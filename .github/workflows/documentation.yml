@@ -1,0 +1,105 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'ws63-hal/src/**'
+      - 'ws63-hal/Cargo.toml'
+      - 'ws63-pac/src/**'
+      - 'docs/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'ws63-hal/src/**'
+      - 'ws63-pac/src/**'
+      - 'docs/**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ── Build API docs ────────────────────────────────────────────
+  docs:
+    name: Build API Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: riscv32imafc-unknown-none-elf
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-docs-
+
+      - name: Build ws63-hal documentation
+        run: cargo doc -p ws63-hal --target riscv32imafc-unknown-none-elf --no-deps
+
+      - name: Build ws63-pac documentation
+        run: cargo doc -p ws63-pac --target riscv32imafc-unknown-none-elf --no-deps
+
+      - name: Build ws63-rt documentation
+        run: cargo doc -p ws63-rt --target riscv32imafc-unknown-none-elf --no-deps
+
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: target/riscv32imafc-unknown-none-elf/doc/
+
+  # ── Deploy to GitHub Pages ────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: docs-output
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-output
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── Link check ────────────────────────────────────────────────
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --verbose --no-progress '*.md' '**/*.md'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

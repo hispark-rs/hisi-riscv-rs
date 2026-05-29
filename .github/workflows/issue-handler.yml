@@ -1,0 +1,78 @@
+name: Issue Handler
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  # ── Auto-label new issues ────────────────────────────────────
+  triage:
+    name: Auto Triage
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add triage label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+
+            const labels = [];
+
+            // Categorize by keywords
+            if (title.includes('bug') || title.includes('fail') || title.includes('error') || title.includes('broken')) {
+              labels.push('bug');
+            } else if (title.includes('feature') || title.includes('add') || title.includes('support') || title.includes('implement')) {
+              labels.push('enhancement');
+            } else if (title.includes('doc') || title.includes('readme') || title.includes('typo')) {
+              labels.push('documentation');
+            } else if (title.includes('question') || title.includes('how') || title.includes('help')) {
+              labels.push('question');
+            }
+
+            // Component-based labels
+            if (body.includes('gpio') || title.includes('gpio')) labels.push('component:gpio');
+            if (body.includes('uart') || title.includes('uart')) labels.push('component:uart');
+            if (body.includes('i2c') || title.includes('i2c')) labels.push('component:i2c');
+            if (body.includes('spi') || title.includes('spi')) labels.push('component:spi');
+            if (body.includes('dma') || title.includes('dma')) labels.push('component:dma');
+            if (body.includes('wifi') || title.includes('wifi')) labels.push('component:wifi');
+            if (body.includes('ble') || title.includes('ble') || title.includes('bt')) labels.push('component:ble');
+            if (body.includes('hal') || title.includes('hal')) labels.push('component:hal');
+            if (body.includes('pac') || title.includes('pac')) labels.push('component:pac');
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labels
+              });
+            }
+
+  # ── Welcome comment for first-time contributors ───────────────
+  welcome:
+    name: Welcome New Contributors
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Thanks for opening your first issue in ws63-rs!
+
+            Please ensure you've checked:
+            - [ ] The [FAQ / Known Issues](https://github.com/sanchuanhehe/ws63-rs/wiki)
+            - [ ] Existing [open issues](https://github.com/sanchuanhehe/ws63-rs/issues)
+
+            For hardware-related issues, please include:
+            - WS63 chip variant (WS63 / WS63E)
+            - Development board model
+            - Rust toolchain version (`rustc --version`)

@@ -1,0 +1,55 @@
+name: Merge Conflict Detection
+
+on:
+  push:
+    branches: [main, master]
+  pull_request_target:
+    types: [synchronize]
+
+jobs:
+  check-conflicts:
+    name: Check for Merge Conflicts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for merge conflict markers
+        run: |
+          CONFLICTS=$(grep -rn '^<<<<<<< ' . --include='*.rs' --include='*.toml' --include='*.md' --include='*.x' --include='*.ld' 2>/dev/null || true)
+          if [ -n "$CONFLICTS" ]; then
+            echo "❌ Merge conflict markers found:"
+            echo "$CONFLICTS"
+            exit 1
+          fi
+          echo "✅ No merge conflict markers found"
+
+  label-conflict:
+    name: Label PRs with Merge Conflicts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check conflicts and label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            try {
+              execSync('git merge-base --is-ancestor origin/main HEAD');
+            } catch {
+              // Check for conflict markers
+              const result = execSync('grep -rn "^<<<<<<< " . --include="*.rs" --include="*.toml" 2>/dev/null || true').toString();
+              if (result.trim()) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: ['merge-conflict']
+                });
+              }
+            }

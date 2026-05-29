@@ -1,0 +1,80 @@
+name: CI (Nightly)
+
+on:
+  schedule:
+    # Run at 04:43 UTC daily
+    - cron: '43 4 * * *'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ── Nightly build (with experimental features) ────────────────
+  nightly-build:
+    name: Nightly Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [ws63-hal, ws63-pac, ws63-rt]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: riscv32imafc-unknown-none-elf
+          components: clippy, rustfmt
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-nightly-
+
+      - name: Check ${{ matrix.crate }}
+        run: cargo +nightly check -p ${{ matrix.crate }} --target riscv32imafc-unknown-none-elf
+
+      - name: Clippy ${{ matrix.crate }} (nightly)
+        continue-on-error: true
+        run: cargo +nightly clippy -p ${{ matrix.crate }} --target riscv32imafc-unknown-none-elf -- -D warnings 2>&1 | head -100
+
+  # ── Binary size report ────────────────────────────────────────
+  size-report:
+    name: Binary Size Report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: riscv32imafc-unknown-none-elf
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-cargo-size-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-size-
+
+      - name: Build blinky example
+        run: cargo build -p blinky --target riscv32imafc-unknown-none-elf --release
+
+      - name: Report binary size
+        run: |
+          ls -la target/riscv32imafc-unknown-none-elf/release/blinky
+          echo "--- Binary sections ---"
+          riscv-none-elf-size target/riscv32imafc-unknown-none-elf/release/blinky || true
