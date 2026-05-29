@@ -1,0 +1,37 @@
+[workspace]
+resolver = "3"
+members = [
+    "ws63-pac",
+    "ws63-hal",
+    "ws63-rt",
+    "ws63-examples/*",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["sanchuanhehe"]
+license = "MIT"
+repository = "https://github.com/sanchuanhehe/ws63-rs"
+
+[workspace.dependencies]
+ws63-pac = { path = "ws63-pac" }
+ws63-hal = { path = "ws63-hal" }
+ws63-rt  = { path = "ws63-rt" }
+
+# External dependencies
+riscv = "0.13"
+riscv-rt = "0.14"
+embedded-hal = "1.0.0"
+embedded-io = "0.6"
+nb = "1"
+critical-section = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = "s"

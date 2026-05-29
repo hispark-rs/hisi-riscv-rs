@@ -13,3 +13,9 @@
 [submodule "ws63-svd"]
 	path = ws63-svd
 	url = https://github.com/sanchuanhehe/ws63-svd.git
+[submodule "ws63-rt"]
+	path = ws63-rt
+	url = https://github.com/sanchuanhehe/ws63-rt.git
+[submodule "ws63-examples"]
+	path = ws63-examples
+	url = https://github.com/sanchuanhehe/ws63-examples.git

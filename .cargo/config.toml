@@ -1,0 +1,9 @@
+[build]
+# Default RISC-V target for WS63
+# Uses built-in riscv32imafc-unknown-none-elf on stable Rust.
+# For custom target (RV32IMFC without Atomic extension), use nightly:
+#   cargo +nightly build -Zjson-target-spec --target ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json
+target = "riscv32imafc-unknown-none-elf"
+
+[target.riscv32imafc-unknown-none-elf]
+runner = "gdb-multiarch"
