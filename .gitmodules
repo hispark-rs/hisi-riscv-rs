@@ -1,0 +1,15 @@
+[submodule "ws63-guide"]
+	path = ws63-guide
+	url = https://github.com/sanchuanhehe/ws63-guide.git
+[submodule "ws63-hal"]
+	path = ws63-hal
+	url = https://github.com/sanchuanhehe/ws63-hal.git
+[submodule "ws63-pac"]
+	path = ws63-pac
+	url = https://github.com/sanchuanhehe/ws63-pac.git
+[submodule "ws63-RF"]
+	path = ws63-RF
+	url = https://github.com/sanchuanhehe/ws63-RF.git
+[submodule "ws63-svd"]
+	path = ws63-svd
+	url = https://github.com/sanchuanhehe/ws63-svd.git
