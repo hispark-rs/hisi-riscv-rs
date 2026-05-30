@@ -166,6 +166,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77439c1b53d2303b20d9459b1ade71a83c716e3f9c34f3228c00e6f185d6c002"
 
 [[package]]
+name = "ws63-flashboot"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "riscv",
+ "ws63-pac 0.1.0 (git+https://github.com/sanchuanhehe/ws63-pac)",
+]
+
+[[package]]
 name = "ws63-hal"
 version = "0.1.0"
 dependencies = [
