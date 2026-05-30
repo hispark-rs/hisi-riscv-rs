@@ -13,8 +13,6 @@ const SFC_BUS_CONFIG1: *mut u32 = 0x4800_0200 as *mut u32;
 const SFC_TIMING: *mut u32 = 0x4800_0110 as *mut u32;
 /// SFC soft reset mask
 const SFC_SOFT_RST_MASK: *mut u32 = 0x4800_0130 as *mut u32;
-/// SFC interrupt mask
-const SFC_INT_MASK: *mut u32 = 0x4800_0128 as *mut u32;
 /// SFC interrupt clear
 const SFC_INT_CLEAR: *mut u32 = 0x4800_012C as *mut u32;
 /// SFC command instruction register
@@ -64,24 +62,11 @@ pub struct ImageHeader {
 impl ImageHeader {
     /// Read an ImageHeader from flash at `addr` via SFC command.
     pub fn read(flash_addr: u32) -> Self {
-        let mut header = ImageHeader::zeroed();
+        // All-zero header is fine — invalid fields will be caught by image::validate()
+        let mut header: ImageHeader = unsafe { core::mem::zeroed() };
         let buf = &mut header as *mut ImageHeader as *mut u32;
         sfc_read_data(flash_addr, buf, core::mem::size_of::<ImageHeader>() as u32 / 4);
         header
-    }
-
-    fn zeroed() -> Self {
-        ImageHeader {
-            key_area: KeyArea {
-                key_id: 0, key_type: 0, key_length: 0, sig_length: 0, sig_scheme: 0,
-                _reserved: [0u8; 0xF0],
-            },
-            code_info: CodeInfo {
-                image_id: 0, structure_version: 0, structure_length: 0,
-                signature_length: 0, image_version: 0, image_length: 0, load_addr: 0,
-                _reserved: [0u8; 0x1E4],
-            },
-        }
     }
 }
 
