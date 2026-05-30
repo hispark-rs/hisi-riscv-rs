@@ -6,11 +6,14 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
 
     // Copy linker scripts to OUT_DIR
-    let memory_x = Path::new("memory.x");
-    let memory_out = Path::new(&out_dir).join("memory.x");
-    fs::copy(memory_x, &memory_out).expect("Failed to copy memory.x");
+    for file in ["memory.x", "layout.ld"] {
+        let src = Path::new(file);
+        let dst = Path::new(&out_dir).join(file);
+        fs::copy(src, &dst).unwrap();
+        println!("cargo:rerun-if-changed={file}");
+        println!("cargo:rustc-link-arg=-T{}", dst.display());
+    }
 
-    println!("cargo:rerun-if-changed=memory.x");
-    println!("cargo:rustc-link-arg=-T{}", memory_out.display());
+    println!("cargo:rerun-if-changed=asm/startup.S");
     println!("cargo:rustc-link-search={}", out_dir);
 }

@@ -112,6 +112,22 @@ pub fn read_image_header(flash_addr: u32) -> ImageHeader {
     ImageHeader::read(flash_addr)
 }
 
+/// Read raw bytes from flash (for SHA256 verification).
+/// Reads `len` bytes from `addr` into `buf`. Blocking, single SFC command per 64-byte chunk.
+pub fn read_bytes(addr: u32, buf: &mut [u8]) {
+    let mut offset = 0;
+    while offset < buf.len() {
+        let chunk = core::cmp::min(64, buf.len() - offset);
+        let mut tmp = [0u32; 16]; // 16 words = 64 bytes
+        let words = (chunk + 3) / 4;
+        sfc_read_data(addr + offset as u32, tmp.as_mut_ptr(), words as u32);
+        for i in 0..chunk {
+            buf[offset + i] = (tmp[i / 4] >> ((i % 4) * 8)) as u8;
+        }
+        offset += chunk;
+    }
+}
+
 /// Read data from flash using SFC command.
 fn sfc_read_data(addr: u32, dst: *mut u32, words: u32) {
     unsafe {
