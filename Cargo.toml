@@ -5,6 +5,7 @@ members = [
     "ws63-hal",
     "ws63-rt",
     "ws63-examples/*",
+    "ws63-flashboot",
 ]
 
 [workspace.package]

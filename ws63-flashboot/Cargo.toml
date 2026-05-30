@@ -1,0 +1,27 @@
+[package]
+name = "ws63-flashboot"
+version = "0.1.0"
+edition = "2024"
+description = "Second-stage bootloader (flashboot) for HiSilicon WS63 — SFC init, image verify, app jump"
+license = "MIT"
+repository = "https://github.com/sanchuanhehe/ws63-rs"
+keywords = ["ws63", "hisilicon", "riscv", "bootloader", "flashboot"]
+categories = ["embedded", "no-std", "hardware-support"]
+
+[[bin]]
+name = "flashboot"
+path = "src/main.rs"
+
+[dependencies]
+ws63-pac = { version = "0.1", git = "https://github.com/sanchuanhehe/ws63-pac", features = ["critical-section", "rt"] }
+riscv = "0.13"
+critical-section = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = "s"
