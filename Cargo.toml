@@ -7,19 +7,17 @@ members = [
     "ws63-examples/blinky",
     "ws63-flashboot",
 ]
-# default-members = the library crates only, which build cleanly for the no-atomic
-# rv32imfc target. The two BINARY crates are excluded from the default `cargo build`:
-#   - ws63-flashboot: experimental, NOT secure boot (see ws63-flashboot/README.md).
-#   - ws63-examples/blinky: does not link yet — the ws63-rt linker scripts are not
-#     propagated to downstream binaries (cargo:rustc-link-arg from a lib dep does not
-#     reach the bin), so it links with lld's default layout and the trap-stack symbols
-#     are unresolved. Tracked in ROADMAP phase 1 (linker-script integration + HIL bring-up).
-# Both remain workspace `members` so `cargo check --workspace` still covers them.
-# Build either explicitly: `cargo build -p blinky` / `cargo build -p flashboot`.
+# default-members = the libraries + the blinky example (which links via ws63-rt's
+# exported linker scripts; see ws63-rt/build.rs + ws63-examples/blinky/build.rs).
+# ws63-flashboot is excluded: it is experimental and NOT secure boot
+# (see ws63-flashboot/README.md). It stays a workspace `member` so
+# `cargo check --workspace` covers it; build it explicitly with
+# `cargo build -p ws63-flashboot`.
 default-members = [
     "ws63-pac",
     "ws63-hal",
     "ws63-rt",
+    "ws63-examples/blinky",
 ]
 
 [workspace.package]

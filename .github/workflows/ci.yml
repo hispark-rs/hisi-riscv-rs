@@ -60,11 +60,10 @@ jobs:
       # Covers every member (incl. blinky + flashboot) at the type/codegen level.
       - name: Check workspace
         run: cargo check --workspace
-      # Real build (link) of the default-members: the library crates. The binary
-      # crates (blinky, flashboot) are NOT built here — blinky does not yet link
-      # (ws63-rt linker scripts are not propagated to downstream bins; ROADMAP
-      # phase 1) and flashboot is experimental. No `|| true` masking.
-      - name: Build libraries (release)
+      # Real build (link) of the default-members: the libraries + the blinky example
+      # (blinky links via ws63-rt's exported linker scripts). The experimental
+      # flashboot binary is excluded from the default build. No `|| true` masking.
+      - name: Build default members (release, links blinky)
         run: cargo build --release
 
   # ── Clippy (gating) ─────────────────────────────────────────────

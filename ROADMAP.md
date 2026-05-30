@@ -21,7 +21,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 阶段 | 主题 | 状态 |
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | ⏭️ 下一步（最高优先级） |
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本集成已完成（blinky 可链接）；上板冒烟待硬件 |
 | 2 | 死代码清理 + 正确性修复 | 计划 |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
@@ -54,20 +54,21 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ---
 
-## 阶段 1 — 硬件在环 bring-up + 链接脚本集成（下一步）
+## 阶段 1 — 硬件在环 bring-up + 链接脚本集成
 
 **门禁理念：把"在硅片上跑起来"当作验收标准，而不是"过了 N 次 agent review"。** 评审显示底座大概率从未上板。
 
-1. **修复链接脚本传播**（阻塞示例链接）：`ws63-rt` 的 `cargo:rustc-link-arg=-T…` 来自 *库* 依赖，
-   不会传播到下游二进制（blinky 因此用 lld 默认布局链接、trap 栈符号 `__exc/nmi/irq_stack_top__` 未定义而失败）。
-   方案：`ws63-rt/build.rs` 改用 `cargo:rustc-link-search` 导出脚本目录（link-search 可传播），
-   应用侧（blinky）经 `build.rs` 或 `.cargo/config.toml` 以 `-Tlayout.ld` 引用；注意脚本加载顺序与
-   不与 flashboot 自有脚本冲突；用 `readelf` 核实真实内存布局确实生效。
-2. **统一 trap/栈布局**：把 `.stacks`（NOLOAD）与 `memory.x` 里的栈顶 fallback 合并为单一真值；
+1. ✅ **修复链接脚本传播（已完成 2026-05-31）**：`ws63-rt` 的 `cargo:rustc-link-arg=-T…` 来自 *库* 依赖、不传播到下游二进制
+   （blinky 曾因此用 lld 默认布局链接、trap 栈符号 `__exc/nmi/irq_stack_top__` 未定义而失败）。
+   已改为：`ws63-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录（link-search 可传播）+ 生成 `ws63-link.x`
+   包装脚本（按 memory→layout→device→symbols 顺序 `INCLUDE`），blinky 的 `build.rs` 以 `-Tws63-link.x` 引入。
+   **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
+2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 ws63-rt 评审。
+3. **统一 trap/栈布局**（剩余）：把 `.stacks`（NOLOAD）与 `memory.x` 里的栈顶 fallback 合并为单一真值；
    在 `layout.ld` 显式放置 `.trap`/`.trap.*` 段（`KEEP` + `ALIGN(64)`）；`startup.S` 设 Vectored 模式
-   或干脆改 Direct + 软件分发（与中断重写一并，见阶段 2）。
-3. **上板冒烟**：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
-4. 恢复 CI 的固件产物：blinky 能链接后，release 的 `objcopy` 步骤自动开始产 `.bin`，nightly 恢复尺寸报告。
+   或改 Direct + 软件分发（与中断重写一并，见阶段 2）。
+4. **上板冒烟**（剩余，需硬件）：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
+   用 `readelf` 核实 ELF 内存布局已确实采用 WS63 的 layout（非 lld 默认）。
 
 ---
 
@@ -163,4 +164,4 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 中 | 死代码（RAII 时钟守卫 / DMA 安全层 / async marker） | 阶段 2 |
 | 中 | safety.rs 恒真断言剧场 | 阶段 2 |
 | 中 | SVD→PAC 生成流水线不可复现 | 阶段 2 |
-| — | 示例无法链接（链接脚本不传播） | 阶段 1 |
+| — | 示例无法链接（链接脚本不传播） | ✅ 阶段 1 已修（blinky 可链接） |

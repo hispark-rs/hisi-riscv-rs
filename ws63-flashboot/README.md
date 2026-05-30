@@ -28,8 +28,8 @@
 ## 显式构建（仅用于实验）
 
 ```bash
-# 默认构建不含 flashboot；需显式指定
-cargo build -p flashboot --release
+# 默认构建不含 flashboot；需显式指定（包名是 ws63-flashboot）
+cargo build -p ws63-flashboot --release
 ```
 
 后续若决定继续维护本 crate，整改项见仓库根 [`ROADMAP.md`](../ROADMAP.md) 阶段 2，

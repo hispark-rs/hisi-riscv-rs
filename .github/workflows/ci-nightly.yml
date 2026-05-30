@@ -58,10 +58,11 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-size-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-size-
-      # Build the library crates (default-members) and report their artifact sizes.
-      # Firmware (ELF) size reporting for the blinky example returns once it links
-      # — see ROADMAP phase 1 (linker-script integration).
-      - name: Build libraries (release)
+      # Build the default-members (libraries + blinky) and report the firmware size.
+      - name: Build default members (release)
         run: cargo build --release
-      - name: Report rlib sizes
-        run: ls -la target/riscv32imc-unknown-none-elf/release/deps/*.rlib
+      - name: Report blinky firmware size
+        run: |
+          ELF=target/riscv32imc-unknown-none-elf/release/blinky
+          ls -la "$ELF"
+          size "$ELF" || rust-size "$ELF" || true

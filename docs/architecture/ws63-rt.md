@@ -83,7 +83,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 |--------|------|------|-----------------|------|
 | 高 | 正确性 | `mtvec` 以 Direct 模式写入（`la t0,trap_vector; csrw mtvec,t0`，未 `ori` 设置 MODE=Vectored），但同时构建了完整的 Vectored 跳转表（含 NMI/MIE/local 各项），导致除 `trap_entry` 外的向量项全部失效——所有 trap 都落到偏移 0 的异常入口 | `asm/startup.S:40-41`（Direct 写法）vs `asm/startup.S:88-127`（Vectored 表）| 已排期(ROADMAP 阶段 2，随中断子系统重构修正模式/表) |
 | 中 | 正确性 | trap 相关段（`.trap`/`.trap.exception`/`.trap.nmi`/`.trap.mie*`/`.trap.local`）在 `layout.ld` 无显式输出段放置，成为孤立段（orphan），布局/对齐依赖链接器默认行为 | `asm/startup.S:85,318,367,390,416`（段声明）；`layout.ld:28-224`（无对应 `*(.trap*)` 放置）| 已排期(ROADMAP 阶段 2) |
-| 高 | 构建 | 链接脚本不传播到下游二进制：`build.rs` 用 `cargo:rustc-link-arg=-T...` 注入 layout/memory/device，但该 arg 来自 lib 依赖、不会传递到 bin；示例改用 lld 默认布局链接，`__exc_stack_top__`/`__nmi_stack_top__`/`__irq_stack_top__` 等符号未定义 → blinky 链接失败 | `build.rs:36-39`；符号引用 `asm/startup.S:328,374,396,422`；`memory.x:76-78` | 已排期(ROADMAP 阶段 1，硬件在环 bring-up + 链接脚本集成) |
+| 高 | 构建 | （已修）链接脚本不传播到下游二进制：`build.rs` 原用 `cargo:rustc-link-arg=-T...` 注入，但该 arg 来自 lib 依赖、不传递到 bin；示例改用 lld 默认布局、`__exc/nmi/irq_stack_top__` 未定义 → blinky 链接失败。现改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），blinky `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接** | `build.rs`（link-search + ws63-link.x）；`ws63-examples/blinky/build.rs` | 本轮已修 |
 | 高 | 构建 | （已修）MIE 中断宏 typo：`call mie\()_interrupt_handler` 缺少 `\n`，宏展开后符号名错误 | `asm/startup.S:397`（现为 `call mie\n\()_interrupt_handler`）| 本轮已修 |
 | 中 | 构建 | （已修）栈顶符号 `__irq/exc/nmi_stack_top__` 在 `.stacks (NOLOAD)` 仅符号区被 `--gc-sections` 回收 → 链接期未定义；已在 `memory.x` 顶层加 GC-safe fallback | `layout.ld:199-204`（说明）；`memory.x:76-78`（fallback）| 本轮已修 |
 | 中 | 构建 | （已修）`riscv` 启用 `critical-section-single-hart`，为无原子扩展的 WS63 提供单 hart CS 实现，支撑 PAC `take()` 与 HAL portable-atomic | `Cargo.toml`（`riscv` features）| 本轮已修 |
@@ -93,6 +93,6 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 
 ## 改进项与排期
 
-- **阶段 1（硬件在环 bring-up + 链接脚本集成）**：解决链接脚本不传播到下游 bin 的问题（让 examples 能正确拾取 layout/memory/device，使 `__*_stack_top__`/trap 符号在 bin 中有定义），使 blinky 等示例可链接、可上板。对应上表“链接脚本不传播”一行。
+- **阶段 1（链接脚本集成 ✅ 已完成 / 上板待硬件）**：链接脚本不传播问题已解决（`rustc-link-search` + `ws63-link.x` 包装脚本 + blinky `build.rs` 引入），blinky 现可链接并产出 `.bin`。剩余：真机上板冒烟、用 `readelf` 核实 WS63 布局生效。
 - **阶段 2（死代码清理 + 正确性修复）**：修正 `mtvec` 模式与向量表的不一致（Direct vs Vectored）；为 trap 段在 `layout.ld` 增加显式输出段放置；统一 `.stacks` 布局与 `memory.x` 栈顶 fallback；并随中断子系统模型纠正（PLIC vs LOCIPRI/LOCIEN）一并处理。对应上表前两行。
 - 其余仓库级排期（efuse/lsadc、flashboot 镜像头/验签/AB、porting+HCC+blob 连接性、async）见 [ROADMAP](../../ROADMAP.md) 阶段 2-6，与本运行时组件无直接耦合。

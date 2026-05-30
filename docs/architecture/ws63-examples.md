@@ -49,7 +49,7 @@ ws63-rt  (启动汇编 / 链接脚本 / 中断向量)  ──提供 #[entry] 与
 
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
-| 高 | 构建 | `blinky` **当前无法链接**：`ws63-rt` 的链接脚本（layout.ld/memory.x）通过 lib 依赖的 `cargo:rustc-link-arg` 不传播到下游二进制，导致 `__exc/nmi/irq_stack_top__` 等 trap 栈符号未定义而链接失败 | `Cargo.toml:13-16`（排除原因注释） | 已排期(ROADMAP 阶段 1) |
+| 高 | 构建 | （已修）`blinky` 曾无法链接：`ws63-rt` 的链接脚本经 lib 依赖的 `cargo:rustc-link-arg` 不传播到下游二进制，`__exc/nmi/irq_stack_top__` 等符号未定义。现 `ws63-rt` 以 `cargo:rustc-link-search` + `ws63-link.x` 导出脚本，`blinky` 新增 `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接**，已加回 default-members 并产 `.bin` | `build.rs`（新增）；`ws63-rt/build.rs` | 本轮已修 |
 | 高 | 方向 | 唯一示例且用手写忙等 `delay_ms` 绕过 HAL timer/delay，无法证明其余 ~31 个驱动可用；缺少 UART/SPI/I2C/连接性示例 | `main.rs:17-25`；`README.md:9-10` | 已排期(ROADMAP 阶段 1/5) |
 | 中 | 文档 | `README.md` 的构建指引仍指向已弃用的自定义 JSON target（`riscv32imfc-...json`），而工作区默认 target 已改为 builtin 无原子 `riscv32imc-unknown-none-elf` | `README.md:16-22` vs `.cargo/config.toml:17` | 已排期(ROADMAP 阶段 1) |
 | 中 | 演示覆盖 | 示例未直接演示 HAL 的 `OutputConfig`/`InputConfig` 构建器 API，仅用 legacy `create_output_pin` 类型态路径 | `main.rs:30`；`gpio.rs:471` vs `gpio.rs:27-65` | 已排期(ROADMAP 阶段 1) |
@@ -59,7 +59,7 @@ ws63-rt  (启动汇编 / 链接脚本 / 中断向量)  ──提供 #[entry] 与
 
 ## 改进项与排期
 
-- **ROADMAP 阶段 1（硬件在环 bring-up + 链接脚本集成）**：解决链接脚本不传播问题，使 `blinky` 真正可链接并在硬件上点灯；同步修正 README 的 target 指引；将示例升级为使用 `OutputConfig`/`InputConfig` 配置 API；清理冗余 `ws63-pac` 依赖。这是把本组件从「能编译」推进到「能跑」的关键阶段。
+- **ROADMAP 阶段 1**：链接脚本传播已修，`blinky` 现可链接并产 `.bin`（已加回 default-members）。剩余：真机上板点灯验证；修正 README 的 target 指引（仍指向已弃用的自定义 JSON target，应为 `riscv32imc`）；将示例升级为使用 `OutputConfig`/`InputConfig` 配置 API。这是把本组件从「能链接」推进到「能跑」的关键阶段。
 - **ROADMAP 阶段 2（死代码清理 + 正确性修复）**：随 HAL 中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C 超时、GPIO pull 等修复，补充对应外设的最小示例并清理冗余声明。
 - **ROADMAP 阶段 5（连接性示例）**：在 porting 层 + HCC IPC + blob 链接就绪后，新增 Wi-Fi/BLE/SLE 连接性示例，使示例集真正覆盖 SoC 核心能力。
 - **ROADMAP 阶段 6（async）**：引入 Embassy/RTIC 风格的异步示例（依赖 HAL async 支持落地）。

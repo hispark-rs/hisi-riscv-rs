@@ -23,11 +23,9 @@ jobs:
       - name: Install toolchain (rust-toolchain.toml)
         run: rustup show
 
-      # Build the library crates (default-members). Firmware images (blinky/flashboot)
-      # are not attached yet: blinky does not link until the linker-script integration
-      # lands (ROADMAP phase 1), and flashboot is experimental. Once blinky links, the
-      # guarded packaging step below starts producing artifacts automatically.
-      - name: Build libraries (release)
+      # Build the default-members (libraries + blinky). blinky links and is packaged
+      # below; the experimental flashboot binary is not built/attached here.
+      - name: Build default members (release)
         run: cargo build --release
 
       # Guarded firmware packaging: only runs once a flashable ELF actually exists.

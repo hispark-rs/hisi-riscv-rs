@@ -57,8 +57,10 @@ ws63-guide     (中文硬件手册，Sphinx)
     （`ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json`，需 nightly + `-Z build-std`）。
 - **单一 PAC 实例**：根 `Cargo.toml` 用 `[patch.crates-io]` 把 `ws63-pac` 的 registry 依赖重定向到本地 submodule，
   保证全仓库只链接一个 PAC（否则 `DEVICE_PERIPHERALS` 单例静态重复、类型不兼容）。
-- **default-members = 库**（`ws63-pac`/`ws63-hal`/`ws63-rt`）。两个二进制 crate 不在默认构建里：
-  `ws63-flashboot` 是实验性；`blinky` 暂时无法链接（见下）。二者仍是 `members`，`cargo check --workspace` 覆盖。
+- **default-members = 库 + blinky**（`ws63-pac`/`ws63-hal`/`ws63-rt`/`ws63-examples/blinky`）。
+  blinky 经 ws63-rt 导出的链接脚本可正常链接（`ws63-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录 +
+  `ws63-link.x` 包装脚本，blinky 的 `build.rs` 以 `-Tws63-link.x` 引入）。实验性的 `ws63-flashboot` 不在默认构建里，
+  仍是 `member`，`cargo check --workspace` 覆盖。
 
 常用命令：
 
@@ -66,16 +68,16 @@ ws63-guide     (中文硬件手册，Sphinx)
 cargo build --release          # 构建库（default-members）
 cargo check --workspace        # 检查全部（含 blinky/flashboot，不链接）
 cargo clippy --workspace --exclude ws63-flashboot -- -D warnings
-cargo build -p blinky          # 显式构建示例（当前链接失败，见 ROADMAP 阶段 1）
-cargo build -p flashboot       # 显式构建实验性 flashboot
+cargo build -p blinky             # 示例（已可链接；包含在默认构建中）
+cargo build -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```
 
 ## 已知的全局性问题（详见评审台账）
 
 1. **连接性 0%**：芯片价值（Wi-Fi/BLE/SLE）尚未触及；`ws63-RF` 仅 blob + 未实现 porting。→ ROADMAP 阶段 3-5。
-2. **示例无法链接**：`ws63-rt` 的链接脚本不传播到下游二进制（`cargo:rustc-link-arg` 来自库依赖不达 bin），
-   blinky 因 trap 栈符号未定义而链接失败。→ ROADMAP 阶段 1。
-3. **从未上板验证**：测试是 host 端恒真式；底座需要 HIL 冒烟。→ ROADMAP 阶段 1。
+2. ~~示例无法链接~~ **（已修，阶段 1）**：`ws63-rt` 的链接脚本原先经 `cargo:rustc-link-arg` 注入、不传播到下游二进制；
+   已改为 `cargo:rustc-link-search` + `ws63-link.x` 包装脚本，blinky 现可链接。
+3. **从未上板验证**：测试是 host 端恒真式；底座仍需 HIL 冒烟（真机烧 blinky/UART）。→ ROADMAP 阶段 1（剩余部分）。
 4. **正确性地雷**：中断模型错误、SPI/复位/超时缺陷等。→ ROADMAP 阶段 2。
 
 ## 参考资料
