@@ -33,12 +33,10 @@ pub fn init(pclk: u32, baud: u32) {
         UART_DIV_H.write_volatile(((div >> 8) & 0xFF) as u16);
         UART_DIV_FRA.write_volatile(0);
 
-        // 8N1: data_bits=8 (3 << 2), no parity, 1 stop
-        UART_CTL.write_volatile((3 << 2) | (1 << 7)); // DIV_EN still set
+        // 8N1: data_bits=8 (3 << 2), no parity, 1 stop, UART_EN + DIV_EN
+        UART_CTL.write_volatile(1 | (3 << 2) | (1 << 7)); // UART_EN=1, DIV_EN=1
 
-        // Enable FIFO
-        UART_FIFO_CTL.write_volatile(0x01);
-        // Clear FIFO
+        // Enable FIFO and clear
         UART_FIFO_CTL.write_volatile(0x07);
     }
 }

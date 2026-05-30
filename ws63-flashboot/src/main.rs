@@ -116,7 +116,8 @@ fn try_boot(addr: u32, name: char) -> bool {
     // P1: verify image hash (SHA256 of app body)
     let img_body = addr + IMAGE_HEADER_LEN;
     let img_len = hdr.code_info.image_length;
-    if !verify_sha256(img_body, img_len) { uart::puts("hash mismatch\n"); return false; }
+    let expected_hash = hdr.code_info.image_hash;
+    if !verify_sha256(img_body, img_len, &expected_hash) { uart::puts("hash mismatch\n"); return false; }
 
     let entry = addr + IMAGE_HEADER_LEN;
     log("jump to "); uart::puthex32(entry); uart::puts("\n");
@@ -196,7 +197,7 @@ fn enter_upgrade() -> ! {
 
 // ── P1: SHA256 image verification ───────────────────────────────
 
-fn verify_sha256(img_body: u32, img_len: u32) -> bool {
+fn verify_sha256(img_body: u32, img_len: u32, expected: &[u8; 32]) -> bool {
     // fbb_ws63: ws63_verify_app() — full ECC/SM2 signature via ROM
     // We compute SHA256 of the image body and compare with header hash.
     // For production, use hardware SPACC accelerator.
@@ -215,9 +216,8 @@ fn verify_sha256(img_body: u32, img_len: u32) -> bool {
     }
 
     let hash = sha.finish();
-    // For full verification: compare hash with header.code_info hash field.
-    // Currently: accept any non-zero hash (at least the image was readable).
-    hash != [0u8; 32]
+    // Compare computed hash with expected hash from image header
+    hash == *expected
 }
 
 // ── Hardware helpers ────────────────────────────────────────────

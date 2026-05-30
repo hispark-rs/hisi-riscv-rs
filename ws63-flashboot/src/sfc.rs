@@ -49,7 +49,8 @@ pub struct CodeInfo {
     pub image_version: u32,     // +0x110 (params_version_ext)
     pub image_length: u32,      // +0x114 (offset in struct)
     pub load_addr: u32,         // +0x118
-    _reserved: [u8; 0x1E4],    // +0x11C..0x300
+    pub image_hash: [u8; 32],   // +0x11C — SHA256 of image body
+    _reserved: [u8; 0x1C4],    // +0x13C..0x300
 }
 
 /// Combined image header (key_area + code_info = 0x300 bytes).
@@ -129,33 +130,40 @@ pub fn read_bytes(addr: u32, buf: &mut [u8]) {
 }
 
 /// Read data from flash using SFC command.
+/// Handles reads of any size by chunking into 64-byte commands (hardware limit).
 fn sfc_read_data(addr: u32, dst: *mut u32, words: u32) {
-    unsafe {
-        // Set instruction (standard SPI read: 0x03, or quad read: 0xEB)
-        SFC_CMD_INS.write_volatile(0x03);
-        // Set address
-        SFC_CMD_ADDR.write_volatile(addr);
+    const MAX_WORDS_PER_CMD: u32 = 16; // 16 words = 64 bytes (SFC data buffer size)
+    let mut offset_words = 0u32;
 
-        // Build command config
-        let data_len = words * 4; // convert words to bytes
-        let cmd_cfg: u32 =
-            (1 << 0)    // start
-            | (1 << 2)   // addr_en
-            | (1 << 7)   // data_en
-            | (1 << 8);  // rw = read
+    while offset_words < words {
+        let chunk_words = core::cmp::min(MAX_WORDS_PER_CMD, words - offset_words);
+        let chunk_addr = addr + offset_words * 4;
 
-        // For small reads (< 64 bytes), use 1-word data buffer
-        SFC_CMD_CONFIG.write_volatile(cmd_cfg | (((data_len - 1) & 0x3F) << 9));
+        unsafe {
+            // Use quad-SPI read instruction to match bus configuration in sfc_init()
+            SFC_CMD_INS.write_volatile(0xEB);
+            SFC_CMD_ADDR.write_volatile(chunk_addr);
 
-        // Read data from buffer register
-        for i in 0..words {
-            while SFC_INT_STATUS.read_volatile() & 0x01 == 0 {} // wait for cmd done
-            let word = SFC_CMD_DATABUF.read_volatile();
-            dst.add(i as usize).write_volatile(word);
-            if i < words - 1 {
-                SFC_INT_CLEAR.write_volatile(0x01);
+            let data_len = chunk_words * 4;
+            let cmd_cfg: u32 =
+                (1 << 0)    // start
+                | (1 << 2)   // addr_en
+                | (1 << 7)   // data_en
+                | (1 << 8);  // rw = read
+
+            // data_len field is 6 bits (bits 9-14), encodes (data_len - 1)
+            // chunk_words is 1..=16, so data_len is 4..=64, and data_len-1 fits in 0..=63
+            SFC_CMD_CONFIG.write_volatile(cmd_cfg | (((data_len - 1) & 0x3F) << 9));
+
+            // Wait for command completion once, then read all words in this chunk
+            while SFC_INT_STATUS.read_volatile() & 0x01 == 0 {}
+            for i in 0..chunk_words {
+                let word = SFC_CMD_DATABUF.add(i as usize).read_volatile();
+                dst.add((offset_words + i) as usize).write_volatile(word);
             }
+            SFC_INT_CLEAR.write_volatile(0x01);
         }
-        SFC_INT_CLEAR.write_volatile(0x01);
+
+        offset_words += chunk_words;
     }
 }
