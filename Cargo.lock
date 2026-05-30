@@ -42,7 +42,7 @@ dependencies = [
  "embedded-hal",
  "riscv",
  "ws63-hal",
- "ws63-pac 0.1.0",
+ "ws63-pac",
  "ws63-rt",
 ]
 
@@ -246,6 +246,9 @@ name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c33a9471896f1c69cecef8d20cbe2f7accd12527ce60845ff44c153bb2a21b49"
+dependencies = [
+ "critical-section",
+]
 
 [[package]]
 name = "ppv-lite86"
@@ -721,7 +724,6 @@ version = "0.1.0"
 dependencies = [
  "critical-section",
  "riscv",
- "ws63-pac 0.1.0 (git+https://github.com/sanchuanhehe/ws63-pac)",
 ]
 
 [[package]]
@@ -738,22 +740,12 @@ dependencies = [
  "portable-atomic",
  "proptest",
  "riscv",
- "ws63-pac 0.1.0 (git+https://github.com/sanchuanhehe/ws63-pac)",
+ "ws63-pac",
 ]
 
 [[package]]
 name = "ws63-pac"
-version = "0.1.0"
-dependencies = [
- "critical-section",
- "riscv",
- "vcell",
-]
-
-[[package]]
-name = "ws63-pac"
-version = "0.1.0"
-source = "git+https://github.com/sanchuanhehe/ws63-pac#df35d6934dc0c182af21cc096a8a5c992ca1aaae"
+version = "0.1.1"
 dependencies = [
  "critical-section",
  "riscv",
@@ -767,7 +759,7 @@ dependencies = [
  "critical-section",
  "riscv",
  "riscv-rt",
- "ws63-pac 0.1.0",
+ "ws63-pac",
 ]
 
 [[package]]

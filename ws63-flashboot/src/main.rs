@@ -1,13 +1,23 @@
-//! # ws63-flashboot — Second-stage bootloader for HiSilicon WS63
+//! # ws63-flashboot — EXPERIMENTAL second-stage bootloader for HiSilicon WS63
 //!
-//! Rust rewrite of fbb_ws63 `flashboot_ws63/startup/main.c`.
-//! All P0/P1 gaps addressed:
-//! - P0: startup.S with sp/gp/BSS/FPU init
-//! - P0: boot_clock_adapt() — UART/WDT/timer tick adapt to TCXO
-//! - P0: efuse_init() — efuse clock period + chip type detect
-//! - P1: partition table parsing from flash
-//! - P1: upg_check() — upgrade mode detection
-//! - P1: SHA256 image body verification
+//! ⚠️ **EXPERIMENTAL — NOT SECURE BOOT. NOT FOR PRODUCTION.** ⚠️
+//!
+//! This is a learning/experimental Rust rewrite of fbb_ws63
+//! `flashboot_ws63/startup/main.c`. For production, use the vendor (fbb_ws63)
+//! flashboot and run the Rust application in the partition it launches.
+//! See `README.md` for the full rationale.
+//!
+//! Known gaps vs. the vendor bootloader (do NOT trust this as a root of trust):
+//! - **NO authenticity check.** `verify_sha256()` only compares an integrity hash
+//!   against a hash stored in the *same unsigned header*. An attacker who can write
+//!   flash recomputes the hash and boots arbitrary code at M-mode. The vendor does
+//!   ECC-bp256/SM2 signature verification rooted in an efuse public key — not done here.
+//! - **Image header layout is unverified** against a real WS63-signed image
+//!   (`ImageHeader`/`CodeInfo` offsets in `sfc.rs` are not confirmed against
+//!   `fbb_ws63/.../secure_verify_boot.h`), so it likely rejects genuine images.
+//! - **Stubs:** `boot_clock_adapt()` is a TODO no-op, `read_partition_app_addr()`
+//!   always returns `FLASH_START`, `check_upgrade_mode()` always returns false.
+//! - No FOTA/upgrade, no image decompression, no flash on-line encryption.
 //!
 //! Called by asm/startup.S as `flashboot_main()`.
 

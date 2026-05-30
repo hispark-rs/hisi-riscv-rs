@@ -7,6 +7,20 @@ members = [
     "ws63-examples/blinky",
     "ws63-flashboot",
 ]
+# default-members = the library crates only, which build cleanly for the no-atomic
+# rv32imfc target. The two BINARY crates are excluded from the default `cargo build`:
+#   - ws63-flashboot: experimental, NOT secure boot (see ws63-flashboot/README.md).
+#   - ws63-examples/blinky: does not link yet — the ws63-rt linker scripts are not
+#     propagated to downstream binaries (cargo:rustc-link-arg from a lib dep does not
+#     reach the bin), so it links with lld's default layout and the trap-stack symbols
+#     are unresolved. Tracked in ROADMAP phase 1 (linker-script integration + HIL bring-up).
+# Both remain workspace `members` so `cargo check --workspace` still covers them.
+# Build either explicitly: `cargo build -p blinky` / `cargo build -p flashboot`.
+default-members = [
+    "ws63-pac",
+    "ws63-hal",
+    "ws63-rt",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -27,6 +41,14 @@ embedded-hal = "1.0.0"
 embedded-io = "0.6"
 nb = "1"
 critical-section = "1"
+
+# ws63-hal (a standalone submodule) depends on ws63-pac via a registry version
+# requirement so it builds on its own. Inside this monorepo we redirect that to the
+# local submodule so EVERY crate links exactly ONE ws63-pac instance (otherwise the
+# PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and
+# the singleton-safety invariant is split across two copies).
+[patch.crates-io]
+ws63-pac = { path = "ws63-pac" }
 
 [profile.release]
 opt-level = "s"

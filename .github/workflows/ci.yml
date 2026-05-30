@@ -10,26 +10,25 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
+# Toolchain + target are pinned in rust-toolchain.toml (stable +
+# riscv32imc-unknown-none-elf). `rustup show` installs them. The default build
+# target (riscv32imc, no atomics) comes from .cargo/config.toml.
+
 jobs:
-  # ── Build check ─────────────────────────────────────────────────
+  # ── Per-crate check ─────────────────────────────────────────────
   build:
-    name: Build (RISC-V)
+    name: Check (RISC-V)
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crate: [ws63-hal, ws63-pac]
+        crate: [ws63-pac, ws63-hal, ws63-rt]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: riscv32imafc-unknown-none-elf
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/
@@ -37,26 +36,20 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-
       - name: Check ${{ matrix.crate }}
-        run: cargo check -p ${{ matrix.crate }} --target riscv32imafc-unknown-none-elf
+        run: cargo check -p ${{ matrix.crate }}
 
-  # ── Full workspace build ────────────────────────────────────────
+  # ── Full workspace check + library build ────────────────────────
   workspace:
-    name: Workspace Build
+    name: Workspace
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: riscv32imafc-unknown-none-elf
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/
@@ -64,31 +57,27 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-
+      # Covers every member (incl. blinky + flashboot) at the type/codegen level.
       - name: Check workspace
-        run: cargo check --target riscv32imafc-unknown-none-elf
+        run: cargo check --workspace
+      # Real build (link) of the default-members: the library crates. The binary
+      # crates (blinky, flashboot) are NOT built here — blinky does not yet link
+      # (ws63-rt linker scripts are not propagated to downstream bins; ROADMAP
+      # phase 1) and flashboot is experimental. No `|| true` masking.
+      - name: Build libraries (release)
+        run: cargo build --release
 
-      - name: Check examples
-        run: cargo check --examples --target riscv32imafc-unknown-none-elf || true
-
-  # ── Clippy ──────────────────────────────────────────────────────
+  # ── Clippy (gating) ─────────────────────────────────────────────
   clippy:
-    name: Clippy Lints
+    name: Clippy
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: riscv32imafc-unknown-none-elf
-          components: clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/
@@ -96,9 +85,12 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-
+      # Gating: no `continue-on-error`, no `| head` (which would swallow the exit code).
+      # ws63-flashboot is excluded — it is experimental (publish=false, out of the
+      # default build), so its lints are not a merge gate. `cargo check --workspace`
+      # above still compile-checks it.
       - name: Run clippy
-        run: cargo clippy --target riscv32imafc-unknown-none-elf -- -D warnings 2>&1 | head -200
+        run: cargo clippy --workspace --exclude ws63-flashboot -- -D warnings
 
   # ── Format check ────────────────────────────────────────────────
   fmt:
@@ -106,36 +98,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  # ── Host tests (doc tests, logic tests) ────────────────────────
-  host-test:
-    name: Host Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # NOTE: there is intentionally no host-test job. ws63-hal contains raw RISC-V
+  # inline asm (e.g. `asm!("ebreak")` in system.rs), so the crate cannot compile
+  # for a host (x86) target, and the previous host-test job masked that with
+  # `|| echo`. Enabling genuine host unit tests requires cfg-gating the riscv asm
+  # behind `#[cfg(target_arch = "riscv32")]` — tracked in ROADMAP phase 2.
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Check ws63-hal (unit test compilation)
-        run: cargo check --lib --tests -p ws63-hal 2>&1 | tail -5 || echo "Note: some tests may need no_std target"
-
-  # ── Dependency audit ────────────────────────────────────────────
+  # ── Dependency audit (advisory) ─────────────────────────────────
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-
       - name: Run cargo audit
         uses: rustsec/audit-check@v2.0.0
         with:

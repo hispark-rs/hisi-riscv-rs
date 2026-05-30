@@ -6,11 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are each standalone repos linked as submodules.
 
+**Architecture docs (Chinese):** see [`docs/`](docs/) — [`docs/architecture/overview.md`](docs/architecture/overview.md) for the whole picture, per-component docs under `docs/architecture/`, the full review ledger in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
+
 ## Build Commands
 
 ```bash
-# Default target is riscv32imafc-unknown-none-elf (set in .cargo/config.toml)
-cargo check                         # Full workspace check
+# Default target is the no-atomic riscv32imc-unknown-none-elf (set in .cargo/config.toml;
+# the WS63 core has no atomic extension). Toolchain pinned to stable via rust-toolchain.toml.
+cargo build                         # Build libraries (default-members)
+cargo check --workspace             # Full workspace check (incl. blinky, flashboot)
 cargo check -p ws63-hal             # Check HAL only
 cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example

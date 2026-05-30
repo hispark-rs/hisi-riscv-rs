@@ -1,0 +1,12 @@
+# The WS63 application core has NO atomic ('a') extension. We build for the
+# builtin, no-atomic `riscv32imc-unknown-none-elf` target on STABLE — this fixes
+# the atomic-ISA mismatch (native lr.w/sc.w would trap on this core) without the
+# fragility of a custom JSON target-spec + build-std (which also breaks host tests).
+#
+# Tradeoff: riscv32imc is soft-float (ilp32), not hardware-float (ilp32f). The HAL
+# does not use FP, so this is fine today. Switch to a custom ilp32f rv32imfc target
+# (see ws63-rt/target-specs/) only when linking the ilp32f vendor blobs — ROADMAP phase 3.
+[toolchain]
+channel = "stable"
+targets = ["riscv32imc-unknown-none-elf"]
+components = ["rustfmt", "clippy", "llvm-tools"]

@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
 
+# Toolchain + default target come from rust-toolchain.toml (stable + riscv32imc).
+
 jobs:
   # ── Create GitHub Release ─────────────────────────────────────
   release:
@@ -18,16 +20,29 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: riscv32imafc-unknown-none-elf
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
 
-      - name: Build all crates
-        run: cargo build --release --target riscv32imafc-unknown-none-elf
+      # Build the library crates (default-members). Firmware images (blinky/flashboot)
+      # are not attached yet: blinky does not link until the linker-script integration
+      # lands (ROADMAP phase 1), and flashboot is experimental. Once blinky links, the
+      # guarded packaging step below starts producing artifacts automatically.
+      - name: Build libraries (release)
+        run: cargo build --release
 
-      - name: Build all examples
-        run: cargo build --examples --release --target riscv32imafc-unknown-none-elf || true
+      # Guarded firmware packaging: only runs once a flashable ELF actually exists.
+      # rust-objcopy ships with the llvm-tools component (rust-toolchain.toml).
+      - name: Package firmware (if present)
+        run: |
+          set -euo pipefail
+          OUT=target/riscv32imc-unknown-none-elf/release
+          shopt -s nullglob
+          for elf in "$OUT"/blinky "$OUT"/flashboot; do
+            [ -f "$elf" ] || continue
+            rust-objcopy -O binary "$elf" "$elf.bin"
+            cp "$elf" "$elf.elf"
+            echo "packaged $(basename "$elf").bin / .elf"
+          done
 
       - name: Generate changelog
         id: changelog
@@ -42,28 +57,38 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.changelog }}
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
+          # Globs match the actual artifact names (.elf/.bin). They produce no files
+          # until firmware packaging above runs; gh-release just skips empty matches.
           files: |
-            target/riscv32imafc-unknown-none-elf/release/*.bin
-            target/riscv32imafc-unknown-none-elf/release/*.elf
+            target/riscv32imc-unknown-none-elf/release/blinky.bin
+            target/riscv32imc-unknown-none-elf/release/blinky.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Publish crates ────────────────────────────────────────────
+  # Published in dependency order (pac → rt → hal) as sequential steps in ONE job,
+  # NOT a parallel matrix (which raced: hal could publish before pac existed). No
+  # `continue-on-error`: a failed publish now fails the release loudly instead of
+  # silently tagging with nothing published.
+  #
+  # Each crate's version MUST be bumped before tagging — `cargo publish` fails if the
+  # version already exists on crates.io (that failure is intentional and visible).
+  # ws63-flashboot is publish=false (experimental) and is intentionally not published.
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
     needs: release
-    strategy:
-      matrix:
-        crate: [ws63-pac, ws63-hal, ws63-rt]
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Publish ${{ matrix.crate }}
-        run: cargo publish -p ${{ matrix.crate }} --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: true
+      - name: Install toolchain (rust-toolchain.toml)
+        run: rustup show
+      - name: Publish ws63-pac
+        run: cargo publish -p ws63-pac --locked
+      - name: Publish ws63-rt
+        run: cargo publish -p ws63-rt --locked
+      - name: Publish ws63-hal
+        run: cargo publish -p ws63-hal --locked

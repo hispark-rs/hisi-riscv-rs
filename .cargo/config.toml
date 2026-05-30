@@ -1,9 +1,23 @@
+# Default RISC-V target for WS63.
+#
+# The WS63 application core is RV32IMC_Zicsr with NO atomic ('a') extension
+# (verified against the fbb_ws63 C SDK: -march=rv32imfc, no 'a'). The stock
+# `riscv32imafc` target advertises hardware atomics the silicon lacks, so native
+# lr.w/sc.w/amo* would trap on-device. We therefore default to the builtin
+# no-atomic `riscv32imc-unknown-none-elf` target (stable, no build-std).
+#
+# `riscv32imc` provides atomic load/store (lowered to plain ld/st on a single hart)
+# but no CAS; portable-atomic falls back to a critical-section polyfill for RMW
+# (see ws63-hal/Cargo.toml). No atomic instructions are emitted.
+#
+# NOTE: this target is soft-float (ilp32). When we start linking the ilp32f vendor
+# Wi-Fi/BT blobs (ROADMAP phase 3), switch to a custom hardware-float rv32imfc target
+# (ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json, requires nightly + build-std).
 [build]
-# Default RISC-V target for WS63
-# Uses built-in riscv32imafc-unknown-none-elf on stable Rust.
-# For custom target (RV32IMFC without Atomic extension), use nightly:
-#   cargo +nightly build -Zjson-target-spec --target ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json
-target = "riscv32imafc-unknown-none-elf"
+target = "riscv32imc-unknown-none-elf"
 
-[target.riscv32imafc-unknown-none-elf]
+[target.riscv32imc-unknown-none-elf]
 runner = "gdb-multiarch"
+# Disable RISC-V linker relaxation (matches the vendor C SDK flow; avoids gp-relative
+# relaxation surprises with the custom linker scripts in ws63-rt).
+rustflags = ["-C", "link-arg=--no-relax"]
