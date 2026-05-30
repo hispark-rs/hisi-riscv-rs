@@ -122,6 +122,10 @@ fn try_boot(addr: u32, name: char) -> bool {
     log("jump to "); uart::puthex32(entry); uart::puts("\n");
     unsafe { asm!("csrw mie, zero", options(nomem, nostack)) };
     wdg_feed();
+    // SAFETY: transmute is sound because:
+    // 1. `entry` is a valid RISC-V function pointer (app binary entry at image_addr+0x300)
+    // 2. Both `extern "C" fn() -> !` and `*const ()` have the same size (pointer-width on RV32)
+    // 3. The app's entry point is compiled with the same ABI (RISC-V RV32IMFC ilp32f)
     let app: extern "C" fn() -> ! = unsafe { core::mem::transmute(entry as *const ()) };
     app();
 }
