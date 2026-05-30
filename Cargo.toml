@@ -4,7 +4,7 @@ members = [
     "ws63-pac",
     "ws63-hal",
     "ws63-rt",
-    "ws63-examples/*",
+    "ws63-examples/blinky",
     "ws63-flashboot",
 ]
 
