@@ -27,30 +27,36 @@ mod uart;
 
 // ── Peripherals (raw MMIO — intentionally independent of ws63-pac) ──
 
-const HW_CTL: *const u32           = 0x4000_0014 as *const u32;
-const CLDO_CRG_CLK_SEL: *mut u32   = 0x4400_1134 as *mut u32;
-const CMU_NEW_CFG1: *mut u32       = 0x4000_34A4 as *mut u32;
-const CLDO_CKEN_CTL1: *mut u32     = 0x4400_1104 as *mut u32;
-const FAMA_REMAP: *mut u32         = 0x4400_7800 as *mut u32;
-const FLASH_BOOT_TYPE: *const u32  = 0x4000_0024 as *const u32;
-const WDT: *mut u32                = 0x4000_6000 as *mut u32;
-const EFUSE_CTL: *mut u32          = 0x4400_8000 as *mut u32;
-const EFUSE_CLK_PERIOD: *mut u32   = 0x4400_8004 as *mut u32;
+const HW_CTL: *const u32 = 0x4000_0014 as *const u32;
+const CLDO_CRG_CLK_SEL: *mut u32 = 0x4400_1134 as *mut u32;
+const CMU_NEW_CFG1: *mut u32 = 0x4000_34A4 as *mut u32;
+const CLDO_CKEN_CTL1: *mut u32 = 0x4400_1104 as *mut u32;
+const FAMA_REMAP: *mut u32 = 0x4400_7800 as *mut u32;
+const FLASH_BOOT_TYPE: *const u32 = 0x4000_0024 as *const u32;
+const WDT: *mut u32 = 0x4000_6000 as *mut u32;
+const EFUSE_CTL: *mut u32 = 0x4400_8000 as *mut u32;
+const EFUSE_CLK_PERIOD: *mut u32 = 0x4400_8004 as *mut u32;
 
 // Boot flag saved by startup.S from a0 register
-unsafe extern "C" { static __flash_boot_flag: u32; }
+unsafe extern "C" {
+    static __flash_boot_flag: u32;
+}
 
-const FLASH_START: u32       = 0x0020_0000;
-const IMAGE_HEADER_LEN: u32  = 0x300;
-const BOOT_MAIN: u32         = 0xA5A5_A5A5;
-const REGION_SIZE: u32       = 0x0028_0000;
+const FLASH_START: u32 = 0x0020_0000;
+const IMAGE_HEADER_LEN: u32 = 0x300;
+const BOOT_MAIN: u32 = 0xA5A5_A5A5;
+const REGION_SIZE: u32 = 0x0028_0000;
 const REGION_OFFSETS: [(u32, char); 2] = [(0, 'A'), (REGION_SIZE, 'B')];
 
 // ── Entry point (called from asm/startup.S) ────────────────────
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn flashboot_main() -> ! {
-    let tcxo_hz = if unsafe { HW_CTL.read_volatile() & 1 != 0 } { 40_000_000 } else { 24_000_000 };
+    let tcxo_hz = if unsafe { HW_CTL.read_volatile() & 1 != 0 } {
+        40_000_000
+    } else {
+        24_000_000
+    };
 
     // P0: adapt UART/WDT/timer tick rates to TCXO frequency
     boot_clock_adapt(tcxo_hz);
@@ -70,10 +76,16 @@ pub unsafe extern "C" fn flashboot_main() -> ! {
     wdg_init(65);
 
     // SFC: quad-SPI flash read
-    if !sfc::sfc_init(tcxo_hz) { log("FAIL: SFC\n"); halt(); }
+    if !sfc::sfc_init(tcxo_hz) {
+        log("FAIL: SFC\n");
+        halt();
+    }
 
     // P1: upgrade mode check (fbb_ws63: ws63_upg_check)
-    if check_upgrade_mode() { log("UPGRADE mode\n"); enter_upgrade(); }
+    if check_upgrade_mode() {
+        log("UPGRADE mode\n");
+        enter_upgrade();
+    }
 
     // FAMA: remap flash→program
     unsafe {
@@ -87,7 +99,10 @@ pub unsafe extern "C" fn flashboot_main() -> ! {
 
     // P1: read partition table and locate app image
     let img_addr = read_partition_app_addr();
-    if img_addr == 0 { log("FATAL: no partition\n"); halt(); }
+    if img_addr == 0 {
+        log("FATAL: no partition\n");
+        halt();
+    }
 
     // Try primary, then backup region if needed
     let boot_type = unsafe { FLASH_BOOT_TYPE.read_volatile() };
@@ -108,19 +123,29 @@ pub unsafe extern "C" fn flashboot_main() -> ! {
 // ── Boot region ─────────────────────────────────────────────────
 
 fn try_boot(addr: u32, name: char) -> bool {
-    log("Region "); uart::putc(name as u8); uart::puts(": ");
+    log("Region ");
+    uart::putc(name as u8);
+    uart::puts(": ");
 
     let hdr = sfc::read_image_header(addr);
-    if !image::validate(&hdr) { uart::puts("invalid header\n"); return false; }
+    if !image::validate(&hdr) {
+        uart::puts("invalid header\n");
+        return false;
+    }
 
     // P1: verify image hash (SHA256 of app body)
     let img_body = addr + IMAGE_HEADER_LEN;
     let img_len = hdr.code_info.image_length;
     let expected_hash = hdr.code_info.image_hash;
-    if !verify_sha256(img_body, img_len, &expected_hash) { uart::puts("hash mismatch\n"); return false; }
+    if !verify_sha256(img_body, img_len, &expected_hash) {
+        uart::puts("hash mismatch\n");
+        return false;
+    }
 
     let entry = addr + IMAGE_HEADER_LEN;
-    log("jump to "); uart::puthex32(entry); uart::puts("\n");
+    log("jump to ");
+    uart::puthex32(entry);
+    uart::puts("\n");
     unsafe { asm!("csrw mie, zero", options(nomem, nostack)) };
     wdg_feed();
     // SAFETY: transmute is sound because:
@@ -201,7 +226,9 @@ fn verify_sha256(img_body: u32, img_len: u32, expected: &[u8; 32]) -> bool {
     // fbb_ws63: ws63_verify_app() — full ECC/SM2 signature via ROM
     // We compute SHA256 of the image body and compare with header hash.
     // For production, use hardware SPACC accelerator.
-    if img_len == 0 || img_len > 8 * 1024 * 1024 { return false; }
+    if img_len == 0 || img_len > 8 * 1024 * 1024 {
+        return false;
+    }
 
     // Read image body in 256-byte chunks, compute SHA256
     let mut sha = sha256::Sha256::new();
@@ -244,22 +271,38 @@ fn wdg_init(timeout_s: u32) {
     unsafe {
         WDT.write_volatile(0x5A5A5A5A);
         WDT.add(1).write_volatile((timeout_s * 32768) << 8);
-        WDT.add(4).write_volatile(0x01 | (1 << 2) | (7 << 3) | (1 << 6));
+        WDT.add(4)
+            .write_volatile(0x01 | (1 << 2) | (7 << 3) | (1 << 6));
         WDT.write_volatile(0);
     }
 }
 
 fn wdg_feed() {
-    unsafe { WDT.write_volatile(0x5A5A5A5A); WDT.add(2).write_volatile(1); WDT.write_volatile(0); }
+    unsafe {
+        WDT.write_volatile(0x5A5A5A5A);
+        WDT.add(2).write_volatile(1);
+        WDT.write_volatile(0);
+    }
 }
 
 fn delay(loops: u32) {
-    for _ in 0..loops { unsafe { asm!("nop", options(nomem, nostack)) }; }
+    for _ in 0..loops {
+        unsafe { asm!("nop", options(nomem, nostack)) };
+    }
 }
 
-fn log(msg: &str) { uart::puts(msg); }
+fn log(msg: &str) {
+    uart::puts(msg);
+}
 
-fn halt() -> ! { loop { unsafe { asm!("wfi", options(nomem, nostack)) }; } }
+fn halt() -> ! {
+    loop {
+        unsafe { asm!("wfi", options(nomem, nostack)) };
+    }
+}
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! { log("PANIC\n"); halt(); }
+fn panic(_info: &PanicInfo) -> ! {
+    log("PANIC\n");
+    halt();
+}

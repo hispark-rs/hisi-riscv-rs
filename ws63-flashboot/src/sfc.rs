@@ -31,12 +31,12 @@ const SFC_INT_STATUS: *const u32 = 0x4800_0124 as *const u32;
 /// Key area (0x100 bytes): signature + public key
 #[repr(C)]
 pub struct KeyArea {
-    pub key_id: u32,            // +0x00
-    pub key_type: u32,          // +0x04
-    pub key_length: u32,        // +0x08
-    pub sig_length: u32,        // +0x0C
-    pub sig_scheme: u32,        // +0x10
-    _reserved: [u8; 0xF0],     // +0x14..0x100
+    pub key_id: u32,       // +0x00
+    pub key_type: u32,     // +0x04
+    pub key_length: u32,   // +0x08
+    pub sig_length: u32,   // +0x0C
+    pub sig_scheme: u32,   // +0x10
+    _reserved: [u8; 0xF0], // +0x14..0x100
 }
 
 /// Code info area (0x200 bytes): image metadata
@@ -50,7 +50,7 @@ pub struct CodeInfo {
     pub image_length: u32,      // +0x114 (offset in struct)
     pub load_addr: u32,         // +0x118
     pub image_hash: [u8; 32],   // +0x11C — SHA256 of image body
-    _reserved: [u8; 0x1C4],    // +0x13C..0x300
+    _reserved: [u8; 0x1C4],     // +0x13C..0x300
 }
 
 /// Combined image header (key_area + code_info = 0x300 bytes).
@@ -66,7 +66,11 @@ impl ImageHeader {
         // All-zero header is fine — invalid fields will be caught by image::validate()
         let mut header: ImageHeader = unsafe { core::mem::zeroed() };
         let buf = &mut header as *mut ImageHeader as *mut u32;
-        sfc_read_data(flash_addr, buf, core::mem::size_of::<ImageHeader>() as u32 / 4);
+        sfc_read_data(
+            flash_addr,
+            buf,
+            core::mem::size_of::<ImageHeader>() as u32 / 4,
+        );
         header
     }
 }
@@ -92,8 +96,7 @@ pub fn sfc_init(_tcxo_hz: u32) -> bool {
         // 4. Configure bus for quad-SPI fast read
         // rd_mem_if_type = 4 (Quad I/O), rd_dummy = 4, rd_ins = 0xEB (Quad I/O Fast Read)
         // wr_mem_if_type = 2 (Dual I/O), wr_ins = 0x02 (Page Program)
-        let bus_cfg1: u32 =
-            (4 << 0)   // rd_mem_if_type: Quad I/O
+        let bus_cfg1: u32 = (4 << 0)   // rd_mem_if_type: Quad I/O
             | (4 << 3)  // rd_dummy_bytes: 4
             | (0xEB << 8)  // rd_ins: Quad I/O Fast Read
             | (2 << 16)    // wr_mem_if_type: Dual I/O
@@ -145,11 +148,10 @@ fn sfc_read_data(addr: u32, dst: *mut u32, words: u32) {
             SFC_CMD_ADDR.write_volatile(chunk_addr);
 
             let data_len = chunk_words * 4;
-            let cmd_cfg: u32 =
-                (1 << 0)    // start
+            let cmd_cfg: u32 = (1 << 0)    // start
                 | (1 << 2)   // addr_en
                 | (1 << 7)   // data_en
-                | (1 << 8);  // rw = read
+                | (1 << 8); // rw = read
 
             // data_len field is 6 bits (bits 9-14), encodes (data_len - 1)
             // chunk_words is 1..=16, so data_len is 4..=64, and data_len-1 fits in 0..=63
