@@ -736,7 +736,6 @@ dependencies = [
  "embedded-hal-nb",
  "embedded-io",
  "nb",
- "paste",
  "portable-atomic",
  "proptest",
  "riscv",
