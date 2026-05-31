@@ -126,6 +126,11 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     continue-on-error: true
+    # rustsec/audit-check posts results as a check-run/annotations; needs checks: write
+    # (default token is read-only here → "Resource not accessible by integration").
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
         with:
