@@ -13,6 +13,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 1. **方向**：连接性交付 0%（ws63-RF 只有闭源 blob + 未实现的 porting 桩），精力却集中在底层外设打磨。
 2. **构建完整性**：双 PAC 致示例链接失败、默认 target ISA 与硅片不符、发布链路坏。← 本轮（阶段 0）已修。
 3. **正确性地雷 / 过度设计**：中断模型错误、SPI/复位/超时缺陷、大量零消费者死代码、从未上板验证。
+   ← SPI 位段+超时、eFuse/LSADC 寄存器映射、可复现 SVD→PAC 流水线已修（阶段 2 部分，见下）。
 
 ---
 
@@ -22,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本集成已完成（blinky 可链接）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 计划 |
+| 2 | 死代码清理 + 正确性修复 | 🟡 部分完成（SPI/eFuse/LSADC 寄存器 + 可复现 SVD→PAC 流水线已修；死代码/中断/I2C 超时/复位等待做） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -76,6 +77,14 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 基调：**删无用、留哨兵**。
 
+> **✅ 本轮已完成（2026-05-31，寄存器审计后续）**——以下三类已落地（详见下方对应条目）：
+> 1. **SPI**：`ctra.trsm` 改 0（TX&RX）+ 所有忙等加有界超时 `SpiError::Timeout`。
+> 2. **eFuse / LSADC**：寄存器映射按 fbb_ws63 C SDK（`hal_efuse_v151`/`hal_adc_v154`）整体重写。
+> 3. **PAC/SVD 流水线**：`ws63-svd/regen.sh` 可复现生成 + 停止手补 lib.rs（幂等、build+clippy 门禁）。
+>
+> 注：以上均为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）。其余阶段 2 项目（死代码、
+> 中断重写、I2C 超时、reset、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
+
 **死代码清理（删）**
 - `clock.rs`：`ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者）。
 - `private.rs`：`DriverMode` / `Blocking` / `Async`（关联类型恒等，零引用）。
@@ -86,12 +95,19 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 **正确性修复**
 - **中断子系统**（严重）：按 riscv31 自定义 CSR（`LOCIPRI`/`LOCIEN`/`LOCIPD`）重写 `interrupt.rs`，或诚实标注为桩
   并撤出 `prelude`；删除"PLIC"措辞。
-- **SPI**（严重）：`spi.rs:76` `ctra trsm` 由 `3`(EEPROM-Read) 改 `0`(TX&RX)。
-- **I2C/SPI 超时**（高）：所有 `while !…` 加有界计数，超时返回既有的 `I2cError::Timeout`/`BusError`/`SpiError::Overflow`。
+- ✅ **SPI**（严重，已修 2026-05-31）：`ctra.trsm` 由 `3`(EEPROM-Read) 改 `0`(TX&RX)；SCKDV 分频去掉
+  多余的 `/2`/`-1`（曾产出 ~2× SCK）；全部忙等改有界 `wait_until` → `SpiError::Timeout`。
+- **I2C 超时**（高，剩余）：`i2c.rs` 仍有多处无界 `while !…{}`（行 59/80/130/153…）；加有界计数并接入既有
+  `I2cError::Timeout`。（SPI 侧已完成，见上。）
 - **system reset**（高）：`software_reset` 用 `GLB_CTL_M(0x40002110)`、`reset_reason` 解码 `SYS_RST_RECORD(0x400000A0)`，
   未实现前用 `todo!()` 而非返回似是而非的假值。
 - **GPIO pull**（中）：`InputConfig.pull` 经 IO_CONFIG 落地，或移除字段；中断加 trigger 类型。
-- **efuse/lsadc**（高）：按 `hal_efuse_v151.c` 区地址方案重写 efuse 读路径；按 SDK 解决 lsadc ctrl_7 位段歧义。
+- ✅ **efuse/lsadc**（高，已修 2026-05-31）：通过改 SVD + 重生成 PAC + 重写 HAL 落地——
+  - eFuse：控制块 base+0x30、16 位模式魔数（`0x5A5A` 读 / `0xA5A5` 写）、0x800 数据窗口（128 字），
+    `efuse.rs` 改为字节读写（窗口索引 `byte/2`、奇偶字节抽取），对齐 `hal_efuse_v151.c`。
+  - LSADC：重写为连续 `adc_regs_t`——使能/复位 `CTRL_11`（`da_lsadc_en[15:0]`/`rstn`@16）、扫描 `CTRL_0`、
+    启停 `CTRL_8`、FIFO 读 `CTRL_9`、空判定 `CTRL_1.rne`、`CFG_*` @ 0xDC..0xEC，对齐 `hal_adc_v154`。
+  - 偏移已在生成的 PAC 中逐一核验；纯解析逻辑有 proptest。**未上板**。
 - **safety.rs**：删恒真断言并去掉"formal verification"措辞。
 - **host 单测**：把 `ws63-hal` 的 RISC-V 内联汇编（如 `system.rs` 的 `ebreak`）用 `#[cfg(target_arch=…)]`
   门控，使库能为 host 编译，从而真正运行单测（现状：库含 riscv asm，host 根本编不过，旧 CI 用 `|| echo` 掩盖）。
@@ -99,8 +115,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   而非误用 `0x40000024`。否则保持实验性、不投入。
 
 **PAC/SVD 流水线**
-- 提交可复现的 svd2rust 生成脚本（pin 版本 + form/fmt）；CI 增"从 SVD 重生成并 diff 校验"；停止手补 lib.rs。
-- 补齐 KM `*_FLUSH_BUSY` 等缺失寄存器；逐外设对照 fbb_ws63 `*_reg.h` 核覆盖。
+- ✅ **可复现生成脚本（已完成 2026-05-31）**：`ws63-svd/regen.sh` + `postprocess.py`——pin `svd2rust@0.37.1`/`form@0.13.0`，
+  补齐 svd2rust→edition 2024 的三处确定性落差（删 5 个 dim 重复 TIMER 访问器、`#[no_mangle]`→`#[unsafe(no_mangle)]`、
+  `cargo fix` 套 `unsafe_op_in_unsafe_fn`），**幂等**（同 SVD→字节一致 lib.rs）、build+clippy 内建门禁。
+  **停止手补 lib.rs**（主仓 PreToolUse hook 已拦截手改）。再生成同时恢复了手补漏掉的 KM keyslot 字段。
+- 剩余：CI 增"从 SVD 重生成并 diff 校验"步骤（脚本已就绪，接 CI 即可）；逐外设对照 fbb_ws63 `*_reg.h` 核覆盖
+  （本轮已核 SPI/eFuse/LSADC，其余待逐个过）。
 
 ---
 
@@ -151,7 +171,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |--------|----------|------|
 | 严重 | 双 PAC 致示例链接失败（DEVICE_PERIPHERALS 重复） | ✅ 阶段 0 已修 |
 | 严重 | 中断子系统建在不存在的 PLIC 模型上 | 阶段 2 |
-| 严重 | SPI 传输模式位写成 EEPROM-Read | 阶段 2 |
+| 严重 | SPI 传输模式位写成 EEPROM-Read | ✅ 阶段 2 已修（2026-05-31） |
 | 严重 | flashboot 无真实性验签（≠ secure boot） | 实验化（阶段 0），整改阶段 2 |
 | 严重 | flashboot 镜像头布局对不上真实镜像 | 实验化（阶段 0），整改阶段 2 |
 | 严重 | 连接性交付 0%（chip 价值未触及） | 阶段 3-5 |
@@ -159,9 +179,11 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 高 | crates.io 发布链路坏 + 失败被静默吞 | ✅ 阶段 0 已修（结构） |
 | 高 | release 不挂固件产物 | ✅ 阶段 0 已修（blinky 链接后生效） |
 | 高 | porting 层 + HCC IPC 完全未实现 | 阶段 4 |
-| 高 | I2C/SPI 无超时死循环 | 阶段 2 |
+| 高 | I2C/SPI 无超时死循环 | 🟡 SPI 已修（有界超时）；I2C 待做（阶段 2） |
+| 高 | eFuse 读路径/控制偏移错误 | ✅ 阶段 2 已修（2026-05-31） |
+| 高 | LSADC 寄存器映射整块错位（ctrl_7/fifo 等） | ✅ 阶段 2 已修（2026-05-31） |
 | 高 | 从未上板验证 / 测试恒真 | 阶段 1 |
 | 中 | 死代码（RAII 时钟守卫 / DMA 安全层 / async marker） | 阶段 2 |
 | 中 | safety.rs 恒真断言剧场 | 阶段 2 |
-| 中 | SVD→PAC 生成流水线不可复现 | 阶段 2 |
+| 中 | SVD→PAC 生成流水线不可复现 | ✅ 阶段 2 已修（regen.sh 幂等可复现，2026-05-31） |
 | — | 示例无法链接（链接脚本不传播） | ✅ 阶段 1 已修（blinky 可链接） |
