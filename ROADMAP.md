@@ -22,7 +22,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 阶段 | 主题 | 状态 |
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本集成已完成（blinky 可链接）；上板冒烟待硬件 |
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
 | 2 | 死代码清理 + 正确性修复 | 🟡 部分完成（SPI/eFuse/LSADC 寄存器 + 可复现 SVD→PAC 流水线已修；死代码/中断/I2C 超时/复位等待做） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
@@ -65,10 +65,16 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    包装脚本（按 memory→layout→device→symbols 顺序 `INCLUDE`），blinky 的 `build.rs` 以 `-Tws63-link.x` 引入。
    **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
 2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 ws63-rt 评审。
-3. **统一 trap/栈布局**（剩余）：把 `.stacks`（NOLOAD）与 `memory.x` 里的栈顶 fallback 合并为单一真值；
+3. ✅ **软件在环（QEMU）bring-up（已完成 2026-05-31）**：硬件不便时的替代验证信号——
+   [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
+   in-tree `hw/riscv/ws63.c`（rv32imfc hart、按 `memory.x` 的内存映射、自定义 HiSilicon UART、
+   自定义 CSR RAZ/WI、其余外设 MMIO 吸收）。**已实测**：`blinky` 启动并跑到 GPIO 翻转循环（0 非法指令陷阱）、
+   新增的 `uart_hello` 在 QEMU 串口打印。这验证了内存布局 / startup（PMP/FPU/cache/数据重定位/栈）/ 链接脚本
+   在一个 WS63 地址空间模型上能正确运行——但**不等于真机验证**（QEMU 未建模时钟/中断/RF，时序也不保真）。
+4. **统一 trap/栈布局**（剩余）：把 `.stacks`（NOLOAD）与 `memory.x` 里的栈顶 fallback 合并为单一真值；
    在 `layout.ld` 显式放置 `.trap`/`.trap.*` 段（`KEEP` + `ALIGN(64)`）；`startup.S` 设 Vectored 模式
    或改 Direct + 软件分发（与中断重写一并，见阶段 2）。
-4. **上板冒烟**（剩余，需硬件）：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
+5. **上板冒烟**（剩余，需硬件）：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
    用 `readelf` 核实 ELF 内存布局已确实采用 WS63 的 layout（非 lld 默认）。
 
 ---
