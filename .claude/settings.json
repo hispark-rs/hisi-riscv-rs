@@ -1,0 +1,29 @@
+{
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in */ws63-pac/src/lib.rs) echo 'BLOCKED: lib.rs is svd2rust-generated — edit ws63-svd/WS63.svd and regenerate (ROADMAP phase 2), do not hand-edit.' >&2; exit 2 ;; esac"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); [ \"${f##*.}\" = rs ] && rustfmt --edition 2024 \"$f\" 2>/dev/null; true"
+          }
+        ]
+      }
+    ]
+  }
+}

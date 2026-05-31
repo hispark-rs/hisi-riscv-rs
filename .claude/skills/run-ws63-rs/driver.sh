@@ -3,7 +3,9 @@
 # Usage: bash driver.sh [check|doc|clippy|fmt|all]
 
 set -euo pipefail
-TARGET="${TARGET:-riscv32imafc-unknown-none-elf}"
+# Default target comes from .cargo/config.toml (riscv32imfc-unknown-none-elf, the
+# no-atomic hard-float target baked into the `ws63` toolchain). Override via TARGET=.
+TARGET="${TARGET:-riscv32imfc-unknown-none-elf}"
 PASS=0
 FAIL=0
 
@@ -35,9 +37,10 @@ run_check() {
     banner "cargo doc"
     check_step "ws63-hal docs"  "cargo doc -p ws63-hal --target $TARGET --no-deps 2>/dev/null"
 
-    banner "size check (blinky release check)"
-    # Build-check with release profile (actual linking may fail, check-only)
-    check_step "blinky release"  "cargo check -p blinky --target $TARGET --release"
+    banner "blinky release build (links via ws63-rt linker scripts)"
+    # blinky links now (dual-PAC fixed + ws63-rt exports its linker scripts), so do a
+    # real release build, not just check.
+    check_step "blinky build"  "cargo build -p blinky --target $TARGET --release"
 }
 
 # ── Clippy ─────────────────────────────────────────────────────────

@@ -3,93 +3,82 @@ name: run-ws63-rs
 description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test ws63-hal, ws63-pac, or any crate in this workspace.
 ---
 
-Paths below are relative to the repo root, which is a Cargo workspace with
-`ws63-pac`, `ws63-hal`, `ws63-rt`, and `ws63-examples/*`.
+Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
+`ws63-hal`, `ws63-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
 
-## Prerequisites
+## Toolchain (required)
+
+ws63-rs builds with the custom **`ws63`** toolchain: a stable rustc with the WS63
+target `riscv32imfc-unknown-none-elf` (RV32IMFC, hardware single-float `ilp32f`, no
+atomics) baked in as a **builtin** — so builds need **no `-Z build-std`**. The default
+target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "ws63"`.
+
+Install + link it first (it is not a distributable rustup channel):
 
 ```bash
-rustup target add riscv32imafc-unknown-none-elf
+curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+rustup toolchain link ws63 "$PWD/stage2"
 ```
 
-The `cargo fmt` check also needs `rustfmt`:
-
-```bash
-rustup component add rustfmt clippy
-```
+The `ws63` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.
 
 ## Build (agent path)
 
-Run the driver script — it checks compilation, docs, formatting, and
-clippy in sequence:
-
 ```bash
-bash .claude/skills/run-ws63-rs/driver.sh all
+bash .claude/skills/run-ws63-rs/driver.sh all      # check + fmt + clippy + blinky build
+bash .claude/skills/run-ws63-rs/driver.sh check    # cargo check + doc + blinky release build
+bash .claude/skills/run-ws63-rs/driver.sh fmt      # cargo fmt --check
+bash .claude/skills/run-ws63-rs/driver.sh clippy   # cargo clippy
 ```
 
-Individual steps:
+All steps target `riscv32imfc-unknown-none-elf` (the config default). `blinky` is built
+for real in release (it links — the dual-PAC bug is fixed and ws63-rt exports its linker
+scripts to downstream bins).
+
+## Quick commands
 
 ```bash
-bash .claude/skills/run-ws63-rs/driver.sh check   # cargo check + doc + size check
-bash .claude/skills/run-ws63-rs/driver.sh fmt     # cargo fmt --check
-bash .claude/skills/run-ws63-rs/driver.sh clippy  # cargo clippy
+cargo build                      # default-members: libs + blinky (uses config default target)
+cargo check --workspace          # everything incl. flashboot
+cargo clippy --workspace --exclude ws63-flashboot -- -D warnings   # flashboot is experimental
+cargo fmt --all -- --check
+cargo build -p ws63-flashboot --release   # experimental flashboot (excluded from default build)
 ```
 
-All steps target `riscv32imafc-unknown-none-elf`. The `check` step also
-performs release-profile size checks on the blinky example (compile-only,
-no linking — linking requires matching LLVM bitcode versions).
-
-## Quick single-crate check
+## Documentation
 
 ```bash
-cargo check -p ws63-hal --target riscv32imafc-unknown-none-elf
-cargo check -p ws63-pac --target riscv32imafc-unknown-none-elf
-cargo check -p ws63-rt --target riscv32imafc-unknown-none-elf
-cargo check -p blinky --target riscv32imafc-unknown-none-elf
-```
-
-## Build documentation
-
-```bash
-cargo doc -p ws63-hal --target riscv32imafc-unknown-none-elf --no-deps
-# Output: target/riscv32imafc-unknown-none-elf/doc/ws63_hal/index.html
+cargo doc -p ws63-hal -p ws63-pac -p ws63-rt --no-deps
+# Output: target/riscv32imfc-unknown-none-elf/doc/ws63_hal/index.html
 ```
 
 ## Test
 
-In-binary unit tests (bare-metal `#[cfg(test)]` blocks) cannot run on
-Linux — they require a RISC-V target with the `test` crate, which is
-only available on bare-metal or QEMU targets. Compile-check only:
-
-```bash
-cargo check --tests -p ws63-hal --target riscv32imafc-unknown-none-elf
-# Note: will show "can't find crate for `test`" — expected for bare-metal
-```
-
-For logic-only tests (time.rs Duration/Rate arithmetic), those are
-verified at compile time through `cargo check` since they live inside
-`#[cfg(test)]` modules. They cannot be executed on the host.
+In-binary unit tests (`#[cfg(test)]`) cannot run on the host: ws63-hal contains RISC-V
+inline asm (e.g. `asm!("ebreak")`), so the crate does not compile for an x86 host. They
+are compile-checked only as part of `cargo check`. Running real host unit tests requires
+cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP phase 1.
 
 ## Gotchas
 
-- **`cargo build --release` may fail with LLVM bitcode errors** on the
-  blinky example — this is a rustc/LLVM version mismatch with the
-  ws63-pac precompiled crate. Use `cargo check --release` instead for
-  size verification.
-- **`cargo test` cannot run on the host** — the RISC-V bare-metal
-  target has no `test` crate. Tests are compile-check only.
-- **The workspace uses git submodules** (`ws63-pac`, `ws63-hal`,
-  `ws63-rt`, `ws63-examples`). If you get missing-package errors, run
-  `git submodule update --init --recursive`.
-- **Changing ws63-hal submodule files** requires committing inside the
-  submodule first, then updating the parent repo's submodule pointer.
+- **Needs the `ws63` toolchain** (above). A stock rustup toolchain does not have the
+  `riscv32imfc` target and will fail with "target may not be installed".
+- **Single PAC instance**: the root `Cargo.toml` `[patch.crates-io]` redirects the
+  `ws63-pac` registry dep to the local submodule. Don't add a second `ws63-pac` source.
+- **`ws63-pac/src/lib.rs` is svd2rust-generated** — do not hand-edit it (a PreToolUse
+  hook blocks edits). Change `ws63-svd/WS63.svd` and regenerate (ROADMAP phase 2).
+- **Submodule changes**: commit inside the submodule first, push, then bump the parent
+  pointer. Use the `submodule-commit` skill.
+- **`git submodule update --init --recursive`** if you get missing-manifest errors.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| `failed to load manifest for workspace member` | `git submodule update --init` |
-| `can't find crate for 'ws63_pac'` | The PAC is a git dependency; `cargo update` |
-| `error: could not compile 'blinky'` (bitcode) | Use `cargo check` instead of `cargo build` |
-| `clippy FAILED` | Run `cargo clippy -p ws63-hal --target riscv32imafc-unknown-none-elf` to see warnings |
-| `formatting FAILED` | Run `cargo fmt --all` to auto-fix |
+| `target may not be installed` / `riscv32imfc` unknown | Install + link the `ws63` toolchain (see Toolchain) |
+| `failed to load manifest for workspace member` | `git submodule update --init --recursive` |
+| `error[E0463]: can't find crate for proc_macro2` (fresh CI) | Stale cross-toolchain `target/` cache — don't cache `target/` across toolchains |
+| `clippy FAILED` | `cargo clippy --workspace --exclude ws63-flashboot -- -D warnings` to see warnings |
+| `formatting FAILED` | `cargo fmt --all` to auto-fix (a PostToolUse hook also auto-formats `.rs` on edit) |
+| blinky link error `__*_stack_top__` undefined | ensure ws63-rt is up to date (it exports `ws63-link.x` for downstream bins) |
