@@ -525,6 +525,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "uart_hello"
+version = "0.1.0"
+dependencies = [
+ "riscv",
+ "ws63-hal",
+ "ws63-pac",
+ "ws63-rt",
+]
+
+[[package]]
 name = "unarray"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

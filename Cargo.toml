@@ -5,6 +5,7 @@ members = [
     "ws63-hal",
     "ws63-rt",
     "ws63-examples/blinky",
+    "ws63-examples/uart_hello",
     "ws63-flashboot",
 ]
 # default-members = the libraries + the blinky example (which links via ws63-rt's
@@ -18,6 +19,7 @@ default-members = [
     "ws63-hal",
     "ws63-rt",
     "ws63-examples/blinky",
+    "ws63-examples/uart_hello",
 ]
 
 [workspace.package]
