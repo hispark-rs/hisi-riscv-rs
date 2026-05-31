@@ -10,9 +10,11 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
-# Toolchain + target are pinned in rust-toolchain.toml (stable +
-# riscv32imc-unknown-none-elf). `rustup show` installs them. The default build
-# target (riscv32imc, no atomics) comes from .cargo/config.toml.
+# ws63-rs builds with the custom `ws63` toolchain (stable rustc with the WS63
+# riscv32imfc hard-float target baked in as a builtin; see rust-toolchain.toml).
+# Each job installs+links it from the ws63-rust-toolchain release via
+# .github/scripts/install-toolchain.sh. Default target (riscv32imfc) is in
+# .cargo/config.toml; no -Z build-std needed (toolchain ships precompiled core).
 
 jobs:
   # ── Per-crate check ─────────────────────────────────────────────
@@ -26,8 +28,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v4
         with:
           path: |
@@ -47,8 +49,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v4
         with:
           path: |
@@ -74,8 +76,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v4
         with:
           path: |
@@ -97,8 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - name: Check formatting
         run: cargo fmt --all -- --check
 

@@ -50,11 +50,15 @@ ws63-guide     (中文硬件手册，Sphinx)
 
 ## 构建与目标（target）
 
-- **默认 target**：builtin **`riscv32imc-unknown-none-elf`**（stable）。WS63 核**无原子（A）扩展**，
-  此 target 不发 `lr/sc/amo`，`portable-atomic` 用 critical-section polyfill 处理 RMW。
-  - 这是 2026-05 修正的关键：原默认 `riscv32imafc` 会发原子指令，在硅片上触发非法指令陷阱。
-  - 软浮点（ilp32）。链接 ilp32f 的 vendor blob 时（ROADMAP 阶段 3）切自定义硬浮点 `rv32imfc` target
-    （`ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json`，需 nightly + `-Z build-std`）。
+- **默认 target / 工具链**：**`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 `ilp32f`，无原子），
+  由自定义 **`ws63`** 工具链提供（stable rustc 把该 target 烤成 builtin，故**无需 `-Z build-std`**，
+  工具链自带预编译 core/alloc）。`rust-toolchain.toml` pin `channel = "ws63"`；安装见
+  <https://github.com/sanchuanhehe/ws63-rust-toolchain>（`rustup toolchain link ws63 …`）。
+  - WS63 核**无原子（A）扩展**：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
+    RMW 走 `portable-atomic` 的 critical-section polyfill，**不发 `lr/sc/amo`**。原默认 `riscv32imafc`
+    会发原子指令、在硅片上触发非法指令陷阱，已弃用。
+  - 历史：2026-05-31 阶段 0 曾先用 builtin `riscv32imc`（软浮点、stable、免 build-std）做过渡；
+    随后切到 `ws63` 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为阶段 3 链接做准备）。
 - **单一 PAC 实例**：根 `Cargo.toml` 用 `[patch.crates-io]` 把 `ws63-pac` 的 registry 依赖重定向到本地 submodule，
   保证全仓库只链接一个 PAC（否则 `DEVICE_PERIPHERALS` 单例静态重复、类型不兼容）。
 - **default-members = 库 + blinky**（`ws63-pac`/`ws63-hal`/`ws63-rt`/`ws63-examples/blinky`）。

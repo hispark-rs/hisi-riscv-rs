@@ -35,12 +35,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 - **消除双 PAC**：`ws63-hal`/`ws63-flashboot` 改 registry 版本依赖，根 `Cargo.toml` 加
   `[patch.crates-io] ws63-pac = { path = "ws63-pac" }`；`cargo tree` 单一 `ws63-pac` 实例；
   `ws63-pac` 版本 bump `0.1.0 → 0.1.1`（tag 后加了 KM 寄存器，SemVer 要求）。
-- **ISA 修正**：默认 target 改为 builtin 无原子 `riscv32imc-unknown-none-elf`（stable，无需 build-std/nightly）；
-  `portable-atomic` 用 `critical-section` polyfill，`ws63-rt` 的 `riscv` 开 `critical-section-single-hart`
-  提供单 hart CS 实现。**实测编译产物零原子指令（lr/sc/amo）**，不再会在无 A 扩展的核上触发非法指令陷阱。
-  - 权衡：`riscv32imc` 是软浮点（ilp32）。HAL 不用 FP，当前无影响。链接 ilp32f 的 vendor blob 时（阶段 3）
-    再切到自定义硬浮点 `rv32imfc` target（`ws63-rt/target-specs/riscv32imfc-unknown-none-elf.json` 已就绪，
-    需 nightly + `-Z build-std`）。
+- **ISA 修正**：先用 builtin 无原子 `riscv32imc`（软浮点、stable）做过渡，随后**切到自定义 `ws63` 工具链**——
+  把硬浮点 `riscv32imfc-unknown-none-elf`（`ilp32f`，无原子）烤进 stable rustc 作 builtin，仓库默认即用之、
+  **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`ws63-rt` 的 `riscv` 开
+  `critical-section-single-hart`。**实测产物零原子指令（lr/sc/amo）、single-float ABI**，不再会在无 A 核上触发陷阱。
+  - 工具链仓库：<https://github.com/sanchuanhehe/ws63-rust-toolchain>（release v1.96.0 提供预编译 sysroot tarball）。
+    硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。
 - **flashboot 标记实验性**：banner 改为"非安全启动"警告、`publish = false`、移出 `default-members`、
   删除未使用的 `ws63-pac` 依赖、新增 `README.md`。生产启动复用 fbb_ws63 原厂 flashboot。
 - **CI/release 修复**：去除失败屏蔽（`|| true` / `continue-on-error` / `| head` 吞掉退出码）；
@@ -107,7 +107,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 ## 阶段 3 — 链接/blob 尖刺
 
 先消除最大未知：写最小 crate 链接 `ws63-RF/lib/libwifi_rom_data.a`（仅 3KB）并解析其外部符号，
-**证明工具链/链接路径走得通**。此时切到自定义 ilp32f `rv32imfc` target（与 blob ABI 一致）。
+**证明工具链/链接路径走得通**。ABI 已就绪：仓库已用 `ws63` 硬浮点工具链（`riscv32imfc`/`ilp32f`），与 blob ABI 一致。
 
 ---
 

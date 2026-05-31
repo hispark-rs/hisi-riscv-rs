@@ -20,24 +20,25 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
 
       # Build the default-members (libraries + blinky). blinky links and is packaged
       # below; the experimental flashboot binary is not built/attached here.
       - name: Build default members (release)
         run: cargo build --release
 
-      # Guarded firmware packaging: only runs once a flashable ELF actually exists.
-      # rust-objcopy ships with the llvm-tools component (rust-toolchain.toml).
-      - name: Package firmware (if present)
+      # Package the blinky firmware. rust-objcopy lives in the ws63 toolchain's
+      # rustlib bin (bundled from the CI LLVM), not on PATH — resolve via the sysroot.
+      - name: Package firmware
         run: |
           set -euo pipefail
-          OUT=target/riscv32imc-unknown-none-elf/release
+          OUT=target/riscv32imfc-unknown-none-elf/release
+          OBJCOPY="$(rustc +ws63 --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
           shopt -s nullglob
-          for elf in "$OUT"/blinky "$OUT"/flashboot; do
+          for elf in "$OUT"/blinky; do
             [ -f "$elf" ] || continue
-            rust-objcopy -O binary "$elf" "$elf.bin"
+            "$OBJCOPY" -O binary "$elf" "$elf.bin"
             cp "$elf" "$elf.elf"
             echo "packaged $(basename "$elf").bin / .elf"
           done
@@ -58,8 +59,8 @@ jobs:
           # Globs match the actual artifact names (.elf/.bin). They produce no files
           # until firmware packaging above runs; gh-release just skips empty matches.
           files: |
-            target/riscv32imc-unknown-none-elf/release/blinky.bin
-            target/riscv32imc-unknown-none-elf/release/blinky.elf
+            target/riscv32imfc-unknown-none-elf/release/blinky.bin
+            target/riscv32imfc-unknown-none-elf/release/blinky.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -82,8 +83,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - name: Publish ws63-pac
         run: cargo publish -p ws63-pac --locked
       - name: Publish ws63-rt

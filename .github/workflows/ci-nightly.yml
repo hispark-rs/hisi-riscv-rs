@@ -1,4 +1,4 @@
-name: CI (Nightly toolchain)
+name: Scheduled build + size
 
 on:
   schedule:
@@ -9,47 +9,21 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-# This workflow is a FORWARD-COMPATIBILITY signal: it builds the project on the
-# Rust *nightly* toolchain (the project itself ships on stable per rust-toolchain.toml)
-# to catch upcoming breakage early. It is advisory (continue-on-error) and does not
-# gate merges.
+# Daily scheduled build of the firmware with the pinned `ws63` toolchain, plus a
+# blinky size report. (The old "nightly upstream toolchain" forward-compat job was
+# dropped: ws63-rs pins the custom `ws63` toolchain whose riscv32imfc target is not a
+# builtin in upstream nightly, so a plain `+nightly` build is not meaningful here.)
 
 jobs:
-  nightly-build:
-    name: Nightly-toolchain check (advisory)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Install Rust nightly + riscv32imc target
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          targets: riscv32imc-unknown-none-elf
-          components: clippy
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/
-            ~/.cargo/git/
-            target/
-          key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-nightly-
-      - name: Check workspace (nightly)
-        run: cargo +nightly check --workspace --target riscv32imc-unknown-none-elf
-      - name: Clippy (nightly)
-        run: cargo +nightly clippy --workspace --exclude ws63-flashboot --target riscv32imc-unknown-none-elf -- -D warnings
-
   size-report:
-    name: Library Size Report
+    name: Build + firmware size
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install toolchain (rust-toolchain.toml)
-        run: rustup show
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v4
         with:
           path: |
@@ -58,11 +32,11 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-size-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-size-
-      # Build the default-members (libraries + blinky) and report the firmware size.
-      - name: Build default members (release)
+      - name: Build default members (release, links blinky)
         run: cargo build --release
       - name: Report blinky firmware size
         run: |
-          ELF=target/riscv32imc-unknown-none-elf/release/blinky
+          ELF=target/riscv32imfc-unknown-none-elf/release/blinky
           ls -la "$ELF"
-          size "$ELF" || rust-size "$ELF" || true
+          SIZE="$(rustc +ws63 --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-size"
+          "$SIZE" "$ELF" || true
