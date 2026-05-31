@@ -128,6 +128,11 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # rust-toolchain.toml pins ws63, so cargo (used by the audit action) needs it installed.
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       - name: Run cargo audit
         uses: rustsec/audit-check@v2.0.0
         with:
