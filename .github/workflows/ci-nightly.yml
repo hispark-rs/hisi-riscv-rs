@@ -26,12 +26,13 @@ jobs:
         run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v4
         with:
+          # Do not cache target/ (built by the custom ws63 rustc; stale cross-toolchain
+          # artifacts cause E0463). Registry/git caches are toolchain-agnostic.
           path: |
             ~/.cargo/registry/
             ~/.cargo/git/
-            target/
-          key: ${{ runner.os }}-cargo-size-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-size-
+          key: ${{ runner.os }}-cargo-ws63-size-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-ws63-size-
       - name: Build default members (release, links blinky)
         run: cargo build --release
       - name: Report blinky firmware size
