@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + 可复现 SVD→PAC 已修；剩 DMA 请求 ID/接线、flashboot） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + 可复现 SVD→PAC 已修；剩 flashboot） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -104,6 +104,9 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 > 8. **GPIO pull**（2026-06-01）：`init_input` 经 IO_CONFIG pad 寄存器落地 `InputConfig.pull`；新增 `InterruptTrigger`。
 > 9. **host 单测真正跑起来**（2026-06-01）：cfg 门控 `ws63-hal` 与 `ws63-pac` 的 riscv 耦合，使库能为 x86 编译；
 >    `cargo test --target x86_64` 跑通 **77 个单测**，CI 新增 `host-test` job。
+> 10. **DMA 请求 ID + 接线**（2026-06-01）：`DmaPeripheral` 请求 ID 由杜撰的 0..11 改为 `dma_porting.h` 的
+>     `HAL_DMA_HANDSHAKING_*`（UART_L/H0/H1=UART0/1/2、SPI_MS0/1=SPI0/1、I2S），经 `request_id()` +
+>     `DmaChannelConfig::mem_to_peripheral`/`peripheral_to_mem` 接入 `configure_channel` 的 flow-control/握手字段。
 >
 > 注：1–3、5、7、8 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁；GPIO pull 是上拉电阻、QEMU 数字引脚网不建模）；
 > 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机；9 是 host 逻辑单测（非硬件）。其余阶段 2 项目（DMA 请求 ID/接线、flashboot）仍待做。
