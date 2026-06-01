@@ -100,3 +100,24 @@ pub extern "C" fn oal_get_netbuf_pool_len() -> i32 {
     let total = pkt_ram_end().saturating_sub(pkt_ram_begin());
     (total / buf) as i32
 }
+
+// ── General OAL allocation (driver structures, not packet RAM) ───────────────
+// The C SDK `oal_mem_alloc(pool_id, len, lock)` / `oal_mem_free(ptr, lock)`
+// macros normally expand to `*_etc()` (file/line traced); the blob also
+// references the bare names (verified by nm). Both back onto the general heap.
+
+/// Allocate `len` bytes from the general heap (pool id / lock are advisory).
+#[unsafe(no_mangle)]
+pub extern "C" fn oal_mem_alloc(
+    _pool_id: core::ffi::c_int,
+    len: core::ffi::c_uint,
+    _lock: core::ffi::c_uchar,
+) -> *mut c_void {
+    crate::alloc::osal_kmalloc(len as usize)
+}
+
+/// Free a block from [`oal_mem_alloc`].
+#[unsafe(no_mangle)]
+pub extern "C" fn oal_mem_free(ptr: *mut c_void, _lock: core::ffi::c_uchar) {
+    crate::alloc::osal_kfree(ptr);
+}

@@ -187,35 +187,17 @@ pub extern "C" fn osal_adapt_workqueue_init(_work: *mut c_void, _handler: *mut c
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_workqueue_destroy(_work: *mut c_void) {}
 
-// ── Wait objects (osal_wait { void *wait; } backed by a Semaphore) ──────────
+// ── Wait objects (forward to the canonical osal_wait impl) ──────────────────
 
-/// Mirrors C `osal_wait { void *wait; }`.
-#[repr(C)]
-pub struct OsalWait {
-    wait: *mut c_void,
-}
+use crate::osal_wait::OsalWait;
 
-/// Wake a task waiting on the object.
+/// Wake a task waiting on the object (adapt alias).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_wait_wakeup(wait: *mut OsalWait) {
-    if wait.is_null() {
-        return;
-    }
-    let h = unsafe { (*wait).wait } as *const crate::sched::Semaphore;
-    if !h.is_null() {
-        // SAFETY: `.wait` holds a Semaphore created by the wait-init path.
-        unsafe { (*h).up() };
-    }
+    crate::osal_wait::osal_wait_wakeup(wait);
 }
-/// Destroy a wait object.
+/// Destroy a wait object (adapt alias).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_wait_destroy(wait: *mut OsalWait) {
-    if wait.is_null() {
-        return;
-    }
-    let h = unsafe { (*wait).wait };
-    if !h.is_null() {
-        crate::alloc::osal_kfree(h);
-        unsafe { (*wait).wait = core::ptr::null_mut() };
-    }
+    crate::osal_wait::osal_wait_destroy(wait);
 }

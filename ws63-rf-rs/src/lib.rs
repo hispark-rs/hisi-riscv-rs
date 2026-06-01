@@ -54,6 +54,7 @@ pub mod alloc;
 pub mod error;
 pub mod globals;
 pub mod ipc;
+pub mod libc;
 pub mod log;
 pub mod oal;
 pub mod osal;
@@ -61,6 +62,7 @@ pub mod osal_adapt;
 pub mod osal_ext;
 pub mod osal_queue;
 pub mod osal_sync;
+pub mod osal_wait;
 pub mod uapi;
 
 // The task scheduler / runtime is an INTERNAL implementation detail: the vendor

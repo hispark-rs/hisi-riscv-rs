@@ -68,6 +68,36 @@ pub extern "C" fn log_event_wifi_print4(fmt: *const c_char) -> c_int {
     0
 }
 
+// Generic-module diagnostic prints (BT / GNSS / platform …). Unlike the wifi
+// variants, the first argument is a packed `log_head` word, not a format
+// string, so there is nothing safe to render — they swallow the event and
+// return 0 (ABI-safe: extra args sit in a1.. and the caller cleans up).
+/// Generic log event, 0 format args.
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_print0() -> c_int {
+    0
+}
+/// Generic log event, 1 format arg.
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_print1() -> c_int {
+    0
+}
+/// Generic log event, 2 format args.
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_print2() -> c_int {
+    0
+}
+/// Generic log event, 3 format args.
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_print3() -> c_int {
+    0
+}
+/// Generic log event, 4 format args.
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_print4() -> c_int {
+    0
+}
+
 /// Debug printf (OSAL). Emits the raw format string to the log sink.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_printk(fmt: *const c_char) -> c_int {

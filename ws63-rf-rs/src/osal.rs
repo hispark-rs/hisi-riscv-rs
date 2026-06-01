@@ -8,7 +8,7 @@
 //!
 //! `osal_kmalloc`/`osal_kfree` live in [`crate::alloc`].
 
-use crate::{OSAL_NOK, OSAL_OK};
+use crate::OSAL_OK;
 use core::ffi::{c_char, c_int, c_ulong, c_void};
 
 /// Approximate CPU cycles per microsecond for [`osal_udelay`]. The WS63 app
@@ -98,6 +98,12 @@ pub extern "C" fn osal_irq_enable(_irq: u32) -> c_int {
 pub extern "C" fn osal_irq_disable(_irq: u32) -> c_int {
     OSAL_OK
 }
+/// Set an IRQ's priority. STUB: the WS63 local-interrupt priority model
+/// (`LOCIPRI`) is owned by the runtime/HAL, not the blob — accepted as a no-op.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_irq_set_priority(_irq: core::ffi::c_uint, _priority: u16) -> c_int {
+    OSAL_OK
+}
 
 // ── Threads (backed by the real scheduler in `crate::sched`) ────────────────
 
@@ -163,35 +169,5 @@ pub extern "C" fn osal_get_current_tid() -> c_int {
     crate::sched::current_id() as c_int
 }
 
-// ── Wait objects (scheduler-backed counting semaphore, initial count 0) ─────
-
-/// Create a wait object (a count-0 semaphore on the heap). NULL on OOM.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_wait_init() -> *mut c_void {
-    let p = crate::alloc::osal_kmalloc(core::mem::size_of::<crate::sched::Semaphore>())
-        as *mut crate::sched::Semaphore;
-    if !p.is_null() {
-        // SAFETY: freshly allocated, size_of::<Semaphore>() bytes, 8-aligned.
-        unsafe { p.write(crate::sched::Semaphore::new(0)) };
-    }
-    p as *mut c_void
-}
-/// Destroy a wait object.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_wait_destroy(wait: *mut c_void) -> c_int {
-    if wait.is_null() {
-        return OSAL_NOK;
-    }
-    crate::alloc::osal_kfree(wait);
-    OSAL_OK
-}
-/// Wake a task waiting on the object.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_wait_wakeup(wait: *mut c_void) -> c_int {
-    if wait.is_null() {
-        return OSAL_NOK;
-    }
-    // SAFETY: `wait` came from osal_wait_init.
-    unsafe { (*(wait as *mut crate::sched::Semaphore)).up() };
-    OSAL_OK
-}
+// Wait objects (`osal_wait { void *wait; }`, condition-variable semantics) live
+// in [`crate::osal_wait`] — the C SDK signatures take the struct pointer.
