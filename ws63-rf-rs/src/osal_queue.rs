@@ -100,20 +100,23 @@ pub extern "C" fn osal_msg_queue_write_copy(
     }
 }
 
-/// Dequeue one item (blocks until available); copies up to `*buffer_size`.
+/// Dequeue one item; copies up to `*buffer_size`. Blocks up to `timeout` ms
+/// (`u32::MAX` == wait-forever) for an item; returns `OSAL_NOK` on timeout.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_msg_queue_read_copy(
     queue_id: c_ulong,
     buffer_addr: *mut c_void,
     buffer_size: *mut c_uint,
-    _timeout: c_uint,
+    timeout: c_uint,
 ) -> c_int {
     let q = queue_id as *mut MsgQueue;
     if q.is_null() || buffer_addr.is_null() {
         return OSAL_NOK;
     }
-    // SAFETY: q is a live handle. Block until an item is available.
-    unsafe { (*q).items.down() };
+    // SAFETY: q is a live handle. Block (up to `timeout`) for an item.
+    if !unsafe { (*q).items.down_timeout(timeout) } {
+        return OSAL_NOK;
+    }
     critical_section::with(|_cs| {
         let m = unsafe { &mut *q };
         if m.count == 0 {
@@ -214,20 +217,23 @@ fn event_ptr(event_obj: *mut OsalEvent) -> *mut EventGroup {
     unsafe { (*event_obj).event as *mut EventGroup }
 }
 
-/// Wait for `mask` bits (OR = any, AND = all; CLR clears them on success).
-/// Returns the matched bits. NOTE: single-waiter (the WiFi worker); a write
-/// wakes one waiter, which rechecks.
+/// Wait up to `timeout_ms` (`u32::MAX` == forever) for `mask` bits (OR = any,
+/// AND = all; CLR clears them on success). Returns the matched bits, or 0 on
+/// timeout. NOTE: single-waiter (the WiFi worker); a write wakes the waiter,
+/// which rechecks.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_event_read(
     event_obj: *mut OsalEvent,
     mask: c_uint,
-    _timeout_ms: c_uint,
+    timeout_ms: c_uint,
     mode: c_uint,
 ) -> c_int {
     let g = event_ptr(event_obj);
     if g.is_null() {
         return 0;
     }
+    let forever = timeout_ms == u32::MAX;
+    let deadline = crate::osal_ext::osal_get_jiffies().wrapping_add(timeout_ms as u64);
     loop {
         let matched = critical_section::with(|_cs| {
             let e = unsafe { &mut *g };
@@ -246,12 +252,21 @@ pub extern "C" fn osal_event_read(
                 None
             }
         });
-        match matched {
-            Some(m) => return m as c_int,
-            // SAFETY: g is a live handle. Block; a write() will wake us, then
-            // we recheck the bits above.
-            None => unsafe { (*g).sem.down() },
+        if let Some(m) = matched {
+            return m as c_int;
         }
+        let remaining = if forever {
+            u32::MAX
+        } else {
+            let now = crate::osal_ext::osal_get_jiffies();
+            if now >= deadline {
+                return 0;
+            }
+            (deadline - now).min(u32::MAX as u64) as u32
+        };
+        // SAFETY: g is a live handle. Block until a write() signals (or the
+        // deadline passes), then recheck the bits at the top of the loop.
+        unsafe { (*g).sem.down_timeout(remaining) };
     }
 }
 

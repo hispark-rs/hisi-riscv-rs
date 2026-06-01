@@ -57,6 +57,7 @@ pub mod ipc;
 pub mod log;
 pub mod oal;
 pub mod osal;
+pub mod osal_adapt;
 pub mod osal_ext;
 pub mod osal_queue;
 pub mod osal_sync;

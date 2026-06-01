@@ -442,9 +442,32 @@ impl Semaphore {
         }
     }
 
+    /// Acquire with a timeout (ms). Returns `true` if a count was obtained,
+    /// `false` if the deadline passed first. `u32::MAX` (wait-forever) blocks
+    /// like [`down`](Semaphore::down).
+    ///
+    /// Cooperative sleep-poll: re-checks `try_down`, then parks for 1 ms so the
+    /// `up`-ing task (and the rest of the system) runs, until granted or expired.
+    /// `mcycle` (the time base) advances in real time regardless, so the deadline
+    /// is honoured even while parked.
+    pub fn down_timeout(&self, timeout_ms: u32) -> bool {
+        if timeout_ms == u32::MAX {
+            self.down();
+            return true;
+        }
+        let deadline = now_cycles() + timeout_ms as u64 * CYCLES_PER_MS;
+        loop {
+            if self.try_down() {
+                return true;
+            }
+            if now_cycles() >= deadline {
+                return false;
+            }
+            sleep_ms(1);
+        }
+    }
+
     /// Try to acquire without blocking. Returns true on success.
-    /// (Will back `osal_sem_trydown` once the deeper OSAL is wired.)
-    #[allow(dead_code)]
     pub fn try_down(&self) -> bool {
         critical_section::with(|_cs| {
             // SAFETY: exclusive under the critical section.

@@ -85,11 +85,17 @@ pub extern "C" fn osal_sem_down(sem: *mut OsalSemaphore) -> c_int {
     }
 }
 
-/// Acquire with a timeout. TODO: the timeout is not yet honored (blocks until
-/// available); a timed block needs the sleep/timer path wired into `down`.
+/// Acquire with a timeout (ms; `u32::MAX` == wait-forever). Returns `OSAL_OK`
+/// if acquired, `OSAL_NOK` on timeout or a bad handle.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_sem_down_timeout(sem: *mut OsalSemaphore, _timeout: c_uint) -> c_int {
-    osal_sem_down(sem)
+pub extern "C" fn osal_sem_down_timeout(sem: *mut OsalSemaphore, timeout: c_uint) -> c_int {
+    if sem.is_null() {
+        return OSAL_NOK;
+    }
+    match handle(unsafe { (*sem).sem }) {
+        Some(s) if s.down_timeout(timeout) => OSAL_OK,
+        _ => OSAL_NOK,
+    }
 }
 
 /// Release.
@@ -147,10 +153,17 @@ pub extern "C" fn osal_mutex_lock(mutex: *mut OsalMutex) -> c_int {
     }
 }
 
-/// Lock with a timeout (timeout not yet honored — see [`osal_sem_down_timeout`]).
+/// Lock with a timeout (ms; `u32::MAX` == wait-forever). Returns `OSAL_OK` if
+/// locked, `OSAL_NOK` on timeout or a bad handle.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_mutex_lock_timeout(mutex: *mut OsalMutex, _timeout: c_uint) -> c_int {
-    osal_mutex_lock(mutex)
+pub extern "C" fn osal_mutex_lock_timeout(mutex: *mut OsalMutex, timeout: c_uint) -> c_int {
+    if mutex.is_null() {
+        return OSAL_NOK;
+    }
+    match handle(unsafe { (*mutex).mutex }) {
+        Some(s) if s.down_timeout(timeout) => OSAL_OK,
+        _ => OSAL_NOK,
+    }
 }
 
 /// Unlock.
