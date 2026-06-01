@@ -13,3 +13,12 @@ name = "ws63_rf_rs"
 ws63-hal = { path = "../ws63-hal" }
 critical-section = "1"
 linked_list_allocator = { version = "0.10", default-features = false }
+portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
+
+# For the internal `sched_selftest` example only (runtime entry + linker scripts).
+[dev-dependencies]
+ws63-rt = { path = "../ws63-rt" }
+
+[[example]]
+name = "sched_selftest"
+path = "examples/sched_selftest.rs"

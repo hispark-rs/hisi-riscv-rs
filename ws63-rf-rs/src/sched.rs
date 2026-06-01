@@ -443,6 +443,8 @@ impl Semaphore {
     }
 
     /// Try to acquire without blocking. Returns true on success.
+    /// (Will back `osal_sem_trydown` once the deeper OSAL is wired.)
+    #[allow(dead_code)]
     pub fn try_down(&self) -> bool {
         critical_section::with(|_cs| {
             // SAFETY: exclusive under the critical section.

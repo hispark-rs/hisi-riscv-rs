@@ -57,8 +57,17 @@ pub mod ipc;
 pub mod log;
 pub mod oal;
 pub mod osal;
-pub mod sched;
 pub mod uapi;
+
+// The task scheduler / runtime is an INTERNAL implementation detail: the vendor
+// blob reaches it only through the `osal_*` C-ABI symbols (in `osal`), never as
+// a Rust API. So `sched` is private (not part of this crate's public surface).
+mod sched;
+mod selftest;
+/// Internal scheduler self-test hook (used by the `sched_selftest` example;
+/// NOT a public API). Hidden from docs.
+#[doc(hidden)]
+pub use selftest::sched_selftest;
 
 // ── Return codes from the ws63-RF OSAL contract (port_osal.h) ──────────────
 /// OSAL success (`OSAL_OK`).

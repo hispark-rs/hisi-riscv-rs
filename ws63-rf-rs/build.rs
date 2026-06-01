@@ -30,5 +30,10 @@ fn main() {
     // or, better, a reserved NOLOAD region (ROADMAP phase 4). See the
     // `rf_port_demo` example for the scaffold recipe.
 
+    // For this crate's own examples (e.g. sched_selftest): link via ws63-rt's
+    // scripts. `rustc-link-arg` applies only to THIS package's bins/examples/
+    // tests, not to downstream consumers (they set their own).
+    println!("cargo:rustc-link-arg=-Tws63-link.x");
+
     println!("cargo:rerun-if-changed=build.rs");
 }
