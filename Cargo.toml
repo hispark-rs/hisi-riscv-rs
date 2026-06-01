@@ -9,6 +9,7 @@ members = [
     "ws63-examples/timer_irq",
     "ws63-examples/gpio_irq",
     "ws63-examples/reset_demo",
+    "ws63-examples/dma_loopback",
     "ws63-flashboot",
 ]
 # default-members = the libraries + the blinky example (which links via ws63-rt's
@@ -26,6 +27,7 @@ default-members = [
     "ws63-examples/timer_irq",
     "ws63-examples/gpio_irq",
     "ws63-examples/reset_demo",
+    "ws63-examples/dma_loopback",
 ]
 
 [workspace.package]

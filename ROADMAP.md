@@ -107,6 +107,14 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 > 10. **DMA 请求 ID + 接线**（2026-06-01）：`DmaPeripheral` 请求 ID 由杜撰的 0..11 改为 `dma_porting.h` 的
 >     `HAL_DMA_HANDSHAKING_*`（UART_L/H0/H1=UART0/1/2、SPI_MS0/1=SPI0/1、I2S），经 `request_id()` +
 >     `DmaChannelConfig::mem_to_peripheral`/`peripheral_to_mem` 接入 `configure_channel` 的 flow-control/握手字段。
+> 11. **SDMA 8–11 通道映射 + 外设 DMA 端到端验证**（2026-06-02）：`DmaInstance` 加 `CHANNEL_BASE`
+>     （`Dma0`=0 / `Sdma0`=8），`DmaDriver<Sdma0>` 接受逻辑通道 8–11 并内部映射到物理 0–3（对齐
+>     C SDK `hal_dma_ch_get`/`hal_dma_type_get`），全通道方法 + `en_chns`/`burst`/`single`/`int_clr`
+>     位操作统一用物理索引；+6 个映射单测（host 82 passed）。ws63-qemu DMA 模型补外设 DMA：
+>     `ws63_dma_run` 解析 `fc_tt`/`src_per`/`dest_per`，修正 TC 中断门控 `(ctrl.tc_int_en)&&(cfg.tc_int_mask, bit13)`
+>     （原 `!(cfg&bit2)` 位号+极性皆错）、修完成清位 `bit0+bit15(active)`（原误清 fc_tt 内的 bit10）。
+>     新增 `ws63-examples/dma_loopback`：mem↔SPI0 外设 DMA 环回（MDMA ch0，fc=1/2，握手 7/8）+ SDMA
+>     逻辑通道 8 mem2mem，**在 ws63-qemu 上跑通**（接入 smoke-test）；C SDK `dma.elf` 回归无回归。
 >
 > 注：1–3、5、7、8 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁；GPIO pull 是上拉电阻、QEMU 数字引脚网不建模）；
 > 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机；9 是 host 逻辑单测（非硬件）。**阶段 2 正确性项已全部落地**
