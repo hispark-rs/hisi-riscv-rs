@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + 可复现 SVD→PAC 已修；剩 trap/向量布局、DMA 请求 ID/接线、flashboot） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + 可复现 SVD→PAC 已修；剩 DMA 请求 ID/接线、flashboot） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -71,9 +71,15 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    自定义 CSR RAZ/WI、其余外设 MMIO 吸收）。**已实测**：`blinky` 启动并跑到 GPIO 翻转循环（0 非法指令陷阱）、
    新增的 `uart_hello` 在 QEMU 串口打印。这验证了内存布局 / startup（PMP/FPU/cache/数据重定位/栈）/ 链接脚本
    在一个 WS63 地址空间模型上能正确运行——但**不等于真机验证**（QEMU 未建模时钟/中断/RF，时序也不保真）。
-4. **统一 trap/栈布局**（剩余）：把 `.stacks`（NOLOAD）与 `memory.x` 里的栈顶 fallback 合并为单一真值；
-   在 `layout.ld` 显式放置 `.trap`/`.trap.*` 段（`KEEP` + `ALIGN(64)`）；`startup.S` 设 Vectored 模式
-   或改 Direct + 软件分发（与中断重写一并，见阶段 2）。
+4. ✅ **统一 trap/栈布局（已完成 2026-06-01）**：`startup.S` 现以 **Vectored 模式**设 mtvec（`ori t0,t0,1`，
+   mtvec[1:0]=01）——此前是 Direct，每个中断都落到 `trap_vector+0`(异常入口)、26-91 表项是死代码。`layout.ld`
+   显式放置 `.trap`(64 字节对齐) + `.trap.exception/.nmi/.mieN/.local`(`KEEP`)，不再依赖 lld 孤儿放置。栈顶
+   `__irq/exc/nmi_stack_top__` 统一定义在 `.stacks`(单一真值,被 KEEP 的 .trap 处理器引用故 GC 安全)，删除
+   `memory.x` 里指向 `.heap` 区的错误 fallback(修了一个潜在的 trap 栈/堆重叠)。静态验证(readelf/反汇编):
+   mtvec=0x230441、`.trap` 64 对齐、表项 0→trap_entry / 26→mie_interrupt0_handler / 32-91→local_interrupt_handler
+   均解析且在跳转范围内、无未定义栈/trap 符号；smoke 5/5 无回归。**运行期分发**(经 ws63-rt 弱处理器覆盖)受
+   工作区 fat-LTO + 跨 crate 弱符号覆盖限制(同 `timer_irq`/`gpio_irq` 用自带 mtvec 的原因)，未做运行期示例;
+   底层 IRQ 投递已由 `timer_irq`(26)/`gpio_irq`(≥32) 在 QEMU 验证。
 5. **上板冒烟**（剩余，需硬件）：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
    用 `readelf` 核实 ELF 内存布局已确实采用 WS63 的 layout（非 lld 默认）。
 
