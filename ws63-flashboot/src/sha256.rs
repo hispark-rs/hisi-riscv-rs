@@ -84,8 +84,8 @@ impl Sha256 {
 
     fn compress(&mut self) {
         let mut w = [0u32; 64];
-        for i in 0..16 {
-            w[i] = ((self.buf[i * 4] as u32) << 24)
+        for (i, wi) in w.iter_mut().take(16).enumerate() {
+            *wi = ((self.buf[i * 4] as u32) << 24)
                 | ((self.buf[i * 4 + 1] as u32) << 16)
                 | ((self.buf[i * 4 + 2] as u32) << 8)
                 | (self.buf[i * 4 + 3] as u32);

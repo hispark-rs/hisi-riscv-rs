@@ -27,30 +27,64 @@ const SFC_CMD_DATABUF: *mut u32 = 0x4800_0400 as *mut u32;
 const SFC_INT_STATUS: *const u32 = 0x4800_0124 as *const u32;
 
 // ── Image header structure ───────────────────────────────────────
+//
+// Layout mirrors fbb_ws63 `bootloader/commonboot/include/secure_verify_boot.h`
+// (`image_key_area_t` + `image_code_info_t`) for the **ECC256 / SM2** build
+// (KEY_AREA_STRUCTURE_LENGTH = 0x100, CODE_INFO_STRUCTURE_LENGTH = 0x200,
+// BOOT_PUBLIC_KEY_LEN = BOOT_SIG_LEN = BOOT_EXT_SIG_LEN = 64). RSA3072/4096 builds
+// use larger areas (0x400/0x500) — not modelled here. The earlier struct invented
+// `image_length`/`load_addr`/`image_hash` at wrong offsets (it read the app length
+// from `mask_version_ext`@+0x14 and the hash from +0x1C instead of `code_area_len`
+// @+0x24 / `code_area_hash`@+0x28), so it would misread a genuine WS63 image.
 
-/// Key area (0x100 bytes): signature + public key
+/// Image key area (`image_key_area_t`, 0x100 bytes): key metadata, the ECC/SM2
+/// public key, and the signature. The trailing key/signature bytes are not parsed —
+/// this experimental loader does NOT verify the signature (see the crate-level docs).
 #[repr(C)]
 pub struct KeyArea {
-    pub key_id: u32,       // +0x00
-    pub key_type: u32,     // +0x04
-    pub key_length: u32,   // +0x08
-    pub sig_length: u32,   // +0x0C
-    pub sig_scheme: u32,   // +0x10
-    _reserved: [u8; 0xF0], // +0x14..0x100
+    pub image_id: u32,             // +0x00
+    pub structure_version: u32,    // +0x04 — 0x0001_0000
+    pub structure_length: u32,     // +0x08
+    pub signature_length: u32,     // +0x0C
+    pub key_owner_id: u32,         // +0x10
+    pub key_id: u32,               // +0x14
+    pub key_alg: u32,              // +0x18 — 0x2A13C812 ECC256, 0x2A13C823 SM2
+    pub ecc_curve_type: u32,       // +0x1C
+    pub key_length: u32,           // +0x20
+    pub key_version_ext: u32,      // +0x24
+    pub mask_key_version_ext: u32, // +0x28
+    pub msid_ext: u32,             // +0x2C
+    pub mask_msid_ext: u32,        // +0x30
+    pub maintenance_mode: u32,     // +0x34
+    pub die_id: [u8; 16],          // +0x38
+    pub code_info_addr: u32,       // +0x48 — 0 means CodeInfo immediately follows
+    /// +0x4C..0x100: reserved (52B) + ext_public_key_area[64] + sig_key_area[64].
+    _rest: [u8; 0x100 - 0x4C],
 }
 
-/// Code info area (0x200 bytes): image metadata
+/// Image code info (`image_code_info_t`, 0x200 bytes): app metadata + body hash.
 #[repr(C)]
 pub struct CodeInfo {
-    pub image_id: u32,          // +0x100
-    pub structure_version: u32, // +0x104
-    pub structure_length: u32,  // +0x108
-    pub signature_length: u32,  // +0x10C
-    pub image_version: u32,     // +0x110 (params_version_ext)
-    pub image_length: u32,      // +0x114 (offset in struct)
-    pub load_addr: u32,         // +0x118
-    pub image_hash: [u8; 32],   // +0x11C — SHA256 of image body
-    _reserved: [u8; 0x1C4],     // +0x13C..0x300
+    pub image_id: u32,               // +0x00 (header +0x100)
+    pub structure_version: u32,      // +0x04 — 0x0001_0000
+    pub structure_length: u32,       // +0x08 — 0x200 (ECC/SM2), 0x400 (RSA3072)
+    pub signature_length: u32,       // +0x0C — 64 (ECC), 384/512 (RSA)
+    pub version_ext: u32,            // +0x10
+    pub mask_version_ext: u32,       // +0x14
+    pub msid_ext: u32,               // +0x18
+    pub mask_msid_ext: u32,          // +0x1C
+    pub code_area_addr: u32,         // +0x20 — 0 means body follows the header
+    pub code_area_len: u32,          // +0x24 — length of the signed app body
+    pub code_area_hash: [u8; 32],    // +0x28 — SHA256 of the app body
+    pub code_enc_flag: u32,          // +0x48
+    pub protection_key_l1: [u8; 16], // +0x4C
+    pub protection_key_l2: [u8; 16], // +0x5C
+    pub iv: [u8; 16],                // +0x6C
+    pub code_compress_flag: u32,     // +0x7C — 0x3C7896E1 = compressed
+    pub code_uncompress_len: u32,    // +0x80
+    pub text_segment_size: u32,      // +0x84
+    /// +0x88..0x200: reserved (248B) + sig_code_info[64] + sig_code_info_ext[64].
+    _rest: [u8; 0x200 - 0x88],
 }
 
 /// Combined image header (key_area + code_info = 0x300 bytes).
@@ -59,6 +93,13 @@ pub struct ImageHeader {
     pub key_area: KeyArea,
     pub code_info: CodeInfo,
 }
+
+// Lock the layout to the secure_verify_boot.h ECC256 sizes.
+const _: () = {
+    assert!(core::mem::size_of::<KeyArea>() == 0x100);
+    assert!(core::mem::size_of::<CodeInfo>() == 0x200);
+    assert!(core::mem::size_of::<ImageHeader>() == 0x300);
+};
 
 impl ImageHeader {
     /// Read an ImageHeader from flash at `addr` via SFC command.
@@ -96,7 +137,7 @@ pub fn sfc_init(_tcxo_hz: u32) -> bool {
         // 4. Configure bus for quad-SPI fast read
         // rd_mem_if_type = 4 (Quad I/O), rd_dummy = 4, rd_ins = 0xEB (Quad I/O Fast Read)
         // wr_mem_if_type = 2 (Dual I/O), wr_ins = 0x02 (Page Program)
-        let bus_cfg1: u32 = (4 << 0)   // rd_mem_if_type: Quad I/O
+        let bus_cfg1: u32 = 4          // rd_mem_if_type: Quad I/O (field at bit 0)
             | (4 << 3)  // rd_dummy_bytes: 4
             | (0xEB << 8)  // rd_ins: Quad I/O Fast Read
             | (2 << 16)    // wr_mem_if_type: Dual I/O
@@ -123,7 +164,7 @@ pub fn read_bytes(addr: u32, buf: &mut [u8]) {
     while offset < buf.len() {
         let chunk = core::cmp::min(64, buf.len() - offset);
         let mut tmp = [0u32; 16]; // 16 words = 64 bytes
-        let words = (chunk + 3) / 4;
+        let words = chunk.div_ceil(4);
         sfc_read_data(addr + offset as u32, tmp.as_mut_ptr(), words as u32);
         for i in 0..chunk {
             buf[offset + i] = (tmp[i / 4] >> ((i % 4) * 8)) as u8;

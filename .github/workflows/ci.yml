@@ -96,11 +96,10 @@ jobs:
           key: ${{ runner.os }}-cargo-ws63-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-ws63-
       # Gating: no `continue-on-error`, no `| head` (which would swallow the exit code).
-      # ws63-flashboot is excluded — it is experimental (publish=false, out of the
-      # default build), so its lints are not a merge gate. `cargo check --workspace`
-      # above still compile-checks it.
+      # ws63-flashboot is now clippy-clean too (was excluded as experimental), so the
+      # whole workspace is gated.
       - name: Run clippy
-        run: cargo clippy --workspace --exclude ws63-flashboot -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
 
   # ── Format check ────────────────────────────────────────────────
   fmt:

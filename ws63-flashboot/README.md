@@ -11,7 +11,7 @@
 | 能力 | 原厂 flashboot（fbb_ws63） | 本 crate |
 |------|--------------------------|----------|
 | 镜像**真实性**（签名验签） | ECC-bp256 / SM2，根密钥在 efuse | ❌ **无**，只比对镜像头里的 SHA256（攻击者可重算） |
-| 镜像头布局 | 与硅片一致 | ⚠️ 未对照真实 WS63 签名镜像核实，可能拒绝真镜像 |
+| 镜像头布局 | 与硅片一致 | ✅ 已对齐 fbb_ws63 `secure_verify_boot.h`（ECC256：`code_area_len`@+0x24、`code_area_hash`@+0x28），但未在真实硬件上对照签名镜像验证 |
 | 时钟自适应 `boot_clock_adapt` | 完整 | ⚠️ TODO 空壳 |
 | 分区表解析 | `uapi_partition_get_info` | ⚠️ 桩，恒返回 `FLASH_START` |
 | 升级/FOTA、镜像解压、flash 在线加密 | 有 | ❌ 无 |

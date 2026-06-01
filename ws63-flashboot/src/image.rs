@@ -1,21 +1,27 @@
 //! Image header validation for WS63 flashboot.
 //!
-//! Checks: image_id ≠ 0/0xFFFFFFFF, structure_length ∈ {0x200, 0x400},
-//! image_length ∈ (0, 8MB), signature_length ∈ (0, 512], version = 0x0001_0000.
+//! Best-effort **structural sanity** check of the `image_code_info_t` header
+//! (NOT a signature/authenticity check — see the crate-level docs): image_id is
+//! set, the structure version/length and signature length look sane, and the
+//! signed body length (`code_area_len`) is in range.
 
 use crate::sfc::ImageHeader;
 
-/// Validate an image header. Returns true if the image looks bootable.
+/// Validate an image header structurally. Returns true if it looks bootable.
+///
+/// Integrity/sanity gate only — it does NOT authenticate the image (the vendor
+/// flashboot ECC/SM2-verifies it against an efuse-rooted key; this loader does not).
 pub fn validate(header: &ImageHeader) -> bool {
     let ci = &header.code_info;
     ci.image_id != 0
         && ci.image_id != 0xFFFF_FFFF
+        && ci.structure_version == 0x0001_0000
+        // 0x200 = ECC256/SM2 CodeInfo; 0x400 = RSA3072 CodeInfo.
         && (ci.structure_length == 0x200 || ci.structure_length == 0x400)
-        && ci.image_length > 0
-        && ci.image_length < 8 * 1024 * 1024
         && ci.signature_length > 0
         && ci.signature_length <= 512
-        && ci.structure_version == 0x0001_0000
+        && ci.code_area_len > 0
+        && ci.code_area_len < 8 * 1024 * 1024
 }
 
 // ── Tests ──────────────────────────────────────────────────────
@@ -23,30 +29,17 @@ pub fn validate(header: &ImageHeader) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sfc::{CodeInfo, ImageHeader, KeyArea};
 
     fn make_header() -> ImageHeader {
-        ImageHeader {
-            key_area: KeyArea {
-                key_id: 0,
-                key_type: 0,
-                key_length: 0,
-                sig_length: 0,
-                sig_scheme: 0,
-                _reserved: [0u8; 0xF0],
-            },
-            code_info: CodeInfo {
-                image_id: 1,
-                structure_version: 0x0001_0000,
-                structure_length: 0x200,
-                signature_length: 256,
-                image_version: 1,
-                image_length: 0x10000,
-                load_addr: 0xA00000,
-                image_hash: [0u8; 32],
-                _reserved: [0u8; 0x1C4],
-            },
-        }
+        // SAFETY: ImageHeader is repr(C) over plain u32 / byte arrays, so the all-zero
+        // bit pattern is valid (just not bootable). We then set the fields validate() reads.
+        let mut h: ImageHeader = unsafe { core::mem::zeroed() };
+        h.code_info.image_id = 1;
+        h.code_info.structure_version = 0x0001_0000;
+        h.code_info.structure_length = 0x200;
+        h.code_info.signature_length = 64; // ECC256
+        h.code_info.code_area_len = 0x10000;
+        h
     }
 
     #[test]
@@ -69,23 +62,23 @@ mod tests {
     }
 
     #[test]
-    fn test_reject_zero_image_length() {
+    fn test_reject_zero_code_area_len() {
         let mut h = make_header();
-        h.code_info.image_length = 0;
+        h.code_info.code_area_len = 0;
         assert!(!validate(&h));
     }
 
     #[test]
     fn test_reject_too_large_image() {
         let mut h = make_header();
-        h.code_info.image_length = 8 * 1024 * 1024; // exactly 8MB — must be LESS than
+        h.code_info.code_area_len = 8 * 1024 * 1024; // exactly 8MB — must be LESS than
         assert!(!validate(&h));
     }
 
     #[test]
-    fn test_accept_max_valid_image_length() {
+    fn test_accept_max_valid_code_area_len() {
         let mut h = make_header();
-        h.code_info.image_length = 8 * 1024 * 1024 - 1; // 1 byte under 8MB
+        h.code_info.code_area_len = 8 * 1024 * 1024 - 1; // 1 byte under 8MB
         assert!(validate(&h));
     }
 

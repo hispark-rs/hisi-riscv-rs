@@ -42,9 +42,9 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 - **裸 MMIO 而非 PAC**：所有外设地址硬编码为 `*mut u32`/`*const u32` 常量（`src/main.rs:40-48`，`src/sfc.rs:9-27`，`src/uart.rs:8-15`），刻意不引入 `ws63-pac`，避免双份 PAC 链接冲突（`Cargo.toml:17-19`）。代价是与 HAL 重复造 UART/SFC/SHA256/startup（见评审）。
 - **汇编启动对照原厂**：`asm/startup.S` 注释声明基于 fbb_ws63 `flashboot_ws63/startup/riscv_init.S`，做 PMP 清零、清自定义 CSR `0x7d9`、从 `a0` 保存 boot flag 到 `__flash_boot_flag`、`mtvec` 向量模式（+1）、开 FPU（`mstatus.FS=0b11`）、清 BSS、`tail flashboot_main`。
-- **地址与 magic 对照 SDK**：`FLASH_BOOT_TYPE = 0x4000_0024`、`BOOT_MAIN = 0xA5A5_A5A5`、`FLASH_START = 0x0020_0000` 与原厂一致（vendor `main.c:50-52`：`FLASH_BOOT_TYPE_REG 0x40000024` / `_MAIN 0xA5A5A5A5` / `_BKUP 0x5A5A5A5A`）。
-- **镜像头数据结构**：`ImageHeader = KeyArea(0x100) + CodeInfo(0x200) = 0x300`（`src/sfc.rs:32-61`）。`CodeInfo` 自注偏移：`image_length` 在 +0x114、`image_hash` 在 +0x11C（`src/sfc.rs:51-52`）。**这些偏移与真实 WS63 镜像不符**（见评审，对照 vendor `secure_verify_boot.h:156-178` 的 `image_code_info_t`）。
-- **校验流程**：`validate()` 做边界检查（`image_id`、`structure_length∈{0x200,0x400}`、`image_length∈(0,8MB)`、`signature_length∈(0,512]`、`structure_version==0x0001_0000`，`src/image.rs:9-19`），随后 `verify_sha256()` 分 256 字节块读 app body、软件 SHA256、与头里的 `image_hash` 比对（`src/main.rs:235-258`）。SHA256 实现完整且正确（标准 H/K 常量、压缩函数、大端长度填充，`src/sha256.rs`，含 `""`/`"abc"`/长输入测试 `:148-175`）。
+- **单镜像启动（2026-06-01 整改）**：删除了对 `0x4000_0024` 的 A/B 误用。该寄存器是 flashboot **自身**的备份恢复标志（`0x5A5A5A5A` ⇒ 从备份分区恢复 bootloader；vendor `main.c:131-135` `flashboot_need_recovery`），**不是** app 槽选择器。真实 app A/B 由 upg run-region 配置（`PARTITION_FOTA_DATA` 末尾 magic `0x70746C6C`、`run_region` 0=A/1=B）+ 分区表（`@0x200380`）决定 —— 本实验 loader 不解析这些，仅启动单一 app 镜像，A/B/恢复/FOTA 交给原厂 flashboot（`src/main.rs:110-131`）。
+- **镜像头数据结构（整改：对齐 secure_verify_boot.h）**：`ImageHeader = KeyArea(0x100) + CodeInfo(0x200) = 0x300`，按 vendor `image_key_area_t`/`image_code_info_t`（ECC256/SM2 构建）逐字段重排（`src/sfc.rs`）。`CodeInfo` 的关键字段现在正确：`code_area_len` 在 +0x24（旧代码错读 `mask_version_ext`@+0x14 当长度）、`code_area_hash` 在 +0x28（旧代码错读 +0x1C）。`const` 断言锁定 `size_of` = 0x100/0x200/0x300。
+- **校验流程**：`validate()` 做结构边界检查（`image_id`、`structure_version==0x0001_0000`、`structure_length∈{0x200,0x400}`、`signature_length∈(0,512]`、`code_area_len∈(0,8MB)`，`src/image.rs`），随后 `verify_image_integrity()`（原 `verify_sha256`）分 256 字节块读 app body、软件 SHA256、与头里的 `code_area_hash` 比对（`src/main.rs`）。**这是完整性校验、非真实性验签**：哈希在同一份未签名头里，能写 flash 的攻击者可重算 —— 函数名/文档已如实标注。SHA256 软件实现（`src/sha256.rs`，含 `""`/`"abc"`/长输入测试）未经审计、仅作完整性用途。
 - **SFC**：`sfc_init()` 配置四线快读（rd_ins=0xEB Quad I/O，`src/sfc.rs:99-104`）；`sfc_read_data()` 以 16 字（64 字节）为硬件上限分块、轮询 `SFC_INT_STATUS` 完成位（`src/sfc.rs:137-171`）。
 - **跳转**：清 `mie`、喂狗后将 `addr + 0x300` `transmute` 为 `extern "C" fn() -> !` 并调用（`src/main.rs:159-166`），SAFETY 注释声明 app 入口同 ABI（RV32IMFC ilp32f）。
 - **本轮构建完整性修复（针对该 crate）**：banner 重写为"非安全启动"警告（`src/main.rs:1-22`）、`publish = false`（`Cargo.toml:11`）、移出 `default-members`、删除未用的 `ws63-pac` 依赖、新增 `README.md`。
@@ -57,7 +57,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 - SHA256 软件实现正确，常量与填充无误，含已知向量单测（`src/sha256.rs:14-141`、`:148-175`）。
 - `startup.S` 对照原厂 `riscv_init.S`，PMP/FPU/BSS/boot flag 处理到位（`asm/startup.S`）。
-- 关键地址与 magic（`FLASHBOOT_RAM` 语义、`FLASH_BOOT_TYPE=0x40000024`、`BOOT_MAIN=0xA5A5A5A5`）对照 SDK 一致（`src/main.rs:45,57` vs vendor `main.c:50-52`）。
+- 关键地址（SFC/UART/WDT/FAMA/efuse 寄存器、`FLASHBOOT_RAM` 语义）与镜像头 magic/版本对照 SDK 一致；整改后镜像头布局对齐 `secure_verify_boot.h`。
 - 镜像头边界校验有较完整的拒绝/接受边界单测（`src/image.rs:52-135`）。
 - 本轮已正确自我定级为实验性：banner、`publish=false`、移出默认构建、README 说明（`src/main.rs:1-22`、`Cargo.toml:11`、`README.md`）。
 
@@ -65,17 +65,17 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
-| 严重 | 安全 | 无真实性验签：`verify_sha256()` 只把算出的哈希与**同一份未签名头里的** `image_hash` 比对。能写 flash 的攻击者改镜像后重算 SHA256 写回头部即可以 M 态特权跳进任意代码，≠ secure boot（原厂用 efuse 根密钥 ECC-bp256/SM2 签名验签） | `src/main.rs:150,235-258`；对照 vendor `secure_verify_boot.c`、`upg_verify.c:671-723` | 已排期(ROADMAP 阶段 2) |
-| 严重 | 正确性 | `ImageHeader`/`CodeInfo` 布局对不上真实 WS63 镜像：`image_length`(+0x114)/`image_hash`(+0x11C) 偏移读错。原厂 `image_code_info_t` 在这些字段前还有 `version_ext`/`mask_version_ext`/`msid_ext`/`mask_msid_ext`、随后是 `code_area_addr`/`code_area_len`/`code_area_hash` 及签名区，布局不同 → 会拒绝真镜像 | `src/sfc.rs:44-54`；对照 vendor `secure_verify_boot.h:156-178` | 已排期(ROADMAP 阶段 2) |
-| 高 | 正确性 | A/B 误用 `0x4000_0024`：该寄存器是 flashboot **自身的备份恢复标志**（main flashboot vs backup flashboot），并非 app 槽选择器。代码却用它选 app 区 A/B | `src/main.rs:45,118-127`；对照 vendor `main.c:131-135`（`flashboot_need_recovery`） | 已排期(ROADMAP 阶段 2) |
+| 严重 | 安全 | 无真实性验签：只把算出的哈希与**同一份未签名头里的**哈希比对。能写 flash 的攻击者改镜像后重算 SHA256 写回头部即可以 M 态特权跳进任意代码，≠ secure boot（原厂用 efuse 根密钥 ECC-bp256/SM2 签名验签） | `src/main.rs`、`verify_image_integrity()`；对照 vendor `secure_verify_boot.c` | ✅ 已如实标注(2026-06-01)：函数改名 `verify_image_integrity`、文档明确"仅完整性、非真实性"；真实 ECC/SM2 验签属 ROADMAP 冻结项（复用原厂，不在本实验件投入） |
+| 严重 | 正确性 | `ImageHeader`/`CodeInfo` 布局对不上真实 WS63 镜像：`image_length`(+0x114)/`image_hash`(+0x11C) 偏移读错 → 会拒绝真镜像 | `src/sfc.rs`；对照 vendor `secure_verify_boot.h:156-178` | ✅ 已修(2026-06-01)：`sfc.rs` `KeyArea`/`CodeInfo` 按 `image_key_area_t`/`image_code_info_t`(ECC256) 逐字段重排，`code_area_len`@+0x24、`code_area_hash`@+0x28，`const` 断言锁定 0x100/0x200/0x300；评审(layout) ok |
+| 高 | 正确性 | A/B 误用 `0x4000_0024`：该寄存器是 flashboot **自身的备份恢复标志**，并非 app 槽选择器。代码却用它选 app 区 A/B | `src/main.rs`；对照 vendor `main.c:131-135`（`flashboot_need_recovery`） | ✅ 已修(2026-06-01)：删除该误用，改单镜像启动 + 如实注明真实 A/B = upg run-region(magic `0x70746C6C`)+分区表(`@0x200380`)、`0x40000024`=bootloader 自恢复 |
 | 高 | 方向 | 重写原厂安全关键件（验签/启动链）属误导努力。生产应复用原厂 flashboot，本 crate 仅供学习 | `src/main.rs:5-8`、`README.md:22-26` | 暂不修(定级实验性；定位为学习件，整体方向走复用原厂) |
-| 高 | 正确性 | 关键子流程是桩：`boot_clock_adapt()` 为 TODO 空操作；`read_partition_app_addr()` 恒返回 `FLASH_START`；`check_upgrade_mode()` 恒 false | `src/main.rs:171-188,206-215,219-224` | 已排期(ROADMAP 阶段 2) |
+| 高 | 正确性 | 关键子流程是桩：`boot_clock_adapt()` 为 TODO 空操作；`read_partition_app_addr()` 恒返回 `FLASH_START`；`check_upgrade_mode()` 恒 false | `src/main.rs` | 🟡 部分(2026-06-01)：`read_partition_app_addr()` 改为**如实标注**的桩（注明不解析分区表、真实查表在 `@0x200380` magic `0x4b87a54b`）；`boot_clock_adapt`/`check_upgrade_mode` 仍为桩（实验定位，生产复用原厂） |
 | 中 | 维护性 | 重复造轮子：UART/SFC/SHA256/startup 与 `ws63-hal`/`ws63-rt` 重复（因刻意不依赖 PAC/HAL） | `src/uart.rs`、`src/sfc.rs`、`src/sha256.rs`、`asm/startup.S`、`Cargo.toml:17-19` | 暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍) |
 | 中 | 工程化 | 删除未用的 `ws63-pac` 依赖、`publish=false`、移出默认构建、banner 改为实验性警告 | `Cargo.toml:11,17-19`、根 `Cargo.toml` `default-members`、`src/main.rs:1-22` | 本轮已修 |
 
 ## 改进项与排期
 
 - 生产层面的结论是**复用 fbb_ws63 原厂 flashboot**（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（`README.md:22-26`）。本 crate 维持实验/学习定位。
-- 若继续维护本 crate，正确性整改集中在 **ROADMAP 阶段 2（死代码清理 + 正确性修复）**：efuse/lsadc 寄存器、flashboot 镜像头布局 / 验签 / A/B 语义修正。
+- **整改已落地（2026-06-01）**：镜像头布局对齐 `secure_verify_boot.h`（`code_area_len`/`code_area_hash` 偏移修正 + const 尺寸断言）、删除 `0x40000024` 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、`verify_sha256`→`verify_image_integrity` 如实标注"仅完整性非真实性"、`read_partition_app_addr` 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 `--exclude`）。**真实 ECC/SM2 验签**仍按冻结项复用原厂、不在本实验件投入。
 - 本轮（阶段 0）已完成的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、ISA 改为无原子 `riscv32imc-unknown-none-elf` + `portable-atomic` critical-section polyfill、CI/release gating 与发布顺序修复、`ws63-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
 - 尚未解决并已排期：示例链接（`ws63-rt` 链接脚本不传播到下游 bin）见 **阶段 1**；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 **阶段 2**；porting 层 + HCC IPC + blob 链接的连接性见 **阶段 3–5**；async 见 **阶段 6**。详见 [ROADMAP](../../ROADMAP.md)。

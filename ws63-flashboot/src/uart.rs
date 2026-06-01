@@ -6,7 +6,7 @@
 // ── UART0 register addresses ─────────────────────────────────────
 
 const UART0_BASE: u32 = 0x4401_0000;
-const UART_CTL: *mut u16 = (UART0_BASE + 0x00) as *mut u16;
+const UART_CTL: *mut u16 = UART0_BASE as *mut u16;
 const UART_DIV_L: *mut u16 = (UART0_BASE + 0x04) as *mut u16;
 const UART_DIV_H: *mut u16 = (UART0_BASE + 0x08) as *mut u16;
 const UART_DIV_FRA: *mut u16 = (UART0_BASE + 0x0C) as *mut u16;

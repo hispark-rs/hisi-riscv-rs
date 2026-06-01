@@ -8,16 +8,23 @@
 //! See `README.md` for the full rationale.
 //!
 //! Known gaps vs. the vendor bootloader (do NOT trust this as a root of trust):
-//! - **NO authenticity check.** `verify_sha256()` only compares an integrity hash
-//!   against a hash stored in the *same unsigned header*. An attacker who can write
-//!   flash recomputes the hash and boots arbitrary code at M-mode. The vendor does
-//!   ECC-bp256/SM2 signature verification rooted in an efuse public key — not done here.
-//! - **Image header layout is unverified** against a real WS63-signed image
-//!   (`ImageHeader`/`CodeInfo` offsets in `sfc.rs` are not confirmed against
-//!   `fbb_ws63/.../secure_verify_boot.h`), so it likely rejects genuine images.
+//! - **NO authenticity check.** `verify_image_integrity()` only compares a SHA256
+//!   of the body against `code_area_hash` stored in the *same unsigned header*. An
+//!   attacker who can write flash recomputes the hash and boots arbitrary code at
+//!   M-mode. The vendor does ECC-bp256/SM2 signature verification rooted in an
+//!   efuse public key (`verify_image_head`/`verify_image_body`) — not done here.
+//! - **No A/B slot selection / recovery / FOTA.** This boots the single primary app
+//!   image. In production the running slot is chosen by the vendor's upg run-region
+//!   config (magic `0x70746C6C` at the end of `PARTITION_FOTA_DATA`; `run_region`
+//!   0=A/1=B) plus the partition table (@`0x200380`). Note `0x40000024` is the
+//!   flashboot **self-recovery** flag (`0x5A5A5A5A` => restore the *bootloader* from
+//!   its backup partition), NOT an app-slot selector — earlier code misused it as one.
+//! - **Header layout** now mirrors `fbb_ws63/.../secure_verify_boot.h` (ECC256:
+//!   `code_area_len`@CodeInfo+0x24, `code_area_hash`@+0x28), but is still not
+//!   validated against a real signed vendor image on hardware.
 //! - **Stubs:** `boot_clock_adapt()` is a TODO no-op, `read_partition_app_addr()`
-//!   always returns `FLASH_START`, `check_upgrade_mode()` always returns false.
-//! - No FOTA/upgrade, no image decompression, no flash on-line encryption.
+//!   always returns `FLASH_START` (no partition-table parse), `check_upgrade_mode()`
+//!   always returns false. No image decompression, no flash on-line encryption.
 //!
 //! Called by asm/startup.S as `flashboot_main()`.
 
@@ -42,7 +49,6 @@ const CLDO_CRG_CLK_SEL: *mut u32 = 0x4400_1134 as *mut u32;
 const CMU_NEW_CFG1: *mut u32 = 0x4000_34A4 as *mut u32;
 const CLDO_CKEN_CTL1: *mut u32 = 0x4400_1104 as *mut u32;
 const FAMA_REMAP: *mut u32 = 0x4400_7800 as *mut u32;
-const FLASH_BOOT_TYPE: *const u32 = 0x4000_0024 as *const u32;
 const WDT: *mut u32 = 0x4000_6000 as *mut u32;
 const EFUSE_CTL: *mut u32 = 0x4400_8000 as *mut u32;
 const EFUSE_CLK_PERIOD: *mut u32 = 0x4400_8004 as *mut u32;
@@ -54,12 +60,17 @@ unsafe extern "C" {
 
 const FLASH_START: u32 = 0x0020_0000;
 const IMAGE_HEADER_LEN: u32 = 0x300;
-const BOOT_MAIN: u32 = 0xA5A5_A5A5;
-const REGION_SIZE: u32 = 0x0028_0000;
-const REGION_OFFSETS: [(u32, char); 2] = [(0, 'A'), (REGION_SIZE, 'B')];
+/// Max app image size — the flash app window remapped for execution via FAMA.
+const APP_MAX_SIZE: u32 = 0x0028_0000;
 
 // ── Entry point (called from asm/startup.S) ────────────────────
 
+/// Second-stage boot entry, called once from `asm/startup.S` after stack setup.
+///
+/// # Safety
+/// Must be invoked exactly once at boot, from M-mode, by the startup assembly —
+/// not callable from Rust. It does raw MMIO across the SoC and ultimately jumps
+/// to the loaded app, so there is no valid state in which a second caller is sound.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn flashboot_main() -> ! {
     let tcxo_hz = if unsafe { HW_CTL.read_volatile() & 1 != 0 } {
@@ -97,34 +108,31 @@ pub unsafe extern "C" fn flashboot_main() -> ! {
         enter_upgrade();
     }
 
-    // FAMA: remap flash→program
+    // FAMA: remap the flash app window → program execution address
     unsafe {
         let a = FLASH_START >> 12;
-        let e = (FLASH_START + REGION_SIZE * 2) >> 12;
+        let e = (FLASH_START + APP_MAX_SIZE) >> 12;
         FAMA_REMAP.write_volatile(a);
         FAMA_REMAP.add(8).write_volatile(e);
         FAMA_REMAP.add(16).write_volatile(0x230000 >> 12);
     }
     wdg_feed();
 
-    // P1: read partition table and locate app image
+    // P1: locate the app image (partition-table lookup — stubbed; see fn).
     let img_addr = read_partition_app_addr();
     if img_addr == 0 {
         log("FATAL: no partition\n");
         halt();
     }
 
-    // Try primary, then backup region if needed
-    let boot_type = unsafe { FLASH_BOOT_TYPE.read_volatile() };
-    let region: usize = if boot_type == BOOT_MAIN { 0 } else { 1 };
-    let (pri, bak) = (region, 1 - region);
-
-    let pri_addr = img_addr + REGION_OFFSETS[pri].0;
-    let bak_addr = img_addr + REGION_OFFSETS[bak].0;
-
-    if try_boot(pri_addr, REGION_OFFSETS[pri].1) { /* no return */ }
-    log("primary invalid, trying backup\n");
-    if try_boot(bak_addr, REGION_OFFSETS[bak].1) { /* no return */ }
+    // Single-image boot. We deliberately do NOT do A/B slot selection: the running
+    // slot is chosen by the vendor's upg run-region config (magic 0x70746C6C at the
+    // end of PARTITION_FOTA_DATA; run_region 0=A/1=B) + the partition table — which
+    // this experimental loader does not parse. Address 0x40000024 is the flashboot
+    // SELF-recovery flag (0x5A5A5A5A => restore the bootloader from its backup
+    // partition), NOT an app-slot selector; the earlier code misused it as one.
+    // Production A/B / recovery / FOTA is the vendor flashboot's job (see README).
+    if try_boot(img_addr) { /* no return on success */ }
 
     log("FATAL: no valid image\n");
     halt();
@@ -132,10 +140,8 @@ pub unsafe extern "C" fn flashboot_main() -> ! {
 
 // ── Boot region ─────────────────────────────────────────────────
 
-fn try_boot(addr: u32, name: char) -> bool {
-    log("Region ");
-    uart::putc(name as u8);
-    uart::puts(": ");
+fn try_boot(addr: u32) -> bool {
+    log("App image: ");
 
     let hdr = sfc::read_image_header(addr);
     if !image::validate(&hdr) {
@@ -143,11 +149,12 @@ fn try_boot(addr: u32, name: char) -> bool {
         return false;
     }
 
-    // P1: verify image hash (SHA256 of app body)
+    // P1: integrity check — SHA256 of the app body vs the header's code_area_hash.
+    // This is NOT authenticity (the hash lives in the same unsigned header); see docs.
     let img_body = addr + IMAGE_HEADER_LEN;
-    let img_len = hdr.code_info.image_length;
-    let expected_hash = hdr.code_info.image_hash;
-    if !verify_sha256(img_body, img_len, &expected_hash) {
+    let img_len = hdr.code_info.code_area_len;
+    let expected_hash = hdr.code_info.code_area_hash;
+    if !verify_image_integrity(img_body, img_len, &expected_hash) {
         uart::puts("hash mismatch\n");
         return false;
     }
@@ -204,14 +211,13 @@ fn efuse_init(tcxo_hz: u32) {
 // ── P1: Partition table ─────────────────────────────────────────
 
 fn read_partition_app_addr() -> u32 {
-    // fbb_ws63: uapi_partition_get_info(PARTITION_APP_IMAGE)
-    // Reads the partition table from flash, finds the APP_IMAGE entry,
-    // returns flash_addr + partition_offset.
-    //
-    // Minimal implementation: treat FLASH_START + 0x1000 as the
-    // partition table location (typical for WS63 layout).
-    // A full implementation would parse the partition table structure.
-    FLASH_START // default: app image starts at flash base
+    // STUB — does NOT parse the partition table; returns the flash base.
+    // The real lookup (fbb_ws63 uapi_partition_get_info(PARTITION_APP_IMAGE)) reads
+    // the partition table at flash 0x200380 (header magic 0x4b87a54b + 16 entries of
+    // addr/size/id) and returns the APP_IMAGE entry's flash address. Implementing it
+    // here would require the partition-table layout + the upg run-region selection;
+    // out of scope for this experimental loader (production uses the vendor flashboot).
+    FLASH_START
 }
 
 // ── P1: Upgrade mode ────────────────────────────────────────────
@@ -230,12 +236,14 @@ fn enter_upgrade() -> ! {
     halt();
 }
 
-// ── P1: SHA256 image verification ───────────────────────────────
+// ── P1: SHA256 image INTEGRITY check (NOT authenticity) ─────────
 
-fn verify_sha256(img_body: u32, img_len: u32, expected: &[u8; 32]) -> bool {
-    // fbb_ws63: ws63_verify_app() — full ECC/SM2 signature via ROM
-    // We compute SHA256 of the image body and compare with header hash.
-    // For production, use hardware SPACC accelerator.
+fn verify_image_integrity(img_body: u32, img_len: u32, expected: &[u8; 32]) -> bool {
+    // INTEGRITY only: SHA256(body) == code_area_hash from the header. This detects
+    // accidental corruption, NOT tampering — the hash is in the same unsigned header,
+    // so an attacker who can write flash recomputes it. The vendor authenticates via
+    // ECC/SM2 signatures over the key/code areas rooted in an efuse key. SHA256 here
+    // is the unaudited software impl in `sha256.rs` (integrity, not a security primitive).
     if img_len == 0 || img_len > 8 * 1024 * 1024 {
         return false;
     }

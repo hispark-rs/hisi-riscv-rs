@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + 可复现 SVD→PAC 已修；剩 flashboot） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + **flashboot 整改** + 可复现 SVD→PAC 已修 —— 正确性项全部落地；真实 secure-boot 验签按冻结项复用原厂） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -109,7 +109,9 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 >     `DmaChannelConfig::mem_to_peripheral`/`peripheral_to_mem` 接入 `configure_channel` 的 flow-control/握手字段。
 >
 > 注：1–3、5、7、8 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁；GPIO pull 是上拉电阻、QEMU 数字引脚网不建模）；
-> 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机；9 是 host 逻辑单测（非硬件）。其余阶段 2 项目（DMA 请求 ID/接线、flashboot）仍待做。
+> 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机；9 是 host 逻辑单测（非硬件）。**阶段 2 正确性项已全部落地**
+> （死代码、I2C 超时、reset、GPIO pull、host 单测、trap/向量布局、DMA 请求 ID、flashboot 整改）；唯一显式不做的是
+> flashboot 真实 secure-boot 验签（冻结项，复用原厂）。下一步是连接性北极星（阶段 3 blob 链接尖刺 → 4 porting/HCC → 5 demo）。
 
 **死代码清理（删）✅ 已完成（2026-06-01）**
 - ✅ `clock.rs`：删除 `ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者；驱动依赖复位默认开）。
@@ -154,8 +156,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   `riscv` 改 riscv32-only 依赖;`lib.rs` 改 `#![cfg_attr(not(test), no_std)]` + dev-dep `critical-section/std`。
   `cargo test --target x86_64` 现真正编译并跑通 **77 个单测**;CI 新增 `host-test` job（stable + x86_64）。
   注:这是 host 逻辑单测,非硅上验证（仍属阶段 1 门禁;用对照 C 驱动序列替换恒真单测见阶段 5 示例）。
-- **flashboot**（若继续维护）：`CodeInfo`/`KeyArea` 按 `secure_verify_boot.h` 重生成；A/B 用分区表/升级配置
-  而非误用 `0x40000024`。否则保持实验性、不投入。
+- ✅ **flashboot 整改（已修 2026-06-01）**：`CodeInfo`/`KeyArea` 按 `secure_verify_boot.h`(ECC256) 重排
+  （`code_area_len`@+0x24 / `code_area_hash`@+0x28 偏移修正 + `const` 尺寸断言锁定 0x100/0x200/0x300）；
+  删除 `0x40000024` 的 A/B 误用 → 单镜像启动，并如实注明真实 A/B = upg run-region(magic `0x70746C6C`)+分区表
+  （`@0x200380`）、`0x40000024`=bootloader 自恢复标志；`verify_sha256`→`verify_image_integrity` 如实标注
+  "仅完整性、非真实性"；flashboot 纳入 CI clippy 门禁（不再 `--exclude`）。对抗式评审：layout ok、honesty
+  ok（修了 README 一处过时声明）。**真实 ECC/SM2 签名验签**保持冻结、生产复用原厂 flashboot（不在实验件投入）。
 
 **PAC/SVD 流水线**
 - ✅ **可复现生成脚本（已完成 2026-05-31）**：`ws63-svd/regen.sh` + `postprocess.py`——pin `svd2rust@0.37.1`/`form@0.13.0`，
