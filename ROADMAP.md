@@ -24,7 +24,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
 | 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + **flashboot 整改** + 可复现 SVD→PAC 已修 —— 正确性项全部落地；真实 secure-boot 验签按冻结项复用原厂） |
-| 3 | 链接/blob 尖刺 | 计划 |
+| 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
 | 6 | async（embassy） | 计划 |
@@ -181,10 +181,23 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ---
 
-## 阶段 3 — 链接/blob 尖刺
+## 阶段 3 — 链接/blob 尖刺 ✅ 已完成（2026-06-02）
 
 先消除最大未知：写最小 crate 链接 `ws63-RF/lib/libwifi_rom_data.a`（仅 3KB）并解析其外部符号，
 **证明工具链/链接路径走得通**。ABI 已就绪：仓库已用 `ws63` 硬浮点工具链（`riscv32imfc`/`ilp32f`），与 blob ABI 一致。
+
+**已交付**：`ws63-examples/wifi_blob_link` 用 `--whole-archive` **全量**静态链接该 blob（确认其 `rv32imfc`/`ilp32f`
+与工具链一致），13 个配置全局全部进入镜像（配置 blob 须整体在位——厂商 ROM 按地址读全部），并解析其全部 3 个
+外部符号：2 个数据符号在 Rust 里打桩（`g_dmac_alg_main`/`g_mac_res_etc`），链接器符号 `__wifi_pkt_ram_begin__`
+经 build.rs `--defsym=0xA00000`（C SDK `.wifi_pkt_ram` 基址）提供。**ws63-qemu 实跑 13/13 通过**：所有配置全局
+== 厂商初值、`g_mem_start_addr_cfg[2]` == `__wifi_pkt_ram_begin__+4`（链接器符号重定位）、`g_dmac_algorithm_main`/
+`g_mac_res` == 打桩地址（数据符号重定位）；接入 `smoke-test`。
+
+**已证伪的未知**：ABI 匹配、厂商静态归档可链入 Rust 镜像、`.data` 重定位（数据符号 + 链接器符号两类）可解析、
+`--whole-archive` 可把整个配置 blob 纳入。**本尖刺不涉及**（留阶段 4）：大型**代码** blob（`libwifi_driver_dmac.a`
+~629KB 带真实 `.text`、`libbt_host.a` ~1.1MB）的链接与符号闭合；用真实驱动库（而非桩）满足 `g_dmac_alg_main`/
+`g_mac_res_etc` 的 ABI；`ws63-rt` 真实的 `.wifi_pkt_ram` NOLOAD 区（此处 `__wifi_pkt_ram_begin__` 仅是裸 `--defsym`）。
+**Wi-Fi 栈未运行**——这是链接/重定位路径证明，不是连接性。
 
 ---
 
@@ -192,6 +205,14 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 实现 `ws63-RF/include/port/` 的最小桩（`port_log`/`port_osal`/`port_oal`）+ 与 Wi-Fi/BT 协处理器的
 共享内存 HCC IPC，架在现有 DMA/UART 驱动之上。这是到产品**最大、最高风险**的一块。
+
+承接阶段 3 尖刺，需显式完成（评审补充）：
+- **链接大型代码 blob + 符号闭合**：把 `libwifi_driver_dmac.a`（~629KB，含真实 `.text`）链入，验证
+  `libwifi_rom_data.a` 引用的 `g_dmac_alg_main`/`g_mac_res_etc` 由真实驱动库以正确 ABI 定义（替换尖刺里的桩），
+  并枚举/解析尚未发现的其余外部符号（逐个用 `nm` 核对 defined/undefined 闭合）。
+- **真实 `.wifi_pkt_ram` NOLOAD 区**：把尖刺里的裸 `--defsym=__wifi_pkt_ram_begin__=0xA00000` 升级为 `ws63-rt`
+  链接脚本里**保留的** `.wifi_pkt_ram` NOLOAD 段（C SDK `linker.lds`：0xA00000、0xC000=48KB，含 `__wifi_pkt_ram_end__`），
+  否则 Wi-Fi ROM 初始化在运行期会写入未保留区域而失败。
 
 ---
 

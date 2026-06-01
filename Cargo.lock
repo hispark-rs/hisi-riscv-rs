@@ -659,6 +659,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wifi_blob_link"
+version = "0.1.0"
+dependencies = [
+ "riscv",
+ "ws63-hal",
+ "ws63-pac",
+ "ws63-rt",
+]
+
+[[package]]
 name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
