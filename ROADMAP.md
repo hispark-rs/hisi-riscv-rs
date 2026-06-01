@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + 可复现 SVD→PAC 已修；剩 trap/向量布局、host 单测、DMA 请求 ID/接线、flashboot） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + 可复现 SVD→PAC 已修；剩 trap/向量布局、DMA 请求 ID/接线、flashboot） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -96,9 +96,11 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 >    `DriverMode`/`Blocking`/`Async` marker、`DmaEligible`/`DmaChannelFor` 绑定 trait、safety.rs 的恒真计数断言；
 >    保留 `Peripheral` enum + `cken_info` 门控图 + `PERIPHERAL_COUNT` 及 MMIO 地址范围/算术溢出断言。
 > 8. **GPIO pull**（2026-06-01）：`init_input` 经 IO_CONFIG pad 寄存器落地 `InputConfig.pull`；新增 `InterruptTrigger`。
+> 9. **host 单测真正跑起来**（2026-06-01）：cfg 门控 `ws63-hal` 与 `ws63-pac` 的 riscv 耦合，使库能为 x86 编译；
+>    `cargo test --target x86_64` 跑通 **77 个单测**，CI 新增 `host-test` job。
 >
 > 注：1–3、5、7、8 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁；GPIO pull 是上拉电阻、QEMU 数字引脚网不建模）；
-> 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机。其余阶段 2 项目（safety.rs 措辞、host 单测、flashboot）仍待做。
+> 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机；9 是 host 逻辑单测（非硬件）。其余阶段 2 项目（DMA 请求 ID/接线、flashboot）仍待做。
 
 **死代码清理（删）✅ 已完成（2026-06-01）**
 - ✅ `clock.rs`：删除 `ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者；驱动依赖复位默认开）。
@@ -136,8 +138,13 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
     启停 `CTRL_8`、FIFO 读 `CTRL_9`、空判定 `CTRL_1.rne`、`CFG_*` @ 0xDC..0xEC，对齐 `hal_adc_v154`。
   - 偏移已在生成的 PAC 中逐一核验；纯解析逻辑有 proptest。**未上板**。
 - **safety.rs**：删恒真断言并去掉"formal verification"措辞。
-- **host 单测**：把 `ws63-hal` 的 RISC-V 内联汇编（如 `interrupt.rs` 的自定义 CSR 访问）用 `#[cfg(target_arch=…)]`
-  门控，使库能为 host 编译，从而真正运行单测（现状：库含 riscv asm，host 根本编不过，旧 CI 用 `|| echo` 掩盖）。
+- ✅ **host 单测**（已修 2026-06-01）：`ws63-hal` 的 riscv CSR 内联汇编（`interrupt.rs`）用
+  `#[cfg(target_arch="riscv32")]` 门控（host 得 no-op 桩）。更深的阻塞在 `ws63-pac`——它无条件
+  `pub use riscv::interrupt::*` 且对 `ExternalInterrupt` 打 `#[riscv::pac_enum]`,而 riscv 0.13 不能为 x86 构建。
+  经 `ws63-svd/postprocess.py` 把这些 riscv 耦合 cfg 门控到 riscv32（host 得纯 enum,HAL 仅用 `as u16`）,
+  `riscv` 改 riscv32-only 依赖;`lib.rs` 改 `#![cfg_attr(not(test), no_std)]` + dev-dep `critical-section/std`。
+  `cargo test --target x86_64` 现真正编译并跑通 **77 个单测**;CI 新增 `host-test` job（stable + x86_64）。
+  注:这是 host 逻辑单测,非硅上验证（仍属阶段 1 门禁;用对照 C 驱动序列替换恒真单测见阶段 5 示例）。
 - **flashboot**（若继续维护）：`CodeInfo`/`KeyArea` 按 `secure_verify_boot.h` 重生成；A/B 用分区表/升级配置
   而非误用 `0x40000024`。否则保持实验性、不投入。
 

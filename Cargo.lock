@@ -777,7 +777,6 @@ dependencies = [
  "nb",
  "portable-atomic",
  "proptest",
- "riscv",
  "ws63-pac",
 ]
 

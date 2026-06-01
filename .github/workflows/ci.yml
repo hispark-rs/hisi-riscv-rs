@@ -115,11 +115,23 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  # NOTE: there is intentionally no host-test job. ws63-hal contains raw RISC-V
-  # inline asm (e.g. `asm!("ebreak")` in system.rs), so the crate cannot compile
-  # for a host (x86) target, and the previous host-test job masked that with
-  # `|| echo`. Enabling genuine host unit tests requires cfg-gating the riscv asm
-  # behind `#[cfg(target_arch = "riscv32")]` — tracked in ROADMAP phase 2.
+  # ── Host unit tests ─────────────────────────────────────────────
+  # ws63-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
+  # ws63-pac's riscv coupling is gated too, so the crate compiles for x86 and the
+  # pure-logic unit tests (encoding, tick math, proptests) actually run. Uses the
+  # stable toolchain on the host target (RUSTUP_TOOLCHAIN overrides the ws63 pin in
+  # rust-toolchain.toml; --target overrides the riscv32 default in .cargo/config.toml).
+  host-test:
+    name: Host unit tests
+    runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: stable
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Run host unit tests (x86_64)
+        run: cargo test -p ws63-hal --target x86_64-unknown-linux-gnu
 
   # ── Dependency audit (advisory) ─────────────────────────────────
   audit:
