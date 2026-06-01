@@ -89,9 +89,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 > 3. **PAC/SVD 流水线**（2026-05-31）：`ws63-svd/regen.sh` 可复现生成 + 停止手补 lib.rs（幂等、build+clippy 门禁）。
 > 4. **中断子系统重写**（2026-06-01）：`interrupt.rs` 由 PLIC 虚构改为 WS63 真实模型（见下「正确性修复」首条），
 >    并经 ws63-qemu 的 `timer_irq`/`gpio_irq` 端到端验证——这是首个**有软件在环验证信号**的正确性修复。
+> 5. **I2C 超时**（2026-06-01）：`i2c.rs` 全部无界忙等改为有界 `wait_until` → `I2cError::Timeout`（对齐 SPI）。
+> 6. **system reset**（2026-06-01）：`software_reset` 触发 `GLB_CTL_M(0x40002110)` bit2 全芯片复位、`reset_reason`
+>    解码 `SYS_RST_RECORD_0(0x400000A0)`（WDT/软件/上电），经 ws63-qemu 新增复位模型 + `reset_demo` 往返验证。
 >
-> 注：1–3 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）；4 已在 QEMU 验证投递闭环但仍非真机。
-> 其余阶段 2 项目（死代码、I2C 超时、reset、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
+> 注：1–3、5 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）；4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机。
+> 其余阶段 2 项目（死代码、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
 
 **死代码清理（删）**
 - `clock.rs`：`ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者）。
@@ -111,10 +114,13 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   改用此 API，经 ws63-qemu `smoke-test.sh` 端到端验证投递闭环。**仍未上板**（属阶段 1 门禁）。
 - ✅ **SPI**（严重，已修 2026-05-31）：`ctra.trsm` 由 `3`(EEPROM-Read) 改 `0`(TX&RX)；SCKDV 分频去掉
   多余的 `/2`/`-1`（曾产出 ~2× SCK）；全部忙等改有界 `wait_until` → `SpiError::Timeout`。
-- **I2C 超时**（高，剩余）：`i2c.rs` 仍有多处无界 `while !…{}`（行 59/80/130/153…）；加有界计数并接入既有
-  `I2cError::Timeout`。（SPI 侧已完成，见上。）
-- **system reset**（高）：`software_reset` 用 `GLB_CTL_M(0x40002110)`、`reset_reason` 解码 `SYS_RST_RECORD(0x400000A0)`，
-  未实现前用 `todo!()` 而非返回似是而非的假值。
+- ✅ **I2C 超时**（高，已修 2026-06-01）：`i2c.rs` 的全部无界 `while !…{}`（busy / tx-ack / rx / stop 等待）改为
+  有界 `wait_until` → `I2cError::Timeout`（与 SPI 同一模式，`I2C_WAIT_LOOPS`）。卡死 / 缺席的从设备不再死锁内核。
+- ✅ **system reset**（高，已修 2026-06-01）：`system.rs` 删除 `software_reset` 的占位 `ebreak` 与 `reset_reason`
+  恒返回 `PowerOn` 的假值，按 fbb_ws63 `reboot_porting.c` 实现——`software_reset` 置 `GLB_CTL_M(0x40002110)` bit2
+  触发全芯片复位；`reset_reason` 读 `SYS_RST_RECORD_0(0x400000A0)` 解码 WDT(bit0)/软件(bit1)/上电(bit3) 并经
+  `SYS_DIAG_CLR_1(0x400000A4)` 清位。ws63-qemu 新增对应复位模型，`reset_demo` 示例端到端验证往返
+  （冷启动 → `software_reset` → 重启 → `reset_reason`=Software）。
 - **GPIO pull**（中）：`InputConfig.pull` 经 IO_CONFIG 落地，或移除字段；中断加 trigger 类型。
 - ✅ **efuse/lsadc**（高，已修 2026-05-31）：通过改 SVD + 重生成 PAC + 重写 HAL 落地——
   - eFuse：控制块 base+0x30、16 位模式魔数（`0x5A5A` 读 / `0xA5A5` 写）、0x800 数据窗口（128 字），
@@ -123,7 +129,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
     启停 `CTRL_8`、FIFO 读 `CTRL_9`、空判定 `CTRL_1.rne`、`CFG_*` @ 0xDC..0xEC，对齐 `hal_adc_v154`。
   - 偏移已在生成的 PAC 中逐一核验；纯解析逻辑有 proptest。**未上板**。
 - **safety.rs**：删恒真断言并去掉"formal verification"措辞。
-- **host 单测**：把 `ws63-hal` 的 RISC-V 内联汇编（如 `system.rs` 的 `ebreak`）用 `#[cfg(target_arch=…)]`
+- **host 单测**：把 `ws63-hal` 的 RISC-V 内联汇编（如 `interrupt.rs` 的自定义 CSR 访问）用 `#[cfg(target_arch=…)]`
   门控，使库能为 host 编译，从而真正运行单测（现状：库含 riscv asm，host 根本编不过，旧 CI 用 `|| echo` 掩盖）。
 - **flashboot**（若继续维护）：`CodeInfo`/`KeyArea` 按 `secure_verify_boot.h` 重生成；A/B 用分区表/升级配置
   而非误用 `0x40000024`。否则保持实验性、不投入。
