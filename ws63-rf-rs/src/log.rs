@@ -54,6 +54,13 @@ pub extern "C" fn log_event_wifi_print2(fmt: *const c_char) -> c_int {
     emit_line(b"[wifi:I] ", fmt);
     0
 }
+/// WiFi diagnostic print, level 3 = debug. (Declared by `port_log.h` only as
+/// 0/1/2/4, but `libwifi_driver_dmac.a` also references print3 — verified by nm.)
+#[unsafe(no_mangle)]
+pub extern "C" fn log_event_wifi_print3(fmt: *const c_char) -> c_int {
+    emit_line(b"[wifi:D] ", fmt);
+    0
+}
 /// WiFi diagnostic print, level 4 = verbose/trace.
 #[unsafe(no_mangle)]
 pub extern "C" fn log_event_wifi_print4(fmt: *const c_char) -> c_int {
