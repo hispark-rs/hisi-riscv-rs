@@ -135,10 +135,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
+      # rust-toolchain.toml pins ws63, so the cargo shim refuses to run until it's
+      # installed (even though cargo-audit only parses Cargo.lock).
+      - name: Install ws63 toolchain
+        run: bash .github/scripts/install-toolchain.sh
       # rustsec/audit-check has no Node 24 release; use cargo-audit directly via
       # taiki-e/install-action (composite, Node-24 era) which fetches a prebuilt
-      # binary. cargo-audit just parses Cargo.lock + the advisory DB, so it needs
-      # no toolchain build.
+      # binary. cargo-audit just parses Cargo.lock + the advisory DB.
       - name: Install cargo-audit
         uses: taiki-e/install-action@v2
         with:
