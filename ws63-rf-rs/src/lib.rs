@@ -57,6 +57,7 @@ pub mod ipc;
 pub mod log;
 pub mod oal;
 pub mod osal;
+pub mod sched;
 pub mod uapi;
 
 // ── Return codes from the ws63-RF OSAL contract (port_osal.h) ──────────────

@@ -99,58 +99,99 @@ pub extern "C" fn osal_irq_disable(_irq: u32) -> c_int {
     OSAL_OK
 }
 
-// ── Threads (STUB — needs a task scheduler, phase 4/6) ──────────────────────
+// ── Threads (backed by the real scheduler in `crate::sched`) ────────────────
 
-type KthreadFunc = Option<unsafe extern "C" fn(*mut c_void) -> *mut c_void>;
+type KthreadFunc = Option<extern "C" fn(*mut c_void) -> *mut c_void>;
 
-/// STUB: returns NULL (no scheduler). The Wi-Fi worker thread cannot run until
-/// ws63-rs gains a task scheduler (ROADMAP phase 6 / an RTOS).
+/// Spawn a kernel thread on the cooperative scheduler. The handle encodes the
+/// task slot (`slot + 1`, so non-null). Returns NULL on failure.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_create(
-    _func: KthreadFunc,
-    _arg: *mut c_void,
-    _stack_size: usize,
+    func: KthreadFunc,
+    arg: *mut c_void,
+    stack_size: usize,
     _priority: c_int,
     _name: *const c_char,
 ) -> *mut c_void {
-    crate::log::log_event_wifi_print0(c"osal_kthread_create: no scheduler (stub)".as_ptr());
-    core::ptr::null_mut()
+    match func {
+        Some(f) => match crate::sched::spawn(f, arg, stack_size) {
+            Some(slot) => (slot + 1) as *mut c_void,
+            None => core::ptr::null_mut(),
+        },
+        None => core::ptr::null_mut(),
+    }
 }
-/// STUB (see [`osal_kthread_create`]).
+/// Destroy a thread. NO-OP for now: cleanly killing an arbitrary task (freeing
+/// the stack it may be running on) needs deferred reclamation — TODO. The WiFi
+/// worker threads are long-lived, so this is acceptable for the scaffold.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_destroy(_thread: *mut c_void) -> c_int {
-    OSAL_NOK
+    OSAL_OK
 }
-/// STUB.
+/// Prevent preemption. The scheduler is cooperative (no time-slicing yet), so a
+/// task already runs to its next yield/block — this is a no-op.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_lock(_thread: *mut c_void) -> c_int {
-    OSAL_NOK
+    OSAL_OK
 }
-/// STUB.
+/// Re-allow preemption (see [`osal_kthread_lock`]).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_unlock(_thread: *mut c_void) -> c_int {
-    OSAL_NOK
+    OSAL_OK
 }
-/// STUB.
+/// Set thread priority. NO-OP: the cooperative scheduler is round-robin (no
+/// priorities yet) — TODO when preemption lands.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_set_priority(_thread: *mut c_void, _priority: c_int) -> c_int {
-    OSAL_NOK
+    OSAL_OK
 }
 
-// ── Wait/signal (STUB — needs scheduler-backed wait objects, phase 4/6) ─────
+/// Sleep the current task for `ms` milliseconds (scheduler-backed).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_msleep(ms: u32) {
+    crate::sched::sleep_ms(ms);
+}
 
-/// STUB: returns NULL (no scheduler to back a wait object).
+/// Current task id ("pid"/"tid") — the scheduler slot index.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_get_current_pid() -> c_int {
+    crate::sched::current_id() as c_int
+}
+/// Current task id (alias of [`osal_get_current_pid`]).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_get_current_tid() -> c_int {
+    crate::sched::current_id() as c_int
+}
+
+// ── Wait objects (scheduler-backed counting semaphore, initial count 0) ─────
+
+/// Create a wait object (a count-0 semaphore on the heap). NULL on OOM.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_wait_init() -> *mut c_void {
-    core::ptr::null_mut()
+    let p = crate::alloc::osal_kmalloc(core::mem::size_of::<crate::sched::Semaphore>())
+        as *mut crate::sched::Semaphore;
+    if !p.is_null() {
+        // SAFETY: freshly allocated, size_of::<Semaphore>() bytes, 8-aligned.
+        unsafe { p.write(crate::sched::Semaphore::new(0)) };
+    }
+    p as *mut c_void
 }
-/// STUB.
+/// Destroy a wait object.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_wait_destroy(_wait: *mut c_void) -> c_int {
-    OSAL_NOK
+pub extern "C" fn osal_wait_destroy(wait: *mut c_void) -> c_int {
+    if wait.is_null() {
+        return OSAL_NOK;
+    }
+    crate::alloc::osal_kfree(wait);
+    OSAL_OK
 }
-/// STUB.
+/// Wake a task waiting on the object.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_wait_wakeup(_wait: *mut c_void) -> c_int {
-    OSAL_NOK
+pub extern "C" fn osal_wait_wakeup(wait: *mut c_void) -> c_int {
+    if wait.is_null() {
+        return OSAL_NOK;
+    }
+    // SAFETY: `wait` came from osal_wait_init.
+    unsafe { (*(wait as *mut crate::sched::Semaphore)).up() };
+    OSAL_OK
 }

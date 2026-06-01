@@ -500,6 +500,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sched_demo"
+version = "0.1.0"
+dependencies = [
+ "portable-atomic",
+ "riscv",
+ "ws63-hal",
+ "ws63-pac",
+ "ws63-rf-rs",
+ "ws63-rt",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
