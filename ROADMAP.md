@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 部分完成（SPI/eFuse/LSADC 寄存器 + **中断子系统重写** + 可复现 SVD→PAC 流水线已修；死代码/I2C 超时/复位等待做） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + 可复现 SVD→PAC 已修；剩 trap/向量布局、host 单测、DMA 请求 ID/接线、flashboot） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -92,16 +92,20 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 > 5. **I2C 超时**（2026-06-01）：`i2c.rs` 全部无界忙等改为有界 `wait_until` → `I2cError::Timeout`（对齐 SPI）。
 > 6. **system reset**（2026-06-01）：`software_reset` 触发 `GLB_CTL_M(0x40002110)` bit2 全芯片复位、`reset_reason`
 >    解码 `SYS_RST_RECORD_0(0x400000A0)`（WDT/软件/上电），经 ws63-qemu 新增复位模型 + `reset_demo` 往返验证。
+> 7. **死代码清理**（2026-06-01）：删除 `ClockControl`/`PeripheralGuard`/`REF_COUNTS` RAII 时钟守卫、
+>    `DriverMode`/`Blocking`/`Async` marker、`DmaEligible`/`DmaChannelFor` 绑定 trait、safety.rs 的恒真计数断言；
+>    保留 `Peripheral` enum + `cken_info` 门控图 + `PERIPHERAL_COUNT` 及 MMIO 地址范围/算术溢出断言。
+> 8. **GPIO pull**（2026-06-01）：`init_input` 经 IO_CONFIG pad 寄存器落地 `InputConfig.pull`；新增 `InterruptTrigger`。
 >
-> 注：1–3、5 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）；4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机。
-> 其余阶段 2 项目（死代码、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
+> 注：1–3、5、7、8 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁；GPIO pull 是上拉电阻、QEMU 数字引脚网不建模）；
+> 4、6 已在 QEMU 验证（投递闭环 / 复位往返）但仍非真机。其余阶段 2 项目（safety.rs 措辞、host 单测、flashboot）仍待做。
 
-**死代码清理（删）**
-- `clock.rs`：`ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者）。
-- `private.rs`：`DriverMode` / `Blocking` / `Async`（关联类型恒等，零引用）。
-- `dma.rs`：`DmaEligible` / `DmaChannelFor`（无 impl、无驱动接线）。
-- `safety.rs`：9 条恒真断言（行 56,67-68,72-75,89-91）。
-- **保留哨兵**：`Peripheral` enum + `PERIPHERAL_COUNT`、真正的跨模块漂移断言（safety.rs 37-44,79-85）。
+**死代码清理（删）✅ 已完成（2026-06-01）**
+- ✅ `clock.rs`：删除 `ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者；驱动依赖复位默认开）。
+- ✅ `private.rs`：删除 `DriverMode` / `Blocking` / `Async`（关联类型恒等，零引用）。
+- ✅ `dma.rs`：删除 `DmaEligible` / `DmaChannelFor`（前者仅 impl 未调用、后者无 impl 无接线）。
+- ✅ `safety.rs`：删除 10 条 `const X == 字面量` 恒真计数断言 + `verify_peripheral_count`，去掉"formal verification"措辞。
+- ✅ **保留哨兵**：`Peripheral` enum + `cken_info` 门控图 + `PERIPHERAL_COUNT`、MMIO 地址范围断言（37-44）与定时器算术溢出断言（79-85）、`PeripheralIndex`/`GpioPinIndex`。
 
 **正确性修复**
 - ✅ **中断子系统**（严重，已修 2026-06-01）：`interrupt.rs` 删除"PLIC"虚构，按 fbb_ws63
@@ -121,7 +125,10 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   触发全芯片复位；`reset_reason` 读 `SYS_RST_RECORD_0(0x400000A0)` 解码 WDT(bit0)/软件(bit1)/上电(bit3) 并经
   `SYS_DIAG_CLR_1(0x400000A4)` 清位。ws63-qemu 新增对应复位模型，`reset_demo` 示例端到端验证往返
   （冷启动 → `software_reset` → 重启 → `reset_reason`=Software）。
-- **GPIO pull**（中）：`InputConfig.pull` 经 IO_CONFIG 落地，或移除字段；中断加 trigger 类型。
+- ✅ **GPIO pull**（中，已修 2026-06-01）：`init_input` 不再静默忽略 `InputConfig.pull`——经 IO_CONFIG pad 控制寄存器
+  （`pad_gpio_NN_ctrl` @ IO_CONFIG+0x800+N*4，PE=bit9/PS=bit10）读-改-写落地，保留 drive/Schmitt/IE 位（pad 仅 0..=14 有，
+  对齐 `io_config::build_pad_ctrl` 编码）。新增 `InterruptTrigger`（上升/下降沿、高/低电平）+ `Input::set_interrupt_trigger`
+  写 `GPIO_INT_TYPE`/`GPIO_INT_POLARITY`。上拉电阻在 QEMU 数字引脚网不可观测，故为静态修复。
 - ✅ **efuse/lsadc**（高，已修 2026-05-31）：通过改 SVD + 重生成 PAC + 重写 HAL 落地——
   - eFuse：控制块 base+0x30、16 位模式魔数（`0x5A5A` 读 / `0xA5A5` 写）、0x800 数据窗口（128 字），
     `efuse.rs` 改为字节读写（窗口索引 `byte/2`、奇偶字节抽取），对齐 `hal_efuse_v151.c`。
