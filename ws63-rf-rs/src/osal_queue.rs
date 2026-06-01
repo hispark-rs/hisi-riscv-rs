@@ -2,7 +2,7 @@
 //!
 //! C SDK `osal_msg_queue.h` / `osal_event.h` (deeper OSAL, beyond
 //! `ws63-RF/port_*.h`). A queue is a heap ring buffer + a counting
-//! [`Semaphore`] for blocking reads; an event group is a bitmask + a semaphore
+//! `Semaphore` for blocking reads; an event group is a bitmask + a semaphore
 //! the reader rechecks. Handles: the queue id is the heap object address; the
 //! event handle field holds it.
 

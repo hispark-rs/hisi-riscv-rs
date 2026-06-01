@@ -3,7 +3,7 @@
 //! These are part of the *deeper* C SDK OSAL the WiFi blob uses (NOT the
 //! documented `ws63-RF/port_*.h` contract). Signatures + the `{ void* }` handle
 //! structs are from fbb_ws63 `kernel/osal/include/semaphore/osal_semaphore.h`
-//! and `.../lock/osal_mutex.h`. Each wraps a heap [`crate::sched::Semaphore`]
+//! and `.../lock/osal_mutex.h`. Each wraps a heap `crate::sched::Semaphore`
 //! (a mutex is a binary semaphore initialised available).
 
 // These are C-ABI entry points: the vendor blob passes valid `osal_semaphore*`
@@ -27,7 +27,7 @@ pub struct OsalMutex {
     mutex: *mut c_void,
 }
 
-/// Allocate a heap [`Semaphore`] with `count`; returns its address (null on OOM).
+/// Allocate a heap `Semaphore` with `count`; returns its address (null on OOM).
 fn new_sem(count: i32) -> *mut c_void {
     let p = crate::alloc::osal_kmalloc(core::mem::size_of::<Semaphore>()) as *mut Semaphore;
     if !p.is_null() {

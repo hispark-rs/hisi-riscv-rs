@@ -14,33 +14,49 @@
 //! It does **not** put any Rust into `ws63-RF` (that delivery stays
 //! language-neutral so it can be ported to any runtime).
 //!
-//! ## Status — this is a porting-layer scaffold, NOT a working Wi-Fi stack
+//! ## Status — symbol closure ACHIEVED for Wi-Fi init; runnable image is HIL
 //!
 //! Implemented for real (usable today):
-//! - **Memory** — `osal_kmalloc`/`osal_kfree` over a real heap ([`alloc`]).
-//! - **Logging** — `osal_printk`, `log_event_wifi_print{0,1,2,4}` to a settable
-//!   sink ([`set_log_sink`]); `memset_s`/`memcpy_s` (real, bounds-checked).
-//! - **Time** — `uapi_systick_get_ms`, `osal_udelay` via [`ws63_hal`] timers.
-//! - **IRQ** — `osal_irq_enable/disable/lock/restore` via [`ws63_hal::interrupt`].
-//! - **OAL pool config** — `oal_mem_*` over the 48 KB Wi-Fi packet RAM.
-//! - **Globals** — `g_dmac_alg_main` / `g_mac_res_etc` (referenced by the ROM
-//!   data blob; not defined by any vendor lib — provided here).
+//! - **Memory** — `osal_kmalloc`/`osal_kfree` over a real heap ([`alloc`]);
+//!   `malloc`/`free`/`memalign`/`oal_mem_*` back onto it ([`libc`], [`oal`]).
+//! - **Scheduler** — a real cooperative scheduler (`sched`, internal) backs
+//!   `osal_kthread_*`, the counting `Semaphore` behind
+//!   `osal_sem_*`/`osal_mutex_*`/`osal_wait_*`, message queues + event groups
+//!   ([`osal_queue`]) and **timed** blocking (`*_timeout` via deadlines).
+//! - **Sync** — spinlocks + atomics ([`osal_sync`]); IRQ lock/restore (real
+//!   `mstatus` CSR) + `ArchIntLock`/`ArchIntRestore` ([`osal`], [`litos`]).
+//! - **Logging / securec** — `osal_printk`, `log_event_*`, `memset_s`/`memcpy_s`
+//!   ([`log`]); string/time leaves ([`osal_ext`]).
+//! - **Adaptation** — the full `osal_adapt_*` shim ([`osal_adapt`]).
+//! - **Globals** — `g_dmac_alg_main` / `g_mac_res_etc` ([`globals`]).
 //!
-//! Typed, documented **stubs** (return error / `OSAL_NOK`, log "unimplemented"):
-//! - Threads/wait (`osal_kthread_*`, `osal_wait_*`) — need a scheduler/RTOS.
-//! - Framework + IPC (`frw_*`, `hcc_*`, `wlan_*`) — need the host↔device-MAC
-//!   message framework (single-core shared-memory IPC) and the descriptor rings.
+//! Seams + scaffolds (defined, documented, not a working data path yet):
+//! - **netif/lwip** ([`netif`]) — `pbuf_*` / `driverif_input` / `netifapi_*` /
+//!   `tcpip_callback`: the smoltcp integration seam (RX is dropped+counted; the
+//!   pbuf layout must be reconciled with the WiFi build's `lwipopts.h`).
+//! - **FRW/HCC** ([`ipc`]) — the host↔device message framework + transport.
+//! - **eFuse/TRNG/NV** ([`uapi`]) — scaffold values; a HW run needs real ones.
 //!
-//! **Why connectivity does NOT yet work** (but it does NOT need radio
-//! reverse-engineering): `libwifi_driver_dmac.a` has ~1080 undefined symbols,
-//! of which ~422 are WS63 **mask-ROM** functions (`fe_*`/`hal_machw_*`/… —
-//! addresses in `ws63-RF/rom/ws63_acore_rom.lds`) and ~618 are defined by other
-//! vendor Wi-Fi `.a` libs the ws63-RF extraction omitted (`libwifi_driver_hmac`
-//! /`_tcm`/`_btcoex`/`_alg_*`/`libwpa_supplicant` — see `ws63-RF/LIB_EXTRACT.md`).
-//! With those, the surface closes to ~40 symbols — the porting contract THIS
-//! crate implements + compiler-rt. Still genuinely needed: a task scheduler
-//! (FRW worker thread / `osal_kthread_*`), a real `.wifi_pkt_ram` region, and
-//! vendoring the omitted libs. See `README.md` and `ROADMAP.md` phase 4.
+//! **What "symbol closure" means here.** The vendor blobs
+//! (`libwifi_driver_{hmac,dmac,tcm}.a`, `libbg_common.a`, `libwifi_alg_*.a`,
+//! `libwifi_rom_data.a`) link as one relocatable object against this crate, the
+//! WS63 mask-ROM symbol table (`ws63-RF/rom/ws63_acore_rom.lds`) and compiler-rt
+//! with **zero duplicate symbols**, and a `--gc-sections` link rooted at
+//! `uapi_wifi_init` leaves a **residual of just two symbols**
+//! (`__wifi_pkt_ram_begin__`/`__wifi_pkt_ram_end__` — linker `--defsym` region
+//! bounds, supplied by the firmware link). Reproduce with
+//! `ws63-rf-rs/tools/mac-link-residual.sh`. The earlier "~96 missing" figure was
+//! a whole-archive upper bound dominated by **off-path** BT-coexistence and
+//! alternate-OS-adapter code that Wi-Fi init never reaches (0 BT symbols on the
+//! reachability path).
+//!
+//! **Why a runnable Wi-Fi image is still hardware-in-the-loop:** (1) the ROM
+//! symbols are **real-silicon addresses** (an emulator without a populated mask
+//! ROM cannot execute them); (2) the HiSilicon-toolchain blobs carry **custom
+//! relocations** stock `lld` cannot resolve to absolute addresses (the residual
+//! probe uses a relocatable link, which defers them). The remaining software
+//! work is the data path: the FRW worker thread + HCC transport ([`ipc`]) and
+//! the netif→smoltcp bridge ([`netif`]). See `README.md` and `ROADMAP.md`.
 //!
 //! [`ws63-RF`]: https://github.com/sanchuanhehe/ws63-RF
 
@@ -55,7 +71,9 @@ pub mod error;
 pub mod globals;
 pub mod ipc;
 pub mod libc;
+pub mod litos;
 pub mod log;
+pub mod netif;
 pub mod oal;
 pub mod osal;
 pub mod osal_adapt;

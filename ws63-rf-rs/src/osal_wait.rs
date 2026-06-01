@@ -3,7 +3,7 @@
 //! Mirrors `osal_wait { void *wait; }` and the condition-wait API the WiFi
 //! driver uses: a task sleeps in [`osal_wait_interruptible`] until a predicate
 //! `func(param)` holds, woken by [`osal_wait_wakeup`] re-evaluating it. Backed
-//! by a scheduler [`Semaphore`](crate::sched::Semaphore): `wakeup` releases it,
+//! by a scheduler `Semaphore`: `wakeup` releases it,
 //! the waiter re-checks the predicate (classic condvar recheck loop).
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -12,7 +12,7 @@ use crate::sched::Semaphore;
 use crate::{OSAL_NOK, OSAL_OK};
 use core::ffi::{c_int, c_uint, c_void};
 
-/// Mirrors C `osal_wait { void *wait; }`. `.wait` holds a heap [`Semaphore`].
+/// Mirrors C `osal_wait { void *wait; }`. `.wait` holds a heap `Semaphore`.
 #[repr(C)]
 pub struct OsalWait {
     pub wait: *mut c_void,
