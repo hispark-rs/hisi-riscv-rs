@@ -49,7 +49,26 @@ fn main() -> ! {
         uart.write(0, b"\r\n");
     }
 
-    let ok = r == [5, 5, 3, 4];
+    // Also exercise the scheduler-backed OSAL message queue (write -> read).
+    let q = ws63_rf_rs::osal_queue_selftest();
+    uart.write(0, b"osal_msg_queue rx= 0x");
+    {
+        let mut hb = [0u8; 8];
+        let mut i = 0;
+        while i < 8 {
+            let nib = (q >> ((7 - i) * 4)) & 0xf;
+            hb[i] = if nib < 10 {
+                b'0' + nib as u8
+            } else {
+                b'a' + (nib - 10) as u8
+            };
+            i += 1;
+        }
+        uart.write(0, &hb);
+    }
+    uart.write(0, b"\r\n");
+
+    let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D;
     uart.write(
         0,
         if ok {

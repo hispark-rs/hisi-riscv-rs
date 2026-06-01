@@ -57,6 +57,8 @@ pub mod ipc;
 pub mod log;
 pub mod oal;
 pub mod osal;
+pub mod osal_ext;
+pub mod osal_queue;
 pub mod osal_sync;
 pub mod uapi;
 
@@ -68,7 +70,7 @@ mod selftest;
 /// Internal scheduler self-test hook (used by the `sched_selftest` example;
 /// NOT a public API). Hidden from docs.
 #[doc(hidden)]
-pub use selftest::sched_selftest;
+pub use selftest::{osal_queue_selftest, sched_selftest};
 
 // ── Return codes from the ws63-RF OSAL contract (port_osal.h) ──────────────
 /// OSAL success (`OSAL_OK`).

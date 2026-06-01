@@ -176,3 +176,144 @@ pub extern "C" fn osal_mutex_destroy(mutex: *mut OsalMutex) {
         unsafe { (*mutex).mutex = core::ptr::null_mut() };
     }
 }
+
+// ── Spinlocks (single hart → interrupt masking) ─────────────────────────────
+
+/// Mirrors C `osal_spinlock { void *lock; }`. On a single hart a spinlock is
+/// just interrupt masking; the saved IRQ state is stashed in the handle field.
+#[repr(C)]
+pub struct OsalSpinlock {
+    lock: *mut c_void,
+}
+
+/// Initialise a spinlock.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_lock_init(lock: *mut OsalSpinlock) -> c_int {
+    if lock.is_null() {
+        return OSAL_NOK;
+    }
+    unsafe { (*lock).lock = core::ptr::null_mut() };
+    OSAL_OK
+}
+/// Lock (disable interrupts; save prior state in the handle).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_lock(lock: *mut OsalSpinlock) {
+    let st = crate::osal::osal_irq_lock();
+    if !lock.is_null() {
+        unsafe { (*lock).lock = st as *mut c_void };
+    }
+}
+/// Unlock (restore the interrupt state saved by [`osal_spin_lock`]).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_unlock(lock: *mut OsalSpinlock) {
+    let st = if lock.is_null() {
+        0
+    } else {
+        unsafe { (*lock).lock as core::ffi::c_ulong }
+    };
+    crate::osal::osal_irq_restore(st);
+}
+/// Lock, saving the interrupt state into `flags`.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_lock_irqsave(_lock: *mut OsalSpinlock, flags: *mut core::ffi::c_ulong) {
+    let st = crate::osal::osal_irq_lock();
+    if !flags.is_null() {
+        unsafe { *flags = st };
+    }
+}
+/// Unlock, restoring the interrupt state from `flags`.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_unlock_irqrestore(
+    _lock: *mut OsalSpinlock,
+    flags: *mut core::ffi::c_ulong,
+) {
+    let st = if flags.is_null() {
+        0
+    } else {
+        unsafe { *flags }
+    };
+    crate::osal::osal_irq_restore(st);
+}
+/// Lock against bottom halves (== plain lock on bare metal).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_lock_bh(lock: *mut OsalSpinlock) {
+    osal_spin_lock(lock);
+}
+/// Unlock against bottom halves.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_unlock_bh(lock: *mut OsalSpinlock) {
+    osal_spin_unlock(lock);
+}
+/// Destroy a spinlock (no-op).
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_spin_lock_destroy(_lock: *mut OsalSpinlock) {}
+
+// ── Atomics (osal_atomic { volatile int counter; }) ─────────────────────────
+
+/// Mirrors C `osal_atomic { volatile int counter; }`.
+#[repr(C)]
+pub struct OsalAtomic {
+    counter: c_int,
+}
+
+#[inline]
+fn atomic_rmw<R>(a: *mut OsalAtomic, f: impl FnOnce(&mut c_int) -> R) -> R {
+    // Single hart: a critical section makes the read-modify-write atomic.
+    critical_section::with(|_cs| {
+        // SAFETY: exclusive under the critical section; `a` is a valid handle.
+        let c = unsafe { &mut (*a).counter };
+        f(c)
+    })
+}
+
+/// Read the atomic.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_read(atomic: *mut OsalAtomic) -> c_int {
+    if atomic.is_null() {
+        return 0;
+    }
+    atomic_rmw(atomic, |c| *c)
+}
+/// Set the atomic.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_set(atomic: *mut OsalAtomic, i: c_int) {
+    if !atomic.is_null() {
+        atomic_rmw(atomic, |c| *c = i);
+    }
+}
+/// Increment.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_inc(atomic: *mut OsalAtomic) {
+    if !atomic.is_null() {
+        atomic_rmw(atomic, |c| *c = c.wrapping_add(1));
+    }
+}
+/// Decrement.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_dec(atomic: *mut OsalAtomic) {
+    if !atomic.is_null() {
+        atomic_rmw(atomic, |c| *c = c.wrapping_sub(1));
+    }
+}
+/// Increment and return the new value.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_inc_return(atomic: *mut OsalAtomic) -> c_int {
+    if atomic.is_null() {
+        return 0;
+    }
+    atomic_rmw(atomic, |c| {
+        *c = c.wrapping_add(1);
+        *c
+    })
+}
+/// Decrement and return the new value.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_atomic_dec_return(atomic: *mut OsalAtomic) -> c_int {
+    if atomic.is_null() {
+        return 0;
+    }
+    atomic_rmw(atomic, |c| {
+        *c = c.wrapping_sub(1);
+        *c
+    })
+}

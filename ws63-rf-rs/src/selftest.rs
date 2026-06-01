@@ -52,6 +52,33 @@ extern "C" fn consumer(_arg: *mut c_void) -> *mut c_void {
     core::ptr::null_mut()
 }
 
+/// Exercise the scheduler-backed OSAL message queue end to end (single task):
+/// create a 4×4 queue, write a word, read it back. Returns the round-tripped
+/// value (expect `0xCAFE_F00D`). The read goes through the blocking-semaphore
+/// path (one item is available, so it does not park). Internal hook.
+#[doc(hidden)]
+pub fn osal_queue_selftest() -> u32 {
+    use core::ffi::{c_uint, c_ulong, c_void};
+    let mut qid: c_ulong = 0;
+    if crate::osal_queue::osal_msg_queue_create(core::ptr::null(), 4, &mut qid, 0, 4)
+        != crate::OSAL_OK
+    {
+        return 0;
+    }
+    let tx: u32 = 0xCAFE_F00D;
+    crate::osal_queue::osal_msg_queue_write_copy(qid, core::ptr::addr_of!(tx) as *mut c_void, 4, 0);
+    let mut rx: u32 = 0;
+    let mut sz: c_uint = 4;
+    crate::osal_queue::osal_msg_queue_read_copy(
+        qid,
+        core::ptr::addr_of_mut!(rx) as *mut c_void,
+        &mut sz,
+        0,
+    );
+    crate::osal_queue::osal_msg_queue_delete(qid);
+    rx
+}
+
 /// Run the scheduler self-test. Returns `[worker0, worker1, sem_items, done]`;
 /// a pass is `[ROUNDS, ROUNDS, ITEMS, 4]`. Internal hook — not a public API.
 #[doc(hidden)]
