@@ -57,6 +57,7 @@ pub mod ipc;
 pub mod log;
 pub mod oal;
 pub mod osal;
+pub mod osal_sync;
 pub mod uapi;
 
 // The task scheduler / runtime is an INTERNAL implementation detail: the vendor
