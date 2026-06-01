@@ -217,6 +217,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
+name = "linked_list_allocator"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b23ac50abb8261cb38c6e2a7192d3302e0836dac1628f6a93b82b4fad185897"
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -394,6 +400,18 @@ version = "0.1.0"
 dependencies = [
  "ws63-hal",
  "ws63-pac",
+ "ws63-rt",
+]
+
+[[package]]
+name = "rf_port_demo"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "riscv",
+ "ws63-hal",
+ "ws63-pac",
+ "ws63-rf-rs",
  "ws63-rt",
 ]
 
@@ -807,6 +825,15 @@ dependencies = [
  "critical-section",
  "riscv",
  "vcell",
+]
+
+[[package]]
+name = "ws63-rf-rs"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "linked_list_allocator",
+ "ws63-hal",
 ]
 
 [[package]]

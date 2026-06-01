@@ -25,7 +25,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
 | 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + **flashboot 整改** + 可复现 SVD→PAC 已修 —— 正确性项全部落地；真实 secure-boot 验签按冻结项复用原厂） |
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
-| 4 | porting 层 + HCC IPC | 计划 |
+| 4 | porting 层 + HCC IPC | 🟡 已起步（2026-06-02：`ws63-rf-rs` 移植层 crate——契约可链接可运行的 feasible 子集，QEMU 验证）|
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
 | 6 | async（embassy） | 计划 |
 
@@ -201,12 +201,28 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ---
 
-## 阶段 4 — porting 层 + HCC IPC
+## 阶段 4 — porting 层 + HCC IPC 🟡 已起步（2026-06-02）
 
 实现 `ws63-RF/include/port/` 的最小桩（`port_log`/`port_osal`/`port_oal`）+ 与 Wi-Fi/BT 协处理器的
 共享内存 HCC IPC，架在现有 DMA/UART 驱动之上。这是到产品**最大、最高风险**的一块。
 
-承接阶段 3 尖刺，需显式完成（评审补充）：
+**已交付**：`ws63-rf-rs`（in-tree crate，仿 esp-radio 的 os-adapter）——把 ws63-RF 的 77 函数运行时无关
+移植契约（`include/port/*.h`）用 Rust 实现为 `#[no_mangle] extern "C"`：**已真正实现** `osal_kmalloc`/`kfree`
+（`linked_list_allocator` 真实堆）、log/`memset_s`/`memcpy_s`、`uapi_systick_get_ms`/`osal_udelay`、
+`osal_irq_lock`/`restore`（mstatus）、OAL 池配置、2 个 ROM 全局 `g_dmac_alg_main`/`g_mac_res_etc`（任何 blob 都不定义）；
+线程/wait/`frw_*`/`hcc_*`/`wlan_*` 为**有类型有 TODO 的桩**（需调度器 + IPC 框架）。`rf_port_demo` 例子在 ws63-qemu
+验证：实现的契约函数真能用，且厂商 ROM blob **经 ws63-rf-rs 全量链接**。同时核 `nm` 修正了 ws63-RF README 的不准确论断
+（dmac.a 并非完全自包含——另有 ~118 个 `fe_*`/`hal_btcoex_*` RF 前端符号是外部未定义）。
+
+承接阶段 3 尖刺，**仍需**完成（评审补充）：
+- **链接大型代码 blob + 符号闭合**：把 `libwifi_driver_dmac.a`（~629KB，含真实 `.text`）链入，验证
+  `libwifi_rom_data.a` 引用的 `g_dmac_alg_main`/`g_mac_res_etc` 由真实驱动库以正确 ABI 定义（替换尖刺里的桩），
+  并枚举/解析尚未发现的其余外部符号——已知缺口：**~118 个 `fe_*`/`hal_*` RF 前端/MAC-HAL** 符号不在 dmac.a 内，
+  且**公开 Wi-Fi API 层 `libwifi_driver_hmac.a` 未随 ws63-RF 交付**（两者都需补齐才能完整链接 + 跑栈）。
+- **任务调度器**：`osal_kthread_*`/`osal_wait_*` + FRW 工作线程需要调度器（与阶段 6 async 相关）。
+- **真实 `.wifi_pkt_ram` NOLOAD 区**：把尖刺/scaffold 里的裸 `--defsym=__wifi_pkt_ram_begin__=0xA00000` 升级为 `ws63-rt`
+  链接脚本里**保留的** `.wifi_pkt_ram` NOLOAD 段（C SDK `linker.lds`：0xA00000、0xC000=48KB，含 `__wifi_pkt_ram_end__`），
+  否则 Wi-Fi ROM 初始化在运行期会写入未保留区域而失败。
 - **链接大型代码 blob + 符号闭合**：把 `libwifi_driver_dmac.a`（~629KB，含真实 `.text`）链入，验证
   `libwifi_rom_data.a` 引用的 `g_dmac_alg_main`/`g_mac_res_etc` 由真实驱动库以正确 ABI 定义（替换尖刺里的桩），
   并枚举/解析尚未发现的其余外部符号（逐个用 `nm` 核对 defined/undefined 闭合）。

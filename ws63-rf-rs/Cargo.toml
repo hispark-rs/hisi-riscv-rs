@@ -1,0 +1,15 @@
+[package]
+name = "ws63-rf-rs"
+version = "0.1.0"
+edition = "2024"
+description = "Rust porting layer + FFI bindings for the closed-source WS63 Wi-Fi/BLE blobs (ws63-RF). Implements the runtime-agnostic ws63-RF porting contract (osal/oal/log/uapi) on the ws63-rs runtime."
+license = "MIT"
+publish = false
+
+[lib]
+name = "ws63_rf_rs"
+
+[dependencies]
+ws63-hal = { path = "../ws63-hal" }
+critical-section = "1"
+linked_list_allocator = { version = "0.10", default-features = false }
