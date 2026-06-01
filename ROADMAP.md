@@ -23,7 +23,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
 | 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 部分完成（SPI/eFuse/LSADC 寄存器 + 可复现 SVD→PAC 流水线已修；死代码/中断/I2C 超时/复位等待做） |
+| 2 | 死代码清理 + 正确性修复 | 🟡 部分完成（SPI/eFuse/LSADC 寄存器 + **中断子系统重写** + 可复现 SVD→PAC 流水线已修；死代码/I2C 超时/复位等待做） |
 | 3 | 链接/blob 尖刺 | 计划 |
 | 4 | porting 层 + HCC IPC | 计划 |
 | 5 | 连接性示例（scan → connect → ping） | 计划 |
@@ -83,13 +83,15 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 基调：**删无用、留哨兵**。
 
-> **✅ 本轮已完成（2026-05-31，寄存器审计后续）**——以下三类已落地（详见下方对应条目）：
-> 1. **SPI**：`ctra.trsm` 改 0（TX&RX）+ 所有忙等加有界超时 `SpiError::Timeout`。
-> 2. **eFuse / LSADC**：寄存器映射按 fbb_ws63 C SDK（`hal_efuse_v151`/`hal_adc_v154`）整体重写。
-> 3. **PAC/SVD 流水线**：`ws63-svd/regen.sh` 可复现生成 + 停止手补 lib.rs（幂等、build+clippy 门禁）。
+> **✅ 本轮已完成**——以下已落地（详见下方对应条目）：
+> 1. **SPI**（2026-05-31）：`ctra.trsm` 改 0（TX&RX）+ 所有忙等加有界超时 `SpiError::Timeout`。
+> 2. **eFuse / LSADC**（2026-05-31）：寄存器映射按 fbb_ws63 C SDK（`hal_efuse_v151`/`hal_adc_v154`）整体重写。
+> 3. **PAC/SVD 流水线**（2026-05-31）：`ws63-svd/regen.sh` 可复现生成 + 停止手补 lib.rs（幂等、build+clippy 门禁）。
+> 4. **中断子系统重写**（2026-06-01）：`interrupt.rs` 由 PLIC 虚构改为 WS63 真实模型（见下「正确性修复」首条），
+>    并经 ws63-qemu 的 `timer_irq`/`gpio_irq` 端到端验证——这是首个**有软件在环验证信号**的正确性修复。
 >
-> 注：以上均为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）。其余阶段 2 项目（死代码、
-> 中断重写、I2C 超时、reset、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
+> 注：1–3 为静态对照 SDK 的修复，**仍未上板验证**（属阶段 1 门禁）；4 已在 QEMU 验证投递闭环但仍非真机。
+> 其余阶段 2 项目（死代码、I2C 超时、reset、GPIO pull、safety.rs、host 单测、flashboot）仍待做。
 
 **死代码清理（删）**
 - `clock.rs`：`ClockControl` / `PeripheralGuard` / `REF_COUNTS`（RAII 时钟守卫，零消费者）。
@@ -99,8 +101,14 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 - **保留哨兵**：`Peripheral` enum + `PERIPHERAL_COUNT`、真正的跨模块漂移断言（safety.rs 37-44,79-85）。
 
 **正确性修复**
-- **中断子系统**（严重）：按 riscv31 自定义 CSR（`LOCIPRI`/`LOCIEN`/`LOCIPD`）重写 `interrupt.rs`，或诚实标注为桩
-  并撤出 `prelude`；删除"PLIC"措辞。
+- ✅ **中断子系统**（严重，已修 2026-06-01）：`interrupt.rs` 删除"PLIC"虚构，按 fbb_ws63
+  `arch/riscv/riscv31/interrupt.c` 重写为 WS63 真实双层模型——**IRQ 26–31** 走标准 `mie` 位，**IRQ ≥32**
+  走自定义 `LOCIEN0-2`（0xBE0–2，base 32）使能、`LOCIPRI0-15`（0xBC0，base 26，4-bit/IRQ）优先级、
+  `LOCIPCLR`（0xBF0）按号清挂起、`PRITHD`（0xBFE）阈值；默认优先级 `0x11111111`。API：
+  `enable`/`disable`/`set_priority`/`priority`/`set_threshold`/`threshold`/`clear_pending`/`is_pending`/
+  `is_enabled`/`init`/`enable_global`/`disable_global`/`free`。移除零消费者的 `InterruptConfigurable`/
+  `InterruptHandler`（`prelude` 改导出 `Interrupt` 枚举 + `Priority`）。`timer_irq`(mie)/`gpio_irq`(LOCIEN+LOCIPCLR)
+  改用此 API，经 ws63-qemu `smoke-test.sh` 端到端验证投递闭环。**仍未上板**（属阶段 1 门禁）。
 - ✅ **SPI**（严重，已修 2026-05-31）：`ctra.trsm` 由 `3`(EEPROM-Read) 改 `0`(TX&RX)；SCKDV 分频去掉
   多余的 `/2`/`-1`（曾产出 ~2× SCK）；全部忙等改有界 `wait_until` → `SpiError::Timeout`。
 - **I2C 超时**（高，剩余）：`i2c.rs` 仍有多处无界 `while !…{}`（行 59/80/130/153…）；加有界计数并接入既有
@@ -176,7 +184,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 严重度 | 代表问题 | 状态 |
 |--------|----------|------|
 | 严重 | 双 PAC 致示例链接失败（DEVICE_PERIPHERALS 重复） | ✅ 阶段 0 已修 |
-| 严重 | 中断子系统建在不存在的 PLIC 模型上 | 阶段 2 |
+| 严重 | 中断子系统建在不存在的 PLIC 模型上 | ✅ 阶段 2 已修（2026-06-01，重写为 LOCIEN/LOCIPRI/LOCIPCLR/PRITHD，QEMU 验证） |
 | 严重 | SPI 传输模式位写成 EEPROM-Read | ✅ 阶段 2 已修（2026-05-31） |
 | 严重 | flashboot 无真实性验签（≠ secure boot） | 实验化（阶段 0），整改阶段 2 |
 | 严重 | flashboot 镜像头布局对不上真实镜像 | 实验化（阶段 0），整改阶段 2 |
