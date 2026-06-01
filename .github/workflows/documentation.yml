@@ -25,7 +25,7 @@ jobs:
     name: Build API Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -33,7 +33,7 @@ jobs:
         run: bash .github/scripts/install-toolchain.sh
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # registry/git only — target/ is toolchain-specific (see ci.yml note).
           path: |
@@ -46,7 +46,7 @@ jobs:
         run: cargo doc -p ws63-hal -p ws63-pac -p ws63-rt --no-deps
 
       - name: Upload docs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: api-docs
           path: target/riscv32imfc-unknown-none-elf/doc/
@@ -65,13 +65,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Download docs artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: api-docs
           path: docs-output
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -80,7 +80,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # ── Link check ────────────────────────────────────────────────
   link-check:
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check markdown links
         uses: lycheeverse/lychee-action@v2

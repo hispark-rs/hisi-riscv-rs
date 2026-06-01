@@ -25,12 +25,12 @@ jobs:
       matrix:
         crate: [ws63-pac, ws63-hal, ws63-rt]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install ws63 toolchain
         run: bash .github/scripts/install-toolchain.sh
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
@@ -49,12 +49,12 @@ jobs:
     name: Workspace
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install ws63 toolchain
         run: bash .github/scripts/install-toolchain.sh
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
@@ -79,12 +79,12 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install ws63 toolchain
         run: bash .github/scripts/install-toolchain.sh
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
@@ -107,7 +107,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Install ws63 toolchain
@@ -132,13 +132,16 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
-      # rust-toolchain.toml pins ws63, so cargo (used by the audit action) needs it installed.
-      - name: Install ws63 toolchain
-        run: bash .github/scripts/install-toolchain.sh
-      - name: Run cargo audit
-        uses: rustsec/audit-check@v2.0.0
+      # rustsec/audit-check has no Node 24 release; use cargo-audit directly via
+      # taiki-e/install-action (composite, Node-24 era) which fetches a prebuilt
+      # binary. cargo-audit just parses Cargo.lock + the advisory DB, so it needs
+      # no toolchain build.
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tool: cargo-audit
+      - name: Run cargo audit
+        run: cargo audit
