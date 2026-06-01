@@ -31,12 +31,16 @@
 //! - Framework + IPC (`frw_*`, `hcc_*`, `wlan_*`) — need the host↔device-MAC
 //!   message framework (single-core shared-memory IPC) and the descriptor rings.
 //!
-//! **Out of scope here** (so connectivity does NOT yet work): a full link of
-//! `libwifi_driver_dmac.a` additionally needs ~118 vendor RF-front-end / MAC-HAL
-//! symbols it references but does not define (`fe_*`, `hal_btcoex_*`, … —
-//! supplied by the vendor HAL/ROM, *not* the runtime), the host-MAC + public
-//! Wi-Fi API layer (`libwifi_driver_hmac.a`, not shipped in ws63-RF), and a real
-//! task scheduler. See `README.md` and the workspace `ROADMAP.md` phase 4.
+//! **Why connectivity does NOT yet work** (but it does NOT need radio
+//! reverse-engineering): `libwifi_driver_dmac.a` has ~1080 undefined symbols,
+//! of which ~422 are WS63 **mask-ROM** functions (`fe_*`/`hal_machw_*`/… —
+//! addresses in `ws63-RF/rom/ws63_acore_rom.lds`) and ~618 are defined by other
+//! vendor Wi-Fi `.a` libs the ws63-RF extraction omitted (`libwifi_driver_hmac`
+//! /`_tcm`/`_btcoex`/`_alg_*`/`libwpa_supplicant` — see `ws63-RF/LIB_EXTRACT.md`).
+//! With those, the surface closes to ~40 symbols — the porting contract THIS
+//! crate implements + compiler-rt. Still genuinely needed: a task scheduler
+//! (FRW worker thread / `osal_kthread_*`), a real `.wifi_pkt_ram` region, and
+//! vendoring the omitted libs. See `README.md` and `ROADMAP.md` phase 4.
 //!
 //! [`ws63-RF`]: https://github.com/sanchuanhehe/ws63-RF
 

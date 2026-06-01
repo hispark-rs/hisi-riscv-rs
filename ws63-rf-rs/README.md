@@ -42,25 +42,31 @@ foundation, not a working Wi-Fi stack. The honest picture:
 | WLAN rings / RF clk | `wlan_*`, `oal_ring_*` (12) | descriptor rings + vendor RF HAL |
 | NV / tsensor | `uapi_nv_read`, `uapi_tsensor_get_current_temp` | flash-NV (RF cal + MAC) / ws63-hal tsensor |
 
-### Out of scope here (why connectivity still does not work)
+### What a full Wi-Fi link still needs (NOT radio reverse-engineering)
 
-Linking the **code** blobs (`libwifi_driver_dmac.a` ~629 KB, `libbg_common.a`)
-additionally needs, none of which is the runtime's job and none of which this
-crate provides:
+`nm` on `libwifi_driver_dmac.a` shows 1080 undefined symbols, but they are
+almost all **obtainable from the vendor delivery** (see `ws63-RF/LIB_EXTRACT.md`):
 
-- **~118 vendor RF-front-end / MAC-HAL symbols** that `libwifi_driver_dmac.a`
-  references but does **not** define (verified by `nm`: `fe_*` RF device driver,
-  `hal_btcoex_*`, some `hal_al_rx_*`/`hal_machw_*`; the other ~443 `hal_*`/`fe_*`
-  refs resolve inside dmac.a). These are the *radio implementation*, supplied by
-  the vendor RF HAL/ROM, not by the porting layer. Re-implementing them in Rust
-  would mean reverse-engineering the radio (explicitly a non-goal).
-- **The host-MAC + public Wi-Fi API layer** (`wifi_init`, `wifi_sta_scan`,
-  `wifi_sta_connect`, declared in `ws63-RF/include/api/wifi/`) lives in
-  `libwifi_driver_hmac.a`, which is **not shipped in `ws63-RF/lib`**.
-- **A real `.wifi_pkt_ram` NOLOAD region** in `ws63-rt` (here the linker symbols
-  are a scaffold `--defsym`).
-- **A task scheduler** for the FRW worker thread + the `osal_kthread_*`/wait
-  primitives.
+- **~422 are WS63 mask-ROM functions** (`fe_*` RF front-end, `hal_machw_*`,
+  `hal_al_rx_*`, `hal_btcoex_*`, …). Their addresses are in the ROM symbol table
+  `ws63-RF/rom/ws63_acore_rom.lds` (link with `-T`). They are **not** something
+  the runtime reimplements — the radio lives in the on-chip mask ROM. (The
+  addresses only execute on real silicon, so this path is HIL, not QEMU.)
+- **~618 are defined by other vendor Wi-Fi `.a` libs** the original ws63-RF
+  extraction omitted: `libwifi_driver_hmac.a` (host MAC + public `wifi_*` API),
+  `libwifi_driver_tcm.a`, `libwifi_btcoex.a`, `libwifi_alg_*.a`,
+  `libwpa_supplicant.a` — all present in the C SDK (`LIB_EXTRACT.md` lists paths).
+- **~40 are the runtime's job — and ~all are what THIS crate implements**: the
+  `osal_*`/`oal_*`/`log_*`/`uapi_*` porting contract + compiler-rt builtins +
+  `g_dmac_alg_main`/`g_mac_res_etc` + the `__wifi_pkt_ram_*` linker symbols.
+
+Still genuinely remaining for the runtime (beyond the contract above):
+
+- **A task scheduler** for the FRW worker thread + `osal_kthread_*`/wait (those
+  are still stubs here — ROADMAP phase 6 / an RTOS).
+- **A real `.wifi_pkt_ram` NOLOAD region** in `ws63-rt` (here the symbols are a
+  scaffold `--defsym`).
+- Completing the **omitted Wi-Fi `.a` set** in `ws63-RF/lib` (`LIB_EXTRACT.md`).
 
 See the workspace [`ROADMAP.md`](../ROADMAP.md) phase 4 for the staged plan.
 

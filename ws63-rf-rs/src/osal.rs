@@ -49,7 +49,7 @@ pub extern "C" fn osal_irq_restore(state: c_ulong) {
 
 // ── Delay (REAL, approximate) ───────────────────────────────────────────────
 
-/// Busy-wait roughly `usec` microseconds. Uncalibrated (see [`CYCLES_PER_US`]).
+/// Busy-wait roughly `usec` microseconds. Uncalibrated (see `CYCLES_PER_US`).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_udelay(usec: u32) {
     let iters = (usec as u64).saturating_mul(CYCLES_PER_US);
