@@ -145,6 +145,67 @@ pub fn frw_hcc_selftest() -> [u32; 4] {
     ]
 }
 
+// ── Software-timer self-test ─────────────────────────────────────────────────
+
+static TIMER_FIRED: AtomicU32 = AtomicU32::new(0);
+
+extern "C" fn timer_cb(_data: core::ffi::c_ulong) {
+    TIMER_FIRED.fetch_add(1, Ordering::Relaxed);
+}
+
+/// Exercise the software-timer service deterministically (no scheduler needed):
+/// arm a one-shot 2 ms timer, drive `frw_dmac_timer_timeout_proc` until it
+/// fires, confirm it does NOT re-fire on its own, then re-arm and confirm it
+/// fires again. Returns `[after_oneshot, after_rearm, ok]`; a pass is `[1,2,1]`.
+/// Internal hook.
+#[doc(hidden)]
+pub fn timer_selftest() -> [u32; 3] {
+    use crate::timer::{self, OsalTimer};
+    TIMER_FIRED.store(0, Ordering::Relaxed);
+    timer::frw_dmac_timer_init();
+
+    let mut t = OsalTimer {
+        timer: core::ptr::null_mut(),
+        handler: None,
+        data: 0,
+        interval: 0,
+    };
+    // osal_adapt_timer_init takes the callback as a `void*` (the blob passes a
+    // fn pointer the same way).
+    let func = timer_cb as extern "C" fn(core::ffi::c_ulong) as *mut core::ffi::c_void;
+    timer::osal_adapt_timer_init(&mut t, func, 0, 2);
+    timer::osal_adapt_timer_mod(&mut t, 2);
+
+    // Drive the timer service; mcycle (the time base) advances as we spin.
+    let mut guard: u32 = 0;
+    while TIMER_FIRED.load(Ordering::Relaxed) == 0 && guard < 50_000_000 {
+        timer::frw_dmac_timer_timeout_proc();
+        guard += 1;
+    }
+    let after_oneshot = TIMER_FIRED.load(Ordering::Relaxed);
+
+    // A one-shot must NOT re-fire without re-arming.
+    for _ in 0..10_000 {
+        timer::frw_dmac_timer_timeout_proc();
+    }
+
+    // Re-arm; it must fire again.
+    timer::osal_adapt_timer_mod(&mut t, 2);
+    guard = 0;
+    while TIMER_FIRED.load(Ordering::Relaxed) < 2 && guard < 50_000_000 {
+        timer::frw_dmac_timer_timeout_proc();
+        guard += 1;
+    }
+    let after_rearm = TIMER_FIRED.load(Ordering::Relaxed);
+    timer::osal_adapt_timer_destroy(&mut t);
+
+    [
+        after_oneshot,
+        after_rearm,
+        (after_oneshot == 1 && after_rearm == 2) as u32,
+    ]
+}
+
 /// Run the scheduler self-test. Returns `[worker0, worker1, sem_items, done]`;
 /// a pass is `[ROUNDS, ROUNDS, ITEMS, 4]`. Internal hook — not a public API.
 #[doc(hidden)]

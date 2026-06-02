@@ -152,29 +152,8 @@ pub extern "C" fn osal_adapt_kthread_set_priority(_task: *mut c_void, _priority:
     OSAL_OK
 }
 
-// ── Software timers (STUB — needs a timer service; do not fire yet) ──────────
-
-/// STUB: accepts the registration; the timer does not fire yet (TODO: a timer
-/// service driving `func` after `interval` ms via the scheduler tick).
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_timer_init(
-    _timer: *mut c_void,
-    _func: *mut c_void,
-    _data: core::ffi::c_ulong,
-    _interval: c_uint,
-) -> c_int {
-    OSAL_OK
-}
-/// STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_timer_mod(_timer: *mut c_void, _interval: c_uint) -> c_int {
-    OSAL_OK
-}
-/// STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_timer_destroy(_timer: *mut c_void) -> c_int {
-    OSAL_OK
-}
+// Software timers (`osal_adapt_timer_init/mod/destroy`) are now real — see
+// [`crate::timer`], driven by the FRW worker loop.
 
 // ── Workqueues (STUB — needs a deferred-work service) ────────────────────────
 

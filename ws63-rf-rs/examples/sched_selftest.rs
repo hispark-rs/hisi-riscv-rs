@@ -82,7 +82,20 @@ fn main() -> ! {
         uart.write(0, b"\r\n");
     }
 
-    let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D && f == [5, 5, 5, 1];
+    // Exercise the software-timer service (one-shot fire + no-refire + re-arm).
+    let tm = ws63_rf_rs::timer_selftest(); // [after_oneshot, after_rearm, ok]
+    let tlabels: [&[u8]; 3] = [
+        b"timer oneshot   = ",
+        b"timer rearm     = ",
+        b"timer ok        = ",
+    ];
+    for (label, v) in tlabels.iter().zip(tm.iter()) {
+        uart.write(0, label);
+        uart.write(0, u32dec(*v, &mut b));
+        uart.write(0, b"\r\n");
+    }
+
+    let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D && f == [5, 5, 5, 1] && tm == [1, 2, 1];
     uart.write(
         0,
         if ok {

@@ -229,10 +229,14 @@ pub extern "C" fn frw_thread_get_wait() -> c_int {
 pub extern "C" fn frw_task_thread(_arg: *mut c_void) -> *mut c_void {
     with_state(|s| s.running = true);
     loop {
-        frw_thread_get_wait();
+        // Park until a message is posted OR the nearest timer is due (so timers
+        // fire even with no message traffic). u32::MAX == no timer armed.
+        EVENT.down_timeout(crate::timer::next_delay_ms());
         if !with_state(|s| s.running) {
             break;
         }
+        // Fire any expired software timers (cooperative, from this thread).
+        crate::timer::frw_dmac_timer_timeout_proc();
         loop {
             let node = fifo_pop();
             if node.is_null() {
@@ -310,21 +314,5 @@ pub extern "C" fn frw_hcc_service_deinit() -> c_int {
     OSAL_OK
 }
 
-// ── Software timers (still light stubs — a timer service is future work) ─────
-
-/// STUB: no timer service yet (`osal_adapt_timer_*` are stubbed too).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_init() -> c_int {
-    OSAL_NOK
-}
-/// STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_exit() -> c_int {
-    OSAL_OK
-}
-/// STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_timeout_proc() {}
-/// STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_timer_timeout_proc_event(_arg: core::ffi::c_ulong) {}
+// Software timers (`frw_dmac_timer_*`, `frw_timer_timeout_proc_event`) are now
+// real — see [`crate::timer`]; the worker loop above drives them.
