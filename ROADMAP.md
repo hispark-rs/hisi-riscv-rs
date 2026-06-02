@@ -183,7 +183,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ## 阶段 3 — 链接/blob 尖刺 ✅ 已完成（2026-06-02）
 
-先消除最大未知：写最小 crate 链接 `ws63-RF/lib/libwifi_rom_data.a`（仅 3KB）并解析其外部符号，
+先消除最大未知：写最小 crate 链接 `ws63-rf-rs/ws63-RF/lib/libwifi_rom_data.a`（仅 3KB）并解析其外部符号，
 **证明工具链/链接路径走得通**。ABI 已就绪：仓库已用 `ws63` 硬浮点工具链（`riscv32imfc`/`ilp32f`），与 blob ABI 一致。
 
 **已交付**：`ws63-examples/wifi_blob_link` 用 `--whole-archive` **全量**静态链接该 blob（确认其 `rv32imfc`/`ilp32f`
@@ -203,7 +203,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ## 阶段 4 — porting 层 + HCC IPC 🟡 已起步（2026-06-02）
 
-实现 `ws63-RF/include/port/` 的最小桩（`port_log`/`port_osal`/`port_oal`）+ 与 Wi-Fi/BT 协处理器的
+实现 `ws63-rf-rs/ws63-RF/include/port/` 的最小桩（`port_log`/`port_osal`/`port_oal`）+ 与 Wi-Fi/BT 协处理器的
 共享内存 HCC IPC，架在现有 DMA/UART 驱动之上。这是到产品**最大、最高风险**的一块。
 
 **已交付**：`ws63-rf-rs`（in-tree crate，仿 esp-radio 的 os-adapter）——把 ws63-RF 的 77 函数运行时无关
@@ -215,7 +215,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 **符号闭合 ✅（已用真实链接器达成，2026-06-02）**：完整 MAC blob 集（`libwifi_driver_{hmac,dmac,tcm}.a`、
 `libbg_common.a`、`libwifi_alg_*.a`、`libwifi_rom_data.a`）经 `rust-lld` 与 ws63-rf-rs + WS63 掩膜 ROM 符号表
-（`ws63-RF/rom/ws63_acore_rom.lds`，3752 符号）+ compiler-rt **可重定位链接成单一对象，0 个重复符号**；从
+（`ws63-rf-rs/ws63-RF/rom/ws63_acore_rom.lds`，3752 符号）+ compiler-rt **可重定位链接成单一对象，0 个重复符号**；从
 `uapi_wifi_init` 做 `--gc-sections` 可达性链接后**残留仅 2 个符号**——`__wifi_pkt_ram_begin__`/`__wifi_pkt_ram_end__`，
 二者皆为链接器 `--defsym` 区界符号（已由 `wifi_blob_link` 例子提供）。即**整个 Wi-Fi init 闭包对 ws63-rf-rs + ROM + rt
 完成符号解析**。可复现：`ws63-rf-rs/tools/mac-link-residual.sh`。
@@ -226,7 +226,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 `frw_*`/`hcc_*` 仍为有类型的桩（数据通路待做），netif/lwip 为接 smoltcp 的缝。
 
 承接阶段 3/4，**仍需**完成：
-- ✅ ~~补齐漏抽的 wifi `.a` 库~~（hmac/tcm/alg/bg_common 已纳入 `ws63-RF/lib`；wpa 按 MVP 决策剔除；ROM 表已补）。
+- ✅ ~~补齐漏抽的 wifi `.a` 库~~（hmac/tcm/alg/bg_common 已纳入 `ws63-rf-rs/ws63-RF/lib`；wpa 按 MVP 决策剔除；ROM 表已补）。
 - ✅ ~~任务调度器~~（`crate::sched` cooperative 调度器已实现并在 ws63-qemu 验证）。
 - **数据通路（真正的活）**：FRW 工作线程 + HCC 共享内存传输（`ipc.rs`）；netif→smoltcp 桥（`netif.rs`，含按 wifi 构建
   `lwipopts.h` 对齐 pbuf 布局）。

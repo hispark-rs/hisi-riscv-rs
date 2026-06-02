@@ -1,6 +1,8 @@
 //! Build script for ws63-rf-rs.
 //!
-//! Sets up linking against the vendor RF blobs in the `ws63-RF` submodule and
+//! Sets up linking against the vendor RF blobs in the `ws63-RF` submodule
+//! (nested under this crate at `ws63-rf-rs/ws63-RF` so the blob delivery is
+//! owned by this crate and not reached into laterally) and
 //! supplies the Wi-Fi packet-RAM linker symbols the blobs reference. These
 //! `cargo:rustc-link-*` directives propagate to any binary that depends on
 //! ws63-rf-rs (the library itself is not linked).
@@ -13,8 +15,9 @@ use std::path::PathBuf;
 
 fn main() {
     // ws63-RF/lib holds the vendor archives (rom_data/dmac/bg_common/bt...).
+    // The submodule is nested inside this crate (ws63-rf-rs/ws63-RF).
     let manifest = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
-    let lib_dir = PathBuf::from(&manifest).join("../ws63-RF/lib");
+    let lib_dir = PathBuf::from(&manifest).join("ws63-RF/lib");
     if let Ok(canon) = lib_dir.canonicalize() {
         println!("cargo:rustc-link-search=native={}", canon.display());
         // Re-export the path so downstream build scripts can locate the blobs.

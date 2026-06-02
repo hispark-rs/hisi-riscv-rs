@@ -8,7 +8,7 @@
 	path = ws63-pac
 	url = https://github.com/sanchuanhehe/ws63-pac.git
 [submodule "ws63-RF"]
-	path = ws63-RF
+	path = ws63-rf-rs/ws63-RF
 	url = https://github.com/sanchuanhehe/ws63-RF.git
 [submodule "ws63-svd"]
 	path = ws63-svd

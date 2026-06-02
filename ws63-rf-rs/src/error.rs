@@ -1,9 +1,9 @@
 //! `errcode_t` mapping for the public Wi-Fi API (future use).
 //!
 //! The vendor public API (`wifi_init`, `wifi_sta_scan`, `wifi_sta_connect`, …,
-//! declared in `ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
+//! declared in `ws63-rf-rs/ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
 //! NOTE: those API symbols are **not** exported by any blob shipped in
-//! `ws63-RF/lib` — they live in the host-MAC library (`libwifi_driver_hmac.a`),
+//! `ws63-rf-rs/ws63-RF/lib` — they live in the host-MAC library (`libwifi_driver_hmac.a`),
 //! which is not part of this delivery. So a safe Rust API over them is deferred
 //! until that layer is available; this module only provides the error mapping
 //! the future binding will use.

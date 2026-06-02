@@ -2,7 +2,7 @@
 //!
 //! The WS63 Wi-Fi/BLE/SLE radio ships as closed-source vendor static libraries
 //! in the [`ws63-RF`] delivery (`libwifi_driver_dmac.a`, `libbg_common.a`, …)
-//! plus the **runtime-agnostic porting contract** in `ws63-RF/include/port/`:
+//! plus the **runtime-agnostic porting contract** in `ws63-rf-rs/ws63-RF/include/port/`:
 //! ~77 C functions any host runtime must implement (OSAL, OAL, FRW, HCC, WLAN,
 //! log, UAPI) so the blobs can run on it.
 //!
@@ -42,7 +42,7 @@
 //! **What "symbol closure" means here.** The vendor blobs
 //! (`libwifi_driver_{hmac,dmac,tcm}.a`, `libbg_common.a`, `libwifi_alg_*.a`,
 //! `libwifi_rom_data.a`) link as one relocatable object against this crate, the
-//! WS63 mask-ROM symbol table (`ws63-RF/rom/ws63_acore_rom.lds`) and compiler-rt
+//! WS63 mask-ROM symbol table (`ws63-rf-rs/ws63-RF/rom/ws63_acore_rom.lds`) and compiler-rt
 //! with **zero duplicate symbols**, and a `--gc-sections` link rooted at
 //! `uapi_wifi_init` leaves a **residual of just two symbols**
 //! (`__wifi_pkt_ram_begin__`/`__wifi_pkt_ram_end__` — linker `--defsym` region

@@ -3,7 +3,7 @@
 Rust **porting layer + FFI bindings** for the closed-source WS63 Wi-Fi/BLE radio
 blobs delivered in [`ws63-RF`](../ws63-RF). It is the WS63 analogue of esp-hal's
 `esp-radio` OS-adapter: it implements the **runtime-agnostic porting contract**
-(`ws63-RF/include/port/*.h`) in Rust as `#[unsafe(no_mangle)] extern "C"`
+(`ws63-rf-rs/ws63-RF/include/port/*.h`) in Rust as `#[unsafe(no_mangle)] extern "C"`
 symbols, so when a firmware links a vendor blob the linker resolves the blob's
 `osal_* / oal_* / log_* / uapi_* / frw_* / hcc_* / wlan_*` references to these
 implementations.
@@ -45,11 +45,11 @@ foundation, not a working Wi-Fi stack. The honest picture:
 ### What a full Wi-Fi link still needs (NOT radio reverse-engineering)
 
 `nm` on `libwifi_driver_dmac.a` shows 1080 undefined symbols, but they are
-almost all **obtainable from the vendor delivery** (see `ws63-RF/LIB_EXTRACT.md`):
+almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_EXTRACT.md`):
 
 - **~422 are WS63 mask-ROM functions** (`fe_*` RF front-end, `hal_machw_*`,
   `hal_al_rx_*`, `hal_btcoex_*`, …). Their addresses are in the ROM symbol table
-  `ws63-RF/rom/ws63_acore_rom.lds` (link with `-T`). They are **not** something
+  `ws63-rf-rs/ws63-RF/rom/ws63_acore_rom.lds` (link with `-T`). They are **not** something
   the runtime reimplements — the radio lives in the on-chip mask ROM. (The
   addresses only execute on real silicon, so this path is HIL, not QEMU.)
 - **~618 are defined by other vendor Wi-Fi `.a` libs** the original ws63-RF
@@ -66,7 +66,7 @@ Still genuinely remaining for the runtime (beyond the contract above):
   are still stubs here — ROADMAP phase 6 / an RTOS).
 - **A real `.wifi_pkt_ram` NOLOAD region** in `ws63-rt` (here the symbols are a
   scaffold `--defsym`).
-- Completing the **omitted Wi-Fi `.a` set** in `ws63-RF/lib` (`LIB_EXTRACT.md`).
+- Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
 See the workspace [`ROADMAP.md`](../ROADMAP.md) phase 4 for the staged plan.
 
