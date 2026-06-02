@@ -136,7 +136,7 @@ pub extern "C" fn pbuf_header(p: *mut c_void, header_size: i16) -> u8 {
 }
 
 /// `driverif_input(netif, p)` — RX entry from the MAC driver. With feature `net`
-/// the frame bytes are pushed to the smoltcp bridge ([`crate::netif_smoltcp`]);
+/// the frame bytes are pushed to the smoltcp bridge (`crate::netif_smoltcp`);
 /// otherwise (or if the pbuf has no payload) the frame is counted and dropped.
 /// The pbuf is freed either way (lwip owns it after input).
 #[unsafe(no_mangle)]
