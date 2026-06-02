@@ -16,6 +16,7 @@ members = [
     "ws63-examples/custom_memory",
     "ws63-examples/async_delay",
     "ws63-examples/embassy_multitask",
+    "ws63-examples/embassy_async_io",
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
@@ -41,6 +42,7 @@ default-members = [
     "ws63-examples/custom_memory",
     "ws63-examples/async_delay",
     "ws63-examples/embassy_multitask",
+    "ws63-examples/embassy_async_io",
 ]
 
 [workspace.package]
