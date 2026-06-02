@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-06-02
+
+### Changed
+
+- **Releases are now owned by each crate's own repo.** The monorepo tag only cuts the firmware GitHub Release; crate publishing moved to each submodule's own `release.yml` (pac/rt/hal), triggered by a `v*` tag in that repo with its own `CRATES_IO_TOKEN`. Removed the parent's `publish` job.
+- Added `ws63-rt`'s own release workflow (pac/hal already had theirs).
+
+### Notes
+
+- First releases via the per-repo pipelines: `ws63-pac 0.1.3`, `ws63-rt 0.1.1`, `ws63-hal 0.2.1` (each published by its own repo).
+
 ## [0.2.0] - 2026-06-02
 
 ### Added
