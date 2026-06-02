@@ -64,30 +64,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── Publish crates ────────────────────────────────────────────
-  # Published in dependency order (pac → rt → hal) as sequential steps in ONE job,
-  # NOT a parallel matrix (which raced: hal could publish before pac existed). No
-  # `continue-on-error`: a failed publish now fails the release loudly instead of
-  # silently tagging with nothing published.
-  #
-  # Each crate's version MUST be bumped before tagging — `cargo publish` fails if the
-  # version already exists on crates.io (that failure is intentional and visible).
-  # ws63-flashboot is publish=false (experimental) and is intentionally not published.
-  publish:
-    name: Publish to crates.io
-    runs-on: ubuntu-latest
-    needs: release
-    env:
-      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - name: Install ws63 toolchain
-        run: bash .github/scripts/install-toolchain.sh
-      - name: Publish ws63-pac
-        run: cargo publish -p ws63-pac --locked
-      - name: Publish ws63-rt
-        run: cargo publish -p ws63-rt --locked
-      - name: Publish ws63-hal
-        run: cargo publish -p ws63-hal --locked
+  # ── crates.io publishing is OWNED BY EACH CRATE'S OWN REPO ─────────────────
+  # The monorepo tag only cuts the firmware GitHub Release above. Each library
+  # crate is a standalone submodule repo and publishes ITSELF from its own
+  # `.github/workflows/release.yml` (triggered by a `v*` tag in that repo, using
+  # that repo's CRATES_IO_TOKEN secret). The parent must not reach in and publish
+  # the submodules' crates — that couples independent releases and inverts
+  # ownership. To release a crate, bump + tag it in its own repo:
+  #   ws63-pac  -> github.com/sanchuanhehe/ws63-pac   (release.yml)
+  #   ws63-rt   -> github.com/sanchuanhehe/ws63-rt    (release.yml)
+  #   ws63-hal  -> github.com/sanchuanhehe/ws63-hal   (release.yml)
+  # ws63-flashboot / ws63-rf-rs are publish=false (not published).
