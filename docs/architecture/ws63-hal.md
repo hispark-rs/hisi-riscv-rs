@@ -66,9 +66,11 @@ ws63-pac ──► ws63-hal ──► ws63-examples/*
 
 `Dma0`（0x4A00_0000）与 `Sdma0`（0x520A_0000）共享 `dma::RegisterBlock`，经 `DmaInstance` trait 提供 `ptr()`（`dma.rs:25-44`）。`DmaDriver<'d, T: DmaInstance>` 泛型于控制器（`dma.rs:144`）。`DmaEligible`（`dma.rs:428-431`）+ `DmaChannelFor<P>`（`dma.rs:439`）意图提供编译期通道-外设绑定安全（刻意不写 blanket impl 以保留约束语义）。
 
-### Sealed trait 与驱动 mode 标记
+### Sealed trait + 异步层
 
-`private.rs` 定义 `Sealed` 超 trait，封印 `DmaWord`、`PeripheralInput`、`PeripheralOutput`、`DriverMode`。`Blocking`/`Async` 是为未来异步预留的 mode 标记（`private.rs:32-51`）。
+`private.rs` 定义 `Sealed` 超 trait，封印 `DmaWord`、`PeripheralInput`、`PeripheralOutput`。早先空壳的 `DriverMode`/`Blocking`/`Async` mode 标记（associated type 恒等、零消费者）**已删除**。
+
+**真正的异步层已实现**（feature `async`/`embassy`，详见 [async-embassy.md](async-embassy.md)）：`embedded-hal-async`/`embedded-io-async` 的 `DelayNs`/`digital::Wait`/`spi::SpiBus`/`i2c::I2c`/`Read`/`Write`，加上 `asynch::block_on` + `IrqSignal`（中断→waker 桥）+ 各驱动的 `on_interrupt` 钩子（不自动装 ISR）；外加 LSADC/DMA 的自研异步。还提供一个 embassy-time `Driver`（`now()`=TCXO 64 位计数器、alarm=TIMER 通道），让 `embassy-executor`（platform-riscv32）跑 `Timer::after` + 多任务。全部跑在无原子的 WS63 上（portable-atomic + critical-section）。
 
 ### embedded-hal trait 选型（评审优点）
 
@@ -91,23 +93,26 @@ ws63-pac ──► ws63-hal ──► ws63-examples/*
 
 ### 问题
 
+> 下表为 **2026-05 评审快照**；其后多数阶段 2 项已修（见各行状态），权威进度以 [评审台账](../review/architecture-review-2026-05.md) 为准。全部修复在姊妹仓 `ws63-qemu` 软件在环验证。
+
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
-| 严重 | 正确性 | 中断子系统建在不存在的 PLIC 模型上。WS63 用自定义 CSR（`LOCIPRI`=0xBC0 / `LOCIEN`=0xBE0 / `LOCIPD`=0xBE8，见 fbb_ws63 `riscv_interrupt.h`）。`enable`/`disable`/`bind_handler` 忽略 `_interrupt` 参数，仅做全局 `riscv::interrupt::enable()`，`disable` 是空函数 | `interrupt.rs:63-82` | 已排期(ROADMAP 阶段 2) |
+| 严重 | 正确性 | 中断子系统曾建在不存在的 PLIC 模型上。WS63 用自定义 CSR（`LOCIPRI`=0xBC0 / `LOCIEN`=0xBE0 / `LOCIPD`=0xBE8） | `interrupt.rs` | ✅ 阶段2已修：重写为 LOCIPRI/LOCIEN/LOCIPD CSR 模型 + 优先级/阈值；ws63-qemu `timer_irq`/`gpio_irq`(IRQ≥32) 端到端验证 |
 | 严重 | 正确性 | SPI `ctra` 写入 `trsm=3`（bits 19:18），该值是 EEPROM-Read 模式；全双工 TX+RX 应为 `0`。注释误写"TX+RX mode"导致 `transfer`/`SpiBus` 全双工语义不成立 | `spi.rs:76` | 已排期(ROADMAP 阶段 2) |
-| 高 | 正确性 | I2C/SPI 共 9+ 处 `while !...read()...{}` 无超时死循环；`I2cError::{Timeout,BusError}`、`SpiError::Overflow` 已定义但从不返回，硬件挂死则永久阻塞 | `spi.rs:88,90,102,116,118,149,151`；`i2c.rs:59,80,130,153,160,197,205,250,261` | 已排期(ROADMAP 阶段 2) |
-| 高 | 正确性 | `software_reset` 执行 `ebreak`（调试陷阱，非系统复位）后死循环；`reset_reason` 读了寄存器但恒返回 `PowerOn`，从不解析状态位 | `system.rs:43-71`（`ebreak`@60，恒返回@49） | 已排期(ROADMAP 阶段 2) |
-| 中 | 正确性 | GPIO `InputConfig.pull` 被静默忽略：`init_input` 只设 OEN，从不写上下拉寄存器；`config` 字段标 `#[allow(dead_code)]` | `gpio.rs:107-110,141-142` | 已排期(ROADMAP 阶段 2) |
-| 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`（266 行）、`lsadc.rs`（323 行） | 已排期(ROADMAP 阶段 2) |
-| 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言（如 `0x4401_0000 >= 0x4000_0000` 字面量比较，编译期必然成立），属"断言剧场"；模块头"Formal safety contracts / Type-level proofs"措辞夸大 | `safety.rs:1-6,37-44` | 已排期(ROADMAP 阶段 2) |
-| 中 | 架构 | 零消费者死代码：RAII 时钟守卫（`ClockControl`/`PeripheralGuard`/`REF_COUNTS`）、DMA 安全 trait（`DmaEligible`/`DmaChannelFor`）、async marker（`Blocking`/`Async` 两者 `Async<D>=D` 恒等）全无下游使用者 | `clock.rs:86-168`；`dma.rs:428-439`；`private.rs:32-51` | 已排期(ROADMAP 阶段 2) |
-| 高 | 维护性 | 测试是恒真式——重抄被测代码自身的公式再断言（如 SPI 分频器测试在测试内重算一遍同样的式子），从未上板验证 | `spi.rs:199-291`（分频器重算）；`i2c.rs:319-350`（地址移位重算）；`clock.rs:319-396`、`safety.rs:131-188` | 已排期(ROADMAP 阶段 1：硬件在环) |
+| 高 | 正确性 | I2C/SPI 多处无超时死循环；错误码定义却从不返回 | `spi.rs`、`i2c.rs` | ✅ 阶段2已修：I2C/SPI 加 bounded 超时并真正返回 `Timeout` 等错误 |
+| 高 | 正确性 | `software_reset` 执行 `ebreak`（非系统复位）；`reset_reason` 恒返回 `PowerOn` | `system.rs` | ✅ 阶段2已修：`software_reset` 置 GLB_CTL_M 复位位，`reset_reason` 解析 SYS_RST_RECORD；ws63-qemu `reset_demo` 往返验证 |
+| 中 | 正确性 | GPIO `InputConfig.pull` 被静默忽略：`init_input` 只设 OEN | `gpio.rs` | ✅ 阶段2已修：`init_input` 经 IO_CONFIG pad 寄存器应用上下拉 + 中断触发模式 |
+| 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`、`lsadc.rs` | 🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍按阶段 2 推进 |
+| 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言；模块头措辞夸大 | `safety.rs` | ✅ 阶段2已修：删除恒真断言 + 夸大措辞 |
+| 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 大部已清：async marker(`Blocking`/`Async`) 与 RAII 时钟守卫已删；**并已实现真正的异步层**（见上「Sealed trait + 异步层」）；DMA `DmaEligible`/`DmaChannelFor` 保留约束语义 |
+| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | 🟡 已大幅缓解：ws63-qemu `smoke-test.sh` 用**真实固件**端到端验证（含异步/embassy 示例 + C SDK 交叉验证）；真机 HIL 冒烟仍待补（阶段 1 尾） |
 
 ## 改进项与排期
 
-按 [ROADMAP](../../ROADMAP.md)：
+按 [ROADMAP](../../ROADMAP.md)（多数已完成，下记现状）：
 
-- **阶段 1（硬件在环 bring-up + 链接脚本集成）**：示例当前因 `ws63-rt` 链接脚本不传播到下游二进制而无法链接（`blinky` 缺 `__exc/nmi/irq_stack_top__` 符号），需先打通链接脚本集成；随后用真实硬件替换恒真式测试做在环验证。
-- **阶段 2（死代码清理 + 正确性修复）**：重写中断子系统到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；修 SPI `trsm`；为 I2C/SPI 加超时并真正返回错误；修 `software_reset`/`reset_reason`；接通 GPIO pull；核实并修正 eFuse/LSADC 寄存器；删除 `safety.rs` 恒真断言与夸大措辞；删除 RAII 时钟守卫 / DMA 安全层 / async marker 死代码（在引入真实消费者之前）。
+- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`ws63-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
+- **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
+- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](async-embassy.md)）—— `embedded-hal-async`/`embedded-io-async` 全套 + embassy-time `Driver`，全部 ws63-qemu 验证。
 - **阶段 4-5（porting 层 + HCC IPC + 连接性）**：HAL 之上接入 WiFi/BLE/SLE 协议栈所需的 porting 与 IPC 通道。
 - **阶段 6（async）**：在确有异步消费者后再恢复 `Blocking`/`Async` 类型状态（阶段 2 已先删除空壳）。

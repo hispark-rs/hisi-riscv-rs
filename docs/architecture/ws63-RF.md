@@ -12,41 +12,42 @@
 它**不负责**：
 - 不提供任何 Rust 绑定、链接胶水或可编译产物——目录中无 `.rs` / `build.rs` / `Cargo.toml` / bindgen（已 `find` 核实，0 结果）。
 - **不是 Cargo workspace 成员**——根 `Cargo.toml` 的 `members` / `default-members` 与 `Cargo.lock` 均未引用 `ws63-RF`（已 grep 核实，0 结果）。因此当前它对 `cargo check --workspace` 完全不可见。
-- 不实现 porting 层本身——`port_*.h` 只是接口声明，实现需由下游（最终的 ws63-rs 平台层）填充。
+- 不实现 porting 层本身——`port_*.h` 只是接口声明，实现由下游 in-tree crate **`ws63-rf-rs`** 填充，**现已实现**（见下）。
 - 不提供链接脚本——`port_linker.h` 仅以 `extern` 声明 blob 期望的链接符号，实际的 `SECTIONS` / 内存区段需调用方在 linker script 中给出。
 
-子模块内自带 `ARCHITECTURE.md`，其结论与本文一致：战略正确，但"尚无任何 Rust 绑定/链接，连接性交付为 0%"。
+子模块内自带 `ARCHITECTURE.md`。注意其"连接性 0% / 尚无 Rust 绑定"的旧结论**已过时**：in-tree crate **`ws63-rf-rs` 现已实现 porting 契约**（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥），且 **Wi-Fi-init 的符号闭合已达成**（whole-archive 0 重复符号，`--gc-sections` rooted at `uapi_wifi_init` 残留仅 2 个 `__wifi_pkt_ram_*` defsym）。剩余是真机 bring-up（掩膜 ROM 地址只在硅片上可执行 + 厂商自定义重定位）。
 
 ## 在依赖链中的位置
 
-ws63-RF 游离于主依赖链（SVD → PAC → HAL → examples，rt 提供启动）之外，是一条**尚未接入的并行支线**：
+ws63-RF（blob）经 in-tree crate **`ws63-rf-rs`** 接入主链 —— rf-rs 实现 porting 契约、把 blob 链进镜像：
 
 ```mermaid
 graph TD
     subgraph 主链["已接入的 Rust 主链"]
-        SVD[ws63-svd] --> PAC[ws63-pac]
+        SVD[ws63-pac/ws63-svd] --> PAC[ws63-pac]
         PAC --> HAL[ws63-hal]
         HAL --> EX[ws63-examples]
         RT[ws63-rt] -.启动/链接脚本.-> EX
     end
-    subgraph RF["ws63-RF（未接入支线）"]
-        BLOB["lib/*.a 闭源协议栈<br/>3126 个未定义符号"]
-        PORT["include/port/port_*.h<br/>~70 个 porting 接口"]
+    subgraph RF["ws63-rf-rs/ws63-RF（闭源 blob 交付）"]
+        BLOB["lib/*.a 闭源协议栈"]
+        PORT["include/port/port_*.h<br/>~77 个 porting 接口契约"]
         PORT -.接口契约.-> BLOB
     end
-    PLATFORM["待建：porting 层实现 + HCC IPC<br/>(port_osal/oal/log + HCC 共享内存)"]
-    HAL -.未来:寄存器/时钟/中断.-> PLATFORM
-    PLATFORM -.未来:满足符号 + 链接.-> BLOB
-    BLOB -.未来:Wi-Fi/BLE 示例.-> EX
+    PLATFORM["ws63-rf-rs（已实现）<br/>osal/oal/log/uapi/frw/hcc + 调度器 + netif→smoltcp"]
+    HAL --> PLATFORM
+    PORT --> PLATFORM
+    PLATFORM -->|实现契约 + 链接 blob| BLOB
+    BLOB -.HIL:真机连接性示例.-> EX
 
     classDef done fill:#d5f5d5,stroke:#2a2;
-    classDef todo fill:#fdd,stroke:#a22;
-    class SVD,PAC,HAL,EX,RT done;
-    class BLOB,PORT,PLATFORM todo;
+    classDef hil fill:#fff3cd,stroke:#cc9;
+    class SVD,PAC,HAL,EX,RT,PORT,PLATFORM done;
+    class BLOB hil;
 ```
 
-- **上游**：blob 由 vendor SDK（`fbb_ws63`，参考实现位于其 `src/drivers/chips/ws63/porting/`）编译而来，本仓库只做重分发。
-- **下游（目标）**：blob 暴露的 Wi-Fi/BLE 公开 API（`include/api/wifi/`、`include/api/bts/`）最终供 ws63-examples 中的连接性示例调用。但中间隔着两层尚不存在的桥：porting 层实现 + HCC IPC，以及 blob 链接本身。
+- **上游**：blob 由 vendor SDK（`fbb_ws63`，参考实现在 `src/drivers/chips/ws63/porting/`）编译而来，本仓库只做重分发。
+- **下游**：blob 的 Wi-Fi/BLE 公开 API 最终供连接性示例调用。中间两层桥**已实现**（`ws63-rf-rs` 的 porting + FRW/HCC 数据路径）；真正剩下的是真机 HIL（ROM 地址 + 自定义重定位只在硅片上成立）。
 - 架构上 WS63 是**单核 RISC-V**（一个自研应用核——核过 fbb_ws63：`ch2_system.md`「系统提供一个自研 RISC-V 处理器作为主控 CPU」、`platform_core.h` 标题 *Application Core*、`rom_config/` 仅 `acore`、全 SDK 无 `dcore`）。Wi-Fi 协议栈的 **HMAC（上层/host MAC）与 DMAC（下层/device MAC）是链接进同一应用镜像的软件库**（`libwifi_driver_hmac.a` / `libwifi_driver_dmac.a` 同在 `ws63-liteos-app/`），都跑在这一颗核上、驱动 Wi-Fi MAC/PHY 硬件。HCC 的 host/device-CPU 语义是 HiSilicon 跨产品线的**通用框架模型**——真正两颗 CPU 是「外接主控 MCU + WS63 模组」拓扑，**不是 WS63 片内有第二颗 RISC-V 核**。（更正：早期 README/本文曾写成「ACORE/DCORE 双核」，不准确。）
 
 ## 关键设计
@@ -87,20 +88,20 @@ porting 层的语义对标 vendor SDK `fbb_ws63/src/drivers/chips/ws63/porting/`
 ### 问题
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |---|---|---|---|---|
-| 严重 | 方向 | 纯 blob + C 头，无任何 `.rs`/`build.rs`/`Cargo.toml`/bindgen/链接配置；不是 Cargo workspace 成员，`cargo check --workspace` 完全看不到本组件——连接性交付 0% | `find ws63-RF -name '*.rs' -o -name build.rs -o -name Cargo.toml` 返回空；`Cargo.toml`/`Cargo.lock` grep `ws63-RF` 返回空 | 已排期(ROADMAP 阶段 3-5) |
-| 高 | 方向 | porting 层完全未实现：`port_log`/`osal`/`oal` + HCC IPC（连通 Wi-Fi/BT device-MAC）无一行实现，这是到产品最大、最高风险的缺口 | `include/port/port_osal.h:44-160`、`port_hcc.h:35-77`、`port_oal.h:39-79`、`port_log.h:30-50`（均为纯声明，仓库内无实现单元） | 已排期(ROADMAP 阶段 4) |
-| 高 | 链接 | blob 的数千未定义符号无一被满足：全 7 个库合计 **3126 个唯一未定义符号**（`libwifi_driver_dmac.a` 1421、`libbt_host.a` 2042、`libbth_gle.a` 1438 …），且其中 `frw_*`/`osal_*`/`hcc_*`/`oal_*` 等正对应 porting 头 | `nm lib/*.a \| grep '^\s*U' \| sort -u \| wc -l` = 3126；样本含 `frw_main_init`、`frw_send_msg_to_device`、`frw_dmac_timer_init` 等 | 已排期(ROADMAP 阶段 3) |
-| 高 | 工具链 | 链接 blob 需要带原子/浮点的目标（ilp32f rv32imfc）；本轮默认 target 已切到无原子 `riscv32imc`，blob 链接所需的自定义 JSON 目标已保留但尚未启用 | 根 `.cargo/config.toml` 默认 target + 保留的 ilp32f JSON（本轮工具链修复说明） | 已排期(ROADMAP 阶段 3) |
-| 中 | 集成 | `port_linker.h` 仅声明 `extern` 符号（48 KB packet RAM、TCM/SRAM 区段），实际 `SECTIONS` 未提供，且与 ws63-rt 的 `layout.ld`/`memory.x` 尚无任何衔接 | `port_linker.h:38-77`（只有 `extern uint8_t __*__;`，无 linker script） | 已排期(ROADMAP 阶段 3) |
+| 严重 | 方向 | （曾）纯 blob + C 头，无 Rust/链接配置，连接性 0% | — | ✅ 已修：in-tree crate **`ws63-rf-rs`** 提供完整 Rust porting + `build.rs` + 链接搜索；blob 经它链入镜像（`wifi_blob_link`/`rf_port_demo` 在 ws63-qemu 验证） |
+| 高 | 方向 | （曾）porting 层完全未实现：`osal`/`oal`/`log`/HCC 无一行实现 | `ws63-rf-rs/src/*` | ✅ 已实现：`osal_adapt_*`(33 符号) + `oal`/`log`/`uapi` + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥；`frw_hcc_selftest`/`sched_selftest`/`netif_smoltcp_selftest` 自测通过 |
+| 高 | 链接 | （曾）blob 数千未定义符号无一被满足 | `mac-link-residual.sh` | ✅ **Wi-Fi-init 符号闭合达成**：whole-archive 0 重复符号；`--gc-sections` rooted at `uapi_wifi_init` 残留仅 **2** 个（`__wifi_pkt_ram_begin__/end__` defsym）。早先"~3126/~96 missing"是 whole-archive 上界，被 off-path BT/alt-OS 代码主导（可达路径 0 BT 符号） |
+| 高 | 工具链 | 链接 blob 需 ilp32f rv32imfc 目标 | `.cargo/config.toml` | ✅ 已就位：默认 target **就是** builtin 的 `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f），原子由 portable-atomic critical-section 垫片提供（之前文档误写 imc） |
+| 中 | 集成 | `port_linker.h` 的 `extern` 符号与 ws63-rt 链接脚本的衔接 | `ws63-rt`/`ws63-rf-rs` | 🟡 ws63-rt 提供 `__wifi_pkt_ram_*` 的 scaffold `--defsym`；真机前需把 netif pbuf 布局 pin 到 WiFi 构建的 `lwipopts.h`、TX sink 指向 blob 真实发送符号（见 ws63-rf-rs README）|
 
 ## 改进项与排期
 
-本组件是 ws63-rs 通往"可用产品"的最大缺口，集中在 ROADMAP 后段，且依赖前置阶段先打通构建/链接基础：
+本组件是 ws63-rs 通往"可用产品"的最大缺口。多数前置已完成，现状如下：
 
-- **阶段 0（本轮已完成）**：消除双 PAC、修复 ISA（无原子 `riscv32imc` + critical-section polyfill）、保留 ilp32f rv32imfc 自定义 JSON 供 phase 3 链接 blob 时启用。这些为后续链接 blob 扫清了工具链层面的前置障碍，但本组件自身尚无任何实现进展。
-- **阶段 3（链接 blob 尖刺）**：启用 ilp32f 自定义 target；编写 `build.rs` / 链接参数把 `lib/*.a` 喂给链接器；提供满足 `port_linker.h` 的链接脚本（与 ws63-rt 的 `layout.ld`/`memory.x` 衔接），先验证 3126 个未定义符号能否在打桩后收敛。
-- **阶段 4（porting + HCC）**：用 Rust（或最小 C 胶水）实现 `port_osal`/`port_oal`/`port_log`/`port_uapi`/`port_frw`/`port_wlan` 约 70 个函数，并实现 HCC IPC，打通到 Wi-Fi/BT device-MAC 的 host↔device 通路（WS63 单核上为片内层间消息 + MAC 硬件）——这是风险最高、工作量最大的一步。
-- **阶段 5（连接性示例）**：在 ws63-examples 中给出 Wi-Fi STA 连接 / BLE 广播的端到端示例，按 README "Step 4" 的初始化序列驱动 blob 公开 API。
-- **阶段 6（async）**：在连接性可用后，考虑 Embassy/RTIC 异步集成。
+- **阶段 0（已完成）**：消除双 PAC；默认 target = builtin **`riscv32imfc`**（硬浮点 ilp32f，blob 所需）+ critical-section polyfill。工具链前置已清。
+- **阶段 3（链接 blob 尖刺）** ✅ 已完成：`ws63-rf-rs/build.rs` + 链接搜索把 `lib/*.a` 喂给链接器；ws63-rt 提供 `__wifi_pkt_ram_*` defsym；**Wi-Fi-init 符号闭合达成**（残留 2）。`wifi_blob_link`/`rf_port_demo` 验证。
+- **阶段 4（porting + HCC）** ✅ 大部已实现：`osal_adapt_*`(33) + `oal`/`log`/`uapi` + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥，均在 ws63-qemu 自测。剩余是把 pbuf 布局/TX sink pin 到真实 blob + 真机执行。
+- **阶段 5（连接性示例）** 🔴 待真机：ROM 地址 + 厂商自定义重定位只在硅片上成立，故是 HIL（硬件在环）；QEMU 无法跑真 Wi-Fi 链路。
+- **阶段 6（async）** ✅ 通用异步已就绪：ws63-hal 的 `async`/`embassy`（见 [async-embassy.md](async-embassy.md)）已实现并验证；连接性专属的异步包装待 blob 上板后再做。
 
-详见 [ROADMAP](../../ROADMAP.md) 阶段 3-5 条目。
+详见 [ROADMAP](../../ROADMAP.md)。

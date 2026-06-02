@@ -49,7 +49,7 @@ ws63-pac ──► ws63-hal ──► ws63-examples/*
 |--------|------|------|-----------------|------|
 | 中 | 维护性 | 单文件 `lib.rs` 体积约 1.8MB / 31814 行，难以审阅与定位 | `src/lib.rs`（1797361 字节、31814 行） | 暂不修（svd2rust 生成产物，按惯例不拆分；通过 CHANGELOG + grep 定位缓解） |
 | 高 | 维护性 | 寄存器手补进生成代码：KM keyslot 寄存器（`KC_REECPU_LOCK_CMD` 等）在生成后人工添加，下次重生成会被覆盖 | `src/lib.rs:28415`、`28569`；`CHANGELOG.md:13-21` | 已排期(ROADMAP 阶段 2)：应回填到 ws63-svd 源头由生成器产出 |
-| 中 | 依赖 | 版本曾停在 `0.1.0` 而 tag 后又追加了公开寄存器，违反 SemVer | `Cargo.toml:3`、`CHANGELOG.md:10-21` | 本轮已修：bump `0.1.0` → `0.1.1` |
+| 中 | 依赖 | 版本曾停在 `0.1.0` 而 tag 后又追加了公开寄存器，违反 SemVer | `Cargo.toml:3`、`CHANGELOG.md` | 已修：bump `0.1.0` →（经 0.1.1/0.1.2）现 `0.1.3`，由 ws63-pac 自有仓库流水线发布 |
 | 中 | 依赖 | 曾被 `ws63-hal` 以 git 依赖引入，导致工作区出现双 PAC 实例 | `ws63-hal/Cargo.toml:12`、`Cargo.toml:45-51` | 本轮已修：改 registry 版本依赖 + 根 `[patch.crates-io]` 指向本地，`cargo tree` 仅单一 `ws63-pac` 实例 |
 
 ## 改进项与排期
@@ -57,8 +57,8 @@ ws63-pac ──► ws63-hal ──► ws63-examples/*
 本轮（2026-05-31，ROADMAP 阶段 0）已完成的构建完整性修复中，与本 crate 直接相关：
 
 - **双 PAC 消除**：`ws63-hal`/`ws63-flashboot` 改为 registry 版本依赖，根 `Cargo.toml` 用 `[patch.crates-io]` 统一指向本地（`Cargo.toml:50-51`），全工作区单实例。
-- **版本对齐**：`0.1.0` → `0.1.1`，与 tag 后新增的 KM 寄存器对齐（`CHANGELOG.md:10-21`）。
-- **ISA 协同**：`rt` feature 导出 `RISCV_RT_BASE_ISA=rv32i`（`build.rs:16`），配合默认 target 切换到无原子的 `riscv32imc-unknown-none-elf`。
+- **版本对齐**：`0.1.0` → `0.1.1`（与 tag 后新增的 KM 寄存器对齐），其后随各仓自有流水线发布到 **`0.1.3`**。
+- **ISA 协同**：`rt` feature 导出 `RISCV_RT_BASE_ISA=rv32i`（`build.rs:16`），配合默认 target = builtin、无原子的 **`riscv32imfc-unknown-none-elf`**（硬件单精度浮点 ilp32f，原子由 portable-atomic critical-section polyfill 提供）。
 
 仍需后续处理（指向 ROADMAP 对应阶段）：
 

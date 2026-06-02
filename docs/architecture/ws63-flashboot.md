@@ -77,5 +77,5 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 - 生产层面的结论是**复用 fbb_ws63 原厂 flashboot**（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（`README.md:22-26`）。本 crate 维持实验/学习定位。
 - **整改已落地（2026-06-01）**：镜像头布局对齐 `secure_verify_boot.h`（`code_area_len`/`code_area_hash` 偏移修正 + const 尺寸断言）、删除 `0x40000024` 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、`verify_sha256`→`verify_image_integrity` 如实标注"仅完整性非真实性"、`read_partition_app_addr` 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 `--exclude`）。**真实 ECC/SM2 验签**仍按冻结项复用原厂、不在本实验件投入。
-- 本轮（阶段 0）已完成的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、ISA 改为无原子 `riscv32imc-unknown-none-elf` + `portable-atomic` critical-section polyfill、CI/release gating 与发布顺序修复、`ws63-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
+- 阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、无原子 ISA + `portable-atomic` critical-section polyfill（默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`，硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）、CI/release gating 与发布顺序修复、`ws63-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
 - 尚未解决并已排期：示例链接（`ws63-rt` 链接脚本不传播到下游 bin）见 **阶段 1**；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 **阶段 2**；porting 层 + HCC IPC + blob 链接的连接性见 **阶段 3–5**；async 见 **阶段 6**。详见 [ROADMAP](../../ROADMAP.md)。

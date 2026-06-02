@@ -13,7 +13,7 @@
 - **trap/中断向量与汇编分发**：异常入口 `trap_entry`、NMI、6 个 MIE 中断、60 个 local 中断的向量与寄存器保存/恢复（`asm/startup.S:76-428`）。
 - **段重定位**：ROM data/BSS、TCM text/data/BSS、SRAM text、`.data`、`.bss` 从 flash 拷到 RAM 并清零（`src/startup.rs:75-193`）。
 - **缓存与 PMP**：I/D cache 使能（`src/startup.rs:59-69`），PMP 由 startup.S 在复位时清零（doc 注释提到 PMP 配置，但当前仅做禁用）。
-- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。
+- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：ws63-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `ws63-examples/custom_memory`）。
 - **入口属性与 prelude**：re-export `riscv_rt::entry` 与 PAC 中断类型（`src/lib.rs:44-64`）。
 - **临界区基础设施**：作为持有单一应用 hart 的 crate，启用 `riscv` 的 `critical-section-single-hart`，为全固件提供唯一的 `critical-section` 实现（`Cargo.toml` 依赖注释；支撑 PAC 的 `Peripherals::take()` 与 HAL 的 portable-atomic polyfill）。
 
@@ -33,7 +33,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 
 `ws63-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它依赖 `ws63-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`。
 
-> 关键约束：链接脚本由 `build.rs` 通过 `cargo:rustc-link-arg=-T...` 注入（`build.rs:36-39`）。由于该 build 脚本属于 lib 依赖，其 `rustc-link-arg` 不会自动传播到下游 bin —— 这是当前“示例无法链接”的根因（见评审“问题”表）。
+> 链接脚本传播（已解决）：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游 bin。早先这导致示例无法链接；**现已修**——`build.rs` 改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x`，bin 用 `-Tws63-link.x` 引入（`rustc-link-search` 会传播）。见评审“问题”表「本轮已修」条。
 
 ## 关键设计
 
@@ -66,7 +66,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 
 ### ISA / 原子性
 
-`build.rs:44` 设 `RISCV_RT_BASE_ISA=rv32i`（无原子扩展）。本轮已将默认 target 切到 builtin 的 `riscv32imc-unknown-none-elf`，原子操作由 portable-atomic 的 critical-section polyfill 提供，`ws63-rt` 启用 `riscv` 的 `critical-section-single-hart` 作为唯一 CS 实现（`Cargo.toml`）。
+`build.rs` 设 `RISCV_RT_BASE_ISA=rv32i`（无原子扩展）。默认 target 是 builtin 的 **`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 ilp32f）；无 A 扩展，原子由 portable-atomic 的 critical-section polyfill 提供，`ws63-rt` 启用 `riscv` 的 `critical-section-single-hart` 作为整个固件唯一的 CS 实现（`Cargo.toml`）。这套 CS 也支撑 ws63-hal 的 `async`/`embassy` 异步层。
 
 ## 评审发现
 
@@ -89,7 +89,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 | 中 | 构建 | （已修）`riscv` 启用 `critical-section-single-hart`，为无原子扩展的 WS63 提供单 hart CS 实现，支撑 PAC `take()` 与 HAL portable-atomic | `Cargo.toml`（`riscv` features）| 本轮已修 |
 | 低 | 构建/发布 | （已修）`ws63-pac` 依赖补充 `version`（`version = "0.1", path = ...`）以便 `cargo publish` | `Cargo.toml`（ws63-pac 依赖）| 本轮已修 |
 
-> 说明：本轮（2026-05-31）构建完整性修复中，与本组件相关的还包括——双 PAC 实例消除（根 `[patch.crates-io]` 指向本地，cargo tree 单一实例）、ISA 切到 builtin `riscv32imc-unknown-none-elf` 后实测产物零原子指令（lr/sc/amo）。这些在仓库级评审中记录，本组件直接相关项已并入上表。
+> 说明：构建完整性修复中与本组件相关的还包括——双 PAC 实例消除（根 `[patch.crates-io]` 指向本地，cargo tree 单一实例）、无原子 ISA 下实测产物零原子指令（lr/sc/amo）。默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`（硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）。这些在仓库级评审中记录，本组件直接相关项已并入上表。
 
 ## 改进项与排期
 

@@ -50,7 +50,7 @@ ws63-rt (startup, linker scripts, interrupt vectors)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for all 35 peripherals. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`ws63-hal`**: 33 source files implementing safe drivers. Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`.
+- **`ws63-hal`**: 35 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
 - **`ws63-rt`**: Runtime crate — startup assembly, linker scripts (memory.x, layout.ld), interrupt vector definitions (device.x). Uses `riscv-rt` underneath.
 
 ### Peripheral Singleton Pattern
@@ -85,8 +85,8 @@ impl<'d> Uart<'d, Uart1<'d>> { pub fn new_uart1(...) -> Self { ... } }
 
 ### Sealed Traits (`private.rs`)
 
-- `Sealed` — supertrait preventing external implementation of `DmaWord`, `DriverMode`, `PeripheralInput`, `PeripheralOutput`.
-- `DriverMode` — sealed trait with `Blocking`/`Async` markers (reserved for future async support).
+- `Sealed` — supertrait preventing external implementation of `DmaWord`, `PeripheralInput`, `PeripheralOutput`.
+- (The old empty `DriverMode`/`Blocking`/`Async` marker traits were removed; real async now lives behind the `async`/`embassy` features — see "Async & embassy" below and `docs/architecture/async-embassy.md`.)
 
 ### Clock Architecture
 
@@ -118,7 +118,7 @@ Two controllers share `dma::RegisterBlock`:
 - **No `std`** — `#![no_std]` throughout. No heap, no `Vec` in driver code. Use fixed arrays when data buffers are needed.
 - **Safety via lifetime generics** — peripherals are `'d`-parameterized to prevent use-after-drop of the `Peripherals` token.
 - **Register access is `unsafe`** — raw PAC register writes use `unsafe { reg.write(|w| w.bits(val)) }`. Driver methods encapsulate this.
-- **No RTOS integration yet** — HAL is bare-metal. Embassy/RTIC async support is planned but not implemented.
+- **Async & embassy** — beyond the blocking drivers, ws63-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/architecture/async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
 ## CI/CD

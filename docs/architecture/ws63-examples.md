@@ -9,7 +9,7 @@
 - **负责**：提供可参考的 `#![no_std]` / `#![no_main]` 入口、面板 LED 点灯演示、HAL API 的最小调用示例。
 - **不负责**：实现任何驱动或运行时逻辑（这些属于 `ws63-hal` / `ws63-rt`）；不承担测试覆盖职责（不是测试套件）。
 
-当前该组件**仅含一个示例 `blinky`**（GPIO 点灯，见 `ws63-examples/README.md:9`），尚无 UART / SPI / I2C / 定时器 / 连接性（Wi-Fi/BLE/SLE）示例。
+当前该组件含 **14 个示例**：`blinky`（GPIO 点灯）、`uart_hello`、`timer_irq`、`gpio_irq`、`reset_demo`、`dma_loopback`、`wifi_blob_link`、`rf_port_demo`、`semihost_selftest`、`custom_memory`，以及 4 个**异步/embassy** 示例 `async_delay`/`async_bus`/`embassy_multitask`/`embassy_async_io`（用 ws63-hal 的 `async`/`embassy` feature + `embassy-executor`）。另有一个 crate 内示例 `sched_selftest`（ws63-rf-rs 调度器自测）。全部在姊妹仓 [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) 经 `scripts/smoke-test.sh` 端到端验证。仍缺真实**连接性**（Wi-Fi/BLE/SLE）示例（北极星，待 ws63-rf-rs 上板）。
 
 ## 在依赖链中的位置
 
@@ -51,7 +51,7 @@ ws63-rt  (启动汇编 / 链接脚本 / 中断向量)  ──提供 #[entry] 与
 |--------|------|------|-----------------|------|
 | 高 | 构建 | （已修）`blinky` 曾无法链接：`ws63-rt` 的链接脚本经 lib 依赖的 `cargo:rustc-link-arg` 不传播到下游二进制，`__exc/nmi/irq_stack_top__` 等符号未定义。现 `ws63-rt` 以 `cargo:rustc-link-search` + `ws63-link.x` 导出脚本，`blinky` 新增 `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接**，已加回 default-members 并产 `.bin` | `build.rs`（新增）；`ws63-rt/build.rs` | 本轮已修 |
 | 高 | 方向 | 唯一示例且用手写忙等 `delay_ms` 绕过 HAL timer/delay，无法证明其余 ~31 个驱动可用；缺少 UART/SPI/I2C/连接性示例 | `main.rs:17-25`；`README.md:9-10` | 已排期(ROADMAP 阶段 1/5) |
-| 中 | 文档 | `README.md` 的构建指引仍指向已弃用的自定义 JSON target（`riscv32imfc-...json`），而工作区默认 target 已改为 builtin 无原子 `riscv32imc-unknown-none-elf` | `README.md:16-22` vs `.cargo/config.toml:17` | 已排期(ROADMAP 阶段 1) |
+| 中 | 文档 | 旧构建指引曾指向自定义 JSON target；工作区现默认 target = **ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`**（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable `riscv32imc`） | `.cargo/config.toml`、`rust-toolchain.toml` | 🟡 各示例 README 用词复核 |
 | 中 | 演示覆盖 | 示例未直接演示 HAL 的 `OutputConfig`/`InputConfig` 构建器 API，仅用 legacy `create_output_pin` 类型态路径 | `main.rs:30`；`gpio.rs:471` vs `gpio.rs:27-65` | 已排期(ROADMAP 阶段 1) |
 | 低 | 依赖 | `blinky/Cargo.toml` 直接声明 `ws63-pac` 依赖，但源码未直接使用（只用 hal/rt） | `blinky/Cargo.toml:13` vs `main.rs:14-15` | 已排期(ROADMAP 阶段 2，死代码清理) |
 
