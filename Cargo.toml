@@ -17,6 +17,7 @@ members = [
     "ws63-examples/async_delay",
     "ws63-examples/embassy_multitask",
     "ws63-examples/embassy_async_io",
+    "ws63-examples/async_bus",
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
@@ -43,6 +44,7 @@ default-members = [
     "ws63-examples/async_delay",
     "ws63-examples/embassy_multitask",
     "ws63-examples/embassy_async_io",
+    "ws63-examples/async_bus",
 ]
 
 [workspace.package]
