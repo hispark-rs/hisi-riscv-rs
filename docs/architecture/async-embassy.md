@@ -68,8 +68,12 @@ WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
 
 按"上游"对象分四条线,**都不需要改 embassy 本身**:
 
-1. **embassy 支持留在 ws63-hal**(idiomatic)。embassy 的设计就是「HAL 实现 `embassy_time_driver::Driver`」,**不**由 embassy 仓库收录每个芯片的 driver —— 和 esp-hal 把 embassy 支持放在自己 crate 里一样。上游化 = 把带 `embassy` feature 的 **ws63-hal 发布到 crates.io**(版本结构已就绪)。如想更解耦,可拆出独立 `embassy-time-ws63` crate,但非必需。
-   - 跟版:盯 `embassy-time-driver`(现 0.2)/`embassy-time-queue-utils`(0.3)/`embassy-executor`(0.10)的 semver;它们偶有破坏性改动(如 `Driver` trait 从 alarm-handle 改成 `schedule_wake`+queue),改动集中在 `embassy.rs` 一个文件。
+1. **embassy 支持 —— 两种正规模型,WS63 走 out-of-tree 那条**。
+   embassy 仓库**确实**收录了一批 **in-tree HAL**(`embassy-nrf`/`-stm32`/`-rp`/`-nxp`/`-imxrt`/`-microchip`/`-mspm0`/`-mcxa`…,主要是主流 Cortex-M),它们由 embassy 维护者**承诺维护**、与 embassy 内部同步演进。
+   但 embassy 同时提供一套**给树外 HAL 用的接缝**(`embassy-time-driver` + `embassy-time-queue-utils` + `embassy-executor` 的 platform 抽象)—— 树外 HAL 只实现这些 trait 即可,**无需进 embassy 仓库**。最大的例子是 **esp-hal**(Espressif 自己维护、在 esp-rs/esp-hal,**不在** embassy 仓库),社区还有 ch32-hal/py32-hal 等几十个。
+   **WS63 属于后者(esp-hal 模型)**,原因:① in-tree 要 embassy 维护者**采纳并长期维护**该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 全部基于 **stable rustc 标准 target** 构建,而 WS63 现在依赖自定义 `ws63` 工具链(无原子 target 烤进 builtin)——这是进 embassy CI 的硬阻塞(见第 3 点);③ ws63-hal 本就是**独立 HAL**(阻塞 embedded-hal + 可选 embassy),天然适合树外。
+   所以**上游化 = 把带 `embassy` feature 的 ws63-hal 发布到 crates.io**(版本结构已就绪),而**不是**塞进 embassy monorepo。想更解耦可拆 `embassy-time-ws63`,但非必需。
+   - 跟版:盯 `embassy-time-driver`(现 0.2)/`embassy-time-queue-utils`(0.3)/`embassy-executor`(0.10)的 semver;破坏性改动(如 `Driver` 从 alarm-handle 改成 `schedule_wake`+queue)集中在 `embassy.rs` 一个文件。
 
 2. **embassy-executor 已是上游**:我们直接用 `platform-riscv32`,**零改动**。无 CAS 支持是它已有能力(thumbv6m 同理)。无需上游任何东西。
 
