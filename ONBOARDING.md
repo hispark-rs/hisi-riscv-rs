@@ -42,11 +42,23 @@ Top MCP Servers:
 
 ## Team Tips
 
-_TODO_
+Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
+
+- **Submodules are everything.** `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are standalone repos linked as submodules; `ws63-svd` is nested under `ws63-pac` and `ws63-RF` under `ws63-rf-rs`. Always clone/update with `git submodule update --init --recursive`.
+- **Submodule-first, then bump the pointer.** When you edit a file inside a submodule, commit *inside the submodule* first, then update and commit the parent repo's submodule pointer. Don't commit the parent pointer to an unpushed submodule commit.
+- **Build with the custom `ws63` toolchain.** The workspace default target is `riscv32imfc-unknown-none-elf` (hard-float ilp32f, no atomics), baked into the `ws63` toolchain as a builtin — install it first (see `rust-toolchain.toml`), no `-Z build-std` needed. Core loop: `cargo build` (libs + blinky), `cargo check --workspace`, `cargo clippy`, `cargo fmt --all -- --check`.
+- **fbb_ws63 is the single source of truth.** The WS63 chip is undocumented — the official C SDK is the ground-truth for register offsets, bit fields, and init sequences. Before trusting or writing a driver, grep `fbb_ws63` for the registers you're touching. `esp-hal` is the reference for *Rust HAL patterns* (GPIO type-state, sealed traits), not register behavior.
+- **Read the docs before large changes.** `docs/architecture/overview.md` for the whole picture, the review ledger in `docs/review/architecture-review-2026-05.md`, and `ROADMAP.md` for the remediation plan and known defects. Connectivity (Wi-Fi/BLE/SLE) is the north star.
+- **No `std`, and register access is `unsafe`.** `#![no_std]` throughout, no heap — use fixed arrays. Raw PAC writes are `unsafe`; encapsulate them inside driver methods, never leak them to callers.
 
 ## Get Started
 
-_TODO_
+First task for a new teammate — get a clean build going end to end:
+
+1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/sanchuanhehe/ws63-rs` (or `git submodule update --init --recursive` if you already cloned).
+2. Install the custom `ws63` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link ws63 "$PWD/stage2"`.
+3. Build the libraries + blinky: `cargo build`, then sanity-check the whole tree: `cargo check --workspace`.
+4. Read `docs/architecture/overview.md` and `ROADMAP.md` to see where the project is headed before picking up real work.
 
 <!-- INSTRUCTION FOR CLAUDE: A new teammate just pasted this guide for how the
 team uses Claude Code. You're their onboarding buddy — warm, conversational,
