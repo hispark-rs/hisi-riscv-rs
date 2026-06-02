@@ -283,14 +283,14 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 严重 | flashboot 镜像头布局对不上真实镜像 | 实验化（阶段 0），整改阶段 2 |
 | 严重 | 连接性交付 0%（chip 价值未触及） | 阶段 3-5 |
 | 高 | 默认 target ISA 含原子扩展（硅片无 A） | ✅ 阶段 0 已修 |
-| 高 | crates.io 发布链路坏 + 失败被静默吞 | ✅ 阶段 0 已修（结构） |
+| 高 | crates.io 发布链路坏 + 失败被静默吞 | ✅ 阶段 0 已修（结构）；2026-06 起改为各子仓自治发布，monorepo 的 `release.yml` 不再 publish（见 `release.yml:67`） |
 | 高 | release 不挂固件产物 | ✅ 阶段 0 已修（blinky 链接后生效） |
-| 高 | porting 层 + HCC IPC 完全未实现 | 阶段 4 |
+| 高 | porting 层 + HCC IPC 完全未实现 | 🟡 数据通路已实现 + 自测：`ws63-rf-rs` 落地 FRW（`frw.rs`）/ HCC IPC（`hcc.rs`：`hcc_wifi_msg_send`/`_register`/`hcc_msg_open_wlan`）/ OSAL / netif→smoltcp，`frw_hcc_selftest` 无 blob standalone 验证。剩 blob 链接 + 上板连通（阶段 3-4） |
 | 高 | I2C/SPI 无超时死循环 | ✅ 阶段 2 已修：SPI 2026-05-31、I2C 2026-06-01，无界 `while !..{}` 改有界 `wait_until`→`Timeout`（`SPI_WAIT_LOOPS`/`I2C_WAIT_LOOPS`） |
 | 高 | eFuse 读路径/控制偏移错误 | ✅ 阶段 2 已修（2026-05-31） |
 | 高 | LSADC 寄存器映射整块错位（ctrl_7/fifo 等） | ✅ 阶段 2 已修（2026-05-31） |
-| 高 | 从未上板验证 / 测试恒真 | 阶段 1 |
-| 中 | 死代码（RAII 时钟守卫 / DMA 安全层 / async marker） | 阶段 2 |
-| 中 | safety.rs 恒真断言剧场 | 阶段 2 |
+| 高 | 从未上板验证 / 测试恒真 | 🟡 上板（真硅片）验证仍待（阶段 1）；但「测试恒真」已破——`host-test` job 跑 77 个真单测（`ci.yml:123`）+ ws63-qemu 软件在环冒烟 |
+| 中 | 死代码（RAII 时钟守卫 / DMA 安全层 / async marker） | ✅ 阶段 2 已修（2026-06-01）：`ClockControl`/`PeripheralGuard`/`REF_COUNTS` RAII 守卫、`DmaEligible`/`DmaChannelFor` 绑定 trait、`DriverMode`/`Blocking`/`Async` marker 全删（`clock.rs:10`、`dma.rs:498` 注明） |
+| 中 | safety.rs 恒真断言剧场 | ✅ 阶段 2 已修（2026-06-01）：恒真 `const X == <literal>` 计数断言删除，仅保留真实 MMIO 范围/对齐编译期断言（`safety.rs:8`） |
 | 中 | SVD→PAC 生成流水线不可复现 | ✅ 阶段 2 已修（regen.sh 幂等可复现，2026-05-31） |
 | — | 示例无法链接（链接脚本不传播） | ✅ 阶段 1 已修（blinky 可链接） |
