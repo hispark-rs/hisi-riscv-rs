@@ -1,60 +1,52 @@
-# Welcome to ws63-rs Team
+# Welcome to WS63-RS
 
 ## How We Use Claude
 
 Based on sanchuanhehe's usage over the last 30 days:
 
 Work Type Breakdown:
-  Build Feature   ████████████████████  40%
-  Debug Fix       ██████████████  25%
-  Improve Quality ██████████  20%
-  Plan Design     █████████  15%
+  Build Feature  ████████████████████  50%
+  Plan Design    ███████████████░░░░░  38%
+  Write Docs     █████░░░░░░░░░░░░░░░░  12%
 
 Top Skills & Commands:
-  /code-review    ████████████████████  8x/month
-  /simplify       ██████████  4x/month
-  /init           █████  2x/month
-  run-ws63-rs     ██████████████  6x/month
+  /effort        ████████████████████  18x/month
+  /model         █████████████░░░░░░░  12x/month
+  /code-review   ████████░░░░░░░░░░░░   7x/month
+  /goal          ███░░░░░░░░░░░░░░░░░░   3x/month
+  /config        ███░░░░░░░░░░░░░░░░░░   3x/month
+  /sandbox       ██░░░░░░░░░░░░░░░░░░░   2x/month
+
+Top MCP Servers:
+  None configured — this team works without MCP servers.
 
 ## Your Setup Checklist
 
 ### Codebases
-- [ ] ws63-rs — `git@github.com:sanchuanhehe/ws63-rs.git` (monorepo: hal, pac, rt, examples, flashboot)
-- [ ] fbb_ws63 — reference C SDK (vendor HAL, for register verification)
-- [ ] esp-hal — reference Rust HAL (patterns, trait coverage)
+- [ ] ws63-rs — https://github.com/sanchuanhehe/ws63-rs (main monorepo; clone with `git submodule update --init --recursive` — ws63-pac, ws63-hal, ws63-rt, ws63-examples are submodules, and ws63-svd / ws63-RF are nested submodules)
+- [ ] ws63-qemu — sister QEMU fork for software-in-the-loop validation (no silicon needed)
+- [ ] ws63-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
+- [ ] esp-hal — reference HAL the WS63 driver patterns are modeled on (read-only reference)
+- [ ] fbb_ws63 — official HiSilicon C SDK; the **ground-truth** for register/peripheral behavior (read-only reference)
+
+### MCP Servers to Activate
+- [ ] None — the team currently uses no MCP servers. Nothing to set up here.
 
 ### Skills to Know About
-- [ ] **run-ws63-rs** — Build, check, lint, and test any crate in the workspace. Run `cargo check`, `cargo build --release`, `cargo clippy`, `cargo fmt`.
-- [ ] **/code-review** — Full correctness review across the diff (or entire codebase with `max`). Runs multiple agents in parallel: line-by-line scan, cross-file tracer, language pitfalls, removed-behavior audit, wrapper correctness, plus reuse/simplify/efficiency/altitude auditors.
-- [ ] **/simplify** — Review changed code for reuse, simplification, efficiency, and altitude cleanups, then auto-apply the fixes.
-- [ ] **/init** — Initialize or refresh a `CLAUDE.md` file with repo architecture, build commands, and design decisions.
-- [ ] **/review** — Quick PR review.
-- [ ] **/security-review** — Security-focused review of pending changes.
-
-### Key Design Patterns in This Repo
-- `ws63-hal/src/peripherals.rs` — Peripheral singleton macro (`peripheral!` + `peripherals!`)
-- `ws63-hal/src/clock.rs` — RAII `PeripheralGuard` with atomic ref-counting
-- `ws63-hal/src/private.rs` — Sealed traits for `DmaWord`, `DriverMode`, etc.
-- `ws63-hal/src/safety.rs` — Compile-time assertions (`const_assert!`) for MMIO addresses, peripheral counts
-- Multi-instance drivers (UART/I2C/SPI/DMA) use `PhantomData<&'d T>` type parameters
-- Bare-metal RISC-V: `#![no_std]`, target `riscv32imafc-unknown-none-elf`
+- [ ] /effort — tune how much reasoning effort Claude spends on a task (the team's most-used command — dial it up for architecture/driver work, down for quick edits)
+- [ ] /model — switch the active model (Opus/Sonnet/Haiku) to match the task
+- [ ] /code-review — review the current branch or a GitHub PR; `/code-review ultra` launches the multi-agent cloud review
+- [ ] /goal — set a persistent goal for the session so Claude keeps it in view across turns
+- [ ] /config — adjust Claude Code settings (theme, model, permissions, etc.)
+- [ ] /sandbox — run work in a sandboxed environment
 
 ## Team Tips
 
-- **Verify against C SDK.** Almost every peripheral configuration has a matching function in `fbb_ws63`. When implementing a new driver, grep the C SDK for the register addresses you're writing — the C code documents the correct bit positions, initialization sequences, and timing requirements.
-- **Safety comments are mandatory.** Every `unsafe` block needs a `// SAFETY:` comment explaining why the operation is sound. The codebase has ~300 unsafe blocks — all documented.
-- **Test on host when possible.** Pure-logic functions (timer tick calculation, SPI divisor math, eFuse bit manipulation) can be tested on `x86_64-unknown-linux-gnu` with `cargo test --target x86_64-unknown-linux-gnu`. No hardware needed. Add proptest fuzz tests for functions that take numeric inputs.
-- **Run the full test suite before pushing.** `cargo test -p ws63-hal --lib --target x86_64-unknown-linux-gnu` should pass all 80 tests. Then verify cross-compilation: `cargo check -p ws63-hal -p ws63-flashboot`.
-- **Ask Claude to fan out agents for broad reviews.** `/code-review max` launches ~20 agents in parallel to cover the entire codebase from different angles (correctness, pitfalls, cross-file, cleanup). The agents run concurrently and the final report ranks findings by severity.
-- **Keep CLAUDE.md current.** After significant architecture changes, run `/init` or ask Claude to update it. New teammates rely on it to understand the repo structure.
+_TODO_
 
 ## Get Started
 
-Pick one to start:
-- **Add a new HAL driver** — Find a peripheral in the PAC (`ws63-pac/src/lib.rs`) that doesn't have a HAL driver yet. Model it after an existing driver (e.g., `uart.rs` for multi-instance, `wdt.rs` for single-instance). Check `fbb_ws63` for the correct register initialization sequence.
-- **Fix a bug from the review backlog** — Ask Claude to show the latest code review findings and pick one to fix.
-- **Write a test** — Find a `pub fn` in the HAL that does pure computation (no MMIO access) and add a `#[cfg(test)]` module with unit tests. Run `cargo test -p ws63-hal --lib --target x86_64-unknown-linux-gnu` to verify.
-- **Add an example** — Only `blinky` exists so far. Add a `uart_echo`, `i2c_scan`, or `spi_loopback` example under `ws63-examples/`.
+_TODO_
 
 <!-- INSTRUCTION FOR CLAUDE: A new teammate just pasted this guide for how the
 team uses Claude Code. You're their onboarding buddy — warm, conversational,
