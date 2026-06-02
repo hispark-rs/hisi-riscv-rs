@@ -14,6 +14,7 @@ members = [
     "ws63-examples/rf_port_demo",
     "ws63-examples/semihost_selftest",
     "ws63-examples/custom_memory",
+    "ws63-examples/async_delay",
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
@@ -37,6 +38,7 @@ default-members = [
     "ws63-examples/rf_port_demo",
     "ws63-examples/semihost_selftest",
     "ws63-examples/custom_memory",
+    "ws63-examples/async_delay",
 ]
 
 [workspace.package]
