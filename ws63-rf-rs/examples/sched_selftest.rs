@@ -68,7 +68,21 @@ fn main() -> ! {
     }
     uart.write(0, b"\r\n");
 
-    let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D;
+    // Exercise the FRW/HCC data path (msg pool -> HCC -> worker -> handler).
+    let f = ws63_rf_rs::frw_hcc_selftest(); // [sent, received, dispatched, checksum_ok]
+    let flabels: [&[u8]; 4] = [
+        b"frw sent        = ",
+        b"frw received    = ",
+        b"frw dispatched  = ",
+        b"frw checksum_ok = ",
+    ];
+    for (label, v) in flabels.iter().zip(f.iter()) {
+        uart.write(0, label);
+        uart.write(0, u32dec(*v, &mut b));
+        uart.write(0, b"\r\n");
+    }
+
+    let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D && f == [5, 5, 5, 1];
     uart.write(
         0,
         if ok {

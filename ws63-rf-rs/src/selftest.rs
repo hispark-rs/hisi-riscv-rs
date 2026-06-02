@@ -79,6 +79,72 @@ pub fn osal_queue_selftest() -> u32 {
     rx
 }
 
+// ── FRW + HCC data-path self-test ───────────────────────────────────────────
+
+static FRW_SENT: AtomicU32 = AtomicU32::new(0);
+static FRW_RECV: AtomicU32 = AtomicU32::new(0);
+/// XOR of every delivered message's `data_len` — proves payloads arrive intact.
+static FRW_CHECK: AtomicU32 = AtomicU32::new(0);
+
+const FRW_N: u32 = 5;
+
+/// Mock device handler: the worker delivers each posted message here. Folds the
+/// payload into a checksum, counts it, and returns the node to the pool.
+extern "C" fn frw_mock_handler(msg: *mut crate::frw::FrwMsg) {
+    if !msg.is_null() {
+        // SAFETY: `msg` is a live node from frw_fetch_msg_node (msg at offset 0).
+        let dlen = unsafe { (*msg).data_len } as u32;
+        FRW_CHECK.fetch_xor(dlen, Ordering::Relaxed);
+        FRW_RECV.fetch_add(1, Ordering::Relaxed);
+    }
+    crate::frw::frw_free_msg_node(msg as *mut crate::frw::FrwMsgNode);
+}
+
+/// Exercise the FRW/HCC data path end to end (no blob): register a handler,
+/// spawn the worker, post `FRW_N` messages through HCC, and confirm the worker
+/// delivers them all. Returns `[sent, received, dispatched, checksum_ok]`; a
+/// pass is `[FRW_N, FRW_N, FRW_N, 1]`. Internal hook.
+#[doc(hidden)]
+pub fn frw_hcc_selftest() -> [u32; 4] {
+    use crate::frw::FrwMsg;
+    sched::init();
+    crate::hcc::hcc_wifi_msg_register(Some(frw_mock_handler));
+    crate::frw::start_worker();
+
+    let mut expect: u32 = 0;
+    for i in 0..FRW_N {
+        let node = crate::frw::frw_fetch_msg_node();
+        if node.is_null() {
+            break;
+        }
+        let dlen = 0x100 + i;
+        // SAFETY: fresh node from the pool.
+        unsafe {
+            (*node).msg.data_len = dlen as u16;
+        }
+        expect ^= dlen;
+        FRW_SENT.fetch_add(1, Ordering::Relaxed);
+        crate::hcc::hcc_wifi_msg_send(node as *mut FrwMsg);
+        sched::yield_now(); // let the worker drain
+    }
+
+    let mut guard: u32 = 0;
+    while crate::frw::dispatched() < FRW_N && guard < 1_000_000 {
+        sched::yield_now();
+        guard += 1;
+    }
+    crate::frw::stop_worker();
+    for _ in 0..16 {
+        sched::yield_now(); // let the worker observe the stop and exit
+    }
+    [
+        FRW_SENT.load(Ordering::Relaxed),
+        FRW_RECV.load(Ordering::Relaxed),
+        crate::frw::dispatched(),
+        (FRW_CHECK.load(Ordering::Relaxed) == expect) as u32,
+    ]
+}
+
 /// Run the scheduler self-test. Returns `[worker0, worker1, sem_items, done]`;
 /// a pass is `[ROUNDS, ROUNDS, ITEMS, 4]`. Internal hook — not a public API.
 #[doc(hidden)]

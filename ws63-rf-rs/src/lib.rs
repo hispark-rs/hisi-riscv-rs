@@ -34,7 +34,9 @@
 //! - **netif/lwip** ([`netif`]) — `pbuf_*` / `driverif_input` / `netifapi_*` /
 //!   `tcpip_callback`: the smoltcp integration seam (RX is dropped+counted; the
 //!   pbuf layout must be reconciled with the WiFi build's `lwipopts.h`).
-//! - **FRW/HCC** ([`ipc`]) — the host↔device message framework + transport.
+//! - **FRW/HCC** ([`frw`], [`hcc`]) — the host↔device message framework +
+//!   transport: a real node pool, worker thread (on `sched`) and message FIFO;
+//!   the blob's protocol half drives them. Validated by `frw_hcc_selftest`.
 //! - **eFuse/TRNG/NV** ([`uapi`]) — scaffold values; a HW run needs real ones.
 //!
 //! **What "symbol closure" means here.** The vendor blobs
@@ -55,7 +57,7 @@
 //! ROM cannot execute them); (2) the HiSilicon-toolchain blobs carry **custom
 //! relocations** stock `lld` cannot resolve to absolute addresses (the residual
 //! probe uses a relocatable link, which defers them). The remaining software
-//! work is the data path: the FRW worker thread + HCC transport ([`ipc`]) and
+//! work is the data path: the FRW worker thread + HCC transport ([`frw`], [`hcc`]) and
 //! the netif→smoltcp bridge ([`netif`]). See `README.md` and `ROADMAP.md`.
 //!
 //! [`ws63-RF`]: https://github.com/sanchuanhehe/ws63-RF
@@ -68,8 +70,9 @@ use critical_section::Mutex;
 
 pub mod alloc;
 pub mod error;
+pub mod frw;
 pub mod globals;
-pub mod ipc;
+pub mod hcc;
 pub mod libc;
 pub mod litos;
 pub mod log;
@@ -91,7 +94,7 @@ mod selftest;
 /// Internal scheduler self-test hook (used by the `sched_selftest` example;
 /// NOT a public API). Hidden from docs.
 #[doc(hidden)]
-pub use selftest::{osal_queue_selftest, sched_selftest};
+pub use selftest::{frw_hcc_selftest, osal_queue_selftest, sched_selftest};
 
 // ── Return codes from the ws63-RF OSAL contract (port_osal.h) ──────────────
 /// OSAL success (`OSAL_OK`).
