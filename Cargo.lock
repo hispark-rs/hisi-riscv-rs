@@ -537,6 +537,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "semihost_selftest"
+version = "0.1.0"
+dependencies = [
+ "ws63-rt",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"

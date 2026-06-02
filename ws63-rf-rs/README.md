@@ -1,7 +1,7 @@
 # ws63-rf-rs
 
 Rust **porting layer + FFI bindings** for the closed-source WS63 Wi-Fi/BLE radio
-blobs delivered in [`ws63-RF`](../ws63-RF). It is the WS63 analogue of esp-hal's
+blobs delivered in [`ws63-RF`](ws63-RF) (a submodule nested under this crate). It is the WS63 analogue of esp-hal's
 `esp-radio` OS-adapter: it implements the **runtime-agnostic porting contract**
 (`ws63-rf-rs/ws63-RF/include/port/*.h`) in Rust as `#[unsafe(no_mangle)] extern "C"`
 symbols, so when a firmware links a vendor blob the linker resolves the blob's
@@ -12,35 +12,40 @@ implementations.
 > language-neutral so the blobs can be ported to *any* runtime. This crate is
 > the ws63-rs runtime's implementation of `ws63-RF`'s C contract.
 
-## ⚠️ Status: porting-layer scaffold — this does NOT make Wi-Fi work yet
+## ⚠️ Status: symbol closure for Wi-Fi init ACHIEVED; runtime + data path implemented; runnable image is HIL
 
-This crate makes the porting contract **compile, link, and (where feasible)
-actually run**, validated on `ws63-qemu` by the `rf_port_demo` example. It is a
-foundation, not a working Wi-Fi stack. The honest picture:
+This crate makes the porting contract **compile, link, and actually run** — the
+runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
+timers, netif→smoltcp) are implemented and self-tested standalone on `ws63-qemu`
+(`rf_port_demo`, plus the crate's `sched_selftest` / `frw_hcc_selftest` /
+`netif_smoltcp_selftest`). It is **not yet a working Wi-Fi stack**: a real link
+is hardware-in-the-loop (the ROM symbols are real-silicon addresses and the
+HiSilicon blobs carry custom relocations stock `lld` cannot resolve — see
+below). The honest picture:
 
 ### Implemented for real (usable today)
 
 | Area | Symbols | Notes |
 |------|---------|-------|
-| Memory | `osal_kmalloc`, `osal_kfree` | real first-fit heap ([`linked_list_allocator`]) over a static pool; zero-initialised, 8-aligned |
-| Logging | `osal_printk`, `log_event_wifi_print{0,1,2,4}` | routed to a settable [`set_log_sink`]; format `%` specifiers are **not** expanded (raw fmt string) |
-| Safe C lib | `memset_s`, `memcpy_s` | faithful securec semantics (bounds-checked) |
-| Time | `uapi_systick_get_ms`, `osal_udelay` | `mcycle`-based / busy-wait (approximate, uncalibrated) |
-| IRQ critical section | `osal_irq_lock`, `osal_irq_restore` | real, via `mstatus.MIE` |
-| Cache | `osal_flush_cache` | data `fence` (single-core, no MMU) |
-| OAL pool | `oal_memory_init/exit`, `oal_mem_rsv`, `oal_mem_set_buf_size/skb_size`, … | bump reservation inside the 48 KB Wi-Fi packet RAM |
-| ROM globals | `g_dmac_alg_main`, `g_mac_res_etc` | referenced by `libwifi_rom_data.a`, defined by **no** vendor lib → provided here (zeroed scaffold storage) |
+| Memory | `osal_kmalloc`/`osal_kfree`, `malloc`/`free`/`memalign`, `oal_mem_*` | real first-fit heap over a static pool; zero-initialised, 8-aligned |
+| Scheduler | `osal_kthread_*`, `osal_sem_*`, `osal_mutex_*`, `osal_wait_*`, queues + event groups | real cooperative scheduler with **timed** blocking (`*_timeout` deadlines); validated by `sched_selftest` |
+| Sync / IRQ | `osal_irq_lock`/`restore`, spinlocks, atomics, `ArchIntLock`/`Restore` | real, via `mstatus.MIE` |
+| Timers | `osal_adapt_timer_*`, `frw_dmac_timer_*` | real ms software-timer service, fired from the FRW worker loop |
+| FRW / HCC data path | `frw_*`, `hcc_*` | real message-node pool + WiFi worker thread (on the scheduler) + host↔device FIFO; validated by `frw_hcc_selftest` |
+| netif → smoltcp | `netif` / `netif_smoltcp` (feature `net`) | real `smoltcp::phy::Device` behind the netif seam; `driverif_input` feeds RX, `TxToken` calls the TX sink; validated by `netif_smoltcp_selftest` (ARP round-trip) |
+| Logging / securec | `osal_printk`, `log_event_wifi_print{0,1,2,4}`, `memset_s`/`memcpy_s` | log routed to a settable [`set_log_sink`]; `%` specifiers not expanded (raw fmt) |
+| Time leaves | `uapi_systick_get_ms`, `osal_udelay` | `mcycle`-based / busy-wait (approximate, uncalibrated) |
+| Adaptation shim | full `osal_adapt_*` (33) | forwards to the OSAL / event / irq / kthread / wait impls |
+| ROM globals | `g_dmac_alg_main`, `g_mac_res_etc` | referenced by `libwifi_rom_data.a`, defined by **no** vendor lib → provided here |
 
-### Typed, documented stubs (return error / null, do nothing useful yet)
+### Scaffolds (defined + documented; need hardware or the real blob)
 
-| Area | Symbols | Blocked on |
-|------|---------|-----------|
-| Threads / wait | `osal_kthread_*`, `osal_wait_*` | a task **scheduler** (ws63-rs is bare-metal; ROADMAP phase 6 / an RTOS) |
-| Per-line IRQ | `osal_irq_request/free/enable/disable` | trap-delivery wiring for the WLAN/MAC line (phase 4) |
-| Framework | `frw_*` (21) | message framework + worker thread + timers |
-| IPC transport | `hcc_*` (6) | host↔device-MAC shared-memory transport |
-| WLAN rings / RF clk | `wlan_*`, `oal_ring_*` (12) | descriptor rings + vendor RF HAL |
-| NV / tsensor | `uapi_nv_read`, `uapi_tsensor_get_current_temp` | flash-NV (RF cal + MAC) / ws63-hal tsensor |
+| Area | Symbols | Needs |
+|------|---------|-------|
+| netif pbuf layout | `pbuf_*` (`netif`) | offsets reconciled with the WiFi build's `lwipopts.h`; the smoltcp TX sink pointed at the blob's real transmit symbol (mismatch corrupts silently) |
+| Per-line IRQ | `osal_irq_request/free/enable/disable` | trap-delivery wiring for the WLAN/MAC line |
+| WLAN rings / RF clk | `wlan_*`, `oal_ring_*` | descriptor rings + vendor RF HAL (on-silicon) |
+| eFuse / TRNG / NV / tsensor | `uapi_nv_read`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
 
 ### What a full Wi-Fi link still needs (NOT radio reverse-engineering)
 
@@ -60,12 +65,13 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
   `osal_*`/`oal_*`/`log_*`/`uapi_*` porting contract + compiler-rt builtins +
   `g_dmac_alg_main`/`g_mac_res_etc` + the `__wifi_pkt_ram_*` linker symbols.
 
-Still genuinely remaining for the runtime (beyond the contract above):
+Still genuinely remaining for the runtime (beyond the contract above — note the
+scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **A task scheduler** for the FRW worker thread + `osal_kthread_*`/wait (those
-  are still stubs here — ROADMAP phase 6 / an RTOS).
 - **A real `.wifi_pkt_ram` NOLOAD region** in `ws63-rt` (here the symbols are a
   scaffold `--defsym`).
+- **Pinning the netif pbuf layout** to the WiFi build's `lwipopts.h` and the
+  smoltcp TX sink to the blob's transmit symbol (on hardware).
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
 See the workspace [`ROADMAP.md`](../ROADMAP.md) phase 4 for the staged plan.

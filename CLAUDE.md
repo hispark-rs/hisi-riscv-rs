@@ -50,7 +50,7 @@ ws63-rt (startup, linker scripts, interrupt vectors)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for all 35 peripherals. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`ws63-hal`**: 31 source files implementing safe drivers. Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`.
+- **`ws63-hal`**: 33 source files implementing safe drivers. Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`.
 - **`ws63-rt`**: Runtime crate — startup assembly, linker scripts (memory.x, layout.ld), interrupt vector definitions (device.x). Uses `riscv-rt` underneath.
 
 ### Peripheral Singleton Pattern

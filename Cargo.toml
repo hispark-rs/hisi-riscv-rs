@@ -12,6 +12,7 @@ members = [
     "ws63-examples/dma_loopback",
     "ws63-examples/wifi_blob_link",
     "ws63-examples/rf_port_demo",
+    "ws63-examples/semihost_selftest",
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
@@ -33,6 +34,7 @@ default-members = [
     "ws63-examples/dma_loopback",
     "ws63-examples/wifi_blob_link",
     "ws63-examples/rf_port_demo",
+    "ws63-examples/semihost_selftest",
 ]
 
 [workspace.package]
