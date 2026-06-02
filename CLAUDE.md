@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are each standalone repos linked as submodules.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are each standalone repos linked as submodules. Two are **nested under the crate that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree `ws63-rf-rs` crate (`ws63-rf-rs/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
 
 **Architecture docs (Chinese):** see [`docs/`](docs/) — [`docs/architecture/overview.md`](docs/architecture/overview.md) for the whole picture, per-component docs under `docs/architecture/`, the full review ledger in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
 

@@ -27,13 +27,14 @@ ws63-guide     (中文硬件手册，Sphinx)
 
 | 组件 | 类型 | 角色 | 架构文档 |
 |------|------|------|----------|
-| `ws63-svd` | submodule | SVD 真值 + 生成工具 | [ws63-svd.md](ws63-svd.md) |
 | `ws63-pac` | submodule | svd2rust 生成的寄存器访问层 | [ws63-pac.md](ws63-pac.md) |
+| `ws63-pac/ws63-svd` | 嵌套 submodule（在 ws63-pac 下） | SVD 真值 + 生成工具（归 pac 所有） | [ws63-svd.md](ws63-svd.md) |
 | `ws63-hal` | submodule | 手写安全驱动（31 个外设） | [ws63-hal.md](ws63-hal.md) |
 | `ws63-rt` | submodule | 运行时：启动、中断向量、链接脚本 | [ws63-rt.md](ws63-rt.md) |
 | `ws63-examples` | submodule | 应用示例（目前仅 blinky） | [ws63-examples.md](ws63-examples.md) |
 | `ws63-flashboot` | in-tree | **实验性**二级引导（非安全启动） | [ws63-flashboot.md](ws63-flashboot.md) |
-| `ws63-RF` | submodule | 闭源协议栈 blob + porting 接口 | [ws63-RF.md](ws63-RF.md) |
+| `ws63-rf-rs` | in-tree | 闭源 blob 的 Rust porting 层 | — |
+| `ws63-rf-rs/ws63-RF` | submodule（嵌套路径） | 闭源协议栈 blob + porting 接口（归 rf-rs 所有） | [ws63-RF.md](ws63-RF.md) |
 | `ws63-guide` | submodule | 中文硬件手册 | [ws63-guide.md](ws63-guide.md) |
 
 ## 核心设计模式
