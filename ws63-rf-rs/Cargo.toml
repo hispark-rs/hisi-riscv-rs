@@ -14,6 +14,17 @@ ws63-hal = { path = "../ws63-hal" }
 critical-section = "1"
 linked_list_allocator = { version = "0.10", default-features = false }
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
+# The netif->smoltcp bridge (feature `net`): a no_std/no-alloc TCP/IP stack to
+# replace the C SDK's lwip behind the netif seam. Optional so the bare porting
+# layer (which links the vendor blobs) stays lean.
+smoltcp = { version = "0.13", default-features = false, features = [
+    "medium-ethernet",
+    "proto-ipv4",
+    "socket-raw",
+], optional = true }
+
+[features]
+net = ["dep:smoltcp"]
 
 # For the internal `sched_selftest` example only (runtime entry + linker scripts).
 [dev-dependencies]
@@ -22,3 +33,8 @@ ws63-rt = { path = "../ws63-rt" }
 [[example]]
 name = "sched_selftest"
 path = "examples/sched_selftest.rs"
+
+[[example]]
+name = "net_selftest"
+path = "examples/net_selftest.rs"
+required-features = ["net"]

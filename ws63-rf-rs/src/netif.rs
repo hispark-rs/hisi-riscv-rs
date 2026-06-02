@@ -135,11 +135,31 @@ pub extern "C" fn pbuf_header(p: *mut c_void, header_size: i16) -> u8 {
     0
 }
 
-/// `driverif_input(netif, p)` — RX entry from the MAC driver. SEAM: the frame is
-/// counted and freed (dropped). Wiring it into smoltcp is the next step.
+/// `driverif_input(netif, p)` — RX entry from the MAC driver. With feature `net`
+/// the frame bytes are pushed to the smoltcp bridge ([`crate::netif_smoltcp`]);
+/// otherwise (or if the pbuf has no payload) the frame is counted and dropped.
+/// The pbuf is freed either way (lwip owns it after input).
 #[unsafe(no_mangle)]
 pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
-    RX_DROPPED.fetch_add(1, Ordering::Relaxed);
+    #[cfg(feature = "net")]
+    {
+        let pb = p as *const Pbuf;
+        if !pb.is_null() {
+            // SAFETY: `p` is a live pbuf from pbuf_alloc; payload/len are set by
+            // the driver. Copy the single-buffer frame to the smoltcp RX queue.
+            let (payload, len) = unsafe { ((*pb).payload, (*pb).len as usize) };
+            if !payload.is_null() && len > 0 && len <= crate::netif_smoltcp::MTU {
+                let bytes = unsafe { core::slice::from_raw_parts(payload as *const u8, len) };
+                crate::netif_smoltcp::rx_push(bytes);
+            } else {
+                RX_DROPPED.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    }
+    #[cfg(not(feature = "net"))]
+    {
+        RX_DROPPED.fetch_add(1, Ordering::Relaxed);
+    }
     pbuf_free(p);
 }
 

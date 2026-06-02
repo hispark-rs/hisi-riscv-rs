@@ -77,6 +77,10 @@ pub mod libc;
 pub mod litos;
 pub mod log;
 pub mod netif;
+/// netif→smoltcp bridge (feature `net`): a Rust TCP/IP stack behind the netif
+/// seam. Optional so the bare porting layer stays lean.
+#[cfg(feature = "net")]
+pub mod netif_smoltcp;
 pub mod oal;
 pub mod osal;
 pub mod osal_adapt;
@@ -92,6 +96,10 @@ pub mod uapi;
 // a Rust API. So `sched` is private (not part of this crate's public surface).
 mod sched;
 mod selftest;
+/// Internal netif→smoltcp bridge self-test (feature `net`). NOT a public API.
+#[cfg(feature = "net")]
+#[doc(hidden)]
+pub use netif_smoltcp::netif_smoltcp_selftest;
 /// Internal scheduler self-test hook (used by the `sched_selftest` example;
 /// NOT a public API). Hidden from docs.
 #[doc(hidden)]
