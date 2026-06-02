@@ -21,7 +21,7 @@ in-tree and are not published.
 | Crate | Role | crates.io |
 |-------|------|-----------|
 | [`ws63-pac`](ws63-pac/) | `svd2rust`-generated peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
-| [`ws63-hal`](ws63-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) | [`ws63-hal`](https://crates.io/crates/ws63-hal) |
+| [`ws63-hal`](ws63-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver) | [`ws63-hal`](https://crates.io/crates/ws63-hal) |
 | [`ws63-rt`](ws63-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`ws63-rt`](https://crates.io/crates/ws63-rt) |
 | [`ws63-rf-rs`](ws63-rf-rs/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](ws63-flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
@@ -97,6 +97,23 @@ ROADMAP phase 1 "hardware bring-up":
 bash scripts/build.sh
 WS63_RS=../ws63-rs bash scripts/smoke-test.sh   # boots ws63-rs examples + asserts behaviour
 ```
+
+## Async & embassy
+
+`ws63-hal` has an interrupt + waker driven async layer (no heap, no global
+executor required), built on `embedded-hal-async` / `embedded-io-async`. It runs
+on the no-atomics WS63 core via the existing portable-atomic + critical-section
+polyfill. Two opt-in features:
+
+- **`async`** — `embedded_hal_async::delay::DelayNs` (on a TIMER), `digital::Wait`
+  (GPIO edges), `embedded_io_async::{Read, Write}` (UART), plus a minimal `wfi`
+  `block_on`. Drivers expose `on_interrupt` hooks rather than installing ISRs.
+- **`embassy`** — an [`embassy-time`](https://docs.rs/embassy-time) `Driver`
+  (`now()` from the TCXO 64-bit counter, alarms from a TIMER), so
+  [`embassy-executor`](https://docs.rs/embassy-executor) (platform-riscv32) runs
+  `Timer::after` + multi-task scheduling + the async drivers above.
+
+Validated on ws63-qemu — see `ws63-examples/{async_delay, embassy_multitask, embassy_async_io}`.
 
 ## Releasing
 
