@@ -25,18 +25,25 @@
 //!   ([`osal_queue`]) and **timed** blocking (`*_timeout` via deadlines).
 //! - **Sync** — spinlocks + atomics ([`osal_sync`]); IRQ lock/restore (real
 //!   `mstatus` CSR) + `ArchIntLock`/`ArchIntRestore` ([`osal`], [`litos`]).
+//! - **Timers** — a real ms software-timer service ([`timer`]):
+//!   `osal_adapt_timer_*` / `frw_dmac_timer_*`, fired from the FRW worker loop.
+//! - **FRW/HCC data path** ([`frw`], [`hcc`]) — a real message-node pool, the
+//!   WiFi worker thread (on `sched`) and the host↔device message FIFO; the
+//!   blob's protocol half drives them. Validated by `frw_hcc_selftest`.
+//! - **netif → smoltcp** (`netif_smoltcp`, feature `net`) — a real
+//!   `smoltcp::phy::Device` behind the netif seam: `driverif_input` feeds the RX
+//!   queue, `TxToken` calls the TX sink. Validated by `netif_smoltcp_selftest`
+//!   (an ARP request round-trips driver→smoltcp→driver).
 //! - **Logging / securec** — `osal_printk`, `log_event_*`, `memset_s`/`memcpy_s`
 //!   ([`log`]); string/time leaves ([`osal_ext`]).
 //! - **Adaptation** — the full `osal_adapt_*` shim ([`osal_adapt`]).
 //! - **Globals** — `g_dmac_alg_main` / `g_mac_res_etc` ([`globals`]).
 //!
-//! Seams + scaffolds (defined, documented, not a working data path yet):
-//! - **netif/lwip** ([`netif`]) — `pbuf_*` / `driverif_input` / `netifapi_*` /
-//!   `tcpip_callback`: the smoltcp integration seam (RX is dropped+counted; the
-//!   pbuf layout must be reconciled with the WiFi build's `lwipopts.h`).
-//! - **FRW/HCC** ([`frw`], [`hcc`]) — the host↔device message framework +
-//!   transport: a real node pool, worker thread (on `sched`) and message FIFO;
-//!   the blob's protocol half drives them. Validated by `frw_hcc_selftest`.
+//! Scaffolds (defined, documented, need hardware / the real blob):
+//! - **netif pbuf layout** ([`netif`]) — `pbuf_*` use the default lwip layout;
+//!   the offsets MUST be reconciled with the WiFi build's `lwipopts.h` before a
+//!   real frame flows (mismatch corrupts silently). The smoltcp TX sink must be
+//!   pointed at the blob's real frame-transmit symbol on hardware.
 //! - **eFuse/TRNG/NV** ([`uapi`]) — scaffold values; a HW run needs real ones.
 //!
 //! **What "symbol closure" means here.** The vendor blobs
@@ -56,9 +63,11 @@
 //! symbols are **real-silicon addresses** (an emulator without a populated mask
 //! ROM cannot execute them); (2) the HiSilicon-toolchain blobs carry **custom
 //! relocations** stock `lld` cannot resolve to absolute addresses (the residual
-//! probe uses a relocatable link, which defers them). The remaining software
-//! work is the data path: the FRW worker thread + HCC transport ([`frw`], [`hcc`]) and
-//! the netif→smoltcp bridge ([`netif`]). See `README.md` and `ROADMAP.md`.
+//! probe uses a relocatable link, which defers them). The runtime + data-path
+//! plumbing (scheduler, OSAL, FRW/HCC, timers, netif→smoltcp) is implemented and
+//! self-tested standalone; what remains is hardware bring-up: pin the pbuf
+//! layout to the blob's `lwipopts.h`, point the TX sink at the blob's transmit,
+//! and run on silicon. See `README.md` and `ROADMAP.md`.
 //!
 //! [`ws63-RF`]: https://github.com/sanchuanhehe/ws63-RF
 

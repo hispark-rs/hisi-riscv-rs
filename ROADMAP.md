@@ -221,15 +221,23 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 完成符号解析**。可复现：`ws63-rf-rs/tools/mac-link-residual.sh`。
 
 之前"~96 缺失"是 `--whole-archive`（强制纳入每个 obj）的上界，其中**绝大多数是 Wi-Fi init 不可达**的 BT 共存 + 备用 OS
-适配器代码（可达路径上 BT 符号数 = 0）。ws63-rf-rs 现导出 220 个契约符号：已**真正实现**堆/调度器（`osal_kthread_*`/
-信号量/消息队列/事件组/**带超时阻塞**）/自旋锁/原子/log/securec/时间/字符串/`osal_adapt_*`(33)/libc/LiteOS-arch 兼容；
-`frw_*`/`hcc_*` 仍为有类型的桩（数据通路待做），netif/lwip 为接 smoltcp 的缝。
+适配器代码（可达路径上 BT 符号数 = 0）。ws63-rf-rs 现导出 220+ 个契约符号：已**真正实现**堆/调度器（`osal_kthread_*`/
+信号量/消息队列/事件组/**带超时阻塞**）/自旋锁/原子/log/securec/时间/字符串/`osal_adapt_*`(33)/libc/LiteOS-arch 兼容。
+
+**数据通路（运行时半边）已实现并在 ws63-qemu 自验**（无 blob，用 mock 验证）：
+- **FRW 工作线程 + HCC 传输**（`frw.rs`/`hcc.rs`）：真实消息节点池（`frw_msg_node` 精确 40B 布局）、worker 线程（跑在
+  `sched` 上）、host↔device 消息 FIFO。`frw_hcc_selftest`：5 条消息经 HCC→worker 全投递、校验和正确。
+- **软件定时器服务**（`timer.rs`）：`osal_adapt_timer_*`/`frw_dmac_timer_*`，ms deadline，由 worker 循环驱动。
+  `timer_selftest`：one-shot 触发一次、不重触、re-arm 再触发。
+- **netif→smoltcp 桥**（`netif_smoltcp.rs`，feature `net`）：真实 `smoltcp::phy::Device`，`driverif_input` 喂 RX 队列、
+  `TxToken` 走 TX sink。`netif_smoltcp_selftest`：ARP 请求经 驱动→smoltcp→驱动 往返、回 ARP reply。
 
 承接阶段 3/4，**仍需**完成：
 - ✅ ~~补齐漏抽的 wifi `.a` 库~~（hmac/tcm/alg/bg_common 已纳入 `ws63-rf-rs/ws63-RF/lib`；wpa 按 MVP 决策剔除；ROM 表已补）。
 - ✅ ~~任务调度器~~（`crate::sched` cooperative 调度器已实现并在 ws63-qemu 验证）。
-- **数据通路（真正的活）**：FRW 工作线程 + HCC 共享内存传输（`ipc.rs`）；netif→smoltcp 桥（`netif.rs`，含按 wifi 构建
-  `lwipopts.h` 对齐 pbuf 布局）。
+- ✅ ~~数据通路运行时半边~~（FRW worker + HCC 传输 + 软件定时器 + netif→smoltcp 桥，均已实现 + QEMU 自验）。
+- **接真实 blob（硬件在环）**：把 netif `pbuf` 布局按 wifi 构建的 `lwipopts.h` 对齐；把 smoltcp TX sink 指向 blob 的真实
+  发帧符号；用真实 `frw_event_process_all_event_etc` 等 blob 协议半边联调。
 - **真实 `.wifi_pkt_ram` NOLOAD 区**：把裸 `--defsym=__wifi_pkt_ram_*` 升级为 `ws63-rt` 链接脚本里**保留的** NOLOAD 段
   （C SDK `linker.lds`：0xA00000、0xC000=48KB），否则 Wi-Fi ROM 初始化运行期会写入未保留区域。
 - **真机验证（仍属硬件在环）**：ROM 符号是真实硅地址（QEMU 未填充掩膜 ROM）；且厂商 blob 携带 stock `lld` 无法定位的
