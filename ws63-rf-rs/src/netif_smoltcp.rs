@@ -4,7 +4,7 @@
 //! Two seams connect the vendor WiFi MAC blob to smoltcp:
 //! - **RX**: the driver hands a received Ethernet frame up via
 //!   [`driverif_input`](crate::netif::driverif_input); with feature `net` that
-//!   pushes the frame bytes into [`rx_push`] → an internal queue that the
+//!   pushes the frame bytes into `rx_push` → an internal queue that the
 //!   `Ws63Device` `RxToken` drains.
 //! - **TX**: smoltcp emits a frame through a `TxToken`, which calls the
 //!   registered TX sink (`set_tx_sink`). On hardware that sink invokes the
