@@ -284,8 +284,9 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`。配套：工具链 **v1.96.0-1**（补全 proc-macro-srv /
    cargo / gdb-lldb）+ 全仓下载 URL 同步。发布前已用 CI verify job 同款校验（host `clippy --all-features
    -D warnings` / `doc -D warnings` / riscv clippy）预检通过。
-5. **ws63-guide 上线**：Pages 部署目前一直红（仓库未把 Pages 源设为 GitHub Actions）——需 owner 在
-   Settings→Pages 启用；之后 ch1–8 全量上线。可选：补 ch6 外设寄存器深度（UART/QSPI/I2S 全寄存器图）。
+5. ✅ **ws63-guide 上线 + ch6 寄存器深度**（已完成 2026-06-05）：Pages 已正常（ch1–8 全量上线）；
+   ch6 的 SPI/QSPI/I2S 三章补全寄存器概览 + 关键位域（取自 SVD 显式 bitRange），并据 SVD 校正 ch8 表 8-7 的
+   SPI_WSR 位。**至此阶段 7 全部收口。**
 6. **版本 + CHANGELOG**：各 crate bump/tag，记录本会话的时钟修复与 cken 审计。
 
 ## 阶段 1 准备 — 真机 bring-up 框架（板子短期到位）
