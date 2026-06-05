@@ -65,7 +65,7 @@ link it first (see [`rust-toolchain.toml`](rust-toolchain.toml) and the
 [ws63-rust-toolchain](https://github.com/sanchuanhehe/ws63-rust-toolchain) repo):
 
 ```bash
-curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 tar xzf ws63-rust-1.96.0-*.tar.gz && rustup toolchain link ws63 "$PWD/stage2"
 ```
 

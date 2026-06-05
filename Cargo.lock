@@ -1354,7 +1354,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-hal"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "cfg-if",
  "critical-section",
@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-rt"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "critical-section",
  "riscv",

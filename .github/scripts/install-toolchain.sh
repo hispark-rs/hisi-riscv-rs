@@ -4,7 +4,7 @@
 # Used by the CI workflows since ws63-rs pins `channel = "ws63"` in rust-toolchain.toml.
 set -euo pipefail
 
-VER="v1.96.0"
+VER="v1.96.0-1"
 BASE="ws63-rust-1.96.0-x86_64-unknown-linux-gnu"
 URL="https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/${VER}/${BASE}.tar.gz"
 

@@ -3,7 +3,7 @@
 # baked in as a BUILTIN — so we build without `-Z build-std`.
 #
 # You MUST install + link it first (it is not a distributable rustup channel):
-#   curl -LO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+#   curl -LO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   rustup toolchain link ws63 "$PWD/stage2"
 #
