@@ -45,8 +45,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   把硬浮点 `riscv32imfc-unknown-none-elf`（`ilp32f`，无原子）烤进 stable rustc 作 builtin，仓库默认即用之、
   **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`ws63-rt` 的 `riscv` 开
   `critical-section-single-hart`。**实测产物零原子指令（lr/sc/amo）、single-float ABI**，不再会在无 A 核上触发陷阱。
-  - 工具链仓库：<https://github.com/sanchuanhehe/ws63-rust-toolchain>（release v1.96.0 提供预编译 sysroot tarball）。
+  - 工具链仓库：<https://github.com/sanchuanhehe/ws63-rust-toolchain>（预编译 sysroot tarball + 已硬化的 release CICD）。
     硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。
+  - **工具链补全（2026-06）**：sysroot 此前缺件，现已齐——`rust-analyzer-proc-macro-srv`（修复 LSP「cannot find
+    proc-macro server」、可展开 `#[entry]` 等过程宏）、`cargo`（增量构建曾漏装进 bin）、`rust-gdb`/`rust-lldb` +
+    美化打印器（配 `gdb-multiarch` 调 QEMU gdbstub）、rust-src、llvm-tools。`build.sh`/`config.toml` 持久化，
+    发布 **v1.96.0-1**（rustc 仍 1.96.0，纯打包热修；旧 v1.96.0 保留）。
 - **flashboot 标记实验性**：banner 改为"非安全启动"警告、`publish = false`、移出 `default-members`、
   删除未使用的 `ws63-pac` 依赖、新增 `README.md`。生产启动复用 fbb_ws63 原厂 flashboot。
 - **CI/release 修复**：去除失败屏蔽（`|| true` / `continue-on-error` / `| head` 吞掉退出码）；
