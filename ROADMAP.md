@@ -21,13 +21,18 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 | 阶段 | 主题 | 状态 |
 |------|------|------|
-| 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 本轮已完成 |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本已完成；**软件在环（QEMU）已跑通 blinky + uart_hello**（[ws63-qemu](https://github.com/sanchuanhehe/ws63-qemu)）；上板冒烟待硬件 |
-| 2 | 死代码清理 + 正确性修复 | 🟡 大部完成（SPI / eFuse / LSADC + **中断子系统** + **I2C 超时** + **system reset** + **死代码清理** + **GPIO pull** + **host 单测** + **trap/向量表布局** + **DMA 请求 ID/接线** + **flashboot 整改** + 可复现 SVD→PAC 已修 —— 正确性项全部落地；真实 secure-boot 验签按冻结项复用原厂） |
+| 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 已完成（2026-05） |
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本 ✅；QEMU 软件在环 ✅（blinky/uart/中断/async 全绿）；**板子短期到位 → 先备烧录脚本 + HIL 冒烟框架**（见下「阶段 1 准备」）|
+| 2 | 死代码清理 + 正确性修复 | ✅ 已完成（中断 LOCI* / SPI / I2C/SPI 超时 / 复位 / GPIO pull / eFuse / LSADC / 死代码 / host 单测 / DMA + **本会话：timer/WDT/UART/SPI/I2C 时钟真实化、cken 位逐一对照 SDK 审计**）|
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
-| 4 | porting 层 + HCC IPC | 🟡 已起步（2026-06-02：`ws63-rf-rs` 移植层 crate——契约可链接可运行的 feasible 子集，QEMU 验证）|
-| 5 | 连接性示例（scan → connect → ping） | 计划 |
-| 6 | async（embassy） | 计划 |
+| 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（依赖阶段 1）|
+| 5 | 连接性示例（scan → connect → ping） | 🔴 待真机（HIL，阶段 1/4 之后）|
+| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/architecture/async-embassy.md](docs/architecture/async-embassy.md)）|
+| **7** | **HAL 收尾 + 发布（← 当前焦点）** | 🟢 进行中（见下「阶段 7」）|
+
+> **当前焦点（2026-06）**：阶段 0/2/3/6 已收口、QEMU 软件在环成熟、文档已是「官方重建 + ch8 实证补充」双层。
+> 主攻 **阶段 7（HAL 收尾 + 发布）**，同时因**真机短期到位**而并行**阶段 1 准备**（烧录脚本 + HIL 框架），
+> 让板子一到位即可 blinky→uart→连接性 bring-up。阶段 4/5（连接性上板）随之解锁。
 
 ---
 
@@ -256,6 +261,37 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 接 `embassy-executor` + 中断驱动 I/O，让一个驱动（UART 或 timer）真正异步，作为概念验证。
 在此之前不要保留空的 async 类型状态（阶段 2 已删 `Blocking`/`Async` marker）。
+
+---
+
+## 阶段 7 — HAL 收尾 + 发布（← 当前焦点，2026-06）
+
+把现有成果固化为「可用、可发布、文档齐全」的产品级 crate 集。
+
+1. **SPI 两级时钟建模**：HAL 当前按固定 160 MHz SSI_CLK 写 SCKDV，但未配 CLDO_CRG 的 SPI 分频
+   （480 MHz PLL → `DIV_CTL3[9:5]`，见 ch8 时钟树）。补全 CRG 分频配置，使 SCK 在真机上准确；
+   或显式记录「依赖 boot 默认 SSI_CLK」的边界。
+2. **cken 位复核收口**：已逐一对照 SDK 审计——I2S 修正为 `CKEN0` bit11/12，其余
+   I2C/Timer/LSADC/Tsensor/TRNG/Security/DMA/SDMA/SFC/SPI1 标为「SDK 不门控、占位未证实」。
+   决定保留占位（已标注）还是删除仅留已证实位；并使 `safety.rs` 的 cken 漂移检查与之一致。
+3. **补示例**：`blinky` 升级到 `OutputConfig`/`InputConfig`；按需加 `i2c_scan` / `spi_loopback` 覆盖更多驱动 API。
+4. **发布到 crates.io**：`ws63-pac` / `ws63-hal` / `ws63-rt` 各自仓自治发布（`release.yml` 已就位），
+   `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`；校验 docs.rs 构建（features 门控）。
+5. **ws63-guide 上线**：Pages 部署目前一直红（仓库未把 Pages 源设为 GitHub Actions）——需 owner 在
+   Settings→Pages 启用；之后 ch1–8 全量上线。可选：补 ch6 外设寄存器深度（UART/QSPI/I2S 全寄存器图）。
+6. **版本 + CHANGELOG**：各 crate bump/tag，记录本会话的时钟修复与 cken 审计。
+
+## 阶段 1 准备 — 真机 bring-up 框架（板子短期到位）
+
+板子一到位即可上手，不临时现搭：
+
+1. **烧录脚本**：封装 BurnTool / 串口 ymodem（参考 fbb_ws63 烧录流程），`flash.sh <bin> <port>`。
+2. **HIL 冒烟框架**：镜像 ws63-qemu 的 `smoke-test.sh`，跑在真实串口上——blinky（LED/逻辑分析仪）、
+   uart_hello（读 banner）、timer_irq/gpio_irq（读中断计数）、reset_demo。
+3. **bring-up 清单**：上电 → flashboot → blinky → uart → 中断 →（实测核对时钟 240/160/24）→ DMA → 连接性，
+   每步附预期 + 失败诊断。
+4. **首板验证目标**：确认本会话的时钟修复（timer 24 MHz、UART 160 MHz 波特、SPI/I2C）在真硅片上准确
+   ——这正是 QEMU 无法证明的部分。一旦通过，阶段 4/5（连接性上板）即可推进。
 
 ---
 
