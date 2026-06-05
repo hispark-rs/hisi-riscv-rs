@@ -22,7 +22,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 阶段 | 主题 | 状态 |
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 已完成（2026-05） |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本 ✅；QEMU 软件在环 ✅（blinky/uart/中断/async 全绿）；**板子短期到位 → 先备烧录脚本 + HIL 冒烟框架**（见下「阶段 1 准备」）|
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本 ✅；QEMU 软件在环 ✅；**HIL 脚手架已就位**（`hil/flash.sh`+`hil/hil-smoke.sh`+bring-up 清单；`ws63-qemu/scripts/debug.sh` gdb 调试）——板子到位即可烧录冒烟（见「阶段 1 准备」）|
 | 2 | 死代码清理 + 正确性修复 | ✅ 已完成（中断 LOCI* / SPI / I2C/SPI 超时 / 复位 / GPIO pull / eFuse / LSADC / 死代码 / host 单测 / DMA + **本会话：timer/WDT/UART/SPI/I2C 时钟真实化、cken 位逐一对照 SDK 审计**）|
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（依赖阶段 1）|
