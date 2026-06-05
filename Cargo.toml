@@ -20,6 +20,7 @@ members = [
     "ws63-examples/async_bus",
     "ws63-examples/spi_loopback",
     "ws63-examples/i2c_scan",
+    "ws63-examples/net_ping",
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
@@ -49,6 +50,7 @@ default-members = [
     "ws63-examples/async_bus",
     "ws63-examples/spi_loopback",
     "ws63-examples/i2c_scan",
+    "ws63-examples/net_ping",
 ]
 
 [workspace.package]

@@ -596,6 +596,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 
 [[package]]
+name = "net_ping"
+version = "0.1.0"
+dependencies = [
+ "smoltcp",
+ "ws63-hal",
+ "ws63-rf-rs",
+ "ws63-rt",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
