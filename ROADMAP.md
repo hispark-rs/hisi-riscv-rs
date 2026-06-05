@@ -279,8 +279,11 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    返回 `Some`、SDK 不门控的返回 `None`（不再吐假位）；I2S 修正为 `CKEN0` bit11/12。文档 + 测试同步。
 3. ✅ **补示例**（已完成）：`blinky` 升级到 `OutputConfig` + `Output` 现代 GPIO 路径；新增 `spi_loopback`
    （阻塞 SPI 全双工，验证两级时钟）+ `i2c_scan`（地址扫描）；均接入 ws63-qemu smoke-test。
-4. **发布到 crates.io**：`ws63-pac` / `ws63-hal` / `ws63-rt` 各自仓自治发布（`release.yml` 已就位），
-   `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`；校验 docs.rs 构建（features 门控）。
+4. ✅ **发布到 crates.io**（已完成 2026-06-05）：**ws63-hal 0.3.0**（时钟真实化 + 两级 SPI + cken Option +
+   async/embassy）、**ws63-rt 0.2.0**（bundled-memory-x）已发布；ws63-pac 0.1.3 本会话无改动、跳过。
+   `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`。配套：工具链 **v1.96.0-1**（补全 proc-macro-srv /
+   cargo / gdb-lldb）+ 全仓下载 URL 同步。发布前已用 CI verify job 同款校验（host `clippy --all-features
+   -D warnings` / `doc -D warnings` / riscv clippy）预检通过。
 5. **ws63-guide 上线**：Pages 部署目前一直红（仓库未把 Pages 源设为 GitHub Actions）——需 owner 在
    Settings→Pages 启用；之后 ch1–8 全量上线。可选：补 ch6 外设寄存器深度（UART/QSPI/I2S 全寄存器图）。
 6. **版本 + CHANGELOG**：各 crate bump/tag，记录本会话的时钟修复与 cken 审计。
