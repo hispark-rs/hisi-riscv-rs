@@ -268,13 +268,13 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 把现有成果固化为「可用、可发布、文档齐全」的产品级 crate 集。
 
-1. **SPI 两级时钟建模**：HAL 当前按固定 160 MHz SSI_CLK 写 SCKDV，但未配 CLDO_CRG 的 SPI 分频
-   （480 MHz PLL → `DIV_CTL3[9:5]`，见 ch8 时钟树）。补全 CRG 分频配置，使 SCK 在真机上准确；
-   或显式记录「依赖 boot 默认 SSI_CLK」的边界。
-2. **cken 位复核收口**：已逐一对照 SDK 审计——I2S 修正为 `CKEN0` bit11/12，其余
-   I2C/Timer/LSADC/Tsensor/TRNG/Security/DMA/SDMA/SFC/SPI1 标为「SDK 不门控、占位未证实」。
-   决定保留占位（已标注）还是删除仅留已证实位；并使 `safety.rs` 的 cken 漂移检查与之一致。
-3. **补示例**：`blinky` 升级到 `OutputConfig`/`InputConfig`；按需加 `i2c_scan` / `spi_loopback` 覆盖更多驱动 API。
+1. ✅ **SPI 两级时钟建模**（已完成）：`spi.rs::configure_spi_source_clock` 照搬 `spi_porting_clock_init`——
+   `DIV_CTL3[9:5]=480/160=3` 建立 SSI_CLK + `CLK_SEL` bit6 切 PLL（关门→切→开门），SCK = SSI_CLK/SCKDV
+   在硅片上成立。QEMU smoke-test 全绿。
+2. ✅ **cken 位复核收口**（已完成）：选 B——`cken_info` 改 `Option<(reg,bit)>`，已证实位（PWM/I2S/UART/SPI0）
+   返回 `Some`、SDK 不门控的返回 `None`（不再吐假位）；I2S 修正为 `CKEN0` bit11/12。文档 + 测试同步。
+3. ✅ **补示例**（已完成）：`blinky` 升级到 `OutputConfig` + `Output` 现代 GPIO 路径；新增 `spi_loopback`
+   （阻塞 SPI 全双工，验证两级时钟）+ `i2c_scan`（地址扫描）；均接入 ws63-qemu smoke-test。
 4. **发布到 crates.io**：`ws63-pac` / `ws63-hal` / `ws63-rt` 各自仓自治发布（`release.yml` 已就位），
    `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`；校验 docs.rs 构建（features 门控）。
 5. **ws63-guide 上线**：Pages 部署目前一直红（仓库未把 Pages 源设为 GitHub Actions）——需 owner 在
