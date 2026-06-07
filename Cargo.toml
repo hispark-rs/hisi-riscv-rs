@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "ws63-pac",
+    "bs21-pac",
     "ws63-hal",
     "ws63-rt",
     "ws63-examples/blinky",
@@ -80,6 +81,7 @@ critical-section = "1"
 # the singleton-safety invariant is split across two copies).
 [patch.crates-io]
 ws63-pac = { path = "ws63-pac" }
+bs21-pac = { path = "bs21-pac" }
 
 [profile.release]
 opt-level = "s"
