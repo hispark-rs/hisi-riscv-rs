@@ -46,7 +46,7 @@ jobs:
         run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
 
       - name: Upload docs artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: api-docs
           path: target/riscv32imfc-unknown-none-elf/doc/
