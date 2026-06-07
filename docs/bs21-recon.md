@@ -2,6 +2,15 @@
 
 来源:`/root/fbb_bs2x`(HiSpark `fbb_bs2x`,部分稀疏检出)。本文是后续所有阶段的 ground truth,角色等同 `fbb_ws63` 之于 WS63。
 
+> **里程碑 M1 — 已达成（2026-06-07）。** BS21 的 `blinky` + `uart_hello`(`bs21-examples/`,
+> `--features chip-bs21` 的 HAL + BS21 `memory.x`)在 `qemu-system-riscv32 -M bs21` 上**端到端启动**:
+> uart_hello 打印横幅(UART0 @ 0x52081000),blinky 翻转 GPIO0(@ 0x57010000,0 条非法指令陷阱)。
+> `ws63-qemu/scripts/bs21-smoke-test.sh` 全绿;WS63 不回归(`-M ws63` + 5/5 qtest 仍绿)。
+> 落地:`bs21-pac`、`ws63-hal`(`chip-ws63` 默认 / `chip-bs21`)、`ws63-rt`(芯片门控)、
+> `bs21-examples/`(独立 workspace)、`ws63-qemu` 的 `hw/riscv/{hisi_riscv31.h,bs21.c}` + `-M bs21`。
+> **推后(随连接性):** linx131 自定义 ISA 解码、ROM 拦截、全外设对齐、共享模型拆到
+> `hisi_riscv31.c`(`CONFIG_HISI_RISCV31`)、CPU 改名 `hisi-riscv31`、BLE/SLE 厂商 blob。
+
 ## 芯片身份
 
 - `fbb_bs2x` = **星闪(SparkLink/NearLink)BS20 / BS21E / BS22** 方案(LiteOS)。`bs2x` 是公共驱动目录,`bs20/bs21e/bs22` 是 SKU。用户的「BS21」≈ **BS21E**。
