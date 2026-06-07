@@ -8,7 +8,7 @@
 //!
 //! hisi-riscv-rt still supplies layout.ld / riscv-rt-symbols.x / startup and the
 //! `ws63-link.x` entry script. Under `chip-bs21` the interrupt `device.x` comes
-//! from bs21-pac's `rt` feature (enabled transitively by hisi-riscv-hal's `rt`), whose
+//! from bs2x-pac's `rt` feature (enabled transitively by hisi-riscv-hal's `rt`), whose
 //! build.rs adds its own OUT_DIR to the link search path.
 use std::env;
 use std::fs::File;

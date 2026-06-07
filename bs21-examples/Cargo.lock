@@ -3,20 +3,10 @@
 version = 4
 
 [[package]]
-name = "bs21-pac"
-version = "0.1.0"
-dependencies = [
- "critical-section",
- "riscv",
- "vcell",
- "ws63-pac",
-]
-
-[[package]]
 name = "bs21_blinky"
 version = "0.1.0"
 dependencies = [
- "bs21-pac",
+ "bs2x-pac",
  "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
@@ -26,10 +16,19 @@ dependencies = [
 name = "bs21_uart_hello"
 version = "0.1.0"
 dependencies = [
- "bs21-pac",
+ "bs2x-pac",
  "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
+]
+
+[[package]]
+name = "bs2x-pac"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "riscv",
+ "vcell",
 ]
 
 [[package]]
@@ -70,7 +69,7 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 name = "hisi-riscv-hal"
 version = "0.3.0"
 dependencies = [
- "bs21-pac",
+ "bs2x-pac",
  "cfg-if",
  "critical-section",
  "embedded-hal",
@@ -85,7 +84,7 @@ dependencies = [
 name = "hisi-riscv-rt"
 version = "0.2.0"
 dependencies = [
- "bs21-pac",
+ "bs2x-pac",
  "critical-section",
  "riscv",
  "riscv-rt",

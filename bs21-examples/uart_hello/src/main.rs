@@ -3,7 +3,7 @@
 //! The BS21 analogue of `ws63-examples/uart_hello`: prints a banner and a running
 //! tick counter over UART0. Built with `--features chip-bs21`, so `Uart::new_uart0`
 //! drives the BS21 UART_L0 at 0x5208_1000 (vs WS63's 0x4401_0000) — the only thing
-//! that changed is the base address baked into `bs21-pac`'s `Uart0` type.
+//! that changed is the base address baked into `bs2x-pac`'s `Uart0` type.
 //!
 //! Like the WS63 version it deliberately does NOT init the clock tree, so it
 //! touches only UART0 registers and needs no CLDO_CRG/SYS_CTL modeling — ideal for

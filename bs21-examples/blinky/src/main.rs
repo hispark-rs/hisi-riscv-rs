@@ -3,7 +3,7 @@
 //! The BS21 analogue of `ws63-examples/blinky`: it toggles a GPIO using the same
 //! chip-neutral HAL GPIO path ([`OutputConfig`] + the type-erased [`Output`]
 //! driver), built with `--features chip-bs21` so the peripheral addresses come
-//! from `bs21-pac` and the clocks/counts from `soc/bs21.rs`.
+//! from `bs2x-pac` and the clocks/counts from `soc/bs21.rs`.
 //!
 //! Milestone-1 target: boot end-to-end on the `bs21` QEMU machine. The busy-wait
 //! is sized for the BS21 app core (64 MHz) rather than WS63's 240 MHz.

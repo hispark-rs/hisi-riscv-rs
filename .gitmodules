@@ -16,3 +16,9 @@
 [submodule "ws63-examples"]
 	path = ws63-examples
 	url = https://github.com/sanchuanhehe/ws63-examples.git
+[submodule "bs2x-pac"]
+	path = bs2x-pac
+	url = https://github.com/sanchuanhehe/bs2x-pac.git
+[submodule "bs2x-guide"]
+	path = bs2x-guide
+	url = https://github.com/sanchuanhehe/bs2x-guide.git

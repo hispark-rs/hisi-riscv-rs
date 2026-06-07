@@ -6,7 +6,7 @@
 > `--features chip-bs21` 的 HAL + BS21 `memory.x`)在 `qemu-system-riscv32 -M bs21` 上**端到端启动**:
 > uart_hello 打印横幅(UART0 @ 0x52081000),blinky 翻转 GPIO0(@ 0x57010000,0 条非法指令陷阱)。
 > `ws63-qemu/scripts/bs21-smoke-test.sh` 全绿;WS63 不回归(`-M ws63` + 5/5 qtest 仍绿)。
-> 落地:`bs21-pac`、`hisi-riscv-hal`(`chip-ws63` 默认 / `chip-bs21`)、`hisi-riscv-rt`(芯片门控)、
+> 落地:`bs2x-pac`、`hisi-riscv-hal`(`chip-ws63` 默认 / `chip-bs21`)、`hisi-riscv-rt`(芯片门控)、
 > `bs21-examples/`(独立 workspace)、`ws63-qemu` 的 `hw/riscv/{hisi_riscv31.h,bs21.c}` + `-M bs21`。
 > **推后(随连接性):** linx131 自定义 ISA 解码、ROM 拦截、全外设对齐、共享模型拆到
 > `hisi_riscv31.c`(`CONFIG_HISI_RISCV31`)、CPU 改名 `hisi-riscv31`、BLE/SLE 厂商 blob。
@@ -82,7 +82,7 @@ ROM 驻留 secure-libc/printf:`memset_s=0x3d1dc`、`memcpy_s=0x3da4e`、`sprintf
    **→ QEMU 设备模型(ws63-uart/timer/gpio)与 HAL 驱动逻辑(uart.rs/gpio.rs)原样复用,仅基址 + IRQ 号不同。** 这是最好结果:per-chip 面只剩「内存图 + 基址 + IRQ + 实例数 + 时钟常量」。
 6. **GPIO/UART/IO_CONFIG 基址 + IRQ 号**:✅ 已取(见上)。
 7. **启动路径**:`-kernel` 直载 + 标准 RV32IMFC 的 Rust 固件,M1 多半只需 UART+GPIO+吸收器;ROM/TCXO 桩按需。**待确认 BS21 startup 是否读 TCXO/sysctl**。
-8. **PAC 来源**:无 SVD(同 WS63),从 platform_core.h + 各 `*_regs.h` 手工派生 `bs21-pac`。
+8. **PAC 来源**:无 SVD(同 WS63),从 platform_core.h + 各 `*_regs.h` 手工派生 `bs2x-pac`。
 
 ## M1 路径(关键结论)
 

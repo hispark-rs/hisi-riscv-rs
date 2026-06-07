@@ -21,13 +21,13 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
-# hisi-riscv-hal / bs21-pac depend on the PACs by registry version (so they build
+# hisi-riscv-hal / bs2x-pac depend on the PACs by registry version (so they build
 # standalone). Redirect to the local sources so every crate links exactly ONE
-# ws63-pac / bs21-pac (the PAC #[no_mangle] singleton static must be unique), and
+# ws63-pac / bs2x-pac (the PAC #[no_mangle] singleton static must be unique), and
 # so we test the in-tree code. Paths are relative to this manifest (../ = ws63-rs).
 [patch.crates-io]
 ws63-pac = { path = "../ws63-pac" }
-bs21-pac = { path = "../bs21-pac" }
+bs2x-pac = { path = "../bs2x-pac" }
 
 [profile.release]
 opt-level = "s"
