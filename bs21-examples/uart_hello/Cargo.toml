@@ -1,0 +1,20 @@
+[package]
+name = "bs21_uart_hello"
+version = "0.1.0"
+edition = "2024"
+description = "HiSilicon BS21 UART hello-world example (prints over UART0 @ 0x52081000)"
+license = "MIT"
+
+[[bin]]
+name = "bs21_uart_hello"
+path = "src/main.rs"
+
+[dependencies]
+bs21-pac = { path = "../../bs21-pac" }
+ws63-hal = { path = "../../ws63-hal", default-features = false, features = ["chip-bs21", "rt"] }
+ws63-rt  = { path = "../../ws63-rt", default-features = false, features = ["chip-bs21"] }
+riscv = "0.13"
+
+[profile.release]
+opt-level = "s"
+lto = true

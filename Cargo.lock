@@ -1417,6 +1417,7 @@ dependencies = [
 name = "ws63-rt"
 version = "0.2.0"
 dependencies = [
+ "bs21-pac",
  "critical-section",
  "riscv",
  "riscv-rt",
