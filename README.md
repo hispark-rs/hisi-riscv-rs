@@ -21,8 +21,8 @@ in-tree and are not published.
 | Crate | Role | crates.io |
 |-------|------|-----------|
 | [`ws63-pac`](ws63-pac/) | `svd2rust`-generated peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
-| [`ws63-hal`](ws63-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver) | [`ws63-hal`](https://crates.io/crates/ws63-hal) |
-| [`ws63-rt`](ws63-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`ws63-rt`](https://crates.io/crates/ws63-rt) |
+| [`hisi-riscv-hal`](hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver) | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
+| [`hisi-riscv-rt`](hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
 | [`ws63-rf-rs`](ws63-rf-rs/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](ws63-flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
 | [`ws63-examples`](ws63-examples/) | Runnable examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
@@ -36,8 +36,8 @@ owns them**, so generation inputs / vendor blobs are not reached into laterally:
 ws63-rs/
 ├── ws63-pac/            # submodule
 │   └── ws63-svd/        # submodule of ws63-pac — the svd2rust source (WS63.svd)
-├── ws63-hal/            # submodule
-├── ws63-rt/             # submodule
+├── hisi-riscv-hal/            # submodule
+├── hisi-riscv-rt/             # submodule
 ├── ws63-rf-rs/          # in-tree crate
 │   └── ws63-RF/         # submodule — closed Wi-Fi/BLE blobs + porting contract
 ├── ws63-flashboot/      # in-tree crate
@@ -100,7 +100,7 @@ WS63_RS=../ws63-rs bash scripts/smoke-test.sh   # boots ws63-rs examples + asser
 
 ## Async & embassy
 
-`ws63-hal` has an interrupt + waker driven async layer (no heap, no global
+`hisi-riscv-hal` has an interrupt + waker driven async layer (no heap, no global
 executor required), built on `embedded-hal-async` / `embedded-io-async`. It runs
 on the no-atomics WS63 core via the existing portable-atomic + critical-section
 polyfill. Two opt-in features:
@@ -118,7 +118,7 @@ Validated on ws63-qemu — see `ws63-examples/{async_delay, embassy_multitask, e
 ## Releasing
 
 Each published crate **self-publishes from its own repository**: bump + tag
-`vX.Y.Z` in `ws63-pac` / `ws63-hal` / `ws63-rt`, and that repo's
+`vX.Y.Z` in `ws63-pac` / `hisi-riscv-hal` / `hisi-riscv-rt`, and that repo's
 `.github/workflows/release.yml` publishes it to crates.io (using its own
 `CRATES_IO_TOKEN`). The monorepo `v*` tag cuts only a **firmware GitHub
 Release** — it does not publish the library crates.

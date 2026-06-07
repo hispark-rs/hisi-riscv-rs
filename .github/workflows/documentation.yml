@@ -5,14 +5,14 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'ws63-hal/src/**'
-      - 'ws63-hal/Cargo.toml'
+      - 'hisi-riscv-hal/src/**'
+      - 'hisi-riscv-hal/Cargo.toml'
       - 'ws63-pac/src/**'
       - 'docs/**'
   pull_request:
     branches: [main, master]
     paths:
-      - 'ws63-hal/src/**'
+      - 'hisi-riscv-hal/src/**'
       - 'ws63-pac/src/**'
       - 'docs/**'
 
@@ -42,8 +42,8 @@ jobs:
           key: ${{ runner.os }}-cargo-ws63-docs-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-ws63-docs-
 
-      - name: Build API documentation (ws63-hal/pac/rt)
-        run: cargo doc -p ws63-hal -p ws63-pac -p ws63-rt --no-deps
+      - name: Build API documentation (hisi-riscv-hal/pac/rt)
+        run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
 
       - name: Upload docs artifact
         uses: actions/upload-artifact@v6

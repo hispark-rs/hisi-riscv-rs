@@ -6,7 +6,7 @@
 > `--features chip-bs21` 的 HAL + BS21 `memory.x`)在 `qemu-system-riscv32 -M bs21` 上**端到端启动**:
 > uart_hello 打印横幅(UART0 @ 0x52081000),blinky 翻转 GPIO0(@ 0x57010000,0 条非法指令陷阱)。
 > `ws63-qemu/scripts/bs21-smoke-test.sh` 全绿;WS63 不回归(`-M ws63` + 5/5 qtest 仍绿)。
-> 落地:`bs21-pac`、`ws63-hal`(`chip-ws63` 默认 / `chip-bs21`)、`ws63-rt`(芯片门控)、
+> 落地:`bs21-pac`、`hisi-riscv-hal`(`chip-ws63` 默认 / `chip-bs21`)、`hisi-riscv-rt`(芯片门控)、
 > `bs21-examples/`(独立 workspace)、`ws63-qemu` 的 `hw/riscv/{hisi_riscv31.h,bs21.c}` + `-M bs21`。
 > **推后(随连接性):** linx131 自定义 ISA 解码、ROM 拦截、全外设对齐、共享模型拆到
 > `hisi_riscv31.c`(`CONFIG_HISI_RISCV31`)、CPU 改名 `hisi-riscv31`、BLE/SLE 厂商 blob。
@@ -75,7 +75,7 @@ ROM 驻留 secure-libc/printf:`memset_s=0x3d1dc`、`memcpy_s=0x3da4e`、`sprintf
    → **M1 影响为零**:我们的 Rust blinky/uart_hello **只发标准 RV32IMFC 指令**,现有 `ws63` 工具链可用;linx131 解码器**只在跑厂商 C 固件时才需要**(随连接性推后)。
 2. **LOCI CSR**:✅ **确认与 WS63 完全相同**(`vectors.h`:同一 HiSilicon「HimiDeer」核)——`RISCV_SYS_VECTOR_CNT=26`、**mie 类 6 个(IRQ 26-31,「enabled by CSR mie 26-31 bit」)**、
    **custom 类 60 个(IRQ≥32,「enabled by custom CSR locie0~2」)**、`LOCIEN_IRQ_NUM=32`、`LOCIPRI_IRQ_NUM=8`、`LOCIPRI_IRQ_BITS=4`、`LOCIPRI_DEFAULT_VAL=0x11111111`、
-   异常上下文含 `ccause`(WS63 的 0xFC2 自定义 CSR)——与 `ws63-hal/interrupt.rs` 常量逐一吻合。**→ HAL `interrupt.rs` + QEMU LOCI intc + target/riscv LOCI 投递补丁完全复用**(CSR 原始地址 0xBC0/0xBE0/0xBF0/0xBFE 极高概率相同,待 linx131 `trap.S`/`arch_encoding.h` 末确认)。
+   异常上下文含 `ccause`(WS63 的 0xFC2 自定义 CSR)——与 `hisi-riscv-hal/interrupt.rs` 常量逐一吻合。**→ HAL `interrupt.rs` + QEMU LOCI intc + target/riscv LOCI 投递补丁完全复用**(CSR 原始地址 0xBC0/0xBE0/0xBF0/0xBFE 极高概率相同,待 linx131 `trap.S`/`arch_encoding.h` 末确认)。
 3. **内存图**:✅ 已取(见上)。
 4. **ROM 符号**:✅ acore.sym 已取。
 5. **UART/timer/GPIO IP 是否寄存器级相同**:✅ **确认相同**——BS21 用 **UART v151 / timer v150 / GPIO v150**,与 WS63 是**同版本 IP 块**(`hal_uart_v151_regs_def.h`:`intr_id`@0x00、`fifo_status` = tx_full[0]/tx_empty[1]/rx_full[2]/rx_empty[3],与 WS63 QEMU 模型逐位吻合)。

@@ -12,12 +12,12 @@ path = "src/main.rs"
 [dependencies]
 # Select the BS21 chip across the stack. `default-features = false` drops the
 # WS63 defaults; `chip-bs21` pulls bs21-pac, and `rt` turns on bs21-pac's rt
-# feature (its device.x interrupt vectors). ws63-rt with `chip-bs21` (and its
+# feature (its device.x interrupt vectors). hisi-riscv-rt with `chip-bs21` (and its
 # bundled-memory-x off) supplies layout.ld / riscv-rt-symbols.x / startup /
 # ws63-link.x while THIS crate supplies the BS21 memory.x (see build.rs).
 bs21-pac = { path = "../../bs21-pac" }
-ws63-hal = { path = "../../ws63-hal", default-features = false, features = ["chip-bs21", "rt"] }
-ws63-rt  = { path = "../../ws63-rt", default-features = false, features = ["chip-bs21"] }
+hisi-riscv-hal = { path = "../../hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt"] }
+hisi-riscv-rt  = { path = "../../hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
 riscv = "0.13"
 
 [profile.release]

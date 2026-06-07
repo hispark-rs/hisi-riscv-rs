@@ -2,7 +2,7 @@
 //!
 //! `uapi_systick_get_ms` is real (reads the RISC-V `mcycle` counter).
 //! `uapi_tsensor_get_current_temp` returns a fixed safe value and `uapi_nv_read`
-//! is a stub — both need ws63-hal tsensor / a flash-NV backing (phase 4): the
+//! is a stub — both need hisi-riscv-hal tsensor / a flash-NV backing (phase 4): the
 //! real `uapi_nv_read` returns calibrated RF parameters + the MAC address from
 //! flash/eFuse, without which the RF front-end cannot be calibrated.
 
@@ -44,7 +44,7 @@ fn read_mcycle() -> u64 {
 }
 
 /// Current chip temperature in °C. SCAFFOLD: fixed 25 °C (thermal-protection
-/// algorithms read this; a real reading needs the ws63-hal tsensor — phase 4).
+/// algorithms read this; a real reading needs the hisi-riscv-hal tsensor — phase 4).
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_tsensor_get_current_temp() -> i32 {
     25
@@ -67,7 +67,7 @@ pub extern "C" fn uapi_nv_write(_id: u32, _buf: *const c_void, _len: u32) -> i32
 // ── eFuse / TRNG / device identity ───────────────────────────────────────────
 // These feed RF calibration, the MAC address and crypto seeding. They are
 // SCAFFOLD values good enough to LINK and to bring the stack up under emulation;
-// a hardware run must source real eFuse/TRNG via ws63-hal (phase 4).
+// a hardware run must source real eFuse/TRNG via hisi-riscv-hal (phase 4).
 
 /// One eFuse bit. STUB: always 0.
 #[unsafe(no_mangle)]
@@ -90,7 +90,7 @@ pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, _byte: u32, length: u1
 }
 
 /// Random bytes. SCAFFOLD: a tiny `mcycle`-seeded xorshift (NOT cryptographically
-/// secure — a hardware run must use the real TRNG via ws63-hal).
+/// secure — a hardware run must use the real TRNG via hisi-riscv-hal).
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_drv_cipher_trng_get_random_bytes(randnum: *mut u8, size: u32) -> u32 {
     if randnum.is_null() {

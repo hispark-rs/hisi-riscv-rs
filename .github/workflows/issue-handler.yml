@@ -69,8 +69,8 @@ jobs:
             👋 Thanks for opening your first issue in ws63-rs!
 
             Please ensure you've checked:
-            - [ ] The [FAQ / Known Issues](https://github.com/sanchuanhehe/ws63-rs/wiki)
-            - [ ] Existing [open issues](https://github.com/sanchuanhehe/ws63-rs/issues)
+            - [ ] The [FAQ / Known Issues](https://github.com/sanchuanhehe/hisi-riscv-rs/wiki)
+            - [ ] Existing [open issues](https://github.com/sanchuanhehe/hisi-riscv-rs/issues)
 
             For hardware-related issues, please include:
             - WS63 chip variant (WS63 / WS63E)

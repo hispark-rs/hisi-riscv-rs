@@ -14,7 +14,7 @@
 它**不负责**：
 
 - 托管 Rust 生成产物（产物 `lib.rs` 落在下游 `ws63-pac`；本组件提供并驱动生成流水线 `regen.sh`，产物归 PAC 仓）。
-- 任何运行时逻辑或驱动语义（那是 `ws63-hal` 的职责）。
+- 任何运行时逻辑或驱动语义（那是 `hisi-riscv-hal` 的职责）。
 - 中断控制器的运行时模型（SVD 仅声明 `<interrupt>` 编号，控制器建模问题归 HAL/RT 层）。
 
 寄存器定义来源为公开的 ws63-guide 文档与 fbb_ws63 HAL 头文件转录（`WS63.svd:5-7` 的 `<licenseText>`），属于手工建模而非厂商官方 SVD。
@@ -24,12 +24,12 @@
 ```mermaid
 flowchart LR
     SVD["ws63-svd<br/>(WS63.svd 手写真值)"] -->|svd2rust 生成| PAC["ws63-pac<br/>(寄存器 RegisterBlock)"]
-    PAC --> HAL["ws63-hal<br/>(安全驱动)"]
+    PAC --> HAL["hisi-riscv-hal<br/>(安全驱动)"]
     HAL --> EX["ws63-examples/*"]
-    RT["ws63-rt<br/>(启动/链接/向量)"] --> EX
+    RT["hisi-riscv-rt<br/>(启动/链接/向量)"] --> EX
 ```
 
-ws63-svd 处于链条最上游：`WS63.svd` 经 svd2rust 生成 `ws63-pac` 的 `lib.rs`，再由 `ws63-hal` 封装为安全驱动，最终被 `ws63-examples` 使用。`ws63-rt` 提供启动代码与链接脚本，是与上述生成链平行的独立分支。
+ws63-svd 处于链条最上游：`WS63.svd` 经 svd2rust 生成 `ws63-pac` 的 `lib.rs`，再由 `hisi-riscv-hal` 封装为安全驱动，最终被 `ws63-examples` 使用。`hisi-riscv-rt` 提供启动代码与链接脚本，是与上述生成链平行的独立分支。
 
 **生成关系（2026-05-31 起可复现）**：`WS63.svd` 经 `regen.sh`（svd2rust 0.37.1 + 确定性后处理 + cargo fix/fmt）生成 `ws63-pac/src/lib.rs`，**幂等**（同 SVD → 字节一致产物），内建 build+clippy 门禁。SVD 与 PAC 之间已是可复现的生成关系，不再“人工对照”。
 

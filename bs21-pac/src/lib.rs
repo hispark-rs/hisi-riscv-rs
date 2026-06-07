@@ -9,7 +9,7 @@
 //! - the [`Peripherals`] set.
 //!
 //! The interrupt *architecture* (HiSilicon "HimiDeer" LOCI core: mie 26-31 + custom
-//! LOCI ≥32) is identical to WS63, so `ws63-hal`'s `interrupt` module works unchanged.
+//! LOCI ≥32) is identical to WS63, so `hisi-riscv-hal`'s `interrupt` module works unchanged.
 #![no_std]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]

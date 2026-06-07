@@ -1,10 +1,10 @@
-# ws63-hal 架构与评审
+# hisi-riscv-hal 架构与评审
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
 
 ## 职责与边界
 
-`ws63-hal` 是 WS63 SoC 的硬件抽象层（HAL），在 `ws63-pac` 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。
+`hisi-riscv-hal` 是 WS63 SoC 的硬件抽象层（HAL），在 `ws63-pac` 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。
 
 - **负责**：
   - 为 35 个 PAC 外设提供生命周期化的安全单例封装（`peripherals.rs`），并在其上实现 31 个外设驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、以及 KM/PKE/SPACC 等加密外设）。
@@ -13,7 +13,7 @@
   - embedded-hal 1.0 / embedded-hal-nb 1.0 / embedded-io 0.6 / nb 的 trait 实现。
 - **不负责**：
   - 裸寄存器布局与地址映射（属 `ws63-pac`）。
-  - 启动汇编、链接脚本、中断向量表（属 `ws63-rt`）。
+  - 启动汇编、链接脚本、中断向量表（属 `hisi-riscv-rt`）。
   - 应用业务逻辑（属 `ws63-examples`）。
   - 连接性协议栈（WiFi/BLE/SLE）、porting 层、HCC IPC（尚未实现，见 ROADMAP 阶段 4-5）。
 
@@ -25,12 +25,12 @@
 ws63-svd (XML)
    │ svd2rust 生成
    ▼
-ws63-pac ──► ws63-hal ──► ws63-examples/*
+ws63-pac ──► hisi-riscv-hal ──► ws63-examples/*
                 ▲
-       ws63-rt（启动汇编 / 链接脚本 / 中断向量）并行提供运行期支撑
+       hisi-riscv-rt（启动汇编 / 链接脚本 / 中断向量）并行提供运行期支撑
 ```
 
-`ws63-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `ws63-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期向量表由 `ws63-rt` 的 `device.x` 提供。
+`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期向量表由 `hisi-riscv-rt` 的 `device.x` 提供。
 
 依赖：`embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`nb`、`portable-atomic`、`riscv`。
 
@@ -111,7 +111,7 @@ ws63-pac ──► ws63-hal ──► ws63-examples/*
 
 按 [ROADMAP](../../ROADMAP.md)（多数已完成，下记现状）：
 
-- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`ws63-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
+- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
 - **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
 - **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](async-embassy.md)）—— `embedded-hal-async`/`embedded-io-async` 全套 + embassy-time `Driver`，全部 ws63-qemu 验证。
 - **阶段 4-5（porting 层 + HCC IPC + 连接性）**：HAL 之上接入 WiFi/BLE/SLE 协议栈所需的 porting 与 IPC 通道。

@@ -1,10 +1,10 @@
-# ws63-rt 架构与评审
+# hisi-riscv-rt 架构与评审
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
 
 ## 职责与边界
 
-`ws63-rt` 是 WS63（RISC-V RV32IMFC_Zicsr）的最小运行时（runtime），负责把芯片从复位状态带到可执行 Rust `main()` 的环境。
+`hisi-riscv-rt` 是 WS63（RISC-V RV32IMFC_Zicsr）的最小运行时（runtime），负责把芯片从复位状态带到可执行 Rust `main()` 的环境。
 
 **负责：**
 
@@ -13,7 +13,7 @@
 - **trap/中断向量与汇编分发**：异常入口 `trap_entry`、NMI、6 个 MIE 中断、60 个 local 中断的向量与寄存器保存/恢复（`asm/startup.S:76-428`）。
 - **段重定位**：ROM data/BSS、TCM text/data/BSS、SRAM text、`.data`、`.bss` 从 flash 拷到 RAM 并清零（`src/startup.rs:75-193`）。
 - **缓存与 PMP**：I/D cache 使能（`src/startup.rs:59-69`），PMP 由 startup.S 在复位时清零（doc 注释提到 PMP 配置，但当前仅做禁用）。
-- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：ws63-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `ws63-examples/custom_memory`）。
+- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：hisi-riscv-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `ws63-examples/custom_memory`）。
 - **入口属性与 prelude**：re-export `riscv_rt::entry` 与 PAC 中断类型（`src/lib.rs:44-64`）。
 - **临界区基础设施**：作为持有单一应用 hart 的 crate，启用 `riscv` 的 `critical-section-single-hart`，为全固件提供唯一的 `critical-section` 实现（`Cargo.toml` 依赖注释；支撑 PAC 的 `Peripherals::take()` 与 HAL 的 portable-atomic polyfill）。
 
@@ -27,11 +27,11 @@
 ## 在依赖链中的位置
 
 ```
-ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
-                                  ws63-rt ─┘  提供启动/向量/链接脚本
+ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → ws63-examples/*
+                                  hisi-riscv-rt ─┘  提供启动/向量/链接脚本
 ```
 
-`ws63-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它依赖 `ws63-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`。
+`hisi-riscv-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它依赖 `ws63-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`。
 
 > 链接脚本传播（已解决）：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游 bin。早先这导致示例无法链接；**现已修**——`build.rs` 改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x`，bin 用 `-Tws63-link.x` 引入（`rustc-link-search` 会传播）。见评审“问题”表「本轮已修」条。
 
@@ -66,7 +66,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 
 ### ISA / 原子性
 
-`build.rs` 设 `RISCV_RT_BASE_ISA=rv32i`（无原子扩展）。默认 target 是 builtin 的 **`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 ilp32f）；无 A 扩展，原子由 portable-atomic 的 critical-section polyfill 提供，`ws63-rt` 启用 `riscv` 的 `critical-section-single-hart` 作为整个固件唯一的 CS 实现（`Cargo.toml`）。这套 CS 也支撑 ws63-hal 的 `async`/`embassy` 异步层。
+`build.rs` 设 `RISCV_RT_BASE_ISA=rv32i`（无原子扩展）。默认 target 是 builtin 的 **`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 ilp32f）；无 A 扩展，原子由 portable-atomic 的 critical-section polyfill 提供，`hisi-riscv-rt` 启用 `riscv` 的 `critical-section-single-hart` 作为整个固件唯一的 CS 实现（`Cargo.toml`）。这套 CS 也支撑 hisi-riscv-hal 的 `async`/`embassy` 异步层。
 
 ## 评审发现
 
@@ -75,7 +75,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → ws63-hal → ws63-examples/*
 - **标准 RV32 启动**：PMP 清零、`mtvec`、关中断、FPU、`gp`/`sp`、栈金丝雀、BSS/data 重定位齐备，流程对照 fbb_ws63（`asm/startup.S:28-73`、`src/startup.rs:75-193`）。
 - **内存地址权威**：`memory.x` 各区起始/长度与 fbb_ws63 SDK 对齐（`memory.x:16-41`）。
 - **trap 汇编质量高**：异常/IRQ/NMI 均有 `mscratch` 栈切换 + 分栈（exc/irq/nmi 独立栈），异常按 `mcause` 索引 `excp_vect_table` 表驱动分发（`asm/startup.S:318-428`、132-153）。
-- **单一 CS 实现的依赖边界清晰**：由持有 hart 的 `ws63-rt` 独家启用 `critical-section-single-hart`，避免多处重复实现（`Cargo.toml` 注释）。
+- **单一 CS 实现的依赖边界清晰**：由持有 hart 的 `hisi-riscv-rt` 独家启用 `critical-section-single-hart`，避免多处重复实现（`Cargo.toml` 注释）。
 
 ### 问题
 

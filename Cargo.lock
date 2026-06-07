@@ -22,10 +22,10 @@ name = "async_bus"
 version = "0.1.0"
 dependencies = [
  "embedded-hal-async",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -33,10 +33,10 @@ name = "async_delay"
 version = "0.1.0"
 dependencies = [
  "embedded-hal-async",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -77,10 +77,10 @@ name = "blinky"
 version = "0.1.0"
 dependencies = [
  "embedded-hal 1.0.0",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -135,10 +135,10 @@ checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
 name = "custom_memory"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -180,10 +180,10 @@ dependencies = [
 name = "dma_loopback"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -269,11 +269,11 @@ dependencies = [
  "embassy-time",
  "embedded-hal-async",
  "embedded-io-async",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
  "static_cell",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -282,11 +282,11 @@ version = "0.1.0"
 dependencies = [
  "embassy-executor",
  "embassy-time",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
  "static_cell",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -429,10 +429,10 @@ dependencies = [
 name = "gpio_irq"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -476,12 +476,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hisi-riscv-hal"
+version = "0.3.0"
+dependencies = [
+ "bs21-pac",
+ "cfg-if",
+ "critical-section",
+ "embassy-time-driver",
+ "embassy-time-queue-utils",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-hal-nb",
+ "embedded-io",
+ "embedded-io-async",
+ "nb 1.1.0",
+ "portable-atomic",
+ "proptest",
+ "ws63-pac",
+]
+
+[[package]]
+name = "hisi-riscv-rt"
+version = "0.2.0"
+dependencies = [
+ "bs21-pac",
+ "critical-section",
+ "riscv",
+ "riscv-rt",
+ "ws63-pac",
+]
+
+[[package]]
 name = "i2c_scan"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
- "ws63-rt",
 ]
 
 [[package]]
@@ -609,10 +640,10 @@ checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 name = "net_ping"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "smoltcp",
- "ws63-hal",
  "ws63-rf-rs",
- "ws63-rt",
 ]
 
 [[package]]
@@ -793,9 +824,9 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 name = "reset_demo"
 version = "0.1.0"
 dependencies = [
- "ws63-hal",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -803,11 +834,11 @@ name = "rf_port_demo"
 version = "0.1.0"
 dependencies = [
  "critical-section",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
  "ws63-rf-rs",
- "ws63-rt",
 ]
 
 [[package]]
@@ -910,7 +941,7 @@ checksum = "e1cf6437eb19a8f4a6cc0f7dca544973b0b78843adbfeb3683d1a94a0024a294"
 name = "semihost_selftest"
 version = "0.1.0"
 dependencies = [
- "ws63-rt",
+ "hisi-riscv-rt",
 ]
 
 [[package]]
@@ -999,9 +1030,9 @@ dependencies = [
 name = "spi_loopback"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
- "ws63-rt",
 ]
 
 [[package]]
@@ -1062,10 +1093,10 @@ dependencies = [
 name = "timer_irq"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -1133,10 +1164,10 @@ dependencies = [
 name = "uart_hello"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -1240,10 +1271,10 @@ dependencies = [
 name = "wifi_blob_link"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "riscv",
- "ws63-hal",
  "ws63-pac",
- "ws63-rt",
 ]
 
 [[package]]
@@ -1373,26 +1404,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ws63-hal"
-version = "0.3.0"
-dependencies = [
- "bs21-pac",
- "cfg-if",
- "critical-section",
- "embassy-time-driver",
- "embassy-time-queue-utils",
- "embedded-hal 1.0.0",
- "embedded-hal-async",
- "embedded-hal-nb",
- "embedded-io",
- "embedded-io-async",
- "nb 1.1.0",
- "portable-atomic",
- "proptest",
- "ws63-pac",
-]
-
-[[package]]
 name = "ws63-pac"
 version = "0.1.3"
 dependencies = [
@@ -1406,22 +1417,11 @@ name = "ws63-rf-rs"
 version = "0.1.0"
 dependencies = [
  "critical-section",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
  "linked_list_allocator",
  "portable-atomic",
  "smoltcp",
- "ws63-hal",
- "ws63-rt",
-]
-
-[[package]]
-name = "ws63-rt"
-version = "0.2.0"
-dependencies = [
- "bs21-pac",
- "critical-section",
- "riscv",
- "riscv-rt",
- "ws63-pac",
 ]
 
 [[package]]

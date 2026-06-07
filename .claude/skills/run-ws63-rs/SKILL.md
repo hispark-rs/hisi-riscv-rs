@@ -1,10 +1,10 @@
 ---
 name: run-ws63-rs
-description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test ws63-hal, ws63-pac, or any crate in this workspace.
+description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test hisi-riscv-hal, ws63-pac, or any crate in this workspace.
 ---
 
 Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
-`ws63-hal`, `ws63-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
+`hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
 
 ## Toolchain (required)
 
@@ -33,7 +33,7 @@ bash .claude/skills/run-ws63-rs/driver.sh clippy   # cargo clippy
 ```
 
 All steps target `riscv32imfc-unknown-none-elf` (the config default). `blinky` is built
-for real in release (it links — the dual-PAC bug is fixed and ws63-rt exports its linker
+for real in release (it links — the dual-PAC bug is fixed and hisi-riscv-rt exports its linker
 scripts to downstream bins).
 
 ## Quick commands
@@ -49,13 +49,13 @@ cargo build -p ws63-flashboot --release   # experimental flashboot (excluded fro
 ## Documentation
 
 ```bash
-cargo doc -p ws63-hal -p ws63-pac -p ws63-rt --no-deps
-# Output: target/riscv32imfc-unknown-none-elf/doc/ws63_hal/index.html
+cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
+# Output: target/riscv32imfc-unknown-none-elf/doc/hisi_riscv_hal/index.html
 ```
 
 ## Test
 
-In-binary unit tests (`#[cfg(test)]`) cannot run on the host: ws63-hal contains RISC-V
+In-binary unit tests (`#[cfg(test)]`) cannot run on the host: hisi-riscv-hal contains RISC-V
 inline asm (e.g. `asm!("ebreak")`), so the crate does not compile for an x86 host. They
 are compile-checked only as part of `cargo check`. Running real host unit tests requires
 cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP phase 1.
@@ -81,4 +81,4 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
 | `error[E0463]: can't find crate for proc_macro2` (fresh CI) | Stale cross-toolchain `target/` cache — don't cache `target/` across toolchains |
 | `clippy FAILED` | `cargo clippy --workspace --exclude ws63-flashboot -- -D warnings` to see warnings |
 | `formatting FAILED` | `cargo fmt --all` to auto-fix (a PostToolUse hook also auto-formats `.rs` on edit) |
-| blinky link error `__*_stack_top__` undefined | ensure ws63-rt is up to date (it exports `ws63-link.x` for downstream bins) |
+| blinky link error `__*_stack_top__` undefined | ensure hisi-riscv-rt is up to date (it exports `ws63-link.x` for downstream bins) |

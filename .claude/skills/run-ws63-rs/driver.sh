@@ -28,17 +28,17 @@ check_step() {
 # ── Library check ──────────────────────────────────────────────────
 run_check() {
     banner "cargo check"
-    check_step "ws63-hal"      "cargo check -p ws63-hal --target $TARGET"
+    check_step "hisi-riscv-hal"      "cargo check -p hisi-riscv-hal --target $TARGET"
     check_step "ws63-pac"      "cargo check -p ws63-pac --target $TARGET"
-    check_step "ws63-rt"        "cargo check -p ws63-rt --target $TARGET"
+    check_step "hisi-riscv-rt"        "cargo check -p hisi-riscv-rt --target $TARGET"
     check_step "blinky (check)" "cargo check -p blinky --target $TARGET"
     check_step "workspace"      "cargo check --target $TARGET"
 
     banner "cargo doc"
-    check_step "ws63-hal docs"  "cargo doc -p ws63-hal --target $TARGET --no-deps 2>/dev/null"
+    check_step "hisi-riscv-hal docs"  "cargo doc -p hisi-riscv-hal --target $TARGET --no-deps 2>/dev/null"
 
-    banner "blinky release build (links via ws63-rt linker scripts)"
-    # blinky links now (dual-PAC fixed + ws63-rt exports its linker scripts), so do a
+    banner "blinky release build (links via hisi-riscv-rt linker scripts)"
+    # blinky links now (dual-PAC fixed + hisi-riscv-rt exports its linker scripts), so do a
     # real release build, not just check.
     check_step "blinky build"  "cargo build -p blinky --target $TARGET --release"
 }
@@ -46,7 +46,7 @@ run_check() {
 # ── Clippy ─────────────────────────────────────────────────────────
 run_clippy() {
     banner "cargo clippy"
-    check_step "ws63-hal clippy" "cargo clippy -p ws63-hal --target $TARGET -- -W warnings 2>&1 | grep -q 'Finished'"
+    check_step "hisi-riscv-hal clippy" "cargo clippy -p hisi-riscv-hal --target $TARGET -- -W warnings 2>&1 | grep -q 'Finished'"
 }
 
 # ── Format ─────────────────────────────────────────────────────────

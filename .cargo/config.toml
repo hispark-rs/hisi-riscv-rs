@@ -10,12 +10,12 @@
 #
 # `riscv32imfc` here has hardware float and uses forced-atomics + no-CAS, so atomic
 # load/store lower to plain ld/st (single hart) and RMW goes through portable-atomic's
-# critical-section polyfill (ws63-hal/Cargo.toml). No lr.w/sc.w/amo* are emitted.
+# critical-section polyfill (hisi-riscv-hal/Cargo.toml). No lr.w/sc.w/amo* are emitted.
 [build]
 target = "riscv32imfc-unknown-none-elf"
 
 [target.riscv32imfc-unknown-none-elf]
 runner = "gdb-multiarch"
 # Disable RISC-V linker relaxation (matches the vendor C SDK flow; avoids gp-relative
-# relaxation surprises with the custom linker scripts in ws63-rt).
+# relaxation surprises with the custom linker scripts in hisi-riscv-rt).
 rustflags = ["-C", "link-arg=--no-relax"]

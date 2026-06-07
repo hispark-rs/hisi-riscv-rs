@@ -35,7 +35,7 @@ MEMORY
     PRESERVE (rw) : ORIGIN = 0x00128000 - 0x100, LENGTH = 0x100
 }
 
-/* Memory regions exported as symbols for runtime relocation (same set ws63-rt's
+/* Memory regions exported as symbols for runtime relocation (same set hisi-riscv-rt's
    layout.ld / startup.S expect). */
 PROVIDE(__rom_start = ORIGIN(ROM));
 PROVIDE(__rom_length = LENGTH(ROM));

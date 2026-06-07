@@ -11,9 +11,9 @@
 #![no_std]
 #![no_main]
 
-use ws63_hal::Peripherals;
-use ws63_hal::uart::{Config, Uart};
-use ws63_rt::entry;
+use hisi_riscv_hal::Peripherals;
+use hisi_riscv_hal::uart::{Config, Uart};
+use hisi_riscv_rt::entry;
 
 fn u32dec(mut v: u32, buf: &mut [u8; 10]) -> &[u8] {
     let mut i = buf.len();

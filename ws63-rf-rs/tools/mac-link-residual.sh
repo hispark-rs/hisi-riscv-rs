@@ -52,7 +52,7 @@ BLOBS=(
 )
 
 # ROM symbol names (name = addr;) and a filter for non-C-contract leftovers
-# (Rust-internal lang items that resolve when linked into a real ws63-rt binary).
+# (Rust-internal lang items that resolve when linked into a real hisi-riscv-rt binary).
 grep -oE '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=' "$ROM" | tr -d ' =' | sort -u > "$T/rom.txt"
 undef() { "$NM" "$1" 2>/dev/null | awk 'NF>=2 && $(NF-1)=="U"{print $NF}' | sort -u; }
 strip_internal() { grep -vE '^_RNv|^_critical_section_|^_ZN21linked_list_allocator|^rust_'; }

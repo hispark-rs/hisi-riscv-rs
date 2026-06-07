@@ -9,11 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - **Releases are now owned by each crate's own repo.** The monorepo tag only cuts the firmware GitHub Release; crate publishing moved to each submodule's own `release.yml` (pac/rt/hal), triggered by a `v*` tag in that repo with its own `CRATES_IO_TOKEN`. Removed the parent's `publish` job.
-- Added `ws63-rt`'s own release workflow (pac/hal already had theirs).
+- Added `hisi-riscv-rt`'s own release workflow (pac/hal already had theirs).
 
 ### Notes
 
-- First releases via the per-repo pipelines: `ws63-pac 0.1.3`, `ws63-rt 0.1.1`, `ws63-hal 0.2.1` (each published by its own repo).
+- First releases via the per-repo pipelines: `ws63-pac 0.1.3`, `hisi-riscv-rt 0.1.1`, `hisi-riscv-hal 0.2.1` (each published by its own repo).
 
 ## [0.2.0] - 2026-06-02
 
@@ -40,9 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Changelog** configuration (`.github/changelog-config.json`)
 - **CLAUDE.md** — agent guidance for working in this repo
 - **Run skill** (`.claude/skills/run-ws63-rs/`) — build driver script + SKILL.md
-- **ws63-hal** expanded from 10 to 31 source files, covering 35 PAC peripherals
-- **ws63-hal** now implements 25+ embedded-hal / embedded-hal-nb / embedded-io traits
-- **ws63-hal** aligned with esp-hal patterns (RAII clock guards, type-state GPIO, sealed traits)
+- **hisi-riscv-hal** expanded from 10 to 31 source files, covering 35 PAC peripherals
+- **hisi-riscv-hal** now implements 25+ embedded-hal / embedded-hal-nb / embedded-io traits
+- **hisi-riscv-hal** aligned with esp-hal patterns (RAII clock guards, type-state GPIO, sealed traits)
 - **Phase-3 Wi-Fi blob link spike** (wifi_blob_link example) + ROADMAP documentation
 - **Host unit tests** — genuine host unit tests (Phase 2)
 - **Trap handling** — vectored mtvec + explicit trap-table layout + unified trap stacks
@@ -52,14 +52,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Directory structure** — ws63-RF nested under ws63-rf-rs (prevent lateral deps)
 - **Directory structure** — ws63-svd nested under ws63-pac (generation source owned by its consumer)
 - **Scheduler/runtime** — made internal (not a public API)
-- ws63-hal submodule updated through 5 feature merges
+- hisi-riscv-hal submodule updated through 5 feature merges
 - `cargo fmt` applied workspace-wide
 - Clock control refactored: duplicated register dispatch eliminated
 - GPIO module: new `Input`/`Output`/`Flex` drivers alongside legacy `GpioPin<MODE>`
 
 ### Fixed
 
-- **DMA wiring** — correct request IDs + wiring; fix ws63-hal/ws63-rt standalone CI
+- **DMA wiring** — correct request IDs + wiring; fix hisi-riscv-hal/hisi-riscv-rt standalone CI
 - **Flashboot** — correct image-header layout + honest A/B verification (Phase 2)
 - **CI** — Docs fix: unlink private apply_pull
 - **CI** — standalone CI: drop pinned lock + fix doc link
@@ -87,13 +87,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Changelog** configuration (`.github/changelog-config.json`)
 - **CLAUDE.md** — agent guidance for working in this repo
 - **Run skill** (`.claude/skills/run-ws63-rs/`) — build driver script + SKILL.md
-- **ws63-hal** expanded from 10 to 31 source files, covering 35 PAC peripherals
-- **ws63-hal** now implements 25+ embedded-hal / embedded-hal-nb / embedded-io traits
-- **ws63-hal** aligned with esp-hal patterns (RAII clock guards, type-state GPIO, sealed traits)
+- **hisi-riscv-hal** expanded from 10 to 31 source files, covering 35 PAC peripherals
+- **hisi-riscv-hal** now implements 25+ embedded-hal / embedded-hal-nb / embedded-io traits
+- **hisi-riscv-hal** aligned with esp-hal patterns (RAII clock guards, type-state GPIO, sealed traits)
 
 ### Changed
 
-- ws63-hal submodule updated through 5 feature merges
+- hisi-riscv-hal submodule updated through 5 feature merges
 - `cargo fmt` applied workspace-wide
 - Clock control refactored: duplicated register dispatch eliminated
 - GPIO module: new `Input`/`Output`/`Flex` drivers alongside legacy `GpioPin<MODE>`

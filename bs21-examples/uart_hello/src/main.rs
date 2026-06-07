@@ -12,9 +12,9 @@
 #![no_std]
 #![no_main]
 
-use ws63_hal::Peripherals;
-use ws63_hal::uart::{Config, Uart};
-use ws63_rt::entry;
+use hisi_riscv_hal::Peripherals;
+use hisi_riscv_hal::uart::{Config, Uart};
+use hisi_riscv_rt::entry;
 
 /// Format a u32 as decimal into `buf`, returning the used slice.
 fn u32_to_dec(mut n: u32, buf: &mut [u8; 10]) -> &[u8] {

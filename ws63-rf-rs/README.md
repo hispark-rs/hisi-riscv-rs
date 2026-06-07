@@ -68,7 +68,7 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **A real `.wifi_pkt_ram` NOLOAD region** in `ws63-rt` (here the symbols are a
+- **A real `.wifi_pkt_ram` NOLOAD region** in `hisi-riscv-rt` (here the symbols are a
   scaffold `--defsym`).
 - **Pinning the netif pbuf layout** to the WiFi build's `lwipopts.h` and the
   smoltcp TX sink to the blob's transmit symbol (on hardware).

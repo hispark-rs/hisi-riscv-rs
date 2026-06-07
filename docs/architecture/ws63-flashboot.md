@@ -19,7 +19,7 @@
 
 - **真实性验签（secure boot）** —— 没有基于 efuse 根密钥的 ECC-bp256 / SM2 签名校验。
 - 分区表解析、A/B app 槽选择、FOTA / 升级、镜像解压、flash 在线加密 —— 这些在原厂 flashboot 中存在，本 crate 为桩或缺失（`src/main.rs:206-231`）。
-- 不依赖 `ws63-pac` / `ws63-hal`：有意用裸 MMIO 保持独立、避免第二份 PAC 在链接期与 `ws63-hal` 的 `DEVICE_PERIPHERALS` 冲突（`Cargo.toml:17-19`）。
+- 不依赖 `ws63-pac` / `hisi-riscv-hal`：有意用裸 MMIO 保持独立、避免第二份 PAC 在链接期与 `hisi-riscv-hal` 的 `DEVICE_PERIPHERALS` 冲突（`Cargo.toml:17-19`）。
 
 生产正确做法：复用 fbb_ws63 原厂 flashboot，把本仓库构建的 Rust 应用按原厂打包/签名流程烧到原厂 flashboot 加载的 APP 分区（`README.md:22-26`）。
 
@@ -28,15 +28,15 @@
 `ws63-flashboot` **不在** 主依赖链（SVD → PAC → HAL → examples）上，是一条独立的二进制旁支：
 
 ```
-SVD → ws63-pac → ws63-hal → ws63-examples/*   （主链，ws63-rt 提供启动）
+SVD → ws63-pac → hisi-riscv-hal → ws63-examples/*   （主链，hisi-riscv-rt 提供启动）
 
 ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO，
                 不依赖 pac/hal/rt；被排除在默认构建之外）
 ```
 
 - 它是一个 `[[bin]]`（`Cargo.toml:13-15`，产物名 `flashboot`），仅依赖 `riscv` 与 `critical-section`（`Cargo.toml:20-22`）。
-- 在工作区中它是 `members` 之一（`cargo check --workspace` 仍覆盖），但**不在 `default-members`** 中，默认 `cargo build` 不构建它（根 `Cargo.toml` `default-members` 仅含 `ws63-pac`/`ws63-hal`/`ws63-rt`）。
-- 它逻辑上位于 PAC/HAL 之"下"：在硬件上电后、Rust 应用（用 `ws63-rt` 启动 + `ws63-hal` 驱动）运行之"前"运行，但在代码上与三者完全解耦。
+- 在工作区中它是 `members` 之一（`cargo check --workspace` 仍覆盖），但**不在 `default-members`** 中，默认 `cargo build` 不构建它（根 `Cargo.toml` `default-members` 仅含 `ws63-pac`/`hisi-riscv-hal`/`hisi-riscv-rt`）。
+- 它逻辑上位于 PAC/HAL 之"下"：在硬件上电后、Rust 应用（用 `hisi-riscv-rt` 启动 + `hisi-riscv-hal` 驱动）运行之"前"运行，但在代码上与三者完全解耦。
 
 ## 关键设计
 
@@ -70,12 +70,12 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 | 高 | 正确性 | A/B 误用 `0x4000_0024`：该寄存器是 flashboot **自身的备份恢复标志**，并非 app 槽选择器。代码却用它选 app 区 A/B | `src/main.rs`；对照 vendor `main.c:131-135`（`flashboot_need_recovery`） | ✅ 已修(2026-06-01)：删除该误用，改单镜像启动 + 如实注明真实 A/B = upg run-region(magic `0x70746C6C`)+分区表(`@0x200380`)、`0x40000024`=bootloader 自恢复 |
 | 高 | 方向 | 重写原厂安全关键件（验签/启动链）属误导努力。生产应复用原厂 flashboot，本 crate 仅供学习 | `src/main.rs:5-8`、`README.md:22-26` | 暂不修(定级实验性；定位为学习件，整体方向走复用原厂) |
 | 高 | 正确性 | 关键子流程是桩：`boot_clock_adapt()` 为 TODO 空操作；`read_partition_app_addr()` 恒返回 `FLASH_START`；`check_upgrade_mode()` 恒 false | `src/main.rs` | 🟡 部分(2026-06-01)：`read_partition_app_addr()` 改为**如实标注**的桩（注明不解析分区表、真实查表在 `@0x200380` magic `0x4b87a54b`）；`boot_clock_adapt`/`check_upgrade_mode` 仍为桩（实验定位，生产复用原厂） |
-| 中 | 维护性 | 重复造轮子：UART/SFC/SHA256/startup 与 `ws63-hal`/`ws63-rt` 重复（因刻意不依赖 PAC/HAL） | `src/uart.rs`、`src/sfc.rs`、`src/sha256.rs`、`asm/startup.S`、`Cargo.toml:17-19` | 暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍) |
+| 中 | 维护性 | 重复造轮子：UART/SFC/SHA256/startup 与 `hisi-riscv-hal`/`hisi-riscv-rt` 重复（因刻意不依赖 PAC/HAL） | `src/uart.rs`、`src/sfc.rs`、`src/sha256.rs`、`asm/startup.S`、`Cargo.toml:17-19` | 暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍) |
 | 中 | 工程化 | 删除未用的 `ws63-pac` 依赖、`publish=false`、移出默认构建、banner 改为实验性警告 | `Cargo.toml:11,17-19`、根 `Cargo.toml` `default-members`、`src/main.rs:1-22` | 本轮已修 |
 
 ## 改进项与排期
 
 - 生产层面的结论是**复用 fbb_ws63 原厂 flashboot**（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（`README.md:22-26`）。本 crate 维持实验/学习定位。
 - **整改已落地（2026-06-01）**：镜像头布局对齐 `secure_verify_boot.h`（`code_area_len`/`code_area_hash` 偏移修正 + const 尺寸断言）、删除 `0x40000024` 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、`verify_sha256`→`verify_image_integrity` 如实标注"仅完整性非真实性"、`read_partition_app_addr` 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 `--exclude`）。**真实 ECC/SM2 验签**仍按冻结项复用原厂、不在本实验件投入。
-- 阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、无原子 ISA + `portable-atomic` critical-section polyfill（默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`，硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）、CI/release gating 与发布顺序修复、`ws63-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
-- 尚未解决并已排期：示例链接（`ws63-rt` 链接脚本不传播到下游 bin）见 **阶段 1**；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 **阶段 2**；porting 层 + HCC IPC + blob 链接的连接性见 **阶段 3–5**；async 见 **阶段 6**。详见 [ROADMAP](../../ROADMAP.md)。
+- 阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、无原子 ISA + `portable-atomic` critical-section polyfill（默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`，硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）、CI/release gating 与发布顺序修复、`hisi-riscv-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
+- 尚未解决并已排期：示例链接（`hisi-riscv-rt` 链接脚本不传播到下游 bin）见 **阶段 1**；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 **阶段 2**；porting 层 + HCC IPC + blob 链接的连接性见 **阶段 3–5**；async 见 **阶段 6**。详见 [ROADMAP](../../ROADMAP.md)。

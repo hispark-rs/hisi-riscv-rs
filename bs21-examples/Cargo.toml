@@ -1,12 +1,12 @@
 # BS21 example firmware — a DEDICATED workspace, deliberately separate from the
 # root ws63-rs workspace.
 #
-# Why isolated: `ws63-hal` is a single crate that can be built for exactly one
+# Why isolated: `hisi-riscv-hal` is a single crate that can be built for exactly one
 # chip (a `compile_error!` enforces it). The root workspace's WS63 members select
 # `chip-ws63`; these BS21 members select `chip-bs21`. If both lived in one
-# workspace, `cargo build --workspace` would unify ws63-hal's features and pull in
+# workspace, `cargo build --workspace` would unify hisi-riscv-hal's features and pull in
 # BOTH chips at once → compile_error. Keeping BS21 in its own workspace lets each
-# side build its own ws63-hal flavour. The root workspace lists its members
+# side build its own hisi-riscv-hal flavour. The root workspace lists its members
 # explicitly and does NOT include this dir, and this `[workspace]` makes it a
 # separate root so the parent never sweeps it into `--workspace`.
 #
@@ -21,7 +21,7 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
-# ws63-hal / bs21-pac depend on the PACs by registry version (so they build
+# hisi-riscv-hal / bs21-pac depend on the PACs by registry version (so they build
 # standalone). Redirect to the local sources so every crate links exactly ONE
 # ws63-pac / bs21-pac (the PAC #[no_mangle] singleton static must be unique), and
 # so we test the in-tree code. Paths are relative to this manifest (../ = ws63-rs).

@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crate: [ws63-pac, ws63-hal, ws63-rt]
+        crate: [ws63-pac, hisi-riscv-hal, hisi-riscv-rt]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -69,7 +69,7 @@ jobs:
       - name: Check workspace
         run: cargo check --workspace
       # Real build (link) of the default-members: the libraries + the blinky example
-      # (blinky links via ws63-rt's exported linker scripts). The experimental
+      # (blinky links via hisi-riscv-rt's exported linker scripts). The experimental
       # flashboot binary is excluded from the default build. No `|| true` masking.
       - name: Build default members (release, links blinky)
         run: cargo build --release
@@ -115,7 +115,7 @@ jobs:
         run: cargo fmt --all -- --check
 
   # ── Host unit tests ─────────────────────────────────────────────
-  # ws63-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
+  # hisi-riscv-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
   # ws63-pac's riscv coupling is gated too, so the crate compiles for x86 and the
   # pure-logic unit tests (encoding, tick math, proptests) actually run. Uses the
   # stable toolchain on the host target (RUSTUP_TOOLCHAIN overrides the ws63 pin in
@@ -130,7 +130,7 @@ jobs:
         with:
           submodules: recursive
       - name: Run host unit tests (x86_64)
-        run: cargo test -p ws63-hal --target x86_64-unknown-linux-gnu
+        run: cargo test -p hisi-riscv-hal --target x86_64-unknown-linux-gnu
 
   # ── Dependency audit (advisory) ─────────────────────────────────
   audit:

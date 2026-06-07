@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are each standalone repos linked as submodules. Two are **nested under the crate that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree `ws63-rf-rs` crate (`ws63-rf-rs/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-examples` are each standalone repos linked as submodules. Two are **nested under the crate that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree `ws63-rf-rs` crate (`ws63-rf-rs/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
 
 **Architecture docs (Chinese):** see [`docs/`](docs/) — [`docs/architecture/overview.md`](docs/architecture/overview.md) for the whole picture, per-component docs under `docs/architecture/`, the full review ledger in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
 
@@ -19,7 +19,7 @@ Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS
 #   tar xzf ws63-rust-1.96.0-*.tar.gz && rustup toolchain link ws63 "$PWD/stage2"
 cargo build                         # Build libraries + blinky (default-members)
 cargo check --workspace             # Full workspace check (incl. flashboot)
-cargo check -p ws63-hal             # Check HAL only
+cargo check -p hisi-riscv-hal             # Check HAL only
 cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example
 
@@ -32,8 +32,8 @@ cargo fmt --all -- --check
 
 # Submodule operations
 git submodule update --init --recursive
-git -C ws63-hal status              # Work inside submodule
-git -C ws63-hal add -A && git -C ws63-hal commit -m "..."
+git -C hisi-riscv-hal status              # Work inside submodule
+git -C hisi-riscv-hal add -A && git -C hisi-riscv-hal commit -m "..."
 ```
 
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
@@ -44,18 +44,18 @@ git -C ws63-hal add -A && git -C ws63-hal commit -m "..."
 
 ```
 ws63-svd (XML) → ws63-pac (svd2rust generated, ~1.5MB lib.rs)
-                → ws63-hal (hand-written safe drivers)
+                → hisi-riscv-hal (hand-written safe drivers)
                 → ws63-examples/* (applications)
-ws63-rt (startup, linker scripts, interrupt vectors)
+hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for all 35 peripherals. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`ws63-hal`**: 35 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
-- **`ws63-rt`**: Runtime crate — startup assembly, linker scripts (memory.x, layout.ld), interrupt vector definitions (device.x). Uses `riscv-rt` underneath.
+- **`hisi-riscv-hal`**: 35 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
+- **`hisi-riscv-rt`**: Runtime crate — startup assembly, linker scripts (memory.x, layout.ld), interrupt vector definitions (device.x). Uses `riscv-rt` underneath.
 
 ### Peripheral Singleton Pattern
 
-`ws63-hal/src/peripherals.rs` defines two macros:
+`hisi-riscv-hal/src/peripherals.rs` defines two macros:
 - `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, `register_block()`.
 - `peripherals!(...)` — generates the `Peripherals` struct with `take()` (safe) and `steal()` (unsafe).
 
@@ -118,7 +118,7 @@ Two controllers share `dma::RegisterBlock`:
 - **No `std`** — `#![no_std]` throughout. No heap, no `Vec` in driver code. Use fixed arrays when data buffers are needed.
 - **Safety via lifetime generics** — peripherals are `'d`-parameterized to prevent use-after-drop of the `Peripherals` token.
 - **Register access is `unsafe`** — raw PAC register writes use `unsafe { reg.write(|w| w.bits(val)) }`. Driver methods encapsulate this.
-- **Async & embassy** — beyond the blocking drivers, ws63-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/architecture/async-embassy.md`.
+- **Async & embassy** — beyond the blocking drivers, hisi-riscv-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/architecture/async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
 ## CI/CD

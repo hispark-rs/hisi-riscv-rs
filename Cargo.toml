@@ -3,8 +3,8 @@ resolver = "3"
 members = [
     "ws63-pac",
     "bs21-pac",
-    "ws63-hal",
-    "ws63-rt",
+    "hisi-riscv-hal",
+    "hisi-riscv-rt",
     "ws63-examples/blinky",
     "ws63-examples/uart_hello",
     "ws63-examples/timer_irq",
@@ -25,16 +25,16 @@ members = [
     "ws63-rf-rs",
     "ws63-flashboot",
 ]
-# default-members = the libraries + the blinky example (which links via ws63-rt's
-# exported linker scripts; see ws63-rt/build.rs + ws63-examples/blinky/build.rs).
+# default-members = the libraries + the blinky example (which links via hisi-riscv-rt's
+# exported linker scripts; see hisi-riscv-rt/build.rs + ws63-examples/blinky/build.rs).
 # ws63-flashboot is excluded: it is experimental and NOT secure boot
 # (see ws63-flashboot/README.md). It stays a workspace `member` so
 # `cargo check --workspace` covers it; build it explicitly with
 # `cargo build -p ws63-flashboot`.
 default-members = [
     "ws63-pac",
-    "ws63-hal",
-    "ws63-rt",
+    "hisi-riscv-hal",
+    "hisi-riscv-rt",
     "ws63-examples/blinky",
     "ws63-examples/uart_hello",
     "ws63-examples/timer_irq",
@@ -59,12 +59,12 @@ version = "0.1.0"
 edition = "2024"
 authors = ["sanchuanhehe"]
 license = "MIT"
-repository = "https://github.com/sanchuanhehe/ws63-rs"
+repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
 
 [workspace.dependencies]
 ws63-pac = { path = "ws63-pac" }
-ws63-hal = { path = "ws63-hal" }
-ws63-rt  = { path = "ws63-rt" }
+hisi-riscv-hal = { path = "hisi-riscv-hal" }
+hisi-riscv-rt  = { path = "hisi-riscv-rt" }
 
 # External dependencies
 riscv = "0.13"
@@ -74,7 +74,7 @@ embedded-io = "0.6"
 nb = "1"
 critical-section = "1"
 
-# ws63-hal (a standalone submodule) depends on ws63-pac via a registry version
+# hisi-riscv-hal (a standalone submodule) depends on ws63-pac via a registry version
 # requirement so it builds on its own. Inside this monorepo we redirect that to the
 # local submodule so EVERY crate links exactly ONE ws63-pac instance (otherwise the
 # PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and

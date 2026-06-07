@@ -1,14 +1,14 @@
 //! Build script for the BS21 blinky example.
 //!
-//! BS21 has its own memory map, so this crate ships its own `memory.x` (ws63-rt's
+//! BS21 has its own memory map, so this crate ships its own `memory.x` (hisi-riscv-rt's
 //! bundled WS63 one is disabled via `default-features = false`). Copy ours into
 //! OUT_DIR and put that dir on the linker search path, so `ws63-link.x`'s
 //! `INCLUDE memory.x` resolves to THIS file (exactly one on the path → no
 //! link-order ambiguity).
 //!
-//! ws63-rt still supplies layout.ld / riscv-rt-symbols.x / startup and the
+//! hisi-riscv-rt still supplies layout.ld / riscv-rt-symbols.x / startup and the
 //! `ws63-link.x` entry script. Under `chip-bs21` the interrupt `device.x` comes
-//! from bs21-pac's `rt` feature (enabled transitively by ws63-hal's `rt`), whose
+//! from bs21-pac's `rt` feature (enabled transitively by hisi-riscv-hal's `rt`), whose
 //! build.rs adds its own OUT_DIR to the link search path.
 use std::env;
 use std::fs::File;

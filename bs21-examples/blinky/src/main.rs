@@ -11,8 +11,8 @@
 #![no_std]
 #![no_main]
 
-use ws63_hal::gpio::{AnyPin, OutputConfig};
-use ws63_rt::entry;
+use hisi_riscv_hal::gpio::{AnyPin, OutputConfig};
+use hisi_riscv_rt::entry;
 
 /// Approximate busy-wait delay (~64 cycles ≈ 1 µs at the 64 MHz BS21 CPU clock).
 fn delay_ms(ms: u32) {

@@ -23,7 +23,7 @@ Top MCP Servers:
 ## Your Setup Checklist
 
 ### Codebases
-- [ ] ws63-rs — https://github.com/sanchuanhehe/ws63-rs (main monorepo; clone with `git submodule update --init --recursive` — ws63-pac, ws63-hal, ws63-rt, ws63-examples are submodules, and ws63-svd / ws63-RF are nested submodules)
+- [ ] ws63-rs — https://github.com/sanchuanhehe/hisi-riscv-rs (main monorepo; clone with `git submodule update --init --recursive` — ws63-pac, hisi-riscv-hal, hisi-riscv-rt, ws63-examples are submodules, and ws63-svd / ws63-RF are nested submodules)
 - [ ] ws63-qemu — sister QEMU fork for software-in-the-loop validation (no silicon needed)
 - [ ] ws63-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
 - [ ] esp-hal — reference HAL the WS63 driver patterns are modeled on (read-only reference)
@@ -44,7 +44,7 @@ Top MCP Servers:
 
 Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 
-- **Submodules are everything.** `ws63-pac`, `ws63-hal`, `ws63-rt`, `ws63-examples` are standalone repos linked as submodules; `ws63-svd` is nested under `ws63-pac` and `ws63-RF` under `ws63-rf-rs`. Always clone/update with `git submodule update --init --recursive`.
+- **Submodules are everything.** `ws63-pac`, `hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-examples` are standalone repos linked as submodules; `ws63-svd` is nested under `ws63-pac` and `ws63-RF` under `ws63-rf-rs`. Always clone/update with `git submodule update --init --recursive`.
 - **Submodule-first, then bump the pointer.** When you edit a file inside a submodule, commit *inside the submodule* first, then update and commit the parent repo's submodule pointer. Don't commit the parent pointer to an unpushed submodule commit.
 - **Build with the custom `ws63` toolchain.** The workspace default target is `riscv32imfc-unknown-none-elf` (hard-float ilp32f, no atomics), baked into the `ws63` toolchain as a builtin — install it first (see `rust-toolchain.toml`), no `-Z build-std` needed. Core loop: `cargo build` (libs + blinky), `cargo check --workspace`, `cargo clippy`, `cargo fmt --all -- --check`.
 - **fbb_ws63 is the single source of truth.** The WS63 chip is undocumented — the official C SDK is the ground-truth for register offsets, bit fields, and init sequences. Before trusting or writing a driver, grep `fbb_ws63` for the registers you're touching. `esp-hal` is the reference for *Rust HAL patterns* (GPIO type-state, sealed traits), not register behavior.
@@ -55,7 +55,7 @@ Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 
 First task for a new teammate — get a clean build going end to end:
 
-1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/sanchuanhehe/ws63-rs` (or `git submodule update --init --recursive` if you already cloned).
+1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/sanchuanhehe/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
 2. Install the custom `ws63` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link ws63 "$PWD/stage2"`.
 3. Build the libraries + blinky: `cargo build`, then sanity-check the whole tree: `cargo check --workspace`.
 4. Read `docs/architecture/overview.md` and `ROADMAP.md` to see where the project is headed before picking up real work.

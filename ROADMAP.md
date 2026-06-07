@@ -38,12 +38,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 ## 阶段 0 — 构建完整性 + 文档（✅ 本轮已完成，2026-05-31）
 
-- **消除双 PAC**：`ws63-hal`/`ws63-flashboot` 改 registry 版本依赖，根 `Cargo.toml` 加
+- **消除双 PAC**：`hisi-riscv-hal`/`ws63-flashboot` 改 registry 版本依赖，根 `Cargo.toml` 加
   `[patch.crates-io] ws63-pac = { path = "ws63-pac" }`；`cargo tree` 单一 `ws63-pac` 实例；
   `ws63-pac` 版本 bump `0.1.0 → 0.1.1`（tag 后加了 KM 寄存器，SemVer 要求）。
 - **ISA 修正**：先用 builtin 无原子 `riscv32imc`（软浮点、stable）做过渡，随后**切到自定义 `ws63` 工具链**——
   把硬浮点 `riscv32imfc-unknown-none-elf`（`ilp32f`，无原子）烤进 stable rustc 作 builtin，仓库默认即用之、
-  **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`ws63-rt` 的 `riscv` 开
+  **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`hisi-riscv-rt` 的 `riscv` 开
   `critical-section-single-hart`。**实测产物零原子指令（lr/sc/amo）、single-float ABI**，不再会在无 A 核上触发陷阱。
   - 工具链仓库：<https://github.com/sanchuanhehe/ws63-rust-toolchain>（预编译 sysroot tarball + 已硬化的 release CICD）。
     硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。
@@ -56,7 +56,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 - **CI/release 修复**：去除失败屏蔽（`|| true` / `continue-on-error` / `| head` 吞掉退出码）；
   clippy 改为 gating（排除实验性 flashboot）；发布改依赖序顺序 `pac → rt → hal`、删并行 matrix 竞态、
   删 `continue-on-error`；release 加 `objcopy` 产 `.bin`、修正 artifact glob、删除从未真正运行的 host-test 任务。
-- **ws63-rt 旁修**：修了 MIE 中断宏 typo、栈顶符号 GC fallback；为 publish 给 ws63-pac 依赖补 version。
+- **hisi-riscv-rt 旁修**：修了 MIE 中断宏 typo、栈顶符号 GC fallback；为 publish 给 ws63-pac 依赖补 version。
 - **文档**：新增 `docs/`（中文）总体架构 + 8 个组件架构与评审 + 完整评审台账；各子模块加薄链接 `ARCHITECTURE.md`。
 
 验证：`cargo build`（默认 = 库）与 `cargo check --workspace` 均绿；clippy（排除 flashboot）零告警；
@@ -68,12 +68,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 **门禁理念：把"在硅片上跑起来"当作验收标准，而不是"过了 N 次 agent review"。** 评审显示底座大概率从未上板。
 
-1. ✅ **修复链接脚本传播（已完成 2026-05-31）**：`ws63-rt` 的 `cargo:rustc-link-arg=-T…` 来自 *库* 依赖、不传播到下游二进制
+1. ✅ **修复链接脚本传播（已完成 2026-05-31）**：`hisi-riscv-rt` 的 `cargo:rustc-link-arg=-T…` 来自 *库* 依赖、不传播到下游二进制
    （blinky 曾因此用 lld 默认布局链接、trap 栈符号 `__exc/nmi/irq_stack_top__` 未定义而失败）。
-   已改为：`ws63-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录（link-search 可传播）+ 生成 `ws63-link.x`
+   已改为：`hisi-riscv-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录（link-search 可传播）+ 生成 `ws63-link.x`
    包装脚本（按 memory→layout→device→symbols 顺序 `INCLUDE`），blinky 的 `build.rs` 以 `-Tws63-link.x` 引入。
    **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
-2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 ws63-rt 评审。
+2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 hisi-riscv-rt 评审。
 3. ✅ **软件在环（QEMU）bring-up（已完成 2026-05-31）**：硬件不便时的替代验证信号——
    [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
    in-tree `hw/riscv/ws63.c`（rv32imfc hart、按 `memory.x` 的内存映射、自定义 HiSilicon UART、
@@ -86,7 +86,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    `__irq/exc/nmi_stack_top__` 统一定义在 `.stacks`(单一真值,被 KEEP 的 .trap 处理器引用故 GC 安全)，删除
    `memory.x` 里指向 `.heap` 区的错误 fallback(修了一个潜在的 trap 栈/堆重叠)。静态验证(readelf/反汇编):
    mtvec=0x230441、`.trap` 64 对齐、表项 0→trap_entry / 26→mie_interrupt0_handler / 32-91→local_interrupt_handler
-   均解析且在跳转范围内、无未定义栈/trap 符号；smoke 5/5 无回归。**运行期分发**(经 ws63-rt 弱处理器覆盖)受
+   均解析且在跳转范围内、无未定义栈/trap 符号；smoke 5/5 无回归。**运行期分发**(经 hisi-riscv-rt 弱处理器覆盖)受
    工作区 fat-LTO + 跨 crate 弱符号覆盖限制(同 `timer_irq`/`gpio_irq` 用自带 mtvec 的原因)，未做运行期示例;
    底层 IRQ 投递已由 `timer_irq`(26)/`gpio_irq`(≥32) 在 QEMU 验证。
 5. **上板冒烟**（剩余，需硬件）：真机烧 blinky → UART hello-world，验证 `clock_init`/linker/startup 在硅片上正确。
@@ -111,7 +111,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 >    `DriverMode`/`Blocking`/`Async` marker、`DmaEligible`/`DmaChannelFor` 绑定 trait、safety.rs 的恒真计数断言；
 >    保留 `Peripheral` enum + `cken_info` 门控图 + `PERIPHERAL_COUNT` 及 MMIO 地址范围/算术溢出断言。
 > 8. **GPIO pull**（2026-06-01）：`init_input` 经 IO_CONFIG pad 寄存器落地 `InputConfig.pull`；新增 `InterruptTrigger`。
-> 9. **host 单测真正跑起来**（2026-06-01）：cfg 门控 `ws63-hal` 与 `ws63-pac` 的 riscv 耦合，使库能为 x86 编译；
+> 9. **host 单测真正跑起来**（2026-06-01）：cfg 门控 `hisi-riscv-hal` 与 `ws63-pac` 的 riscv 耦合，使库能为 x86 编译；
 >    `cargo test --target x86_64` 跑通 **77 个单测**，CI 新增 `host-test` job。
 > 10. **DMA 请求 ID + 接线**（2026-06-01）：`DmaPeripheral` 请求 ID 由杜撰的 0..11 改为 `dma_porting.h` 的
 >     `HAL_DMA_HANDSHAKING_*`（UART_L/H0/H1=UART0/1/2、SPI_MS0/1=SPI0/1、I2S），经 `request_id()` +
@@ -166,7 +166,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
     启停 `CTRL_8`、FIFO 读 `CTRL_9`、空判定 `CTRL_1.rne`、`CFG_*` @ 0xDC..0xEC，对齐 `hal_adc_v154`。
   - 偏移已在生成的 PAC 中逐一核验；纯解析逻辑有 proptest。**未上板**。
 - **safety.rs**：删恒真断言并去掉"formal verification"措辞。
-- ✅ **host 单测**（已修 2026-06-01）：`ws63-hal` 的 riscv CSR 内联汇编（`interrupt.rs`）用
+- ✅ **host 单测**（已修 2026-06-01）：`hisi-riscv-hal` 的 riscv CSR 内联汇编（`interrupt.rs`）用
   `#[cfg(target_arch="riscv32")]` 门控（host 得 no-op 桩）。更深的阻塞在 `ws63-pac`——它无条件
   `pub use riscv::interrupt::*` 且对 `ExternalInterrupt` 打 `#[riscv::pac_enum]`,而 riscv 0.13 不能为 x86 构建。
   经 `ws63-svd/postprocess.py` 把这些 riscv 耦合 cfg 门控到 riscv32（host 得纯 enum,HAL 仅用 `as u16`）,
@@ -205,7 +205,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 **已证伪的未知**：ABI 匹配、厂商静态归档可链入 Rust 镜像、`.data` 重定位（数据符号 + 链接器符号两类）可解析、
 `--whole-archive` 可把整个配置 blob 纳入。**本尖刺不涉及**（留阶段 4）：大型**代码** blob（`libwifi_driver_dmac.a`
 ~629KB 带真实 `.text`、`libbt_host.a` ~1.1MB）的链接与符号闭合；用真实驱动库（而非桩）满足 `g_dmac_alg_main`/
-`g_mac_res_etc` 的 ABI；`ws63-rt` 真实的 `.wifi_pkt_ram` NOLOAD 区（此处 `__wifi_pkt_ram_begin__` 仅是裸 `--defsym`）。
+`g_mac_res_etc` 的 ABI；`hisi-riscv-rt` 真实的 `.wifi_pkt_ram` NOLOAD 区（此处 `__wifi_pkt_ram_begin__` 仅是裸 `--defsym`）。
 **Wi-Fi 栈未运行**——这是链接/重定位路径证明，不是连接性。
 
 ---
@@ -247,7 +247,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 - ✅ ~~数据通路运行时半边~~（FRW worker + HCC 传输 + 软件定时器 + netif→smoltcp 桥，均已实现 + QEMU 自验）。
 - **接真实 blob（硬件在环）**：把 netif `pbuf` 布局按 wifi 构建的 `lwipopts.h` 对齐；把 smoltcp TX sink 指向 blob 的真实
   发帧符号；用真实 `frw_event_process_all_event_etc` 等 blob 协议半边联调。
-- **真实 `.wifi_pkt_ram` NOLOAD 区**：把裸 `--defsym=__wifi_pkt_ram_*` 升级为 `ws63-rt` 链接脚本里**保留的** NOLOAD 段
+- **真实 `.wifi_pkt_ram` NOLOAD 区**：把裸 `--defsym=__wifi_pkt_ram_*` 升级为 `hisi-riscv-rt` 链接脚本里**保留的** NOLOAD 段
   （C SDK `linker.lds`：0xA00000、0xC000=48KB），否则 Wi-Fi ROM 初始化运行期会写入未保留区域。
 - **真机验证（仍属硬件在环）**：ROM 符号是真实硅地址（QEMU 未填充掩膜 ROM）；且厂商 blob 携带 stock `lld` 无法定位的
   HiSilicon 自定义重定位（残留探针用可重定位链接来推迟它们），故可运行镜像需原厂链接器 + 真机。
@@ -279,8 +279,8 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    返回 `Some`、SDK 不门控的返回 `None`（不再吐假位）；I2S 修正为 `CKEN0` bit11/12。文档 + 测试同步。
 3. ✅ **补示例**（已完成）：`blinky` 升级到 `OutputConfig` + `Output` 现代 GPIO 路径；新增 `spi_loopback`
    （阻塞 SPI 全双工，验证两级时钟）+ `i2c_scan`（地址扫描）；均接入 ws63-qemu smoke-test。
-4. ✅ **发布到 crates.io**（已完成 2026-06-05）：**ws63-hal 0.3.0**（时钟真实化 + 两级 SPI + cken Option +
-   async/embassy）、**ws63-rt 0.2.0**（bundled-memory-x）已发布；ws63-pac 0.1.3 本会话无改动、跳过。
+4. ✅ **发布到 crates.io**（已完成 2026-06-05）：**hisi-riscv-hal 0.3.0**（时钟真实化 + 两级 SPI + cken Option +
+   async/embassy）、**hisi-riscv-rt 0.2.0**（bundled-memory-x）已发布；ws63-pac 0.1.3 本会话无改动、跳过。
    `ws63-rf-rs` / `ws63-flashboot` 维持 `publish=false`。配套：工具链 **v1.96.0-1**（补全 proc-macro-srv /
    cargo / gdb-lldb）+ 全仓下载 URL 同步。发布前已用 CI verify job 同款校验（host `clippy --all-features
    -D warnings` / `doc -D warnings` / riscv clippy）预检通过。

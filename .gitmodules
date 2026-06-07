@@ -1,18 +1,18 @@
 [submodule "ws63-guide"]
 	path = ws63-guide
 	url = https://github.com/sanchuanhehe/ws63-guide.git
-[submodule "ws63-hal"]
-	path = ws63-hal
-	url = https://github.com/sanchuanhehe/ws63-hal.git
+[submodule "hisi-riscv-hal"]
+	path = hisi-riscv-hal
+	url = https://github.com/sanchuanhehe/hisi-riscv-hal.git
 [submodule "ws63-pac"]
 	path = ws63-pac
 	url = https://github.com/sanchuanhehe/ws63-pac.git
 [submodule "ws63-RF"]
 	path = ws63-rf-rs/ws63-RF
 	url = https://github.com/sanchuanhehe/ws63-RF.git
-[submodule "ws63-rt"]
-	path = ws63-rt
-	url = https://github.com/sanchuanhehe/ws63-rt.git
+[submodule "hisi-riscv-rt"]
+	path = hisi-riscv-rt
+	url = https://github.com/sanchuanhehe/hisi-riscv-rt.git
 [submodule "ws63-examples"]
 	path = ws63-examples
 	url = https://github.com/sanchuanhehe/ws63-examples.git

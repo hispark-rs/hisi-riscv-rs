@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "EXPERIMENTAL Rust second-stage bootloader for HiSilicon WS63 — NOT secure boot, not for production (see README)"
 license = "MIT"
-repository = "https://github.com/sanchuanhehe/ws63-rs"
+repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
 keywords = ["ws63", "hisilicon", "riscv", "bootloader", "flashboot"]
 categories = ["embedded", "no-std", "hardware-support"]
 # Experimental crate: never published to crates.io.
@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 # NOTE: flashboot intentionally does NOT depend on ws63-pac — it uses raw MMIO
 # (see src/main.rs) so it stays minimal and standalone. Do not re-add ws63-pac:
-# a second PAC copy would clash with ws63-hal's at link time (DEVICE_PERIPHERALS).
+# a second PAC copy would clash with hisi-riscv-hal's at link time (DEVICE_PERIPHERALS).
 [dependencies]
 riscv = "0.13"
 critical-section = "1"

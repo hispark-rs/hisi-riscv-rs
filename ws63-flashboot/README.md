@@ -23,7 +23,7 @@
 
 1. 用 fbb_ws63 的原厂 flashboot 作为二级引导（它已做签名验签 / AB / 升级 / 解压 / flash 加密）。
 2. 把本仓库构建出的 Rust 应用镜像，按原厂打包/签名流程烧到原厂 flashboot 加载的 **APP 分区**。
-3. Rust 应用使用 `ws63-rt` 启动 + `ws63-hal` 驱动，在原厂 flashboot 跳转后接管。
+3. Rust 应用使用 `hisi-riscv-rt` 启动 + `hisi-riscv-hal` 驱动，在原厂 flashboot 跳转后接管。
 
 ## 显式构建（仅用于实验）
 

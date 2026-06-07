@@ -11,8 +11,8 @@ path = "src/main.rs"
 
 [dependencies]
 bs21-pac = { path = "../../bs21-pac" }
-ws63-hal = { path = "../../ws63-hal", default-features = false, features = ["chip-bs21", "rt"] }
-ws63-rt  = { path = "../../ws63-rt", default-features = false, features = ["chip-bs21"] }
+hisi-riscv-hal = { path = "../../hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt"] }
+hisi-riscv-rt  = { path = "../../hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
 riscv = "0.13"
 
 [profile.release]
