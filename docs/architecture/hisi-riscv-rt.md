@@ -13,7 +13,7 @@
 - **trap/中断向量与汇编分发**：异常入口 `trap_entry`、NMI、6 个 MIE 中断、60 个 local 中断的向量与寄存器保存/恢复（`asm/startup.S:76-428`）。
 - **段重定位**：ROM data/BSS、TCM text/data/BSS、SRAM text、`.data`、`.bss` 从 flash 拷到 RAM 并清零（`src/startup.rs:75-193`）。
 - **缓存与 PMP**：I/D cache 使能（`src/startup.rs:59-69`），PMP 由 startup.S 在复位时清零（doc 注释提到 PMP 配置，但当前仅做禁用）。
-- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：hisi-riscv-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `ws63-examples/custom_memory`）。
+- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：hisi-riscv-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `examples/ws63/custom_memory`）。
 - **入口属性与 prelude**：re-export `riscv_rt::entry` 与 PAC 中断类型（`src/lib.rs:44-64`）。
 - **临界区基础设施**：作为持有单一应用 hart 的 crate，启用 `riscv` 的 `critical-section-single-hart`，为全固件提供唯一的 `critical-section` 实现（`Cargo.toml` 依赖注释；支撑 PAC 的 `Peripherals::take()` 与 HAL 的 portable-atomic polyfill）。
 
@@ -27,7 +27,7 @@
 ## 在依赖链中的位置
 
 ```
-ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → ws63-examples/*
+ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws63/*
                                   hisi-riscv-rt ─┘  提供启动/向量/链接脚本
 ```
 
@@ -83,7 +83,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → ws63-exampl
 |--------|------|------|-----------------|------|
 | 高 | 正确性 | `mtvec` 以 Direct 模式写入（`la t0,trap_vector; csrw mtvec,t0`，未 `ori` 设置 MODE=Vectored），但同时构建了完整的 Vectored 跳转表（含 NMI/MIE/local 各项），导致除 `trap_entry` 外的向量项全部失效——所有 trap 都落到偏移 0 的异常入口 | `asm/startup.S:40-41`（Direct 写法）vs `asm/startup.S:88-127`（Vectored 表）| 已排期(ROADMAP 阶段 2，随中断子系统重构修正模式/表) |
 | 中 | 正确性 | trap 相关段（`.trap`/`.trap.exception`/`.trap.nmi`/`.trap.mie*`/`.trap.local`）在 `layout.ld` 无显式输出段放置，成为孤立段（orphan），布局/对齐依赖链接器默认行为 | `asm/startup.S:85,318,367,390,416`（段声明）；`layout.ld:28-224`（无对应 `*(.trap*)` 放置）| 已排期(ROADMAP 阶段 2) |
-| 高 | 构建 | （已修）链接脚本不传播到下游二进制：`build.rs` 原用 `cargo:rustc-link-arg=-T...` 注入，但该 arg 来自 lib 依赖、不传递到 bin；示例改用 lld 默认布局、`__exc/nmi/irq_stack_top__` 未定义 → blinky 链接失败。现改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），blinky `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接** | `build.rs`（link-search + ws63-link.x）；`ws63-examples/blinky/build.rs` | 本轮已修 |
+| 高 | 构建 | （已修）链接脚本不传播到下游二进制：`build.rs` 原用 `cargo:rustc-link-arg=-T...` 注入，但该 arg 来自 lib 依赖、不传递到 bin；示例改用 lld 默认布局、`__exc/nmi/irq_stack_top__` 未定义 → blinky 链接失败。现改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），blinky `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接** | `build.rs`（link-search + ws63-link.x）；`examples/ws63/blinky/build.rs` | 本轮已修 |
 | 高 | 构建 | （已修）MIE 中断宏 typo：`call mie\()_interrupt_handler` 缺少 `\n`，宏展开后符号名错误 | `asm/startup.S:397`（现为 `call mie\n\()_interrupt_handler`）| 本轮已修 |
 | 中 | 构建 | （已修）栈顶符号 `__irq/exc/nmi_stack_top__` 在 `.stacks (NOLOAD)` 仅符号区被 `--gc-sections` 回收 → 链接期未定义；已在 `memory.x` 顶层加 GC-safe fallback | `layout.ld:199-204`（说明）；`memory.x:76-78`（fallback）| 本轮已修 |
 | 中 | 构建 | （已修）`riscv` 启用 `critical-section-single-hart`，为无原子扩展的 WS63 提供单 hart CS 实现，支撑 PAC `take()` 与 HAL portable-atomic | `Cargo.toml`（`riscv` features）| 本轮已修 |

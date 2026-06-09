@@ -1,6 +1,6 @@
 ---
 name: submodule-commit
-description: Commit + push changes that span ws63-rs git submodules in dependency order, then bump the parent repo's submodule pointers. Use when you've edited files inside one or more submodules (ws63-pac/hal/rt/examples/guide, ws63-rf-rs/ws63-RF, ws63-pac/ws63-svd) and need to land them correctly.
+description: Commit + push changes that span ws63-rs git submodules in dependency order, then bump the parent repo's submodule pointers. Use when you've edited files inside one or more submodules (ws63-pac/hal/rt/examples/guide, chips/ws63/rf/ws63-RF, ws63-pac/ws63-svd) and need to land them correctly.
 disable-model-invocation: true
 ---
 
@@ -14,11 +14,11 @@ the parent never points at an unpushed commit.
 | Submodule | Default branch | Notes |
 |-----------|----------------|-------|
 | ws63-pac | `main` | upstream of hal/rt; **nests ws63-svd** |
-| ws63-svd | `main` | source of the PAC — **nested submodule at `ws63-pac/ws63-svd`** |
+| ws63-svd | `main` | source of the PAC — **nested submodule at `crates/ws63-pac/ws63-svd`** |
 | hisi-riscv-rt | `master` | runtime |
 | hisi-riscv-hal | `master` | drivers; depends on pac |
 | ws63-examples | `master` | blinky |
-| ws63-RF | `main` | blobs — parent submodule at nested path `ws63-rf-rs/ws63-RF` |
+| ws63-RF | `main` | blobs — parent submodule at nested path `chips/ws63/rf/ws63-RF` |
 | ws63-guide | `main` | docs |
 
 Dependency order for committing: **svd → pac → rt → hal → examples/RF/guide → parent**.
@@ -28,7 +28,7 @@ Two paths are nested, which changes the pointer-bump chain:
   change: commit+push svd → in ws63-pac bump `ws63-svd` + commit+push pac → in
   the parent bump `ws63-pac`. (Two-level.)
 - **ws63-RF** is a parent submodule whose path lives inside the in-tree crate
-  `ws63-rf-rs` (`ws63-rf-rs/ws63-RF`). It bumps directly in the parent like any
+  `ws63-rf-rs` (`chips/ws63/rf/ws63-RF`). It bumps directly in the parent like any
   other submodule — no extra level.
 
 The in-tree `ws63-flashboot` and `ws63-rf-rs` are NOT submodules — they commit

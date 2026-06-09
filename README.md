@@ -20,12 +20,14 @@ in-tree and are not published.
 
 | Crate | Role | crates.io |
 |-------|------|-----------|
-| [`ws63-pac`](ws63-pac/) | `svd2rust`-generated peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
-| [`hisi-riscv-hal`](hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver) | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
-| [`hisi-riscv-rt`](hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
-| [`ws63-rf-rs`](ws63-rf-rs/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
-| [`ws63-flashboot`](ws63-flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
-| [`ws63-examples`](ws63-examples/) | Runnable examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
+| [`ws63-pac`](crates/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
+| [`bs2x-pac`](crates/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
+| [`hisi-riscv-hal`](crates/hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Multi-chip: `chip-ws63` (default) / `chip-bs21` | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
+| [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
+| [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
+| [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
+| [`ws63-examples`](examples/ws63/) | Runnable WS63 examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
+| [`bs21-examples`](examples/bs21/) | BS21 examples (blinky, uart_hello) — isolated workspace, builds for `-M bs21` | — |
 
 ## Repository layout
 
@@ -33,19 +35,29 @@ The repo uses git submodules extensively. Two are **nested under the crate that
 owns them**, so generation inputs / vendor blobs are not reached into laterally:
 
 ```
-ws63-rs/
-├── ws63-pac/            # submodule
-│   └── ws63-svd/        # submodule of ws63-pac — the svd2rust source (WS63.svd)
-├── hisi-riscv-hal/            # submodule
-├── hisi-riscv-rt/             # submodule
-├── ws63-rf-rs/          # in-tree crate
-│   └── ws63-RF/         # submodule — closed Wi-Fi/BLE blobs + porting contract
-├── ws63-flashboot/      # in-tree crate
-├── ws63-examples/       # submodule
-├── ws63-guide/          # submodule — user guide
-├── docs/                # architecture docs (Chinese) + review ledger
-├── CLAUDE.md            # build/architecture guide
-└── ROADMAP.md           # staged plan toward connectivity
+hisi-riscv-rs/
+├── crates/                    # core publishable library crates
+│   ├── ws63-pac/              # submodule
+│   │   └── ws63-svd/          # submodule of ws63-pac — svd2rust source (WS63.svd)
+│   ├── bs2x-pac/              # submodule
+│   │   └── bs2x-svd/          # submodule of bs2x-pac — svd2rust source (BS2X.svd)
+│   ├── hisi-riscv-hal/        # submodule (multi-chip: chip-ws63 / chip-bs21)
+│   └── hisi-riscv-rt/         # submodule
+├── examples/                  # application examples
+│   ├── ws63/                  # submodule (blinky, uart_hello, …)
+│   └── bs21/                  # in-tree, isolated workspace (BS21 blinky + uart_hello)
+├── chips/                     # chip-specific support
+│   ├── ws63/
+│   │   ├── guide/             # submodule — WS63 user guide
+│   │   ├── rf/                # in-tree crate (ws63-rf-rs)
+│   │   │   └── ws63-RF/       # submodule — closed Wi-Fi/BLE blobs + porting contract
+│   │   └── flashboot/         # in-tree crate (ws63-flashboot)
+│   └── bs2x/
+│       └── guide/             # submodule — BS21/BS2X user guide
+├── docs/                      # architecture docs (Chinese) + review ledger
+├── hil/                       # hardware-in-the-loop scripts
+├── CLAUDE.md                  # build/architecture guide
+└── ROADMAP.md                 # staged plan toward connectivity
 ```
 
 Always clone/update with recursion:
@@ -113,7 +125,7 @@ polyfill. Two opt-in features:
   [`embassy-executor`](https://docs.rs/embassy-executor) (platform-riscv32) runs
   `Timer::after` + multi-task scheduling + the async drivers above.
 
-Validated on ws63-qemu — see `ws63-examples/{async_delay, embassy_multitask, embassy_async_io}`.
+Validated on ws63-qemu — see `examples/ws63/{async_delay, embassy_multitask, embassy_async_io}`.
 
 ## Releasing
 
@@ -133,5 +145,5 @@ Release** — it does not publish the library crates.
 ## License
 
 MIT for the Rust code (see each crate's `Cargo.toml`). The closed-source vendor
-blobs under `ws63-rf-rs/ws63-RF` carry HiSilicon's own license and are **not**
+blobs under `chips/ws63/rf/ws63-RF` carry HiSilicon's own license and are **not**
 MIT — that delivery stays language-neutral and is only linked, never modified.

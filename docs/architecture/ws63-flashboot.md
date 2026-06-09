@@ -28,7 +28,7 @@
 `ws63-flashboot` **不在** 主依赖链（SVD → PAC → HAL → examples）上，是一条独立的二进制旁支：
 
 ```
-SVD → ws63-pac → hisi-riscv-hal → ws63-examples/*   （主链，hisi-riscv-rt 提供启动）
+SVD → ws63-pac → hisi-riscv-hal → examples/ws63/*   （主链，hisi-riscv-rt 提供启动）
 
 ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO，
                 不依赖 pac/hal/rt；被排除在默认构建之外）

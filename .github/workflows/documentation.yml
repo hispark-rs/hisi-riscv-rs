@@ -5,15 +5,15 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'hisi-riscv-hal/src/**'
-      - 'hisi-riscv-hal/Cargo.toml'
-      - 'ws63-pac/src/**'
+      - 'crates/hisi-riscv-hal/src/**'
+      - 'crates/hisi-riscv-hal/Cargo.toml'
+      - 'crates/ws63-pac/src/**'
       - 'docs/**'
   pull_request:
     branches: [main, master]
     paths:
-      - 'hisi-riscv-hal/src/**'
-      - 'ws63-pac/src/**'
+      - 'crates/hisi-riscv-hal/src/**'
+      - 'crates/ws63-pac/src/**'
       - 'docs/**'
 
 env:

@@ -1,24 +1,24 @@
 [submodule "ws63-guide"]
-	path = ws63-guide
+	path = chips/ws63/guide
 	url = https://github.com/sanchuanhehe/ws63-guide.git
 [submodule "hisi-riscv-hal"]
-	path = hisi-riscv-hal
+	path = crates/hisi-riscv-hal
 	url = https://github.com/sanchuanhehe/hisi-riscv-hal.git
 [submodule "ws63-pac"]
-	path = ws63-pac
+	path = crates/ws63-pac
 	url = https://github.com/sanchuanhehe/ws63-pac.git
 [submodule "ws63-RF"]
-	path = ws63-rf-rs/ws63-RF
+	path = chips/ws63/rf/ws63-RF
 	url = https://github.com/sanchuanhehe/ws63-RF.git
 [submodule "hisi-riscv-rt"]
-	path = hisi-riscv-rt
+	path = crates/hisi-riscv-rt
 	url = https://github.com/sanchuanhehe/hisi-riscv-rt.git
 [submodule "ws63-examples"]
-	path = ws63-examples
+	path = examples/ws63
 	url = https://github.com/sanchuanhehe/ws63-examples.git
 [submodule "bs2x-pac"]
-	path = bs2x-pac
+	path = crates/bs2x-pac
 	url = https://github.com/sanchuanhehe/bs2x-pac.git
 [submodule "bs2x-guide"]
-	path = bs2x-guide
+	path = chips/bs2x/guide
 	url = https://github.com/sanchuanhehe/bs2x-guide.git

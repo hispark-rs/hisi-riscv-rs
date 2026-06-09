@@ -11,7 +11,7 @@ hisi-riscv-hal 在阻塞驱动之上加了**一层中断 + waker 驱动的异步
 
 ## 三块地基
 
-### 1. `asynch::block_on` + `IrqSignal`(`hisi-riscv-hal/src/asynch.rs`)
+### 1. `asynch::block_on` + `IrqSignal`(`crates/hisi-riscv-hal/src/asynch.rs`)
 
 - **`block_on(fut)`**:极简单 future 执行器 —— poll,Pending 就 `wfi` 休眠,硬件中断唤醒后重 poll。无堆、无全局执行器。给"不上 embassy 也想 `.await`"的场景用。
 - **`IrqSignal`**:`const` 可构造的「ISR → future」桥。一个 `portable_atomic::AtomicBool`(fired 标志)+ 一个 `critical_section::Mutex` 停放的 `Waker`。驱动把它放进 `static`;ISR 调 `signal()`,future poll 时 `take_fired()`/`register(waker)`。
@@ -30,7 +30,7 @@ WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
 - **embassy-executor 在无 CAS 目标上也能跑**(thumbv6m / riscv32imc 同理):它内部按编译期 cfg 在 `core::sync::atomic` 与 `portable_atomic` 间切换,riscv 平台模块的 `SIGNAL_WORK` 只用 load/store(WS63 支持)。所以**无需改 embassy**。
 - 一个真实踩过的坑:`target/` 里**陈旧的 host proc-macro 工件**(syn/quote 来自旧 rustc)会让 embassy 宏构建莫名失败 → `cargo clean` 后全量通过。
 
-## embassy-time `Driver`(`hisi-riscv-hal/src/embassy.rs`)
+## embassy-time `Driver`(`crates/hisi-riscv-hal/src/embassy.rs`)
 
 让 WS63 成为 [embassy-time](https://docs.rs/embassy-time) 的**时间提供者**,于是 `Timer::after`/`Instant`/`Ticker` 在 embassy-executor 下可用:
 
@@ -45,19 +45,19 @@ WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
 
 | 文件 | 内容 |
 |------|------|
-| `hisi-riscv-hal/src/asynch.rs` | `block_on` + `IrqSignal`(地基)|
-| `hisi-riscv-hal/src/embassy.rs` | embassy-time `Driver`(now/alarm/queue)|
-| `hisi-riscv-hal/src/timer.rs` (末尾) | `AsyncDelay`(`DelayNs`)+ `on_interrupt` |
-| `hisi-riscv-hal/src/gpio.rs` (末尾) | `Wait`(GPIO 边沿/电平)+ `on_interrupt` |
-| `hisi-riscv-hal/src/uart.rs` (末尾) | `embedded_io_async::{Read,Write}` + `on_interrupt` |
-| `hisi-riscv-hal/src/spi.rs` (末尾) | `embedded_hal_async::spi::SpiBus`(包装阻塞)|
-| `hisi-riscv-hal/src/i2c.rs` (末尾) | `embedded_hal_async::i2c::I2c`(包装阻塞)|
-| `hisi-riscv-hal/src/lsadc.rs` (末尾) | `read_async`(自研;IRQ 72)|
-| `hisi-riscv-hal/src/dma.rs` (末尾) | `wait_transfer_done`(自研;IRQ 59)|
-| `hisi-riscv-hal/Cargo.toml` | `async` / `embassy` feature + 可选依赖 |
+| `crates/hisi-riscv-hal/src/asynch.rs` | `block_on` + `IrqSignal`(地基)|
+| `crates/hisi-riscv-hal/src/embassy.rs` | embassy-time `Driver`(now/alarm/queue)|
+| `crates/hisi-riscv-hal/src/timer.rs` (末尾) | `AsyncDelay`(`DelayNs`)+ `on_interrupt` |
+| `crates/hisi-riscv-hal/src/gpio.rs` (末尾) | `Wait`(GPIO 边沿/电平)+ `on_interrupt` |
+| `crates/hisi-riscv-hal/src/uart.rs` (末尾) | `embedded_io_async::{Read,Write}` + `on_interrupt` |
+| `crates/hisi-riscv-hal/src/spi.rs` (末尾) | `embedded_hal_async::spi::SpiBus`(包装阻塞)|
+| `crates/hisi-riscv-hal/src/i2c.rs` (末尾) | `embedded_hal_async::i2c::I2c`(包装阻塞)|
+| `crates/hisi-riscv-hal/src/lsadc.rs` (末尾) | `read_async`(自研;IRQ 72)|
+| `crates/hisi-riscv-hal/src/dma.rs` (末尾) | `wait_transfer_done`(自研;IRQ 59)|
+| `crates/hisi-riscv-hal/Cargo.toml` | `async` / `embassy` feature + 可选依赖 |
 
 **示例**(均在 ws63-qemu smoke-test 验证):
-`ws63-examples/async_delay`(block_on + `DelayNs`)、`async_bus`(SPI/I2C/LSADC)、
+`examples/ws63/async_delay`(block_on + `DelayNs`)、`async_bus`(SPI/I2C/LSADC)、
 `embassy_multitask`(embassy 多任务 + embassy-time)、`embassy_async_io`(capstone:embassy + GPIO `Wait` + async UART)。
 
 ## 覆盖范围

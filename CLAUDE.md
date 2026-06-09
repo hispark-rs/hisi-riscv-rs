@@ -4,7 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `ws63-pac`, `hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-examples` are each standalone repos linked as submodules. Two are **nested under the crate that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree `ws63-rf-rs` crate (`ws63-rf-rs/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/ws63-pac`, `crates/hisi-riscv-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules. Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+
+### Repository layout (grouped tree)
+
+```
+crates/      core publishable library crates
+  ws63-pac/      (submodule; nests ws63-svd)   bs2x-pac/  (submodule; nests bs2x-svd)
+  hisi-riscv-hal/ (submodule)                  hisi-riscv-rt/ (submodule)
+examples/    application examples
+  ws63/        (= ws63-examples submodule: blinky, uart_hello, …)
+  bs21/        (in-tree, isolated workspace: BS21 blinky + uart_hello)
+chips/       chip-specific support
+  ws63/        guide/ (submodule)  rf/ (in-tree, nests ws63-RF)  flashboot/ (in-tree)
+  bs2x/        guide/ (submodule)
+docs/        architecture docs (Chinese)        hil/  hardware-in-the-loop scripts
+```
+
+Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-riscv-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` is a separate isolated workspace (build with `--manifest-path examples/bs21/Cargo.toml`).
 
 **Architecture docs (Chinese):** see [`docs/`](docs/) — [`docs/architecture/overview.md`](docs/architecture/overview.md) for the whole picture, per-component docs under `docs/architecture/`, the full review ledger in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
 
@@ -32,8 +49,8 @@ cargo fmt --all -- --check
 
 # Submodule operations
 git submodule update --init --recursive
-git -C hisi-riscv-hal status              # Work inside submodule
-git -C hisi-riscv-hal add -A && git -C hisi-riscv-hal commit -m "..."
+git -C crates/hisi-riscv-hal status              # Work inside submodule
+git -C crates/hisi-riscv-hal add -A && git -C crates/hisi-riscv-hal commit -m "..."
 ```
 
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
@@ -45,7 +62,7 @@ git -C hisi-riscv-hal add -A && git -C hisi-riscv-hal commit -m "..."
 ```
 ws63-svd (XML) → ws63-pac (svd2rust generated, ~1.5MB lib.rs)
                 → hisi-riscv-hal (hand-written safe drivers)
-                → ws63-examples/* (applications)
+                → examples/ws63/* (applications)
 hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 ```
 
@@ -55,7 +72,7 @@ hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 
 ### Peripheral Singleton Pattern
 
-`hisi-riscv-hal/src/peripherals.rs` defines two macros:
+`crates/hisi-riscv-hal/src/peripherals.rs` defines two macros:
 - `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, `register_block()`.
 - `peripherals!(...)` — generates the `Peripherals` struct with `take()` (safe) and `steal()` (unsafe).
 

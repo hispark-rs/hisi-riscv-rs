@@ -25,7 +25,7 @@
 ws63-svd (XML)
    │ svd2rust 生成
    ▼
-ws63-pac ──► hisi-riscv-hal ──► ws63-examples/*
+ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
                 ▲
        hisi-riscv-rt（启动汇编 / 链接脚本 / 中断向量）并行提供运行期支撑
 ```

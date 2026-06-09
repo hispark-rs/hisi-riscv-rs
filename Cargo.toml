@@ -1,29 +1,29 @@
 [workspace]
 resolver = "3"
 members = [
-    "ws63-pac",
-    "bs2x-pac",
-    "hisi-riscv-hal",
-    "hisi-riscv-rt",
-    "ws63-examples/blinky",
-    "ws63-examples/uart_hello",
-    "ws63-examples/timer_irq",
-    "ws63-examples/gpio_irq",
-    "ws63-examples/reset_demo",
-    "ws63-examples/dma_loopback",
-    "ws63-examples/wifi_blob_link",
-    "ws63-examples/rf_port_demo",
-    "ws63-examples/semihost_selftest",
-    "ws63-examples/custom_memory",
-    "ws63-examples/async_delay",
-    "ws63-examples/embassy_multitask",
-    "ws63-examples/embassy_async_io",
-    "ws63-examples/async_bus",
-    "ws63-examples/spi_loopback",
-    "ws63-examples/i2c_scan",
-    "ws63-examples/net_ping",
-    "ws63-rf-rs",
-    "ws63-flashboot",
+    "crates/ws63-pac",
+    "crates/bs2x-pac",
+    "crates/hisi-riscv-hal",
+    "crates/hisi-riscv-rt",
+    "examples/ws63/blinky",
+    "examples/ws63/uart_hello",
+    "examples/ws63/timer_irq",
+    "examples/ws63/gpio_irq",
+    "examples/ws63/reset_demo",
+    "examples/ws63/dma_loopback",
+    "examples/ws63/wifi_blob_link",
+    "examples/ws63/rf_port_demo",
+    "examples/ws63/semihost_selftest",
+    "examples/ws63/custom_memory",
+    "examples/ws63/async_delay",
+    "examples/ws63/embassy_multitask",
+    "examples/ws63/embassy_async_io",
+    "examples/ws63/async_bus",
+    "examples/ws63/spi_loopback",
+    "examples/ws63/i2c_scan",
+    "examples/ws63/net_ping",
+    "chips/ws63/rf",
+    "chips/ws63/flashboot",
 ]
 # default-members = the libraries + the blinky example (which links via hisi-riscv-rt's
 # exported linker scripts; see hisi-riscv-rt/build.rs + ws63-examples/blinky/build.rs).
@@ -32,26 +32,26 @@ members = [
 # `cargo check --workspace` covers it; build it explicitly with
 # `cargo build -p ws63-flashboot`.
 default-members = [
-    "ws63-pac",
-    "hisi-riscv-hal",
-    "hisi-riscv-rt",
-    "ws63-examples/blinky",
-    "ws63-examples/uart_hello",
-    "ws63-examples/timer_irq",
-    "ws63-examples/gpio_irq",
-    "ws63-examples/reset_demo",
-    "ws63-examples/dma_loopback",
-    "ws63-examples/wifi_blob_link",
-    "ws63-examples/rf_port_demo",
-    "ws63-examples/semihost_selftest",
-    "ws63-examples/custom_memory",
-    "ws63-examples/async_delay",
-    "ws63-examples/embassy_multitask",
-    "ws63-examples/embassy_async_io",
-    "ws63-examples/async_bus",
-    "ws63-examples/spi_loopback",
-    "ws63-examples/i2c_scan",
-    "ws63-examples/net_ping",
+    "crates/ws63-pac",
+    "crates/hisi-riscv-hal",
+    "crates/hisi-riscv-rt",
+    "examples/ws63/blinky",
+    "examples/ws63/uart_hello",
+    "examples/ws63/timer_irq",
+    "examples/ws63/gpio_irq",
+    "examples/ws63/reset_demo",
+    "examples/ws63/dma_loopback",
+    "examples/ws63/wifi_blob_link",
+    "examples/ws63/rf_port_demo",
+    "examples/ws63/semihost_selftest",
+    "examples/ws63/custom_memory",
+    "examples/ws63/async_delay",
+    "examples/ws63/embassy_multitask",
+    "examples/ws63/embassy_async_io",
+    "examples/ws63/async_bus",
+    "examples/ws63/spi_loopback",
+    "examples/ws63/i2c_scan",
+    "examples/ws63/net_ping",
 ]
 
 [workspace.package]
@@ -62,9 +62,9 @@ license = "MIT"
 repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
 
 [workspace.dependencies]
-ws63-pac = { path = "ws63-pac" }
-hisi-riscv-hal = { path = "hisi-riscv-hal" }
-hisi-riscv-rt  = { path = "hisi-riscv-rt" }
+ws63-pac = { path = "crates/ws63-pac" }
+hisi-riscv-hal = { path = "crates/hisi-riscv-hal" }
+hisi-riscv-rt  = { path = "crates/hisi-riscv-rt" }
 
 # External dependencies
 riscv = "0.13"
@@ -80,8 +80,8 @@ critical-section = "1"
 # PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and
 # the singleton-safety invariant is split across two copies).
 [patch.crates-io]
-ws63-pac = { path = "ws63-pac" }
-bs2x-pac = { path = "bs2x-pac" }
+ws63-pac = { path = "crates/ws63-pac" }
+bs2x-pac = { path = "crates/bs2x-pac" }
 
 [profile.release]
 opt-level = "s"

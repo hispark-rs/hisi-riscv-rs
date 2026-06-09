@@ -10,7 +10,7 @@
 #
 # `riscv32imfc` here has hardware float and uses forced-atomics + no-CAS, so atomic
 # load/store lower to plain ld/st (single hart) and RMW goes through portable-atomic's
-# critical-section polyfill (hisi-riscv-hal/Cargo.toml). No lr.w/sc.w/amo* are emitted.
+# critical-section polyfill (crates/hisi-riscv-hal/Cargo.toml). No lr.w/sc.w/amo* are emitted.
 [build]
 target = "riscv32imfc-unknown-none-elf"
 
