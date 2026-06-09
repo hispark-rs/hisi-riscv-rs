@@ -32,5 +32,5 @@
 cargo build -p ws63-flashboot --release
 ```
 
-后续若决定继续维护本 crate，整改项见仓库根 [`ROADMAP.md`](../ROADMAP.md) 阶段 2，
-架构与评审见 [`docs/architecture/ws63-flashboot.md`](../docs/architecture/ws63-flashboot.md)。
+后续若决定继续维护本 crate，整改项见仓库根 [`ROADMAP.md`](../../../ROADMAP.md) 阶段 2，
+架构与评审见 [`docs/architecture/ws63-flashboot.md`](../../../docs/architecture/ws63-flashboot.md)。

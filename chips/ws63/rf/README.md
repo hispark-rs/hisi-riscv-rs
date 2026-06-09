@@ -74,7 +74,7 @@ scheduler + FRW worker thread are now **implemented**, see the status table):
   smoltcp TX sink to the blob's transmit symbol (on hardware).
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
-See the workspace [`ROADMAP.md`](../ROADMAP.md) phase 4 for the staged plan.
+See the workspace [`ROADMAP.md`](../../../ROADMAP.md) phase 4 for the staged plan.
 
 ## Validate
 

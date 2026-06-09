@@ -72,6 +72,11 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
+        with:
+          # Auto-enable Pages on first run (the repo was renamed to hisi-riscv-rs;
+          # Pages must be sourced from GitHub Actions). If this still 404s, enable
+          # it once in Settings -> Pages -> Source: GitHub Actions.
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

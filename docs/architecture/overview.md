@@ -1,6 +1,6 @@
 # ws63-rs 总体架构
 
-> 这是 ws63-rs 的 **Rust 代码架构**文档（与硬件手册 [`ws63-guide`](../../ws63-guide/) 互补：手册讲芯片，本文讲代码）。
+> 这是 ws63-rs 的 **Rust 代码架构**文档（与硬件手册 [`ws63-guide`](../../chips/ws63/guide/) 互补：手册讲芯片，本文讲代码）。
 > 完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
 
 ## 这是什么
