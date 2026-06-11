@@ -25,34 +25,39 @@ jobs:
             // so every issue collected nearly every component label. Titles in this
             // repo name their component(s) explicitly, so title-only is enough.
             const title = issue.title;
-            const has = (re) => re.test(title);
+            // A token must be delimited by start/end or a NON-alphanumeric char.
+            // Unlike \b, this treats '_' as a delimiter, so code identifiers like
+            // "uart_echo" / "i2c_scan" / "spi_loopback" match, while substrings
+            // inside words ("ble" in "problem"/"enable", "pac" in "space") do not.
+            const tok = (alt) =>
+              new RegExp('(^|[^a-z0-9])(' + alt + ')([^a-z0-9]|$)', 'i').test(title);
 
             const labels = new Set();
 
             // Category (first match wins)
-            if (has(/\b(bug|fails?|failing|failure|error|broken|regression|crash|panic)\b/i)) {
+            if (tok('bugs?|fails?|failing|failure|errors?|broken|regression|crash|panic')) {
               labels.add('bug');
-            } else if (has(/\b(feature|enhance(ment)?|implement|support|add)\b/i)) {
+            } else if (tok('feature|enhance(?:ment)?|implement|support|add')) {
               labels.add('enhancement');
-            } else if (has(/\b(docs?|documentation|readme|typo)\b/i)) {
+            } else if (tok('docs?|documentation|readme|typo')) {
               labels.add('documentation');
-            } else if (has(/\b(question|how-to|howto)\b/i)) {
+            } else if (tok('question|how-?to')) {
               labels.add('question');
             }
 
-            // Component (whole-word, title only)
+            // Component (title only)
             const components = [
-              [/\bgpio\b/i, 'component:gpio'],
-              [/\buart\b/i, 'component:uart'],
-              [/\bi2c\b/i, 'component:i2c'],
-              [/\bspi\b/i, 'component:spi'],
-              [/\bdma\b/i, 'component:dma'],
-              [/\bwi-?fi\b/i, 'component:wifi'],
-              [/\b(ble|sle|bt)\b/i, 'component:ble'],
-              [/\bhal\b/i, 'component:hal'],
-              [/\bpac\b/i, 'component:pac'],
+              ['gpio', 'component:gpio'],
+              ['uart', 'component:uart'],
+              ['i2c', 'component:i2c'],
+              ['spi', 'component:spi'],
+              ['dma', 'component:dma'],
+              ['wi-?fi', 'component:wifi'],
+              ['ble|sle|bt', 'component:ble'],
+              ['hal', 'component:hal'],
+              ['pac', 'component:pac'],
             ];
-            for (const [re, label] of components) if (has(re)) labels.add(label);
+            for (const [alt, label] of components) if (tok(alt)) labels.add(label);
 
             if (labels.size > 0) {
               await github.rest.issues.addLabels({
