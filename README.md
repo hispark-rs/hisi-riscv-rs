@@ -97,6 +97,21 @@ cargo clippy --workspace
 cargo fmt --all -- --check
 ```
 
+### 3. Start your own project
+
+Scaffold a fresh app outside this repo with
+[`cargo generate`](https://cargo-generate.github.io/cargo-generate/) from the
+[`hisi-rs-template`](https://github.com/hispark-rs/hisi-rs-template) starter — it
+wires up the toolchain, target, linker scripts, a QEMU `cargo run` runner, and the
+right [crates.io](https://crates.io) deps for the chip you pick:
+
+```bash
+cargo install cargo-generate
+cargo generate --git https://github.com/hispark-rs/hisi-rs-template
+#   chip    = ws63 | bs21 | bs20
+#   starter = blinky | uart_hello | async (embassy; WS63-only)
+```
+
 ## Run without hardware (software-in-the-loop)
 
 [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) is a QEMU fork with an
