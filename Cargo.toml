@@ -59,7 +59,7 @@ version = "0.1.0"
 edition = "2024"
 authors = ["sanchuanhehe"]
 license = "MIT"
-repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
+repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 
 [workspace.dependencies]
 ws63-pac = { path = "crates/pac/ws63-pac" }

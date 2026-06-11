@@ -3,7 +3,7 @@
 ws63-qemu 已把固件「跑得足够真」做软件在环验证；这一层是它的**真机对应**——板子到位后用它把 ROADMAP
 阶段 1（HIL bring-up）跑通，验证 QEMU 证明不了的部分（**真实时钟/时序、真实外设**）。
 
-烧录工具用 [`hisiflash`](https://github.com/sanchuanhehe)（本机在 `/root/hisiflash`）；QEMU 端调试见
+烧录工具用 [`hisiflash`](https://github.com/hispark-rs/hisiflash)（本机在 `/root/hisiflash`）；QEMU 端调试见
 `ws63-qemu/scripts/debug.sh`。
 
 ## 准备（板子相关，首板时确认）

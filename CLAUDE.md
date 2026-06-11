@@ -32,8 +32,8 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # Builds with the custom `ws63` toolchain (rust-toolchain.toml): stable rustc with the
 # WS63 target riscv32imfc-unknown-none-elf (hardware single-float ilp32f, no atomics)
 # baked in as a builtin — default target set in .cargo/config.toml, no -Z build-std.
-# Install it first (see rust-toolchain.toml / https://github.com/sanchuanhehe/ws63-rust-toolchain):
-#   curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+# Install it first (see rust-toolchain.toml / https://github.com/hispark-rs/ws63-rust-toolchain):
+#   curl -fLO https://github.com/hispark-rs/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   tar xzf ws63-rust-1.96.0-*.tar.gz && rustup toolchain link ws63 "$PWD/stage2"
 cargo build                         # Build libraries + blinky (default-members)
 cargo check --workspace             # Full workspace check (incl. flashboot)

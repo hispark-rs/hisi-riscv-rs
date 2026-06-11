@@ -23,7 +23,7 @@ Top MCP Servers:
 ## Your Setup Checklist
 
 ### Codebases
-- [ ] ws63-rs — https://github.com/sanchuanhehe/hisi-riscv-rs (main monorepo; clone with `git submodule update --init --recursive` — ws63-pac, hisi-riscv-hal, hisi-riscv-rt, ws63-examples are submodules, and ws63-svd / ws63-RF are nested submodules)
+- [ ] ws63-rs — https://github.com/hispark-rs/hisi-riscv-rs (main monorepo; clone with `git submodule update --init --recursive` — ws63-pac, hisi-riscv-hal, hisi-riscv-rt, ws63-examples are submodules, and ws63-svd / ws63-RF are nested submodules)
 - [ ] ws63-qemu — sister QEMU fork for software-in-the-loop validation (no silicon needed)
 - [ ] ws63-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
 - [ ] esp-hal — reference HAL the WS63 driver patterns are modeled on (read-only reference)
@@ -55,7 +55,7 @@ Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 
 First task for a new teammate — get a clean build going end to end:
 
-1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/sanchuanhehe/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
+1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
 2. Install the custom `ws63` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link ws63 "$PWD/stage2"`.
 3. Build the libraries + blinky: `cargo build`, then sanity-check the whole tree: `cargo check --workspace`.
 4. Read `docs/architecture/overview.md` and `ROADMAP.md` to see where the project is headed before picking up real work.

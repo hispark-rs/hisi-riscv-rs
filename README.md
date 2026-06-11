@@ -6,7 +6,7 @@ A Rust embedded ecosystem for the **HiSilicon WS63** — a single-core RISC-V
 This monorepo bundles a `svd2rust` peripheral-access crate, a hand-written safe
 HAL, a runtime, a porting layer for the closed-source Wi-Fi/BLE blobs, and
 runnable examples — buildable today with a custom Rust toolchain, and runnable
-**without hardware** on the sister project [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu).
+**without hardware** on the sister project [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
 > up Wi-Fi/BLE on the WS63 in Rust. See [`ROADMAP.md`](ROADMAP.md) for the staged
@@ -74,10 +74,10 @@ The default target `riscv32imfc-unknown-none-elf` (hardware single-float
 `ilp32f`, no atomics) is **baked into a custom rustc** as a builtin, so no
 `-Z build-std` is needed. It is not a distributable rustup channel — install +
 link it first (see [`rust-toolchain.toml`](rust-toolchain.toml) and the
-[ws63-rust-toolchain](https://github.com/sanchuanhehe/ws63-rust-toolchain) repo):
+[ws63-rust-toolchain](https://github.com/hispark-rs/ws63-rust-toolchain) repo):
 
 ```bash
-curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+curl -fLO https://github.com/hispark-rs/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 tar xzf ws63-rust-1.96.0-*.tar.gz && rustup toolchain link ws63 "$PWD/stage2"
 ```
 
@@ -98,7 +98,7 @@ cargo fmt --all -- --check
 
 ## Run without hardware (software-in-the-loop)
 
-[`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) is a QEMU fork with an
+[`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) is a QEMU fork with an
 in-tree WS63 machine (`-M ws63`) that models the CPU + xlinx custom ISA, memory
 map, interrupt controller, and all 35 SVD peripherals. It runs ws63-rs firmware
 (and real vendor C-SDK firmware) and is the software-in-the-loop stand-in for

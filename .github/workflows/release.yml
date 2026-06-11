@@ -71,7 +71,7 @@ jobs:
   # that repo's CRATES_IO_TOKEN secret). The parent must not reach in and publish
   # the submodules' crates — that couples independent releases and inverts
   # ownership. To release a crate, bump + tag it in its own repo:
-  #   ws63-pac  -> github.com/sanchuanhehe/ws63-pac   (release.yml)
-  #   hisi-riscv-rt   -> github.com/sanchuanhehe/hisi-riscv-rt    (release.yml)
-  #   hisi-riscv-hal  -> github.com/sanchuanhehe/hisi-riscv-hal   (release.yml)
+  #   ws63-pac  -> github.com/hispark-rs/ws63-pac   (release.yml)
+  #   hisi-riscv-rt   -> github.com/hispark-rs/hisi-riscv-rt    (release.yml)
+  #   hisi-riscv-hal  -> github.com/hispark-rs/hisi-riscv-hal   (release.yml)
   # ws63-flashboot / ws63-rf-rs are publish=false (not published).

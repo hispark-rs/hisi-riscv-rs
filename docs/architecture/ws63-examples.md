@@ -28,7 +28,7 @@
 | `wifi_blob_link` | 把 vendor RF blob 链入镜像（符号闭合冒烟） |
 | `rf_port_demo` | 经 `ws63-rf-rs` 调用 porting 层 + FRW/HCC 数据通路 |
 
-另有 2 个 crate 内自测示例（在 `chips/ws63/rf/examples/`）：`sched_selftest`（协作调度器自测）、`net_selftest`（netif→smoltcp 自测）。上述示例全部在姊妹仓 [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) 经 `scripts/smoke-test.sh` 端到端验证。仍缺真实**连接性**（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。
+另有 2 个 crate 内自测示例（在 `chips/ws63/rf/examples/`）：`sched_selftest`（协作调度器自测）、`net_selftest`（netif→smoltcp 自测）。上述示例全部在姊妹仓 [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 经 `scripts/smoke-test.sh` 端到端验证。仍缺真实**连接性**（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。
 
 ## 在依赖链中的位置
 

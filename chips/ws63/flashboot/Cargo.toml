@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "EXPERIMENTAL Rust second-stage bootloader for HiSilicon WS63 — NOT secure boot, not for production (see README)"
 license = "MIT"
-repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
+repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 keywords = ["ws63", "hisilicon", "riscv", "bootloader", "flashboot"]
 categories = ["embedded", "no-std", "hardware-support"]
 # Experimental crate: never published to crates.io.

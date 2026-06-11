@@ -69,7 +69,7 @@
 //! layout to the blob's `lwipopts.h`, point the TX sink at the blob's transmit,
 //! and run on silicon. See `README.md` and `ROADMAP.md`.
 //!
-//! [`ws63-RF`]: https://github.com/sanchuanhehe/ws63-RF
+//! [`ws63-RF`]: https://github.com/hispark-rs/ws63-RF
 
 #![no_std]
 #![allow(non_upper_case_globals)] // contract symbols must match the C names exactly

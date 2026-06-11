@@ -45,7 +45,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   把硬浮点 `riscv32imfc-unknown-none-elf`（`ilp32f`，无原子）烤进 stable rustc 作 builtin，仓库默认即用之、
   **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`hisi-riscv-rt` 的 `riscv` 开
   `critical-section-single-hart`。**实测产物零原子指令（lr/sc/amo）、single-float ABI**，不再会在无 A 核上触发陷阱。
-  - 工具链仓库：<https://github.com/sanchuanhehe/ws63-rust-toolchain>（预编译 sysroot tarball + 已硬化的 release CICD）。
+  - 工具链仓库：<https://github.com/hispark-rs/ws63-rust-toolchain>（预编译 sysroot tarball + 已硬化的 release CICD）。
     硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。
   - **工具链补全（2026-06）**：sysroot 此前缺件，现已齐——`rust-analyzer-proc-macro-srv`（修复 LSP「cannot find
     proc-macro server」、可展开 `#[entry]` 等过程宏）、`cargo`（增量构建曾漏装进 bin）、`rust-gdb`/`rust-lldb` +
@@ -75,7 +75,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
 2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 hisi-riscv-rt 评审。
 3. ✅ **软件在环（QEMU）bring-up（已完成 2026-05-31）**：硬件不便时的替代验证信号——
-   [`ws63-qemu`](https://github.com/sanchuanhehe/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
+   [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
    in-tree `hw/riscv/ws63.c`（rv32imfc hart、按 `memory.x` 的内存映射、自定义 HiSilicon UART、
    自定义 CSR RAZ/WI、其余外设 MMIO 吸收）。**已实测**：`blinky` 启动并跑到 GPIO 翻转循环（0 非法指令陷阱）、
    新增的 `uart_hello` 在 QEMU 串口打印。这验证了内存布局 / startup（PMP/FPU/cache/数据重定位/栈）/ 链接脚本

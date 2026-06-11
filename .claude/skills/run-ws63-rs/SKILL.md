@@ -16,7 +16,7 @@ target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "ws
 Install + link it first (it is not a distributable rustup channel):
 
 ```bash
-curl -fLO https://github.com/sanchuanhehe/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+curl -fLO https://github.com/hispark-rs/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 rustup toolchain link ws63 "$PWD/stage2"
 ```
