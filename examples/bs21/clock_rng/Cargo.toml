@@ -1,0 +1,25 @@
+[package]
+name = "bs21_clock_rng"
+version = "0.1.0"
+edition = "2024"
+description = "HiSilicon BS21 RTC + TRNG example (chip-bs21 HAL + BS21 memory.x)"
+license = "MIT"
+
+[[bin]]
+name = "bs21_clock_rng"
+path = "src/main.rs"
+
+[dependencies]
+# Select the BS21 chip across the stack. `default-features = false` drops the
+# WS63 defaults; `chip-bs21` pulls bs2x-pac, and `rt` turns on bs2x-pac's rt
+# feature (its device.x interrupt vectors). hisi-riscv-rt with `chip-bs21` (and its
+# bundled-memory-x off) supplies layout.ld / riscv-rt-symbols.x / startup /
+# ws63-link.x while THIS crate supplies the BS21 memory.x (see build.rs).
+bs2x-pac = { path = "../../../crates/bs2x-pac" }
+hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt"] }
+hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
+riscv = "0.13"
+
+[profile.release]
+opt-level = "s"
+lto = true
