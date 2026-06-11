@@ -2,6 +2,8 @@
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
 
+> **2026-06 更新**：PAC crate 现归并在 `crates/pac/ws63-pac`（内嵌生成源 `ws63-svd`）。其 BS2X 同胞 `crates/pac/bs2x-pac`（由 `bs2x-svd` 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。
+
 ## 职责与边界
 
 `ws63-pac` 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 `svd2rust` 从 SVD 描述生成。它的职责非常聚焦：

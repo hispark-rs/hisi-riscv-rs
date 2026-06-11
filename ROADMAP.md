@@ -6,7 +6,7 @@
 
 ## 北极星
 
-**在真实 EVB 上"连上 AP 并 ping 通"。** WS63 的全部价值是连接性（Wi-Fi 6 / BLE / SLE/星闪）；
+**在真实 EVB 上"连上 AP 并 ping 通"。** WS63/BS2X 的全部价值是连接性（Wi-Fi 6 / BLE / SLE/星闪）；
 HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 评审揭示的三类核心问题：
@@ -22,17 +22,19 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 阶段 | 主题 | 状态 |
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 已完成（2026-05） |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本 ✅；QEMU 软件在环 ✅；**HIL 脚手架已就位**（`hil/flash.sh`+`hil/hil-smoke.sh`+bring-up 清单；`ws63-qemu/scripts/debug.sh` gdb 调试）——板子到位即可烧录冒烟（见「阶段 1 准备」）|
-| 2 | 死代码清理 + 正确性修复 | ✅ 已完成（中断 LOCI* / SPI / I2C/SPI 超时 / 复位 / GPIO pull / eFuse / LSADC / 死代码 / host 单测 / DMA + **本会话：timer/WDT/UART/SPI/I2C 时钟真实化、cken 位逐一对照 SDK 审计**）|
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | 🟡 链接脚本 ✅；QEMU 软件在环 ✅；**HIL 脚手架已就位**（`hil/flash.sh`+`hil/hil-smoke.sh`+bring-up 清单；`ws63-qemu/scripts/debug.sh` gdb 调试；**probe-rs debug 分支已就绪**见下）——板子到位即可烧录冒烟（见「阶段 1 准备」）|
+| 2 | 死代码清理 + 正确性修复 | ✅ 已完成（中断 LOCI* / SPI / I2C/SPI 超时 / 复位 / GPIO pull / eFuse / LSADC / 死代码 / host 单测 / DMA + **本会话：timer/WDT/UART/SPI/I2C 时钟真实化、cken 位逐一对照 SDK 审计**；BS2X（BS21/BS20）全外设 QEMU 验证已完成）|
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（依赖阶段 1）|
 | 5 | 连接性示例（scan → connect → ping） | 🔴 待真机（HIL，阶段 1/4 之后）|
-| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/architecture/async-embassy.md](docs/architecture/async-embassy.md)）|
+| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/architecture/async-embassy.md](docs/architecture/async-embassy.md)；支持 chip-ws63/chip-bs21 特性）|
 | **7** | **HAL 收尾 + 发布（← 当前焦点）** | 🟢 进行中（见下「阶段 7」）|
+| 探针 | debug 支持（RISC-V-DM / probe-rs） | 🟡 已就绪（fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`——CoreSight mem-AP DTM、vendor DebugSequence、flash-algorithm crate；软件完成，待硅上验证）|
 
-> **当前焦点（2026-06）**：阶段 0/2/3/6 已收口、QEMU 软件在环成熟、文档已是「官方重建 + ch8 实证补充」双层。
+> **当前焦点（2026-06-11）**：阶段 0/2/3/6 已收口、WS63 + BS2X（BS21/BS20）QEMU 软件在环成熟、文档已是「官方重建 + ch8 实证补充」双层。
 > 主攻 **阶段 7（HAL 收尾 + 发布）**，同时因**真机短期到位**而并行**阶段 1 准备**（烧录脚本 + HIL 框架），
 > 让板子一到位即可 blinky→uart→连接性 bring-up。阶段 4/5（连接性上板）随之解锁。
+> 注：许多组件文档（如 overview.md）仍聚焦 WS63；BS2X 多芯片文档覆盖见 bs2x-guide + examples/bs21/examples/bs20。
 
 ---
 
@@ -46,7 +48,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   **无需 `-Z build-std`**。`portable-atomic` 用 `critical-section` polyfill，`hisi-riscv-rt` 的 `riscv` 开
   `critical-section-single-hart`。**实测产物零原子指令（lr/sc/amo）、single-float ABI**，不再会在无 A 核上触发陷阱。
   - 工具链仓库：<https://github.com/hispark-rs/ws63-rust-toolchain>（预编译 sysroot tarball + 已硬化的 release CICD）。
-    硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。
+    硬浮点提前到位，为阶段 3 链接 ilp32f vendor blob 的 ABI 一致性做好准备。WS63/BS2X 共享同一 target。
   - **工具链补全（2026-06）**：sysroot 此前缺件，现已齐——`rust-analyzer-proc-macro-srv`（修复 LSP「cannot find
     proc-macro server」、可展开 `#[entry]` 等过程宏）、`cargo`（增量构建曾漏装进 bin）、`rust-gdb`/`rust-lldb` +
     美化打印器（配 `gdb-multiarch` 调 QEMU gdbstub）、rust-src、llvm-tools。`build.sh`/`config.toml` 持久化，
@@ -242,6 +244,8 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   `TxToken` 走 TX sink。`netif_smoltcp_selftest`：ARP 请求经 驱动→smoltcp→驱动 往返、回 ARP reply。
 
 承接阶段 3/4，**仍需**完成：
+**BS2X 连接性边界**（已确认死胡同，2026-06）：BS2X（BS21）BLE/SLE 无线电的 PHY 寄存器空间（B_CTL @ 0x59000000）为 56 个只写位段 + IRQ-26 纯 PHY 事件墙。无法通过硬件建模逆向 blob 的 PHY 命令/响应协议；无线电与主机间的 HCI 边界亦为 blob-on-blob（固件 ROM 驱动 + MAC blob 联调）。完整分析见 `chips/ws63/guide/docs/bs21-connectivity-feasibility.md`。**实用结论**：BS2X Wi-Fi 可用 WS63 porting 层（FRW/HCC/netif），BLE/SLE 需要原厂支持或完整 blob 反汇编（超出 MVP 范围）。
+
 - ✅ ~~补齐漏抽的 wifi `.a` 库~~（hmac/tcm/alg/bg_common 已纳入 `chips/ws63/rf/ws63-RF/lib`；wpa 按 MVP 决策剔除；ROM 表已补）。
 - ✅ ~~任务调度器~~（`crate::sched` cooperative 调度器已实现并在 ws63-qemu 验证）。
 - ✅ ~~数据通路运行时半边~~（FRW worker + HCC 传输 + 软件定时器 + netif→smoltcp 桥，均已实现 + QEMU 自验）。

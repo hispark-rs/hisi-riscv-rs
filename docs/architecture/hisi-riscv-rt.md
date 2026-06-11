@@ -2,6 +2,8 @@
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
 
+> **2026-06 更新**：同一 runtime 服务 WS63 与 BS2X（BS21/BS20）。BS2X 示例自带按芯片的 `memory.x`（BS21E/BS22 160K、BS20 128K L2RAM），见 `examples/bs21` / `examples/bs20`。
+
 ## 职责与边界
 
 `hisi-riscv-rt` 是 WS63（RISC-V RV32IMFC_Zicsr）的最小运行时（runtime），负责把芯片从复位状态带到可执行 Rust `main()` 的环境。

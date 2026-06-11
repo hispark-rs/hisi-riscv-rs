@@ -14,6 +14,8 @@ implementations.
 
 ## ⚠️ Status: symbol closure for Wi-Fi init ACHIEVED; runtime + data path implemented; runnable image is HIL
 
+**Project context:** ws63-rs is in **phase 7 (HAL polishing & release)** with **phase 1 preparation** (real board bring-up framework) underway (see [ROADMAP.md](../../../ROADMAP.md) §Current focus). This crate is **phase 4** (porting layer + HCC IPC); phases 4–5 (real Wi-Fi link) await hardware-in-the-loop validation.
+
 This crate makes the porting contract **compile, link, and actually run** — the
 runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
 timers, netif→smoltcp) are implemented and self-tested standalone on `ws63-qemu`

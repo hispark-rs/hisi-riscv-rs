@@ -9,8 +9,7 @@ runnable examples — buildable today with a custom Rust toolchain, and runnable
 **without hardware** on the sister project [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
-> up Wi-Fi/BLE on the WS63 in Rust. See [`ROADMAP.md`](ROADMAP.md) for the staged
-> plan and [`docs/`](docs/) for the architecture (Chinese).
+> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-06):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and on-silicon validation (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in `docs/bs21-connectivity-feasibility.md`. Full QEMU bring-up done for both chips; HIL scaffolding ready. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
 
 ## Crates
 
@@ -27,7 +26,8 @@ in-tree and are not published.
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
 | [`ws63-examples`](examples/ws63/) | Runnable WS63 examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
-| [`bs21-examples`](examples/bs21/) | BS21 examples (blinky, uart_hello) — isolated workspace, builds for `-M bs21` | — |
+| [`bs21-examples`](examples/bs21/) | BS21 examples (blinky, uart_hello, spi_loopback, gadc_read, i2c_scan, hid_demo, clock_rng, pwm_wdt, dma_mem) — isolated workspace, builds for `-M bs21` | — |
+| [`bs20-examples`](examples/bs20/) | BS20 examples (same as BS21; isolated workspace, 128K RAM variant) — builds for `-M bs20` | — |
 
 ## Repository layout
 
@@ -45,7 +45,8 @@ hisi-riscv-rs/
 │   └── hisi-riscv-rt/         # submodule
 ├── examples/                  # application examples
 │   ├── ws63/                  # submodule (blinky, uart_hello, …)
-│   └── bs21/                  # in-tree, isolated workspace (BS21 blinky + uart_hello)
+│   ├── bs21/                  # in-tree, isolated workspace (10+ examples: SPI, GADC, I2C, KEYSCAN, QDEC, RTC, WDT, DMA, USB, PDM)
+│   └── bs20/                  # in-tree, isolated workspace (BS20 variant: same examples, 128K RAM)
 ├── chips/                     # chip-specific support
 │   ├── ws63/
 │   │   ├── guide/             # submodule — WS63 user guide
@@ -141,6 +142,8 @@ Release** — it does not publish the library crates.
 - [`docs/architecture/overview.md`](docs/architecture/overview.md) — the whole picture (Chinese), with per-component docs alongside.
 - [`docs/review/`](docs/review/) — the architecture review ledger.
 - [`ROADMAP.md`](ROADMAP.md) — remediation plan and the path to connectivity.
+- [`docs/bs21-connectivity-feasibility.md`](docs/bs21-connectivity-feasibility.md) — analysis of BS2X BLE radio interface constraints.
+- **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21`) is software-complete, pending on-silicon validation.
 
 ## License
 

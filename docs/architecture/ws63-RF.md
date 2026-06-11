@@ -105,3 +105,13 @@ porting 层的语义对标 vendor SDK `fbb_ws63/src/drivers/chips/ws63/porting/`
 - **阶段 6（async）** ✅ 通用异步已就绪：hisi-riscv-hal 的 `async`/`embassy`（见 [async-embassy.md](async-embassy.md)）已实现并验证；连接性专属的异步包装待 blob 上板后再做。
 
 详见 [ROADMAP](../../ROADMAP.md)。
+
+## 注记：BS2X 多芯片支持（BS21/BS22/BS20）
+
+WS63-RF 中的 blob + porting 层当前**专为 WS63 设计**（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有**独立的 blob** (`bs2x-pac` + `chips/bs2x/` 目录结构)。
+
+- **WS63 blob**：`chips/ws63/rf/ws63-RF/lib/libwifi_driver_dmac.a` 等 7 个库，Wi-Fi MAC/RF/BLE/SLE 完整堆栈。
+- **BS2X blob**：QEMU `-M bs21/bs22/bs20` 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。
+- **hisi-riscv-hal 多芯片**：`Cargo.toml` 有 `chip-ws63`（default）与 `chip-bs21` feature，运行时可选；porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。
+
+详见 [ROADMAP 阶段 3-5](../../ROADMAP.md)（WS63 北极星）与 [overview.md](overview.md)。

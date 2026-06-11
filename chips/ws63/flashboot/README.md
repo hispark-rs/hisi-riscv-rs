@@ -6,6 +6,8 @@
 引导流程（SFC 初始化、时钟切换、镜像头解析、跳转 app）。它**有意被排除在默认构建之外**
 （见根 `Cargo.toml` 的 `default-members`），且 `publish = false`。
 
+此状态已在 [ROADMAP.md](../../../ROADMAP.md) 阶段 0 确定（2026-05），并决定降优先级（见「冻结 / 降优先级」）：生产启动应复用原厂 flashboot，本 crate 仅作学习用途。
+
 ## 为什么不要用于生产
 
 | 能力 | 原厂 flashboot（fbb_ws63） | 本 crate |

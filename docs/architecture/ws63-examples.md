@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-`ws63-examples` 是面向最终用户的**应用示例集合**，目的是演示如何把 `hisi-riscv-rt`（启动）+ `hisi-riscv-hal`（驱动）+ `ws63-pac`（寄存器），以及连接性场景下的 `ws63-rf-rs`（RF porting），组合成一个可烧录的裸机固件。
+`ws63-examples` 是面向最终用户的**应用示例集合**，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 `hisi-riscv-rt`（启动）+ `hisi-riscv-hal`（驱动，支持 `chip-ws63`/`chip-bs21` 特性）+ PAC（`ws63-pac` 或 `bs2x-pac`，见 `crates/pac/`）+ 连接性场景下的 `ws63-rf-rs`（RF porting），组合成可烧录的裸机固件。
 
 - **负责**：提供可参考的 `#![no_std]` / `#![no_main]` 入口，以及各外设/子系统的最小调用示例（GPIO/UART/Timer/DMA、中断、复位、semihosting、自定义内存布局、async/embassy、RF porting）。
 - **不负责**：实现任何驱动或运行时逻辑（这些属于 `hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-rf-rs`）；不承担系统测试覆盖职责（单测在各 crate 内）。
@@ -28,17 +28,22 @@
 | `wifi_blob_link` | 把 vendor RF blob 链入镜像（符号闭合冒烟） |
 | `rf_port_demo` | 经 `ws63-rf-rs` 调用 porting 层 + FRW/HCC 数据通路 |
 
-另有 2 个 crate 内自测示例（在 `chips/ws63/rf/examples/`）：`sched_selftest`（协作调度器自测）、`net_selftest`（netif→smoltcp 自测）。上述示例全部在姊妹仓 [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 经 `scripts/smoke-test.sh` 端到端验证。仍缺真实**连接性**（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。
+另有 2 个 crate 内自测示例（在 `chips/ws63/rf/examples/`）：`sched_selftest`（协作调度器自测）、`net_selftest`（netif→smoltcp 自测）。此外 `examples/bs21`（BS21 examples，隔离工作区）和 `examples/bs20`（BS20 examples，隔离工作区）提供多芯片变种。所有示例全部在姊妹仓 [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 经 `scripts/smoke-test.sh` 端到端验证。仍缺真实**连接性**（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。
 
 ## 在依赖链中的位置
 
 examples 位于整条依赖链的**最下游**（叶子节点），消费上游各 crate：
 
 ```
-ws63-svd (XML)
-   └─> ws63-pac   (svd2rust 生成的寄存器块)
-          └─> hisi-riscv-hal   (手写安全驱动；async / embassy feature)
-                 └─> examples/ws63/*   ← 本组件
+crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
+       │                                            │
+       └─> ws63-pac   (svd2rust)                   └─> bs2x-pac   (svd2rust)
+            │                                            │
+            └─> hisi-riscv-hal   (手写安全驱动；chip-ws63/chip-bs21、async/embassy feature)
+                 │
+                 ├─> examples/ws63/*   (WS63 示例)
+                 ├─> examples/bs21/*   (BS21 示例，隔离)
+                 └─> examples/bs20/*   (BS20 示例，隔离)
 hisi-riscv-rt      (启动汇编 / 链接脚本 / 中断向量) ──#[entry] + 导出 ws63-link.x──┘
 ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──┘
 ```

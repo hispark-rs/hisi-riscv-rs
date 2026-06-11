@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-`ws63-flashboot` 是一个**实验性 / 学习用途**的 Rust 二级引导（second-stage bootloader），对标 fbb_ws63 原厂 `flashboot_ws63/startup/main.c`。它本轮（2026-05-31）已被明确标注为**实验性、非安全启动、不可用于生产**（`src/main.rs:1-22`、`README.md:3`、`Cargo.toml:5`）。
+`ws63-flashboot` 是一个**实验性 / 学习用途**的 Rust 二级引导（second-stage bootloader），对标 fbb_ws63 原厂 `flashboot_ws63/startup/main.c`。它本轮（2026-05-31）已被明确标注为**实验性、非安全启动、不可用于生产**（`src/main.rs:1-22`、`README.md:3`、`Cargo.toml:5`）。当前专为 **WS63 设计**；BS2X 系列（BS21/BS22/BS20）的引导加载另行开发（见下），复用原厂 flashboot 是生产推荐。
 
 **负责**（最小化的引导流程）：
 
@@ -79,3 +79,13 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 - **整改已落地（2026-06-01）**：镜像头布局对齐 `secure_verify_boot.h`（`code_area_len`/`code_area_hash` 偏移修正 + const 尺寸断言）、删除 `0x40000024` 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、`verify_sha256`→`verify_image_integrity` 如实标注"仅完整性非真实性"、`read_partition_app_addr` 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 `--exclude`）。**真实 ECC/SM2 验签**仍按冻结项复用原厂、不在本实验件投入。
 - 阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、无原子 ISA + `portable-atomic` critical-section polyfill（默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`，硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）、CI/release gating 与发布顺序修复、`hisi-riscv-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
 - 尚未解决并已排期：示例链接（`hisi-riscv-rt` 链接脚本不传播到下游 bin）见 **阶段 1**；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 **阶段 2**；porting 层 + HCC IPC + blob 链接的连接性见 **阶段 3–5**；async 见 **阶段 6**。详见 [ROADMAP](../../ROADMAP.md)。
+
+## 注记：BS2X 引导加载（BS21/BS22/BS20）
+
+WS63-flashboot 当前**专为 WS63 SoC 实现**。BS2X 系列（BS21/BS22/BS20）作为独立芯片系列，有自己的：
+
+- **ROM 代码**：不同的掩膜 ROM 版本与启动流程（相似但非完全兼容）。
+- **原厂 flashboot**：fbb_bs2x 中的 flashboot_bs2x（结构类似但地址/配置寄存器有差异）。
+- **推荐方案**：复用 fbb_bs2x 的原厂 flashboot 加载 Rust 应用镜像；若需自研，按 WS63-flashboot 模式（对照 secure_verify_boot.h 等）另行实现。
+
+QEMU 验证侧，`-M bs21/bs22/bs20` 已支持硬件仿真；vendor 的 LiteOS 栈由 hisi-riscv-qemu 虚拟；BS2X 真机引导加载与连接性由 BS2X 团队后续跟进（见 [ROADMAP](../../ROADMAP.md)）。

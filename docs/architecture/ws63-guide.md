@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-`ws63-guide` 是 WS63 系列 SoC（Wi-Fi 6 / BLE / SLE 星闪 Combo 芯片）的**中文硬件手册**，使用 Sphinx + MyST 构建，逆向自 vendor（HiSilicon）文档。它以子模块形式挂在 ws63-rs monorepo 下。
+`ws63-guide` 是 WS63 系列 SoC（Wi-Fi 6 / BLE / SLE 星闪 Combo 芯片）的**中文硬件手册**，使用 Sphinx + MyST 构建，逆向自 vendor（HiSilicon）文档。它以子模块形式挂在 ws63-rs monorepo 下（`chips/ws63/guide/`）。同时，BS2X 系列（BS21/BS22/BS20）有**独立的 `chips/bs2x/guide` 手册**，采用相同 Sphinx 工程化。
 
 **负责：**
 
@@ -71,6 +71,14 @@ flowchart LR
 ## 改进项与排期
 
 本组件**无本轮（阶段 0）整改项**——阶段 0 的构建完整性修复（双 PAC 消除、默认 target ISA 改 `riscv32imc`、flashboot 实验化、CI/release 修复、hisi-riscv-rt MIE 宏 typo）均落在 Rust crate 侧，不涉及本手册。
+
+## 注记：BS2X 多芯片手册（BS21/BS22/BS20）
+
+本手册专门**为 WS63 编写**。BS2X 系列（BS21/BS22/BS20，不同内核配置与外设集）有**独立的硬件手册** (`chips/bs2x/guide/source/`)，独立 Sphinx 工程、相同的逆向工艺与工程化标准：
+
+- **覆盖范围**：BS2X 系统/复位/时钟/存储映射/中断系统、QSPI、BLE/SLE（无 Wi-Fi MAC，RF 由 PHY 直驱）、安全/外设/JTAG。
+- **与 WS63 的异同**：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。
+- **维护**：两份手册独立演进；冻结扩张的方针同样应用于 BS2X 手册（ROADMAP "冻结/降优先级"）。
 
 - **冻结扩张、聚焦连接性**（ROADMAP "冻结/降优先级"）：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上连上 AP 并 ping 通）。
 - **作为下游纠偏的事实依据**：手册的中断编号表与优先级模型（`source/ch2_system.md:328-424`）应在 **ROADMAP 阶段 2** 用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（`ch2_system.md:162`）服务于 **阶段 1** 的链接脚本集成；RF/ABB 章节（`ch4_wifi/`）服务于 **阶段 3–5** 的 blob 链接与连接性。
