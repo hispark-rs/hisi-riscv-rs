@@ -14,7 +14,7 @@
 #   cargo build --manifest-path bs20-examples/Cargo.toml
 [workspace]
 resolver = "3"
-members = ["blinky", "uart_hello", "spi_loopback", "gadc_read", "i2c_scan", "hid_demo", "clock_rng", "pwm_wdt"]
+members = ["blinky", "uart_hello", "spi_loopback", "gadc_read", "i2c_scan", "hid_demo", "clock_rng", "pwm_wdt", "dma_mem"]
 
 [workspace.package]
 version = "0.1.0"
