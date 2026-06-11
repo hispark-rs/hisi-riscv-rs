@@ -78,6 +78,9 @@ jobs:
       - uses: actions/first-interaction@v3
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+          # first-interaction@v3 requires BOTH issue_message and pr_message
+          # (each is required: true and throws if absent), even though this
+          # workflow only triggers on issues. Supply both.
           issue_message: |
             👋 Thanks for opening your first issue in ws63-rs!
 
@@ -89,3 +92,10 @@ jobs:
             - WS63 chip variant (WS63 / WS63E)
             - Development board model
             - Rust toolchain version (`rustc --version`)
+          pr_message: |
+            👋 Thanks for your first pull request to ws63-rs!
+
+            Please make sure:
+            - [ ] `cargo fmt --all` and `cargo clippy` pass
+            - [ ] The change builds for the WS63 target
+            - [ ] Submodule changes are committed in the submodule first, then the pointer bumped
