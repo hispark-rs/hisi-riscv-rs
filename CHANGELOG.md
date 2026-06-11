@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2026-06-11] — crates.io: ws63-pac 0.1.3 · bs2x-pac 0.1.0 · hisi-riscv-rt 0.2.0 · hisi-riscv-hal 0.3.0
+
+First crates.io release of the library stack (published via CI in dependency
+order). Per-crate changelogs: [`hisi-riscv-hal`](crates/hisi-riscv-hal/CHANGELOG.md) ·
+[`hisi-riscv-rt`](crates/hisi-riscv-rt/CHANGELOG.md).
+
 ### Added
 
 - **Multi-chip support (BS2X/BS21)** — `bs2x-pac` (BS21/BS20 Peripheral Access Crate) published alongside `ws63-pac`; `hisi-riscv-hal` features `chip-ws63` (default) + `chip-bs21`; full functional peripheral coverage on QEMU (`-M bs21/-M bs20/-M bs22`): SPI, GADC, I2C, KEYSCAN, QDEC, RTC, TRNG, WDT, DMA, PDM real audio, USB real enumeration + vendor LiteOS boot. BS21 milestone M1 achieved: `blinky` + `uart_hello` boot end-to-end on `-M bs21`.
