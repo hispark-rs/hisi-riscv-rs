@@ -19,39 +19,47 @@ jobs:
         with:
           script: |
             const issue = context.payload.issue;
-            const title = issue.title.toLowerCase();
-            const body = (issue.body || '').toLowerCase();
+            // Match on the TITLE only, with whole-word boundaries. Matching the
+            // body (and bare substrings) produced false positives — e.g. "ble"
+            // inside "problem"/"enable", "dma"/"spi"/"pac" inside unrelated prose —
+            // so every issue collected nearly every component label. Titles in this
+            // repo name their component(s) explicitly, so title-only is enough.
+            const title = issue.title;
+            const has = (re) => re.test(title);
 
-            const labels = [];
+            const labels = new Set();
 
-            // Categorize by keywords
-            if (title.includes('bug') || title.includes('fail') || title.includes('error') || title.includes('broken')) {
-              labels.push('bug');
-            } else if (title.includes('feature') || title.includes('add') || title.includes('support') || title.includes('implement')) {
-              labels.push('enhancement');
-            } else if (title.includes('doc') || title.includes('readme') || title.includes('typo')) {
-              labels.push('documentation');
-            } else if (title.includes('question') || title.includes('how') || title.includes('help')) {
-              labels.push('question');
+            // Category (first match wins)
+            if (has(/\b(bug|fails?|failing|failure|error|broken|regression|crash|panic)\b/i)) {
+              labels.add('bug');
+            } else if (has(/\b(feature|enhance(ment)?|implement|support|add)\b/i)) {
+              labels.add('enhancement');
+            } else if (has(/\b(docs?|documentation|readme|typo)\b/i)) {
+              labels.add('documentation');
+            } else if (has(/\b(question|how-to|howto)\b/i)) {
+              labels.add('question');
             }
 
-            // Component-based labels
-            if (body.includes('gpio') || title.includes('gpio')) labels.push('component:gpio');
-            if (body.includes('uart') || title.includes('uart')) labels.push('component:uart');
-            if (body.includes('i2c') || title.includes('i2c')) labels.push('component:i2c');
-            if (body.includes('spi') || title.includes('spi')) labels.push('component:spi');
-            if (body.includes('dma') || title.includes('dma')) labels.push('component:dma');
-            if (body.includes('wifi') || title.includes('wifi')) labels.push('component:wifi');
-            if (body.includes('ble') || title.includes('ble') || title.includes('bt')) labels.push('component:ble');
-            if (body.includes('hal') || title.includes('hal')) labels.push('component:hal');
-            if (body.includes('pac') || title.includes('pac')) labels.push('component:pac');
+            // Component (whole-word, title only)
+            const components = [
+              [/\bgpio\b/i, 'component:gpio'],
+              [/\buart\b/i, 'component:uart'],
+              [/\bi2c\b/i, 'component:i2c'],
+              [/\bspi\b/i, 'component:spi'],
+              [/\bdma\b/i, 'component:dma'],
+              [/\bwi-?fi\b/i, 'component:wifi'],
+              [/\b(ble|sle|bt)\b/i, 'component:ble'],
+              [/\bhal\b/i, 'component:hal'],
+              [/\bpac\b/i, 'component:pac'],
+            ];
+            for (const [re, label] of components) if (has(re)) labels.add(label);
 
-            if (labels.length > 0) {
+            if (labels.size > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                labels: labels
+                labels: [...labels]
               });
             }
 
