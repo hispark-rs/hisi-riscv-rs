@@ -13,6 +13,7 @@
 
 use hisi_riscv_hal::Peripherals;
 use hisi_riscv_hal::keyscan::Keyscan;
+use hisi_riscv_hal::pdm::Pdm;
 use hisi_riscv_hal::qdec::Qdec;
 use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
 use hisi_riscv_rt::entry;
@@ -74,7 +75,16 @@ fn main() -> ! {
     uart.write(0, b"\r\n");
     let qdec_ok = count == -5;
 
-    if key_ok && qdec_ok {
+    // PDM — bring up the audio mic front-end + read its version (config-level; the
+    // PCM data path is DMA-fed).
+    let pdm = Pdm::new(p.PDM);
+    let pdm_ver = pdm.version();
+    uart.write(0, b"  pdm version = ");
+    put_dec_i16(&uart, pdm_ver as i16);
+    uart.write(0, b"\r\n");
+    let pdm_ok = pdm_ver == 0x150;
+
+    if key_ok && qdec_ok && pdm_ok {
         uart.write(0, b"  HID demo OK\r\n");
     } else {
         uart.write(0, b"  HID demo MISMATCH\r\n");
