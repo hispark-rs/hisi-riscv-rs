@@ -75,14 +75,18 @@ fn main() -> ! {
     uart.write(0, b"\r\n");
     let qdec_ok = count == -5;
 
-    // PDM — bring up the audio mic front-end + read its version (config-level; the
-    // PCM data path is DMA-fed).
+    // PDM — bring up the audio path and CAPTURE 4 PCM samples from the UP FIFO.
     let pdm = Pdm::new(p.PDM);
-    let pdm_ver = pdm.version();
-    uart.write(0, b"  pdm version = ");
-    put_dec_i16(&uart, pdm_ver as i16);
+    let mut samples = [0u32; 4];
+    let got = pdm.capture(&mut samples);
+    uart.write(0, b"  pdm captured ");
+    put_dec_i16(&uart, got as i16);
+    uart.write(0, b" samples, [0]=");
+    put_dec_i16(&uart, (samples[0] >> 16) as i16);
     uart.write(0, b"\r\n");
-    let pdm_ok = pdm_ver == 0x150;
+    // The model feeds an ascending ramp ((n+1)<<16); a real capture is monotonic.
+    let pdm_ok =
+        got == 4 && samples[0] == 1 << 16 && samples[1] == 2 << 16 && samples[3] == 4 << 16;
 
     if key_ok && qdec_ok && pdm_ok {
         uart.write(0, b"  HID demo OK\r\n");

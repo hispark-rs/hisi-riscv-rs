@@ -12,7 +12,7 @@
 use hisi_riscv_hal::Peripherals;
 use hisi_riscv_hal::dma::{DmaChannelConfig, DmaDriver};
 use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
-use hisi_riscv_hal::usb::Usb;
+use hisi_riscv_hal::usb::{Speed, Usb};
 use hisi_riscv_rt::entry;
 
 #[entry]
@@ -49,16 +49,21 @@ fn main() -> ! {
     let dma_ok = dst == src;
 
     // USB — read the DWC OTG core-ID (presence check; full USB stack deferred).
-    let usb = Usb::new(p.USB);
-    let usb_ok = usb.is_present();
-    uart.write(
-        0,
-        if usb_ok {
-            b"  usb DWC OTG present\r\n"
-        } else {
-            b"  usb absent\r\n"
-        },
-    );
+    let mut usb = Usb::new(p.USB);
+    let usb_ok = match usb.device_enumerate() {
+        Ok(Speed::High) => {
+            uart.write(0, b"  usb device enumerated at high speed\r\n");
+            true
+        }
+        Ok(_) => {
+            uart.write(0, b"  usb device enumerated (other speed)\r\n");
+            true
+        }
+        Err(_) => {
+            uart.write(0, b"  usb bring-up failed\r\n");
+            false
+        }
+    };
 
     if dma_ok && usb_ok {
         uart.write(0, b"  DMA OK\r\n");
