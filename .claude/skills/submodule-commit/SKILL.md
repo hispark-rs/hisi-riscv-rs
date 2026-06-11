@@ -14,7 +14,7 @@ the parent never points at an unpushed commit.
 | Submodule | Default branch | Notes |
 |-----------|----------------|-------|
 | ws63-pac | `main` | upstream of hal/rt; **nests ws63-svd** |
-| ws63-svd | `main` | source of the PAC — **nested submodule at `crates/ws63-pac/ws63-svd`** |
+| ws63-svd | `main` | source of the PAC — **nested submodule at `crates/pac/ws63-pac/ws63-svd`** |
 | hisi-riscv-rt | `master` | runtime |
 | hisi-riscv-hal | `master` | drivers; depends on pac |
 | ws63-examples | `master` | blinky |

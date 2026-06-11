@@ -1,8 +1,8 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/ws63-pac",
-    "crates/bs2x-pac",
+    "crates/pac/ws63-pac",
+    "crates/pac/bs2x-pac",
     "crates/hisi-riscv-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
@@ -32,7 +32,7 @@ members = [
 # `cargo check --workspace` covers it; build it explicitly with
 # `cargo build -p ws63-flashboot`.
 default-members = [
-    "crates/ws63-pac",
+    "crates/pac/ws63-pac",
     "crates/hisi-riscv-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
@@ -62,7 +62,7 @@ license = "MIT"
 repository = "https://github.com/sanchuanhehe/hisi-riscv-rs"
 
 [workspace.dependencies]
-ws63-pac = { path = "crates/ws63-pac" }
+ws63-pac = { path = "crates/pac/ws63-pac" }
 hisi-riscv-hal = { path = "crates/hisi-riscv-hal" }
 hisi-riscv-rt  = { path = "crates/hisi-riscv-rt" }
 
@@ -80,8 +80,8 @@ critical-section = "1"
 # PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and
 # the singleton-safety invariant is split across two copies).
 [patch.crates-io]
-ws63-pac = { path = "crates/ws63-pac" }
-bs2x-pac = { path = "crates/bs2x-pac" }
+ws63-pac = { path = "crates/pac/ws63-pac" }
+bs2x-pac = { path = "crates/pac/bs2x-pac" }
 
 [profile.release]
 opt-level = "s"

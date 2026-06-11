@@ -24,7 +24,7 @@ ws63-RF（blob）经 in-tree crate **`ws63-rf-rs`** 接入主链 —— rf-rs �
 ```mermaid
 graph TD
     subgraph 主链["已接入的 Rust 主链"]
-        SVD[crates/ws63-pac/ws63-svd] --> PAC[ws63-pac]
+        SVD[crates/pac/ws63-pac/ws63-svd] --> PAC[ws63-pac]
         PAC --> HAL[hisi-riscv-hal]
         HAL --> EX[ws63-examples]
         RT[hisi-riscv-rt] -.启动/链接脚本.-> EX

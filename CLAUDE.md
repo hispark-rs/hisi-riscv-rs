@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/ws63-pac`, `crates/hisi-riscv-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules. Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-riscv-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/pac/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
 
 ### Repository layout (grouped tree)
 
 ```
 crates/      core publishable library crates
-  ws63-pac/      (submodule; nests ws63-svd)   bs2x-pac/  (submodule; nests bs2x-svd)
+  pac/         per-chip register-access crates (svd2rust-generated)
+    ws63-pac/  (submodule; nests ws63-svd)     bs2x-pac/  (submodule; nests bs2x-svd)
   hisi-riscv-hal/ (submodule)                  hisi-riscv-rt/ (submodule)
 examples/    application examples
   ws63/        (= ws63-examples submodule: blinky, uart_hello, …)

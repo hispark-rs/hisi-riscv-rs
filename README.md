@@ -20,8 +20,8 @@ in-tree and are not published.
 
 | Crate | Role | crates.io |
 |-------|------|-----------|
-| [`ws63-pac`](crates/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
-| [`bs2x-pac`](crates/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
+| [`ws63-pac`](crates/pac/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
+| [`bs2x-pac`](crates/pac/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
 | [`hisi-riscv-hal`](crates/hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Multi-chip: `chip-ws63` (default) / `chip-bs21` | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |

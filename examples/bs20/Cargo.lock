@@ -13,6 +13,76 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs20_clock_rng"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_dma_mem"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_gadc_read"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_hid_demo"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_i2c_scan"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_pwm_wdt"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
+name = "bs20_spi_loopback"
+version = "0.1.0"
+dependencies = [
+ "bs2x-pac",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+]
+
+[[package]]
 name = "bs20_uart_hello"
 version = "0.1.0"
 dependencies = [

@@ -7,13 +7,13 @@ on:
     paths:
       - 'crates/hisi-riscv-hal/src/**'
       - 'crates/hisi-riscv-hal/Cargo.toml'
-      - 'crates/ws63-pac/src/**'
+      - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
   pull_request:
     branches: [main, master]
     paths:
       - 'crates/hisi-riscv-hal/src/**'
-      - 'crates/ws63-pac/src/**'
+      - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
 
 env:

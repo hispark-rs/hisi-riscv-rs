@@ -5,7 +5,7 @@
 	path = crates/hisi-riscv-hal
 	url = https://github.com/sanchuanhehe/hisi-riscv-hal.git
 [submodule "ws63-pac"]
-	path = crates/ws63-pac
+	path = crates/pac/ws63-pac
 	url = https://github.com/sanchuanhehe/ws63-pac.git
 [submodule "ws63-RF"]
 	path = chips/ws63/rf/ws63-RF
@@ -17,7 +17,7 @@
 	path = examples/ws63
 	url = https://github.com/sanchuanhehe/ws63-examples.git
 [submodule "bs2x-pac"]
-	path = crates/bs2x-pac
+	path = crates/pac/bs2x-pac
 	url = https://github.com/sanchuanhehe/bs2x-pac.git
 [submodule "bs2x-guide"]
 	path = chips/bs2x/guide
