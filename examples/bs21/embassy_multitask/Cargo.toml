@@ -1,0 +1,26 @@
+[package]
+name = "bs21_embassy_multitask"
+version = "0.1.0"
+edition = "2024"
+description = "HiSilicon BS21 embassy-executor + embassy-time multitask demo (Timer::after on the BS2X time-driver)"
+license = "MIT"
+
+[[bin]]
+name = "bs21_embassy_multitask"
+path = "src/main.rs"
+
+[dependencies]
+# Select the BS21 chip across the stack (see blinky's Cargo.toml). `embassy` adds
+# the embassy-time Driver — it is chip-neutral and does NOT pull the (WS63-only)
+# `async` embedded-hal-async layer, so it builds for chip-bs21.
+bs2x-pac = { path = "../../../crates/pac/bs2x-pac" }
+hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt", "embassy"] }
+hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
+embassy-executor = { version = "0.10", features = ["platform-riscv32", "executor-thread"] }
+embassy-time = { version = "0.5", features = ["tick-hz-1_000_000"] }
+static_cell = "2"
+riscv = "0.13"
+
+[profile.release]
+opt-level = "s"
+lto = true

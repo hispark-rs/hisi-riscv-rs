@@ -1,0 +1,20 @@
+[package]
+name = "bs21_timer_irq"
+version = "0.1.0"
+edition = "2024"
+description = "BS21 bare-metal TIMER channel-0 LOCI interrupt smoke test (no embassy)"
+license = "MIT"
+
+[[bin]]
+name = "bs21_timer_irq"
+path = "src/main.rs"
+
+[dependencies]
+bs2x-pac = { path = "../../../crates/pac/bs2x-pac" }
+hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt"] }
+hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
+riscv = "0.13"
+
+[profile.release]
+opt-level = "s"
+lto = true
