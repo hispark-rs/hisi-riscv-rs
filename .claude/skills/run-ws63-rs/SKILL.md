@@ -8,20 +8,20 @@ Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
 
 ## Toolchain (required)
 
-ws63-rs builds with the custom **`ws63`** toolchain: a stable rustc with the WS63
+ws63-rs builds with the custom **`hisi-riscv`** toolchain: a stable rustc with the WS63
 target `riscv32imfc-unknown-none-elf` (RV32IMFC, hardware single-float `ilp32f`, no
 atomics) baked in as a **builtin** — so builds need **no `-Z build-std`**. The default
-target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "ws63"`.
+target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "hisi-riscv"`.
 
 Install + link it first (it is not a distributable rustup channel):
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-rustup toolchain link ws63 "$PWD/stage2"
+curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+tar xzf hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+rustup toolchain link hisi-riscv "$PWD/stage2"
 ```
 
-The `ws63` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.
+The `hisi-riscv` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.
 
 ## Build (agent path)
 
@@ -62,7 +62,7 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
 
 ## Gotchas
 
-- **Needs the `ws63` toolchain** (above). A stock rustup toolchain does not have the
+- **Needs the `hisi-riscv` toolchain** (above). A stock rustup toolchain does not have the
   `riscv32imfc` target and will fail with "target may not be installed".
 - **Single PAC instance**: the root `Cargo.toml` `[patch.crates-io]` redirects the
   `ws63-pac` registry dep to the local submodule. Don't add a second `ws63-pac` source.
@@ -76,7 +76,7 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
 
 | Symptom | Fix |
 |---------|-----|
-| `target may not be installed` / `riscv32imfc` unknown | Install + link the `ws63` toolchain (see Toolchain) |
+| `target may not be installed` / `riscv32imfc` unknown | Install + link the `hisi-riscv` toolchain (see Toolchain) |
 | `failed to load manifest for workspace member` | `git submodule update --init --recursive` |
 | `error[E0463]: can't find crate for proc_macro2` (fresh CI) | Stale cross-toolchain `target/` cache — don't cache `target/` across toolchains |
 | `clippy FAILED` | `cargo clippy --workspace --exclude ws63-flashboot -- -D warnings` to see warnings |

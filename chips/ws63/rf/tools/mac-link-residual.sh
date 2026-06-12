@@ -20,14 +20,14 @@
 # the ROM symbols are real-silicon addresses — so a *runnable* image is HIL, but
 # the relocatable link defers relocations and gives an exact symbol residual.
 #
-# Pure tooling: no hardware, no C compiler. Requires the ws63 Rust toolchain
+# Pure tooling: no hardware, no C compiler. Requires the hisi-riscv Rust toolchain
 # (for rust-lld + the rv32imfc compiler_builtins) and a built ws63-rf-rs rlib.
 set -u
 
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/
 root="$(cd "$here/.." && pwd)"                     # repo root
 rf="$here/ws63-RF"                                 # nested submodule
-sysroot="$(rustc +ws63 --print sysroot 2>/dev/null || rustc --print sysroot)"
+sysroot="$(rustc +hisi-riscv --print sysroot 2>/dev/null || rustc --print sysroot)"
 host_sysroot="$(rustc --print sysroot)"
 
 LLD="$(find "$sysroot" "$host_sysroot" -name rust-lld 2>/dev/null | head -1)"

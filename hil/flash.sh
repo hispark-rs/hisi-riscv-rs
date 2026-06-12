@@ -36,7 +36,7 @@ command -v "$HISIFLASH" >/dev/null 2>&1 || {
 : "${ADDRESS:?set ADDRESS=<program flash offset, e.g. 0x200000> (verify vs partition table)}"
 
 # Resolve the program to a .bin: accept a path, or an example name (prefer its
-# .bin; objcopy the ELF if only that exists — rust-objcopy ships in the ws63 toolchain).
+# .bin; objcopy the ELF if only that exists — rust-objcopy ships in the hisi-riscv toolchain).
 resolve_bin() {
     local a="$1"
     case "$a" in
@@ -48,7 +48,7 @@ resolve_bin() {
     echo "ERROR: cannot resolve firmware '$a' (looked in $TARGET_DIR)" >&2; exit 1
 }
 _objcopy() {
-    local objcopy; objcopy="$(rustc +ws63 --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
+    local objcopy; objcopy="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
     command -v "$objcopy" >/dev/null 2>&1 || objcopy="rust-objcopy"
     echo "==> objcopy $1 -> $2" >&2
     "$objcopy" -O binary "$1" "$2"

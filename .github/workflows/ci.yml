@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
-# ws63-rs builds with the custom `ws63` toolchain (stable rustc with the WS63
+# ws63-rs builds with the custom `hisi-riscv` toolchain (stable rustc with the WS63
 # riscv32imfc hard-float target baked in as a builtin; see rust-toolchain.toml).
 # Each job installs+links it from the hisi-riscv-rust-toolchain release via
 # .github/scripts/install-toolchain.sh. Default target (riscv32imfc) is in
@@ -28,11 +28,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v5
         with:
-          # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
+          # NOTE: do NOT cache target/ — it is built by the custom `hisi-riscv` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
           # different toolchain causes E0463 "can't find crate". Registry/git caches are
           # toolchain-agnostic (just crate sources) and safe.
@@ -52,11 +52,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v5
         with:
-          # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
+          # NOTE: do NOT cache target/ — it is built by the custom `hisi-riscv` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
           # different toolchain causes E0463 "can't find crate". Registry/git caches are
           # toolchain-agnostic (just crate sources) and safe.
@@ -82,11 +82,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
       - uses: actions/cache@v5
         with:
-          # NOTE: do NOT cache target/ — it is built by the custom `ws63` rustc whose
+          # NOTE: do NOT cache target/ — it is built by the custom `hisi-riscv` rustc whose
           # strict-version-hash differs from any other 1.96.0; a stale target/ from a
           # different toolchain causes E0463 "can't find crate". Registry/git caches are
           # toolchain-agnostic (just crate sources) and safe.
@@ -109,7 +109,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -118,7 +118,7 @@ jobs:
   # hisi-riscv-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
   # ws63-pac's riscv coupling is gated too, so the crate compiles for x86 and the
   # pure-logic unit tests (encoding, tick math, proptests) actually run. Uses the
-  # stable toolchain on the host target (RUSTUP_TOOLCHAIN overrides the ws63 pin in
+  # stable toolchain on the host target (RUSTUP_TOOLCHAIN overrides the hisi-riscv pin in
   # rust-toolchain.toml; --target overrides the riscv32 default in .cargo/config.toml).
   host-test:
     name: Host unit tests
@@ -146,9 +146,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
-      # rust-toolchain.toml pins ws63, so the cargo shim refuses to run until it's
+      # rust-toolchain.toml pins hisi-riscv, so the cargo shim refuses to run until it's
       # installed (even though cargo-audit only parses Cargo.lock).
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
       # rustsec/audit-check has no Node 24 release; use cargo-audit directly via
       # taiki-e/install-action (composite, Node-24 era) which fetches a prebuilt

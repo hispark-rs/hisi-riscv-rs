@@ -25,7 +25,7 @@ Top MCP Servers:
 ### Codebases
 - [ ] ws63-rs — https://github.com/hispark-rs/hisi-riscv-rs (main monorepo; clone with `git submodule update --init --recursive` — all crates and docs are submodules: `crates/pac/{ws63-pac,bs2x-pac}`, `crates/{hisi-riscv-hal,hisi-riscv-rt}`, `examples/{ws63,bs21,bs20}`, `chips/{ws63,bs2x}/guide`, `chips/ws63/rf/ws63-RF`, and SVD repos at root)
 - [ ] ws63-qemu — sister QEMU fork for software-in-the-loop validation (no silicon needed)
-- [ ] hisi-riscv-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
+- [ ] hisi-riscv-rust-toolchain — custom `hisi-riscv` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link hisi-riscv`)
 - [ ] esp-hal — reference HAL the WS63 driver patterns are modeled on (read-only reference)
 - [ ] ws63-qemu & bs21-qemu — QEMU forks for software-in-the-loop validation (WS63 + BS21/BS20/BS22 machine types; no silicon needed)
 - [ ] fbb_ws63 — official HiSilicon C SDK; the **ground-truth** for register/peripheral behavior (read-only reference)
@@ -48,7 +48,7 @@ Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 
 - **Submodules are everything.** Core submodules: `crates/pac/{ws63-pac,bs2x-pac}` (PACs), `crates/{hisi-riscv-hal,hisi-riscv-rt}` (HAL + runtime), `examples/{ws63,bs21,bs20}` (chip-specific examples), `chips/{ws63,bs2x}/guide` (hardware guides), `chips/ws63/rf/ws63-RF` (Wi-Fi blob). SVD repos (`ws63-svd`, `bs2x-svd`) are separate root-level submodules. Always clone/update with `git submodule update --init --recursive`.
 - **Submodule-first, then bump the pointer.** When you edit a file inside a submodule, commit *inside the submodule* first, then update and commit the parent repo's submodule pointer. Don't commit the parent pointer to an unpushed submodule commit.
-- **Build with the custom `ws63` toolchain.** The workspace default target is `riscv32imfc-unknown-none-elf` (hard-float ilp32f, no atomics), baked into the `ws63` toolchain as a builtin — install it first (see `rust-toolchain.toml`), no `-Z build-std` needed. Core loop: `cargo build` (libs + blinky), `cargo check --workspace`, `cargo clippy`, `cargo fmt --all -- --check`.
+- **Build with the custom `hisi-riscv` toolchain.** The workspace default target is `riscv32imfc-unknown-none-elf` (hard-float ilp32f, no atomics), baked into the `hisi-riscv` toolchain as a builtin — install it first (see `rust-toolchain.toml`), no `-Z build-std` needed. Core loop: `cargo build` (libs + blinky), `cargo check --workspace`, `cargo clippy`, `cargo fmt --all -- --check`.
 - **Official C SDK is the single source of truth.** The WS63 and BS2X chips are undocumented — the official HiSilicon C SDKs (`fbb_ws63`, `fbb_bs2x`) are ground-truth for register offsets, bit fields, and init sequences. Before trusting or writing a driver, grep the SDK for the registers you're touching. `esp-hal` is the reference for *Rust HAL patterns* (GPIO type-state, sealed traits), not register behavior.
 - **Read the docs before large changes.** `docs/architecture/overview.md` for the whole picture, the review ledger in `docs/review/architecture-review-2026-05.md`, and `ROADMAP.md` for the remediation plan and known defects. **Connectivity (Wi-Fi/BLE/SLE) is the north star:** WS63 Wi-Fi RF blob porting is in progress (ws63-rf-rs porting layer + netif→smoltcp); BS2X BLE/SLE radio is a known challenge (radio-MMIO boundary is blob-on-blob); full functional coverage is exercised on QEMU for both chips.
 - **No `std`, and register access is `unsafe`.** `#![no_std]` throughout, no heap — use fixed arrays. Raw PAC writes are `unsafe`; encapsulate them inside driver methods, never leak them to callers.
@@ -59,7 +59,7 @@ First task for a new teammate — get a clean build going end to end:
 
 1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
    - Note: BS21/BS20 examples are in isolated workspaces (`examples/bs21/`, `examples/bs20/`) because `hisi-riscv-hal` builds for exactly one chip at a time (enforced by compile_error). WS63 examples are in the root workspace.
-2. Install the custom `ws63` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link ws63 "$PWD/stage2"`.
+2. Install the custom `hisi-riscv` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link hisi-riscv "$PWD/stage2"`.
 3. Build the libraries + blinky: `cargo build`, then sanity-check the whole tree: `cargo check --workspace`.
 4. Read `docs/architecture/overview.md` and `ROADMAP.md` to see where the project is headed before picking up real work.
 

@@ -1,12 +1,14 @@
-# ws63-rs builds with the custom `ws63` toolchain: a stable rustc (1.96.0) with the
-# WS63 target `riscv32imfc-unknown-none-elf` (hardware single-float ilp32f, no atomics)
-# baked in as a BUILTIN — so we build without `-Z build-std`.
+# hisi-riscv-rs builds with the custom `hisi-riscv` toolchain: a stable rustc (1.96.0)
+# with the target `riscv32imfc-unknown-none-elf` (hardware single-float ilp32f, no
+# atomics) baked in as a BUILTIN — so we build without `-Z build-std`. The toolchain
+# is chip-neutral (ws63 + bs2x both target riscv32imfc).
 #
-# You MUST install + link it first (it is not a distributable rustup channel):
-#   curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-#   tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-#   rustup toolchain link ws63 "$PWD/stage2"
+# You MUST install + link it first (it is not a distributable rustup channel) — pick
+# the tarball for your host (linux x86_64/aarch64, macOS x86_64/aarch64, windows x86_64):
+#   curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+#   tar xzf hisi-riscv-rust-1.96.0-*.tar.gz
+#   rustup toolchain link hisi-riscv "$PWD/stage2"
 #
 # Build recipe + sources: https://github.com/hispark-rs/hisi-riscv-rust-toolchain
 [toolchain]
-channel = "ws63"
+channel = "hisi-riscv"

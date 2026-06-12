@@ -1,12 +1,15 @@
-# ws63-rs
+# hisi-riscv-rs
 
-A Rust embedded ecosystem for the **HiSilicon WS63** — a single-core RISC-V
-(RV32IMFC, hard-float `ilp32f`, no atomics) Wi-Fi 6 + BLE + SLE/SparkLink SoC.
+A Rust embedded ecosystem for the **HiSilicon RISC-V family** — the **WS63**
+(Wi-Fi 6 + BLE + SLE/SparkLink) and the **BS2X** SKUs (**BS20 / BS21E / BS22**;
+BLE + SLE/NearLink), all single-core RV32IMFC (hard-float `ilp32f`, no atomics) SoCs.
 
-This monorepo bundles a `svd2rust` peripheral-access crate, a hand-written safe
-HAL, a runtime, a porting layer for the closed-source Wi-Fi/BLE blobs, and
-runnable examples — buildable today with a custom Rust toolchain, and runnable
-**without hardware** on the sister project [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu).
+This monorepo bundles per-chip `svd2rust` peripheral-access crates, a hand-written
+multi-chip safe HAL, a runtime, a porting layer for the closed-source Wi-Fi/BLE
+blobs, and runnable examples — buildable today with a custom Rust toolchain, and
+runnable **without hardware** on the sister project
+[`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) (machines
+`-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
 > up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-06):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and on-silicon validation (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in `docs/bs21-connectivity-feasibility.md`. Full QEMU bring-up done for both chips; HIL scaffolding ready. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
@@ -69,7 +72,7 @@ git submodule update --init --recursive
 
 ## Getting started
 
-### 1. Install the `ws63` toolchain
+### 1. Install the `hisi-riscv` toolchain
 
 The default target `riscv32imfc-unknown-none-elf` (hardware single-float
 `ilp32f`, no atomics) is **baked into a custom rustc** as a builtin, so no
@@ -78,8 +81,8 @@ link it first (see [`rust-toolchain.toml`](rust-toolchain.toml) and the
 [hisi-riscv-rust-toolchain](https://github.com/hispark-rs/hisi-riscv-rust-toolchain) repo):
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf ws63-rust-1.96.0-*.tar.gz && rustup toolchain link ws63 "$PWD/stage2"
+curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz && rustup toolchain link hisi-riscv "$PWD/stage2"
 ```
 
 ### 2. Build
@@ -114,14 +117,14 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 
 ## Run without hardware (software-in-the-loop)
 
-[`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) is a QEMU fork with an
+[`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) is a QEMU fork with an
 in-tree WS63 machine (`-M ws63`) that models the CPU + xlinx custom ISA, memory
 map, interrupt controller, and all 35 SVD peripherals. It runs ws63-rs firmware
 (and real vendor C-SDK firmware) and is the software-in-the-loop stand-in for
 ROADMAP phase 1 "hardware bring-up":
 
 ```bash
-# in a sibling checkout of ws63-qemu
+# in a sibling checkout of hisi-riscv-qemu
 bash scripts/build.sh
 WS63_RS=../ws63-rs bash scripts/smoke-test.sh   # boots ws63-rs examples + asserts behaviour
 ```
@@ -141,7 +144,7 @@ polyfill. Two opt-in features:
   [`embassy-executor`](https://docs.rs/embassy-executor) (platform-riscv32) runs
   `Timer::after` + multi-task scheduling + the async drivers above.
 
-Validated on ws63-qemu — see `examples/ws63/{async_delay, embassy_multitask, embassy_async_io}`.
+Validated on hisi-riscv-qemu — see `examples/ws63/{async_delay, embassy_multitask, embassy_async_io}`.
 
 ## Releasing
 

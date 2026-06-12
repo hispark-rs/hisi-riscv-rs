@@ -2,11 +2,11 @@
 #
 # The WS63 application core is RV32IMFC_Zicsr: hardware single-float (ilp32f) and NO
 # atomic ('a') extension. We build for `riscv32imfc-unknown-none-elf`, which is a
-# BUILTIN target in the custom `ws63` toolchain (see rust-toolchain.toml) — so no
+# BUILTIN target in the custom `hisi-riscv` toolchain (see rust-toolchain.toml) — so no
 # `-Z build-std` is needed (the toolchain ships precompiled core/alloc for it).
 #
 # The toolchain is built/distributed from:
-#   https://github.com/hispark-rs/hisi-riscv-rust-toolchain   (release: rustup toolchain link ws63 …)
+#   https://github.com/hispark-rs/hisi-riscv-rust-toolchain   (release: rustup toolchain link hisi-riscv …)
 #
 # `riscv32imfc` here has hardware float and uses forced-atomics + no-CAS, so atomic
 # load/store lower to plain ld/st (single hart) and RMW goes through portable-atomic's

@@ -20,7 +20,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install ws63 toolchain
+      - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
 
       # Build the default-members (libraries + blinky). blinky links and is packaged
@@ -28,13 +28,13 @@ jobs:
       - name: Build default members (release)
         run: cargo build --release
 
-      # Package the blinky firmware. rust-objcopy lives in the ws63 toolchain's
+      # Package the blinky firmware. rust-objcopy lives in the hisi-riscv toolchain's
       # rustlib bin (bundled from the CI LLVM), not on PATH — resolve via the sysroot.
       - name: Package firmware
         run: |
           set -euo pipefail
           OUT=target/riscv32imfc-unknown-none-elf/release
-          OBJCOPY="$(rustc +ws63 --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
+          OBJCOPY="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
           shopt -s nullglob
           for elf in "$OUT"/blinky; do
             [ -f "$elf" ] || continue
