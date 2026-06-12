@@ -108,7 +108,7 @@ right [crates.io](https://crates.io) deps for the chip you pick:
 ```bash
 cargo install cargo-generate
 cargo generate --git https://github.com/hispark-rs/hisi-rs-template
-#   chip    = ws63 | bs21 | bs20
+#   chip    = ws63 | bs21 | bs21e | bs22 | bs20   (BS2X SKUs share one HAL)
 #   starter = blinky | uart_hello | async (embassy; WS63 + BS2X)
 ```
 
