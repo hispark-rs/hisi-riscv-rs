@@ -25,7 +25,7 @@ Top MCP Servers:
 ### Codebases
 - [ ] ws63-rs — https://github.com/hispark-rs/hisi-riscv-rs (main monorepo; clone with `git submodule update --init --recursive` — all crates and docs are submodules: `crates/pac/{ws63-pac,bs2x-pac}`, `crates/{hisi-riscv-hal,hisi-riscv-rt}`, `examples/{ws63,bs21,bs20}`, `chips/{ws63,bs2x}/guide`, `chips/ws63/rf/ws63-RF`, and SVD repos at root)
 - [ ] ws63-qemu — sister QEMU fork for software-in-the-loop validation (no silicon needed)
-- [ ] ws63-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
+- [ ] hisi-riscv-rust-toolchain — custom `ws63` rustc with the `riscv32imfc-unknown-none-elf` target baked in (install + `rustup toolchain link ws63`)
 - [ ] esp-hal — reference HAL the WS63 driver patterns are modeled on (read-only reference)
 - [ ] ws63-qemu & bs21-qemu — QEMU forks for software-in-the-loop validation (WS63 + BS21/BS20/BS22 machine types; no silicon needed)
 - [ ] fbb_ws63 — official HiSilicon C SDK; the **ground-truth** for register/peripheral behavior (read-only reference)

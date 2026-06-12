@@ -6,7 +6,7 @@ set -euo pipefail
 
 VER="v1.96.0-1"
 BASE="ws63-rust-1.96.0-x86_64-unknown-linux-gnu"
-URL="https://github.com/hispark-rs/ws63-rust-toolchain/releases/download/${VER}/${BASE}.tar.gz"
+URL="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/${VER}/${BASE}.tar.gz"
 
 if rustup toolchain list 2>/dev/null | grep -q '^ws63'; then
   echo "ws63 toolchain already linked"

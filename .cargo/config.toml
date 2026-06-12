@@ -6,7 +6,7 @@
 # `-Z build-std` is needed (the toolchain ships precompiled core/alloc for it).
 #
 # The toolchain is built/distributed from:
-#   https://github.com/hispark-rs/ws63-rust-toolchain   (release: rustup toolchain link ws63 …)
+#   https://github.com/hispark-rs/hisi-riscv-rust-toolchain   (release: rustup toolchain link ws63 …)
 #
 # `riscv32imfc` here has hardware float and uses forced-atomics + no-CAS, so atomic
 # load/store lower to plain ld/st (single hart) and RMW goes through portable-atomic's

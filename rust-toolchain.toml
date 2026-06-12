@@ -3,10 +3,10 @@
 # baked in as a BUILTIN — so we build without `-Z build-std`.
 #
 # You MUST install + link it first (it is not a distributable rustup channel):
-#   curl -LO https://github.com/hispark-rs/ws63-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+#   curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-1/ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   tar xzf ws63-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   rustup toolchain link ws63 "$PWD/stage2"
 #
-# Build recipe + sources: https://github.com/hispark-rs/ws63-rust-toolchain
+# Build recipe + sources: https://github.com/hispark-rs/hisi-riscv-rust-toolchain
 [toolchain]
 channel = "ws63"

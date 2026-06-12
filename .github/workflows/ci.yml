@@ -12,7 +12,7 @@ env:
 
 # ws63-rs builds with the custom `ws63` toolchain (stable rustc with the WS63
 # riscv32imfc hard-float target baked in as a builtin; see rust-toolchain.toml).
-# Each job installs+links it from the ws63-rust-toolchain release via
+# Each job installs+links it from the hisi-riscv-rust-toolchain release via
 # .github/scripts/install-toolchain.sh. Default target (riscv32imfc) is in
 # .cargo/config.toml; no -Z build-std needed (toolchain ships precompiled core).
 
