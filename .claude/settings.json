@@ -12,6 +12,15 @@
             "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in */ws63-pac/src/lib.rs) echo 'BLOCKED: lib.rs is svd2rust-generated — edit ws63-svd/WS63.svd and regenerate (ROADMAP phase 2), do not hand-edit.' >&2; exit 2 ;; esac"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command'); case \"$c\" in *hisiflash*write-program*|*burntool*) case \"$c\" in *HIL_CONFIRM=1*) : ;; *) echo 'BLOCKED: destructive hardware flash. Prepend HIL_CONFIRM=1 to confirm, or run the hil-smoke skill (user-invoked).' >&2; exit 2 ;; esac ;; esac"
+          }
+        ]
       }
     ],
     "PostToolUse": [

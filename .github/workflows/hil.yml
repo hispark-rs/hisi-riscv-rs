@@ -1,0 +1,70 @@
+name: HIL (hardware-in-the-loop)
+
+# On-silicon smoke test: build the examples and flash them to a REAL WS63/BS2X board,
+# asserting UART markers (the silicon counterpart to the QEMU smoke in ci-nightly).
+# This validates what emulation can't — real clocks/timing (24 MHz TCXO timer, 160 MHz
+# UART baud) and real peripherals.
+#
+# REQUIRES a self-hosted runner labelled `ws63-hil` with a board attached and the flash
+# rig configured. It will NOT run on GitHub-hosted runners (no such label) — so until
+# that runner is registered this workflow is inert and safe. Manual-only by design
+# (flashing is destructive); the nightly schedule is left commented for when a board is
+# permanently wired up.
+#
+# Runner provides the board params via environment or repo variables:
+#   HIL_PORT        board UART0 serial port (e.g. /dev/ttyUSB0)
+#   HIL_LOADERBOOT  vendor loaderboot.bin path on the runner
+#   HIL_ADDRESS     program flash offset (e.g. 0x200000) — verify vs the partition table
+
+on:
+  workflow_dispatch:
+    inputs:
+      chip:
+        description: Target chip
+        type: choice
+        options: [ws63, bs21, bs21e, bs22, bs20]
+        default: ws63
+      example:
+        description: Single example (blank = full smoke suite)
+        type: string
+        default: ""
+  # schedule:
+  #   - cron: "0 4 * * *"   # nightly once a board is permanently attached
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  hil-smoke:
+    name: HIL smoke (${{ github.event.inputs.chip || 'ws63' }})
+    # Only a self-hosted runner with the board attached carries this label.
+    runs-on: [self-hosted, ws63-hil]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install hisi-riscv toolchain
+        run: bash .github/scripts/install-toolchain.sh
+
+      - name: Ensure hisiflash
+        run: command -v hisiflash >/dev/null 2>&1 || cargo install hisiflash-cli
+
+      - name: Preflight (no writes — fails fast if the rig is incomplete)
+        env:
+          PORT: ${{ vars.HIL_PORT }}
+          LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
+          ADDRESS: ${{ vars.HIL_ADDRESS }}
+        run: bash .claude/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
+
+      - name: HIL smoke
+        env:
+          PORT: ${{ vars.HIL_PORT }}
+          LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
+          ADDRESS: ${{ vars.HIL_ADDRESS }}
+          HIL_CONFIRM: "1"   # deliberate hardware write (see the flash-guard hook)
+        run: |
+          chip="${{ github.event.inputs.chip || 'ws63' }}"
+          ex="${{ github.event.inputs.example }}"
+          bash .claude/skills/hil-smoke/hil.sh "$chip" $ex
