@@ -49,7 +49,7 @@ echo "WS63 HIL smoke test on $PORT @ ${UART_BAUD} 8N1"
 check uart_hello   "Hello from WS63"        "UART banner (validates the 160 MHz baud base)"
 check timer_irq    "timer irq #|OK: timer"  "Timer IRQ delivery (validates the 24 MHz TCXO timer clock)"
 check gpio_irq     "gpio irq #"             "GPIO IRQ delivery"
-check reset_demo   "reset_reason=Software"  "software_reset + reset_reason"
+check reset_demo   "OK: software reset observed"  "software_reset + reset_reason (2nd boot marker)"
 check spi_loopback "SPI loopback OK"        "blocking SPI0 — SHORT MOSI<->MISO first!"
 check i2c_scan     "scan done|no devices"   "I2C0 bus scan"
 

@@ -24,7 +24,7 @@ docs/        architecture docs (Chinese)        hil/  hardware-in-the-loop scrip
 
 Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-riscv-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` is a separate isolated workspace (build with `--manifest-path examples/bs21/Cargo.toml`).
 
-**Architecture docs (Chinese):** see [`docs/`](docs/) — [`docs/architecture/overview.md`](docs/architecture/overview.md) for the whole picture, per-component docs under `docs/architecture/`, the full review ledger in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
+**Docs (Chinese):** the full handbook is an mdBook under [`docs/`](docs/) (build with `mdbook build docs`, serve with `mdbook serve docs`), organized by the [Diátaxis](https://diataxis.fr/) framework (tutorials / how-to / reference / explanation). The per-component architecture deep-dives now live under [`docs/src/explanation/components/`](docs/src/explanation/components/) (e.g. `overview.md` for the whole picture); the full review ledger is in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
 
 ## Build Commands
 
@@ -104,7 +104,7 @@ impl<'d> Uart<'d, Uart1<'d>> { pub fn new_uart1(...) -> Self { ... } }
 ### Sealed Traits (`private.rs`)
 
 - `Sealed` — supertrait preventing external implementation of `DmaWord`, `PeripheralInput`, `PeripheralOutput`.
-- (The old empty `DriverMode`/`Blocking`/`Async` marker traits were removed; real async now lives behind the `async`/`embassy` features — see "Async & embassy" below and `docs/architecture/async-embassy.md`.)
+- (The old empty `DriverMode`/`Blocking`/`Async` marker traits were removed; real async now lives behind the `async`/`embassy` features — see "Async & embassy" below and `docs/src/explanation/components/async-embassy.md`.)
 
 ### Clock Architecture
 
@@ -136,7 +136,7 @@ Two controllers share `dma::RegisterBlock`:
 - **No `std`** — `#![no_std]` throughout. No heap, no `Vec` in driver code. Use fixed arrays when data buffers are needed.
 - **Safety via lifetime generics** — peripherals are `'d`-parameterized to prevent use-after-drop of the `Peripherals` token.
 - **Register access is `unsafe`** — raw PAC register writes use `unsafe { reg.write(|w| w.bits(val)) }`. Driver methods encapsulate this.
-- **Async & embassy** — beyond the blocking drivers, hisi-riscv-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/architecture/async-embassy.md`.
+- **Async & embassy** — beyond the blocking drivers, hisi-riscv-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/src/explanation/components/async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
 ## CI/CD

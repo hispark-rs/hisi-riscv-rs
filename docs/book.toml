@@ -1,0 +1,23 @@
+[book]
+title = "WS63 Rust 嵌入式开发手册"
+description = "HiSilicon WS63 (RISC-V) 的 Rust 嵌入式生态：HAL、运行时、工具链、QEMU 与硬件在环测试。按 Diátaxis 框架组织。"
+authors = ["hispark-rs"]
+language = "zh"
+src = "src"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/hispark-rs/hisi-riscv-rs"
+edit-url-template = "https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/{path}"
+additional-css = []
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+
+[output.html.playground]
+runnable = false

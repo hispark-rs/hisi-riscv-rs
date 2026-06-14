@@ -1,6 +1,6 @@
 # hisi-riscv-rt 架构与评审
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
+> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 > **2026-06 更新**：同一 runtime 服务 WS63 与 BS2X（BS21/BS20）。BS2X 示例自带按芯片的 `memory.x`（BS21E/BS22 160K、BS20 128K L2RAM），见 `examples/bs21` / `examples/bs20`。
 
@@ -97,4 +97,4 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws
 
 - **阶段 1（链接脚本集成 ✅ 已完成 / 上板待硬件）**：链接脚本不传播问题已解决（`rustc-link-search` + `ws63-link.x` 包装脚本 + blinky `build.rs` 引入），blinky 现可链接并产出 `.bin`。剩余：真机上板冒烟、用 `readelf` 核实 WS63 布局生效。
 - **阶段 2（死代码清理 + 正确性修复）**：修正 `mtvec` 模式与向量表的不一致（Direct vs Vectored）；为 trap 段在 `layout.ld` 增加显式输出段放置；统一 `.stacks` 布局与 `memory.x` 栈顶 fallback；并随中断子系统模型纠正（PLIC vs LOCIPRI/LOCIEN）一并处理。对应上表前两行。
-- 其余仓库级排期（efuse/lsadc、flashboot 镜像头/验签/AB、porting+HCC+blob 连接性、async）见 [ROADMAP](../../ROADMAP.md) 阶段 2-6，与本运行时组件无直接耦合。
+- 其余仓库级排期（efuse/lsadc、flashboot 镜像头/验签/AB、porting+HCC+blob 连接性、async）见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 阶段 2-6，与本运行时组件无直接耦合。

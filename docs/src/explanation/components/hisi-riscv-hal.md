@@ -1,6 +1,6 @@
 # hisi-riscv-hal 架构与评审
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
+> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 > **2026-06 更新**：HAL 现为**多芯片** —— `chip-ws63`（默认）/ `chip-bs21` 特性。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族；BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
 
@@ -95,7 +95,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 ### 问题
 
-> 下表为 **2026-05 评审快照**；其后多数阶段 2 项已修（见各行状态），权威进度以 [评审台账](../review/architecture-review-2026-05.md) 为准。全部修复在姊妹仓 `ws63-qemu` 软件在环验证。
+> 下表为 **2026-05 评审快照**；其后多数阶段 2 项已修（见各行状态），权威进度以 [评审台账](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md) 为准。全部修复在姊妹仓 `ws63-qemu` 软件在环验证。
 
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
@@ -111,7 +111,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 ## 改进项与排期
 
-按 [ROADMAP](../../ROADMAP.md)（多数已完成，下记现状）：
+按 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)（多数已完成，下记现状）：
 
 - **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
 - **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
