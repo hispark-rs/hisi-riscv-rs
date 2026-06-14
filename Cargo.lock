@@ -558,6 +558,7 @@ dependencies = [
  "nb 1.1.0",
  "portable-atomic",
  "proptest",
+ "semihosting",
  "ws63-pac",
 ]
 
