@@ -1,9 +1,10 @@
-# 搭建开发环境
+# 搭建环境（贡献生态）
 
-本课带你装好全部工具，并以一次成功的编译收尾。请逐步执行，每一步都有可见的结果。
+本课带你装好全部工具、克隆带子模块的monorepo，并以一次成功的编译收尾。
+请逐步执行，每一步都有可见的结果。
 
 > 本课只求"把工具跑起来"。每个工具的深入安装与故障排查见
-> [安装 hisi-riscv 工具链](../how-to/install-toolchain.md)。
+> [安装 hisi-riscv 工具链](../../how-to/install-toolchain.md)。
 
 ## 第 1 步：安装 hisi-riscv 工具链
 
@@ -26,7 +27,7 @@ rustup toolchain list | grep hisi-riscv
 
 你应当看到：
 
-```
+```console
 hisi-riscv
 ```
 
@@ -46,7 +47,7 @@ cd hisi-riscv-rs
 
 ## 第 3 步：安装 QEMU 模拟器
 
-第 2、3、4 课要用 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu)——
+第 2、3 课要用 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu)——
 一个带 WS63 机器模型（`-M ws63`）的 QEMU 分支。在仓库**同级**目录里克隆并构建它：
 
 ```bash
@@ -64,18 +65,18 @@ bash scripts/build.sh
 
 你应当看到 `ws63` 出现在机器列表中。把这个二进制加入 `PATH`，
 或记下它的路径——第 2 课会用到。详细步骤见
-[QEMU 模型](../explanation/qemu-model.md)。
+[QEMU 模型](../../explanation/qemu-model.md)。
 
 ## 第 4 步：安装烧录工具（真机用）
 
-第 2、5 课要烧到真板，需要两个工具：
+第 3 课要烧到真板，需要两个工具：
 
 - [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)：把 ELF 打包成可启动镜像（加 `0x300` 启动头）。
 - **打过补丁的 probe-rs 分支**（`hispark-rs/probe-rs`，分支 `add-hisilicon-ws63-bs21`）：
   上游 probe-rs 不认识 WS63，必须用这个分支，并配上 `HiSilicon_WS63.yaml`。
 
-安装方法（深入说明见 [安装工具链](../how-to/install-toolchain.md) 与
-[用 probe-rs 烧录到真机](../how-to/flash-probe-rs.md)）：
+安装方法（深入说明见 [安装工具链](../../how-to/install-toolchain.md) 与
+[用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md)）：
 
 ```bash
 # hisi-fwpkg
@@ -92,7 +93,7 @@ hisi-fwpkg --help
 probe-rs --version
 ```
 
-> 第 3、4 课只用 QEMU，可以暂时跳过本步；等到第 2 课要烧真机时再装也行。
+> 第 2 课只用 QEMU，可以暂时跳过本步；等到第 3 课要烧真机时再装也行。
 
 ## 第 5 步：验证你的环境
 
@@ -105,7 +106,7 @@ cargo build -p blinky --release
 
 第一次编译会拉取依赖、编译 HAL，需要几分钟。结束时你应当看到类似：
 
-```
+```console
     Finished `release` profile [optimized + debuginfo] target(s) in ...
 ```
 
@@ -119,5 +120,5 @@ ls target/riscv32imfc-unknown-none-elf/release/blinky
 
 > 编译过程中会有一些 `.weak StorePageFault` 之类的汇编 warning，这是正常的，可以忽略。
 
-环境就绪！下一课我们就让这个 blinky 真正跑起来 ——
-[点亮第一个 LED（blinky）](02-blinky.md)。
+环境就绪！下一课我们构建并运行完整的示例集 ——
+[构建与运行示例集](02-examples.md)。

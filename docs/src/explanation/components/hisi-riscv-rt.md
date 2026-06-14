@@ -28,7 +28,7 @@
 
 ## 在依赖链中的位置
 
-```
+```console
 ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws63/*
                                   hisi-riscv-rt ─┘  提供启动/向量/链接脚本
 ```

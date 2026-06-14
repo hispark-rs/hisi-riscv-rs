@@ -26,7 +26,7 @@ cargo build --release        # 构建 default-members（库 + 全部 ws63 示例
 
 根工作区共用根 `target/`，release ELF 在：
 
-```
+```console
 target/riscv32imfc-unknown-none-elf/release/<name>
 ```
 
@@ -56,4 +56,4 @@ OBJCOPY="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-g
 
 - 打包成可启动镜像 → [如何打包成可启动镜像](package-image.md)
 - 烧到真机 → [用 probe-rs](flash-probe-rs.md) / [用 hisiflash](flash-hisiflash.md)
-- 在 QEMU 里跑 → 见教程 [在 QEMU 里运行与调试](../tutorials/04-qemu.md)
+- 在 QEMU 里跑 → 见教程 [在 QEMU 里运行与调试](../tutorials/contrib/02-examples.md)

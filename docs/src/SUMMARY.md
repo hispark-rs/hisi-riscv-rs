@@ -6,12 +6,21 @@
 
 # 教程 · Tutorials
 
-- [本章导读](tutorials/index.md)
-- [搭建开发环境](tutorials/01-setup.md)
-- [点亮第一个 LED（blinky）](tutorials/02-blinky.md)
-- [第一个 UART 程序（uart_hello）](tutorials/03-uart-hello.md)
-- [在 QEMU 里运行与调试](tutorials/04-qemu.md)
-- [第一次硬件在环测试](tutorials/05-first-hil.md)
+- [本章导读 · 选择你的路径](tutorials/index.md)
+
+# 教程 · 应用开发者
+
+- [本路径导读](tutorials/app/index.md)
+- [搭建环境（应用开发）](tutorials/app/01-setup.md)
+- [从模板创建你的第一个工程](tutorials/app/02-first-project.md)
+- [改造成一个 UART 程序](tutorials/app/03-uart.md)
+
+# 教程 · 生态贡献者
+
+- [本路径导读](tutorials/contrib/index.md)
+- [搭建环境（贡献生态）](tutorials/contrib/01-setup.md)
+- [构建与运行示例集](tutorials/contrib/02-examples.md)
+- [第一次硬件在环测试](tutorials/contrib/03-hil.md)
 
 # 操作指南 · How-to Guides
 

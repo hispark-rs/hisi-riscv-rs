@@ -24,7 +24,10 @@
 | [**参考**](reference/index.md) | 查信息 | 你需要准确的事实：地址、标记串、API、命令行参数 |
 | [**原理与背景**](explanation/index.md) | 理解 | 你想搞懂"为什么这样设计" |
 
-如果你是第一次接触，建议从[搭建开发环境](tutorials/01-setup.md)开始。
+如果你是第一次接触，先到[教程导读](tutorials/index.md)选择适合你的路径——本手册的教程分两条：
+
+- **应用开发者**：用 `cargo generate` 从[模板](https://github.com/hispark-rs/hisi-rs-template)脚手架出**你自己的 WS63 应用**（依赖来自 crates.io，无需克隆本仓库）。见[应用开发者路径](tutorials/app/index.md)。
+- **生态贡献者**：克隆本 monorepo（含子模块），构建/运行完整示例集、改 HAL/PAC/运行时、跑完整 HIL。见[生态贡献者路径](tutorials/contrib/index.md)。
 
 ## 仓库
 

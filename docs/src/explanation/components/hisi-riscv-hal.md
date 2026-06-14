@@ -23,7 +23,7 @@
 
 ## 在依赖链中的位置
 
-```
+```console
 ws63-svd (XML)
    │ svd2rust 生成
    ▼

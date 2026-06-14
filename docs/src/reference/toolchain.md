@@ -64,7 +64,7 @@ rustup toolchain link hisi-riscv "$PWD/stage2"
 
 release URL 形态：
 
-```
+```console
 https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/<tag>/hisi-riscv-rust-1.96.0-<host-triple>.tar.gz
 ```
 
