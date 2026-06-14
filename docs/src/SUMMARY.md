@@ -6,23 +6,17 @@
 
 # 教程 · Tutorials
 
-- [本章导读 · 选择你的路径](tutorials/index.md)
+- [选择你的路径](tutorials/index.md)
+- [应用开发者](tutorials/app/index.md)
+  - [搭建环境](tutorials/app/01-setup.md)
+  - [创建你的第一个工程](tutorials/app/02-first-project.md)
+  - [改造成 UART 程序](tutorials/app/03-uart.md)
+- [生态贡献者](tutorials/contrib/index.md)
+  - [搭建环境](tutorials/contrib/01-setup.md)
+  - [构建与运行示例集](tutorials/contrib/02-examples.md)
+  - [第一次硬件在环测试](tutorials/contrib/03-hil.md)
 
-# 教程 · 应用开发者
-
-- [本路径导读](tutorials/app/index.md)
-- [搭建环境（应用开发）](tutorials/app/01-setup.md)
-- [从模板创建你的第一个工程](tutorials/app/02-first-project.md)
-- [改造成一个 UART 程序](tutorials/app/03-uart.md)
-
-# 教程 · 生态贡献者
-
-- [本路径导读](tutorials/contrib/index.md)
-- [搭建环境（贡献生态）](tutorials/contrib/01-setup.md)
-- [构建与运行示例集](tutorials/contrib/02-examples.md)
-- [第一次硬件在环测试](tutorials/contrib/03-hil.md)
-
-# 操作指南 · How-to Guides
+# 操作指南 · How-to
 
 - [本章导读](how-to/index.md)
 - [安装 hisi-riscv 工具链](how-to/install-toolchain.md)
