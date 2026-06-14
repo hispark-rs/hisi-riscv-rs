@@ -1,0 +1,71 @@
+# On-target HIL (hardware-in-the-loop) test crate for the WS63 RISC-V target.
+#
+# `cargo test` here builds a libtest-compatible test ELF that the patched
+# probe-rs fork (`probe-rs run`) flashes to a real WS63 board and drives via
+# RISC-V semihosting (embedded-test's "run each test in turn" protocol). See
+# ../hil/README.md for the exact command.
+#
+# This crate is deliberately a workspace *member* but is EXCLUDED from
+# default-members, so a plain `cargo build` / `cargo build --workspace` does NOT
+# pull embedded-test (semihosting harness). Build it explicitly:
+#   cargo test -p tests-hil --target riscv32imfc-unknown-none-elf --no-run
+[package]
+name = "tests-hil"
+version = "0.1.0"
+edition = "2024"
+description = "On-target (semihosting) HIL tests for the WS63 RISC-V target, run via probe-rs + embedded-test"
+license = "MIT"
+publish = false
+
+[dependencies]
+# The PAC under test: we exercise its structural facts (base-address constants)
+# and a single volatile register read (QEMU + bare-board safe; no external
+# wiring). Direct path dep (like examples/ws63/blinky) so we can name
+# ws63_pac::{Peripherals, Gpio0, ...} — the HAL keeps its PAC `pub(crate)`.
+ws63-pac = { path = "../crates/pac/ws63-pac" }
+# The HAL is linked too so its no-atomic / critical-section configuration and
+# (transitively) the same single PAC instance are exercised under test.
+hisi-riscv-hal = { path = "../crates/hisi-riscv-hal" }
+# boot-header: bake the 0x300 HiSilicon image header into the test ELF so the
+# bare ELF is directly bootable by flashboot (the runner only needs to
+# `hisi-fwpkg patch-hash` it to fill the body SHA-256 — no separate `image`
+# step). hisi-riscv-rt also provides the startup + critical-section impl + the
+# riscv-rt runtime that calls embedded-test's exported `main` (see tests/hil.rs).
+hisi-riscv-rt = { path = "../crates/hisi-riscv-rt", features = ["boot-header"] }
+# The WS63 core has no atomic extension; mirror the HAL: portable-atomic's RMW
+# polyfill goes through critical-section (impl registered by hisi-riscv-rt).
+# embedded-test (via `semihosting`) needs a real critical-section impl in graph.
+portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
+critical-section = "1"
+
+[dev-dependencies]
+# embedded-test brings its own test harness + panic-handler + a `main` entry
+# (exported as the C symbol `main`, which hisi-riscv-rt's runtime_init calls).
+# Default features = ["semihosting", "panic-handler"] — exactly what the WS63
+# semihosting test-report channel needs (validated on silicon 2026-06-14).
+embedded-test = "0.7"
+# Provides the `embedded-test.x` linker fragment on the link-search path so
+# build.rs's `-Tembedded-test.x` resolves (lets embedded-test stay a dev-dep).
+embedded-test-linker-script = "0.1"
+
+[lib]
+# We bring our own (embedded-test) harness; disable the default libtest harness
+# for the lib's own unit-test target (there are none) so `cargo test` does not
+# try to link the std `test` crate or require a panic handler for the bare lib.
+harness = false
+test = false
+bench = false
+
+[[test]]
+name = "hil"
+# Important: embedded-test IS the harness; the default libtest one would pull in
+# the std `test` crate (unavailable on this no_std target) and a panic handler.
+harness = false
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true

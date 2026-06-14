@@ -104,6 +104,40 @@ PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x230000 \
 环境变量：`PORT`（串口）、`BAUD`（烧录波特，hisiflash 默认 921600）、`UART_BAUD`（例子 UART0 波特，默认
 115200）、`LOADERBOOT`、`ADDRESS`、`HISIFLASH`（二进制名）、`SETTLE`（每次烧录后读 UART 秒数）。
 
+## 在板跑 `cargo test`（embedded-test + 半主机）
+
+`tests-hil` 是一个**在板测试 crate**：用 [`embedded-test`](https://github.com/probe-rs/embedded-test)
+的测试 harness，由补丁版 probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）**
+逐个用例驱动并把结果（libtest 兼容）报回 `cargo test`。半主机通道已于 2026-06-14 在真硅片上验证
+（`semihost_selftest` 打印 PASS + 捕获 SYS_EXIT）。
+
+测试 ELF 自带 0x300 启动头（`tests-hil` 以 `hisi-riscv-rt` 的 `boot-header` feature 构建），
+runner 只需 `hisi-fwpkg patch-hash` 补头部 body SHA-256 即可启动。embedded-test 自带 `main`
+入口（导出为 C 符号 `main`，由 `hisi-riscv-rt` 的 `runtime_init` 调用）和 `#[panic_handler]`，
+所以测试文件**不**用 `#[entry]`、也不写 panic handler。
+
+```bash
+# 1. 仅构建测试 ELF（不上板）——产出在 target/.../deps/hil-*
+cargo test -p tests-hil --target riscv32imfc-unknown-none-elf --no-run
+
+# 2. 在板跑全部用例：用 hil/embedded-test-runner.sh 作为该次 test 调用的 runner
+#    （只覆盖这一次；.cargo/config.toml 里 `cargo run` 仍走 QEMU，不受影响）
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+    cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+```
+
+runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `cargo-run-hw.sh`）：
+`PROBE_RS`（probe-rs 二进制，需补丁 fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`）、
+`PROBE_CHIP`（默认 `WS63`）、`PROBE_YAML`（`--chip-description-path` 的 YAML，默认空=内置库）、
+`HISI_FWPKG`（默认 `hisi-fwpkg`）。runner 先 `hisi-fwpkg patch-hash <elf>`（原地补头），
+再 `probe-rs run --chip WS63 [--chip-description-path YAML] <elf> [embedded-test 参数]`。
+
+用例（自包含、无需跳线，QEMU/裸板皆安全）：(a) M/F/CSR 指令不变式（整数乘、ilp32f 硬浮点、mcycle 自增，
+镜像 `semihost_selftest`）；(b) PAC 基址结构性断言（GPIO0/UART0/TCXO 窗口未漂移）；
+(c) 经 `#[init]` 取出的 PAC 单例读一次 TCXO 状态寄存器（验证 MMIO load 不陷入）。
+
+> 注意：`tests-hil` 是 workspace member 但**不在 default-members**，故普通 `cargo build` 不会拉 embedded-test。
+
 ## Bring-up 清单（按序，每步附预期 + 失败诊断）
 
 | 步 | 验证 | 预期 | 失败诊断 |
