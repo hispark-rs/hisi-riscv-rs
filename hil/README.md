@@ -21,7 +21,28 @@ sudo apt-get install -y gdb-multiarch  # 真机/QEMU 调试（rust-gdb 驱动它
 - **`ADDRESS`** —— 程序写入的 flash 偏移。**对照板子的分区表确认**（典型 app 分区偏移；内存映射里
   NOR_FLASH/XIP 起始 `0x0020_0000`，但 write 的是 SFC flash 偏移，二者不一定相同）。
 
-## 用法
+## 打包成 fwpkg（flashboot 可加载）
+
+**裸 ELF/bin 不会被 flashboot 加载** —— flashboot 期望 app 分区（WS63 flash `0x230000`）
+开头是 0x300 字节的 HiSilicon **image header**，并**无条件**跳到 `app_partition + 0x300`。
+缺了这层 header，复位后 PC 落在 header 之后 0x300 字节处（或 SRAM 残留），不会进你的程序。
+
+[`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg) 补上这层：ELF/bin → image（0x300
+header + body，含 body 的 SHA-256；secure boot 关了时签名 dummy 即可）→ fwpkg（V1 容器 + CRC）。
+
+```bash
+cargo install hisi-fwpkg-cli            # 或 cargo install --path <hisi-fwpkg>/crates/hisi-fwpkg-cli
+
+# 一键：例子名（自动找 release ELF）→ 可烧 fwpkg（默认输出到 target 目录）
+CHIP=ws63 hil/pack.sh blinky            # -> examples/ws63/target/.../blinky.fwpkg
+hisiflash info  target/.../blinky.fwpkg # 静态校验结构（V1 / 分区 / CRC）
+hisiflash flash target/.../blinky.fwpkg # 烧录（boot 链已在板上时，只更新 app 即可）
+```
+
+`pack.sh` 自动识别 ELF vs raw bin；`CHIP` 决定 app 分区地址（ws63=0x230000、bs21=0x90000），
+`APP_ADDR=` 可覆盖。`IMAGE_ONLY=1` 额外产出裸 image（`.img`，仅 header+body，用于 `write` 到分区）。
+
+## 用法（裸 bin 直写，仅在你自己负责加 header 时用）
 
 ```bash
 # 单个固件（按例子名自动找 .bin，没有就用 rust-objcopy 从 ELF 生成）
