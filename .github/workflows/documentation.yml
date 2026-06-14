@@ -42,14 +42,30 @@ jobs:
           key: ${{ runner.os }}-cargo-ws63-docs-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-ws63-docs-
 
+      - name: Install mdBook
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+
+      - name: Build the mdBook handbook (docs/ -> docs/book)
+        run: mdbook build docs
+
       - name: Build API documentation (hisi-riscv-hal/pac/rt)
         run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
+
+      - name: Assemble the site (handbook at /, rustdoc under /api)
+        run: |
+          rm -rf site && mkdir -p site/api
+          cp -r docs/book/. site/
+          cp -r target/riscv32imfc-unknown-none-elf/doc/. site/api/
+          # rustdoc has no root index.html; redirect /api/ to the HAL crate's docs.
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=hisi_riscv_hal/index.html">\n' > site/api/index.html
 
       - name: Upload docs artifact
         uses: actions/upload-artifact@v6
         with:
           name: api-docs
-          path: target/riscv32imfc-unknown-none-elf/doc/
+          path: site/
 
   # ── Deploy to GitHub Pages ────────────────────────────────────
   deploy:
