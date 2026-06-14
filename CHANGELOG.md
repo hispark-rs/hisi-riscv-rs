@@ -21,9 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- **HIL suite grown to 11 driver tests, all passing on silicon** — added
-  `efuse_read_byte0_ok` (eFuse read path) and `trng_produces_entropy` (real TRNG
-  hardware entropy), both self-contained (no jumpers).
+- **HIL suite grown to 12 driver tests, all passing on silicon** — added
+  `efuse_read_byte0_ok` (eFuse read path), `trng_produces_entropy` (real TRNG
+  entropy), and `tsensor_reads_in_range` (on-die temperature), all
+  self-contained (no jumpers).
 
 ### Changed
 
