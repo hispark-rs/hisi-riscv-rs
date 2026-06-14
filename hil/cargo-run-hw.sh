@@ -3,16 +3,20 @@
 # it — turning `cargo run` into "flash to hardware" instead of "boot in QEMU".
 #
 # Cargo invokes a runner as `<runner> <path-to-built-elf> [args...]`, so this
-# script takes the ELF as $1, wraps it into a bootable 0x300-header image with
-# hisi-fwpkg, downloads it to the app partition with the patched probe-rs fork,
-# resets the chip, and (if PORT is set) streams UART0 so you see the output.
+# script takes the ELF as $1. With the `boot-header` feature the 0x300 HiSilicon
+# header is already baked into the ELF at link time, so the bare ELF is directly
+# bootable — there is no `hisi-fwpkg image` step and no intermediate .img. We
+# only fill the body SHA-256 in place with `hisi-fwpkg patch-hash` (flashboot
+# checks the hash even with secure-verify off — secure-off skips the ECC
+# signature, not the hash), then `probe-rs download` the patched ELF straight to
+# flash with the patched probe-rs fork, reset the chip, and (if PORT is set)
+# stream UART0 so you see the output.
 #
 # Enable it for one run via the per-target runner env var, or use `just run-hw`:
 #   CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh \
 #       cargo run -p blinky --release
 #
 # Env (all optional, sensible defaults):
-#   APP_ADDR     app-partition flash address       (default 0x00230000, WS63)
 #   PROBE_RS     probe-rs binary                    (default: `probe-rs` in PATH)
 #   PROBE_CHIP   probe-rs --chip value              (default WS63)
 #   PROBE_YAML   --chip-description-path YAML       (default: empty = built-in DB)
@@ -24,7 +28,6 @@ set -euo pipefail
 
 ELF="${1:?cargo passes the built ELF path as \$1}"
 
-APP_ADDR="${APP_ADDR:-0x00230000}"
 PROBE_RS="${PROBE_RS:-probe-rs}"
 PROBE_CHIP="${PROBE_CHIP:-WS63}"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
@@ -43,15 +46,11 @@ command -v "$PROBE_RS" >/dev/null 2>&1 || {
 yaml_args=()
 [ -n "${PROBE_YAML:-}" ] && yaml_args=(--chip-description-path "$PROBE_YAML")
 
-img="$(mktemp --suffix=.img)"
-trap 'rm -f "$img"' EXIT
+echo "run-hw: filling body SHA-256 in place: $(basename "$ELF") (0x300 header already baked in)"
+"$HISI_FWPKG" patch-hash "$ELF"
 
-echo "run-hw: packaging $(basename "$ELF") -> image (0x300 header)"
-"$HISI_FWPKG" image -o "$img" "$ELF"
-
-echo "run-hw: downloading image to ${APP_ADDR} via probe-rs"
-"$PROBE_RS" download --chip "$PROBE_CHIP" "${yaml_args[@]}" \
-    --binary-format bin --base-address "$APP_ADDR" "$img"
+echo "run-hw: downloading the patched ELF to flash via probe-rs"
+"$PROBE_RS" download --chip "$PROBE_CHIP" "${yaml_args[@]}" "$ELF"
 
 # Optionally start UART capture *before* reset so we don't miss the boot banner.
 cap=""

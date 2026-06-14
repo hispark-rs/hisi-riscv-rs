@@ -69,9 +69,13 @@ QEMU↔硅片的分歧高度集中在固定几类，triage 按这个清单逐项
 要诚实——这是进行中的工作，不是已完成的胜利：
 
 - **blinky：已在真硅片上确认。** 完整的 Rust → flash → 启动主流程
-  （`cargo build` → `hisi-fwpkg image` → `probe-rs download @0x230000` → reset）
+  （`cargo build` → `hisi-fwpkg patch-hash <elf>` → `probe-rs run <elf>`）
   于 2026-06-14 在真 WS63 硅片上跑通，blinky 上电启动并翻转 GPIO0。这是第一个、也是目前
-  唯一一个**端到端真机确认**的例子。
+  唯一一个**端到端真机确认**的例子。WS63 走 `boot-header` feature——0x300 头在链接期就烤进
+  ELF，链接后只需 `hisi-fwpkg patch-hash` 补上真实 body SHA-256（secure-off 仍校验 hash，
+  只跳过 ECC 签名），裸 ELF 即可直接 `probe-rs download` / `probe-rs run`，没有中间 `.img`、
+  也没有 `hisi-fwpkg image` 步骤。（BS2X 暂无链接期 boot-header，仍走 route 1 的
+  `hisi-fwpkg image -o app.img <elf>` → 烧到 app 分区。）
 - **uart_hello：跑到了 main 并在运行，但 banner 还读不出来。** 固件确实启动、确实进了
   `main`、确实在跑——但它的 UART banner 目前在真硅片上**还读不到**。**怀疑是波特/时钟
   假设的问题**（对照上面的分歧类 1：UART 的 160 MHz 时钟基），**正在排查中**。

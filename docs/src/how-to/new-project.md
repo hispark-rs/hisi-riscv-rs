@@ -33,8 +33,9 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
 | --- | --- |
 | `just build` | `cargo build --release` 编出 ELF |
 | `just run` | 在 QEMU 里跑（`cargo run --release`） |
-| `just image` | build 后 `hisi-fwpkg image` 补 0x300 头 → `*.img` |
-| `just flash` | image 后 `probe-rs download` 烧进 app 分区再 `reset` |
+| `just patch`（WS63） | build 后 `hisi-fwpkg patch-hash {{elf}}` 补 body 的 SHA-256（0x300 头已由 `boot-header` feature 在链接期嵌进 ELF，无需 `image` 步骤） |
+| `just image`（BS2X） | build 后 `hisi-fwpkg image` 补 0x300 头 → `*.img`（BS2X 暂无链接期 boot-header，仍走 image 路径） |
+| `just flash` | WS63：patch 后 `probe-rs download` 直接烧裸 ELF 再 `reset`；BS2X：image 后 `probe-rs download` 把 `*.img` 烧进 app 分区再 `reset` |
 | `just fwpkg` | `hisi-fwpkg pack` 产 `*.fwpkg`（hisiflash/厂商路径） |
 | `just clean` | `cargo clean` + 删 img/fwpkg |
 
@@ -46,11 +47,24 @@ just CHIP_DESC=~/probe-rs/HiSilicon_WS63.yaml flash
 
 ## 第一次构建 + 烧录
 
+WS63（route 2，链接期已带 0x300 头）：
+
+```bash
+cd my-app
+just build          # 编出 release ELF（boot-header feature 已把 0x300 头嵌进 ELF）
+just patch          # hisi-fwpkg patch-hash 补 body 的 SHA-256
+just flash          # probe-rs download 直接烧裸 ELF 并复位（需 probe-rs fork + yaml）
+```
+
+> `just flash` 依次做了这些事：先 `just patch`（`hisi-fwpkg patch-hash {{elf}}` 把 body 的 SHA-256 填进链接期已嵌好的 0x300 头），再 `probe-rs download --chip WS63 ... {{elf}}` 把这份裸 ELF **直接**烧到芯片（无中间 `.img`），最后 `probe-rs reset` 复位运行。
+
+BS2X（route 1，build 后才补 0x300 头打成 `.img`）：
+
 ```bash
 cd my-app
 just build          # 编出 release ELF
-just image          # 打成 0x300 头镜像
-just flash          # 烧进真机并复位（需 probe-rs fork + yaml）
+just image          # hisi-fwpkg image 补 0x300 头 → *.img
+just flash          # probe-rs download 把 *.img 烧进 app 分区并复位
 ```
 
 烧 BS2X 时把 `CHIP`/`APP_ADDR` 调成对应值（BS2X 基址 `0x00090000`，**尚未 HIL 验证**，先对照分区表确认）。

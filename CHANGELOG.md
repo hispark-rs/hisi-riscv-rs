@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed (silicon bring-up)
+
+- **TIMER** + **M_DMA** now pass end-to-end on real WS63 silicon (the last two
+  `#[ignore]`'d HIL tests). TIMER `current_value()` does the `cnt_req`/`cnt_lock`
+  latch handshake; M_DMA `configure_channel()` starts via `dmac_en_chns` and
+  detects completion by its auto-clear (vendor-correct, not the QEMU path). Also:
+  a new `cache` module for the non-coherent D-cache, and `enable_controller()`
+  bypasses the M_DMA auto-clock-gate.
+- **UART boot clock** resolved: flashboot's console runs on the raw TCXO (confirmed
+  **40 MHz** on this board), not the 160 MHz PLL — new `uart::Config::clock_hz` +
+  `soc::chip::uart_boot_clock_hz()`. Two real driver bugs (`wdt` saturate-before-
+  narrow, `sfc` floor-before-mask) found + fixed by new property tests.
+
+### Added
+
+- **HIL suite grown to 11 driver tests, all passing on silicon** — added
+  `efuse_read_byte0_ok` (eFuse read path) and `trng_produces_entropy` (real TRNG
+  hardware entropy), both self-contained (no jumpers).
+
+### Changed
+
+- **ws63-pac**: `TIMER%s_CONTROL` gains the `cnt_req`/`cnt_lock` fields and its
+  `mode` enum is corrected to the vendor values (`OneShot=0/Periodic=1/FreeRun=3`),
+  regenerated from the SVD. (The DMA block was already silicon-correct.) The SVD
+  `regen.sh` also now resolves the ws63-pac crate in both the sibling and nested
+  (submodule) layouts.
+- Host test coverage expanded to **302** unit + property tests (from 82). A code
+  review removed 4 tautological `tcxo` status-bit tests (they asserted literals
+  against themselves); the `tcxo` driver bit values are now named consts the
+  property tests bind to, so a driver-bit change actually fails a test.
+
+### Tracking
+
+- QEMU model divergences from silicon filed as hisi-riscv-qemu **#5** (M_DMA
+  `en_chns`), **#6** (TIMER latch handshake), **#7** (SDMA unprovisioned). QEMU is
+  not treated as a reference — these are fixed in QEMU, not worked around in Rust.
+
+---
+
+## [2026-06-14] — crates.io: hisi-riscv-hal 0.3.2 · hisi-riscv-rt 0.2.1
+
 ### Added
 
 - **Hardware bring-up (validated on real WS63 silicon)** — `blinky` boots and
@@ -13,14 +54,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `boot-header` + `hisi-fwpkg patch-hash`) → `probe-rs download` → boot works;
   semihosting works on target.
 - **HIL** — hardware-validated probe-rs flash flow; `hil/cargo-run-hw.sh` (cargo
-  runner) + `hil/embedded-test-runner.sh`; on-target `embedded-test` HIL suite
-  (`tests-hil/`, runs via `cargo test` + probe-rs + semihosting — 9 tests passing
-  on silicon).
+  runner) + `hil/embedded-test-runner.sh`; on-target `embedded-test` HIL suites
+  (run via `cargo test` + probe-rs + semihosting): `tests-hil/tests/hil.rs` — 3
+  cross-cutting CPU/PAC tests (`cpu_m_f_csr_invariants`,
+  `pac_peripheral_base_addresses`, `pac_peripheral_base_addresses_extra`);
+  `crates/hisi-riscv-hal/tests/hil.rs` — 9 driver tests, **all 9 passing on
+  silicon** (incl. `timer_counter_advances` and `dma_mem_to_mem` after the
+  TIMER-latch and M_DMA `en_chns` silicon fixes — see Unreleased).
 
 ### Changed
 
-- Submodule bumps: `hisi-riscv-hal` (uart `div_fra` fix), `hisi-riscv-rt`
-  (`boot-header` feature).
+- Submodule bumps: `hisi-riscv-hal` 0.3.2 (uart `div_fra` fix), `hisi-riscv-rt`
+  0.2.1 (`boot-header` feature).
 
 ### Fixed
 

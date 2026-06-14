@@ -6,7 +6,7 @@
 
 ## 原理
 
-cargo 调用 runner 的方式是 `<runner> <编译出的ELF路径> [args...]`。`hil/cargo-run-hw.sh` 接住 `$1` 这个 ELF，用 `hisi-fwpkg image` 包成 0x300 头镜像，用补丁版 probe-rs `download` 写进 app 分区，`reset` 复位，并（若设了 `PORT`）在复位前就开始抓 UART0 输出。
+cargo 调用 runner 的方式是 `<runner> <编译出的ELF路径> [args...]`。`hil/cargo-run-hw.sh` 接住 `$1` 这个 ELF。WS63 用 hisi-riscv-rt 的 `boot-header` feature，0x300 HiSilicon 头在**链接期**就烤进了 ELF，裸 ELF 直接可引导——没有 `hisi-fwpkg image` 步骤、也没有中间 `.img`。脚本只用 `hisi-fwpkg patch-hash <elf>` 就地补上 body SHA-256（flashboot 即便关了 secure-verify 也仍校验 hash，secure-off 只跳过 ECC 签名，不跳过 hash），然后用补丁版 probe-rs `download` 把这个补好 hash 的 ELF 直接写进 flash，`reset` 复位，并（若设了 `PORT`）在复位前就开始抓 UART0 输出。
 
 > 它依赖[补丁版 probe-rs fork](flash-probe-rs.md) 和 `hisi-fwpkg`——脚本启动时会检查这两个二进制在不在。
 
@@ -33,7 +33,6 @@ PORT=/dev/ttyUSB0 \
 
 | 变量 | 含义 | 默认 |
 | --- | --- | --- |
-| `APP_ADDR` | app 分区 flash 地址 | `0x00230000`（WS63；BS2X 用 `0x00090000`） |
 | `PROBE_RS` | probe-rs 二进制 | PATH 里的 `probe-rs` |
 | `PROBE_CHIP` | `probe-rs --chip` 值 | `WS63` |
 | `PROBE_YAML` | `--chip-description-path` yaml | 空 = 用内置数据库 |
@@ -58,7 +57,9 @@ PORT=/dev/ttyUSB0 UART_BAUD=115200 MONITOR=15 \
 
 从模板生成的工程（见[如何从模板新建一个工程](new-project.md)）用 `just` 封装了同样的流程：
 
-- `just flash` ≈ 这里的「打包 + download + reset」（`image` → `probe-rs download` → `probe-rs reset`）。
-- 要让 `cargo run`/`just run-hw` 烧真机而非 QEMU，是同一套机制：模板的 `just run` 走 QEMU，烧真机用 `just flash`（或在工程里照本篇加一条 `run-hw` 配方，把 `CARGO_TARGET_..._RUNNER` 指向 `cargo-run-hw.sh`）。
+- WS63：`just flash` ≈ 这里的「补 hash + download + reset」（`hisi-fwpkg patch-hash` → `probe-rs download <elf>` → `probe-rs reset`）；`just run-hw` 则等价于在补好 hash 的 ELF 上跑 `probe-rs run`（顺带抓 RTT/semihosting）。
+- 要让 `cargo run`/`just run-hw` 烧真机而非 QEMU，是同一套机制：模板的 `just run` 走 QEMU，烧真机用 `just flash`/`just run-hw`（或在工程里照本篇加一条 `run-hw` 配方，把 `CARGO_TARGET_..._RUNNER` 指向 `cargo-run-hw.sh`）。
 
-`just flash` 的实现就是上面三步的等价命令，区别只是用 justfile 变量（`CHIP`/`CHIP_DESC`/`APP_ADDR`）代替环境变量。
+WS63 的 `just flash` 实现就是上面三步的等价命令，区别只是用 justfile 变量（`CHIP`/`CHIP_DESC`）代替环境变量。
+
+> BS2X（BS21/BS20）没有链接期 boot-header，仍走「route 1」：`just image` 用 `hisi-fwpkg image -o app.img <elf>` 后打包，`just flash` 再把 `.img` 按 `--binary-format bin --base-address {{APP_ADDR}}` 写到 app 分区。本篇的 WS63 runner 不适用于 BS2X。

@@ -12,9 +12,11 @@
 cargo install hisi-fwpkg-cli
 ```
 
-### `hisi-fwpkg image`
+### `hisi-fwpkg image`（路线 1 / BS2X）
 
-ELF/bin → app 镜像（`0x300` header || body，含 body SHA-256）。这是 probe-rs 路径要烧的产物。
+ELF/bin → app 镜像（`0x300` header || body，含真实 body SHA-256）。这是 **BS2X 的路线 1** 产物：BS2X 暂无 link-time `boot-header`，构建后用 `image` 单独生成可启动 `.img`，再烧到 app 分区。
+
+> WS63 走 **路线 2**：`boot-header` feature 已把 `0x300` 头烤进 ELF（链接期），构建后只需 `hisi-fwpkg patch-hash <elf>`（见下）补 body hash，直接烧裸 ELF——不再有中间 `.img`，也不走 `image`。
 
 | 参数 | 说明 |
 |------|------|
@@ -22,7 +24,23 @@ ELF/bin → app 镜像（`0x300` header || body，含 body SHA-256）。这是 p
 | `-o, --output <PATH>` | 输出镜像路径（必填） |
 
 ```bash
-hisi-fwpkg image blinky -o blinky.img
+# BS2X 路线 1：
+hisi-fwpkg image app -o app.img
+```
+
+### `hisi-fwpkg patch-hash`（路线 2 / WS63）
+
+WS63 的 **路线 2** post-link 步骤：原地把裸 ELF（已含 link-time `0x300` 头）的 body SHA-256 填回头部。无输出文件、无 `.img`，补好后直接 `probe-rs download <elf>` 烧、`probe-rs run <elf>` 跑。
+
+> 硅片上 flashboot **始终校验 body hash**：即便 efuse `SEC_VERIFY_ENABLE==0`（secure-off）也只跳过 ECC **签名**，不跳过 hash——所以镜像需要 **真实 body hash**，没有任何「dummy 签名」能让它启动。`patch-hash` 正是用来填这个真实 hash 的。
+
+| 参数 | 说明 |
+|------|------|
+| `<input>` | 输入裸 ELF（含 `boot-header` 烤入的 `0x300` 头，位置参数；原地修改） |
+
+```bash
+# WS63 路线 2：
+hisi-fwpkg patch-hash blinky
 ```
 
 ### `hisi-fwpkg pack`
@@ -49,7 +67,9 @@ hisi-fwpkg pack blinky -o blinky.fwpkg --chip ws63 --name app
 
 | 命令 | 用法 |
 |------|------|
-| `download` | `probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml --binary-format bin --base-address 0x00230000 <out.img>` |
+| `download`（WS63 / 路线 2） | `probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml <elf>`（裸 ELF 已含 `0x300` 头 + `patch-hash` 补好的真实 body hash） |
+| `download`（BS2X / 路线 1） | `probe-rs download --chip BS21 --chip-description-path HiSilicon_WS63.yaml --binary-format bin --base-address 0x00090000 <app.img>` |
+| `run`（WS63 / 路线 2） | `probe-rs run --chip WS63 --chip-description-path HiSilicon_WS63.yaml <elf>`——`just run` 的硅片版，烧+跑+抓 RTT/semihosting |
 | `reset` | `probe-rs reset --chip WS63 --chip-description-path HiSilicon_WS63.yaml` |
 | `read` | 读内存/外设（调试） |
 | `gdb` | 启 GDB stub |
@@ -59,8 +79,8 @@ hisi-fwpkg pack blinky -o blinky.fwpkg --chip ws63 --name app
 |------|------|
 | `--chip <NAME>` | 目标芯片（`WS63`；bs21 用 BS21） |
 | `--chip-description-path <YAML>` | fork 的 `HiSilicon_WS63.yaml` |
-| `--binary-format bin` | 输入为裸 bin（镜像即裸 bin 形态） |
-| `--base-address <ADDR>` | app 分区 flash 地址（ws63 `0x00230000`、bs21 `0x00090000`） |
+| `--binary-format bin` | **仅路线 1（BS2X `.img`）需要**：输入为裸 bin。WS63 路线 2 直接烧 ELF，不加此标志 |
+| `--base-address <ADDR>` | **仅路线 1 需要**：app 分区 flash 地址（bs21 `0x00090000`）。WS63 路线 2 的地址由 ELF 内 `0x300` 头自带，无需此标志 |
 
 调试与读内存细节见 [用 probe-rs 调试与读内存](../how-to/debug-probe-rs.md)。
 
@@ -108,7 +128,7 @@ cargo install hisiflash-cli
 |------|--------|-----|
 | `hisi-riscv-rs` | 主 monorepo（crates、examples、guides、SVD 均为子模块） | github.com/hispark-rs/hisi-riscv-rs |
 | `hisi-rs-template` | cargo-generate 模板（WS63/BS2X 新工程脚手架） | github.com/hispark-rs/hisi-rs-template |
-| `hisi-fwpkg` | app 镜像 / fwpkg 打包工具（`image`/`pack`） | github.com/hispark-rs/hisi-fwpkg |
+| `hisi-fwpkg` | app 镜像 / fwpkg 打包工具（`image`/`patch-hash`/`pack`） | github.com/hispark-rs/hisi-fwpkg |
 | `probe-rs`（fork） | 补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法） | github.com/hispark-rs/probe-rs（branch `add-hisilicon-ws63-bs21`） |
 | `hisi-riscv-rust-toolchain` | 自定义 rustc（riscv32imfc builtin，硬浮点） | github.com/hispark-rs/hisi-riscv-rust-toolchain |
 | `hisi-riscv-qemu` | QEMU fork（`-M ws63/bs21/bs21e/bs22/bs20`） | github.com/hispark-rs/hisi-riscv-qemu |

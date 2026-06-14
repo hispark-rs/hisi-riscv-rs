@@ -56,14 +56,20 @@ just flash
 
 `just flash` 依次做了这些事：
 
-1. `cargo build --release` 编出 ELF；
-2. `hisi-fwpkg image` 给 ELF 加上 `0x300` HiSilicon 启动头，打包成可启动镜像；
-3. 用打补丁的 probe-rs 分支把镜像 `download` 到应用分区 `0x00230000`；
+1. `cargo build --release` 编出 ELF；`0x300` HiSilicon 启动头由 `hisi-riscv-rt`
+   的 `boot-header` 特性在**链接时**直接烘进 ELF，无需单独的打包步骤；
+2. `hisi-fwpkg patch-hash <elf>` 在链接后就地补齐 ELF body 的 SHA-256（链接时占位是零）；
+3. 用打补丁的 probe-rs 分支把这枚**裸 ELF** 直接 `download` 到应用分区 `0x00230000`（不经过 `.img` 中间文件）；
 4. `probe-rs reset` 复位，flashboot 跳进应用入口（`app + 0x300`）。
 
-> **不需要真正签名**：开发芯片的安全启动是关闭的（efuse `SEC_VERIFY_ENABLE == 0`），
-> 所以 `hisi-fwpkg` 写入一个全零的"占位签名"启动头就足够了。镜像格式细节见
-> [应用镜像格式与签名](../../reference/image-format.md)。
+> **不需要真正签名，但需要真实 hash**：开发芯片的安全验证是关闭的（efuse
+> `SEC_VERIFY_ENABLE == 0`），但 flashboot 在硬件上**仍会校验 body 的 SHA-256**——
+> secure-off 只是跳过 ECC 签名，不跳过 hash。所以镜像需要的是 `0x300` 头 +
+> **真实 body SHA-256**（这正是 `patch-hash` 在做的事），而不存在一个能让它启动的"占位签名"。
+> 镜像格式细节见 [应用镜像格式与签名](../../reference/image-format.md)。
+>
+> BS2X 仍走"route 1"：链接时没有 `boot-header`，用编译后的 `hisi-fwpkg image -o app.img <elf>`
+> 打包再烧 `.img`；WS63 用的是上面的 `patch-hash` + 裸 ELF 路径。
 >
 > 如果 `HiSilicon_WS63.yaml` 不在当前目录，指给它：
 > `just CHIP_DESC=/path/to/HiSilicon_WS63.yaml flash`。

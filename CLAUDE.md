@@ -16,6 +16,7 @@ crates/      core publishable library crates
 examples/    application examples
   ws63/        (= ws63-examples submodule: blinky, uart_hello, …)
   bs21/        (in-tree, isolated workspace: BS21 blinky + uart_hello)
+  bs20/        (in-tree, isolated workspace: BS20 blinky + uart_hello)
 chips/       chip-specific support
   ws63/        guide/ (submodule)  rf/ (in-tree, nests ws63-RF)  flashboot/ (in-tree)
   bs2x/        guide/ (submodule)
@@ -42,10 +43,10 @@ cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example
 
 # Specific target override
-cargo check --target riscv32imafc-unknown-none-elf
+cargo check --target riscv32imfc-unknown-none-elf
 
 # Clippy & format
-cargo clippy --target riscv32imafc-unknown-none-elf
+cargo clippy --target riscv32imfc-unknown-none-elf
 cargo fmt --all -- --check
 
 # Submodule operations
@@ -68,7 +69,7 @@ hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for all 35 peripherals. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`hisi-riscv-hal`**: 35 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
+- **`hisi-riscv-hal`**: 43 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
 - **`hisi-riscv-rt`**: Runtime crate — startup assembly, linker scripts (memory.x, layout.ld), interrupt vector definitions (device.x). Uses `riscv-rt` underneath.
 
 ### Peripheral Singleton Pattern

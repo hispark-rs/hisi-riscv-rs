@@ -17,25 +17,29 @@
 
 ## 第 1 步：把 blinky 烧进真板
 
-从仓库根目录走"编译 → 打包 → 下载 → 复位"四步：
+从仓库根目录走"编译 → 补哈希 → 下载 → 复位"四步：
 
 ```bash
 cargo build -p blinky --release
 
-hisi-fwpkg image -o blinky.img \
+# WS63 用 hisi-riscv-rt 的 boot-header 特性：0x300 启动头在链接期就已烘进 ELF，
+# 链接后只需补上 body 的 SHA-256（在原文件就地填写），无中间 .img、无 image 步骤。
+hisi-fwpkg patch-hash \
     target/riscv32imfc-unknown-none-elf/release/blinky
 
 probe-rs download --chip WS63 \
     --chip-description-path HiSilicon_WS63.yaml \
-    --binary-format bin --base-address 0x00230000 \
-    blinky.img
+    target/riscv32imfc-unknown-none-elf/release/blinky
 
 probe-rs reset
 ```
 
-> `hisi-fwpkg image` 给 ELF 加上 `0x300` HiSilicon 启动头；下载地址 `0x00230000`
-> 是应用分区，flashboot 复位后跳进 `app + 0x300`。安全启动关闭，占位签名即可。
+> `hisi-fwpkg patch-hash` 把 ELF 里 `0x300` 启动头之后的 body SHA-256 就地补全；
+> 头已在链接期烘入，flashboot 复位后跳进 `app + 0x300`。安全启动关闭时，flashboot
+> **仍校验 body hash**，只跳过 ECC 签名（efuse `SEC_VERIFY_ENABLE==0`）——所以镜像需要
+> 一份**真实** body SHA-256，没有"占位签名"能让它启动。
 > `HiSilicon_WS63.yaml` 来自打补丁的 probe-rs 分支仓库——上游 probe-rs 没有 WS63 支持。
+> （BS2X 还没有链接期 boot-header，仍走 `hisi-fwpkg image -o app.img` 的 route 1 路线。）
 > 细节见 [用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md) 与
 > [应用镜像格式与签名](../../reference/image-format.md)。
 

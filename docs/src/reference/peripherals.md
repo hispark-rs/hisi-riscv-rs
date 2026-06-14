@@ -56,7 +56,7 @@
 | 主 DMA / MDMA | `Dma0` | `0x4A00_0000` | 0–3 |
 | 安全 DMA / SDMA | `Sdma0` | `0x520A_0000` | 0–3（逻辑 8–11） |
 
-## `Peripherals` 实例（WS63，`chip-ws63`，36 个）
+## `Peripherals` 实例（WS63，`chip-ws63`，35 个）
 
 `SYS_CTL0`、`SYS_CTL1`、`GLB_CTL_M`、`CLDO_CRG`、`IO_CONFIG`、`GPIO0`、`GPIO1`、`GPIO2`、`ULP_GPIO`、`UART0`、`UART1`、`UART2`、`I2C0`、`I2C1`、`SPI0`、`SPI1`、`PWM`、`I2S`、`LSADC`、`DMA`、`SDMA`、`SFC_CFG`、`TIMER`、`WDT`、`RTC`、`TCXO`、`TSENSOR`、`EFUSE`、`SPACC`、`PKE`、`KM`、`TRNG`、`RF_WB_CTL`、`SHARE_MEM_CTL`、`FAMA_REMAP`。
 
