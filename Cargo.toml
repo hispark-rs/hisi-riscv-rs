@@ -24,6 +24,12 @@ members = [
     "examples/ws63/net_ping",
     "chips/ws63/rf",
     "chips/ws63/flashboot",
+    # On-target (semihosting) HIL test crate, run via probe-rs + embedded-test.
+    # A workspace member (so it is covered by `cargo check --workspace`) but
+    # deliberately EXCLUDED from default-members below, so a plain `cargo build`
+    # does NOT pull embedded-test. Build/run it explicitly:
+    #   cargo test -p tests-hil --target riscv32imfc-unknown-none-elf --no-run
+    "tests-hil",
 ]
 # default-members = the libraries + the blinky example (which links via hisi-riscv-rt's
 # exported linker scripts; see hisi-riscv-rt/build.rs + ws63-examples/blinky/build.rs).
