@@ -1,6 +1,10 @@
 # HAL API 总览
 
-`hisi-riscv-hal` 是手写的安全驱动层，建模自 esp-hal 模式。本页给出公开 API 的结构图。**完整 API 以 `cargo doc` 生成的 rustdoc 为准**（`cargo doc -p hisi-riscv-hal --open`）。事实取自 [`crates/hisi-riscv-hal/src/lib.rs`](https://github.com/hispark-rs/hisi-riscv-hal) 及各模块头。
+`hisi-riscv-hal` 是手写的安全驱动层，建模自 esp-hal 模式。本页给出公开 API 的结构图。
+
+> **完整 API 文档（rustdoc）↗** —— 在线:<https://hispark-rs.github.io/hisi-riscv-rs/api/>（`hisi-riscv-hal` / `ws63-pac` / `hisi-riscv-rt`，与本手册同站部署，CI 自动构建）;本地:`cargo doc -p hisi-riscv-hal --open`。本页只是结构图,**逐项 API 以 rustdoc 为准**。
+
+事实取自 [`crates/hisi-riscv-hal/src/lib.rs`](https://github.com/hispark-rs/hisi-riscv-hal) 及各模块头。
 
 模块全清单与外设映射见 [外设清单](peripherals.md)；async/embassy 的原理见 [async 与 embassy](../explanation/async-embassy.md)。
 

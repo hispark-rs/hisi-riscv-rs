@@ -31,6 +31,8 @@
 
 ## 仓库
 
+- 在线手册：<https://hispark-rs.github.io/hisi-riscv-rs/>（本书）
+- API 文档（rustdoc）：<https://hispark-rs.github.io/hisi-riscv-rs/api/>（hisi-riscv-hal / ws63-pac / hisi-riscv-rt）
 - 主仓库：<https://github.com/hispark-rs/hisi-riscv-rs>
 - 工程模板：<https://github.com/hispark-rs/hisi-rs-template>（`cargo generate`）
 - 其它仓库见 [CLI 工具速查](reference/cli-tools.md) 与各[组件文档](explanation/components/index.md)。
