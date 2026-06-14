@@ -20,23 +20,57 @@ publish = false
 [dependencies]
 # The PAC under test: we exercise its structural facts (base-address constants)
 # and a single volatile register read (QEMU + bare-board safe; no external
-# wiring). Direct path dep (like examples/ws63/blinky) so we can name
-# ws63_pac::{Peripherals, Gpio0, ...} — the HAL keeps its PAC `pub(crate)`.
-ws63-pac = { path = "../crates/pac/ws63-pac" }
+# wiring). Exactly one PAC is linked, selected by the chip feature below; both
+# are `optional` so the inactive one is never compiled. Registry version (not a
+# path dep) so the workspace-root `[patch.crates-io]` redirect to the local
+# crates/pac/* paths applies — same pattern as hisi-riscv-hal/rt. We name the
+# active PAC via a cfg-selected alias in tests/hil.rs (`ws63_pac as pac` /
+# `bs2x_pac as pac`) — the HAL keeps its PAC `pub(crate)`.
+ws63-pac = { version = "0.1", optional = true }
+bs2x-pac = { version = "0.1", optional = true }
 # The HAL is linked too so its no-atomic / critical-section configuration and
-# (transitively) the same single PAC instance are exercised under test.
-hisi-riscv-hal = { path = "../crates/hisi-riscv-hal" }
-# boot-header: bake the 0x300 HiSilicon image header into the test ELF so the
-# bare ELF is directly bootable by flashboot (the runner only needs to
-# `hisi-fwpkg patch-hash` it to fill the body SHA-256 — no separate `image`
-# step). hisi-riscv-rt also provides the startup + critical-section impl + the
-# riscv-rt runtime that calls embedded-test's exported `main` (see tests/hil.rs).
-hisi-riscv-rt = { path = "../crates/hisi-riscv-rt", features = ["boot-header"] }
-# The WS63 core has no atomic extension; mirror the HAL: portable-atomic's RMW
-# polyfill goes through critical-section (impl registered by hisi-riscv-rt).
+# (transitively) the same single PAC instance are exercised under test. Chip
+# selection is deferred to the chip feature (default-features off; the chip
+# feature turns on the matching `chip-*` + `rt`).
+hisi-riscv-hal = { path = "../crates/hisi-riscv-hal", default-features = false }
+# hisi-riscv-rt provides the startup + critical-section impl + the riscv-rt
+# runtime that calls embedded-test's exported `main` (see tests/hil.rs). Chip
+# selection (and, for WS63, the `boot-header` feature that bakes the 0x300
+# HiSilicon image header into the test ELF at flash 0x230000 so the bare ELF is
+# directly bootable by flashboot) is turned on by the chip feature below.
+hisi-riscv-rt = { path = "../crates/hisi-riscv-rt", default-features = false }
+# The WS63/BS2X core has no atomic extension; mirror the HAL: portable-atomic's
+# RMW polyfill goes through critical-section (impl registered by hisi-riscv-rt).
 # embedded-test (via `semihosting`) needs a real critical-section impl in graph.
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
 critical-section = "1"
+
+[features]
+# Chip selection mirrors hisi-riscv-hal: exactly one chip, WS63 the default. Each
+# pulls its PAC and turns on the matching `chip-*` (+ `rt`) features of the HAL
+# and rt. The `boot-header` feature (link-time 0x300 header at flash 0x230000) is
+# WS63-specific (BS21's app partition is 0x90000, a different header placement —
+# out of scope here) so it is gated under chip-ws63 only.
+default = ["chip-ws63"]
+chip-ws63 = [
+    "dep:ws63-pac",
+    "hisi-riscv-hal/chip-ws63",
+    "hisi-riscv-hal/rt",
+    "hisi-riscv-rt/chip-ws63",
+    # WS63-only: bake the 0x300 image header into the test ELF (bootable by flashboot).
+    "hisi-riscv-rt/boot-header",
+    # WS63-only: pull rt's bundled WS63 memory.x onto the link-search path so
+    # ws63-link.x's `INCLUDE memory.x` resolves. (default-features=false dropped it;
+    # rt's default had it on.) BS21 has no bundled memory.x — a BS21 board would
+    # supply its own here (see examples/bs21/clock_rng), which is out of scope.
+    "hisi-riscv-rt/bundled-memory-x",
+]
+chip-bs21 = [
+    "dep:bs2x-pac",
+    "hisi-riscv-hal/chip-bs21",
+    "hisi-riscv-hal/rt",
+    "hisi-riscv-rt/chip-bs21",
+]
 
 [dev-dependencies]
 # embedded-test brings its own test harness + panic-handler + a `main` entry

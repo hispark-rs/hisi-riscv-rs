@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Hardware bring-up (validated on real WS63 silicon)** — `blinky` boots and
+  blinks GPIO; the full boot chain build → `hisi-fwpkg image` (or link-time
+  `boot-header` + `hisi-fwpkg patch-hash`) → `probe-rs download` → boot works;
+  semihosting works on target.
+- **HIL** — hardware-validated probe-rs flash flow; `hil/cargo-run-hw.sh` (cargo
+  runner) + `hil/embedded-test-runner.sh`; on-target `embedded-test` HIL suite
+  (`tests-hil/`, runs via `cargo test` + probe-rs + semihosting — 9 tests passing
+  on silicon).
+
+### Changed
+
+- Submodule bumps: `hisi-riscv-hal` (uart `div_fra` fix), `hisi-riscv-rt`
+  (`boot-header` feature).
+
+### Fixed
+
+- **HIL** — fixed `hil/hil-smoke.sh` reset_demo marker.
+
+### Docs
+
+- Full mdBook handbook under `docs/` organized by the Diátaxis framework
+  (tutorials [app-developer + ecosystem-contributor tracks] / how-to / reference /
+  explanation + the 10 component deep-dives), deployed to GitHub Pages (handbook
+  at `/`, rustdoc API at `/api/`); the old `docs/architecture/` moved into the
+  book.
+
+---
+
 ## [2026-06-11] — crates.io: ws63-pac 0.1.3 · bs2x-pac 0.1.0 · hisi-riscv-rt 0.2.0 · hisi-riscv-hal 0.3.0
 
 First crates.io release of the library stack (published via CI in dependency

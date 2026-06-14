@@ -106,10 +106,20 @@ PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x230000 \
 
 ## 在板跑 `cargo test`（embedded-test + 半主机）
 
-`tests-hil` 是一个**在板测试 crate**：用 [`embedded-test`](https://github.com/probe-rs/embedded-test)
-的测试 harness，由补丁版 probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）**
-逐个用例驱动并把结果（libtest 兼容）报回 `cargo test`。半主机通道已于 2026-06-14 在真硅片上验证
-（`semihost_selftest` 打印 PASS + 捕获 SYS_EXIT）。
+在板测试用 [`embedded-test`](https://github.com/probe-rs/embedded-test) 的测试 harness，由补丁版
+probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）** 逐个用例驱动并把结果
+（libtest 兼容）报回 `cargo test`。半主机通道已于 2026-06-14 在真硅片上验证（`semihost_selftest`
+打印 PASS + 捕获 SYS_EXIT）。在板测试分两处：
+
+- **`tests-hil`** —— 跨切面 / CPU / PAC 冒烟套件：纯 CPU 的 M/F/CSR 指令不变式，以及 PAC 基址
+  结构性地址映射不变式（不属于任何单个 HAL 驱动）。
+- **`hisi-riscv-hal/tests/hil.rs`** —— HAL **驱动**在板测试（GPIO/TCXO/UART/clock/system，
+  及 `#[ignore]` 的 timer/DMA）。它们与所测代码同处一 crate，随 HAL 发布与运行，并继承 HAL 的芯片
+  门控（`chip-ws63` 默认，`chip-bs21` 经 `--features chip-bs21`）。在板跑（用 `--test hil`
+  只构建这一 embedded-test 集成测试目标——HAL 的主机单测在 `src/*.rs` 的 lib 测试目标里用默认
+  libtest harness，而裸机 `riscv32imfc` target 没有 `test`/`std` crate，不加 `--test hil` 的
+  裸 `cargo test --target riscv…` 会去构建那个 lib 测试目标并链接失败）：
+  `CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63 --target riscv32imfc-unknown-none-elf --test hil`
 
 测试 ELF 自带 0x300 启动头（`tests-hil` 以 `hisi-riscv-rt` 的 `boot-header` feature 构建），
 runner 只需 `hisi-fwpkg patch-hash` 补头部 body SHA-256 即可启动。embedded-test 自带 `main`
@@ -132,11 +142,16 @@ runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `carg
 `HISI_FWPKG`（默认 `hisi-fwpkg`）。runner 先 `hisi-fwpkg patch-hash <elf>`（原地补头），
 再 `probe-rs run --chip WS63 [--chip-description-path YAML] <elf> [embedded-test 参数]`。
 
-用例（自包含、无需跳线，QEMU/裸板皆安全）：(a) M/F/CSR 指令不变式（整数乘、ilp32f 硬浮点、mcycle 自增，
-镜像 `semihost_selftest`）；(b) PAC 基址结构性断言（GPIO0/UART0/TCXO 窗口未漂移）；
-(c) 经 `#[init]` 取出的 PAC 单例读一次 TCXO 状态寄存器（验证 MMIO load 不陷入）。
+用例（自包含、无需跳线，QEMU/裸板皆安全）：`tests-hil` 跨切面套件 = (a) M/F/CSR 指令不变式
+（整数乘、ilp32f 硬浮点、mcycle 自增，镜像 `semihost_selftest`）；(b) PAC 基址结构性断言
+（GPIO0/UART0/TCXO/I2C0/PWM/WDT/RTC… 窗口未漂移）。HAL 驱动套件
+（`hisi-riscv-hal/tests/hil.rs`）= 经 `#[init]` 取出 PAC 单例读 TCXO 状态寄存器、GPIO0 输出回读、
+TCXO 计数器单调、UART0 分频配置、UART0 时钟门、复位原因解码、HAL Peripherals 构造，以及
+`#[ignore]` 的 timer/DMA。
 
-> 注意：`tests-hil` 是 workspace member 但**不在 default-members**，故普通 `cargo build` 不会拉 embedded-test。
+> 注意：`tests-hil` 是 workspace member 但**不在 default-members**，故普通 `cargo build` 不会拉
+> embedded-test。HAL 的在板测试是 riscv-only 的 target-gated dev-dep，普通 `cargo build -p
+> hisi-riscv-hal` 与主机单测（`cargo test --target x86_64`）都不会拉 embedded-test / hisi-riscv-rt。
 
 ## Bring-up 清单（按序，每步附预期 + 失败诊断）
 
