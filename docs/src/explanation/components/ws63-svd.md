@@ -1,6 +1,6 @@
 # ws63-svd 架构与评审
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](../review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](../../ROADMAP.md)。
+> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -98,4 +98,4 @@ ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-0
 
 ## 相关架构
 
-**BS2X SVD**: [`bs2x-svd`](https://github.com/hispark-rs/bs2x-svd) 强自前和永久性存搬，两份 SVD 准生政之不同厨特针 PAC。**probe-rs 调试**: hispark-rs fork 各和 RISC-V DM/CoreSight，待板级。**连接**: Wi-Fi 于剖地，BLE 是 blob。主要落点（本轮已完成上述大部分，KM 缺口 + CI 接入为剩余）。详见 [ROADMAP](../../ROADMAP.md)。
+**BS2X SVD**: [`bs2x-svd`](https://github.com/hispark-rs/bs2x-svd) 强自前和永久性存搬，两份 SVD 准生政之不同厨特针 PAC。**probe-rs 调试**: hispark-rs fork 各和 RISC-V DM/CoreSight，待板级。**连接**: Wi-Fi 于剖地，BLE 是 blob。主要落点（本轮已完成上述大部分，KM 缺口 + CI 接入为剩余）。详见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
