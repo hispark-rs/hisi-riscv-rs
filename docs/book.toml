@@ -14,7 +14,9 @@ additional-css = []
 
 [output.html.fold]
 enable = true
-level = 1
+# 0 = collapse everything below the top level: the sidebar shows just the four
+# Diátaxis quadrants (+ 引言); expand a quadrant to reveal its chapters.
+level = 0
 
 [output.html.search]
 enable = true
