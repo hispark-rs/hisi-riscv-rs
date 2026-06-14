@@ -1,30 +1,28 @@
-# 教程 · Tutorials
+# 教程 · 选择你的路径
 
-欢迎！本章是一组**手把手的课程**。我们会带你从零开始，一步步把代码跑起来——
-先在 QEMU 里，再到真正的 WS63 芯片上——让 LED 闪烁、让串口打印 `Hello`。
+欢迎！本章是一组**手把手的课程**：给确切的命令、给你应当看到的输出，照着做就能成功。
 
-每一步都会给出**确切的命令**和**你应当看到的输出**。只要照着做，就一定能成功。
+在开始之前，先选一条适合你的路径——两条路径**面向不同的人、起点也不同**，但风格一样（学习导向、一条happy path）。
 
-> 教程的目标是**带你成功跑通**，而不是讲清每个原理。
-> 想知道"为什么"，请看 [原理与背景](../explanation/index.md)；
-> 想查命令和参数，请看 [参考](../reference/index.md)；
-> 想完成某个具体任务，请看 [操作指南](../how-to/index.md)。
+## 你是哪一类？
 
-## 你需要准备什么
+### 应用开发者（用 WS63 写你自己的 App）
 
-- 一台 Linux 电脑（本教程在 x86_64 Linux 上验证）。
-- 已安装 [`rustup`](https://rustup.rs)、`git`、`curl`。
-- 第 1 课会带你装好其余的工具（自定义工具链、QEMU、烧录器）。
-- 第 2 课和第 5 课需要一块 WS63 开发板；第 3、4 课只用 QEMU，无需硬件。
+你想用我们**已发布到 crates.io 的库**（`hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-pac`）
+开发自己的 WS63 程序。你**不需要**克隆这个monorepo——
+起点是用 `cargo generate` 从模板 [`hisi-rs-template`](https://github.com/hispark-rs/hisi-rs-template)
+生成一个自包含的工程。有没有开发板都行（QEMU 不需要硬件）。
 
-## 学习路径
+→ 走 [**应用开发者路径**](app/index.md)
 
-请按顺序学习，每一课都建立在上一课之上：
+### 生态贡献者（开发 HAL / PAC / rt / QEMU / 示例）
 
-1. [搭建开发环境](01-setup.md) —— 装好工具链、克隆仓库，并验证 `cargo build` 能成功。
-2. [点亮第一个 LED（blinky）](02-blinky.md) —— 先在 QEMU 里跑，再烧到真机，看 LED 闪烁。
-3. [第一个 UART 程序（uart_hello）](03-uart-hello.md) —— 在 QEMU 里看到 `Hello from WS63 on QEMU!`。
-4. [在 QEMU 里运行与调试](04-qemu.md) —— 用 QEMU 跑更多示例、看中断输出、用半主机退出码做自检。
-5. [第一次硬件在环测试](05-first-hil.md) —— 把 blinky 烧到真板，观察 GPIO 翻转，认识 HIL 冒烟测试。
+你想给 HAL、PAC、运行时、QEMU 模型或示例目录**贡献代码**。你需要克隆
+带子模块的monorepo，构建并运行完整的示例集，并做硬件在环（HIL）测试。
 
-学完这五课，你就能独立构建、运行并验证 WS63 上的 Rust 程序了。开始吧！
+→ 走 [**生态贡献者路径**](contrib/index.md)
+
+---
+
+> 教程只求**带你跑通**，不展开讲原理。想知道"为什么"看 [原理与背景](../explanation/index.md)；
+> 想查命令和参数看 [参考](../reference/index.md)；想完成某个具体任务看 [操作指南](../how-to/index.md)。

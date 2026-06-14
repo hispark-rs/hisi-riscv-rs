@@ -34,7 +34,7 @@
 
 examples 位于整条依赖链的**最下游**（叶子节点），消费上游各 crate：
 
-```
+```console
 crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
        │                                            │
        └─> ws63-pac   (svd2rust)                   └─> bs2x-pac   (svd2rust)

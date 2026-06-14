@@ -5,7 +5,7 @@
 那个已经在真实芯片上验证通过的示例——完成你的第一次 HIL 测试，保证成功。
 
 > 我们特意选 blinky：它的 GPIO0 翻转是当前**确认可观测**的真机行为
-> （第 3 课提过，真机串口 banner 还在打磨中）。
+> （上一课提过，真机串口 banner 还在打磨中）。
 
 ## 你需要准备
 
@@ -17,7 +17,7 @@
 
 ## 第 1 步：把 blinky 烧进真板
 
-复用第 2 课的流程——编译、打包、下载、复位：
+从仓库根目录走"编译 → 打包 → 下载 → 复位"四步：
 
 ```bash
 cargo build -p blinky --release
@@ -32,6 +32,12 @@ probe-rs download --chip WS63 \
 
 probe-rs reset
 ```
+
+> `hisi-fwpkg image` 给 ELF 加上 `0x300` HiSilicon 启动头；下载地址 `0x00230000`
+> 是应用分区，flashboot 复位后跳进 `app + 0x300`。安全启动关闭，占位签名即可。
+> `HiSilicon_WS63.yaml` 来自打补丁的 probe-rs 分支仓库——上游 probe-rs 没有 WS63 支持。
+> 细节见 [用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md) 与
+> [应用镜像格式与签名](../../reference/image-format.md)。
 
 ## 第 2 步：观察 GPIO 翻转
 
@@ -54,7 +60,7 @@ cat /dev/ttyUSB0
 看完按 `Ctrl-C` 退出 `cat`。
 
 > blinky 自身不打印串口（它只翻转 GPIO），所以这里看到的是 **flashboot 的启动日志**，
-> 不是应用输出。UART0 接线与端口的细节见 [HIL 标记串与环境变量](../reference/hil-markers.md)。
+> 不是应用输出。UART0 接线与端口的细节见 [HIL 标记串与环境变量](../../reference/hil-markers.md)。
 
 ## 第 4 步：认识 HIL 冒烟测试
 
@@ -74,14 +80,14 @@ PORT=/dev/ttyUSB0 hil/hil-smoke.sh
 正是你在第 2、3 步亲手做的事。
 
 > HIL 框架的整体设计、标记串约定、它和 QEMU 冒烟测试的关系，见
-> [HIL 测试框架](../explanation/hil-framework.md) 与
-> [运行 HIL 冒烟测试](../how-to/run-hil-tests.md)。
+> [HIL 测试框架](../../explanation/hil-framework.md) 与
+> [运行 HIL 冒烟测试](../../how-to/run-hil-tests.md)。
 
-恭喜！你已经完成了全部五课：装好工具链，在 QEMU 里跑了 blinky 和 uart_hello，
-用中断和半主机调试了示例，最后在真正的 WS63 芯片上完成了第一次硬件在环测试。
+恭喜！你已经完成了贡献者路径的全部三课：克隆仓库、装好工具链，在 QEMU 里跑通了
+示例集，最后在真正的 WS63 芯片上完成了第一次硬件在环测试。
 
 接下来想做点什么？
 
-- 想完成具体任务（新建工程、加驱动、调试读内存）——看 [操作指南](../how-to/index.md)。
-- 想查命令、地址、API——看 [参考](../reference/index.md)。
-- 想搞懂背后的原理——看 [原理与背景](../explanation/index.md)。
+- 想完成具体任务（新建工程、加驱动、调试读内存）——看 [操作指南](../../how-to/index.md)。
+- 想查命令、地址、API——看 [参考](../../reference/index.md)。
+- 想搞懂背后的原理——看 [原理与背景](../../explanation/index.md)。
