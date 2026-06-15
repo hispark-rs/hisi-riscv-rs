@@ -140,6 +140,34 @@ Two controllers share `dma::RegisterBlock`:
 - **Async & embassy** — beyond the blocking drivers, hisi-riscv-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/src/explanation/components/async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
+### Typed config — "if it compiles, it runs on silicon"
+
+**The project's primary API convention.** The HAL's *configuration* surface is typed
+so that a value you can **write** is a value that **runs** on real silicon — no
+parameter that compiles but is silently clamped, truncated, or left without a clock.
+This adopts esp-hal's API guideline ("prefer compile-time checks over runtime checks;
+prefer a fallible API over panics"), Alexis King's "parse, don't validate", and the
+typestate pattern. Two layers:
+
+- **Config / construction — HAL-inherent, so free to type.** Use validated newtypes
+  with **fallible constructors** (`try_from_hz` / `from_count` → `Option`): an
+  out-of-range value returns `None` at construction, never a silent clamp/truncate.
+  Role-dependent configs use **type-state** (e.g. an I2S `Master` constructor
+  *requires* non-zero clock dividers — a zero-divider Master is unrepresentable). A
+  driver **self-enables its own clock gate** in `configure`/`new` ("construct →
+  clocked"). The type encodes **measured silicon reality, not the datasheet** — e.g.
+  `pwm::PwmPeriod` is a `u16` because the WS63 `pwm_freq_h` high half does not latch
+  on silicon despite the SDK declaring the field 32-bit.
+- **Operational — embedded-hal traits, fixed signatures.** `SetDutyCycle` / `SpiBus`
+  / `I2c` / `Read` / `Write` keep their standard `u16` / `&[u8]` + `Result`
+  signatures (`Result` *is* embedded-hal's idiom for invalid input). These are NOT
+  compile-time-typed; do not change trait method signatures.
+
+When adding or tightening a driver, run the **`typed-config` skill** (the checklist +
+the A/B/C/D defect taxonomy + a candidate scanner). Reference implementation:
+`crates/hisi-riscv-hal/src/pwm.rs` (`PwmPeriod` / `Duty`). Every tightened surface is
+proven on the connected board via the HIL suite (`tests/hil.rs`).
+
 ## CI/CD
 
 Seven GitHub Actions workflows in `.github/workflows/`:
