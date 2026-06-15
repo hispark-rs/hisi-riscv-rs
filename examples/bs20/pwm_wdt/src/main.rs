@@ -11,9 +11,9 @@
 #![no_main]
 
 use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::pwm::PwmChannel;
+use hisi_riscv_hal::pwm::{Duty, PwmChannel, PwmPeriod};
 use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
-use hisi_riscv_hal::wdt::{ResetPulseLength, Watchdog, WdtMode};
+use hisi_riscv_hal::wdt::{ResetPulseLength, Watchdog, WdtMode, WdtTimeout};
 use hisi_riscv_rt::entry;
 
 fn put_hex32(uart: &Uart<'_, impl core::any::Any>, v: u32) {
@@ -33,10 +33,15 @@ fn main() -> ! {
 
     // WDT — configure a 100 ms timeout, feed, read the counter back.
     let mut wdt = Watchdog::new(p.WDT);
-    wdt.configure(100, WdtMode::SingleInterrupt, false, ResetPulseLength::Cycles2);
+    let _ = wdt.configure(
+        WdtTimeout::from_ms(100).unwrap(),
+        WdtMode::SingleInterrupt,
+        false,
+        ResetPulseLength::Cycles2,
+    );
     wdt.enable();
     wdt.feed();
-    let cnt = wdt.counter_value();
+    let cnt = wdt.counter_value().unwrap_or(0);
     uart.write(0, b"  wdt counter = ");
     put_hex32(&uart, cnt);
     uart.write(0, b"\r\n");
@@ -45,7 +50,7 @@ fn main() -> ! {
     // PWM — configure + start channel 0; just needs to run without faulting.
     let pwm = p.PWM;
     let mut ch = PwmChannel::new(&pwm, 0);
-    ch.configure(1_000, 50);
+    ch.configure(PwmPeriod::try_from_hz(1_000).unwrap(), Duty::from_percent(50).unwrap());
     ch.enable();
     ch.start();
     uart.write(0, b"  pwm ch0 started (1 kHz, 50%)\r\n");
