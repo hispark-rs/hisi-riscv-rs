@@ -36,9 +36,14 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # Install it first (see rust-toolchain.toml / https://github.com/hispark-rs/hisi-riscv-rust-toolchain):
 #   curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   tar xzf hisi-riscv-rust-1.96.0-*.tar.gz && rustup toolchain link hisi-riscv "$PWD/stage2"
-cargo build                         # Build libraries + blinky (default-members)
-cargo check --workspace             # Full workspace check (incl. flashboot)
-cargo check -p hisi-riscv-hal             # Check HAL only
+cargo build                         # Build libraries + blinky (default-members) — works:
+                                    # the default-member ws63 examples pull chip-ws63 onto
+                                    # the shared hal via feature unification.
+cargo check --workspace             # Full workspace check — also works (unifies chip-ws63).
+# The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
+# chip feature, else a `compile_error!` fires:
+cargo check -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
+cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt   # …or BS2X
 cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example
 
