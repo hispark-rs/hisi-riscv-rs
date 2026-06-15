@@ -207,6 +207,33 @@ A strong, esp-hal-aligned base. These are already nailed — don't re-open them:
 
 *Publishing caveat:* the `[patch.crates-io]` for `bs2x-pac` (`Cargo.toml:157`) exists because Cargo resolves *all* optional deps when locking — even a WS63-only default build must resolve `bs2x-pac`. If it's ever yanked/lags, published default-feature builds could fail to resolve even though they never compile it.
 
+### 升级路径：common + per-chip wrapper（范式 A，过 2–3 个芯片再触发）
+
+业界拆芯片有两条主流路：**(A) 共享 `*-hal-common` + 极薄 per-chip wrapper crate**（nrf-rs：`nrf-hal-common` 带全部实现、不直接用，`nrf52840-hal`/`nrf52832-hal`/… 各是 ~20 行 wrapper，钉死芯片 feature + `pub use`）；**(B) per-family crate、族内 feature-gated**（stm32-rs：`stm32f4xx-hal` 一族一 crate、型号是 feature，族间拆 crate）。现状是「单 crate 跨 ws63+bs2x 两个不相干族、互斥 feature」——两头不靠，互斥 wart 由此而来。
+
+**本项目走范式 A 的样子**（现在的代码已基本是 common：驱动多经 `soc::pac` 别名 + chip feature 中立化，搬运量≈0，wrapper 各 ~20 行）：
+
+```
+hisi-riscv-hal-common   ← 现全部驱动（芯片藏 cfg 后，publish=false 或不直接用）
+├── ws63-hal            ← wrapper: common{default-features=false, features=["chip-ws63"]} + pub use
+└── bs2x-hal            ← wrapper: common + chip-bs21 + pub use
+```
+
+```toml
+# ws63-hal/Cargo.toml
+[dependencies]
+hisi-riscv-hal-common = { version = "0.x", default-features = false, features = ["chip-ws63"] }
+ws63-pac = "0.x"
+```
+```rust
+// ws63-hal/src/lib.rs — 几乎只有这一行
+pub use hisi_riscv_hal_common::*;
+```
+
+**收益**：互斥 wart 彻底消除（每个 wrapper `--all-features` 干净）、每芯片独立 docs.rs/版本、用户选 `ws63-hal` 零 feature 心智、semver-checks 每 crate 清晰。**代价**：3 个 crate 的发布/版本协调、common 里 cfg 密度不变、wrapper 样板。
+
+**决定（2026-06-15）：现在 NOT 走范式 A** —— 2 个芯片下是过度工程，docs/`--all-features` 已被 `[metadata.docs.rs]` + CI matrix 解决。**触发条件**：芯片数过 2–3 个、或 `#[cfg(feature=…)]` 密度失控时,再升级到 common + per-chip wrapper（正是 nrf-rs 当年的演进方向）。来源：[nrf-hal](https://github.com/nrf-rs/nrf-hal) · [nrf52840-hal](https://docs.rs/nrf52840-hal) · [stm32f4xx-hal](https://github.com/stm32-rs/stm32f4xx-hal)。
+
 ---
 
 ## 4. Suggested sequencing
