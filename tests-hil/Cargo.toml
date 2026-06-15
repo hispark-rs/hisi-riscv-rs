@@ -26,7 +26,7 @@ publish = false
 # crates/pac/* paths applies — same pattern as hisi-riscv-hal/rt. We name the
 # active PAC via a cfg-selected alias in tests/hil.rs (`ws63_pac as pac` /
 # `bs2x_pac as pac`) — the HAL keeps its PAC `pub(crate)`.
-ws63-pac = { version = "0.1", optional = true }
+ws63-pac = { version = "0.2", optional = true }
 bs2x-pac = { version = "0.1", optional = true }
 # The HAL is linked too so its no-atomic / critical-section configuration and
 # (transitively) the same single PAC instance are exercised under test. Chip
