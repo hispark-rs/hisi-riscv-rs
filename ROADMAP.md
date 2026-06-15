@@ -28,7 +28,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（依赖阶段 1）|
 | 5 | 连接性示例（scan → connect → ping） | 🔴 待真机（HIL，阶段 1/4 之后）|
 | 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/architecture/async-embassy.md](docs/architecture/async-embassy.md)；支持 chip-ws63/chip-bs21 特性）|
-| **7** | **HAL 收尾 + 发布（← 当前焦点）** | 🟢 进行中（见下「阶段 7」）|
+| **7** | **HAL 收尾 + 发布** | ✅ 已完成（2026-06-15：硅验证发布 ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，见下「阶段 7」）|
 | 探针 | debug 支持（RISC-V-DM / probe-rs） | 🟡 已就绪（fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`——CoreSight mem-AP DTM、vendor DebugSequence、flash-algorithm crate；软件完成，待硅上验证）|
 
 > **当前焦点（2026-06-11）**：阶段 0/2/3/6 已收口、WS63 + BS2X（BS21/BS20）QEMU 软件在环成熟、文档已是「官方重建 + ch8 实证补充」双层。
@@ -291,7 +291,18 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 5. ✅ **ws63-guide 上线 + ch6 寄存器深度**（已完成 2026-06-05）：Pages 已正常（ch1–8 全量上线）；
    ch6 的 SPI/QSPI/I2S 三章补全寄存器概览 + 关键位域（取自 SVD 显式 bitRange），并据 SVD 校正 ch8 表 8-7 的
    SPI_WSR 位。**至此阶段 7 全部收口。**
-6. **版本 + CHANGELOG**：各 crate bump/tag，记录本会话的时钟修复与 cken 审计。
+6. ✅ **版本 + CHANGELOG + 硅验证发布**（已完成 2026-06-15）：首个**真机验证**发布批次，
+   按依赖顺序 ws63-pac → rt → hal 逐个 tag、等 crates.io 索引后再发下一个：
+   - **ws63-pac 0.2.0**（`v0.2.0`，breaking）：SPI_WSR 位段 + TIMER `cnt_req`/`cnt_lock` 重新生成
+     （改了公开 accessor / Mode 枚举判别值）。
+   - **hisi-riscv-rt 0.2.2**（`v0.2.2`）：仅把 `ws63-pac` 依赖 `0.1`→`0.2`（无运行时/链接改动），
+     让 app 能同时依赖 rt 与 hal 0.4 不冲突。
+   - **hisi-riscv-hal 0.4.0**（`v0.4.0`）：首个硅验证 HAL——12 个 HIL 驱动测试 + 跳线 loopback 组全部
+     在真实 WS63 上通过；依赖 `ws63-pac 0.2`（故 0.x-minor breaking）。
+   配套：hal 删除冗余 `release.yml`（与 pac/rt 对齐，避免同 tag 上 `cargo publish` 双触发）；monorepo
+   推进三个 submodule 指针、`tests-hil` 的 `ws63-pac` 需求 bump 到 `0.2`（否则 `[patch.crates-io]`
+   失效、回退 registry 0.1.3）、重生成 Cargo.lock。三者均 SSH 签名 commit + annotated 签名 tag。
+   **至此阶段 7 全部收口。**
 
 ## 阶段 1 准备 — 真机 bring-up 框架（板子短期到位）
 
