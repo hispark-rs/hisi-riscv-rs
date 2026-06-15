@@ -88,6 +88,9 @@ critical-section = "1"
 [patch.crates-io]
 ws63-pac = { path = "crates/pac/ws63-pac" }
 bs2x-pac = { path = "crates/pac/bs2x-pac" }
+# hisi-riscv-hal now depends on hisi-riscv-rt by version (resolved through cargo);
+# patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
+hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }
 
 [profile.release]
 opt-level = "s"
