@@ -16,6 +16,9 @@
 - [系统架构总览](architecture.md)——crate 依赖链（svd → pac → hal → 示例，rt 管启动）、
   以及那些贯穿全栈的设计取舍：`no_std`、用生命周期泛型保证安全、把 `unsafe` 寄存器访问
   封进驱动、用 sealed trait 锁住扩展点。**为什么这样分层。**
+- [类型化配置：能编译就能在硅片上跑](typed-config.md)——本项目 HAL API 的头号约定:配置面
+  用校验 newtype / type-state / 自起时钟收紧,操作面保持 embedded-hal 的 `Result`,
+  **为什么「能写出来的值就该能跑」**、以及 A/B/C/D 缺陷分类法与逐字段决策树。
 - [启动流程：mask ROM → flashboot → app](boot-flow.md)——从上电到 `main()` 的整条引导链，
   以及为什么"补 0x300 头部、烧到 app 分区"是必须的，**为什么一个裸 ELF 不会启动**。
 - [硬浮点工具链](hardfloat-toolchain.md)——为什么是一条把 `riscv32imfc` 烤进 builtin 的

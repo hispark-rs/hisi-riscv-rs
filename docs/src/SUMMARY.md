@@ -35,6 +35,7 @@
   - [CLI 工具速查（hisi-fwpkg / probe-rs）](reference/cli-tools.md)
 - [原理与背景 · Explanation](explanation/index.md)
   - [系统架构总览](explanation/architecture.md)
+  - [类型化配置：能编译就能在硅片上跑](explanation/typed-config.md)
   - [启动流程：mask ROM → flashboot → app](explanation/boot-flow.md)
   - [硬浮点工具链](explanation/hardfloat-toolchain.md)
   - [async 与 embassy](explanation/async-embassy.md)
