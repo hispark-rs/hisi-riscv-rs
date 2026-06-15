@@ -3,6 +3,11 @@
 > 本路线图源于 2026-05 的一次深度架构评审（多 agent 工作流 + 对抗式验证，41 条发现 0 条被驳回）。
 > 完整发现台账见 [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md)，
 > 各组件架构与评审见 [`docs/architecture/`](docs/architecture/)。
+>
+> **API 设计评审（2026-06）**：HAL API 风格对照业界（esp-hal / embassy / embedded-hal 1.0 /
+> Rust API Guidelines）的讨论台账见 [`docs/review/api-style-discussion-2026-06.md`](docs/review/api-style-discussion-2026-06.md)；
+> 头号约定「类型化配置：能编译就能在硅片上跑」见 [`docs/src/explanation/typed-config.md`](docs/src/explanation/typed-config.md)
+> + `CLAUDE.md`「Typed config」+ `.claude/skills/typed-config/`。这些喂入正在进行的 **0.5.0 config 收紧**（见阶段 7）。
 
 ## 北极星
 
@@ -337,6 +342,9 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 
 严重度（验证修正后）：**严重 6 / 高 16 / 中 15 / 低 4**，共 41 条，0 条被驳回。完整列表见
 [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md)。
+
+另有一份 **2026-06 API 风格评审台账** [`docs/review/api-style-discussion-2026-06.md`](docs/review/api-style-discussion-2026-06.md)
+（typed-config 之外的 ~11 个 API 风格讨论点，按高/中/低优先级 + 0.5.0 fold-in/defer 排序），驱动本轮 HAL 收尾的 API 收紧。
 
 | 严重度 | 代表问题 | 状态 |
 |--------|----------|------|
