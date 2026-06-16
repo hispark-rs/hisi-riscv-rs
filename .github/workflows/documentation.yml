@@ -116,6 +116,8 @@ jobs:
       - name: Check markdown links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress '*.md' '**/*.md'
+          # lychee.toml scopes the check to this repo's own docs (excludes submodule
+          # trees — separate repos — and the TLS-broken blog.japaric.io reference).
+          args: --config lychee.toml --verbose --no-progress '*.md' '**/*.md'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

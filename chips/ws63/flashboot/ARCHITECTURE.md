@@ -10,5 +10,5 @@
 原厂 flashboot**，Rust 应用跑在其加载的分区中。
 
 完整架构与评审（集中维护于主仓库）：
-- 组件文档：<https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/architecture/ws63-flashboot.md>
+- 组件文档：<https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/src/explanation/components/ws63-flashboot.md>
 - 整改排期：<https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md>（阶段 2，若继续维护）
