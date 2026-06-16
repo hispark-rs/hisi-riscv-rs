@@ -51,7 +51,9 @@ jobs:
         run: mdbook build docs
 
       - name: Build API documentation (hisi-riscv-hal/pac/rt)
-        run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
+        # hisi-riscv-hal has no default chip (0.5.0); select chip-ws63 so its
+        # `soc::pac`/`soc::chip` resolve and the no-chip compile_error stays silent.
+        run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps --features hisi-riscv-hal/chip-ws63
 
       - name: Assemble the site (handbook at /, rustdoc under /api)
         run: |
@@ -114,6 +116,8 @@ jobs:
       - name: Check markdown links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress '*.md' '**/*.md'
+          # lychee.toml scopes the check to this repo's own docs (excludes submodule
+          # trees — separate repos — and the TLS-broken blog.japaric.io reference).
+          args: --config lychee.toml --verbose --no-progress '*.md' '**/*.md'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

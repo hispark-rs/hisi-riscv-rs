@@ -23,7 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crate: [ws63-pac, hisi-riscv-hal, hisi-riscv-rt]
+        # hisi-riscv-hal has NO default chip (0.5.0, esp-hal style), so a bare
+        # `cargo check -p hisi-riscv-hal` fires the no-chip compile_error; select
+        # chip-ws63 for it. ws63-pac / hisi-riscv-rt compile chip-neutrally.
+        include:
+          - crate: ws63-pac
+            args: ""
+          - crate: hisi-riscv-hal
+            args: "--no-default-features --features chip-ws63"
+          - crate: hisi-riscv-rt
+            args: ""
     steps:
       - uses: actions/checkout@v5
         with:
@@ -42,7 +51,7 @@ jobs:
           key: ${{ runner.os }}-cargo-ws63-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-ws63-
       - name: Check ${{ matrix.crate }}
-        run: cargo check -p ${{ matrix.crate }}
+        run: cargo check -p ${{ matrix.crate }} ${{ matrix.args }}
 
   # ── Full workspace check + library build ────────────────────────
   workspace:
@@ -129,8 +138,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
+      # The HAL has NO default chip (esp-hal style, 0.5.0) and its `default` pulls
+      # `rt`, so a bare `cargo test -p hisi-riscv-hal` resolves with no chip and every
+      # `soc::pac` reference vanishes. Select `chip-ws63` explicitly (mirrors the HAL's
+      # `just test` recipe): 309 unit/property tests + the doctests run on the host.
       - name: Run host unit tests (x86_64)
-        run: cargo test -p hisi-riscv-hal --target x86_64-unknown-linux-gnu
+        run: cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63 --target x86_64-unknown-linux-gnu
 
   # ── Dependency audit (advisory) ─────────────────────────────────
   audit:

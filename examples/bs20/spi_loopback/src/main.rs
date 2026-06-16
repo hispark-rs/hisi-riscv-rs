@@ -16,7 +16,7 @@
 #![no_main]
 
 use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::spi::{Config as SpiConfig, Spi, SpiMode};
+use hisi_riscv_hal::spi::{Config as SpiConfig, DataBits, Spi, SpiHz, SpiMode};
 use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
 use hisi_riscv_rt::entry;
 
@@ -29,9 +29,9 @@ fn main() -> ! {
     let mut spi = Spi::new_spi0(
         p.SPI0,
         SpiConfig {
-            frequency: 1_000_000,
+            frequency: SpiHz::ONE_MHZ,
             mode: SpiMode::Mode0,
-            data_bits: 8,
+            data_bits: DataBits::EIGHT,
         },
     );
 

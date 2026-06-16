@@ -38,6 +38,27 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 ## 关键设计
 
+### 类型化配置 — "能编译就能上板"（0.5.0）
+
+0.5.0 把**配置面**全面收紧为「能写出来的值就是能在硅上跑的值」：不存在能编译却被静默
+clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
+[类型化配置](../typed-config.md)，验收见 [`docs/review/0.5.0-acceptance.md`](../../../review/0.5.0-acceptance.md)。
+两层结构：
+
+- **配置/构造面（HAL 自有，可自由类型化）**：受校验 newtype + 可失败构造子返回
+  `Option`/`Result`（`SpiHz`/`DataBits`/`BaudRate`/`WdtTimeout`/`SampleCount` 等），越界
+  在构造点拒绝；角色用 type-state（I2S `new_master(非零派生分频)`/`new_slave()`，零分频
+  Master 不可表达）；驱动在 `new`/`configure` 里**自起本外设时钟门**（construct→clocked，
+  如 PWM/I2S）。类型编码的是**实测硅事实而非数据手册**（如 `pwm::PwmPeriod` 是 `u16`，
+  因 WS63 `pwm_freq_h` 高半字在硅上不 latch）。
+- **操作面（embedded-hal trait，固定签名）**：`SetDutyCycle`/`SpiBus`/`I2c`/`Read`/`Write`
+  保留标准 `u16`/`&[u8]` + `Result`（`Result` 即 embedded-hal 的非法输入惯用法），不改 trait 签名。
+
+危险外设（`Wdt`/`PwmChannel`/`Output`）实现 scoped `Drop`（停表/关输出/回高阻），逃生口
+`into_armed`/`into_running`/`into_latched`（消费 self→零大小 marker）。DMA 提供拥有缓冲区的
+`Transfer` guard（`embedded_dma` bound + 缓存维护折进类型），safe 代码里 use-after-free 不可表达。
+每个收紧面都有 host newtype/property 测试，并在连接的真机经 HIL 套件（`tests/hil.rs`）复验。
+
 ### 外设单例 + `'d` 生命周期
 
 `peripherals.rs` 用两个宏生成全套封装：
@@ -56,13 +77,12 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 ### GPIO 三层模型
 
-19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 `pin / 8`、位为 `pin % 8`（`gpio.rs:86-88`，评审确认正确）。三层：
+19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 `pin / 8`、位为 `pin % 8`（评审确认正确）。两层（0.5.0 删除了遗留的 type-state `GpioPin<MODE>`，统一到下面这一套）：
 
-1. `AnyPin<'d>` — 类型擦除，经 `unsafe steal(pin)` 创建（`gpio.rs:75-134`）。
-2. `Input` / `Output` / `Flex` — 由 `AnyPin` 经 `init_input()`/`init_output()`/`init_flex()` 派生（`gpio.rs:107-133`）。
-3. `GpioPin<'d, MODE>` — 遗留 type-state GPIO（`gpio.rs:364-476`）。
+1. `AnyPin<'d>` — 类型擦除，经 `unsafe steal(pin)` 创建。
+2. `Input` / `Output` / `Flex` — 由 `AnyPin` 经 `init_input()`/`init_output()`/`init_flex()` 派生；`degrade()` 可安全擦除回 `AnyPin`，`Flex::set_as_input/set_as_output` 提供显式方向。
 
-`InputConfig { pull }` / `OutputConfig { open_drain, initial_high }` 为配置入口。embedded-hal `digital` trait 用 `Infallible` 错误类型实现（`gpio.rs:177-188` 等）。
+`InputConfig { pull }` / `OutputConfig { open_drain, initial_high }` 为配置入口（均有 `with_*` builder）。`Output` 实现 scoped `Drop`（回 input/高阻），逃生口 `into_latched()`/`into_flex()`。embedded-hal `digital` trait 用 `Infallible` 错误类型实现。
 
 ### DMA 双控制器
 

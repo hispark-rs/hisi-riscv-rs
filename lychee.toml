@@ -1,0 +1,27 @@
+# lychee link-checker config for the hisi-riscv-rs monorepo (used by the advisory
+# "Check Links" CI job in documentation.yml). Scope = this repo's OWN markdown.
+#
+# Submodules are standalone repos (each with its own CI); their internal doc-link
+# hygiene is checked in those repos, not here — and the Check Links checkout does
+# not fetch submodules, so their trees are empty anyway. Skip them as inputs.
+exclude_path = [
+  "crates/hisi-riscv-hal",
+  "crates/hisi-riscv-rt",
+  "crates/pac/ws63-pac",
+  "crates/pac/bs2x-pac",
+  "examples/ws63",
+  "chips/ws63/guide",
+  "chips/bs2x/guide",
+  "chips/ws63/rf/ws63-RF",
+]
+
+# Links the shallow link-check checkout legitimately cannot resolve:
+#   - blog.japaric.io serves a *.github.com TLS cert (name mismatch) — the reference
+#     (Japaric's "Memory-safe DMA" article) is correct, the remote is misconfigured.
+#   - crates/<crate>/CHANGELOG.md live in submodules; CHANGELOG.md links to them
+#     resolve in a full `--recursive` clone but the link-check checkout omits
+#     submodules (so it doesn't also scan their trees).
+exclude = [
+  "^https://blog\\.japaric\\.io",
+  "crates/.*/CHANGELOG\\.md$",
+]

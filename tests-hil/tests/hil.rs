@@ -51,10 +51,10 @@ mod tests {
     use core::hint::black_box;
     // Chip-selected PAC alias: the suite names `pac::{Peripherals, Gpio0, ...}`
     // chip-agnostically and the active chip feature picks the concrete PAC.
-    #[cfg(feature = "chip-ws63")]
-    use ws63_pac as pac;
     #[cfg(feature = "chip-bs21")]
     use bs2x_pac as pac;
+    #[cfg(feature = "chip-ws63")]
+    use ws63_pac as pac;
 
     /// `#[init]` runs before every test. It takes the singleton `Peripherals`
     /// once and hands them to each test as shared state — proving the PAC's
@@ -108,8 +108,16 @@ mod tests {
         assert_eq!(pac::Timer::PTR as usize, 0x4400_2000, "TIMER base moved");
         assert_eq!(pac::Dma::PTR as usize, 0x4a00_0000, "DMA (MDMA) base moved");
         assert_eq!(pac::Sdma::PTR as usize, 0x520a_0000, "SDMA base moved");
-        assert_eq!(pac::CldoCrg::PTR as usize, 0x4400_1100, "CLDO_CRG base moved");
-        assert_eq!(pac::SysCtl0::PTR as usize, 0x4000_0000, "SYS_CTL0 base moved");
+        assert_eq!(
+            pac::CldoCrg::PTR as usize,
+            0x4400_1100,
+            "CLDO_CRG base moved"
+        );
+        assert_eq!(
+            pac::SysCtl0::PTR as usize,
+            0x4000_0000,
+            "SYS_CTL0 base moved"
+        );
     }
 
     /// More PAC base-address structural facts, extending
@@ -130,6 +138,10 @@ mod tests {
         assert_eq!(pac::Pwm::PTR as usize, 0x4402_4000, "PWM base moved");
         assert_eq!(pac::Wdt::PTR as usize, 0x4000_6000, "WDT base moved");
         assert_eq!(pac::Rtc::PTR as usize, 0x5702_4000, "RTC base moved");
-        assert_eq!(pac::GlbCtlM::PTR as usize, 0x4000_2000, "GLB_CTL_M base moved");
+        assert_eq!(
+            pac::GlbCtlM::PTR as usize,
+            0x4000_2000,
+            "GLB_CTL_M base moved"
+        );
     }
 }

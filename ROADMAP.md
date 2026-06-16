@@ -2,7 +2,7 @@
 
 > 本路线图源于 2026-05 的一次深度架构评审（多 agent 工作流 + 对抗式验证，41 条发现 0 条被驳回）。
 > 完整发现台账见 [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md)，
-> 各组件架构与评审见 [`docs/architecture/`](docs/architecture/)。
+> 各组件架构与评审见 [`docs/src/explanation/components/`](docs/src/explanation/components/)。
 >
 > **API 设计评审（2026-06）**：HAL API 风格对照业界（esp-hal / embassy / embedded-hal 1.0 /
 > Rust API Guidelines）的讨论台账见 [`docs/review/api-style-discussion-2026-06.md`](docs/review/api-style-discussion-2026-06.md)；
@@ -32,7 +32,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（**阶段 1 已就绪，不再受阻**） |
 | 5 | 连接性示例（scan → connect → ping） | 🔴 待真机（**阶段 1 已就绪**，待阶段 4 blob 链接 + 真机连通） |
-| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/architecture/async-embassy.md](docs/architecture/async-embassy.md)；支持 chip-ws63/chip-bs21 特性） |
+| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/src/explanation/components/async-embassy.md](docs/src/explanation/components/async-embassy.md)；支持 chip-ws63/chip-bs21 特性） |
 | **7** | **HAL 收尾 + 发布** | ✅ 已完成（2026-06-15：硅验证发布 ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，见下「阶段 7」） |
 | 探针 | debug 支持（RISC-V-DM / probe-rs） | ✅ 硅上验证完成（2026-06-14）：fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`——CoreSight mem-AP DTM、vendor DebugSequence、flash-algorithm crate；真机 attach/halt/read/write + `probe-rs download` 烧录 + flashboot 引导 + blinky 运行全链路打通 |
 
@@ -84,7 +84,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
 2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 hisi-riscv-rt 评审。
 3. ✅ **软件在环（QEMU）bring-up（已完成 2026-05-31）**：硬件不便时的替代验证信号——
-   [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
+   [`ws63-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
    in-tree `hw/riscv/ws63.c`（rv32imfc hart、按 `memory.x` 的内存映射、自定义 HiSilicon UART、
    自定义 CSR RAZ/WI、其余外设 MMIO 吸收）。**已实测**：`blinky` 启动并跑到 GPIO 翻转循环（0 非法指令陷阱）、
    新增的 `uart_hello` 在 QEMU 串口打印。这验证了内存布局 / startup（PMP/FPU/cache/数据重定位/栈）/ 链接脚本
@@ -251,7 +251,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   `TxToken` 走 TX sink。`netif_smoltcp_selftest`：ARP 请求经 驱动→smoltcp→驱动 往返、回 ARP reply。
 
 承接阶段 3/4，**仍需**完成：
-**BS2X 连接性边界**（已确认死胡同，2026-06）：BS2X（BS21）BLE/SLE 无线电的 PHY 寄存器空间（B_CTL @ 0x59000000）为 56 个只写位段 + IRQ-26 纯 PHY 事件墙。无法通过硬件建模逆向 blob 的 PHY 命令/响应协议；无线电与主机间的 HCI 边界亦为 blob-on-blob（固件 ROM 驱动 + MAC blob 联调）。完整分析见 `chips/ws63/guide/docs/bs21-connectivity-feasibility.md`。**实用结论**：BS2X Wi-Fi 可用 WS63 porting 层（FRW/HCC/netif），BLE/SLE 需要原厂支持或完整 blob 反汇编（超出 MVP 范围）。
+**BS2X 连接性边界**（已确认死胡同，2026-06）：BS2X（BS21）BLE/SLE 无线电的 PHY 寄存器空间（B_CTL @ 0x59000000）为 56 个只写位段 + IRQ-26 纯 PHY 事件墙。无法通过硬件建模逆向 blob 的 PHY 命令/响应协议；无线电与主机间的 HCI 边界亦为 blob-on-blob（固件 ROM 驱动 + MAC blob 联调）。（完整分析即本节，原独立 `bs21-connectivity-feasibility.md` 已并入此处。）**实用结论**：BS2X Wi-Fi 可用 WS63 porting 层（FRW/HCC/netif），BLE/SLE 需要原厂支持或完整 blob 反汇编（超出 MVP 范围）。
 
 - ✅ ~~补齐漏抽的 wifi `.a` 库~~（hmac/tcm/alg/bg_common 已纳入 `chips/ws63/rf/ws63-RF/lib`；wpa 按 MVP 决策剔除；ROM 表已补）。
 - ✅ ~~任务调度器~~（`crate::sched` cooperative 调度器已实现并在 ws63-qemu 验证）。

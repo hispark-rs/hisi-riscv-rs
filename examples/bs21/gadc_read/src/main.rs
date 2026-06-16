@@ -42,7 +42,9 @@ fn main() -> ! {
     uart.write(0, b"\r\nBS2X GADC read (AIN0)\r\n");
 
     let mut adc = Gadc::new(p.GADC);
-    let sample = adc.read(AdcChannel::Ain0);
+    // `read` returns Err(ConversionTimeout) if the AFE never completes; on QEMU the
+    // model fills a fixed sample, so it succeeds. Fall back to -1 on timeout.
+    let sample = adc.read(AdcChannel::Ain0).unwrap_or(-1);
 
     uart.write(0, b"  AIN0 raw = ");
     write_hex(&uart, sample as u32);
