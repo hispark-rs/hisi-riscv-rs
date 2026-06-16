@@ -82,6 +82,6 @@ WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
    - **长期**:把这个 target spec 提交进 rustc(niche,门槛高),或推动官方加 `riscv32imfc-*`。
    - 现状对异步**无影响**:异步只依赖 `portable-atomic`+`critical-section`,与 target 是否上游正交。
 
-4. **QEMU 模型**(ws63-qemu):把 `-M ws63` 板卡 + `-cpu ws63` 命名核 + xlinx 自定义 ISA 解码上游到 QEMU —— 这是 ws63-qemu ROADMAP 阶段 6([github.com/hispark-rs/ws63-qemu](https://github.com/hispark-rs/ws63-qemu))。与本仓异步无直接关系,但能让 CI 不依赖 fork 的 QEMU。
+4. **QEMU 模型**(ws63-qemu):把 `-M ws63` 板卡 + `-cpu ws63` 命名核 + xlinx 自定义 ISA 解码上游到 QEMU —— 这是 ws63-qemu ROADMAP 阶段 6([github.com/hispark-rs/hisi-riscv-qemu](https://github.com/hispark-rs/hisi-riscv-qemu))。与本仓异步无直接关系,但能让 CI 不依赖 fork 的 QEMU。
 
 > 简言之:**异步/embassy 这块本身已经是「按上游约定正确实现」**,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 摆脱自定义 rustc 工具链、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。

@@ -84,7 +84,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    **blinky 现已可链接**（已加回 default-members，CI/release 构建并 objcopy 产 `.bin`）。
 2. ✅ **MIE 中断宏 typo + 栈顶符号 GC fallback（已完成）**：见 hisi-riscv-rt 评审。
 3. ✅ **软件在环（QEMU）bring-up（已完成 2026-05-31）**：硬件不便时的替代验证信号——
-   [`ws63-qemu`](https://github.com/hispark-rs/ws63-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
+   [`ws63-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) 仿照 esp-qemu，fork 固定版 QEMU v9.2.4 加
    in-tree `hw/riscv/ws63.c`（rv32imfc hart、按 `memory.x` 的内存映射、自定义 HiSilicon UART、
    自定义 CSR RAZ/WI、其余外设 MMIO 吸收）。**已实测**：`blinky` 启动并跑到 GPIO 翻转循环（0 非法指令陷阱）、
    新增的 `uart_hello` 在 QEMU 串口打印。这验证了内存布局 / startup（PMP/FPU/cache/数据重定位/栈）/ 链接脚本
