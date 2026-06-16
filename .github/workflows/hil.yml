@@ -41,7 +41,7 @@ jobs:
     # Only a self-hosted runner with the board attached carries this label.
     runs-on: [self-hosted, ws63-hil]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
