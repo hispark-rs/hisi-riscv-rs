@@ -64,7 +64,7 @@ jobs:
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=hisi_riscv_hal/index.html">\n' > site/api/index.html
 
       - name: Upload docs artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: api-docs
           path: site/
