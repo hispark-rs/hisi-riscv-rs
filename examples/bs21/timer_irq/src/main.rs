@@ -88,7 +88,7 @@ fn main() -> ! {
     let mut spins: u32 = 0;
     loop {
         spins = spins.wrapping_add(1);
-        if spins % 2_000_000 == 0 {
+        if spins.is_multiple_of(2_000_000) {
             putc(b'.');
         }
         core::hint::spin_loop();
