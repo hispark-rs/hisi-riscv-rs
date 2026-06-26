@@ -1,0 +1,9 @@
+# rust-analyzer 配置:examples/bs21 是独立 workspace(chip-bs21)。见仓库根
+# rust-analyzer.toml 的说明 —— 同样关掉 allFeatures(互斥 chip)与 allTargets
+# (裸机 target 无 `test` crate,避免 E0463 误报)。
+[cargo]
+allFeatures = false
+allTargets = false
+
+[check]
+allTargets = false

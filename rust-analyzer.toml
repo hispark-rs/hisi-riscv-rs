@@ -1,0 +1,21 @@
+# rust-analyzer 工作区配置(由 RA 语言服务器读取,跨编辑器生效:VS Code / nvim /
+# Helix / Zed 等)。这里只放 hisi-riscv-rs 专属、不该进个人全局 RA 配置的设置。
+#
+# cargo.allFeatures = false
+#   HAL 的 chip-ws63 / chip-bs21 是「恰选其一」的互斥 feature(lib.rs 有 compile_error
+#   兜底)。allFeatures 会把两者同时打开 → soc/mod.rs 里 `pac` 别名同时指向 ws63-pac
+#   和 bs2x-pac → ws63 专属的 io_config.rs 报 `cannot find io_config in pac` [E0433]。
+#   关掉后 RA 按各 workspace 自然 unify 的 feature 解析(本仓 examples 把 HAL unify
+#   成 chip-ws63),与 `cargo check` 一致。注:false 也正是 RA 自身默认值。
+#
+# cargo.allTargets / check.allTargets = false
+#   裸机 target riscv32imfc-unknown-none-elf 没有 `test` crate(no_std 无测试 harness)。
+#   --all-targets 会让 RA / clippy 去构建每个 crate 的 test 目标 →
+#   `can't find crate for test` [E0463] 误报。`cargo build` 不受影响(正常构建不带 test)。
+
+[cargo]
+allFeatures = false
+allTargets = false
+
+[check]
+allTargets = false
