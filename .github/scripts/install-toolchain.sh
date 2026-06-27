@@ -8,7 +8,7 @@
 # release also ships aarch64-linux, macOS x86_64/aarch64, and windows x86_64 tarballs.)
 set -euo pipefail
 
-VER="v1.96.0-2"
+VER="v1.96.0-3"
 BASE="hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu"
 URL="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/${VER}/${BASE}.tar.gz"
 
