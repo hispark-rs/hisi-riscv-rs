@@ -1606,6 +1606,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "xip_flash_clk_hazard"
+version = "0.1.0"
+dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+ "ws63-pac",
+]
+
+[[package]]
 name = "zerocopy"
 version = "0.8.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
