@@ -68,22 +68,24 @@ channel = "hisi-riscv"
 
 ### 1. 海量 `unresolved macro println!` / `no method len on [u8; N]` 等
 
+> ✅ **已在 `v1.96.0-3` 修复**。从该版起 tarball 自带实体化的 rust-src,本节只对**钉在
+> `≤ v1.96.0-2`** 的旧安装有意义。用 `releases/latest`(本手册默认)装的不会再遇到。
+
 **症状**：连 `println!`、`core::arch::asm!` 这种标准库宏，以及 `[u8; N]`/`u32` 的原始方法
 （`len`/`iter`/`wrapping_add`）、slice unsize 强转都报错。
 
-**根因**：预编译 tarball 里 sysroot 的 rust-src 软链是**悬空的**，指向打包用的 CI 构建机
-绝对路径（`/Users/runner/work/...`）。RA 加载不到 `core`/`std` 源码，于是把一切基础设施
-判成"未知"。（已反馈上游：<https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1>）
+**根因**：旧（`≤ v1.96.0-2`）tarball 里 sysroot 的 rust-src 软链是**悬空的**，指向打包用的
+CI 构建机绝对路径（`/Users/runner/work/...`）。RA 加载不到 `core`/`std` 源码，于是把一切
+基础设施判成"未知"。（上游已修复:<https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1>）
 
-**修复**：把该软链重指向本机已装的某个 `rust-src`（版本接近即可，RA 容忍小版本差）：
+**修复**：升级到 `v1.96.0-3` 及以上（用 `latest` 重装即可）。若必须留在旧版，把该软链
+重指向本机已装的某个 `rust-src`（版本接近即可，RA 容忍小版本差）：
 
 ```bash
 rustup component add rust-src --toolchain stable
 ln -sfn "$(rustc +stable --print sysroot)/lib/rustlib/src/rust" \
         "$(rustc +hisi-riscv --print sysroot)/lib/rustlib/src/rust"
 ```
-
-> 重装 `hisi-riscv` 工具链后 tarball 会带回悬空软链，需重做这一步。
 
 ### 2. RA 启动即报 `'rust-analyzer' is not installed for toolchain 'hisi-riscv'`
 

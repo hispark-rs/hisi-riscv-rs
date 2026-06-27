@@ -8,7 +8,7 @@
 
 | 现象 | 根因 | 修复 / 规避 | 跟踪 |
 | --- | --- | --- | --- |
-| rust-analyzer 海量误报:`unresolved macro println!`、`no method len on [u8; N]`、slice 强转报错 | 预编译 tarball 的 rust-src 软链悬空(指向 CI 构建机绝对路径),RA 加载不到 `core`/`std` 源码 | 重指软链到本机 `rust-src`,见 [安装工具链 · IDE 已知问题](../how-to/install-toolchain.md) | [toolchain#1](https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1) |
+| rust-analyzer 海量误报:`unresolved macro println!`、`no method len on [u8; N]`、slice 强转报错 | 旧(`≤ v1.96.0-2`)tarball 的 rust-src 软链悬空(指向 CI 构建机绝对路径),RA 加载不到 `core`/`std` 源码 | ✅ **已在 `v1.96.0-3` 修复**;旧版规避见 [安装工具链 · IDE 已知问题](../how-to/install-toolchain.md) | [toolchain#1](https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1)(已修复) |
 | RA 启动报 `'rust-analyzer' is not installed for toolchain 'hisi-riscv'` | 自定义工具链装不了 RA 组件,而 `rust-toolchain.toml` 把频道钉成了它 | 让编辑器用别的工具链的 RA 二进制,见 [安装工具链 · IDE 已知问题](../how-to/install-toolchain.md) | — |
 | `cannot find io_config in pac` `E0433` 等 chip 相关误报 | RA 开了 `cargo.allFeatures`,把互斥的 `chip-ws63` / `chip-bs21` 同时打开 | 设 `rust-analyzer.cargo.allFeatures = false`(仓库已提供 `rust-analyzer.toml`) | — |
 | `can't find crate for test` `E0463` | `--all-targets` 在裸机 target 构建 test 目标,而 no_std 无 `test` crate | 设 `cargo.allTargets = false` 与 `check.allTargets = false`(仓库已提供 `rust-analyzer.toml`) | — |
