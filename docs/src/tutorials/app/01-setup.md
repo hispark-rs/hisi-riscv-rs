@@ -3,8 +3,20 @@
 本课带你装好开发 WS63 应用所需的全部工具。注意：**你不需要克隆monorepo**——
 所有库依赖都来自 crates.io，工程将在下一课用 `cargo generate` 生成。
 
-> 本课只求"把工具装上"。每个工具的深入说明与故障排查见
-> [安装 hisi-riscv 工具链](../../how-to/install-toolchain.md)。
+> 本课只求"把工具装上"。每个工具的深入说明与故障排查（含 **IDE / rust-analyzer
+> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/install-toolchain.md)。
+
+## 第 0 步：安装 Rust（rustup）
+
+后面所有步骤都依赖 `rustup` / `cargo`。如果你机器上还没有，按 Rust 官方指引装一下
+（一条命令、跨平台）：
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+> 官方安装页（含 Windows / 其它方式）：<https://www.rust-lang.org/tools/install>。
+> 装完确认：`rustup --version` 和 `cargo --version` 都能打印版本即可。
 
 ## 第 1 步：安装 hisi-riscv 工具链
 

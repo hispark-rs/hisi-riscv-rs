@@ -56,3 +56,61 @@ channel = "hisi-riscv"
 - **`error: toolchain 'hisi-riscv' is not installed`**：还没 `rustup toolchain link`，或 `stage2/` 被移动/删除了——重新 link。
 - **`error: target 'riscv32imfc-unknown-none-elf' not found` / 触发 build-std**：你用的是普通 stable 而不是 `hisi-riscv`。检查 `rustc +hisi-riscv --print target-list | grep riscv32imfc` 是否有输出；在仓库外构建时记得 `cargo +hisi-riscv ...` 或带上 `rust-toolchain.toml`。
 - **下错 host tarball**（如在 aarch64 上用了 x86_64 包）：`rustc` 跑不起来。按 `uname -m` 重新挑文件名。
+
+## IDE / rust-analyzer 已知问题
+
+`cargo build` / `cargo check` 一切正常，但编辑器里 rust-analyzer 可能冒出**大量误报**。
+这些都不是代码问题，而是自定义工具链 + 嵌入式 target + 多 workspace 的组合给 RA 挖的坑。
+逐条对症即可（命令以 macOS + stable 工具链为例，按你的主机/路径调整）。
+
+### 1. 海量 `unresolved macro println!` / `no method len on [u8; N]` 等
+
+**症状**：连 `println!`、`core::arch::asm!` 这种标准库宏，以及 `[u8; N]`/`u32` 的原始方法
+（`len`/`iter`/`wrapping_add`）、slice unsize 强转都报错。
+
+**根因**：预编译 tarball 里 sysroot 的 rust-src 软链是**悬空的**，指向打包用的 CI 构建机
+绝对路径（`/Users/runner/work/...`）。RA 加载不到 `core`/`std` 源码，于是把一切基础设施
+判成"未知"。（已反馈上游：<https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1>）
+
+**修复**：把该软链重指向本机已装的某个 `rust-src`（版本接近即可，RA 容忍小版本差）：
+
+```bash
+rustup component add rust-src --toolchain stable
+ln -sfn "$(rustc +stable --print sysroot)/lib/rustlib/src/rust" \
+        "$(rustc +hisi-riscv --print sysroot)/lib/rustlib/src/rust"
+```
+
+> 重装 `hisi-riscv` 工具链后 tarball 会带回悬空软链，需重做这一步。
+
+### 2. RA 启动即报 `'rust-analyzer' is not installed for toolchain 'hisi-riscv'`
+
+`hisi-riscv` 是自定义工具链，装不了 rust-analyzer 组件；而 `rust-toolchain.toml` 把频道钉成
+了它，导致 rustup 的 `rust-analyzer` 代理被路由过去后报错。
+
+**修复**：让编辑器用**另一个工具链的** RA 二进制（不设 `RUSTUP_TOOLCHAIN`）——RA 分析时仍会
+按 `rust-toolchain.toml` 调 `hisi-riscv` 的 `cargo`/`rustc`，嵌入式 target 不受影响。例如指向
+`~/.rustup/toolchains/stable-*/bin/rust-analyzer`（先 `rustup component add rust-analyzer --toolchain stable`）。
+
+### 3. `cannot find io_config in pac` [E0433] 等 chip 相关误报
+
+**根因**：HAL 的 `chip-ws63` / `chip-bs21` 是**恰选其一**的互斥 feature。若 RA 开了
+`cargo.allFeatures`（如 LazyVim 的 rust 扩展默认 `allFeatures=true`），两个 chip 会被同时打开，
+ws63 专属文件被按 bs2x-pac 解析而报错。
+
+**修复**：设 `rust-analyzer.cargo.allFeatures = false`（这本就是 RA / VS Code 的原生默认值）。
+
+### 4. `can't find crate for test` [E0463]
+
+**根因**：RA 默认 `--all-targets` 会构建每个 crate 的 test 目标，而裸机 target
+`riscv32imfc-unknown-none-elf` 没有 `test` crate（no_std 无测试 harness）。
+
+**修复**：设 `rust-analyzer.cargo.allTargets = false` 与 `rust-analyzer.check.allTargets = false`。
+
+### 关于第 3、4 条的工程内配置
+
+仓库已提交 `rust-analyzer.toml`（根 + `examples/bs20` + `examples/bs21` 各一份），把
+`allFeatures` / `allTargets` 都设成 `false`。**VS Code 等会直接读取它**，开箱即用。
+
+> ⚠️ 优先级坑：rust-analyzer 里**编辑器 client 配置优先级高于仓库 `rust-analyzer.toml`**。
+> 若你的编辑器/插件（如 LazyVim）在 client 级强设了 `cargo.allFeatures=true`，会把仓库 ratoml
+> 压住——此时需在你**编辑器自己的 RA 配置**里把上面第 3、4 条设回去（client 级覆盖）。
