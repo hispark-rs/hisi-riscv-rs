@@ -33,6 +33,7 @@
   - [应用镜像格式与签名](reference/image-format.md)
   - [HIL 标记串与环境变量](reference/hil-markers.md)
   - [CLI 工具速查（hisi-fwpkg / probe-rs）](reference/cli-tools.md)
+  - [已知问题索引](reference/known-issues.md)
 - [原理与背景 · Explanation](explanation/index.md)
   - [系统架构总览](explanation/architecture.md)
   - [类型化配置：能编译就能在硅片上跑](explanation/typed-config.md)

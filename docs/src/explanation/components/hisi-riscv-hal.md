@@ -42,7 +42,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 0.5.0 把**配置面**全面收紧为「能写出来的值就是能在硅上跑的值」：不存在能编译却被静默
 clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
-[类型化配置](../typed-config.md)，验收见 [`docs/review/0.5.0-acceptance.md`](../../../review/0.5.0-acceptance.md)。
+[类型化配置](../typed-config.md)，验收见 [`docs/review/0.5.0-acceptance.md`](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/0.5.0-acceptance.md)。
 两层结构：
 
 - **配置/构造面（HAL 自有，可自由类型化）**：受校验 newtype + 可失败构造子返回

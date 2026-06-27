@@ -17,3 +17,4 @@
 | [应用镜像格式与签名](image-format.md) | 0x300 镜像头字段布局、fwpkg V1 容器、CRC16 |
 | [HIL 标记串与环境变量](hil-markers.md) | 每个示例的 HIL 标记串、HIL 脚本消费的全部环境变量 |
 | [CLI 工具速查](cli-tools.md) | `hisi-fwpkg`、补丁版 `probe-rs`、QEMU、`hisiflash` 命令与仓库清单 |
+| [已知问题索引](known-issues.md) | 工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue |

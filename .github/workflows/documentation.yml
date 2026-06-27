@@ -105,7 +105,27 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
 
-  # ── Link check ────────────────────────────────────────────────
+  # ── mdBook internal link check (gating) ───────────────────────
+  # Validates the handbook's own cross-references (SUMMARY entries, relative
+  # links, heading anchors). Runs standalone so it does NOT add a book.toml
+  # output backend — the deploy job's `docs/book/` layout stays single-backend.
+  # Internal-only: follow-web-links defaults to false, so flaky external URLs
+  # are left to the lychee job below. A broken internal link fails this job.
+  mdbook-linkcheck:
+    name: mdBook Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install mdBook + linkcheck
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook,mdbook-linkcheck
+
+      - name: Check internal links
+        run: mdbook-linkcheck --standalone docs
+
+  # ── External link check (non-gating) ──────────────────────────
   link-check:
     name: Check Links
     runs-on: ubuntu-latest

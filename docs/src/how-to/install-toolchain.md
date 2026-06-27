@@ -91,7 +91,7 @@ ln -sfn "$(rustc +stable --print sysroot)/lib/rustlib/src/rust" \
 按 `rust-toolchain.toml` 调 `hisi-riscv` 的 `cargo`/`rustc`，嵌入式 target 不受影响。例如指向
 `~/.rustup/toolchains/stable-*/bin/rust-analyzer`（先 `rustup component add rust-analyzer --toolchain stable`）。
 
-### 3. `cannot find io_config in pac` [E0433] 等 chip 相关误报
+### 3. `cannot find io_config in pac` `E0433` 等 chip 相关误报
 
 **根因**：HAL 的 `chip-ws63` / `chip-bs21` 是**恰选其一**的互斥 feature。若 RA 开了
 `cargo.allFeatures`（如 LazyVim 的 rust 扩展默认 `allFeatures=true`），两个 chip 会被同时打开，
@@ -99,7 +99,7 @@ ws63 专属文件被按 bs2x-pac 解析而报错。
 
 **修复**：设 `rust-analyzer.cargo.allFeatures = false`（这本就是 RA / VS Code 的原生默认值）。
 
-### 4. `can't find crate for test` [E0463]
+### 4. `can't find crate for test` `E0463`
 
 **根因**：RA 默认 `--all-targets` 会构建每个 crate 的 test 目标，而裸机 target
 `riscv32imfc-unknown-none-elf` 没有 `test` crate（no_std 无测试 harness）。
