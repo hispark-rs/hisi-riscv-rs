@@ -59,6 +59,7 @@ default-members = [
     "examples/ws63/spi_loopback",
     "examples/ws63/i2c_scan",
     "examples/ws63/net_ping",
+    "examples/ws63/xip_flash_clk_hazard",
 ]
 
 [workspace.package]
