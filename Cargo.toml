@@ -22,6 +22,7 @@ members = [
     "examples/ws63/spi_loopback",
     "examples/ws63/i2c_scan",
     "examples/ws63/net_ping",
+    "examples/ws63/xip_flash_clk_hazard",
     "chips/ws63/rf",
     "chips/ws63/flashboot",
     # On-target (semihosting) HIL test crate, run via probe-rs + embedded-test.
