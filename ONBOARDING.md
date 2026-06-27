@@ -25,7 +25,7 @@ Top MCP Servers:
 
 ### Codebases
 - [ ] hisi-riscv-rs — https://github.com/hispark-rs/hisi-riscv-rs (the monorepo; clone with `git submodule update --init --recursive` — crates, examples, guides, and SVD repos are all submodules)
-- [ ] hisi-riscv-rust-toolchain — https://github.com/hispark-rs/hisi-riscv-rust-toolchain (custom rustc with the `riscv32imfc-unknown-none-elf` target baked in; **required to build** — install + `rustup toolchain link hisi-riscv`)
+- [ ] hisi-riscv-rust-toolchain — https://github.com/hispark-rs/hisi-riscv-rust-toolchain (custom rustc with the `riscv32imfc-unknown-none-elf` target baked in; **required to build** — install by extracting the tarball into `~/.rustup/toolchains/hisi-riscv`, rustup auto-discovers it)
 - [ ] hisi-riscv-qemu — https://github.com/hispark-rs/hisi-riscv-qemu (QEMU fork with `-M ws63/bs21/bs21e/bs22/bs20`; software-in-the-loop, no silicon needed — used by the `qemu-smoke` skill)
 - [ ] fbb_ws63 — https://gitcode.com/HiSpark/fbb_ws63 (official HiSilicon C SDK; the **ground-truth** for register/peripheral behavior, read-only reference)
 - [ ] fbb_bs2x — https://gitcode.com/HiSpark/fbb_bs2x (official C SDK for BS2X; register/peripheral ground-truth for BS21/BS20/BS22)
@@ -67,7 +67,7 @@ First task for a new teammate — get a clean build going end to end:
 
 1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
    - Note: BS21/BS20 examples are in isolated workspaces (`examples/bs21/`, `examples/bs20/`) because `hisi-riscv-hal` builds for exactly one chip at a time (enforced by `compile_error!`). WS63 examples are in the root workspace.
-2. Install the custom `hisi-riscv` toolchain per `rust-toolchain.toml` and link it: `rustup toolchain link hisi-riscv "$PWD/stage2"`.
+2. Install the custom `hisi-riscv` toolchain (per `rust-toolchain.toml`) by extracting the release tarball into `~/.rustup/toolchains/hisi-riscv` (`tar --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv -xzf …`); rustup auto-discovers it, no `link` needed.
 3. Build the libraries + blinky: `cargo build`, then sanity-check the whole tree: `cargo check --workspace` (the `/run-ws63-rs` skill wraps this).
 4. Boot blinky in the emulator to see it run end to end: `/qemu-smoke ws63 blinky`.
 5. Read `docs/architecture/overview.md` and `ROADMAP.md` to see where the project is headed before picking up real work.

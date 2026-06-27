@@ -13,12 +13,13 @@ target `riscv32imfc-unknown-none-elf` (RV32IMFC, hardware single-float `ilp32f`,
 atomics) baked in as a **builtin** — so builds need **no `-Z build-std`**. The default
 target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "hisi-riscv"`.
 
-Install + link it first (it is not a distributable rustup channel):
+Install it first (it is not a distributable rustup channel) — extract straight into
+rustup's toolchains dir, no `link` needed:
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-rustup toolchain link hisi-riscv "$PWD/stage2"
+curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 ```
 
 The `hisi-riscv` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.

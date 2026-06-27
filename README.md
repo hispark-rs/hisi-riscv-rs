@@ -76,13 +76,16 @@ git submodule update --init --recursive
 
 The default target `riscv32imfc-unknown-none-elf` (hardware single-float
 `ilp32f`, no atomics) is **baked into a custom rustc** as a builtin, so no
-`-Z build-std` is needed. It is not a distributable rustup channel — install +
-link it first (see [`rust-toolchain.toml`](rust-toolchain.toml) and the
+`-Z build-std` is needed. It is not a distributable rustup channel — install it
+first by extracting straight into rustup's toolchains dir (see
+[`rust-toolchain.toml`](rust-toolchain.toml) and the
 [hisi-riscv-rust-toolchain](https://github.com/hispark-rs/hisi-riscv-rust-toolchain) repo):
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz && rustup toolchain link hisi-riscv "$PWD/stage2"
+curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+# tarball top-level is stage2/; --strip-components=1 drops it; rustup auto-discovers the dir (no `link` needed)
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 ```
 
 ### 2. Build

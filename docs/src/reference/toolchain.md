@@ -16,7 +16,7 @@ WS63 用自定义 `hisi-riscv` 工具链构建。事实取自 [`rust-toolchain.t
 | 原子 | **无** `a` 扩展（forced-atomics + no-CAS） |
 | build-std | **不需要**（目标为 builtin，工具链自带预编译 core/alloc） |
 | 工具链仓库 | github.com/hispark-rs/hisi-riscv-rust-toolchain |
-| 当前发布 | `v1.96.0-2` |
+| 当前发布 | 由 `releases/latest` 跟踪（撰文时 = `v1.96.0-3`） |
 
 > 目标三元组写法 `riscv32imfc`（注意是 `imfc`，含硬浮点 `f`、不含原子 `a`）。`CLAUDE.md` 中出现的 `riscv32imafc-unknown-none-elf` 是 `--target` 覆盖示例，并非默认目标。
 
@@ -57,16 +57,17 @@ rustflags = ["-C", "link-arg=--no-relax"]
 按主机选 tarball（linux x86_64/aarch64、macOS x86_64/aarch64、windows x86_64）：
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 # 直接解压进 rustup 的 toolchains 目录（顶层 stage2/ 用 --strip-components=1 剥掉），无需 link
 mkdir -p ~/.rustup/toolchains/hisi-riscv
 tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 ```
 
-release URL 形态：
+release URL 形态（推荐用 `latest`，免随 re-release 改版本）：
 
 ```console
-https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/<tag>/hisi-riscv-rust-1.96.0-<host-triple>.tar.gz
+https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-<host-triple>.tar.gz
 ```
 
-当前 `<tag>` = `v1.96.0-2`；`<host-triple>` 如 `x86_64-unknown-linux-gnu`、`aarch64-unknown-linux-gnu`、`x86_64-apple-darwin`、`aarch64-apple-darwin`、`x86_64-pc-windows-msvc`。tarball 顶层是 `stage2/`，解压进 `~/.rustup/toolchains/hisi-riscv/` 后 rustup 自动识别（无需 `rustup toolchain link`）。
+`latest` 永远指向最新 release；要钉某个具体版本，把 `latest/download` 换成
+`download/<tag>`（如 `download/v1.96.0-3`）。`<host-triple>` 如 `x86_64-unknown-linux-gnu`、`aarch64-unknown-linux-gnu`、`x86_64-apple-darwin`、`aarch64-apple-darwin`、`x86_64-pc-windows-msvc`。tarball 顶层是 `stage2/`，解压进 `~/.rustup/toolchains/hisi-riscv/` 后 rustup 自动识别（无需 `rustup toolchain link`）。

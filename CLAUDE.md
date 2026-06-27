@@ -34,8 +34,8 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # WS63 target riscv32imfc-unknown-none-elf (hardware single-float ilp32f, no atomics)
 # baked in as a builtin — default target set in .cargo/config.toml, no -Z build-std.
 # Install it first (see rust-toolchain.toml / https://github.com/hispark-rs/hisi-riscv-rust-toolchain):
-#   curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-#   tar xzf hisi-riscv-rust-1.96.0-*.tar.gz && rustup toolchain link hisi-riscv "$PWD/stage2"
+#   curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+#   mkdir -p ~/.rustup/toolchains/hisi-riscv && tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 cargo build                         # Build libraries + blinky (default-members) — works:
                                     # the default-member ws63 examples pull chip-ws63 onto
                                     # the shared hal via feature unification.
