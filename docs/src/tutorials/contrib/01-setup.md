@@ -23,13 +23,16 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 WS63 应用核是 `riscv32imfc-unknown-none-elf`（硬件单精度浮点、无原子扩展）。
 这个目标被内建进了一个自定义的 `hisi-riscv` 工具链——它**不是** rustup 频道，需要手动下载并链接。
 
-下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），解压，然后链接：
+下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），**直接解压进 rustup 的 toolchains 目录**——rustup 会自动识别，无需 `link`：
 
 ```bash
 curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz
-rustup toolchain link hisi-riscv "$PWD/stage2"
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 ```
+
+> tarball 顶层是 `stage2/`，`--strip-components=1` 把它剥掉，让 `bin/lib/libexec`
+> 落到 `hisi-riscv/` 根下；工具链自包含，删掉下载的临时文件也不影响。
 
 确认链接成功：
 

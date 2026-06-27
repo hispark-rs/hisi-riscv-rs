@@ -80,7 +80,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 - **默认 target / 工具链**：**`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 `ilp32f`，无原子），
   由自定义 **`hisi-riscv`** 工具链提供（stable rustc 把该 target 烤成 builtin，故**无需 `-Z build-std`**，
   工具链自带预编译 core/alloc）。`rust-toolchain.toml` pin `channel = "hisi-riscv"`；安装见
-  <https://github.com/hispark-rs/hisi-riscv-rust-toolchain>（`rustup toolchain link hisi-riscv …`）。
+  <https://github.com/hispark-rs/hisi-riscv-rust-toolchain>（解压进 `~/.rustup/toolchains/hisi-riscv/`，rustup 自动识别）。
   - WS63 核**无原子（A）扩展**：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
     RMW 走 `portable-atomic` 的 critical-section polyfill，**不发 `lr/sc/amo`**。原默认 `riscv32imafc`
     会发原子指令、在硅片上触发非法指令陷阱，已弃用。

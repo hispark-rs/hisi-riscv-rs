@@ -77,7 +77,7 @@ Rust 提供两条路拿到一个非标准 target，二者是真正的取舍：
 权衡的结论很清楚：**用户体验和可重现性 > 维护方自己省事**。对一个嵌入式 SDK，"装好工具链
 就能稳定 `cargo build`"远比"维护方不用管工具链、但每个用户都得忍 nightly"更值。
 所以选了 B。工具链通过 `rust-toolchain.toml` pin 住 `channel = "hisi-riscv"`，
-用 `rustup toolchain link` 接进 rustup。
+解压进 `~/.rustup/toolchains/hisi-riscv/` 后 rustup 即自动识别。
 
 ## code model：medlow 还是 medany
 

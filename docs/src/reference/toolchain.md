@@ -33,7 +33,7 @@ WS63 用自定义 `hisi-riscv` 工具链构建。事实取自 [`rust-toolchain.t
 channel = "hisi-riscv"
 ```
 
-> 该工具链不是可分发的 rustup channel，必须先手动安装并 `rustup toolchain link hisi-riscv`（见下"安装"）。
+> 该工具链不是可分发的 rustup channel，必须先手动安装——解压进 `~/.rustup/toolchains/hisi-riscv/` 即可，rustup 自动识别（见下"安装"）。
 
 ## `.cargo/config.toml`
 
@@ -58,8 +58,9 @@ rustflags = ["-C", "link-arg=--no-relax"]
 
 ```bash
 curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/v1.96.0-2/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz
-rustup toolchain link hisi-riscv "$PWD/stage2"
+# 直接解压进 rustup 的 toolchains 目录（顶层 stage2/ 用 --strip-components=1 剥掉），无需 link
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
 ```
 
 release URL 形态：
@@ -68,4 +69,4 @@ release URL 形态：
 https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/<tag>/hisi-riscv-rust-1.96.0-<host-triple>.tar.gz
 ```
 
-当前 `<tag>` = `v1.96.0-2`；`<host-triple>` 如 `x86_64-unknown-linux-gnu`、`aarch64-unknown-linux-gnu`、`x86_64-apple-darwin`、`aarch64-apple-darwin`、`x86_64-pc-windows-msvc`。链接目标为解压后的 `stage2` 目录。
+当前 `<tag>` = `v1.96.0-2`；`<host-triple>` 如 `x86_64-unknown-linux-gnu`、`aarch64-unknown-linux-gnu`、`x86_64-apple-darwin`、`aarch64-apple-darwin`、`x86_64-pc-windows-msvc`。tarball 顶层是 `stage2/`，解压进 `~/.rustup/toolchains/hisi-riscv/` 后 rustup 自动识别（无需 `rustup toolchain link`）。
