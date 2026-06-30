@@ -135,7 +135,9 @@ Two controllers share `dma::RegisterBlock`:
 - `Dma0` (0x4A00_0000) — primary DMA, channels 0-3
 - `Sdma0` (0x520A_0000) — secure DMA, channels 0-3 (logical 8-11)
 
-`DmaInstance` trait provides `ptr()` → register block access. `DmaDriver<'d, T: DmaInstance>` is generic over the controller. `DmaEligible` trait binds peripherals to DMA, with `DmaChannelFor<P>` providing compile-time safety.
+`DmaInstance` trait provides `ptr()` → register block access. `DmaDriver<'d, T: DmaInstance>` is generic over the controller.
+
+**Peripheral-paced DMA (0.5.1+):** wire DMA into a peripheral via `Spi::with_dma(dma) -> SpiDma` / `Uart::with_dma(dma) -> UartDma` (consumes the blocking driver — blocking + DMA APIs are mutually exclusive, esp-hal style). `SpiDma::{write_dma, transfer_dma}` / `UartDma::{write_dma, read_dma}` are blocking, bounded-wait, and program the peripheral + DMA channel in the vendor handshake order. Channels come from `DmaDriver::split_channels() -> DmaChannels` (typed tokens, runtime-claimed). The low-level `start_mem_to_peripheral`/`start_peripheral_to_mem` return a `PeripheralTransfer<'d, BUF>` guard that owns the buffer (UAF unrepresentable in safe code); `wait()` is fallible (`Err(Timeout)` on a wedged channel). Cache maintenance is folded in (clean TX source / invalidate RX dst; never touch the uncached peripheral MMIO). `Drop` runs cancel-then-quiesce (clear peripheral DMA-enable → halt → drain `active` → disable). See `docs/review/peripheral-dma-design-0.5.1.md`. (The old `DmaEligible`/`DmaChannelFor` binding traits were removed; `DmaPeripheral` + `DmaChannelConfig::mem_to_peripheral`/`peripheral_to_mem` replace them.)
 
 ## Key Design Decisions
 
