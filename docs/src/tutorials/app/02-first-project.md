@@ -66,14 +66,14 @@ just flash
 > `SEC_VERIFY_ENABLE == 0`），但 flashboot 在硬件上**仍会校验 body 的 SHA-256**——
 > secure-off 只是跳过 ECC 签名，不跳过 hash。所以镜像需要的是 `0x300` 头 +
 > **真实 body SHA-256**（这正是 `patch-hash` 在做的事），而不存在一个能让它启动的"占位签名"。
-> 镜像格式细节见 [应用镜像格式与签名](../../reference/image-format.md)。
+> 镜像格式细节见 [应用镜像格式与签名](../../reference/06-image-format.md)。
 >
 > BS2X 仍走"route 1"：链接时没有 `boot-header`，用编译后的 `hisi-fwpkg image -o app.img <elf>`
 > 打包再烧 `.img`；WS63 用的是上面的 `patch-hash` + 裸 ELF 路径。
 >
 > 如果 `HiSilicon_WS63.yaml` 不在当前目录，指给它：
 > `just CHIP_DESC=/path/to/HiSilicon_WS63.yaml flash`。
-> probe-rs 分支与 YAML 的细节见 [用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md)。
+> probe-rs 分支与 YAML 的细节见 [用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)。
 
 想在烧录的同时顺便看 UART0 的启动日志，可以用：
 

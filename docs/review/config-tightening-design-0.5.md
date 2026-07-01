@@ -1,6 +1,6 @@
 # hisi-riscv-hal 0.5.0 配置收紧设计（per-driver）
 
-> 评审日期：2026-06-15 · 对象：`hisi-riscv-hal` 全部 config 面 typed 收紧 · 方法：16 驱动多 agent 审计+设计（Opus 4.8），从工作流 journal 救回的结构化设计汇编（自动综合步因连接错误中断，本文档由设计结果生成 + 人工框架）。约定见 [类型化配置](../src/explanation/typed-config.md) + `.claude/skills/typed-config/`；PWM 已落地（`src/pwm.rs`）。**每一面完整类型草图见附录 [`config-tightening-designs.json`](config-tightening-designs.json)**；API 风格清债见 [api-style 台账](api-style-discussion-2026-06.md)。
+> 评审日期：2026-06-15 · 对象：`hisi-riscv-hal` 全部 config 面 typed 收紧 · 方法：16 驱动多 agent 审计+设计（Opus 4.8），从工作流 journal 救回的结构化设计汇编（自动综合步因连接错误中断，本文档由设计结果生成 + 人工框架）。约定见 [类型化配置](../src/explanation/policies/01-typed-config.md) + `.claude/skills/typed-config/`；PWM 已落地（`src/pwm.rs`）。**每一面完整类型草图见附录 [`config-tightening-designs.json`](config-tightening-designs.json)**；API 风格清债见 [api-style 台账](api-style-discussion-2026-06.md)。
 
 ## 1. 设计原则
 

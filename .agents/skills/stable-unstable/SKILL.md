@@ -84,4 +84,4 @@ grep -n 'feature = "unstable"' crates/hisi-riscv-hal/tests/hil.rs
 
 ## What's currently STABLE vs UNSTABLE
 
-See `AGENTS.md` "Stable / Unstable API gating" section for the authoritative split, or `docs/src/explanation/stable-unstable.md` for the full explanation. The split is audited against `tests/hil.rs` — the rule is "HIL-proven on WS63 silicon = STABLE; everything else = UNSTABLE".
+See `AGENTS.md` "Stable / Unstable API gating" section for the authoritative split, or `docs/src/explanation/policies/02-stable-unstable.md` for the full explanation. The split is audited against `tests/hil.rs` — the rule is "HIL-proven on WS63 silicon = STABLE; everything else = UNSTABLE".

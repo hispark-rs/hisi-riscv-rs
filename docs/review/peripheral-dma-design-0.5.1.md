@@ -1,6 +1,6 @@
 # hisi-riscv-hal 0.5.1 外设 DMA 接入设计（SPI / UART；I2C descope）
 
-> 评审日期：2026-06-16 · 对象：把 0.5.0 的 owned-buffer mem-to-mem DMA `Transfer` guard 接进 SPI/I2C/UART（hisi-riscv-hal#6 / Area C 延后项）· 方法：10-agent 多视角工作流（Opus 4.8，7 并行调研 src/dma.rs+三驱动+vendor fbb_ws63+esp-hal+async 基建 → 1 综合 → 2 对抗性评审[安全/完整性]）。约定见 [类型化配置](../src/explanation/typed-config.md)；DMA 基础见 [components/overview](../src/explanation/components/overview.md)。**两个评审均判 `needs-changes`，其修正已并入本文（§4 列出）。** 规则：vendor C SDK + 硅片为真，非 QEMU。
+> 评审日期：2026-06-16 · 对象：把 0.5.0 的 owned-buffer mem-to-mem DMA `Transfer` guard 接进 SPI/I2C/UART（hisi-riscv-hal#6 / Area C 延后项）· 方法：10-agent 多视角工作流（Opus 4.8，7 并行调研 src/dma.rs+三驱动+vendor fbb_ws63+esp-hal+async 基建 → 1 综合 → 2 对抗性评审[安全/完整性]）。约定见 [类型化配置](../src/explanation/policies/01-typed-config.md)；DMA 基础见 [components/overview](../src/explanation/components/01-overview.md)。**两个评审均判 `needs-changes`，其修正已并入本文（§4 列出）。** 规则：vendor C SDK + 硅片为真，非 QEMU。
 
 ## 0. 范围结论
 

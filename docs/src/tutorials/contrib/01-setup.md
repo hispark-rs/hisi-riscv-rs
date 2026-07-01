@@ -4,7 +4,7 @@
 请逐步执行，每一步都有可见的结果。
 
 > 本课只求"把工具跑起来"。每个工具的深入安装与故障排查（含 **IDE / rust-analyzer
-> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/install-toolchain.md)。
+> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/01-install-toolchain.md)。
 
 ## 第 0 步：安装 Rust（rustup）
 
@@ -80,7 +80,7 @@ bash scripts/build.sh
 
 你应当看到 `ws63` 出现在机器列表中。把这个二进制加入 `PATH`，
 或记下它的路径——第 2 课会用到。详细步骤见
-[QEMU 模型](../../explanation/qemu-model.md)。
+[QEMU 模型](../../explanation/06-qemu-model.md)。
 
 ## 第 4 步：安装烧录工具（真机用）
 
@@ -90,8 +90,8 @@ bash scripts/build.sh
 - **打过补丁的 probe-rs 分支**（`hispark-rs/probe-rs`，分支 `add-hisilicon-ws63-bs21`）：
   上游 probe-rs 不认识 WS63，必须用这个分支，并配上 `HiSilicon_WS63.yaml`。
 
-安装方法（深入说明见 [安装工具链](../../how-to/install-toolchain.md) 与
-[用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md)）：
+安装方法（深入说明见 [安装工具链](../../how-to/01-install-toolchain.md) 与
+[用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)）：
 
 ```bash
 # hisi-fwpkg

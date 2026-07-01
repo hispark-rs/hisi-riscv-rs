@@ -4,7 +4,7 @@
 所有库依赖都来自 crates.io，工程将在下一课用 `cargo generate` 生成。
 
 > 本课只求"把工具装上"。每个工具的深入说明与故障排查（含 **IDE / rust-analyzer
-> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/install-toolchain.md)。
+> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/01-install-toolchain.md)。
 
 ## 第 0 步：安装 Rust（rustup）
 
@@ -80,7 +80,7 @@ cargo install --git https://github.com/hispark-rs/probe-rs \
 ```
 
 确认就位：`probe-rs --version`。深入说明见
-[用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md)。
+[用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)。
 
 > 只想在 QEMU 里跑、暂时不烧真机，可以先跳过第 3、4 步。
 

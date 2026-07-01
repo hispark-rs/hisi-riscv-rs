@@ -6,7 +6,7 @@
 >
 > **API 设计评审（2026-06）**：HAL API 风格对照业界（esp-hal / embassy / embedded-hal 1.0 /
 > Rust API Guidelines）的讨论台账见 [`docs/review/api-style-discussion-2026-06.md`](docs/review/api-style-discussion-2026-06.md)；
-> 头号约定「类型化配置：能编译就能在硅片上跑」见 [`docs/src/explanation/typed-config.md`](docs/src/explanation/typed-config.md)
+> 头号约定「类型化配置：能编译就能在硅片上跑」见 [`docs/src/explanation/policies/01-typed-config.md`](docs/src/explanation/policies/01-typed-config.md)
 > + `CLAUDE.md`「Typed config」+ `.claude/skills/typed-config/`。这些喂入正在进行的 **0.5.0 config 收紧**（见阶段 7）。
 
 ## 北极星
@@ -32,7 +32,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（**阶段 1 已就绪，不再受阻**） |
 | 5 | 连接性示例（scan → connect → ping） | 🔴 待真机（**阶段 1 已就绪**，待阶段 4 blob 链接 + 真机连通） |
-| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/src/explanation/components/async-embassy.md](docs/src/explanation/components/async-embassy.md)；支持 chip-ws63/chip-bs21 特性） |
+| 6 | async（embassy） | ✅ 已完成（async HAL + embassy 时间驱动 + 6 示例，见 [docs/src/explanation/components/06-async-embassy.md](docs/src/explanation/components/06-async-embassy.md)；支持 chip-ws63/chip-bs21 特性） |
 | **7** | **HAL 收尾 + 发布** | ✅ 已完成（2026-06-15：硅验证发布 ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，见下「阶段 7」） |
 | 探针 | debug 支持（RISC-V-DM / probe-rs） | ✅ 硅上验证完成（2026-06-14）：fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`——CoreSight mem-AP DTM、vendor DebugSequence、flash-algorithm crate；真机 attach/halt/read/write + `probe-rs download` 烧录 + flashboot 引导 + blinky 运行全链路打通 |
 

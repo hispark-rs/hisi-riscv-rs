@@ -160,7 +160,7 @@ Release** — it does not publish the library crates.
 ## Documentation
 
 - [`CLAUDE.md`](CLAUDE.md) — build commands, architecture, design decisions.
-- [`docs/src/explanation/components/overview.md`](docs/src/explanation/components/overview.md) — the whole picture (Chinese), with per-component docs alongside.
+- [`docs/src/explanation/components/01-overview.md`](docs/src/explanation/components/01-overview.md) — the whole picture (Chinese), with per-component docs alongside.
 - [`docs/review/`](docs/review/) — the architecture review ledger.
 - [`ROADMAP.md`](ROADMAP.md) — remediation plan and the path to connectivity (incl. the BS2X BLE radio-interface feasibility analysis).
 - **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21`) is software-complete, pending on-silicon validation.

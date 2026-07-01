@@ -1,6 +1,6 @@
 # hisi-riscv-hal — API Style Discussion (beyond typed-config)
 
-> 评审日期：2026-06-15 · 对象：`hisi-riscv-hal` 的 API 风格（typed-config 约定之外）· 方法：12 维度多 agent 工作流（Opus 4.8 全程，13 个 agent / ~767K tokens），每维度并行「研究业界实践 + 审计当前源码 + 评估」，再综合。业界来源 esp-hal / embassy / embedded-hal 1.0 / Rust API Guidelines / Embedded Rust Book / defmt（链接见末节 Sources）；源码 `file:line` 见正文。typed-config 约定本身见 [类型化配置](../src/explanation/typed-config.md)。
+> 评审日期：2026-06-15 · 对象：`hisi-riscv-hal` 的 API 风格（typed-config 约定之外）· 方法：12 维度多 agent 工作流（Opus 4.8 全程，13 个 agent / ~767K tokens），每维度并行「研究业界实践 + 审计当前源码 + 评估」，再综合。业界来源 esp-hal / embassy / embedded-hal 1.0 / Rust API Guidelines / Embedded Rust Book / defmt（链接见末节 Sources）；源码 `file:line` 见正文。typed-config 约定本身见 [类型化配置](../src/explanation/policies/01-typed-config.md)。
 
 
 **Scope:** the owner asked "beyond the typed-config convention, what *other* HAL API-style points are worth discussing, referencing industry practice?" This synthesizes 11 per-dimension audits (esp-hal, embassy, embedded-hal 1.0, the Rust API Guidelines, the Embedded Rust Book, defmt) against the current source. Typed config ("if it compiles, it runs on silicon") is **settled** and only referenced where another dimension collides with it.
