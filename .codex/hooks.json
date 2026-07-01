@@ -1,0 +1,43 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in */ws63-pac/src/lib.rs) echo 'BLOCKED: lib.rs is svd2rust-generated — edit ws63-svd/WS63.svd and regenerate (ROADMAP phase 2), do not hand-edit.' >&2; exit 2 ;; esac"
+          },
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in *Cargo.lock) echo 'BLOCKED: Cargo.lock is auto-generated. Use `cargo update` or `cargo build` to update it, not direct editing.' >&2; exit 2 ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command'); case \"$c\" in *hisiflash*write-program*|*burntool*) case \"$c\" in *HIL_CONFIRM=1*) : ;; *) echo 'BLOCKED: destructive hardware flash. Prepend HIL_CONFIRM=1 to confirm, or run the hil-smoke skill (user-invoked).' >&2; exit 2 ;; esac ;; esac"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); [ \"${f##*.}\" = rs ] && rustfmt --edition 2024 \"$f\" 2>/dev/null; true"
+          },
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in *hisi-riscv-hal/src/*.rs) root=$(git -C \"$(dirname \"$f\")\" rev-parse --show-toplevel 2>/dev/null) || exit 0; log=\"$root/target/claude-hal-postcheck.log\"; (cd \"$root\" && cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63 --target x86_64-unknown-linux-gnu >\"$log\" 2>&1) || { echo 'HAL post-edit cargo check failed:' >&2; tail -20 \"$log\" >&2; exit 2; } ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
