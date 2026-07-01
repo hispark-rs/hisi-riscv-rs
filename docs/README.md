@@ -10,7 +10,7 @@ mdbook serve docs           # 本地预览，http://localhost:3000
 mdbook build docs           # 构建到 docs/book/
 ```
 
-书的源码在 [`src/`](src/),入口是 [`src/introduction.md`](src/introduction.md),目录见 [`src/SUMMARY.md`](src/SUMMARY.md)。
+书的源码在 [`src/`](src/),入口是 [`src/00-introduction.md`](src/00-introduction.md),目录见 [`src/SUMMARY.md`](src/SUMMARY.md)。
 
 ## 结构(Diátaxis 四象限)
 

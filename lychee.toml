@@ -21,7 +21,9 @@ exclude_path = [
 #   - crates/<crate>/CHANGELOG.md live in submodules; CHANGELOG.md links to them
 #     resolve in a full `--recursive` clone but the link-check checkout omits
 #     submodules (so it doesn't also scan their trees).
+#   - dl.acm.org DOI pages are valid references but return 403 to the CI bot.
 exclude = [
   "^https://blog\\.japaric\\.io",
+  "^https://dl\\.acm\\.org/doi/",
   "crates/.*/CHANGELOG\\.md$",
 ]

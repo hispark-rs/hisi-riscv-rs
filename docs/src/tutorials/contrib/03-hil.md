@@ -40,8 +40,8 @@ probe-rs reset
 > 一份**真实** body SHA-256，没有"占位签名"能让它启动。
 > `HiSilicon_WS63.yaml` 来自打补丁的 probe-rs 分支仓库——上游 probe-rs 没有 WS63 支持。
 > （BS2X 还没有链接期 boot-header，仍走 `hisi-fwpkg image -o app.img` 的 route 1 路线。）
-> 细节见 [用 probe-rs 烧录到真机](../../how-to/flash-probe-rs.md) 与
-> [应用镜像格式与签名](../../reference/image-format.md)。
+> 细节见 [用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md) 与
+> [应用镜像格式与签名](../../reference/06-image-format.md)。
 
 ## 第 2 步：观察 GPIO 翻转
 
@@ -64,7 +64,7 @@ cat /dev/ttyUSB0
 看完按 `Ctrl-C` 退出 `cat`。
 
 > blinky 自身不打印串口（它只翻转 GPIO），所以这里看到的是 **flashboot 的启动日志**，
-> 不是应用输出。UART0 接线与端口的细节见 [HIL 标记串与环境变量](../../reference/hil-markers.md)。
+> 不是应用输出。UART0 接线与端口的细节见 [HIL 标记串与环境变量](../../reference/07-hil-markers.md)。
 
 ## 第 4 步：认识 HIL 冒烟测试
 
@@ -84,14 +84,14 @@ PORT=/dev/ttyUSB0 hil/hil-smoke.sh
 正是你在第 2、3 步亲手做的事。
 
 > HIL 框架的整体设计、标记串约定、它和 QEMU 冒烟测试的关系，见
-> [HIL 测试框架](../../explanation/hil-framework.md) 与
-> [运行 HIL 冒烟测试](../../how-to/run-hil-tests.md)。
+> [HIL 测试框架](../../explanation/07-hil-framework.md) 与
+> [运行 HIL 冒烟测试](../../how-to/07-run-hil-tests.md)。
 
 恭喜！你已经完成了贡献者路径的全部三课：克隆仓库、装好工具链，在 QEMU 里跑通了
 示例集，最后在真正的 WS63 芯片上完成了第一次硬件在环测试。
 
 接下来想做点什么？
 
-- 想完成具体任务（新建工程、加驱动、调试读内存）——看 [操作指南](../../how-to/index.md)。
-- 想查命令、地址、API——看 [参考](../../reference/index.md)。
-- 想搞懂背后的原理——看 [原理与背景](../../explanation/index.md)。
+- 想完成具体任务（新建工程、加驱动、调试读内存）——看 [操作指南](../../how-to/00-index.md)。
+- 想查命令、地址、API——看 [参考](../../reference/00-index.md)。
+- 想搞懂背后的原理——看 [原理与背景](../../explanation/00-index.md)。

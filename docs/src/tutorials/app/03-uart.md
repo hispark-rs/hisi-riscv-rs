@@ -57,13 +57,13 @@ tick 2
 在真正的硬件上，串口 banner 的点亮工作**仍在进行中**——真机需要先初始化时钟，
 让波特率分频与 PLL 匹配，而 `uart_hello` 为了适配 QEMU 故意省去了这一步。
 所以本课**不承诺**真机上能看到这条 banner；要在真板上稳定看到串口输出，
-请关注 [HIL 测试框架](../../explanation/hil-framework.md) 的进展。
+请关注 [HIL 测试框架](../../explanation/07-hil-framework.md) 的进展。
 
 > 想在真机上看到稳定可观测的行为，最稳妥的仍是上一课的 blinky（GPIO 翻转，已验证）。
 
 接下来想做点什么？
 
-- 想完成具体任务（加驱动、调试读内存）——看 [操作指南](../../how-to/index.md)。
-- 想查命令、地址、API——看 [参考](../../reference/index.md)。
-- 想搞懂背后的原理——看 [原理与背景](../../explanation/index.md)。
-- 想给生态本身贡献代码——看 [生态贡献者路径](../contrib/index.md)。
+- 想完成具体任务（加驱动、调试读内存）——看 [操作指南](../../how-to/00-index.md)。
+- 想查命令、地址、API——看 [参考](../../reference/00-index.md)。
+- 想搞懂背后的原理——看 [原理与背景](../../explanation/00-index.md)。
+- 想给生态本身贡献代码——看 [生态贡献者路径](../contrib/00-index.md)。
