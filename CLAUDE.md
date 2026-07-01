@@ -186,6 +186,64 @@ Seven GitHub Actions workflows in `.github/workflows/`:
 - `release.yml` — GitHub Release on tag + crates.io publish
 - `dependabot.yml` — weekly Cargo + monthly Actions updates
 
+## Stable / Unstable API gating (0.6.0+)
+
+**Policy: an API is STABLE only if a named HIL test exercises it on real WS63
+silicon** (the only connected board). APIs with no on-silicon test are gated
+**UNSTABLE** — behind the `unstable` cargo feature (OFF by default). Adding
+`features = ["unstable"]` to a consumer's `Cargo.toml` restores the experimental
+surfaces; their signatures may change in a minor release.
+
+The mechanism mirrors esp-hal: the [`instability`](https://crates.io/crates/instability)
+proc-macro (`#[instability::unstable]`) soft-gates an item — `pub` when `unstable`
+is on, `pub(crate)` + `#[allow(dead_code)]` when off (the item stays compiling
+in-crate, so a missed stable→unstable reference doesn't break the build). Module-
+level gating uses the crate-local `unstable_module!` macro (esp-hal form:
+`pub mod` when on, `pub(crate) mod` when off; `#[doc(hidden)]`, forwards
+`$(#[$meta])*` incl. `#[path]`). Both are in `src/macros.rs` (crate-private,
+`#[macro_use]` — NOT `#[macro_export]`).
+
+**Gating rules:**
+- **Inherent impl blocks** stay UNGATED — gate each `pub fn` individually
+  (`instability` hard-deletes `impl` blocks when off, which would make private
+  helpers dead-code). `impl Drop` stays UNGATED (keeps helpers live). Trait impls
+  MAY be whole-block gated.
+- **STABLE pub fn taking an UNSTABLE type** as param/return is FORBIDDEN
+  (`private_interfaces` lint). If a STABLE method needs an UNSTABLE type, either
+  the type becomes STABLE or the method becomes UNSTABLE.
+- **`async`/`embassy`** are feature-gates (consent-by-feature); `embassy` is ALSO
+  `unstable`-gated (no end-to-end HIL). `async` stays STABLE (HIL-verified).
+- **Graduation** (unstable → stable): delete the `#[instability::unstable]` attr
+  (or move the module out of `unstable_module!`) — the item was already compiling
+  as `pub(crate)`, so its lint state is unchanged; residue-free. Optionally replace
+  with `#[instability::stable(since = "0.x.0")]` to keep a "Stabilized in version X"
+  doc note.
+
+**What's STABLE (HIL-proven on WS63 silicon — ungated):** gpio, spi (blocking),
+uart (blocking), timer, tcxo, pwm, wdt, dma (mem-to-mem: `Dma0`/`DmaDriver`/
+`Transfer`/`start_mem_to_mem`/`DmaChannelConfig`+`configure_channel`), trng (WS63),
+efuse, clock, system, peripherals, interrupt, i2c (WS63 v150), i2s, io_config,
+lsadc, tsensor, cache, asynch (`block_on`/`IrqSignal`), + the peripheral-DMA
+HIL-proven subset (`SpiDma::write_dma`/`transfer_dma`/`write_dma_async`,
+`with_dma`/`split_channels`/`DmaChannel`/`DmaPeripheral`). Plus infrastructure:
+time, prelude, private, macros, soc.
+
+**What's UNSTABLE (no on-silicon HIL — gated):** peripheral-DMA unproven subset
+(`SpiDma::transfer_dma_async`/`release`, `UartDma` all, `PeripheralTransfer`,
+`start_mem_to_peripheral`/`start_peripheral_to_mem`, the 4 `DmaChannelConfig`
+builders, `DmaFrame`/`PeriKind`/`PeriDmaCtl`/`DmaError`), `embassy`, WS63 untested
+drivers (`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/
+`delay`), entire BS2X-specific series (`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/
+`i2c`-v151/`rtc`-v150/`trng`-v1 — no BS2X silicon board, QEMU only), + the
+`prelude` re-exports of `sfc::SfcDriver` and `ulp_gpio::UlpGpioPin`.
+
+**Build matrix** (CI must verify all 7 rows + clippy `-D warnings`):
+`{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async,embassy}`,
+`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`, `{bs21,rt}`,
+`{bs21,rt,unstable}`. BS2X isolated examples that import UNSTABLE modules need
+explicit `cargo check --manifest-path` CI checks (they're not in `cargo check
+--workspace`).
+
 ## Reference Material
 
 - **esp-hal** (`/root/esp-hal/`) — reference HAL implementation. WS63 HAL patterns are modeled on esp-hal's GPIO type system, RAII clock guards, and sealed trait patterns.

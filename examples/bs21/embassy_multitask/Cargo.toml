@@ -14,7 +14,7 @@ path = "src/main.rs"
 # the embassy-time Driver — it is chip-neutral and does NOT pull the (WS63-only)
 # `async` embedded-hal-async layer, so it builds for chip-bs21.
 bs2x-pac = { path = "../../../crates/pac/bs2x-pac" }
-hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt", "embassy"] }
+hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", default-features = false, features = ["chip-bs21", "rt", "embassy", "unstable"] }
 hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21"] }
 embassy-executor = { version = "0.10", features = ["platform-riscv32", "executor-thread"] }
 embassy-time = { version = "0.5", features = ["tick-hz-1_000_000"] }
