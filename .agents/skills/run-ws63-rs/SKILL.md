@@ -27,10 +27,10 @@ The `hisi-riscv` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.
 ## Build (agent path)
 
 ```bash
-bash .Codex/skills/run-ws63-rs/driver.sh all      # check + fmt + clippy + blinky build
-bash .Codex/skills/run-ws63-rs/driver.sh check    # cargo check + doc + blinky release build
-bash .Codex/skills/run-ws63-rs/driver.sh fmt      # cargo fmt --check
-bash .Codex/skills/run-ws63-rs/driver.sh clippy   # cargo clippy
+bash .agents/skills/run-ws63-rs/driver.sh all      # check + fmt + clippy + blinky build
+bash .agents/skills/run-ws63-rs/driver.sh check    # cargo check + doc + blinky release build
+bash .agents/skills/run-ws63-rs/driver.sh fmt      # cargo fmt --check
+bash .agents/skills/run-ws63-rs/driver.sh clippy   # cargo clippy
 ```
 
 All steps target `riscv32imfc-unknown-none-elf` (the config default). `blinky` is built
@@ -42,7 +42,7 @@ scripts to downstream bins).
 ```bash
 cargo build                      # default-members: libs + blinky (uses config default target)
 cargo check --workspace          # everything incl. flashboot
-cargo clippy --workspace --exclude ws63-flashboot -- -D warnings   # flashboot is experimental
+cargo clippy --workspace -- -D warnings
 cargo fmt --all -- --check
 cargo build -p ws63-flashboot --release   # experimental flashboot (excluded from default build)
 ```

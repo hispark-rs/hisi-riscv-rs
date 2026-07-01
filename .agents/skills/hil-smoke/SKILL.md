@@ -17,7 +17,7 @@ firmware to hardware.
 ## Usage
 
 ```bash
-bash .Codex/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
+bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 #   chip:    ws63 | bs21 | bs21e | bs22 | bs20
 #   example: uart_hello | timer_irq | gpio_irq | reset_demo | spi_loopback | i2c_scan | …
 ```
@@ -25,12 +25,12 @@ bash .Codex/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 - **Preflight** (no board / no writes): checks toolchain, hisiflash, serial port,
   loaderboot, address — reports READY / NOT-READY.
   ```bash
-  bash .Codex/skills/hil-smoke/hil.sh ws63 --preflight
+  bash .agents/skills/hil-smoke/hil.sh ws63 --preflight
   ```
 - **Single example**: build → flash → read UART → assert the chip-aware marker.
   ```bash
   PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x200000 \
-    bash .Codex/skills/hil-smoke/hil.sh ws63 uart_hello
+    bash .agents/skills/hil-smoke/hil.sh ws63 uart_hello
   ```
 - **Full suite**: WS63 delegates to the in-tree `hil/hil-smoke.sh` (source of truth);
   BS2X runs the chip-aware checks inline (`hil-smoke.sh` is WS63-only).
@@ -83,5 +83,5 @@ bash .Codex/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 - **BS2X HIL is unverified** — the QEMU path is solid; on-silicon BS21/BS20 awaits a board.
 - `ADDRESS` is a flash *offset*, not the XIP base — wrong value can misflash. Verify it.
 - The actual flash goes through `hil/flash.sh` with `HIL_CONFIRM=1` (the flash-guard hook
-  blocks unconfirmed `hisiflash write-program` run via Codex's Bash — see `.Codex/settings.json`).
+  blocks unconfirmed `hisiflash write-program` run via the agent shell — see `.codex/hooks.json`).
 - A first board may need `cargo install hisiflash-cli` and `gdb-multiarch` (see `hil/README.md`).

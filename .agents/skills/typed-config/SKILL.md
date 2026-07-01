@@ -66,7 +66,7 @@ bound — don't trust the PAC/SDK width alone.
 ## Procedure
 
 1. **Scan** the driver for candidates:
-   `bash .Codex/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/<driver>.rs`
+   `bash .agents/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/<driver>.rs`
 2. **Trace** each flagged value to the register it programs; get the field's real
    width from the PAC (`crates/pac/*/src/lib.rs`) and the valid range + clock
    precondition from the vendor SDK (`fbb_ws63/.../hal_*_regs_def.h`,

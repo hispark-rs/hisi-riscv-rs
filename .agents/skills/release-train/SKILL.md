@@ -11,20 +11,20 @@ the repo from the git remote). User-invoked because it pushes tags and triggers 
 ## Usage
 
 ```bash
-cd <repo> && bash <path>/.Codex/skills/release-train/train.sh <tag> [expected_asset_count]
+cd <repo> && bash <path>/.agents/skills/release-train/train.sh <tag> [expected_asset_count]
 ```
 
 Examples (the live repos in this ecosystem):
 
 ```bash
 # QEMU fork — 4-platform release matrix
-cd /root/ws63-qemu        && bash /root/ws63-rs/.Codex/skills/release-train/train.sh v0.4.6 7
+cd /root/ws63-qemu        && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.4.6 7
 
 # Custom toolchain — 4 host tarballs + 4 .sha256
-cd /root/ws63-rust-toolchain && bash /root/ws63-rs/.Codex/skills/release-train/train.sh v1.96.0-2 8
+cd /root/ws63-rust-toolchain && bash /root/ws63-rs/.agents/skills/release-train/train.sh v1.96.0-2 8
 
 # A library crate — crates.io publish (no GitHub assets; watches publish.yml)
-cd /root/ws63-rs/crates/hisi-riscv-hal && bash /root/ws63-rs/.Codex/skills/release-train/train.sh v0.3.1
+cd /root/ws63-rs/crates/hisi-riscv-hal && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.3.1
 ```
 
 ## What it does

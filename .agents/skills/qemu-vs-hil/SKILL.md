@@ -13,7 +13,7 @@ timer period) are exactly what emulation cannot prove (see the bring-up steps in
 ## Usage
 
 ```bash
-bash .Codex/skills/qemu-vs-hil/parity.sh <chip> [example]
+bash .agents/skills/qemu-vs-hil/parity.sh <chip> [example]
 #   chip:    ws63 | bs21 | bs21e | bs22 | bs20
 #   example: omit → the common UART-marker set (uart_hello, timer_irq, gpio_irq,
 #                                               reset_demo, spi_loopback, i2c_scan)

@@ -13,7 +13,7 @@ expected output. This is what `run-ws63-rs` (build/lint/test) stops short of —
 ## Usage
 
 ```bash
-bash .Codex/skills/qemu-smoke/smoke.sh <chip> [example]
+bash .agents/skills/qemu-smoke/smoke.sh <chip> [example]
 #   chip:    ws63 | bs21 | bs21e | bs22 | bs20
 #   example: blinky | uart_hello | timer_irq | gpio_irq | embassy_multitask | …
 ```
@@ -22,15 +22,15 @@ bash .Codex/skills/qemu-smoke/smoke.sh <chip> [example]
   assertions to ws63-qemu's per-chip smoke script (`scripts/smoke-test.sh` for ws63,
   `scripts/<chip>-smoke-test.sh` for BS2X) — the source of truth.
   ```bash
-  bash .Codex/skills/qemu-smoke/smoke.sh ws63      # full WS63 suite
-  bash .Codex/skills/qemu-smoke/smoke.sh bs21      # BS21 milestone-1 suite
+  bash .agents/skills/qemu-smoke/smoke.sh ws63      # full WS63 suite
+  bash .agents/skills/qemu-smoke/smoke.sh bs21      # BS21 milestone-1 suite
   ```
 - **Single example**: builds just that crate, boots `-M <chip>`, applies one focused
   assertion (banner / GPIO trace / `[fast]`+`[slow]` interleave / IRQ marker).
   ```bash
-  bash .Codex/skills/qemu-smoke/smoke.sh ws63 uart_hello
-  bash .Codex/skills/qemu-smoke/smoke.sh bs21 blinky
-  bash .Codex/skills/qemu-smoke/smoke.sh ws63 embassy_multitask
+  bash .agents/skills/qemu-smoke/smoke.sh ws63 uart_hello
+  bash .agents/skills/qemu-smoke/smoke.sh bs21 blinky
+  bash .agents/skills/qemu-smoke/smoke.sh ws63 embassy_multitask
   ```
 
 ## What it knows (so you don't have to)
