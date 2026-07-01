@@ -2,7 +2,7 @@
 
 这是本项目 HAL（0.6.0+）的**第三号约定**：`unsafe` 可以存在，但必须被模块边界、类型不变式、SAFETY 注释和验证流程约束住。对外的 safe API 不能让调用者触发 UB；否则这个 API 不能稳定暴露。
 
-本篇讲**为什么**要有这条政策、**怎么判断**一段 unsafe 是否被安全封装、以及它**如何接到稳定 / 不稳定 API 门控**。完整调研见 [`docs/review/safe-unsafe-formal-verification-research-2026-07.md`](../../../review/safe-unsafe-formal-verification-research-2026-07.md)，当前基线见 [`docs/review/unsafe-audit-2026-07-01.md`](../../../review/unsafe-audit-2026-07-01.md)。
+本篇讲**为什么**要有这条政策、**怎么判断**一段 unsafe 是否被安全封装、以及它**如何接到稳定 / 不稳定 API 门控**。完整调研见 `docs/review/safe-unsafe-formal-verification-research-2026-07.md`，当前基线见 `docs/review/unsafe-audit-2026-07-01.md`。
 
 ## 问题：HAL 不可能没有 unsafe
 
