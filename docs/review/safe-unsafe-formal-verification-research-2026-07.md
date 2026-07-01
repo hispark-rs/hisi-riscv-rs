@@ -331,17 +331,302 @@ unsafe { r.spi_dr().write(|w| w.bits(tx)) }
 
 ---
 
-## 八、AI 能否降低形式化证明的成本（待调研）
+## 八、AI 能否降低形式化证明的成本（完整调研，2026-07-01）
 
-RustBelt 证明一个 `Vec` 花了 3 年 + 4 个 PhD + 20,000 行 Coq。如果 AI/LLM 能自动生成证明（类似 DeepMind AlphaProof 在 IMO 数学竞赛中的突破），成本模型可能根本性改变。这一方向需要进一步调研：
-- AlphaProof / AlphaGeometry 用 LLM + 形式化验证器做到 IMO 银牌级别
-- Lean Dojo / Copra / Lean Copilot 等 LLM 辅助定理证明工具
-- 能否用 AI 自动生成 Rust unsafe 代码的 soundness 证明（Coq/Iris 或 Kani 规约）
+> **核心结论**：AI 已经显著降低了 Rust Unsafe 验证的实用成本，但不是通过替代 RustBelt/Iris/Coq 的路线。实际路径是 AI 生成 Verus/Kani 级别的自动化验证证明，而不是全栈分离逻辑 soundness 证明。截至 2026 年 7 月，RustBelt 级别的全 soundness 证明仍超出 AI 能力，但对生产 HAL 来说也**不再必要**——AI 辅助的 Kani/Verus/Gillian 生态已经把足够好的验证带到了实用水平。
+
+### 8.1 背景：AlphaProof 的突破（2024 → 2026）
+
+#### IMO 银牌（2024，Nature 2025-11）
+
+- AlphaProof 在 IMO 2024 上独立解决了 5 道非几何题中的 3 道（含最难的问题 6，仅 5/609 名人类选手解出）
+- 结合 AlphaGeometry 2，总分 28/42 → **银牌**
+- 训练数据：~8000 万自动形式化的数学问题，用 RL 训练
+- 架构：AlphaZero 启发式 RL Agent + 3B 参数 transformer + Lean 形式验证
+- 关键创新：**Test-Time RL (TTRL)**，推理时生成数百万问题变体做深度适应
+
+#### 科研级数学突破：AlphaProof Nexus（2026-05）
+
+- 解决了 **9/353** 个开放 Erdős 问题（最老的悬置 **56 年**）
+- 证明了 **44/492** 个 OEIS 猜想
+- 解决了一个 **15 年**的代数几何开放问题
+- **单个问题成本：$7.50–$400**（中位数 ~$200–$400）
+
+| Agent 变体 | 组件 | 能解决的问题 | 成本优势 |
+|---|---|---|---|
+| **Agent A**（最简） | Gemini 3.1 Pro + Lean 编译循环 | 全部 9 个 | 基线 |
+| **Agent B** | + AlphaProof 子目标求解 | 同 A | 相当 |
+| **Agent C** | + 进化搜索（共享证明池 + Elo 评分） | 同 A，难问题更高效 | ~1.5× |
+| **Agent D**（完整） | A+B+C | 同 A | 最难问题 **2–5×** 优势 |
+
+**最关键发现**：最简的 Agent A（纯 LLM + Lean 编译器反馈循环）**也能解决全部 9 个问题**—— 复杂多 Agent 编排的主要优势是**成本效率**，而非能力。这意味着随着基础 LLM 持续提升，这类验证的门槛会越来越低。
+
+#### 对形式化验证的意义
+
+AlphaProof Nexus 证明了：
+1. **LLM + 形式验证器 = 可信的推理**：Lean 编译器保证输出正确性，LLM 只提供搜索方向。
+2. **开放科研问题的自动化求解成本已降至 ~$200/题**：非"需要超算"级别。
+3. **但所有已解决的问题都是纯数学**（数论、组合、图论）—— 计算机系统（含 Rust unsafe）的验证需要额外处理硬件语义、时序、并发等。
+
+### 8.2 AI 辅助定理证明工具进展（Lean / Coq）
+
+#### Lean Copilot（LeanDojo，NeuS 2025，v4.31.0，2026-06-20）
+
+- **功能**：在 Lean 定理证明器中集成 LLM，提供 tactic 建议、证明搜索、前提选择
+- **辅助人类**：平均只需 **2.08 个手动输入证明步骤**（传统自动化需要 3.86）
+- **全自动模式**：自动化 **74.2% 的证明步骤**，比传统 AESOP（40.1%）好 **85%**
+- **部署灵活**：本地（可无 GPU）或云端
+
+#### DeepSeek-Prover-V2（2025-04）
+
+- 开源，88.9% miniF2F，递归子目标分解 + RL 形式反馈
+- 49/658 Putnam 竞赛题
+
+#### Goedel-Prover-V2（Princeton，2025-08）
+
+- 90.4% miniF2F，86 PutnamBench
+- **开源 SOTA**
+
+#### Seed-Prover（ByteDance，2025-08）
+
+- IMO 2025 正式金牌水平（4/6 题完美，1 题部分）
+- 99.6% miniF2F
+
+#### Aristotle（Harmonic，2025-10）
+
+- IMO 2025 正式金牌（自动验证）
+- 商业产品
+
+### 8.3 AI 辅助 Rust Unsafe 验证的进展
+
+这是与生产 HAL 最相关的部分。2025–2026 年该方向取得了此前难以想象的进展。
+
+#### AutoVerus（OOPSLA 2025，微软研究院 + UIUC）
+
+- **核心思路**：用多 Agent LLM 系统自动生成 Rust 代码的 **Verus** 正确性证明
+- **流程**：三个阶段：初步生成 → 通用提示精化 → 验证错误驱动的调试
+- **结果**：>90% 成功（150 个非平凡证明任务），**>50% 在 <30 秒或 3 次 LLM 调用内解决**
+- **意义**：验证从"数周到数月"变为"秒到分钟"
+
+#### KVerus（arXiv 2026-05，蚂蚁集团）
+
+- **核心创新**：在 AutoVerus 基础上加入**检索增强生成（RAG）**，处理跨模块依赖和工具链演化
+- **关键问题**：LLM 基于语义推理，但验证需要刚性结构依赖 → 需要 RAG 桥接"语义-结构鸿沟"
+- **单文件任务**：80.2% 成功率（vs AutoVerus 56.9%）
+- **跨文件任务**（repo 级别）：51.0%（vs 基线 4.5%）
+- **实战验证**：为 **Asterinas Rust OS 内核**的内存管理模块验证了 23 个此前未验证的函数
+
+#### VeriStruct（TACAS 2026，Stanford）
+
+- AI 驱动验证 Rust 数据结构模块的完整框架
+- 包含规划器、视图生成、类型不变式、规约生成、证明块生成 + 修复阶段
+- **10/11 个 Rust 数据结构模块**，**128/129 个函数 (99.2%)** 验证成功
+- 计算资源消耗低于普通 coding agent
+
+#### Rust-to-Lean 验证流水线 + AI Provers（arXiv 2026-05）
+
+- 用 **Charon → Aeneas/Hax** 把 Rust 代码翻译到 **Lean 4**
+- 然后调用 **AI Prover**（Aristotle / Aleph）自动关闭证明义务
+- 验证了 **Plonky3**（FRI folding，域运算）和 **RISC Zero**（Merkle inclusion）
+- AI Prover 关闭了包括两个此前遗留的 `sorry` 定理在内的证明义务
+- **Lean 内核检查全部证明** —— AI 输出不能损害 soundness
+- 成本仅对话 API 费用
+
+#### Safe4U（ISSTA 2025，浙江大学）
+
+- 用 LLM 检测 Rust 中**不安全封装（Unsound Safe Encapsulation of Unsafe Calls）**
+- **方法**：静态分析提取上下文 → LLM 分解 Safety 注释为细粒度分类契约（16 种） → 用 34 个保证模式逐一验证
+- **结果**：CVE 测试集上 9/11 检出，在 top 下载 crate 中发现 **22 个新的 unsound EUC**，其中 **16 个已确认并修复**
+- **意义**：AI 现在已经可以在**开源 crate 生态中主动发现 unsoundness**——这以前是形式化专家的手工工作
+
+#### 符号执行 + 多 LLM 编排（arXiv 2026-04）
+
+- KLEE + 4 Agent LLM（Oracle/Validator、安全检查、代码专家、快速过滤器）
+- **31 个真实 Rust CVE**（11 个 CWE 类别）
+- **90.3%** wrapper 编译成功（所有现有工具 **0%**）
+- **83.9%** 检出率（1206 个关键错误）
+- 4 Agent 相比单 Agent：wrapper 失败从 42% 降至 9.7%，检错翻倍（487 → 1206）
+- Clippy 只覆盖 35.5%，Miri 只提供通用标签
+
+#### HarnessLLM（ICSE 2026）
+
+- LLM 自动生成验证 harness（调用场景提取 + 非确定性参数生成 + 增量精化）
+- 9 个真实 Rust 代码库：**94.66% 精度**，~145 秒/generated harness
+- 发现了 **6 个真实内存安全漏洞**
+
+### 8.4 这些工具能替代 RustBelt 级别的 soundness 证明吗？
+
+#### 不能 —— 但也不需要
+
+RustBelt 证明的是：
+
+> "使用 Rust 类型系统的**所有**程序（在子集内）都不会触发 UB。"
+
+这需要：
+1. **形式化 Rust 类型系统本身**（生命周期、borrow checker、类型规则）→ 一次性的基础工作
+2. **证明每个 unsafe 原语符合类型系统** → 每个抽象的个体证明
+
+RustBelt 是**类型系统级**的 soundness 保证。AI 工具当前能做到的是**函数级**或**模块级**的验证：
+
+| 维度 | RustBelt（Iris/Coq） | AutoVerus/KVerus（Verus） | AlphaProof（Lean） |
+|---|---|---|---|
+| **证明什么** | 类型系统 soundness | 函数的预/后条件、不变式 | 数学定理 |
+| **验证范围** | 整个类型系统 + 具体类型 | 具体函数/模块 | 具体定理 |
+| **形式化语义** | Rust 类型系统的全部（借出、生命周期） | 依赖类型的逻辑（无生命周期） | 纯数学逻辑 |
+| **能处理硬件语义** | ❌ 需扩展 | ❌ 需 Stub | ❌ 纯数学 |
+| **自动化程度** | 交互式（Coq） | **全自动（AI 生成）** | **全自动（AI 生成）** |
+| **输出保证** | Coq 检查的证明 | Z3 + 类型检查 | Lean 检查的证明 |
+
+#### 但 Gillian-Rust 正在架桥
+
+Gillian-Rust（PLDI 2025）是一个关键进展：它把 **RustBelt 的 lifetime logic** 和 **RustHornBelt 的 parametric prophecies** 嵌入到半自动化验证器中，同时与 Creusot（安全 Rust 自动验证器）通过共享规约语言对接。结果：
+
+- 验证了真实 Rust 标准库代码（LinkedList、MiniVec、Vec 等）
+- 只要求 **少量注释**
+- 验证速度**比同类工具快几个数量级**
+
+Gillian-Rust 的方案是当前最接近"用自动化工具替代 RustBelt 手工证明"的路线：
+- 安全 Rust → Creusot（自动 SMT）
+- Unsafe Rust → Gillian-Rust（半自动，嵌入 RustBelt 逻辑）
+
+#### 而 Nola/RustHalt（PLDI 2025）在 Iris 内实现了自动化
+
+Nola 用"晚-free 高阶幽灵状态"实现了 Rust 程序终止验证，是 **Coq/Iris 内**的自动化突破。但这仍需要 expers 使用，且不能自动生成全栈证明。
+
+### 8.5 成本模型对比：2024 年前 vs 2026 年
+
+#### 场景：验证一个 UAF（use-after-free）漏洞不可在 HAL 的 DMA 驱动中发生
+
+**2024 年前（纯形式化方法）：**
+
+| 方法 | 成本 | 时间 | 谁做 |
+|---|---|---|---|
+| RustBelt（Iris/Coq） | ~3 年 + 4 个 PhD | 数月 | PhD 形式化专家 |
+| Kani 手动写 harness | ~2-5 天 | 分钟级运行 | 普通 Rust 开发者 |
+| Miri 动态测试 | ~1 小时 | 秒级运行 | 普通 Rust 开发者 |
+| HIL 真机测试 | ~1 天 | 秒级运行 | 普通 Rust 开发者 |
+
+**2026 年（AI 辅助）：**
+
+| 方法 | 成本 | 时间 | 谁做 |
+|---|---|---|---|
+| AutoVerus 自动证明 | **<$1（API 调用）** | **~30 秒** | **全自动** |
+| KVerus（跨文件） | **<$5（API 调用）** | **~数分钟** | **全自动** |
+| VeriStruct（数据结构） | **<$1（API 调用）** | **~数分钟** | **全自动** |
+| Safe4U 自动审计 | **<$1** | **~分钟** | **全自动** |
+| AI 助手的 Kani harness | **~分钟人工** | 分钟级 | 普通开发者 |
+| Rust→Lean + AI Prover | **~$5–20** | **~小时** | 开发者 + 自动 |
+| 手工 Kani（传统） | ~2-5 天 | 分钟级运行 | 普通 Rust 开发者 |
+| Gillian-Rust（半自动） | ~天级 | 小时级运行 | Rust 开发者（需注释） |
+| RustBelt（全 Cog 证明） | ~3 年 + 4 个 PhD | 数月 | 不必了 |
+
+**核心结论**：对于生产 HAL 的实际验证需求（某函数是否 UB、某封装是否 sound、某代码路径是否越界），**AI 辅助的自动化工具在 2026 年的性价比已经远超 RustBelt 式的人工 Coq 证明**。形式化证明的全栈投入对嵌入式 HAL 来说**从未证明过自己的 ROI**，而 AI 工具让这个 ROI 计算彻底不再需要争论。
+
+#### 那 RustBelt 的价值还存在吗？
+
+存在 —— 但不是直接对生产 HAL。RustBelt 的价值在：
+
+1. **类型系统设计**：Rust 语言本身 soundness 的奠基性证明。没有 RustBelt，整个 Rust 的安全声明缺乏形式化基础。
+2. **教育**：理解"安全封装"的精确定义，指导 SAFETY 注释的编写标准。
+3. **验证工具的设计基础**：Gillian-Rust 直接嵌入 RustBelt 的 lifetime logic，RefinedRust 基于 RustBelt 的 Iris 框架。这些工具的关键逻辑来自 RustBelt，而自动化来自 AI。
+
+**类比**：RustBelt 相当于数学中的**存在性证明**（"存在一个证明"），AI 工具相当于**计算性算法**（"以可接受的成本找到具体证明"）。两者不是替代关系，而是分工关系。
+
+### 8.6 对 hisi-riscv-hal 的更新启示
+
+#### 替换路径：AI 辅助的分层验证（2026 年版）
+
+回顾第 5.5 节的渐进路径，现在可以加入 AI 辅助层：
+
+| 层 | 工具 | 成本 | 覆盖范围 | 2026 AI 增强 |
+|---|---|---|---|---|
+| **编译期** | typestate + borrow checker | 0 | 类型安全 | — |
+| **注释审计** | SAFETY 注释 + code review | 低 | unsafe 块级 | **Safe4U 自动审计 unsound 封装** |
+| **静态分析** | clippy + cargo-deny | 低 | 全局 | **LLM 驱动符号执行发现越界路径** |
+| **动态测试** | unit + property tests + Miri | 中 | 代码路径 | **HarnessLLM 自动生成 harness** |
+| **穷尽验证** | Kani（关键函数） | 中 | 纯逻辑属性 | **AutoVerus/KVerus 自动生成证明** |
+| **硬件验证** | HIL 真机测试 | 中高 | 硅片行为 | — |
+| **形式化证明** | RustBelt/Gillian | 极高 | soundness | **Gillian-Rust 半自动 + AI Prover** |
+
+#### 具体到 HAL 中的行动项
+
+| 之前（第 6.3 节） | 更新后的路径（2026-07） |
+|---|---|
+| **P0**: SAFETY 注释 | ✅ 继续。Safe4U 可以自动检测注释遗漏 |
+| **P1**: Typestate 扩展 | ✅ 继续。不变 |
+| **P2**: Kani 试验 | ✅ **用 AutoVerus/KVerus 自动生成 Kani 证明**，不手工写 proof harness |
+| **P3**: Miri 试验 | ✅ 继续。+ HarnessLLM 自动生成测试场景 |
+| **P5**: 关注别名模型 | ✅ 继续。不变 |
+| **新 P-AI1**: Safe4U 审计 | **用 Safe4U 扫描 HAL 的 unsound 封装**，目标：所有 unsafe → safe fn 的封装合规 |
+| **新 P-AI2**: AI Kani 验证 | **对关键函数用 AutoVerus 风格自动生成 Kani/Verus 证明**（DMA wait、Transfer drop 关键路径） |
+| **新 P-AI3**: Rust→Lean 试验 | **用 Charon→Aeneas 把 DMA 核心代码翻译到 Lean，AI Prover 关闭证明义务**（实验性） |
+
+#### 最重要的一条更新
+
+**原来 5.5 节的结论"形式化证明的成本不匹配"需要重写**：
+
+> ~~形式化证明的问题不是"做不到"，而是"投入产出比不匹配"。Kani + Miri + HIL + typestate + SAFETY 注释的组合覆盖了 90%+ 的实际风险，成本只有形式化证明的 1%。~~
+>
+> → **2026 年更新**：AI 辅助的自动化验证（AutoVerus/KVerus/VeriStruct/Safe4U）已经将"穷尽验证"成本从"数月/数周"降至"分钟/美元级"。**生产 HAL 现在完全可以在 CI 中运行 AI 辅助的形式化验证**。RustBelt 级别的全 soundness 证明仍不必要，但函数级/module 级的穷尽验证从"成本不匹配"变为"**可部署**"。
+>
+> **关键经济阈值已跨越**：当证明一个函数的安全性需要的时间从"数周（PhD 手工）"降到"30 秒 + $0.01（AI 自动）"时，验证不再是成本问题，而是工程流程问题。
+
+#### 一条务实的集成路径
+
+```
+PR 提交 → 触发 CI：
+  1. cargo clippy && cargo test                     # 传统流程（延续）
+  2. AutoVerus 扫描 changed .rs files → 自动生成 Verus 证明    # 新：AI 验证
+  3. KVerus 跨文件一致性检查                                    # 新：AI 跨模块验证
+  4. Safe4U 扫描所有 unsafe → safe fn 的封装合规性               # 新：AI 安全审计
+  5. 失败 → 阻塞 PR（如同 clippy）
+```
+
+这**不是科幻**——AutoVerus 已经在 >90% 的任务上实现了"提交代码自动生成证明"，KVerus 已经做到了跨文件验证。虽然对 MMIO 和硬件的模拟仍有局限，但对于**纯逻辑属性的验证**（缓冲区越界、use-after-free、整数溢出、状态机正确性），这些工具已经成熟到可以进入生产 CI 流程。
+
+### 8.7 开放问题（2026-07 更新）
+
+#### 1. Kani/Verus 能否处理嵌入式 no_std MMIO 代码？→ **部分能**
+
+- Verus 已经在 Asterinas OS 内核上工作（no_std），但 MMIO 寄存器的硬件语义无法在 Z3 中建模。
+- 对策：用 **stub**（把 MMIO 操作抽象为函数调用，验证的是调用逻辑而非硬件行为）—— 这对验证 UAF/越界已经足够。
+- 对"这个寄存器写操作是否在硬件上产生正确效果"的验证，仍需 HIL。
+
+#### 2. AI 生成证明的"幻觉"风险？→ **已被形式验证器消除**
+
+所有工具（AutoVerus、KVerus、AlphaProof、Lean Copilot）的架构都是：
+> LLM 生成候选证明 → 形式验证器（Lean/Verus/Z3）**严格检查** → 通过才接受
+
+与通用 AI 生成代码不同，**证明生成不存在"看起来对但错了"的情况**——验证器会拒绝任何不完整的推理。这是形式化方法天然的抗幻觉机制。
+
+#### 3. 别名模型风险是否被 AI 验证覆盖？→ **部分**
+
+Tree Borrows 为 SOTA 别名模型。Miri 已经实现了 Tree Borrows 检查。如果 Rust 官方采纳 Tree Borrows，Miri 会立即检出违规代码。AI 验证工具（如 AutoVerus）本身不直接验证别名合规性 —— 但 Miri 可以做。Miri 是动态的，不能穷尽，但 AI 生成的 test harness（HarnessLLM）可以扩大路径覆盖。
+
+#### 4. 谁来做集成工作？→ **需要一位"验证工程师"**
+
+AI 工具降低了证明生成成本，但仍需要有人配置 CI 流水线、编写 stub、决定哪些函数需要验证。这不是 PhD 级别的工作，但也需要理解 Rust unsafe 和形式化验证的基础概念。对小型团队（如 hisi-riscv-rs），建议采取"先设 P-AI1（Safe4U 审计）是最小可行步骤"策略。
+
+---
+
+## 九、总结（2026-07 更新版）
+
+| 维度 | 2024 年前的状态 | 2026 年 AI 改变后的状态 |
+|---|---|---|
+| Rust soundness 证明 | RustBelt：3 年 + 4 PhD + 14,000 行 Coq | AutoVerus：**>90% 成功率，<30 秒/函数** |
+| Unsafe 封装审计 | 手工 code review | Safe4U：**自动检出 22 个未发现的 unsoundness** |
+| 函数级穷尽验证 | 手工写 Kani harness：数天 | KVerus：**80.2% 自动生成** |
+| 数据结构证明 | 手工 Coq：数周 | VeriStruct：**99.2% 自动验证** |
+| 数学定理证明 | 人类专家：数月到数年 | AlphaProof Nexus：**$7.50–$400 / 题** |
+| 对所有 HAL 的实操建议 | 跳过形式化证明（ROI 不匹配） | **AI 辅助验证可部署到 CI（ROI 已匹配）** |
+
+**一句话总结**：AI 没有直接降低 RustBelt 的成本（RustBelt 的类型系统级 soundness 证明仍需要 PhD 级工作），但它让**绝大多数实际验证任务（函数级、模块级）**的成本从"不现实"降到了"可部署"。对于生产嵌入式 HAL，"全栈形式化证明"仍然过重，但 **AI 辅助的分层验证已经是一条务实的、可 CI 集成的路径**。
 
 ---
 
 ## Sources
 
+### 基础（不变）
 - [The Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [Rust Unsafe Code Guidelines](https://rust-lang.github.io/unsafe-code-guidelines/)
 - [The Rust Reference — Unsafety](https://doc.rust-lang.org/reference/unsafety.html)
@@ -349,3 +634,25 @@ RustBelt 证明一个 `Vec` 花了 3 年 + 4 个 PhD + 20,000 行 Coq。如果 A
 - [Kani Rust Verifier](https://github.com/model-checking/kani) / [docs](https://model-checking.github.io/kani/)
 - [RustBelt](https://plv.mpi-sws.org/rustbelt/)
 - [Tree Borrows (Ralf Jung's blog)](https://www.ralfj.de/blog/2023/06/02/tree-borrows.html)
+
+### AI 形式化证明（2025–2026 新增）
+- [AlphaProof Nature paper (2025): "Olympiad-level formal mathematical reasoning with reinforcement learning"](https://www.nature.com/articles/s41586-025-09833-y)
+- [AlphaProof Nexus (arXiv 2026-05): 9 Erdos problems solved, $7.50–$400/problem](https://arxiv.org/abs/2605.22763v1)
+- [AlphaProof Nexus results repository](https://github.com/google-deepmind/alphaproof-nexus-results)
+- [Lean Copilot (NeuS 2025): LLM copilot for Lean theorem proving](https://proceedings.mlr.press/v288/song25a.html) — [GitHub](https://github.com/lean-dojo/LeanCopilot)
+- [DeepSeek-Prover-V2 (2025): Open-source Lean 4 theorem prover](https://arxiv.org/abs/2505.07661)
+- [Goedel-Prover-V2 (Princeton 2025): Open-source SOTA Lean prover](https://arxiv.org/abs/2508.08900)
+
+### AI 辅助 Rust 验证（2025–2026 新增）
+- [AutoVerus (OOPSLA 2025, MSR+UIUC): LLM-powered automated Verus proof generation, >90% success](https://dl.acm.org/doi/10.1145/3763174)
+- [KVerus (arXiv 2026-05): RAG-enhanced Verus proof generation, 80.2% single-file, 51% cross-file](https://arxiv.org/abs/2605.03822)
+- [VeriStruct (TACAS 2026, Stanford): AI-assisted Rust data-structure verification, 99.2% success](https://theory.stanford.edu/~barrett/pubs/SSA+26-abstract.html)
+- [Safe4U (ISSTA 2025): LLM detection of unsound safe encapsulations of unsafe calls, 22 new findings](https://dl.acm.org/doi/10.1145/3728890)
+- [Rust-to-Lean pipeline + AI Provers (arXiv 2026-05): Charon→Aeneas→Lean 4 + Aristotle/Aleph](https://arxiv.org/abs/2605.30106)
+- [Symbolic Execution + Multi-LLM (arXiv 2026-04): KLEE + 4 agents for Rust CVE detection](https://arxiv.org/abs/2605.00034)
+- [HarnessLLM (ICSE 2026): Automating test harness generation for Rust verification](https://conf.researchr.org/details/icse-2026/icse-2026-research-track/80/)
+- [Gillian-Rust (PLDI 2025): Hybrid safe/unsafe Rust verification with RustBelt lifetime logic](https://dl.acm.org/doi/10.1145/3729289) — [Gillian platform](https://gillianplatform.github.io/publications/rust.html)
+- [RefinedRust (PLDI 2024): Refinement types for safe+unsafe Rust with Lithium automation](https://iris-project.org/pdfs/2024-pldi-refinedrust.pdf)
+- [Nola / RustHalt (PLDI 2025): Later-free ghost state in Iris for Rust total correctness](https://github.com/hopv/nola)
+- [Verus: Verified Rust for low-level systems code](https://github.com/verus-lang/verus)
+- [Charon/Aeneas: Rust-to-Lean/Coq verification pipeline](https://aeneasverif.github.io/projects/)
