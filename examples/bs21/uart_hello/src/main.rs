@@ -36,15 +36,15 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
 
-    uart.write(0, b"\r\nHello from BS21 on QEMU!\r\n");
-    uart.write(0, b"bs21-qemu: UART0 @ 0x52081000 is alive.\r\n");
+    uart.write(b"\r\nHello from BS21 on QEMU!\r\n");
+    uart.write(b"bs21-qemu: UART0 @ 0x52081000 is alive.\r\n");
 
     let mut tick: u32 = 0;
     loop {
         let mut buf = [0u8; 10];
-        uart.write(0, b"tick ");
-        uart.write(0, u32_to_dec(tick, &mut buf));
-        uart.write(0, b"\r\n");
+        uart.write(b"tick ");
+        uart.write(u32_to_dec(tick, &mut buf));
+        uart.write(b"\r\n");
         tick = tick.wrapping_add(1);
 
         // Busy-wait between lines (~arbitrary at QEMU speed).
