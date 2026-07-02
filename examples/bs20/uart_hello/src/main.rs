@@ -1,7 +1,7 @@
 //! HiSilicon BS20 UART hello-world example.
 //!
 //! The BS20 analogue of `ws63-examples/uart_hello`: prints a banner and a running
-//! tick counter over UART0. Built with `--features chip-bs21`, so `Uart::new_uart0`
+//! tick counter over UART0. Built with `--features chip-bs21,unstable`, so `Uart::new_uart0`
 //! drives the BS20 UART_L0 at 0x5208_1000 (vs WS63's 0x4401_0000) — the only thing
 //! that changed is the base address baked into `bs2x-pac`'s `Uart0` type.
 //!

@@ -43,7 +43,7 @@ cargo check --workspace             # Full workspace check — also works (unifi
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
 cargo check -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt   # …or BS2X
+cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
 cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example
 
@@ -250,17 +250,18 @@ setters/getters, SFC pad config, broad I2S data/FIFO/IRQ methods, broad LSADC
 analog/conversion/filter/calibration/data-path methods, broad TSENSOR mode/
 threshold/interrupt/auto-refresh/calibration/blocking-read methods, TRNG manual
 clock/divider/status knobs, WS63 untested drivers (`clock_init`/`km`/`pke`/
-`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/`delay`), entire BS2X-specific series
-(`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 — no BS2X
-silicon board, QEMU only), + matching unstable `prelude` re-exports (`Delay`,
+`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/`delay`), entire BS2X chip target
+(`chip-bs21` requires `unstable` — no BS2X silicon board, QEMU only), + matching
+unstable `prelude` re-exports (`Delay`,
 `Dma0`/`DmaDriver`/`Sdma0`, `RtcDriver`, `SfcDriver`, `UlpGpioPin`).
 
-**Build matrix** (CI must verify all 7 rows + clippy `-D warnings`):
+**Build matrix** (CI must verify all positive rows + clippy `-D warnings`, plus
+the BS2X negative gate):
 `{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async,embassy}`,
-`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`, `{bs21,rt}`,
-`{bs21,rt,unstable}`. BS2X isolated examples that import UNSTABLE modules need
-explicit `cargo check --manifest-path` CI checks (they're not in `cargo check
---workspace`).
+`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`,
+`{bs21,rt,unstable}`. `{bs21,rt}` without `unstable` must fail with the BS2X
+experimental compile_error. BS2X isolated examples need explicit
+`cargo check --manifest-path` CI checks (they're not in `cargo check --workspace`).
 
 ## Reference Material
 

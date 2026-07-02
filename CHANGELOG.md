@@ -40,6 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the no-op GPIO `OutputConfig::open_drain`, replaced raw UART `clock_hz` with
   typed `UartClock`, reject invalid I2C 7-bit addresses, and make PWM duty writes
   fallible for out-of-range duty.
+- **BS2X target marked experimental** — `chip-bs21` now requires `unstable`; BS20/BS21
+  examples and HIL feature forwarding opt in explicitly. The stable API promise is
+  scoped to the WS63 HIL-proven subset until BS2X silicon HIL exists.
 - **ws63-pac**: `TIMER%s_CONTROL` gains the `cnt_req`/`cnt_lock` fields and its
   `mode` enum is corrected to the vendor values (`OneShot=0/Periodic=1/FreeRun=3`),
   regenerated from the SVD. (The DMA block was already silicon-correct.) The SVD

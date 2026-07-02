@@ -2,7 +2,7 @@
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
-> **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族；BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
+> **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 `chip-bs21` target 目前需 `unstable`。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
 
 ## 职责与边界
 

@@ -4,7 +4,7 @@
 
 ## 职责与边界
 
-`ws63-examples` 是面向最终用户的**应用示例集合**，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 `hisi-riscv-rt`（启动）+ `hisi-riscv-hal`（驱动，支持 `chip-ws63`/`chip-bs21` 特性）+ PAC（`ws63-pac` 或 `bs2x-pac`，见 `crates/pac/`）+ 连接性场景下的 `ws63-rf-rs`（RF porting），组合成可烧录的裸机固件。
+`ws63-examples` 是面向最终用户的**应用示例集合**，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 `hisi-riscv-rt`（启动）+ `hisi-riscv-hal`（驱动，支持 `chip-ws63`/实验性 `chip-bs21` + `unstable` 特性）+ PAC（`ws63-pac` 或 `bs2x-pac`，见 `crates/pac/`）+ 连接性场景下的 `ws63-rf-rs`（RF porting），组合成可烧录的裸机固件。
 
 - **负责**：提供可参考的 `#![no_std]` / `#![no_main]` 入口，以及各外设/子系统的最小调用示例（GPIO/UART/Timer/DMA、中断、复位、semihosting、自定义内存布局、async/embassy、RF porting）。
 - **不负责**：实现任何驱动或运行时逻辑（这些属于 `hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-rf-rs`）；不承担系统测试覆盖职责（单测在各 crate 内）。
@@ -39,7 +39,7 @@ crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
        │                                            │
        └─> ws63-pac   (svd2rust)                   └─> bs2x-pac   (svd2rust)
             │                                            │
-            └─> hisi-riscv-hal   (手写安全驱动；chip-ws63/chip-bs21、async/embassy feature)
+            └─> hisi-riscv-hal   (手写安全驱动；chip-bs21 需 unstable、async/embassy feature)
                  │
                  ├─> examples/ws63/*   (WS63 示例)
                  ├─> examples/bs21/*   (BS21 示例，隔离)

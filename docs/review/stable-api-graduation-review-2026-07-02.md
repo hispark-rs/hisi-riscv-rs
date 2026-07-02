@@ -23,6 +23,7 @@ Immediate hygiene fixes made during this review:
 - `private` is crate-internal again, so sealed traits are not externally implementable.
 - The unused vestigial `DmaWord` marker was removed.
 - WS63-only async IRQ/DMA glue is now cfg-gated as `chip-ws63 + async`, so `chip-bs21 + async` no longer compiles WS63 interrupt names.
+- The whole BS2X target now requires `unstable`; WS63 HIL evidence no longer implies a BS2X stable build.
 
 ## 0.1. Remediation Status After The Narrow-Stable Pass
 
@@ -73,8 +74,8 @@ cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63,async -
 cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63,async,unstable --target riscv32imfc-unknown-none-elf
 cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63,async,embassy --target riscv32imfc-unknown-none-elf
 cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63,async,embassy,unstable --target riscv32imfc-unknown-none-elf
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21 --target riscv32imfc-unknown-none-elf
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,async --target riscv32imfc-unknown-none-elf
+cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,unstable --target riscv32imfc-unknown-none-elf
+cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,async,unstable --target riscv32imfc-unknown-none-elf
 ```
 
 The unsafe-readiness baseline was written to `docs/review/unsafe-audit-2026-07-02.md`.

@@ -12,7 +12,7 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 
 交互式会问两个选项：
 
-- **chip（目标芯片）**：`ws63` / `bs21` / `bs21e` / `bs22` / `bs20`（默认 `ws63`）。BS2X 几个 SKU 在 HAL 里是同一颗芯片（`chip-bs21`），差别只在 L2RAM 大小（bs20=128K，其余 160K，写在 `memory.x`）和 QEMU machine 名。
+- **chip（目标芯片）**：`ws63` / `bs21` / `bs21e` / `bs22` / `bs20`（默认 `ws63`）。BS2X 几个 SKU 在 HAL 里是同一颗实验芯片 target（`chip-bs21`，需 `unstable`），差别只在 L2RAM 大小（bs20=128K，其余 160K，写在 `memory.x`）和 QEMU machine 名。
 - **starter（起步应用）**：`blinky` / `uart_hello` / `async`（默认 `blinky`）。
 - 还会问 **app 分区 flash 地址**（WS63 默认 `0x00230000`，BS2X 默认 `0x00090000`）——没有自定义分区表就用默认。
 

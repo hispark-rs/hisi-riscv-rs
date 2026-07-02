@@ -11,7 +11,7 @@
 ## crate 约定
 
 - `#![no_std]`（`cfg(test)` 下链接 `std` 供主机单测）。
-- 必须**恰好**选一个芯片特性：`chip-ws63` 或 `chip-bs21`（二者互斥；HAL standalone 无默认芯片，否则 `compile_error!`）。
+- 必须**恰好**选一个芯片特性：`chip-ws63` 或 `chip-bs21`（二者互斥；HAL standalone 无默认芯片，否则 `compile_error!`）。`chip-bs21` 目前是整芯片实验 target，必须同时启用 `unstable`。
 - 依赖 `embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`portable-atomic`。
 - 默认只导出 HIL 真机验证过的稳定面；实验性 API 需显式启用 `unstable` feature。
 
@@ -80,9 +80,9 @@ UART / I2C / SPI / DMA 用 `PhantomData<&'d T>` 区分实例，构造函数按�
 
 | 特性 | 内容 |
 |------|------|
-| `chip-ws63` / `chip-bs21` | 选芯片，互斥；HAL standalone 无默认芯片 |
+| `chip-ws63` / `chip-bs21` | 选芯片，互斥；HAL standalone 无默认芯片；`chip-bs21` 需 `unstable` |
 | `async` | blocking-backed SPI/I2C `embedded-hal-async` 实现；GPIO wait、timer delay、UART async I/O、DMA/LSADC async hook 还需 `unstable` |
 | `embassy` | embassy-time `Driver` feature；公共 `embassy` 模块还需 `unstable` |
-| `unstable` | 暴露未毕业实验性 API（DMA、interrupt/waker async helpers、embassy、未上板驱动等） |
+| `unstable` | 暴露未毕业实验性 API（DMA、interrupt/waker async helpers、embassy、未上板驱动、BS2X target 等） |
 
 > `async`/`embassy` 在无原子的 WS63 上经 `portable-atomic` + `critical-section` 工作；但默认稳定 API 只承诺已 HIL 覆盖且 soundness 闭合的子集。

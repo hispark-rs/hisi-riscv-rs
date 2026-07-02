@@ -19,7 +19,7 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 | 有（在 `tests/hil.rs` 里能找到调用了该 API 的测试，且在真实 WS63 硅片上跑过）且无已知 soundness blocker | **STABLE** —— 默认 `pub`，不加门控 |
 | 没有，或测试是 opt-in 且从未在连的板上跑，或 safe/unsafe 不变式未闭合 | **UNSTABLE** —— 关在 `unstable` 后 |
 
-跨芯片驱动（gpio/spi/timer 等）只要在 **WS63 硅片**上验过就算 STABLE；BS2X 没板子是芯片 bring-up 的问题，不是 API 稳定性问题，所以 BS2X 构建下它们仍 STABLE。但**整个 BS2X-specific 系列**（BS2X-only 驱动：gadc/keyscan/pdm/qdec/usb/i2c-v151/rtc-v150/trng-v1）从没在 BS2X 硅片上跑过 → 全部 UNSTABLE。
+稳定承诺只面向 **WS63 默认稳定子集**。BS2X 目前没有硅片 HIL，不能把 WS63 上的跨芯片驱动结论外推到 BS2X；因此整个 `chip-bs21` target 需要显式 `unstable`，包括共享驱动和 BS2X-only 驱动。
 
 ## 机制：instability crate（esp-hal 同款）
 
@@ -43,9 +43,13 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 ## 用户怎么用
 
 ```toml
-# 想用实验性接口（DMA、interrupt/waker async、BS2X-only 驱动、embassy 等）：
+# 想用实验性接口（DMA、interrupt/waker async、embassy 等）：
 [dependencies]
 hisi-riscv-hal = { version = "0.6", features = ["chip-ws63", "unstable"] }
+
+# 想构建实验性的 BS2X target：
+[dependencies]
+hisi-riscv-hal = { version = "0.6", features = ["chip-bs21", "unstable"] }
 
 # 只用稳定接口（默认）：
 [dependencies]
@@ -68,7 +72,7 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 - **不可逆 / 未闭合 soundness 的路径**：`EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`（默认稳定面只保留自动 clock period + 单字节只读路径）、`System::software_reset*`、`Instant::now`/`elapsed`、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。
 - **embassy** —— 无端到端 HIL（`timer_int0_named_routing` 还专门 `not(feature="embassy")` 排除它）。
 - **WS63 未测试驱动**：`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。
-- **整个 BS2X 系列**（无 BS2X 板）：`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1。
+- **整个 BS2X target**（无 BS2X 板）：`chip-bs21` 需要 `unstable`；这覆盖共享驱动、`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 等 BS2X-only 模块。
 - **prelude 的 unstable re-export**（`Delay`、`Dma0`/`DmaDriver`/`Sdma0`、`RtcDriver`、`SfcDriver`、`UlpGpioPin`）—— re-export 的是现在 UNSTABLE 的模块/类型。
 
 ## 毕业流程（unstable → stable）
@@ -77,12 +81,12 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 
 ## 构建矩阵
 
-CI 验证 7 种组合（全过 `clippy -D warnings`）：
+CI 验证正例组合（全过 `clippy -D warnings`），并额外确认 BS2X stable-off 负例会失败：
 
 ```
 {ws63,rt}  {ws63,rt,unstable}  {ws63,rt,async,embassy}
 {ws63,rt,async,unstable}  {ws63,rt,async,embassy,unstable}
-{bs21,rt}  {bs21,rt,unstable}
+{bs21,rt,unstable}
 ```
 
-加 BS2X 隔离工作区（examples/bs2X/*，不在 `cargo check --workspace` 里）的显式 `cargo check --manifest-path ... --features unstable`。
+`{bs21,rt}` 不带 `unstable` 必须触发 `compile_error!`。加 BS2X 隔离工作区（examples/bs2X/*，不在 `cargo check --workspace` 里）的显式 `cargo check --manifest-path ... --features unstable`。

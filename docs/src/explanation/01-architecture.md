@@ -99,7 +99,7 @@ HAL 用 crate 内部的 sealed trait（`private.rs` 里的 `Sealed` 超 trait）
   `critical-section-single-hart` 实现。这一条让 async/embassy 能在这颗核上跑——
   详见 [async 与 embassy](04-async-embassy.md)。
 - **多芯片**：同一套 HAL 用 `chip-ws63` / `chip-bs21` feature 二选一区分，
-  条件编译外设模块。WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设。
+  条件编译外设模块。WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设；`chip-bs21` 目前需 `unstable`。
 
 ## 这套架构想达到的最终目的
 

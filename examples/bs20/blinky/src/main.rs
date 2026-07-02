@@ -2,7 +2,7 @@
 //!
 //! The BS20 analogue of `ws63-examples/blinky`: it toggles a GPIO using the same
 //! chip-neutral HAL GPIO path ([`OutputConfig`] + the type-erased [`Output`]
-//! driver), built with `--features chip-bs21` so the peripheral addresses come
+//! driver), built with `--features chip-bs21,unstable` so the peripheral addresses come
 //! from `bs2x-pac` and the clocks/counts from `soc/bs21.rs`.
 //!
 //! Milestone-1 target: boot end-to-end on the `bs21` QEMU machine. The busy-wait
