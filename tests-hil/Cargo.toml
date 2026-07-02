@@ -95,11 +95,3 @@ name = "hil"
 # Important: embedded-test IS the harness; the default libtest one would pull in
 # the std `test` crate (unavailable on this no_std target) and a panic handler.
 harness = false
-
-[profile.dev]
-opt-level = "s"
-
-[profile.release]
-opt-level = "s"
-lto = true
-debug = true
