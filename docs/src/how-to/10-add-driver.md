@@ -8,7 +8,7 @@
 
 驱动消费的是 `crates/hisi-riscv-hal/src/peripherals.rs` 里用宏生成的外设单例。文件里两个宏：
 
-- `peripheral!($name, $pac_ty)` —— 为某个 PAC 类型生成带生命周期的 ZST `$name<'d>`，附 `steal()`、`ptr()`、`register_block()`。
+- `peripheral!($name, $pac_ty)` —— 为某个 PAC 类型生成带生命周期的 ZST `$name<'d>`，附 `steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)` —— 生成 `Peripherals` 结构体，带 `take()`（安全单例）和 `steal()`（unsafe）。
 
 若你的外设的 PAC 类型还没被 `peripheral!` 包过，先加一行（注意按芯片放进对应的 `#[cfg(feature = "chip-ws63")]` / `chip-bs21` 块），并在对应的 `peripherals!(...)` 列表里加 `字段 => 类型`。例如已有的：

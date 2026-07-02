@@ -33,6 +33,7 @@ This skill manages the `#[instability::unstable]` / `unstable_module!` gating in
 7. **HIL tests** that reference UNSTABLE items: gate with `#[cfg(feature = "unstable")]` (the external integration test crate can't see `pub(crate)`).
 8. **In-module host tests** (`#[cfg(test)] mod tests`): do NOT gate — the soft-gate keeps items `pub(crate)` (in-crate visible to test modules).
 9. **`prelude.rs` re-exports** of UNSTABLE modules: gate the `pub use` with `#[cfg(feature = "unstable")]`.
+10. **Raw PAC escape hatches**: `register_block()` / raw register-block access bypass typed-config, driver ownership, and module gating. Keep these `#[instability::unstable]` and `unsafe` unless a specific raw API has its own HIL + safety story.
 
 ## Workflow 1: Add a new unstable surface
 
@@ -84,4 +85,4 @@ grep -n 'feature = "unstable"' crates/hisi-riscv-hal/tests/hil.rs
 
 ## What's currently STABLE vs UNSTABLE
 
-See root Agent Instructions (`CLAUDE.md` / `AGENTS.md`) "Stable / Unstable API gating" section for the authoritative split, or `docs/src/explanation/policies/02-stable-unstable.md` for the full explanation. The split is audited against `tests/hil.rs` — the rule is "HIL-proven on WS63 silicon = STABLE; everything else = UNSTABLE".
+See `docs/src/reference/10-stable-api.md` for the current stable/unstable split, and `docs/src/explanation/policies/02-stable-unstable.md` for the policy/mechanism. The split is audited against `tests/hil.rs` — the rule is "HIL-proven on WS63 silicon = STABLE; everything else = UNSTABLE".

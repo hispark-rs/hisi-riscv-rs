@@ -2,7 +2,7 @@
 
 这是本项目 HAL（0.6.0+）的**第二号约定**：凡是没有上板 HIL 真机测试覆盖，或 safe/unsafe soundness 还没闭合的接口，都关在 `unstable` feature 门后 —— 默认 `cargo build` 只暴露经过硅片验证且无已知 soundness blocker 的稳定 API，实验性接口要用户显式 `features = ["unstable"]` 才能用。这和 [类型化配置](01-typed-config.md) 互补：一个保证"能编译就能跑"，一个保证"默认暴露的是跑过且可承诺的"。
 
-本篇讲**为什么**这样设计、**机制**怎么工作、以及**哪些在门后、哪些稳定**。
+本篇讲**为什么**这样设计、**机制**怎么工作、以及 API **如何毕业**。当前 stable / unstable 清单是参考事实，见 [Stable API 清单与门控状态](../../reference/10-stable-api.md)。
 
 ## 问题：没上过板的 API 照样 pub
 
@@ -58,22 +58,7 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 
 实验性接口的签名**可能在小版本中变**；开 `unstable` = 同意承担 breakage。
 
-## 哪些 STABLE / 哪些 UNSTABLE
-
-### STABLE（HIL 真机验证过 — 默认暴露）
-
-- **WS63 默认稳定子集**：GPIO `Input`/`Output`/`Flex` + `GpioBank`，blocking SPI + blocking-backed `async` `SpiBus`，blocking UART + `BaudRate`/`UartClock`/`UartPort`/sealed `UartInstance`，blocking Timer + `TimerChannel`，TCXO，PWM `PwmPeriod`/`Duty`/`PwmChannelId` + fallible duty writes，WDT，TRNG default read/fill，eFuse `read_byte`，clock metadata，`System::reset_reason`，WS63 I2C blocking + blocking-backed `async` I2c with 7-bit address rejection，I2S config/liveness subset，IO_CONFIG GPIO/UART mux (`GpioPad`/`UartPad`/`MuxFunction`)，LSADC scan-config subset，TSENSOR basic conversion subset，cache unsafe primitives。
-- **跨芯片 + 基础设施**：interrupt identity/types (`Interrupt`/`Priority`/`Threshold`) plus basic enable/disable/pending paths，peripherals，prelude，macros，soc，`Duration`/`Rate`。`private` 是 crate-internal sealed-trait 模块，不是 public API。
-
-### UNSTABLE（没上板 — 关在门后）
-
-- **DMA 整个公共模块**：`Dma0`/`Sdma0`、`DmaDriver`、typed channel tokens、mem-to-mem `Transfer`、`DmaTransferSize`/`DmaSyncMask`、`SpiDma`/`UartDma`、`PeripheralTransfer`、`DmaFrame`/`PeriDmaCtl`/`PeriKind` 以及所有 DMA async hook。原因不是只缺 HIL，还包括 cache-line alignment、timeout quiescence、async cancellation、SPI1/UART DMA 证据未闭合。
-- **interrupt/waker async**：`asynch::block_on`、`IrqSignal`、GPIO `Wait`、timer `AsyncDelay`、UART async I/O、LSADC async。SPI/I2C 的 blocking-backed async trait impl 是例外，随 `async` 暴露。
-- **不可逆 / 未闭合 soundness 的路径**：`EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`（默认稳定面只保留自动 clock period + 单字节只读路径）、`System::software_reset*`、`Instant::now`/`elapsed`、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。
-- **embassy** —— 无端到端 HIL（`timer_int0_named_routing` 还专门 `not(feature="embassy")` 排除它）。
-- **WS63 未测试驱动**：`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。
-- **整个 BS2X target**（无 BS2X 板）：`chip-bs21` 需要 `unstable`；这覆盖共享驱动、`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 等 BS2X-only 模块。
-- **prelude 的 unstable re-export**（`Delay`、`Dma0`/`DmaDriver`/`Sdma0`、`RtcDriver`、`SfcDriver`、`UlpGpioPin`）—— re-export 的是现在 UNSTABLE 的模块/类型。
+当前默认 stable 面与 `unstable` 门后的 API 清单见参考页：[Stable API 清单与门控状态](../../reference/10-stable-api.md)。
 
 ## 毕业流程（unstable → stable）
 

@@ -47,15 +47,16 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 
 - **配置/构造面（HAL 自有，可自由类型化）**：受校验 newtype + 可失败构造子返回
   `Option`/`Result`（`SpiHz`/`DataBits`/`BaudRate`/`WdtTimeout`/`SampleCount` 等），越界
-  在构造点拒绝；角色用 type-state（I2S `new_master(非零派生分频)`/`new_slave()`，零分频
+  在构造点拒绝；角色用 type-state（I2S `new_master(非零派生分频)` 已验证，`new_slave()` 仍 unstable，零分频
   Master 不可表达）；驱动在 `new`/`configure` 里**自起本外设时钟门**（construct→clocked，
   如 PWM/I2S）。类型编码的是**实测硅事实而非数据手册**（如 `pwm::PwmPeriod` 是 `u16`，
   因 WS63 `pwm_freq_h` 高半字在硅上不 latch）。
 - **操作面（embedded-hal trait，固定签名）**：`SetDutyCycle`/`SpiBus`/`I2c`/`Read`/`Write`
   保留标准 `u16`/`&[u8]` + `Result`（`Result` 即 embedded-hal 的非法输入惯用法），不改 trait 签名。
 
-危险外设（`Wdt`/`PwmChannel`/`Output`）实现 scoped `Drop`（停表/关输出/回高阻），逃生口
-`into_armed`/`into_running`/`into_latched`（消费 self→零大小 marker）。DMA 提供拥有缓冲区的
+危险外设（`Wdt`/`PwmChannel`/`Output`）实现 scoped `Drop`（停表/关输出/回高阻）；逃生口按 HIL
+证据分别稳定或门控（如 `Watchdog::into_armed` 已验证，`PwmChannel::into_running` 仍是 unstable）。
+DMA 提供拥有缓冲区的
 `Transfer` guard（`embedded_dma` bound + 缓存维护折进类型），safe 代码里 use-after-free 不可表达。
 每个收紧面都有 host newtype/property 测试，并在连接的真机经 HIL 套件（`tests/hil.rs`）复验。
 
@@ -63,7 +64,7 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 
 `peripherals.rs` 用两个宏生成全套封装：
 
-- `peripheral!($name, $pac_ty)`（`peripherals.rs:10-48`）— 为每个外设生成零大小、`'d` 参数化的 ZST，提供 `unsafe steal()`、`ptr()`、`register_block()`。
+- `peripheral!($name, $pac_ty)`（`peripherals.rs:10-48`）— 为每个外设生成零大小、`'d` 参数化的 ZST，提供 `unsafe steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)`（`peripherals.rs:50-87`）— 生成 `Peripherals` 结构体，`take()` 经 PAC 单例校验（`peripherals.rs:61-64`），`unsafe steal()` 绕过校验。
 
 全部 35 个 PAC 外设都有 HAL 封装（`peripherals.rs:157-193`）。`'d` 生命周期防止 `Peripherals` token 被释放后仍持有驱动，是这一层的核心安全不变量（评审优点）。

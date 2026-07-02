@@ -80,7 +80,7 @@ hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 ### Peripheral Singleton Pattern
 
 `crates/hisi-riscv-hal/src/peripherals.rs` defines two macros:
-- `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, `register_block()`.
+- `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, and an `unstable` + `unsafe` raw `register_block()` escape hatch.
 - `peripherals!(...)` — generates the `Peripherals` struct with `take()` (safe) and `steal()` (unsafe).
 
 All 35 PAC peripherals have HAL wrappers. Drivers consume their peripheral via constructor (e.g., `Watchdog::new(wdt)`).
@@ -248,36 +248,48 @@ level gating uses the crate-local `unstable_module!` macro (esp-hal form:
   doc note.
 
 **What's STABLE (HIL-proven on WS63 silicon — ungated):** scoped default-facing
-subsets of gpio (`Input`/`Output`/`Flex`, `GpioBank`), spi (blocking + blocking-
-backed `async` trait impl), uart (blocking, `BaudRate`, `UartClock`, `UartPort`/
-sealed `UartInstance`), timer (`TimerChannel` blocking paths), tcxo, pwm
-(`PwmPeriod`/`Duty`/`PwmChannelId`, fallible duty writes), wdt, trng default
-read/fill path, efuse read-only byte path (`EfuseDriver`/`EfuseByteAddress`/
-`read_byte`), clock metadata, `System::reset_reason`, peripherals,
-interrupt types (`Priority`/`Threshold`) plus basic enable/disable/pending paths,
-i2c (WS63 v150 blocking + blocking-backed `async` trait impl with 7-bit address
-rejection), i2s config/liveness subset, io_config GPIO/UART mux
+subsets of gpio (`Input`/`Output`/`Flex`, `GpioBank`; not GPIO IRQ), spi (SPI0
+blocking + blocking-backed `async` trait impl), uart (UART0/1 blocking,
+`BaudRate`, `UartClock`, `UartPort`/sealed `UartInstance`), timer (`TimerChannel`
+raw configure/enable/current/interrupt paths; not one-shot/periodic wrappers),
+tcxo, pwm (Ch0 config/enable/disable + `PwmPeriod`/`Duty`/`PwmChannelId`,
+fallible duty writes), wdt (typed configure/feed/counter/drop/`into_armed`; not
+WDT IRQ), trng default blocking read + byte-fill path, efuse read-only byte path
+(`EfuseDriver`/`EfuseByteAddress`/`read_byte`), clock metadata,
+`System::reset_reason`, peripherals (ownership tokens only; raw register blocks
+are unstable), interrupt identity/types (`Priority`/`Threshold`) plus basic
+enable/disable/pending paths, i2c (WS63 v150 I2C0 blocking + blocking-backed
+`async` trait impl with 7-bit address rejection), i2s master config/liveness subset,
+io_config GPIO/UART mux
 (`GpioPad`/`UartPad`/`MuxFunction`), lsadc scan-config subset, tsensor basic
-conversion subset, cache (unsafe primitives), and infrastructure: `Duration`/
+conversion subset, and infrastructure: `Duration`/
 `Rate`, prelude, macros, soc. The sealed-trait `private` module is crate-internal,
 not public API.
 
 **What's UNSTABLE (no on-silicon HIL or soundness not closed — gated):** the public
-`dma` module as a whole (`Dma0`/`Sdma0`, `DmaDriver`, typed channel tokens,
+`cache` module (by-range D-cache CSR maintenance; tied to DMA/cache-line ownership
+invariants), raw PAC `register_block()` escape hatches, the public `dma` module as
+a whole (`Dma0`/`Sdma0`, `DmaDriver`, typed channel tokens,
 mem-to-mem `Transfer`, `DmaTransferSize`/`DmaSyncMask`, peripheral-paced
 `SpiDma`/`UartDma`, `PeripheralTransfer`, `DmaFrame`/`PeriKind`/`PeriDmaCtl`, and
 all DMA async hooks), interrupt/waker async helpers (`asynch::block_on`,
 `IrqSignal`, GPIO `Wait`, timer `AsyncDelay`, UART async I/O, LSADC async),
 `embassy`, `EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`,
-`System::software_reset*`, `Instant::now`/`elapsed`, interrupt priority/threshold
+`System::software_reset*`, `Instant::now`/`elapsed`, `interrupt::free`, GPIO IRQ
+APIs (`InterruptTrigger`, per-pin enable/clear/pending/trigger), unverified
+instance constructors (`Uart::new_uart2`, `Spi::new_spi1`, `I2c::new_i2c1`),
+timer one-shot/periodic wrappers, WDT IRQ methods, PWM polarity/start/pulse-count
+and `into_running`, I2S slave role/config, interrupt priority/threshold
 setters/getters, SFC pad config, broad I2S data/FIFO/IRQ methods, broad LSADC
 analog/conversion/filter/calibration/data-path methods, broad TSENSOR mode/
-threshold/interrupt/auto-refresh/calibration/blocking-read methods, TRNG manual
-clock/divider/status knobs, WS63 untested drivers (`clock_init`/`km`/`pke`/
+threshold/interrupt/auto-refresh/calibration/blocking-read/disable/clear-status
+methods, TRNG manual clock/divider/status knobs plus non-blocking `read` and
+`fill_words`, eFuse status, WS63 untested drivers (`clock_init`/`km`/`pke`/
 `safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/`delay`), entire BS2X chip target
 (`chip-bs21` requires `unstable` — no BS2X silicon board, QEMU only), + matching
 unstable `prelude` re-exports (`Delay`,
-`Dma0`/`DmaDriver`/`Sdma0`, `RtcDriver`, `SfcDriver`, `UlpGpioPin`).
+`InterruptTrigger`, `OneShotTimer`/`PeriodicTimer`, `Dma0`/`DmaDriver`/`Sdma0`,
+`RtcDriver`, `SfcDriver`, `UlpGpioPin`).
 
 **Build matrix** (CI must verify all positive rows + clippy `-D warnings`, plus
 the BS2X negative gate):

@@ -50,6 +50,31 @@ This remediation does **not** claim the blocked APIs are sound or graduated. It
 reduces the default stable API to the scoped surfaces that can be defended for
 0.6.0 and leaves the blockers below as the graduation backlog.
 
+## 0.2. Follow-up Narrowing After The Adversarial Subagent Pass
+
+Additional static review on 2026-07-03 found several remaining default-stable
+escape hatches. The follow-up narrowed them without claiming new silicon evidence:
+
+- `cache` is now an `unstable_module!`; by-range D-cache CSR maintenance graduates
+  together with the DMA/cache-line ownership contract, not as a standalone stable
+  primitive.
+- Raw PAC `register_block()` escape hatches on peripheral tokens and selected
+  drivers are now `unstable` + `unsafe`.
+- `interrupt::free` is now `unstable` + `unsafe`; `disable_global` is `unsafe`.
+  Stable callers should use higher-level APIs and HAL-internal critical sections,
+  not arbitrary user closures under a global interrupt mask.
+- GPIO IRQ APIs, unverified instance constructors (`Uart2`, `Spi1`, `I2c1`),
+  timer one-shot/periodic wrappers, WDT IRQ methods, and PWM
+  polarity/start/pulse-count/`into_running` are gated behind `unstable`.
+- I2S slave role/config, eFuse status, TRNG non-blocking/manual word paths, and
+  TSENSOR disable/clear-status helpers are gated behind `unstable`.
+- The opt-in RTC HIL test now also requires `unstable`, matching the `rtc` module
+  gate. Cargo feature comments for `async`/`embassy` now describe the real gates.
+
+Remaining design backlog: per-channel/per-instance token splitting (PWM/timer and
+other multi-instance peripherals), real I2C transaction HIL, GPIO IRQ graduation
+HIL, and direct cache/DMA coherency tests.
+
 ## 1. Review Inputs
 
 Agents/workflows used:
@@ -96,7 +121,7 @@ The unsafe-readiness baseline was written to `docs/review/unsafe-audit-2026-07-0
 | High | I2C transaction APIs accept invalid raw 7-bit addresses and lack transaction HIL. | `crates/hisi-riscv-hal/src/i2c.rs`; HIL is config-only. | Reject `addr > 0x7f` and add transaction/NACK HIL, or gate operations. |
 | High | TSENSOR masks raw config values and exposes broad un-HIL config. | `crates/hisi-riscv-hal/src/tsensor.rs` mode/threshold setters. | Type thresholds/modes or gate config methods until HIL-covered. |
 | High | LSADC docs/code still expose raw analog/filter/calibration knobs with only config HIL. | `crates/hisi-riscv-hal/src/lsadc.rs`; HIL only scan config. | Gate analog/conversion/config subsets or add full power/conversion HIL. |
-| High | `Peripherals` stable tokens expose raw register access for unstable peripherals. | `crates/hisi-riscv-hal/src/peripherals.rs` token fields and `register_block()`. | Decide explicit policy exception, gate unstable tokens, or make raw access unsafe/unstable. |
+| High | `Peripherals` stable tokens exposed safe raw register access for unstable peripherals. | `crates/hisi-riscv-hal/src/peripherals.rs` token fields and `register_block()`. | Follow-up made `register_block()` `unstable` + `unsafe`; splitting stable/unstable token fields remains a design backlog. |
 | High | `Instant::now()` uses global TCXO MMIO and can spin forever; no direct HIL. | `crates/hisi-riscv-hal/src/time.rs`. | Add bounded/fallible API and HIL, or keep hardware instant unstable. |
 
 ## 3. Graduation Matrix
@@ -116,23 +141,23 @@ Legend:
 | `SpiDma` stable subset | Block | SPI0 HIL exists for TX/full-duplex/IRQ/async paths. | Critical timeout/cancellation/cache blockers; tests still `unstable`-gated; SPI1 mapping unverified. |
 | Blocking `uart`, `UartPort`, sealed `UartInstance` | Scoped | `UartPort`/`UartInstance` encode port identity; HIL covers UART0 PLL divider config, boot-clock divider config, write/flush, and UART1 loopback path. | Constructors do not self-enable clocks in all tested paths; broader RX/trait and per-instance HIL remains useful. |
 | `UartDma` | Block / unstable | No graduation reason; UART DMA remains unproven. | `UartDmaError` now correctly gated unstable. |
-| `timer`, `TimerChannel` | Scoped | HIL covers counter advance and named timer IRQ routing; `TimerChannel` removes raw channel index. | One-shot/periodic wrappers, zero tick semantics, `AsyncDelay`, and `TimerChannel` variants beyond Channel0 need more HIL. |
-| `interrupt`, `Priority`, `Threshold` | Scoped | Typed priority/threshold constructors reject invalid levels; routing HIL exercises interrupt enable path. | `set_priority`/`set_threshold` lack direct HIL and may enable pending delivery from safe code; `interrupt::free` needs ordering review. |
+| `timer`, `TimerChannel` | Scoped | HIL covers counter advance and named timer IRQ routing; `TimerChannel` removes raw channel index. | One-shot/periodic wrappers are now unstable; zero tick semantics, `AsyncDelay`, and `TimerChannel` variants beyond Channel0 need more HIL. |
+| `interrupt`, `Priority`, `Threshold` | Scoped | Typed priority/threshold constructors reject invalid levels; routing HIL exercises interrupt enable path. | `interrupt::free` is now unstable + unsafe; `set_priority`/`set_threshold` still need direct HIL before graduation. |
 | `asynch::block_on` / `IrqSignal` | Block | Async examples/tests exercise the path under feature builds. | Lost-wake races block graduation. |
 | `tcxo` | Scoped | HIL covers status, `read_counter32`, and `read_counter`/64-bit monotonicity. | enable/disable/clear and timeout behavior need coverage/SAFETY cleanup. |
-| `pwm`, `PwmPeriod`, `Duty`, `PwmChannelId` | Block for full module; scoped Ch0 config only | HIL covers Ch0 configure/enable with typed period/duty and `SetDutyCycle` rejection for out-of-range duty. | Ch1..Ch7 clock/divider not proven; duplicate `PwmChannel` ownership; frequency clock note unconfirmed. |
-| `wdt` | Scoped / mostly graduate | HIL covers typed timeout config, rejection of over-range load, drop-disable, armed escape, counter latch, and feed liveness. | Interrupt APIs need HIL before claiming full module stable. |
+| `pwm`, `PwmPeriod`, `Duty`, `PwmChannelId` | Block for full module; scoped Ch0 config only | HIL covers Ch0 configure/enable with typed period/duty and `SetDutyCycle` rejection for out-of-range duty. | Polarity/start/pulse-count/`into_running` are now unstable; Ch1..Ch7 clock/divider and duplicate `PwmChannel` ownership remain backlog. |
+| `wdt` | Scoped / mostly graduate | HIL covers typed timeout config, rejection of over-range load, drop-disable, armed escape, counter latch, and feed liveness. | WDT interrupt APIs are now unstable until they get HIL. |
 | DMA mem-to-mem: `Dma0`, `DmaDriver`, `DmaChannel`, `DmaChannels`, `DmaTransferSize`, `DmaSyncMask`, `Transfer`, `start_mem_to_mem` | Block for safe stable; scoped API design is close | HIL covers mem-to-mem and owned transfer guard; typed channel and beat count remove raw channel/size. | Cache-line alignment soundness unresolved; `DmaSyncMask`/`set_sync` lack HIL; zero-beat/min-length semantics need decision. |
-| `trng` default read/fill path | Scoped | HIL `trng_produces_entropy` exercises blocking entropy generation; `trng_fill_bytes_produces_data` covers byte fill. | `set_sample_clock`, `set_divider`, and status/config helpers are raw/uncovered; gate or type them. |
-| eFuse read-only: `EfuseDriver`, `EfuseByteAddress`, `read_byte` | Scoped | HIL reads byte 0; address newtype prevents OOB data-window access; `write_byte` is unstable. | `read_buffer` lacks HIL; `set_clock_period(u8)` is raw timing config and should be typed/gated. |
+| `trng` default read/fill path | Scoped | HIL `trng_produces_entropy` exercises blocking entropy generation; `trng_fill_bytes_produces_data` covers byte fill. | `done`, non-blocking `read`, `fill_words`, `set_sample_clock`, `set_divider`, and status/config helpers are unstable. |
+| eFuse read-only: `EfuseDriver`, `EfuseByteAddress`, `read_byte` | Scoped | HIL reads byte 0; address newtype prevents OOB data-window access; `write_byte` is unstable. | `status`, `read_buffer`, `set_clock_period`, and `write_byte` are unstable. |
 | `clock` | Scoped | HIL checks UART0 gate metadata; `Peripheral` avoids raw gate index in stable APIs. | Broad enum/gate coverage is not proven; docs still mention removed RAII guard. |
 | `system` | Scoped | HIL covers reset reason. | `software_reset*` needs opt-in reset HIL or unstable gate. |
 | `peripherals` | Block unless policy exception | `Peripherals::take`/tokens are foundational and used by all HIL tests. | Public tokens/register blocks expose unstable/un-HIL peripherals. Needs explicit policy exception or gating. |
 | `i2c` WS63 v150 | Block for full module | HIL covers SCL config/register path and invalid 7-bit address rejection before bus activity. | Transaction APIs still lack real bus HIL. |
-| `i2s` | Block for full module; scoped config/liveness only | HIL constructs master config and reads version. | TX/RX, FIFO, slave mode, interrupts, waveform/data path unproven. |
+| `i2s` | Block for full module; scoped master config/liveness only | HIL constructs master config and reads version. | Slave mode/config, TX/RX, FIFO, interrupts, waveform/data path are unstable/unproven. |
 | `lsadc` | Block | HIL covers scan register config only. | File docs say incomplete silicon validation; analog/conversion/filter/calibration APIs raw/uncovered. |
-| `tsensor` | Block for full module; scoped basic read only | HIL covers basic enable/start/read_raw in range. | Mode/threshold/interrupt/auto-refresh/calibration are raw or uncovered; blocking read unbounded. |
-| `cache` | Infra / unsafe-only graduate | Low-level cache APIs are `unsafe`; DMA HIL indirectly exercises clean/invalidate. | Safe DMA callers must enforce cache preconditions before DMA graduates. Add overflow precondition docs. |
+| `tsensor` | Block for full module; scoped basic read only | HIL covers basic enable/start/read_raw in range. | Disable/clear-status plus mode/threshold/interrupt/auto-refresh/calibration are raw or uncovered; blocking read unbounded. |
+| `cache` | Block / unstable | Low-level cache APIs are `unsafe`, but DMA HIL only indirectly exercises aligned-buffer clean/invalidate. | Public cache module is now unstable; graduate with direct coherency HIL and the DMA cache-line ownership contract. |
 | `time` | Block for hardware instant; pure newtypes need tightening | Pure `Duration`/`Rate` are infrastructure. | `Duration`/`Rate` arithmetic can overflow/wrap; `Instant::now` can hang and lacks HIL. |
 | `prelude` | Infra, fixed | Re-exports now no longer leak `delay`/`rtc` by default. | Keep prelude re-exports tied to underlying gates. |
 | `macros` | Infra | Compile-time infrastructure; no silicon behavior. | Add compile tests if treated as stable user API. |

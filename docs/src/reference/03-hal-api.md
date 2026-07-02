@@ -27,7 +27,7 @@
 
 两个宏生成单例：
 
-- `peripheral!($name, $pac_ty)` — 生成生命周期参数化 ZST `$name<'d>`，带 `steal()`、`ptr()`、`register_block()`。
+- `peripheral!($name, $pac_ty)` — 生成生命周期参数化 ZST `$name<'d>`，带 `steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)` — 生成 `Peripherals` 结构，带 `take() -> Option<Self>`（安全，仅一次）与 `steal()`（`unsafe`）。
 
 ```rust,ignore

@@ -115,6 +115,11 @@ slots, and IRQ bookkeeping. They must not wait for hardware, perform transfers, 
 copy/cache-maintain large buffers, call user callbacks/closures, `delay`, `block_on`,
 or hold borrows across `.await`.
 
+Public APIs must not expose a safe "run arbitrary closure with interrupts masked"
+surface. If an escape hatch such as `interrupt::free` is retained, it stays
+`unstable` and `unsafe` so the short/non-blocking contract is explicit at the call
+site.
+
 Manual scan:
 ```bash
 rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-riscv-hal/src
@@ -124,6 +129,10 @@ Flag any closure / irq-disabled region containing `while`, `loop`, `wait`, `dela
 `transfer`, `read_dma`, `write_dma`, `block_on`, `callback`, `Fn`, or unknown user
 calls. A long hardware transaction should be split into: short CS to claim / mark
 `Busy`, outside-CS MMIO or wait, short CS to clear state and wake.
+
+Also flag safe raw PAC escape hatches (`register_block()` returning a PAC
+`RegisterBlock` reference). They bypass typed-config and unstable driver gates; keep
+them `unstable` + `unsafe`, or replace them with a typed wrapper.
 
 ### Step 5 — Miri dynamic UB detection
 
