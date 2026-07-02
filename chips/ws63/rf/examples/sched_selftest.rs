@@ -32,7 +32,7 @@ fn u32dec(mut v: u32, buf: &mut [u8; 10]) -> &[u8] {
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
-    uart.write(0, b"\r\nWS63 ws63-rf-rs scheduler self-test\r\n");
+    uart.write(b"\r\nWS63 ws63-rf-rs scheduler self-test\r\n");
 
     let r = ws63_rf_rs::sched_selftest(); // [worker0, worker1, sem_items, done]
 
@@ -44,14 +44,14 @@ fn main() -> ! {
     ];
     let mut b = [0u8; 10];
     for (label, v) in labels.iter().zip(r.iter()) {
-        uart.write(0, label);
-        uart.write(0, u32dec(*v, &mut b));
-        uart.write(0, b"\r\n");
+        uart.write(label);
+        uart.write(u32dec(*v, &mut b));
+        uart.write(b"\r\n");
     }
 
     // Also exercise the scheduler-backed OSAL message queue (write -> read).
     let q = ws63_rf_rs::osal_queue_selftest();
-    uart.write(0, b"osal_msg_queue rx= 0x");
+    uart.write(b"osal_msg_queue rx= 0x");
     {
         let mut hb = [0u8; 8];
         let mut i = 0;
@@ -64,9 +64,9 @@ fn main() -> ! {
             };
             i += 1;
         }
-        uart.write(0, &hb);
+        uart.write(&hb);
     }
-    uart.write(0, b"\r\n");
+    uart.write(b"\r\n");
 
     // Exercise the FRW/HCC data path (msg pool -> HCC -> worker -> handler).
     let f = ws63_rf_rs::frw_hcc_selftest(); // [sent, received, dispatched, checksum_ok]
@@ -77,9 +77,9 @@ fn main() -> ! {
         b"frw checksum_ok = ",
     ];
     for (label, v) in flabels.iter().zip(f.iter()) {
-        uart.write(0, label);
-        uart.write(0, u32dec(*v, &mut b));
-        uart.write(0, b"\r\n");
+        uart.write(label);
+        uart.write(u32dec(*v, &mut b));
+        uart.write(b"\r\n");
     }
 
     // Exercise the software-timer service (one-shot fire + no-refire + re-arm).
@@ -90,20 +90,17 @@ fn main() -> ! {
         b"timer ok        = ",
     ];
     for (label, v) in tlabels.iter().zip(tm.iter()) {
-        uart.write(0, label);
-        uart.write(0, u32dec(*v, &mut b));
-        uart.write(0, b"\r\n");
+        uart.write(label);
+        uart.write(u32dec(*v, &mut b));
+        uart.write(b"\r\n");
     }
 
     let ok = r == [5, 5, 3, 4] && q == 0xCAFE_F00D && f == [5, 5, 5, 1] && tm == [1, 2, 1];
-    uart.write(
-        0,
-        if ok {
-            b"SCHED SELFTEST: PASS\r\n"
-        } else {
-            b"SCHED SELFTEST: FAIL\r\n"
-        },
-    );
+    uart.write(if ok {
+        b"SCHED SELFTEST: PASS\r\n"
+    } else {
+        b"SCHED SELFTEST: FAIL\r\n"
+    });
 
     loop {
         core::hint::spin_loop();

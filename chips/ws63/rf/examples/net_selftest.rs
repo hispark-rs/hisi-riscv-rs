@@ -33,10 +33,7 @@ fn u32dec(mut v: u32, buf: &mut [u8; 10]) -> &[u8] {
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
-    uart.write(
-        0,
-        b"\r\nWS63 ws63-rf-rs netif->smoltcp bridge self-test\r\n",
-    );
+    uart.write(b"\r\nWS63 ws63-rf-rs netif->smoltcp bridge self-test\r\n");
 
     let r = ws63_rf_rs::netif_smoltcp_selftest(); // [tx_count, reply_ok, ok]
     let labels: [&[u8]; 3] = [
@@ -46,19 +43,16 @@ fn main() -> ! {
     ];
     let mut b = [0u8; 10];
     for (label, v) in labels.iter().zip(r.iter()) {
-        uart.write(0, label);
-        uart.write(0, u32dec(*v, &mut b));
-        uart.write(0, b"\r\n");
+        uart.write(label);
+        uart.write(u32dec(*v, &mut b));
+        uart.write(b"\r\n");
     }
 
-    uart.write(
-        0,
-        if r == [1, 1, 1] {
-            b"NET SELFTEST: PASS\r\n"
-        } else {
-            b"NET SELFTEST: FAIL\r\n"
-        },
-    );
+    uart.write(if r == [1, 1, 1] {
+        b"NET SELFTEST: PASS\r\n"
+    } else {
+        b"NET SELFTEST: FAIL\r\n"
+    });
 
     loop {
         core::hint::spin_loop();
