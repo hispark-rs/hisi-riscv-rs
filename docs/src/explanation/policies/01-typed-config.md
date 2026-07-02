@@ -2,7 +2,7 @@
 
 这是本项目 HAL API 的**头号约定**:配置面被设计成 ——**你能写出来的值,就是能在真硅片上跑起来的值**。不存在「编译通过、却被静默 clamp / 截断 / 没接时钟」的参数。
 
-本篇讲**为什么**这样设计、它**怎么和 embedded-hal 分层**、以及落地时该**怎么判断**。配方见 [如何新增一个外设驱动](../../how-to/10-add-driver.md);仓库内的可调用清单见 `.claude/skills/typed-config/`(含缺陷分类法 + 候选扫描器)。
+本篇讲**为什么**这样设计、它**怎么和 embedded-hal 分层**、以及落地时该**怎么判断**。配方见 [如何新增一个外设驱动](../../how-to/10-add-driver.md);仓库内的可调用清单见 `.agents/skills/typed-config/`(含缺陷分类法 + 候选扫描器)。
 
 ## 问题:能写出但跑不了
 
@@ -38,6 +38,7 @@
 - **频率 / 波特 / 周期 / 超时**(从运行时值算出来的)→ **校验 newtype** + `const fn try_from_hz(u32) -> Option<Self>` / `from_count` / `try_new`,越出可达寄存器范围就返回 `None`。**拒绝,不要 clamp。**(治 A、D)
 - **角色相关配置**(合法字段取决于模式)→ **type-state**:需要额外参数的那个状态在**构造函数里强制要求**它,非法组合在类型上不可表达。(治 B)
 - **小的有限选择** → **enum**(本就装不下非法值;除非现在是裸整数)。
+- **外设身份 / 通道 / 地址** → **token / enum / newtype**。safe API 不接收会影响 unsafe 前提的裸 `u8`/`usize`/裸地址:例如 DMA `DmaChannel`,GPIO/IO mux 的 `GpioPad`/`UartPad`/`MuxFunction`,GPIO IRQ 的 `GpioBank`,timer 的 `TimerChannel`,UART 的 `UartPort`,UART 时钟源 `UartClock`,PWM 的 `PwmChannelId`,eFuse 的 `EfuseByteAddress`。
 - **时钟门没开** → 驱动在 `configure`/`new` 里**自起自己的时钟门**(照搬 vendor `*_porting` 的 CKEN + DIV_CTL 分频 + LOAD_DIV 序列)。(治 C)
 - **板级/模拟前提**(RTC 32 kHz 晶振、ADC AFE/LDO 上电)类型治不了 → **doc + 守护**:命名明确 / `cfg` / feature 门控的构造,有界轮询(**绝不**用会拖死总线的无界轮询),加一行 `# 硬件要求` 文档。(治 C)
 - **本就是全宽 32 位寄存器 / 本就是 enum** → **不动。** 不要无中生有造约束,只收真缺陷。
@@ -46,10 +47,18 @@
 
 最有教育意义的一例:`pwm::PwmPeriod` 是 **`u16`**,因为 WS63 的 `pwm_freq_h` 高 16 位在硅片上**根本不存值**(实测:写 `0x0001` 读回 `0`,即便整条时钟树都拉起来),而 vendor `regs_def` 明明声明这个字段是 32 位。**类型编码实测行为,而不是数据手册。** 如果某字段的真实范围拿不准,**先上板量,再定类型边界** —— 别只信 PAC/SDK 的位宽。
 
+0.6.0 收敛里的几个同类例子:
+
+- `uart::Config::clock_hz: Option<u32>` 被 `UartClock::{Pll, Boot}` 替代。boot-console 固件显式选 `Boot`,避免把 flashboot 的 24/40 MHz TCXO 串口时钟误当 160 MHz PLL。
+- `gpio::OutputConfig::open_drain` 是无硬件落地的 no-op,已删除而不是保留成误导性稳定旋钮。
+- I2C 操作仍遵守 embedded-hal 签名,但对 `addr > 0x7f` 返回 `I2cError::InvalidAddress`,不再把非法 7-bit 地址悄悄塞进寄存器序列。
+- PWM 的 `SetDutyCycle` 保持 trait 签名,但 `duty > max_duty_cycle()` 返回 `PwmError::DutyOutOfRange`,不再用 `Infallible` 掩盖非法输入。
+- eFuse 稳定面只保留 `EfuseByteAddress` + `read_byte`;会改变时序或不可逆写入的 `set_clock_period`/`read_buffer`/`write_byte` 进 `unstable`。
+
 ## 落地流程(docs-first)
 
 1. **先改文档** —— 本约定要求 docs-first:先更新该驱动的组件文档 + 本页 + ROADMAP,再写代码。
-2. **扫候选**:`bash .claude/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/<driver>.rs`。
+2. **扫候选**:`bash .agents/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/<driver>.rs`。
 3. **追到寄存器**:从 PAC 拿字段真实位宽,从 vendor SDK 拿有效范围 + 时钟前提,标 `file:line`。
 4. **定级 + 选方案**(决策树),**只动配置层**,embedded-hal trait impl 的签名不碰。参考 `pwm.rs`。
 5. **更新测试**:host 单测/property(newtype 的接受/拒绝边界)+ `tests/hil.rs`。
@@ -57,8 +66,8 @@
 
 ## 参考实现与依据
 
-- **参考实现**:`crates/hisi-riscv-hal/src/pwm.rs` —— `PwmPeriod`(u16,`from_count`/`try_from_hz`)、`Duty`(0..=100)、`configure` 自起时钟树、保留 `SetDutyCycle`。
-- **仓库约定**:`CLAUDE.md` 的「Typed config — if it compiles, it runs on silicon」一节 + `.claude/skills/typed-config/` skill。
+- **参考实现**:`crates/hisi-riscv-hal/src/pwm.rs` —— `PwmPeriod`(u16,`from_count`/`try_from_hz`)、`Duty`(0..=100)、`configure` 自起时钟树、`SetDutyCycle` 用 `Result` 拒绝越界 duty。另见 `uart.rs` 的 `UartClock` 与 `i2c.rs` 的 7-bit 地址拒绝。
+- **仓库约定**:`AGENTS.md` 的「Typed config — if it compiles, it runs on silicon」一节 + `.agents/skills/typed-config/` skill。
 - **业界依据**:
   - [esp-hal API 准则](https://hackmd.io/@esp-rs/Hy8RR5FkC):「prefer compile-time checks over runtime checks; prefer a fallible API over panics」—— 本 HAL 本就仿照 esp-hal。
   - [Parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)(Alexis King):只给可失败构造,值要么解析成功要么不存在。

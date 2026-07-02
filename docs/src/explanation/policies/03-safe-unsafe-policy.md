@@ -2,7 +2,7 @@
 
 这是本项目 HAL（0.6.0+）的**第三号约定**：`unsafe` 可以存在，但必须被模块边界、类型不变式、SAFETY 注释和验证流程约束住。对外的 safe API 不能让调用者触发 UB；否则这个 API 不能稳定暴露。
 
-本篇讲**为什么**要有这条政策、**怎么判断**一段 unsafe 是否被安全封装、以及它**如何接到稳定 / 不稳定 API 门控**。完整调研见 `docs/review/safe-unsafe-formal-verification-research-2026-07.md`，当前基线见 `docs/review/unsafe-audit-2026-07-01.md`。
+本篇讲**为什么**要有这条政策、**怎么判断**一段 unsafe 是否被安全封装、以及它**如何接到稳定 / 不稳定 API 门控**。完整调研见 `docs/review/safe-unsafe-formal-verification-research-2026-07.md`，当前基线见 `docs/review/unsafe-audit-2026-07-02.md`。
 
 ## 问题：HAL 不可能没有 unsafe
 
@@ -88,6 +88,8 @@ unsafe { r.spi_dr().write(|w| w.bits(tx)) }
 - **unsafe impl 要写理由。** `unsafe impl Send` / `Sync` 必须说明为什么跨上下文移动不会破坏独占、别名或中断不变式。
 - **不要用 HIL 掩盖 UB 风险。** 真机通过只能证明一个路径工作；若 safe 输入空间里仍有能触发 UB 的值，封装仍然 unsound。
 
+0.6.0 的 P0 收敛把这条规则落到公共 safe API 上:会影响 unsafe 前提的裸通道号、外设索引、pad 编号和 eFuse 地址不再直接外露,而是先变成 `DmaChannel`、`DmaTransferSize`/`DmaSyncMask`、`GpioPad`/`UartPad`/`MuxFunction`、`GpioBank`、`TimerChannel`、`UartPort`、`UartClock`、`PwmChannelId`、`EfuseByteAddress` 等类型。eFuse 编程这种不可逆且 soundness/HIL 未闭合的路径保持 `unstable`,默认稳定面只保留只读 byte API。DMA 虽已有 typed token/owned-transfer 设计,但 cache-line ownership、timeout quiescence 和 async cancellation 不变式尚未闭合,所以公共 `dma` 模块整体保持 `unstable`。
+
 ## 和稳定 / 不稳定门控的关系
 
 [稳定 / 不稳定 API 门控](02-stable-unstable.md) 的规则是“默认只暴露 HIL 真机验证过的 API”。Safe/Unsafe 政策在它下面再加一条负面约束：
@@ -133,7 +135,7 @@ AI 辅助验证只能作为候选生成器：可以帮助写审计队列、harne
 6. **上板验证**：只有涉及硬件行为的结论，必须用 HIL 或明确标成未验证。
 7. **接稳定门控**：有 HIL 且无确认 soundness 缺口，才考虑从 `unstable` 毕业。
 
-当前基线（2026-07-01）：`crates/hisi-riscv-hal/src` 有 486 处 `unsafe` 命中，`clippy::undocumented_unsafe_blocks` 捕获 390 个 warning；Miri 和 Kani 还没有形成门禁。这是**整改起点**，不是已完成状态。
+当前基线（2026-07-02）：`crates/hisi-riscv-hal/src` 有 486 处 `unsafe` 命中，`clippy::undocumented_unsafe_blocks` 仍未形成门禁；Miri 和 Kani 还没有形成门禁。这是**整改起点**，不是已完成状态。
 
 ## 参考实现方向
 

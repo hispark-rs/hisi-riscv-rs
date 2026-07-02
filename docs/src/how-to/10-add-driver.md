@@ -96,7 +96,7 @@ impl embedded_hal::spi::SpiBus for Spi<'_, Spi0<'_>> { /* read/write/transfer/fl
 
 ## 3. Sealed trait（需要时）
 
-如果你要引入「只能内部实现」的标记 trait（比如限定哪些类型能当某外设的输入/输出，或 DMA word），加在 `private.rs`：以 `Sealed` 为 supertrait，外部就无法实现。现有的有 `DmaWord`、`PeripheralInput`、`PeripheralOutput`。**不要**复活已删掉的空 `DriverMode`/`Blocking`/`Async` 标记 trait——它们没有真实 async 后端时纯属误导。
+如果你要引入「只能内部实现」的标记 trait（比如限定哪些类型能当某外设的输入/输出），加在 `private.rs`：以 `Sealed` 为 supertrait，外部就无法实现。现有的是 GPIO signal trait（如 `PeripheralInput`、`PeripheralOutput`）。**不要**复活已删掉的空 `DriverMode`/`Blocking`/`Async` 标记 trait或 vestigial `DmaWord`——这类约束应有真实类型不变式和 HIL/soundness 证据支撑。
 
 ## 4. 配一个带 PASS 标记的 HIL 示例
 

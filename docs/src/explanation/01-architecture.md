@@ -78,12 +78,11 @@ bug 挡在了编译期。代价是 API 略繁（不能用统一的 `new()`），
 
 ## sealed trait：留扩展点，但不让外人乱接
 
-HAL 用了一批 sealed trait（`private.rs` 里的 `Sealed` 超 trait）：`DmaWord`、
-`PeripheralInput`、`PeripheralOutput` 这些 trait 外部 crate **实现不了**。这是有意的——
-这些 trait 表达的是"哪些类型是合法的 DMA 字宽 / 合法的引脚功能"，它们的**完整集合由硬件
-决定**，不该让下游随便加。sealed 让 HAL 可以放心地用这些 trait 做编译期约束
-（比如 `DmaChannelFor<P>` 保证某外设只能配对它真正支持的 DMA 通道），而不必担心
-有人实现出一个硬件根本不支持的组合。
+HAL 用 crate 内部的 sealed trait（`private.rs` 里的 `Sealed` 超 trait）防止外部 crate
+实现硬件限定的 signal trait，例如 `PeripheralInput` / `PeripheralOutput`。这是有意的——
+这些 trait 表达的是"哪些类型是合法的引脚功能"，它们的**完整集合由硬件决定**，不该让下游随便加。
+早先空的 async mode marker 和 vestigial `DmaWord` 已删除；DMA 通道/宽度约束现在由 typed token
+与 `unstable` 门控承载。
 
 ## 贯穿全栈的几个决定
 

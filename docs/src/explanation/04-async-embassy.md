@@ -2,7 +2,9 @@
 
 这一篇是异步故事的**概念总览**——它讲三种用 HAL 的方式（纯阻塞、`async` feature、
 `embassy` feature）各自是什么、为什么并存、以及一个反直觉的事实：**这一切跑在一颗连原子
-扩展都没有的核上。** 想看代码在哪个文件、每个 trait 怎么实现、怎么上游化，去
+扩展都没有的核上。** 0.6.0 起要再叠一层稳定性判断：SPI/I2C 的 blocking-backed async trait impl
+随 `async` 暴露；`block_on`/`IrqSignal`、GPIO wait、timer/UART/DMA/LSADC async 和 `embassy` 模块还需 `unstable`。
+想看代码在哪个文件、每个 trait 怎么实现、怎么上游化，去
 [async-embassy 深入文档](components/06-async-embassy.md)；这里建立的是全局直觉。
 
 ## 同一套 HAL，三种用法
@@ -12,13 +14,10 @@ hisi-riscv-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。
 
 1. **不开任何 feature——纯阻塞**。`uart.write()` 就在那儿自旋等 FIFO 有位。
    简单、确定、没有执行器、没有 waker。绝大多数简单固件用这档就够。
-2. **开 `async` feature——中断 + waker 驱动的 `.await`**。多了
-   `embedded-hal-async` / `embedded-io-async` 的实现（`DelayNs`、`digital::Wait`、
-   `SpiBus`、`I2c`、UART 的 `Read`/`Write`），外加一个极小的 `block_on` 执行器和一个
-   `IrqSignal` 桥。让你"不上 embassy 也能 `.await`"。
-3. **再开 `embassy` feature——完整的 embassy 时间生态**。多了一个 embassy-time 的
+2. **开 `async` feature——blocking-backed `.await`**。默认稳定面多了 SPI `SpiBus`、I2C `I2c` 这类包装阻塞实现的 async trait。中断 + waker 驱动的 `DelayNs`、`digital::Wait`、UART `Read`/`Write`、`block_on`、`IrqSignal` 仍是实验面，需再开 `unstable`。
+3. **再开 `embassy` feature + `unstable`——完整的 embassy 时间生态**。多了一个 embassy-time 的
    `Driver`，于是 `embassy-executor`（platform-riscv32）能跑，`Timer::after` /
-   `Instant` / `Ticker` 都可用。
+   `Instant` / `Ticker` 都可用；默认稳定面暂不暴露该模块。
 
 这三档不是三套代码，而是**同一套阻塞驱动上逐层叠加**。这个分层本身是个设计取舍：
 不想要异步复杂度的人完全感知不到它的存在，想要的人按需开 feature。
@@ -27,7 +26,7 @@ hisi-riscv-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。
 
 ### block_on + IrqSignal
 
-`async` 这一档的核心是两个极小的零件：
+`unstable` 异步中断层的核心是两个极小的零件：
 
 - **`block_on(fut)`**——一个最朴素的 future 执行器：poll，遇到 `Pending` 就 `wfi`
   休眠，硬件中断把核唤醒后再 poll。没有堆、没有全局执行器、没有任务队列。它存在的意义
@@ -70,7 +69,7 @@ hisi-riscv-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。
 
 ## embassy feature：让 WS63 成为时间提供者
 
-`embassy` feature 做的事可以一句话概括：**让 WS63 成为 embassy-time 的时间源**。
+`embassy` feature（公共模块需 `unstable`）做的事可以一句话概括：**让 WS63 成为 embassy-time 的时间源**。
 具体是实现一个 embassy-time `Driver`：
 
 - **`now()`** 读 **TCXO 的 64 位自由计数器**（24 MHz），缩放到 embassy-time 的 1 MHz
@@ -87,8 +86,9 @@ hisi-riscv-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。
 把三档放在一起，选择其实很自然：
 
 - 简单顺序逻辑、不在乎并发 → **纯阻塞**。
-- 想 `.await` 个别 IO、不想背 embassy → **`async` + `block_on`**。
-- 要多任务、要 `Timer::after`、要 embassy 生态 → **`embassy`**。
+- 只想用 SPI/I2C 的 async trait 适配层 → **`async`**。
+- 想 `.await` 中断驱动 IO、不想背 embassy → **`async` + `unstable` + `block_on`**。
+- 要多任务、要 `Timer::after`、要 embassy 生态 → **`embassy` + `unstable`**。
 
 覆盖范围、每个 trait 落在哪个文件、以及"为什么走 esp-hal 那种 out-of-tree 上游模型而不是
 塞进 embassy monorepo"这些更深的讨论，都在

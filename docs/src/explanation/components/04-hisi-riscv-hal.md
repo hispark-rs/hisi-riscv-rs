@@ -2,7 +2,7 @@
 
 > 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
-> **2026-06 更新**：HAL 现为**多芯片** —— `chip-ws63`（默认）/ `chip-bs21` 特性。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族；BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
+> **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族；BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
 
 ## 职责与边界
 
@@ -10,7 +10,7 @@
 
 - **负责**：
   - 为 35 个 PAC 外设提供生命周期化的安全单例封装（`peripherals.rs`），并在其上实现 35 个外设驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、以及 KM/PKE/SPACC 等加密外设）。
-  - 时钟架构：时钟门控（`clock.rs` 的 `ClockControl` + `Peripheral` 枚举）、引导期时钟树初始化（`clock_init.rs`）。
+  - 时钟架构：`clock.rs` 的 `Peripheral`/`cken_info()` 审计图、引导期时钟树初始化（`clock_init.rs`，实验面）。
   - GPIO 三层驱动模型、DMA 双控制器抽象、sealed trait 体系（`private.rs`）。
   - embedded-hal 1.0 / embedded-hal-nb 1.0 / embedded-io 0.6 / nb 的 trait 实现。
 - **不负责**：
@@ -73,7 +73,7 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 两套并存：
 
 1. **`clock_init.rs`（标杆）** — 逐寄存器对照 fbb_ws63 C SDK 的启动时钟序列核实。文件头部完整记录了 `CLDO_CRG_CLK_SEL` 位图、寄存器地址映射、时钟树（`clock_init.rs:1-74`）。`init_clocks()`（`clock_init.rs:197-253`）实现 flash→PLL（bit 18）、UART0/1/2→PLL（bits 1/2/3）、SPI→PLL（bit 6）的切换，并经 `REG_EXCEP_RO_RG` bit 12 轮询 PLL 锁定（`clock_init.rs:127-148`）。TCXO 频率检测读 `HW_CTL` bit 0（`clock_init.rs:103-107`）。所有地址均注明 fbb_ws63 出处。
-2. **`clock.rs` 的 RAII 时钟门控** — `ClockControl` 封装 `CldoCrg`，提供 `enable_uart()`/`enable_spi()` 等直接方法（`clock.rs:192-260`），以及 `PeripheralGuard` 引用计数守卫（`clock.rs:86-125`），用 `static REF_COUNTS: [AtomicU8; 17]`（`clock.rs:74-78`）做并发安全的开/关计数。`Peripheral::cken_info()`（`clock.rs:45-67`）将每个外设映射到 `(cken 寄存器索引, 位)`，PWM 的 9 位连续门控（bits 2:10）特殊处理。
+2. **`clock.rs` 的 CKEN 参考图** — 旧 `ClockControl` / `PeripheralGuard` RAII 时钟门控因零消费者已删除。当前 `Peripheral::cken_info()` 保存经 SDK/SVD 审计的 `(cken 寄存器索引, 位)` 映射，PWM 的 9 位连续门控（bits 2:10）特殊处理；无证据的外设返回 `None`，不虚构 gate bit。
 
 ### GPIO 三层模型
 
@@ -82,17 +82,17 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 1. `AnyPin<'d>` — 类型擦除，经 `unsafe steal(pin)` 创建。
 2. `Input` / `Output` / `Flex` — 由 `AnyPin` 经 `init_input()`/`init_output()`/`init_flex()` 派生；`degrade()` 可安全擦除回 `AnyPin`，`Flex::set_as_input/set_as_output` 提供显式方向。
 
-`InputConfig { pull }` / `OutputConfig { open_drain, initial_high }` 为配置入口（均有 `with_*` builder）。`Output` 实现 scoped `Drop`（回 input/高阻），逃生口 `into_latched()`/`into_flex()`。embedded-hal `digital` trait 用 `Infallible` 错误类型实现。
+`InputConfig { pull }` / `OutputConfig { initial_high }` 为配置入口。旧 `open_drain` 字段没有硬件落地，已删除。`Output` 实现 scoped `Drop`（回 input/高阻），逃生口 `into_latched()`/`into_flex()`。embedded-hal `digital` trait 用 `Infallible` 错误类型实现。
 
 ### DMA 双控制器
 
-`Dma0`（0x4A00_0000）与 `Sdma0`（0x520A_0000）共享 `dma::RegisterBlock`，经 `DmaInstance` trait 提供 `ptr()`（`dma.rs:25-44`）。`DmaDriver<'d, T: DmaInstance>` 泛型于控制器（`dma.rs:144`）。`DmaEligible`（`dma.rs:428-431`）+ `DmaChannelFor<P>`（`dma.rs:439`）意图提供编译期通道-外设绑定安全（刻意不写 blanket impl 以保留约束语义）。
+`Dma0`（0x4A00_0000）与 `Sdma0`（0x520A_0000）共享 `dma::RegisterBlock`，经 `DmaInstance` trait 提供 `ptr()`。`DmaDriver<'d, T: DmaInstance>` 泛型于控制器；typed channel token、`DmaTransferSize`、`DmaSyncMask` 和 owned transfer guard 负责收窄 unsafe-adjacent 输入。0.6.0 默认不暴露公共 `dma` 模块：cache-line ownership、timeout quiescence、async cancellation 与 SPI1/UART DMA 证据未闭合前，它整体在 `unstable` 后。
 
 ### Sealed trait + 异步层
 
-`private.rs` 定义 `Sealed` 超 trait，封印 `DmaWord`、`PeripheralInput`、`PeripheralOutput`。早先空壳的 `DriverMode`/`Blocking`/`Async` mode 标记（associated type 恒等、零消费者）**已删除**。
+`private.rs` 定义 crate 内部 `Sealed` 超 trait，封印 `PeripheralInput`、`PeripheralOutput` 等硬件限定 signal trait。早先空壳的 `DriverMode`/`Blocking`/`Async` mode 标记（associated type 恒等、零消费者）和 vestigial `DmaWord` **已删除**。
 
-**真正的异步层已实现**（feature `async`/`embassy`，详见 [async-embassy.md](06-async-embassy.md)）：`embedded-hal-async`/`embedded-io-async` 的 `DelayNs`/`digital::Wait`/`spi::SpiBus`/`i2c::I2c`/`Read`/`Write`，加上 `asynch::block_on` + `IrqSignal`（中断→waker 桥）+ 各驱动的 `on_interrupt` 钩子（不自动装 ISR）；外加 LSADC/DMA 的自研异步。还提供一个 embassy-time `Driver`（`now()`=TCXO 64 位计数器、alarm=TIMER 通道），让 `embassy-executor`（platform-riscv32）跑 `Timer::after` + 多任务。全部跑在无原子的 WS63 上（portable-atomic + critical-section）。
+**异步层已实现但分层暴露**（feature `async`/`embassy`，详见 [async-embassy.md](06-async-embassy.md)）：SPI/I2C 的 blocking-backed `embedded-hal-async` trait impl 随 `async` 暴露；`asynch::block_on` + `IrqSignal`（中断→waker 桥）、GPIO wait、timer async delay、UART async I/O、LSADC/DMA 自研异步以及 embassy-time `Driver` 仍需 `unstable`。全部可在无原子的 WS63 上编译（portable-atomic + critical-section），但默认稳定面只承诺 HIL/soundness 已闭合的子集。
 
 ### embedded-hal trait 选型（评审优点）
 
@@ -126,7 +126,7 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 | 中 | 正确性 | GPIO `InputConfig.pull` 被静默忽略：`init_input` 只设 OEN | `gpio.rs` | ✅ 阶段2已修：`init_input` 经 IO_CONFIG pad 寄存器应用上下拉 + 中断触发模式 |
 | 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`、`lsadc.rs` | 🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍按阶段 2 推进 |
 | 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言；模块头措辞夸大 | `safety.rs` | ✅ 阶段2已修：删除恒真断言 + 夸大措辞 |
-| 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 大部已清：async marker(`Blocking`/`Async`) 与 RAII 时钟守卫已删；**并已实现真正的异步层**（见上「Sealed trait + 异步层」）；DMA `DmaEligible`/`DmaChannelFor` 保留约束语义 |
+| 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 已清：async marker(`Blocking`/`Async`)、vestigial `DmaWord`、RAII 时钟守卫、`DmaEligible`/`DmaChannelFor` 均已删除；真正的异步层按 `async`/`unstable` 分层暴露 |
 | 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | 🟡 已大幅缓解：ws63-qemu `smoke-test.sh` 用**真实固件**端到端验证（含异步/embassy 示例 + C SDK 交叉验证）；真机 HIL 冒烟仍待补（阶段 1 尾） |
 
 ## 改进项与排期
@@ -134,7 +134,7 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
 按 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)（多数已完成，下记现状）：
 
 - **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
-- **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
-- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）—— `embedded-hal-async`/`embedded-io-async` 全套 + embassy-time `Driver`，全部 ws63-qemu 验证。
+- **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
+- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
 - **阶段 4-5（porting 层 + HCC IPC + 连接性）**：HAL 之上接入 WiFi/BLE/SLE 协议栈所需的 porting 与 IPC 通道。
 - **阶段 6（async）**：在确有异步消费者后再恢复 `Blocking`/`Async` 类型状态（阶段 2 已先删除空壳）。

@@ -17,8 +17,8 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 │                                            ▼ ▼ │
 │                    hisi-riscv-hal (多芯片 HAL，chip-ws63/chip-bs21 feature) ◀── embedded-hal 1.0
 │                    │  ├─ feature "async"  ◀── embedded-hal-async / embedded-io-async
-│                    │  │     asynch::block_on + IrqSignal + 各驱动 on_interrupt(中断→waker)
-│                    │  └─ feature "embassy" ◀── embassy-time-driver / -queue-utils
+│                    │  │     SPI/I2C blocking-backed async traits; interrupt/waker async 需 unstable
+│                    │  └─ feature "embassy" ◀── embassy-time-driver / -queue-utils（模块需 unstable）
 │                    │        embassy::Driver  (now()=TCXO 64位计数器, alarm=TIMER 通道)
 │                    ▼
 │ examples/ws63/* (blinky/uart_hello/timer_irq/gpio_irq/reset_demo/dma_loopback/
@@ -64,16 +64,16 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 - **外设单例 + `'d` 生命周期**：`Peripherals::take()`（PAC 单例，critical-section 保护）分发 `'d` 参数化的 ZST 外设令牌；
   驱动经构造器消费令牌，借生命周期防 use-after-drop。
 - **多实例外设**（UART/I2C/SPI/DMA）：用 `PhantomData<&'d T>` + 每实例构造器（`new_uart0`/`new_uart1`…）区分。
-- **sealed trait**（`private.rs`）：`Sealed` 超 trait 防外部实现 `DmaWord`/`PeripheralInput`/`PeripheralOutput`。
+- **sealed trait**（`private.rs`）：`Sealed` 超 trait 防外部实现 GPIO signal trait（如 `PeripheralInput`/`PeripheralOutput`）。
 - **`#![no_std]`**：无堆、无 `Vec`，数据缓冲用定长数组。
 - **寄存器访问 `unsafe`**：裸 PAC 写封装在驱动方法内。
 
-- **异步**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）：中断 + waker 驱动的
-  `embedded-hal-async`/`embedded-io-async` 驱动 + 一个 embassy-time `Driver`，跑在无原子的 WS63 上
-  （portable-atomic + critical-section 垫片）。驱动只暴露 `on_interrupt` 钩子、不自动装 ISR。
+- **异步**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）：SPI/I2C 提供
+  blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait、timer/UART/DMA/LSADC async
+  以及 embassy-time `Driver` 仍需 `unstable`，直到 lost-wake/cancellation/HIL 闭合。
 
-> 注意：早先评审里的"零消费者脚手架"（DMA 安全 trait、空的 async marker）已处理 —— async marker 已删，
-> **真正的异步层已实现并验证**（见上）；RAII 时钟守卫等仍按 ROADMAP 阶段 2 评估。详见各组件文档。
+> 注意：早先评审里的"零消费者脚手架"（DMA 安全 trait、空的 async marker、RAII 时钟守卫）已处理 ——
+> 空 marker / vestigial DMA marker / RAII 守卫已删；真正的异步层仍按 stable/unstable policy 分层暴露。详见各组件文档。
 
 ## 构建与目标（target）
 

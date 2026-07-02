@@ -28,7 +28,7 @@ This skill manages the `#[instability::unstable]` / `unstable_module!` gating in
 2. **`impl Drop`**: UNGATED (keeps private helpers live).
 3. **Trait impls**: MAY be whole-block gated (`#[instability::unstable] impl Trait for Foo`).
 4. **STABLE `pub fn` taking an UNSTABLE type as param/return**: FORBIDDEN (`private_interfaces` lint). If `write_dma` (STABLE) takes `DmaChannel`, then `DmaChannel` must also be STABLE.
-5. **`async`/`embassy`**: pure feature-gates (consent-by-feature). `embassy` is ALSO `unstable`-gated (no end-to-end HIL). `async` stays STABLE.
+5. **`async`/`embassy`**: feature-gates are consent, not automatic stability. `embassy` is ALSO `unstable`-gated (no end-to-end HIL). `async` alone exposes only the blocking-backed SPI/I2C async trait impls; interrupt/waker helpers (`asynch::block_on`, `IrqSignal`, GPIO wait, timer async delay, UART async I/O, DMA/LSADC async hooks) also require `unstable` until lost-wake/cancellation invariants and HIL are closed.
 6. **Doc comments** inside `unstable_module! { ... }`: put the `///` INSIDE the macro body (it forwards `$(#[$meta])*` to both cfg branches). A `///` outside the macro is an orphaned "unused doc comment".
 7. **HIL tests** that reference UNSTABLE items: gate with `#[cfg(feature = "unstable")]` (the external integration test crate can't see `pub(crate)`).
 8. **In-module host tests** (`#[cfg(test)] mod tests`): do NOT gate — the soft-gate keeps items `pub(crate)` (in-crate visible to test modules).
