@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **HAL HIL default driver suite expanded to 25 self-contained WS63 tests, all
+  passing on silicon** via `probe-rs run` + `embedded-test`. New coverage: UART
+  boot-clock divider and TX flush, I2C invalid 7-bit address rejection, PWM
+  `SetDutyCycle` out-of-range error, TCXO 64-bit counter, TRNG byte fill path, and
+  WDT counter/feed liveness.
 - **HIL suite grown to 12 driver tests, all passing on silicon** — added
   `efuse_read_byte0_ok` (eFuse read path), `trng_produces_entropy` (real TRNG
   entropy), and `tsensor_reads_in_range` (on-die temperature), all

@@ -39,6 +39,11 @@ Implemented after this review:
 - eFuse default-stable surface was narrowed to automatic clock setup plus `read_byte`; manual clock period, `read_buffer`, and `write_byte` are unstable.
 - `System::software_reset*`, `Instant::now`/`elapsed`, interrupt priority/threshold getters/setters, SFC pad config, broad I2S data/FIFO/IRQ methods, broad LSADC analog/conversion/filter/calibration/data-path methods, broad TSENSOR config/interrupt/blocking-read methods, and TRNG manual clock/divider/status controls are unstable-gated.
 - `prelude` re-exports now follow the underlying gates, including DMA and untested drivers.
+- Post-review silicon follow-up: the default HAL HIL driver suite now runs **25/25
+  self-contained tests** on real WS63 via `probe-rs run` + `embedded-test`, adding
+  named coverage for UART boot-clock divider and write/flush, I2C invalid-address
+  fast-fail, PWM `SetDutyCycle` out-of-range rejection, TCXO 64-bit counter, TRNG
+  byte fill, and WDT counter/feed liveness.
 
 This remediation does **not** claim the blocked APIs are sound or graduated. It
 reduces the default stable API to the scoped surfaces that can be defended for
@@ -108,21 +113,21 @@ Legend:
 | `io_config` GPIO/UART mux, `GpioPad`, `UartPad`, `MuxFunction` | Scoped | Pad and mux identities are typed; GPIO/UART/SPI loopback tests exercise representative mux paths. | `SfcPad` / `configure_sfc_pad` should be unstable while SFC is unstable; pad/function validity is not fully encoded. |
 | Blocking `spi` | Graduate | HIL SPI0 loopback exercises real blocking transfer; typed `SpiHz`/`DataBits` avoid raw config identity. | Frequency rounding to even divider should be documented or tightened; non-SPI0 coverage is representative, not per-instance. |
 | `SpiDma` stable subset | Block | SPI0 HIL exists for TX/full-duplex/IRQ/async paths. | Critical timeout/cancellation/cache blockers; tests still `unstable`-gated; SPI1 mapping unverified. |
-| Blocking `uart`, `UartPort`, sealed `UartInstance` | Scoped | `UartPort`/`UartInstance` encode port identity; HIL covers UART0 divider config and UART1 loopback path. | Raw `clock_hz` can invalidate divider math; constructors do not self-enable clocks in all tested paths; trait paths need broader HIL. |
+| Blocking `uart`, `UartPort`, sealed `UartInstance` | Scoped | `UartPort`/`UartInstance` encode port identity; HIL covers UART0 PLL divider config, boot-clock divider config, write/flush, and UART1 loopback path. | Constructors do not self-enable clocks in all tested paths; broader RX/trait and per-instance HIL remains useful. |
 | `UartDma` | Block / unstable | No graduation reason; UART DMA remains unproven. | `UartDmaError` now correctly gated unstable. |
 | `timer`, `TimerChannel` | Scoped | HIL covers counter advance and named timer IRQ routing; `TimerChannel` removes raw channel index. | One-shot/periodic wrappers, zero tick semantics, `AsyncDelay`, and `TimerChannel` variants beyond Channel0 need more HIL. |
 | `interrupt`, `Priority`, `Threshold` | Scoped | Typed priority/threshold constructors reject invalid levels; routing HIL exercises interrupt enable path. | `set_priority`/`set_threshold` lack direct HIL and may enable pending delivery from safe code; `interrupt::free` needs ordering review. |
 | `asynch::block_on` / `IrqSignal` | Block | Async examples/tests exercise the path under feature builds. | Lost-wake races block graduation. |
-| `tcxo` | Scoped | HIL covers status/counter monotonicity through `read_counter32`. | `read_counter64`, enable/disable/clear, and timeout behavior need coverage/SAFETY cleanup. |
-| `pwm`, `PwmPeriod`, `Duty`, `PwmChannelId` | Block for full module; scoped Ch0 config only | HIL covers Ch0 configure/enable with typed period/duty. | Ch1..Ch7 clock/divider not proven; duplicate `PwmChannel` ownership; trait duty validation bug; frequency clock note unconfirmed. |
-| `wdt` | Scoped / mostly graduate | HIL covers typed timeout config, rejection of over-range load, drop-disable, and armed escape. | Feed/counter/interrupt APIs need HIL before claiming full module stable. |
+| `tcxo` | Scoped | HIL covers status, `read_counter32`, and `read_counter`/64-bit monotonicity. | enable/disable/clear and timeout behavior need coverage/SAFETY cleanup. |
+| `pwm`, `PwmPeriod`, `Duty`, `PwmChannelId` | Block for full module; scoped Ch0 config only | HIL covers Ch0 configure/enable with typed period/duty and `SetDutyCycle` rejection for out-of-range duty. | Ch1..Ch7 clock/divider not proven; duplicate `PwmChannel` ownership; frequency clock note unconfirmed. |
+| `wdt` | Scoped / mostly graduate | HIL covers typed timeout config, rejection of over-range load, drop-disable, armed escape, counter latch, and feed liveness. | Interrupt APIs need HIL before claiming full module stable. |
 | DMA mem-to-mem: `Dma0`, `DmaDriver`, `DmaChannel`, `DmaChannels`, `DmaTransferSize`, `DmaSyncMask`, `Transfer`, `start_mem_to_mem` | Block for safe stable; scoped API design is close | HIL covers mem-to-mem and owned transfer guard; typed channel and beat count remove raw channel/size. | Cache-line alignment soundness unresolved; `DmaSyncMask`/`set_sync` lack HIL; zero-beat/min-length semantics need decision. |
-| `trng` default read/fill path | Scoped | HIL `trng_produces_entropy` exercises blocking entropy generation. | `set_sample_clock`, `set_divider`, and status/config helpers are raw/uncovered; gate or type them. |
+| `trng` default read/fill path | Scoped | HIL `trng_produces_entropy` exercises blocking entropy generation; `trng_fill_bytes_produces_data` covers byte fill. | `set_sample_clock`, `set_divider`, and status/config helpers are raw/uncovered; gate or type them. |
 | eFuse read-only: `EfuseDriver`, `EfuseByteAddress`, `read_byte` | Scoped | HIL reads byte 0; address newtype prevents OOB data-window access; `write_byte` is unstable. | `read_buffer` lacks HIL; `set_clock_period(u8)` is raw timing config and should be typed/gated. |
 | `clock` | Scoped | HIL checks UART0 gate metadata; `Peripheral` avoids raw gate index in stable APIs. | Broad enum/gate coverage is not proven; docs still mention removed RAII guard. |
 | `system` | Scoped | HIL covers reset reason. | `software_reset*` needs opt-in reset HIL or unstable gate. |
 | `peripherals` | Block unless policy exception | `Peripherals::take`/tokens are foundational and used by all HIL tests. | Public tokens/register blocks expose unstable/un-HIL peripherals. Needs explicit policy exception or gating. |
-| `i2c` WS63 v150 | Block for full module | HIL covers SCL config/register path only. | Transaction APIs lack real bus HIL and invalid address rejection. |
+| `i2c` WS63 v150 | Block for full module | HIL covers SCL config/register path and invalid 7-bit address rejection before bus activity. | Transaction APIs still lack real bus HIL. |
 | `i2s` | Block for full module; scoped config/liveness only | HIL constructs master config and reads version. | TX/RX, FIFO, slave mode, interrupts, waveform/data path unproven. |
 | `lsadc` | Block | HIL covers scan register config only. | File docs say incomplete silicon validation; analog/conversion/filter/calibration APIs raw/uncovered. |
 | `tsensor` | Block for full module; scoped basic read only | HIL covers basic enable/start/read_raw in range. | Mode/threshold/interrupt/auto-refresh/calibration are raw or uncovered; blocking read unbounded. |
@@ -144,18 +149,25 @@ Named HIL evidence found in `crates/hisi-riscv-hal/tests/hil.rs`:
 | `gpio_int0_named_routing` | GPIO IRQ, `GpioBank`, async IRQ hook | `async` + `hil-loopback`. |
 | `spi0_loopback_mosi_to_miso` | Blocking SPI0 | `hil-loopback`. |
 | `uart0_divider_config` | UART0 config | Register/config HIL. |
+| `uart0_boot_clock_divider_config` | UART boot-clock config | Proves `UartClock::Boot` selects the live 24/40 MHz flashboot clock strap. |
+| `uart0_write_and_flush` | UART blocking write/flush | Self-contained FIFO-drain liveness; bytes are also observable on UART0 when serial is attached. |
 | `uart1_loopback_tx_to_rx` | UART1 blocking RX/TX path | `hil-loopback`; previous board/pad caveats still apply. |
 | `timer_counter_advances` | Timer counter | Channel0. |
 | `timer_int0_named_routing` | Timer IRQ routing | Excludes embassy. |
 | `tcxo_counter_monotonic` / status test | TCXO | Counter32/status. |
+| `tcxo_counter64_monotonic` | TCXO | Full 64-bit counter refresh/assembly path. |
 | `pwm_configure_and_enable` | PWM Ch0 config/enable | Ch0 only. |
+| `pwm_set_duty_cycle_rejects_out_of_range` | PWM embedded-hal duty validation | Rejects raw operational duty above max without overwriting the last valid duty. |
 | `wdt_configure_saturates_load`, `wdt_drop_disables_unless_armed` | WDT typed config/drop | Good graduation evidence for those paths. |
+| `wdt_counter_value_and_feed` | WDT counter/feed | Bounded counter latch and feed liveness with reset disabled. |
 | `dma_mem_to_mem`, `dma_transfer_guard` | DMA mem-to-mem and owned guard | Does not prove arbitrary cache-line safe buffers. |
 | `trng_produces_entropy` | TRNG read path | Default read path only. |
+| `trng_fill_bytes_produces_data` | TRNG fill path | Covers stable byte-fill helper. |
 | `efuse_read_byte0_ok` | eFuse `read_byte` | Does not cover `read_buffer`. |
 | `clock_gate_uart0_enabled` | Clock gate metadata | UART0 only. |
 | `system_reset_reason_valid` | System reset reason | Not software reset. |
 | `i2c0_scl_config` | I2C config | No transaction. |
+| `i2c0_rejects_invalid_7bit_address` | I2C operational validation | Invalid `addr > 0x7f` fails before START/bus activity. |
 | `i2s_version_live` | I2S liveness/config | No data path. |
 | `lsadc_scan_config` | LSADC scan config | No analog conversion. |
 | `tsensor_reads_in_range` | TSENSOR basic conversion | No config/interrupt paths. |
@@ -171,7 +183,7 @@ Before publishing 0.6.0 stable API claims, perform these in order:
 4. Fix DMA soundness before any safe DMA API graduates: timeout quiesce, async cancellation guard, cache-line alignment/ownership, SPI1 gating.
 5. Fix async lost-wake before graduating `asynch` as stable infrastructure.
 6. Tighten typed-config blockers: UART clock/baud pair, GPIO open-drain, PWM duty/channel ownership, I2C address validation, TSENSOR/LSADC/TRNG raw config.
-7. Add missing HIL: `EfuseDriver::read_buffer`, `Priority`/`Threshold`, I2C transaction, I2S data path or narrower docs, LSADC conversion, TSENSOR config/interrupt, WDT feed/counter/interrupt, `Instant::now` or its replacement.
+7. Add missing HIL: `EfuseDriver::read_buffer`, `Priority`/`Threshold`, I2C real-bus transaction, I2S data path or narrower docs, LSADC conversion, TSENSOR config/interrupt, WDT interrupt, `Instant::now` or its replacement.
 8. Update docs to state scoped graduation decisions with file/test evidence, not broad module labels.
 
 ## 6. Current Graduation Verdict
