@@ -94,11 +94,28 @@ impl embedded_hal::spi::SpiBus for Spi<'_, Spi0<'_>> { /* read/write/transfer/fl
 
 开了 `async` feature 还可以补 `embedded-hal-async` 的对应实现（多以阻塞版兜底，见 `spi.rs` 的 `embedded_hal_async::spi::SpiBus`）。
 
-## 3. Sealed trait（需要时）
+## 3. 临界区使用检查
+
+WS63 是单 hart + 无 A 扩展目标:需要 RMW/CAS 语义时会经 `portable-atomic` + `critical-section` 关中断完成。未来多 hart + 有 A 扩展目标可以用硬件 atomic 优化单变量状态,但驱动的不变式仍不能靠"把整个外设事务包进临界区"解决。新增驱动按 [Safe / Unsafe 政策](../explanation/policies/03-safe-unsafe-policy.md#原子与临界区政策) 执行:
+
+- `critical_section::with` 只用于短小元数据:claim flag、引用计数、状态枚举、waker slot、IRQ bookkeeping。
+- 不在临界区里轮询硬件、等待 FIFO/DMA/clock/reset、做传输、做 bulk copy/cache 大范围维护、`delay`、`block_on`。
+- 不在 HAL 持有临界区或 irq-disabled 状态时调用用户回调;ISR 路径只 ack / record / wake。
+- 需要保护长事务时,临界区只设置/清除 `Busy` 或 claim 状态;实际 MMIO 编程和等待硬件完成在临界区外。
+
+提交前至少跑一遍人工扫描:
+
+```bash
+rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-riscv-hal/src
+```
+
+逐个检查闭包/关中断区间里没有 `while`、`loop`、`wait`、`delay`、`transfer`、`read_dma`、`write_dma`、`block_on`、`callback`、用户 `Fn*` 调用,也没有跨 `.await` 的借用。
+
+## 4. Sealed trait（需要时）
 
 如果你要引入「只能内部实现」的标记 trait（比如限定哪些类型能当某外设的输入/输出），加在 `private.rs`：以 `Sealed` 为 supertrait，外部就无法实现。现有的是 GPIO signal trait（如 `PeripheralInput`、`PeripheralOutput`）。**不要**复活已删掉的空 `DriverMode`/`Blocking`/`Async` 标记 trait或 vestigial `DmaWord`——这类约束应有真实类型不变式和 HIL/soundness 证据支撑。
 
-## 4. 配一个带 PASS 标记的 HIL 示例
+## 5. 配一个带 PASS 标记的 HIL 示例
 
 新建一个示例 crate（如 `examples/ws63/myperiph_demo`），用 UART0 打印一个**HIL 能 grep 的标记串**，并在根 `Cargo.toml` 的 `members` / `default-members` 里登记它。骨架（仿 `spi_loopback`）：
 
@@ -128,7 +145,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! { loop { core::hint::spin_loop() } }
 
 标记串约定：用一个稳定、唯一、好 grep 的短语（如 `MyPeriph OK`）。然后把它登进 HIL 冒烟脚本，让 `hil/hil-smoke.sh` 自动断言它（脚本里加一行 `check myperiph_demo "MyPeriph OK" "..."`，标记串清单见[HIL 标记串与环境变量](../reference/07-hil-markers.md)）。
 
-## 5. 验证
+## 6. 验证
 
 ```bash
 cargo check -p hisi-riscv-hal              # 驱动能编过（host 上 check）

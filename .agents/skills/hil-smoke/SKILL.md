@@ -83,5 +83,5 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 - **BS2X HIL is unverified** — the QEMU path is solid; on-silicon BS21/BS20 awaits a board.
 - `ADDRESS` is a flash *offset*, not the XIP base — wrong value can misflash. Verify it.
 - The actual flash goes through `hil/flash.sh` with `HIL_CONFIRM=1` (the flash-guard hook
-  blocks unconfirmed `hisiflash write-program` run via the agent shell — see `.codex/hooks.json`).
+  blocks unconfirmed `hisiflash write-program` in configured agent hooks — see `.claude/settings.json` / `.codex/hooks.json`).
 - A first board may need `cargo install hisiflash-cli` and `gdb-multiarch` (see `hil/README.md`).

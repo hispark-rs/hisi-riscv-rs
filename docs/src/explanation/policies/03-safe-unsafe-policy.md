@@ -90,6 +90,37 @@ unsafe { r.spi_dr().write(|w| w.bits(tx)) }
 
 0.6.0 的 P0 收敛把这条规则落到公共 safe API 上:会影响 unsafe 前提的裸通道号、外设索引、pad 编号和 eFuse 地址不再直接外露,而是先变成 `DmaChannel`、`DmaTransferSize`/`DmaSyncMask`、`GpioPad`/`UartPad`/`MuxFunction`、`GpioBank`、`TimerChannel`、`UartPort`、`UartClock`、`PwmChannelId`、`EfuseByteAddress` 等类型。eFuse 编程这种不可逆且 soundness/HIL 未闭合的路径保持 `unstable`,默认稳定面只保留只读 byte API。DMA 虽已有 typed token/owned-transfer 设计,但 cache-line ownership、timeout quiescence 和 async cancellation 不变式尚未闭合,所以公共 `dma` 模块整体保持 `unstable`。
 
+## 原子与临界区政策
+
+本系列产品按两个现实目标设计并审计同步代码:
+
+| 目标形态 | 本仓策略 |
+|---|---|
+| **单 hart + 无 A 扩展** | WS63 当前主路径。目标必须声明为无原子,不得发 `lr/sc/amo*`;需要 RMW/CAS 语义时走 `portable-atomic` 的 `critical-section` polyfill。`hisi-riscv-rt` 提供 `critical-section-single-hart`:在单 hart 上临时关中断,让 `读-改-写` 不被 ISR 打断。 |
+| **多 hart + 有 A 扩展** | 未来或其它产品的常见形态。单变量 flag/计数器可优先用硬件 atomic;跨多个字段的不变式、队列/waker 注册、与中断 enable/ack 绑定的复合状态仍要用 `critical-section`、专门锁或平台级跨 hart 同步。 |
+
+其它组合(单 hart + 有 A、多 hart + 无 A)不作为本系列产品的默认设计目标:前者可按"有 A 但仍是单 hart"简化,后者不能靠关当前 hart 中断建立全局互斥,必须另有平台级锁或把共享状态限制到单 hart owner。
+
+这条政策的关键边界是: **`critical-section` 是短内存元数据保护,不是外设事务锁。** HAL 可以在内部使用 atomic 或 `critical_section::with`,但公共 API 不应要求上层用户手动关中断或手动进入临界区。
+
+`critical_section::with` / irq-disabled 区间内只允许做短小、可审计的内存状态更新:
+
+- 外设 singleton / DMA channel claim 的 flag;
+- 引用计数、状态枚举、bitflag;
+- `critical_section::Mutex<Cell<_>>` / `RefCell<_>` 里的小状态;
+- async waker slot 注册、`IrqSignal` 的 fired 标志;
+- 与中断 ack/enable 配对的最小 bookkeeping。
+
+这些区间内禁止做任何可能等待进度、调用未知代码或显著拉高中断延迟的事:
+
+- 不轮询硬件 ready,不等 FIFO、DMA active、clock lock、reset done;
+- 不做 SPI/UART/I2C/DMA 传输,不做 bulk copy/cache 大范围维护;
+- 不 `delay`、`block_on`、自旋等待另一个中断;
+- 不调用用户回调、trait object、闭包或其它未知耗时的函数;
+- 不持有临界区内借用跨 `.await`。
+
+如果一个驱动事务需要保护"我正在使用这个外设"这样的不变式,正确形态是把临界区切成两个短片段:进入时设置 `Busy`/claim,退出时清除状态并 wake;实际 MMIO 编程、传输、等待硬件完成都在临界区外进行。来自 ISR 的路径也同理:ISR 只 ack / record / wake,用户业务逻辑在普通上下文、task 或 future poll 后运行。HAL 不得在持有 `critical-section` 或 irq-disabled 状态时调用用户回调;若必须提供 ISR-context callback,必须在 API 文档中明说且不得同时持有内部临界区。
+
 ## 和稳定 / 不稳定门控的关系
 
 [稳定 / 不稳定 API 门控](02-stable-unstable.md) 的规则是“默认只暴露 HIL 真机验证过的 API”。Safe/Unsafe 政策在它下面再加一条负面约束：

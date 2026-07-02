@@ -6,9 +6,9 @@
 # apply the decision tree in SKILL.md.
 #
 # Usage:
-#   bash .claude/skills/typed-config/scan.sh [path ...]
-#   bash .claude/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/spi.rs
-#   bash .claude/skills/typed-config/scan.sh            # default: the HAL src/ dir
+#   bash .agents/skills/typed-config/scan.sh [path ...]
+#   bash .agents/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/spi.rs
+#   bash .agents/skills/typed-config/scan.sh            # default: the HAL src/ dir
 set -euo pipefail
 
 targets=("$@")
@@ -49,7 +49,7 @@ search 'cken|CKEN|clock_enable|enable_clock|DIV_CTL|LOAD_DIV|clk_en' "${targets[
 
 cat <<'EOF'
 
-Next: for each hit, see .claude/skills/typed-config/SKILL.md —
+Next: for each hit, see .agents/skills/typed-config/SKILL.md —
   trace -> classify (A/B/C/D) -> decision tree -> implement (config layer only) ->
   host tests + tests/hil.rs -> validate on the board.
 Reference impl: crates/hisi-riscv-hal/src/pwm.rs (PwmPeriod / Duty).

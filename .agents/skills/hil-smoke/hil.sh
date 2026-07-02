@@ -18,7 +18,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "$HERE/../../.." && pwd)"            # .claude/skills/hil-smoke → repo root
+REPO="$(cd "$HERE/../../.." && pwd)"            # .agents/skills/hil-smoke → repo root
 TARGET=riscv32imfc-unknown-none-elf
 SETTLE="${SETTLE:-4}"
 UART_BAUD="${UART_BAUD:-115200}"

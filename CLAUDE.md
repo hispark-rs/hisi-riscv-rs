@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Agent Instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Repository Overview
 
@@ -165,11 +165,41 @@ typestate pattern. Two layers:
   / `I2c` / `Read` / `Write` keep their standard `u16` / `&[u8]` + `Result`
   signatures (`Result` *is* embedded-hal's idiom for invalid input). These are NOT
   compile-time-typed; do not change trait method signatures.
+- **Unsafe-adjacent identities — no raw safe inputs.** Public safe APIs must not
+  accept raw `u8`/`usize`/addresses when those values select a register bank,
+  DMA channel, pad, timer channel, UART port, PWM channel, or eFuse byte. Use
+  typed tokens/newtypes/enums such as `DmaChannel`, `DmaTransferSize`,
+  `DmaSyncMask`, `GpioPad`, `UartPad`, `MuxFunction`, `GpioBank`,
+  `TimerChannel`, `UartPort`, `PwmChannelId`, and `EfuseByteAddress`.
 
 When adding or tightening a driver, run the **`typed-config` skill** (the checklist +
 the A/B/C/D defect taxonomy + a candidate scanner). Reference implementation:
 `crates/hisi-riscv-hal/src/pwm.rs` (`PwmPeriod` / `Duty`). Every tightened surface is
 proven on the connected board via the HIL suite (`tests/hil.rs`).
+
+### Atomics & critical-section discipline
+
+The product family is designed around two realistic synchronization shapes:
+
+- **Single hart + no A extension** (WS63 current path): the target must not emit
+  `lr/sc/amo*`; RMW/CAS semantics come from `portable-atomic` over
+  `critical-section-single-hart`, i.e. short irq-disabled regions.
+- **Multi hart + A extension** (future/other products): single-word flags/counters
+  may use hardware atomics, but compound invariants still need a real lock,
+  `critical-section`, or platform-level cross-hart synchronization.
+
+Other combinations are not default product targets. In particular, disabling
+interrupts on the current hart is not cross-hart mutual exclusion.
+
+Critical sections are for **short Rust memory metadata**, not external progress or
+whole peripheral transactions. Inside `critical_section::with` / irq-disabled code,
+only update claim flags, refcounts, small state enums, waker slots, and IRQ
+bookkeeping. Do **not** poll hardware, wait for FIFO/DMA/clock/reset, perform
+SPI/UART/I2C/DMA transfers, bulk copy/cache-maintain large buffers, `delay`,
+`block_on`, call user callbacks/closures/trait objects, or hold borrows across
+`.await`. If a transaction needs a `Busy` invariant, set/clear that state in two
+short critical sections and do the MMIO/waiting outside. ISR paths should ack /
+record / wake; user logic runs later in normal context or future polling.
 
 ## CI/CD
 
