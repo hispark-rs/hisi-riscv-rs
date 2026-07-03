@@ -16,7 +16,7 @@ WS63 app 镜像（flashboot 从 flash `0x230000` 加载的对象）的字段布�
 +--------------------------------------+
 ```
 
-0x300 字节前缀为**定长**镜像头。secure boot 关闭（efuse `SEC_VERIFY_ENABLE == 0`）时，flashboot 的 `verify_image_*` 在检查任何签名/body hash **之前**短路成功，故签名字段从不被读。关键只有两点：头恰好 0x300 字节、其后是链接到 `0x230300` 的真实代码。
+0x300 字节前缀为**定长**镜像头。secure boot 关闭（efuse `SEC_VERIFY_ENABLE == 0`）时，flashboot **跳过 ECC/SM2 签名验签，但仍校验 body 的 SHA-256**。因此签名/公钥字段可以是 dummy zero，但 `code_area_hash` 必须是真实 body hash；头必须恰好 0x300 字节，其后是链接到 `0x230300` 的真实代码。
 
 ## 常量
 

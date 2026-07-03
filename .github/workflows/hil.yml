@@ -56,7 +56,7 @@ jobs:
           PORT: ${{ vars.HIL_PORT }}
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
-        run: bash .claude/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
+        run: bash .agents/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
 
       - name: HIL smoke
         env:
@@ -67,4 +67,4 @@ jobs:
         run: |
           chip="${{ github.event.inputs.chip || 'ws63' }}"
           ex="${{ github.event.inputs.example }}"
-          bash .claude/skills/hil-smoke/hil.sh "$chip" $ex
+          bash .agents/skills/hil-smoke/hil.sh "$chip" $ex

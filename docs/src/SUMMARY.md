@@ -32,7 +32,7 @@
   - [Stable API 清单与门控状态](reference/10-stable-api.md)
   - [工具链与编译目标](reference/05-toolchain.md)
   - [应用镜像格式与签名](reference/06-image-format.md)
-  - [HIL 标记串与环境变量](reference/07-hil-markers.md)
+  - [HIL 脚本环境变量](reference/07-hil-markers.md)
   - [CLI 工具速查（hisi-fwpkg / probe-rs）](reference/08-cli-tools.md)
   - [已知问题索引](reference/09-known-issues.md)
 - [原理与背景 · Explanation](explanation/00-index.md)

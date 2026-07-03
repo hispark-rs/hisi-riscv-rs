@@ -18,7 +18,7 @@
 hisi-fwpkg pack -o blinky.fwpkg --chip ws63 \
     target/riscv32imfc-unknown-none-elf/release/blinky
 # 或用脚本：
-FWPKG=1 hil/pack.sh blinky          # -> examples/ws63/target/.../blinky.fwpkg
+FWPKG=1 hil/pack.sh blinky          # -> target/.../blinky.fwpkg
 ```
 
 `.fwpkg` 是单分区容器（V1 + CRC），内含已带 0x300 头的 app 镜像（见[如何打包镜像](03-package-image.md)）。

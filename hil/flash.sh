@@ -45,6 +45,7 @@ WS63_RS="${WS63_RS:-$HERE}"
 METHOD="${METHOD:-probe-rs}"
 CHIP_KIND="${CHIP_KIND:-ws63}"
 TARGET_DIR="$WS63_RS/examples/ws63/target/riscv32imfc-unknown-none-elf/release"
+ROOT_TARGET_DIR="$WS63_RS/target/riscv32imfc-unknown-none-elf/release"
 
 ARG="${1:?usage: flash.sh <program.elf|program.bin|example-name> [port]}"
 
@@ -64,7 +65,8 @@ if [ "$METHOD" = "probe-rs" ]; then
     [ -f "$PROBE_RS_YAML" ] || { echo "ERROR: PROBE_RS_YAML not found: $PROBE_RS_YAML" >&2; exit 1; }
 
     # Produce the bootable .img (0x300 header || body) via pack.sh.
-    IMG="$TARGET_DIR/$(basename "${ARG%.*}").img"
+    mkdir -p "$ROOT_TARGET_DIR"
+    IMG="$ROOT_TARGET_DIR/$(basename "${ARG%.*}").img"
     CHIP="$CHIP_KIND" "$HERE/hil/pack.sh" "$ARG" "$IMG" >&2
 
     echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS (yaml=$PROBE_RS_YAML)"
@@ -88,9 +90,11 @@ resolve_bin() {
         *.bin) [ -f "$a" ] && { echo "$a"; return; } ;;
         *.elf) _objcopy "$a" "${a%.elf}.bin"; echo "${a%.elf}.bin"; return ;;
     esac
+    [ -f "$ROOT_TARGET_DIR/$a.bin" ] && { echo "$ROOT_TARGET_DIR/$a.bin"; return; }
+    if [ -f "$ROOT_TARGET_DIR/$a" ]; then _objcopy "$ROOT_TARGET_DIR/$a" "$ROOT_TARGET_DIR/$a.bin"; echo "$ROOT_TARGET_DIR/$a.bin"; return; fi
     [ -f "$TARGET_DIR/$a.bin" ] && { echo "$TARGET_DIR/$a.bin"; return; }
     if [ -f "$TARGET_DIR/$a" ]; then _objcopy "$TARGET_DIR/$a" "$TARGET_DIR/$a.bin"; echo "$TARGET_DIR/$a.bin"; return; fi
-    echo "ERROR: cannot resolve firmware '$a' (looked in $TARGET_DIR)" >&2; exit 1
+    echo "ERROR: cannot resolve firmware '$a' (looked in $ROOT_TARGET_DIR and $TARGET_DIR)" >&2; exit 1
 }
 _objcopy() {
     local objcopy; objcopy="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"

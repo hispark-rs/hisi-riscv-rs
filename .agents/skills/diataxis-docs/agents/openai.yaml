@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diátaxis Docs"
+  short_description: "Review and maintain Diátaxis docs"
+  default_prompt: "Use $diataxis-docs to review this documentation change for Diátaxis fit and drift risks."

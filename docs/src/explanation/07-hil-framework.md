@@ -3,7 +3,8 @@
 这一篇讲硬件在环（hardware-in-the-loop, HIL）测试的**哲学**——为什么我们用 UART 里的一行
 字符串来判定一次真机测试通过、QEMU 已经验过的东西为什么还要上板再验一遍、以及一份**诚实的**
 当前 bring-up 状态。操作步骤见 [运行 HIL 冒烟测试](../how-to/07-run-hil-tests.md)，
-标记串与环境变量见 [HIL 标记串与环境变量](../reference/07-hil-markers.md)；本篇讲"为什么这样测"。
+示例标记串见 [示例目录与验证标记串](../reference/02-examples.md)，脚本环境变量见
+[HIL 脚本环境变量](../reference/07-hil-markers.md)；本篇讲"为什么这样测"。
 
 ## HIL 存在的意义：验 QEMU 验不了的那部分
 
@@ -64,32 +65,31 @@ QEMU↔硅片的分歧高度集中在固定几类，triage 按这个清单逐项
 诊断时对时序类症状要**做算术**：从 HAL 的时钟常量算出期望周期/波特，再从实测值反推真实
 时钟是多少，用数字说话而不是猜。
 
-## 当前 bring-up 状态（诚实版，2026-06-14）
+## 当前 bring-up 状态（诚实版，2026-07-03）
 
-要诚实——这是进行中的工作，不是已完成的胜利：
+这里要分清两条 HIL 轨道，否则文档很容易互相打架：
 
+- **HAL 驱动级 embedded-test：WS63 真机 26/26 通过。** 这是 `hisi-riscv-hal` 的稳定 API 证据线：
+  GPIO、UART、Timer、TCXO、PWM Ch0 register-latch、WDT（含 `into_armed`/`leak`）、TRNG、eFuse、I2C0
+  配置/拒绝非法地址、I2S master liveness、LSADC/TSENSOR basic path 等都在连接的 WS63 板上跑过。
+  当前 stable/unstable 边界以 [Stable API 清单与门控状态](../reference/10-stable-api.md) 为唯一事实源。
+- **示例 smoke：仍按示例逐项推进。** 示例 smoke 的任务是证明一个完整示例镜像的 UART/semihosting/GPIO
+  标记串在 QEMU 和真机上的一致性，不等同于 HAL 驱动级 HIL。当前示例状态见
+  [示例目录与验证标记串](../reference/02-examples.md)。
 - **blinky：已在真硅片上确认。** 完整的 Rust → flash → 启动主流程
   （`cargo build` → `hisi-fwpkg patch-hash <elf>` → `probe-rs run <elf>`）
-  于 2026-06-14 在真 WS63 硅片上跑通，blinky 上电启动并翻转 GPIO0。这是第一个、也是目前
-  唯一一个**端到端真机确认**的例子。WS63 走 `boot-header` feature——0x300 头在链接期就烤进
+  于 2026-06-14 在真 WS63 硅片上跑通，blinky 上电启动并翻转 GPIO0。WS63 走 `boot-header`
+  feature——0x300 头在链接期就烤进
   ELF，链接后只需 `hisi-fwpkg patch-hash` 补上真实 body SHA-256（secure-off 仍校验 hash，
   只跳过 ECC 签名），裸 ELF 即可直接 `probe-rs download` / `probe-rs run`，没有中间 `.img`、
   也没有 `hisi-fwpkg image` 步骤。（BS2X 暂无链接期 boot-header，仍走 route 1 的
   `hisi-fwpkg image -o app.img <elf>` → 烧到 app 分区。）
-- **uart_hello：跑到了 main 并在运行，但 banner 还读不出来。** 固件确实启动、确实进了
-  `main`、确实在跑——但它的 UART banner 目前在真硅片上**还读不到**。**怀疑是波特/时钟
-  假设的问题**（对照上面的分歧类 1：UART 的 160 MHz 时钟基），**正在排查中**。
-  这正是 QEMU 抓不到、必须上板才暴露的那类——也正是为什么我们要 HIL。
-- **其余例子（timer_irq / gpio_irq / reset_demo / SPI / I2C / DMA 等）：QEMU 已验证，
-  真机 bring-up 进行中。** QEMU 端这些的逻辑（中断投递、复位记录、DMA 握手、回环）都验过了；
-  真机这一侧在等逐例把 `LOADERBOOT`/串口监控参数按板填实、逐步推进。
+- **uart_hello 与其它 UART 示例：示例级真机 smoke 仍要逐项闭环。** 早期 `uart_hello` 已确认进
+  `main` 并运行，但 banner 在 115200 下不可读；这个问题属于示例/时钟/串口台架 bring-up，不再用来否定
+  HAL 驱动级 UART HIL 证据。后续应逐例记录到参考页，而不是散写在解释文档里。
 - **连接性（阶段 4/5）**：WS63 Wi-Fi 的 porting + 链接 + netif→smoltcp 已在 QEMU 软件在环
   自测、符号闭合达成；真机连通仍待 HIL。BS2X 的 BLE/SLE 在 radio 层已论证不可行，
   走 HCI 边界。
 
-**首板的第一目标**就是跑通 uart_hello → timer_irq → reset_demo 这几步，确认"本轮的时钟修复
-在真硅片上准确"（24 MHz 定时器、160 MHz UART 波特、SPI/I2C、GPIO/复位中断）——这正是
-QEMU 数字验证不了、必须上板验的核心。uart_hello 的 banner 问题就是这条路上的当前关卡。
-
-不夸大、不假装：**逻辑这一层 QEMU 已经替我们筛得很干净，物理现实这一层才刚踩上第一块硅。**
-这恰恰是 HIL 这套框架存在的全部理由。
+不夸大、不假装：HAL 默认公开面的证据线已经比 2026-06 清楚很多，但示例级 smoke、连接性和需外部台架的
+外设场景仍要继续补。HIL 文档的职责是解释为什么这样测；当前事实状态应收敛到 reference 页。

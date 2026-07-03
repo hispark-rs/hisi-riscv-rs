@@ -2,7 +2,7 @@
 
 给 `hisi-riscv-hal` 加一个新外设驱动，照仓库统一的「驱动模块范式」走，再配一个带 UART PASS 标记的示例让 HIL 能验证它。本篇是配方；范式背后的设计取舍见 [HAL API 总览](../reference/03-hal-api.md) 和[外设清单与覆盖情况](../reference/04-peripherals.md)，也对照仓库 `CLAUDE.md` 的「Driver Module Pattern」一节。
 
-> **配置接口必须遵守[类型化配置约定](../explanation/policies/01-typed-config.md)** ——「能编译就能在硅片上跑」是本项目头号 API 约定:配置面用校验 newtype / type-state / 自起时钟收紧,不留「能写出来却被静默 clamp/截断/没接时钟」的参数;操作面保持 embedded-hal 的 `Result`。落地按 docs-first(先改文档再写代码),用 `.claude/skills/typed-config/scan.sh` 扫候选,参考 `pwm.rs`。
+> **配置接口必须遵守[类型化配置约定](../explanation/policies/01-typed-config.md)** ——「能编译就能在硅片上跑」是本项目头号 API 约定:配置面用校验 newtype / type-state / 自起时钟收紧,不留「能写出来却被静默 clamp/截断/没接时钟」的参数;操作面保持 embedded-hal 的 `Result`。落地按 docs-first(先改文档再写代码),用 `.agents/skills/typed-config/scan.sh` 扫候选,参考 `pwm.rs`。
 
 ## 0. 确认外设单例存在
 
@@ -143,7 +143,7 @@ fn main() -> ! {
 fn panic(_: &core::panic::PanicInfo) -> ! { loop { core::hint::spin_loop() } }
 ```
 
-标记串约定：用一个稳定、唯一、好 grep 的短语（如 `MyPeriph OK`）。然后把它登进 HIL 冒烟脚本，让 `hil/hil-smoke.sh` 自动断言它（脚本里加一行 `check myperiph_demo "MyPeriph OK" "..."`，标记串清单见[HIL 标记串与环境变量](../reference/07-hil-markers.md)）。
+标记串约定：用一个稳定、唯一、好 grep 的短语（如 `MyPeriph OK`）。然后把它登进 HIL 冒烟脚本，让 `hil/hil-smoke.sh` 自动断言它（脚本里加一行 `check myperiph_demo "MyPeriph OK" "..."`，并把完整标记串登记到[示例目录与验证标记串](../reference/02-examples.md)）。
 
 ## 6. 验证
 

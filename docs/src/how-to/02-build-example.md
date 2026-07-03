@@ -32,7 +32,8 @@ target/riscv32imfc-unknown-none-elf/release/<name>
 
 例如 `target/riscv32imfc-unknown-none-elf/release/blinky`。注意是**无扩展名**的 ELF（cargo 按 `[[bin]]`/crate 名命名产物）。
 
-> 如果你是在 `examples/ws63/` 嵌套工作区里单独构建（只有 `blinky`），它的产物在 `examples/ws63/target/riscv32imfc-unknown-none-elf/release/`——`hil/` 里的脚本默认就找这个目录。两个 `target/` 不要混。
+> 如果你是在 `examples/ws63/` 嵌套工作区里单独构建（只有 `blinky`），它的产物在 `examples/ws63/target/riscv32imfc-unknown-none-elf/release/`。
+> `hil/` 脚本现在优先找根工作区 `target/`，再兼容查找这个旧嵌套 target。两个 `target/` 不要混。
 
 ## `--release` vs debug
 

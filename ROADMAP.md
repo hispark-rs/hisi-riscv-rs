@@ -7,7 +7,7 @@
 > **API 设计评审（2026-06）**：HAL API 风格对照业界（esp-hal / embassy / embedded-hal 1.0 /
 > Rust API Guidelines）的讨论台账见 [`docs/review/api-style-discussion-2026-06.md`](docs/review/api-style-discussion-2026-06.md)；
 > 头号约定「类型化配置：能编译就能在硅片上跑」见 [`docs/src/explanation/policies/01-typed-config.md`](docs/src/explanation/policies/01-typed-config.md)
-> + `CLAUDE.md`「Typed config」+ `.claude/skills/typed-config/`。这些喂入正在进行的 **0.5.0 config 收紧**（见阶段 7）。
+> + `CLAUDE.md`「Typed config」+ `.agents/skills/typed-config/`。这些喂入 0.5.0 以来的 config 收紧（见阶段 7）。
 
 ## 北极星
 
@@ -27,7 +27,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 阶段 | 主题 | 状态 |
 |------|------|------|
 | 0 | 构建完整性 + 文档 + flashboot 实验化 | ✅ 已完成（2026-05） |
-| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | ✅ 驱动级已完成（2026-06-14，真实 WS63 硅片）：链接脚本 ✅、QEMU 软件在环 ✅、**probe-rs download 为一等公民烧录路径**（HW-validated，blinky 物理点灯）、**embedded-test HIL 套件 15/15 在硅片通过**（12 驱动 + 3 跳线 loopback，无 ignore）；时钟修复（timer 24 MHz / UART 40·160 MHz / SPI / I2C）已在硅上核实。连接性上板属阶段 4/5 |
+| 1 | 硬件在环（HIL）bring-up + 链接脚本集成 | ✅ 驱动级已完成并持续扩展：链接脚本 ✅、QEMU 软件在环 ✅、**probe-rs download 为一等公民烧录路径**（HW-validated，blinky 物理点灯）、**WS63 HAL embedded-test HIL 套件 26/26 在硅片通过**（2026-07-03）；stable API 证据源见 `docs/src/reference/10-stable-api.md`。示例 smoke 与连接性上板属阶段 4/5 |
 | 2 | 死代码清理 + 正确性修复 | ✅ 已完成（中断 LOCI* / SPI / I2C/SPI 超时 / 复位 / GPIO pull / eFuse / LSADC / 死代码 / host 单测 / DMA + **本会话：timer/WDT/UART/SPI/I2C 时钟真实化、cken 位逐一对照 SDK 审计**；BS2X（BS21/BS20）全外设 QEMU 验证已完成） |
 | 3 | 链接/blob 尖刺 | ✅ 已完成（2026-06-02：`libwifi_rom_data.a` 全量链接 + 重定位，QEMU 验证 13/13） |
 | 4 | porting 层 + HCC IPC | 🟡 数据通路已实现 + standalone 自测（`ws63-rf-rs`：FRW/HCC/OSAL/netif→smoltcp）；剩 blob 链接 + pbuf/TX-sink pin + 上板（**阶段 1 已就绪，不再受阻**） |
@@ -36,9 +36,9 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | **7** | **HAL 收尾 + 发布** | ✅ 已完成（2026-06-15：硅验证发布 ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，见下「阶段 7」） |
 | 探针 | debug 支持（RISC-V-DM / probe-rs） | ✅ 硅上验证完成（2026-06-14）：fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`——CoreSight mem-AP DTM、vendor DebugSequence、flash-algorithm crate；真机 attach/halt/read/write + `probe-rs download` 烧录 + flashboot 引导 + blinky 运行全链路打通 |
 
-> **当前焦点（2026-06-15）**：阶段 0/1/2/3/6/7 已收口——WS63 + BS2X（BS21/BS20）QEMU 软件在环成熟、
-> **真机驱动级 bring-up 完成**（probe-rs download 烧录 + embedded-test HIL 15/15 在硅片通过 + 时钟修复硅上核实，
-> 2026-06-14）、库栈已**硅验证发布**到 crates.io（ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，2026-06-15）。
+> **当前焦点（2026-07-03）**：阶段 0/1/2/3/6/7 已收口——WS63 + BS2X（BS21/BS20）QEMU 软件在环成熟、
+> **真机驱动级 bring-up 完成并扩展到 0.6.0 stable API 审计线**（probe-rs download 烧录 + WS63 HAL embedded-test
+> HIL 26/26 在硅片通过，2026-07-03）；早期库栈已**硅验证发布**到 crates.io（ws63-pac 0.2.0 / rt 0.2.2 / hal 0.4.0，2026-06-15）。
 > 下一步主攻**北极星——连接性上板**：阶段 4（`ws63-rf-rs` blob 链接 + pbuf/TX-sink pin）→ 阶段 5
 > （scan→connect→ping），阶段 1 已就绪不再是阻塞。
 > 注：许多组件文档（如 overview.md）仍聚焦 WS63；BS2X 多芯片文档覆盖见 bs2x-guide + examples/bs21/examples/bs20。
@@ -311,7 +311,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    失效、回退 registry 0.1.3）、重生成 Cargo.lock。三者均 SSH 签名 commit + annotated 签名 tag。
    **至此阶段 7 全部收口。**
 
-## 阶段 1 — 真机 bring-up（✅ 驱动级完成，2026-06-14）
+## 阶段 1 — 真机 bring-up（✅ 驱动级完成并持续扩展，2026-07-03）
 
 板子已到位，驱动级 bring-up 全部跑通：
 
@@ -319,12 +319,12 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
    配套 `hil/flash.sh`（串口 ymodem 回退）、`hil/pack.sh`（ELF/bin → WS63 app 镜像 + fwpkg）。
 2. ✅ **HIL 框架**：`embedded-test` semihosting harness（`cargo test --target riscv32imfc` 直接在真机跑），
    `hil/cargo-run-hw.sh` + `hil/embedded-test-runner.sh` + `hil/hil-smoke.sh`。
-3. ✅ **HIL 套件 15/15 在硅片通过**（无 ignore）：12 驱动测试（GPIO/TIMER/DMA/clock/reset/UART/TRNG/eFuse/
-   tsensor/TCXO/peripherals）+ 3 跳线 loopback（GPIO 0→3、SPI MOSI→MISO、UART1 TX→RX）。
-4. ✅ **首板验证目标达成**：时钟修复（timer 24 MHz TCXO、UART 40·160 MHz 波特、SPI/I2C）已在真硅片核实
-   ——QEMU 无法证明的部分现已确证。**阶段 4/5（连接性上板）随之解锁。**
+3. ✅ **WS63 HAL embedded-test 套件 26/26 在硅片通过**（2026-07-03）：覆盖 GPIO/TIMER/TCXO/UART/TRNG/eFuse/
+   TSENSOR/LSADC/I2C/PWM/WDT/I2S/peripherals 等稳定子面；具体 stable/unstable 边界以
+   [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md) 为唯一事实源。
+4. ✅ **首板验证目标达成**：时钟修复与默认稳定驱动子集已在真硅片核实。**阶段 4/5（连接性上板）随之解锁。**
 
-> 增量项（非阻塞）：I2C / PWM / WDT / RTC / I2S / GADC 等外设目前仅 host 测，可按需补上板 HIL。
+> 增量项（非阻塞）：示例级 smoke、需要外部台架的真实波形/总线业务事务、RTC 晶振路径、连接性 HIL 继续推进。
 
 ---
 
@@ -361,7 +361,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 | 高 | I2C/SPI 无超时死循环 | ✅ 阶段 2 已修：SPI 2026-05-31、I2C 2026-06-01，无界 `while !..{}` 改有界 `wait_until`→`Timeout`（`SPI_WAIT_LOOPS`/`I2C_WAIT_LOOPS`） |
 | 高 | eFuse 读路径/控制偏移错误 | ✅ 阶段 2 已修（2026-05-31） |
 | 高 | LSADC 寄存器映射整块错位（ctrl_7/fifo 等） | ✅ 阶段 2 已修（2026-05-31） |
-| 高 | 从未上板验证 / 测试恒真 | ✅ 已破：**上板验证完成**（2026-06-14，真实 WS63 硅片）——probe-rs download 烧录 + embedded-test HIL 套件 15/15（12 驱动 + 3 跳线 loopback）；host 侧 305+ 真单测/property（`ci.yml`）+ ws63-qemu 软件在环冒烟。剩 I2C/PWM/WDT/RTC 等外设的上板覆盖为增量项 |
+| 高 | 从未上板验证 / 测试恒真 | ✅ 已破：**上板验证完成并持续扩展**（2026-07-03，真实 WS63 硅片）——probe-rs download 烧录 + WS63 HAL embedded-test HIL 套件 26/26；host 侧真单测/property（`ci.yml`）+ ws63-qemu 软件在环冒烟。剩示例 smoke、外部台架场景、连接性 HIL 为增量项 |
 | 中 | 死代码（RAII 时钟守卫 / DMA 安全层 / async marker） | ✅ 阶段 2 已修（2026-06-01）：`ClockControl`/`PeripheralGuard`/`REF_COUNTS` RAII 守卫、`DmaEligible`/`DmaChannelFor` 绑定 trait、`DriverMode`/`Blocking`/`Async` marker 全删（`clock.rs:10`、`dma.rs:498` 注明） |
 | 中 | safety.rs 恒真断言剧场 | ✅ 阶段 2 已修（2026-06-01）：恒真 `const X == <literal>` 计数断言删除，仅保留真实 MMIO 范围/对齐编译期断言（`safety.rs:8`） |
 | 中 | SVD→PAC 生成流水线不可复现 | ✅ 阶段 2 已修（regen.sh 幂等可复现，2026-05-31） |
