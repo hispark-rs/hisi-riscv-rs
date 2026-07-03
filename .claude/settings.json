@@ -37,6 +37,10 @@
           },
           {
             "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in *CLAUDE.md|*AGENTS.md|*/.agents/skills/*|*/.claude/skills/*|*/.codex/agents/unsafe-auditor.toml|*/.claude/agents/unsafe-auditor.md) root=$(git -C \"$(dirname \"$f\")\" rev-parse --show-toplevel 2>/dev/null) || exit 0; \"$root/scripts/sync-agent-surfaces.sh\" --from-path \"$f\" ;; esac"
+          },
+          {
+            "type": "command",
             "command": "f=$(jq -r '.tool_input.file_path'); case \"$f\" in *hisi-riscv-hal/src/*.rs) root=$(git -C \"$(dirname \"$f\")\" rev-parse --show-toplevel 2>/dev/null) || exit 0; log=\"$root/target/claude-hal-postcheck.log\"; (cd \"$root\" && cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63 --target x86_64-unknown-linux-gnu >\"$log\" 2>&1) || { echo 'HAL post-edit cargo check failed:' >&2; tail -20 \"$log\" >&2; exit 2; } ;; esac"
           }
         ]

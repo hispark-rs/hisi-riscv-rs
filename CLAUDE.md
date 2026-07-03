@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Agent Instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Repository Overview
 
@@ -43,7 +43,7 @@ cargo check --workspace             # Full workspace check — also works (unifi
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
 cargo check -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt   # …or BS2X
+cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
 cargo check -p ws63-pac             # Check PAC only
 cargo build -p blinky --release     # Build example
 
@@ -80,7 +80,7 @@ hisi-riscv-rt (startup, linker scripts, interrupt vectors)
 ### Peripheral Singleton Pattern
 
 `crates/hisi-riscv-hal/src/peripherals.rs` defines two macros:
-- `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, `register_block()`.
+- `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, and an `unstable` + `unsafe` raw `register_block()` escape hatch.
 - `peripherals!(...)` — generates the `Peripherals` struct with `take()` (safe) and `steal()` (unsafe).
 
 All 35 PAC peripherals have HAL wrappers. Drivers consume their peripheral via constructor (e.g., `Watchdog::new(wdt)`).
@@ -109,16 +109,12 @@ impl<'d> Uart<'d, Uart1<'d>> { pub fn new_uart1(...) -> Self { ... } }
 
 ### Sealed Traits (`private.rs`)
 
-- `Sealed` — supertrait preventing external implementation of `DmaWord`, `PeripheralInput`, `PeripheralOutput`.
-- (The old empty `DriverMode`/`Blocking`/`Async` marker traits were removed; real async now lives behind the `async`/`embassy` features — see "Async & embassy" below and `docs/src/explanation/components/06-async-embassy.md`.)
+- `Sealed` — crate-internal supertrait preventing external implementation of GPIO signal traits such as `PeripheralInput` and `PeripheralOutput`.
+- The old empty `DriverMode`/`Blocking`/`Async` marker traits and vestigial `DmaWord` marker were removed. Real async support lives behind the `async` feature, with ungraduated interrupt/waker helpers gated by `unstable`.
 
 ### Clock Architecture
 
-`ClockControl` wraps `CldoCrg` (clock and reset generator). Two access patterns:
-1. Direct methods: `enable_uart()`, `enable_spi()`, etc.
-2. RAII guards: `PeripheralGuard` with reference counting via `AtomicU8` static array. Guard enables clock on creation, decrements refcount on drop.
-
-`Peripheral` enum maps each peripheral to `(cken_register_index, bit_position)` for hardware clock gate control.
+WS63 peripheral clocks default to enabled out of reset. The earlier `ClockControl` / `PeripheralGuard` RAII layer had no consumers and was removed. `clock.rs` now keeps `Peripheral` + `cken_info()` as the audited peripheral → CKEN bit reference for future clock-gating code and drift checks.
 
 ### GPIO Architecture
 
@@ -127,7 +123,7 @@ Three driver levels:
 2. **`Input<'d>` / `Output<'d>` / `Flex<'d>`** — typed drivers created from `AnyPin` via `init_input()`, `init_output()`, `init_flex()`.
 3. **`GpioPin<'d, MODE>`** — legacy type-state GPIO (backward compatibility).
 
-Config API: `InputConfig { pull }`, `OutputConfig { open_drain, initial_high }`.
+Config API: `InputConfig { pull }`, `OutputConfig { initial_high }`. The previous `open_drain` field was a no-op and was removed rather than kept as a misleading stable knob.
 
 ### DMA Architecture
 
@@ -137,14 +133,14 @@ Two controllers share `dma::RegisterBlock`:
 
 `DmaInstance` trait provides `ptr()` → register block access. `DmaDriver<'d, T: DmaInstance>` is generic over the controller.
 
-**Peripheral-paced DMA (0.5.1+):** wire DMA into a peripheral via `Spi::with_dma(dma) -> SpiDma` / `Uart::with_dma(dma) -> UartDma` (consumes the blocking driver — blocking + DMA APIs are mutually exclusive, esp-hal style). `SpiDma::{write_dma, transfer_dma}` / `UartDma::{write_dma, read_dma}` are blocking, bounded-wait, and program the peripheral + DMA channel in the vendor handshake order. Channels come from `DmaDriver::split_channels() -> DmaChannels` (typed tokens, runtime-claimed). The low-level `start_mem_to_peripheral`/`start_peripheral_to_mem` return a `PeripheralTransfer<'d, BUF>` guard that owns the buffer (UAF unrepresentable in safe code); `wait()` is fallible (`Err(Timeout)` on a wedged channel). Cache maintenance is folded in (clean TX source / invalidate RX dst; never touch the uncached peripheral MMIO). `Drop` runs cancel-then-quiesce (clear peripheral DMA-enable → halt → drain `active` → disable). See `docs/review/peripheral-dma-design-0.5.1.md`. (The old `DmaEligible`/`DmaChannelFor` binding traits were removed; `DmaPeripheral` + `DmaChannelConfig::mem_to_peripheral`/`peripheral_to_mem` replace them.)
+**0.6.0 gate:** the public `dma` module is behind `unstable` until the safe-DMA invariants are closed (cache-line ownership/alignment, timeout quiescence, async cancellation, and SPI1/UART DMA evidence). With `unstable`, the design exposes `DmaDriver`, typed channel tokens, mem-to-mem transfers, and peripheral-paced SPI/UART DMA; these APIs remain experimental even where individual HIL tests exist. See `docs/review/peripheral-dma-design-0.5.1.md` and `docs/review/stable-api-graduation-review-2026-07-02.md`.
 
 ## Key Design Decisions
 
 - **No `std`** — `#![no_std]` throughout. No heap, no `Vec` in driver code. Use fixed arrays when data buffers are needed.
 - **Safety via lifetime generics** — peripherals are `'d`-parameterized to prevent use-after-drop of the `Peripherals` token.
 - **Register access is `unsafe`** — raw PAC register writes use `unsafe { reg.write(|w| w.bits(val)) }`. Driver methods encapsulate this.
-- **Async & embassy** — beyond the blocking drivers, hisi-riscv-hal has an `async` feature (interrupt + waker driven `embedded-hal-async`/`embedded-io-async`: `DelayNs`, `digital::Wait`, `SpiBus`, `I2c`, `Read`/`Write`, plus `asynch::block_on` + `IrqSignal` + per-driver `on_interrupt`) and an `embassy` feature (an embassy-time `Driver` so `embassy-executor` platform-riscv32 runs `Timer::after`). Both work on the no-atomics WS63 via portable-atomic + critical-section. See `docs/src/explanation/components/06-async-embassy.md`.
+- **Async & embassy** — `async` remains a feature gate for async trait impls; the blocking-backed SPI/I2C async traits build with `async` alone, while interrupt/waker helpers (`asynch::block_on`, `IrqSignal`, GPIO wait, timer async delay, UART async I/O, DMA/LSADC async hooks) require `unstable`. `embassy` is also `unstable`-gated until end-to-end HIL. See `docs/src/explanation/components/06-async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
 ### Typed config — "if it compiles, it runs on silicon"
@@ -169,11 +165,41 @@ typestate pattern. Two layers:
   / `I2c` / `Read` / `Write` keep their standard `u16` / `&[u8]` + `Result`
   signatures (`Result` *is* embedded-hal's idiom for invalid input). These are NOT
   compile-time-typed; do not change trait method signatures.
+- **Unsafe-adjacent identities — no raw safe inputs.** Public safe APIs must not
+  accept raw `u8`/`usize`/addresses when those values select a register bank,
+  DMA channel, pad, timer channel, UART port, PWM channel, or eFuse byte. Use
+  typed tokens/newtypes/enums such as `DmaChannel`, `DmaTransferSize`,
+  `DmaSyncMask`, `GpioPad`, `UartPad`, `MuxFunction`, `GpioBank`,
+  `TimerChannel`, `UartPort`, `PwmChannelId`, and `EfuseByteAddress`.
 
 When adding or tightening a driver, run the **`typed-config` skill** (the checklist +
 the A/B/C/D defect taxonomy + a candidate scanner). Reference implementation:
 `crates/hisi-riscv-hal/src/pwm.rs` (`PwmPeriod` / `Duty`). Every tightened surface is
 proven on the connected board via the HIL suite (`tests/hil.rs`).
+
+### Atomics & critical-section discipline
+
+The product family is designed around two realistic synchronization shapes:
+
+- **Single hart + no A extension** (WS63 current path): the target must not emit
+  `lr/sc/amo*`; RMW/CAS semantics come from `portable-atomic` over
+  `critical-section-single-hart`, i.e. short irq-disabled regions.
+- **Multi hart + A extension** (future/other products): single-word flags/counters
+  may use hardware atomics, but compound invariants still need a real lock,
+  `critical-section`, or platform-level cross-hart synchronization.
+
+Other combinations are not default product targets. In particular, disabling
+interrupts on the current hart is not cross-hart mutual exclusion.
+
+Critical sections are for **short Rust memory metadata**, not external progress or
+whole peripheral transactions. Inside `critical_section::with` / irq-disabled code,
+only update claim flags, refcounts, small state enums, waker slots, and IRQ
+bookkeeping. Do **not** poll hardware, wait for FIFO/DMA/clock/reset, perform
+SPI/UART/I2C/DMA transfers, bulk copy/cache-maintain large buffers, `delay`,
+`block_on`, call user callbacks/closures/trait objects, or hold borrows across
+`.await`. If a transaction needs a `Busy` invariant, set/clear that state in two
+short critical sections and do the MMIO/waiting outside. ISR paths should ack /
+record / wake; user logic runs later in normal context or future polling.
 
 ## CI/CD
 
@@ -211,38 +237,67 @@ level gating uses the crate-local `unstable_module!` macro (esp-hal form:
 - **STABLE pub fn taking an UNSTABLE type** as param/return is FORBIDDEN
   (`private_interfaces` lint). If a STABLE method needs an UNSTABLE type, either
   the type becomes STABLE or the method becomes UNSTABLE.
-- **`async`/`embassy`** are feature-gates (consent-by-feature); `embassy` is ALSO
-  `unstable`-gated (no end-to-end HIL). `async` stays STABLE (HIL-verified).
+- **`async`/`embassy`** are feature-gates (consent-by-feature). `embassy` is ALSO
+  `unstable`-gated (no end-to-end HIL). `async` alone only exposes the blocking-
+  backed SPI/I2C async trait impls; interrupt/waker-backed helpers and drivers are
+  ALSO `unstable`-gated until lost-wake/cancellation invariants and HIL are closed.
 - **Graduation** (unstable → stable): delete the `#[instability::unstable]` attr
   (or move the module out of `unstable_module!`) — the item was already compiling
   as `pub(crate)`, so its lint state is unchanged; residue-free. Optionally replace
   with `#[instability::stable(since = "0.x.0")]` to keep a "Stabilized in version X"
   doc note.
 
-**What's STABLE (HIL-proven on WS63 silicon — ungated):** gpio, spi (blocking),
-uart (blocking), timer, tcxo, pwm, wdt, dma (mem-to-mem: `Dma0`/`DmaDriver`/
-`Transfer`/`start_mem_to_mem`/`DmaChannelConfig`+`configure_channel`), trng (WS63),
-efuse, clock, system, peripherals, interrupt, i2c (WS63 v150), i2s, io_config,
-lsadc, tsensor, cache, asynch (`block_on`/`IrqSignal`), + the peripheral-DMA
-HIL-proven subset (`SpiDma::write_dma`/`transfer_dma`/`write_dma_async`,
-`with_dma`/`split_channels`/`DmaChannel`/`DmaPeripheral`). Plus infrastructure:
-time, prelude, private, macros, soc.
+**What's STABLE (HIL-proven on WS63 silicon — ungated):** scoped default-facing
+subsets of gpio (`Input`/`Output`/`Flex`, `GpioBank`; not GPIO IRQ), spi (SPI0
+blocking + blocking-backed `async` trait impl), uart (UART0/1 blocking,
+`BaudRate`, `UartClock`, `UartPort`/sealed `UartInstance`), timer (`TimerChannel`
+raw configure/enable/current/interrupt paths; not one-shot/periodic wrappers),
+tcxo, pwm (Ch0 config/enable/disable + `PwmPeriod`/`Duty`/`PwmChannelId`,
+fallible duty writes), wdt (typed configure/feed/counter/drop/`into_armed`; not
+WDT IRQ), trng default blocking read + byte-fill path, efuse read-only byte path
+(`EfuseDriver`/`EfuseByteAddress`/`read_byte`), clock metadata,
+`System::reset_reason`, peripherals (ownership tokens only; raw register blocks
+are unstable), interrupt identity/types (`Priority`/`Threshold`) plus basic
+enable/disable/pending paths, i2c (WS63 v150 I2C0 blocking + blocking-backed
+`async` trait impl with 7-bit address rejection), i2s master config/liveness subset,
+io_config GPIO/UART mux
+(`GpioPad`/`UartPad`/`MuxFunction`), lsadc scan-config subset, tsensor basic
+conversion subset, and infrastructure: `Duration`/
+`Rate`, prelude, macros, soc. The sealed-trait `private` module is crate-internal,
+not public API.
 
-**What's UNSTABLE (no on-silicon HIL — gated):** peripheral-DMA unproven subset
-(`SpiDma::transfer_dma_async`/`release`, `UartDma` all, `PeripheralTransfer`,
-`start_mem_to_peripheral`/`start_peripheral_to_mem`, the 4 `DmaChannelConfig`
-builders, `DmaFrame`/`PeriKind`/`PeriDmaCtl`/`DmaError`), `embassy`, WS63 untested
-drivers (`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/
-`delay`), entire BS2X-specific series (`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/
-`i2c`-v151/`rtc`-v150/`trng`-v1 — no BS2X silicon board, QEMU only), + the
-`prelude` re-exports of `sfc::SfcDriver` and `ulp_gpio::UlpGpioPin`.
+**What's UNSTABLE (no on-silicon HIL or soundness not closed — gated):** the public
+`cache` module (by-range D-cache CSR maintenance; tied to DMA/cache-line ownership
+invariants), raw PAC `register_block()` escape hatches, the public `dma` module as
+a whole (`Dma0`/`Sdma0`, `DmaDriver`, typed channel tokens,
+mem-to-mem `Transfer`, `DmaTransferSize`/`DmaSyncMask`, peripheral-paced
+`SpiDma`/`UartDma`, `PeripheralTransfer`, `DmaFrame`/`PeriKind`/`PeriDmaCtl`, and
+all DMA async hooks), interrupt/waker async helpers (`asynch::block_on`,
+`IrqSignal`, GPIO `Wait`, timer `AsyncDelay`, UART async I/O, LSADC async),
+`embassy`, `EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`,
+`System::software_reset*`, `Instant::now`/`elapsed`, `interrupt::free`, GPIO IRQ
+APIs (`InterruptTrigger`, per-pin enable/clear/pending/trigger), unverified
+instance constructors (`Uart::new_uart2`, `Spi::new_spi1`, `I2c::new_i2c1`),
+timer one-shot/periodic wrappers, WDT IRQ methods, PWM polarity/start/pulse-count
+and `into_running`, I2S slave role/config, interrupt priority/threshold
+setters/getters, SFC pad config, broad I2S data/FIFO/IRQ methods, broad LSADC
+analog/conversion/filter/calibration/data-path methods, broad TSENSOR mode/
+threshold/interrupt/auto-refresh/calibration/blocking-read/disable/clear-status
+methods, TRNG manual clock/divider/status knobs plus non-blocking `read` and
+`fill_words`, eFuse status, WS63 untested drivers (`clock_init`/`km`/`pke`/
+`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/`delay`), entire BS2X chip target
+(`chip-bs21` requires `unstable` — no BS2X silicon board, QEMU only), + matching
+unstable `prelude` re-exports (`Delay`,
+`InterruptTrigger`, `OneShotTimer`/`PeriodicTimer`, `Dma0`/`DmaDriver`/`Sdma0`,
+`RtcDriver`, `SfcDriver`, `UlpGpioPin`).
 
-**Build matrix** (CI must verify all 7 rows + clippy `-D warnings`):
+**Build matrix** (CI must verify all positive rows + clippy `-D warnings`, plus
+the BS2X negative gate):
 `{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async,embassy}`,
-`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`, `{bs21,rt}`,
-`{bs21,rt,unstable}`. BS2X isolated examples that import UNSTABLE modules need
-explicit `cargo check --manifest-path` CI checks (they're not in `cargo check
---workspace`).
+`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`,
+`{bs21,rt,unstable}`. `{bs21,rt}` without `unstable` must fail with the BS2X
+experimental compile_error. BS2X isolated examples need explicit
+`cargo check --manifest-path` CI checks (they're not in `cargo check --workspace`).
 
 ## Reference Material
 

@@ -1,7 +1,7 @@
 //! HiSilicon BS21 UART hello-world example.
 //!
 //! The BS21 analogue of `ws63-examples/uart_hello`: prints a banner and a running
-//! tick counter over UART0. Built with `--features chip-bs21`, so `Uart::new_uart0`
+//! tick counter over UART0. Built with `--features chip-bs21,unstable`, so `Uart::new_uart0`
 //! drives the BS21 UART_L0 at 0x5208_1000 (vs WS63's 0x4401_0000) — the only thing
 //! that changed is the base address baked into `bs2x-pac`'s `Uart0` type.
 //!
@@ -36,15 +36,15 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
 
-    uart.write(0, b"\r\nHello from BS21 on QEMU!\r\n");
-    uart.write(0, b"bs21-qemu: UART0 @ 0x52081000 is alive.\r\n");
+    uart.write(b"\r\nHello from BS21 on QEMU!\r\n");
+    uart.write(b"bs21-qemu: UART0 @ 0x52081000 is alive.\r\n");
 
     let mut tick: u32 = 0;
     loop {
         let mut buf = [0u8; 10];
-        uart.write(0, b"tick ");
-        uart.write(0, u32_to_dec(tick, &mut buf));
-        uart.write(0, b"\r\n");
+        uart.write(b"tick ");
+        uart.write(u32_to_dec(tick, &mut buf));
+        uart.write(b"\r\n");
         tick = tick.wrapping_add(1);
 
         // Busy-wait between lines (~arbitrary at QEMU speed).

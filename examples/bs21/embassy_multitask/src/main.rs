@@ -5,7 +5,7 @@
 //! `embassy_time::Timer::after_millis(..).await` at different rates. Time comes
 //! from `hisi_riscv_hal::embassy` — the same chip-neutral embassy-time `Driver`
 //! WS63 uses (now() via the TCXO 64-bit counter, alarms via a TIMER channel),
-//! built with `--features chip-bs21` so the TCXO rate (32 MHz) and the alarm IRQ
+//! built with `--features chip-bs21,unstable` so the TCXO rate (32 MHz) and the alarm IRQ
 //! come from `soc/bs21.rs`.
 //!
 //! The only per-chip difference from the WS63 version is the alarm interrupt

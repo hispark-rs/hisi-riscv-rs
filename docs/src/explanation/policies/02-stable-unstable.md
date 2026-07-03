@@ -1,12 +1,12 @@
 # 稳定 / 不稳定 API 门控
 
-这是本项目 HAL（0.6.0+）的**第二号约定**：凡是没有上板 HIL 真机测试覆盖的接口，都关在 `unstable` feature 门后 —— 默认 `cargo build` 只暴露经过硅片验证的稳定 API，实验性接口要用户显式 `features = ["unstable"]` 才能用。这和 [类型化配置](01-typed-config.md) 互补：一个保证"能编译就能跑"，一个保证"默认暴露的都是跑过的"。
+这是本项目 HAL（0.6.0+）的**第二号约定**：凡是没有上板 HIL 真机测试覆盖，或 safe/unsafe soundness 还没闭合的接口，都关在 `unstable` feature 门后 —— 默认 `cargo build` 只暴露经过硅片验证且无已知 soundness blocker 的稳定 API，实验性接口要用户显式 `features = ["unstable"]` 才能用。这和 [类型化配置](01-typed-config.md) 互补：一个保证"能编译就能跑"，一个保证"默认暴露的是跑过且可承诺的"。
 
-本篇讲**为什么**这样设计、**机制**怎么工作、以及**哪些在门后、哪些稳定**。
+本篇讲**为什么**这样设计、**机制**怎么工作、以及 API **如何毕业**。当前 stable / unstable 清单是参考事实，见 [Stable API 清单与门控状态](../../reference/10-stable-api.md)。
 
 ## 问题：没上过板的 API 照样 pub
 
-WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/UART/Timer/PWM/WDT/DMA-mem-to-mem…），有些**从未上过板**（crypto 加速器 PKE/SPACC/KM、flash 控制器 SFC、ULP-GPIO、整个 BS2X 系列因为没板子）。在 0.5.x 里它们全是 `pub` —— 用户无差别依赖，下个小版本一改签名就坏。
+WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/UART/Timer/PWM/WDT/TRNG/eFuse…），有些**从未上过板**（crypto 加速器 PKE/SPACC/KM、flash 控制器 SFC、ULP-GPIO、整个 BS2X 系列因为没板子）。还有一类更危险：个别路径有 HIL，但公共 safe API 的所有权、cache、取消或超时不变式还没闭合，例如 DMA。0.5.x 里它们全是 `pub` —— 用户无差别依赖，下个小版本一改签名就坏。
 
 更糟的是：外设 DMA 的 `UartDma::write_dma` 源码注释写着"silicon-verified"，但其实 #5（UART1 TX 移位寄存器不推进）导致它上板 timeout 了，从没真正验过。**注释和事实不符**，因为没有一个机制把"验过"和"没验过"在编译期分开。
 
@@ -16,10 +16,10 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 
 | 有 HIL 真机测试覆盖？ | 判定 |
 |---|---|
-| 有（在 `tests/hil.rs` 里能找到调用了该 API 的测试，且在真实 WS63 硅片上跑过） | **STABLE** —— 默认 `pub`，不加门控 |
-| 没有（没写过测试 / 测试是 opt-in 且从未在连的板上跑 / 板子根本没接） | **UNSTABLE** —— 关在 `unstable` 后 |
+| 有（在 `tests/hil.rs` 里能找到调用了该 API 的测试，且在真实 WS63 硅片上跑过）且无已知 soundness blocker | **STABLE** —— 默认 `pub`，不加门控 |
+| 没有，或测试是 opt-in 且从未在连的板上跑，或 safe/unsafe 不变式未闭合 | **UNSTABLE** —— 关在 `unstable` 后 |
 
-跨芯片驱动（gpio/spi/timer 等）只要在 **WS63 硅片**上验过就算 STABLE；BS2X 没板子是芯片 bring-up 的问题，不是 API 稳定性问题，所以 BS2X 构建下它们仍 STABLE。但**整个 BS2X-specific 系列**（BS2X-only 驱动：gadc/keyscan/pdm/qdec/usb/i2c-v151/rtc-v150/trng-v1）从没在 BS2X 硅片上跑过 → 全部 UNSTABLE。
+稳定承诺只面向 **WS63 默认稳定子集**。BS2X 目前没有硅片 HIL，不能把 WS63 上的跨芯片驱动结论外推到 BS2X；因此整个 `chip-bs21` target 需要显式 `unstable`，包括共享驱动和 BS2X-only 驱动。
 
 ## 机制：instability crate（esp-hal 同款）
 
@@ -38,13 +38,18 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 - **`impl Drop` 不挂** —— 保持它调的 helper 活着。
 - **trait impl 可以整块挂**（关时消失，安全）。
 - **STABLE 的 pub fn 签名里不能出现 UNSTABLE 类型**（`private_interfaces` lint）。如果 `write_dma`（STABLE）接收 `DmaChannel`，那 `DmaChannel` 也必须 STABLE。
+- **`async`/`embassy` 不等于自动稳定。** `async` feature 只表示用户同意编译 async trait impl；当前只有 SPI/I2C 的 blocking-backed async traits 随 `async` 暴露。`asynch::block_on`、`IrqSignal`、GPIO wait、timer async delay、UART async I/O、DMA/LSADC async hook 还需 `unstable`。`embassy` 模块也需 `embassy + unstable`。
 
 ## 用户怎么用
 
 ```toml
-# 想用实验性接口（外设 DMA、BS2X 驱动、embassy 等）：
+# 想用实验性接口（DMA、interrupt/waker async、embassy 等）：
 [dependencies]
 hisi-riscv-hal = { version = "0.6", features = ["chip-ws63", "unstable"] }
+
+# 想构建实验性的 BS2X target：
+[dependencies]
+hisi-riscv-hal = { version = "0.6", features = ["chip-bs21", "unstable"] }
 
 # 只用稳定接口（默认）：
 [dependencies]
@@ -53,21 +58,7 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 
 实验性接口的签名**可能在小版本中变**；开 `unstable` = 同意承担 breakage。
 
-## 哪些 STABLE / 哪些 UNSTABLE
-
-### STABLE（HIL 真机验证过 — 默认暴露）
-
-- **WS63 驱动**：gpio、spi（阻塞）、uart（阻塞）、timer、tcxo、pwm、wdt、dma（mem-to-mem）、trng、efuse、clock、system、i2c、i2s、io_config、lsadc、tsensor、cache。
-- **跨芯片 + 基础设施**：interrupt、peripherals、prelude、private、macros、soc、time、asynch（`block_on`/`IrqSignal`）。
-- **外设 DMA 已验证子集**：`SpiDma::write_dma`/`transfer_dma`/`write_dma_async`、`with_dma`/`split_channels`/`DmaChannel`/`DmaPeripheral`/`DmaChannelConfig` 结构体。
-
-### UNSTABLE（没上板 — 关在门后）
-
-- **外设 DMA 未验证子集**：`SpiDma::transfer_dma_async`/`release`、`UartDma` 全套（#5 阻塞）、`PeripheralTransfer`、`start_mem_to_peripheral`/`start_peripheral_to_mem`、4 个 builder、`DmaFrame`/`PeriDmaCtl`/`PeriKind`/`DmaError`。
-- **embassy** —— 无端到端 HIL（`timer_int0_named_routing` 还专门 `not(feature="embassy")` 排除它）。
-- **WS63 未测试驱动**：`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。
-- **整个 BS2X 系列**（无 BS2X 板）：`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1。
-- **prelude 的两条 re-export**（`sfc::SfcDriver`、`ulp_gpio::UlpGpioPin`）—— 两者 re-export 的是现在 UNSTABLE 的模块。
+当前默认 stable 面与 `unstable` 门后的 API 清单见参考页：[Stable API 清单与门控状态](../../reference/10-stable-api.md)。
 
 ## 毕业流程（unstable → stable）
 
@@ -75,12 +66,12 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 
 ## 构建矩阵
 
-CI 验证 7 种组合（全过 `clippy -D warnings`）：
+CI 验证正例组合（全过 `clippy -D warnings`），并额外确认 BS2X stable-off 负例会失败：
 
 ```
 {ws63,rt}  {ws63,rt,unstable}  {ws63,rt,async,embassy}
 {ws63,rt,async,unstable}  {ws63,rt,async,embassy,unstable}
-{bs21,rt}  {bs21,rt,unstable}
+{bs21,rt,unstable}
 ```
 
-加 BS2X 隔离工作区（examples/bs2X/*，不在 `cargo check --workspace` 里）的显式 `cargo check --manifest-path ... --features unstable`。
+`{bs21,rt}` 不带 `unstable` 必须触发 `compile_error!`。加 BS2X 隔离工作区（examples/bs2X/*，不在 `cargo check --workspace` 里）的显式 `cargo check --manifest-path ... --features unstable`。

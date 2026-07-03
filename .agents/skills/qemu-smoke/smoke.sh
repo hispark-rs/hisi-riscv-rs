@@ -21,7 +21,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="$(cd "$HERE/../../.." && pwd)"            # .claude/skills/qemu-smoke → repo root
+REPO="$(cd "$HERE/../../.." && pwd)"            # .agents/skills/qemu-smoke → repo root
 TARGET=riscv32imfc-unknown-none-elf
 PROFILE="${PROFILE:-release}"
 TIMEOUT="${TIMEOUT:-5}"

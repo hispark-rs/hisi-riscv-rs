@@ -29,6 +29,7 @@
   - [示例目录与验证标记串](reference/02-examples.md)
   - [HAL API 总览](reference/03-hal-api.md)
   - [外设清单与覆盖情况](reference/04-peripherals.md)
+  - [Stable API 清单与门控状态](reference/10-stable-api.md)
   - [工具链与编译目标](reference/05-toolchain.md)
   - [应用镜像格式与签名](reference/06-image-format.md)
   - [HIL 标记串与环境变量](reference/07-hil-markers.md)

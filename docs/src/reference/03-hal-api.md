@@ -6,13 +6,14 @@
 
 事实取自 [`crates/hisi-riscv-hal/src/lib.rs`](https://github.com/hispark-rs/hisi-riscv-hal) 及各模块头。
 
-模块全清单与外设映射见 [外设清单](04-peripherals.md)；async/embassy 的原理见 [async 与 embassy](../explanation/04-async-embassy.md)。
+模块全清单与外设映射见 [外设清单](04-peripherals.md)；稳定/不稳定 API 门控见 [稳定 / 不稳定 API 门控](../explanation/policies/02-stable-unstable.md)；async/embassy 的原理见 [async 与 embassy](../explanation/04-async-embassy.md)。
 
 ## crate 约定
 
 - `#![no_std]`（`cfg(test)` 下链接 `std` 供主机单测）。
-- 必须**恰好**选一个芯片特性：`chip-ws63`（默认）或 `chip-bs21`（二者互斥，否则 `compile_error!`）。
+- 必须**恰好**选一个芯片特性：`chip-ws63` 或 `chip-bs21`（二者互斥；HAL standalone 无默认芯片，否则 `compile_error!`）。`chip-bs21` 目前是整芯片实验 target，必须同时启用 `unstable`。
 - 依赖 `embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`portable-atomic`。
+- 默认只导出 HIL 真机验证过的稳定面；实验性 API 需显式启用 `unstable` feature。
 
 ## 顶层导出
 
@@ -26,7 +27,7 @@
 
 两个宏生成单例：
 
-- `peripheral!($name, $pac_ty)` — 生成生命周期参数化 ZST `$name<'d>`，带 `steal()`、`ptr()`、`register_block()`。
+- `peripheral!($name, $pac_ty)` — 生成生命周期参数化 ZST `$name<'d>`，带 `steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)` — 生成 `Peripherals` 结构，带 `take() -> Option<Self>`（安全，仅一次）与 `steal()`（`unsafe`）。
 
 ```rust,ignore
@@ -44,7 +45,7 @@ let uart = Uart::new_uart0(p.UART0, Config::default());
 | 2 类型化驱动 | `Input<'d>` / `Output<'d>` / `Flex<'d>` | 由 `AnyPin` 经 `init_input()` / `init_output()` / `init_flex()` |
 | 3 旧式类型态 | `GpioPin<'d, MODE>` | 向后兼容 |
 
-配置结构：`InputConfig { pull }`、`OutputConfig { open_drain, initial_high }`。另有 `Io::new(IoConfig)` 顶层封装。
+配置结构：`InputConfig { pull }`、`OutputConfig { initial_high }`。旧 `open_drain` 字段没有硬件落地，已删除。
 
 ## 多实例外设
 
@@ -55,32 +56,33 @@ UART / I2C / SPI / DMA 用 `PhantomData<&'d T>` 区分实例，构造函数按�
 | UART | `Uart<'d, T>` | `new_uart0(UART0, Config)`、`new_uart1(...)`、`new_uart2(...)` |
 | I2C (WS63 v150) | `I2c<'d, T>` | `new_i2c0(I2C0, freq)`、`new_i2c1(...)` |
 | SPI (DesignWare SSI v151) | `Spi<'d, T>` | `new_spi0(SPI0, Config)`、`new_spi1(SPI1, Config)` |
-| DMA | `DmaDriver<'d, T: DmaInstance>` | 泛型于 `Dma0` / `Sdma0` 标记 |
+| DMA | `DmaDriver<'d, T: DmaInstance>` | 泛型于 `Dma0` / `Sdma0` 标记；公共模块需 `unstable` |
 
-> SPI `Config { frequency, mode, data_bits }`；UART `Config { baud, data, parity, stop }`。
+> SPI `Config { frequency, mode, data_bits }`；UART `Config { baudrate, data_bits, parity, stop_bits, clock }`，其中 `clock` 是 `UartClock::{Pll, Boot}`。
 
 ## 单外设驱动（`new()` 模式）
 
-多数驱动遵循 `DriverName::new(peripheral)`：`Watchdog::new`、`TimerDriver::new`、`TcxoDriver::new`、`RtcDriver::new`、`LsAdc::new`、`I2sDriver::new`、`PwmChannel::new(&Pwm, channel)`、`SfcDriver::new`、`PkeDriver::new`、`SpaccDriver::new`、`KmDriver::new`、`TrngDriver::new`、`TempSensor::new`、`EfuseDriver`、`System::new(SysCtl0, GlbCtlM, CldoCrg)`。完整签名见各模块 rustdoc。
+多数驱动遵循 `DriverName::new(peripheral)`：`Watchdog::new`、`TimerDriver::new`、`TcxoDriver::new`、`RtcDriver::new`、`LsAdc::new`、`I2sDriver::new`、`PwmChannel::new(&Pwm, channel)`、`SfcDriver::new`、`PkeDriver::new`、`SpaccDriver::new`、`KmDriver::new`、`TrngDriver::new`、`TempSensor::new`、`EfuseDriver`、`System::new(SysCtl0, GlbCtlM, CldoCrg)`。其中未上板或 soundness 未闭合的模块/方法会被 `unstable` 门控；完整签名见各模块 rustdoc。
 
 ## 时钟（`clock.rs` / `clock_init.rs`，仅 `chip-ws63`）
 
-- `clock_init::init_clocks(&sys_ctl0, &cldo_crg) -> SystemClocks` — 为不经 flashboot 启动的固件初始化系统时钟。
-- `ClockControl` 包裹 `CldoCrg`，两种访问：直接方法（`enable_uart()` 等）或 RAII `PeripheralGuard`（`AtomicU8` 引用计数）。
-- `Peripheral` 枚举把每个外设映射到 `(cken_register_index, bit_position)`。
+- `clock_init::init_clocks(&sys_ctl0, &cldo_crg) -> SystemClocks` — 为不经 flashboot 启动的固件初始化系统时钟，需 `unstable`。
+- `Peripheral` 枚举把每个已审计外设映射到 `(cken_register_index, bit_position)`；无 SDK/SVD 证据的外设返回 `None`。
+- 旧 `ClockControl` / `PeripheralGuard` RAII 层已删除；当前驱动依赖复位默认开，未来若恢复门控需从 `Peripheral::cken_info()` 派生。
 
 > 多数外设访问寄存器前需经 CLDO_CRG 门控使能；复位默认即使能；WDT/RTC/TCXO 常开。
 
 ## sealed trait（`private.rs`）
 
-`Sealed` 作为超 trait，阻止外部实现 `DmaWord`、`PeripheralInput`、`PeripheralOutput`。（旧的空 `DriverMode`/`Blocking`/`Async` 标记 trait 已移除。）
+`Sealed` 是 crate 内部超 trait，阻止外部实现 GPIO signal trait（如 `PeripheralInput`、`PeripheralOutput`）。旧的空 `DriverMode`/`Blocking`/`Async` 标记 trait 以及 vestigial `DmaWord` 均已移除。
 
 ## 特性（features）
 
 | 特性 | 内容 |
 |------|------|
-| `chip-ws63`（默认） / `chip-bs21` | 选芯片，互斥 |
-| `async` | `embedded-hal-async`/`embedded-io-async` 实现 + `asynch::block_on` + `IrqSignal` + 各驱动 `on_interrupt` |
-| `embassy` | embassy-time `Driver`，使 `embassy-executor` (platform-riscv32) 可跑 `Timer::after` |
+| `chip-ws63` / `chip-bs21` | 选芯片，互斥；HAL standalone 无默认芯片；`chip-bs21` 需 `unstable` |
+| `async` | blocking-backed SPI/I2C `embedded-hal-async` 实现；GPIO wait、timer delay、UART async I/O、DMA/LSADC async hook 还需 `unstable` |
+| `embassy` | embassy-time `Driver` feature；公共 `embassy` 模块还需 `unstable` |
+| `unstable` | 暴露未毕业实验性 API（DMA、interrupt/waker async helpers、embassy、未上板驱动、BS2X target 等） |
 
-> `async`/`embassy` 在无原子的 WS63 上经 `portable-atomic` + `critical-section` 工作。
+> `async`/`embassy` 在无原子的 WS63 上经 `portable-atomic` + `critical-section` 工作；但默认稳定 API 只承诺已 HIL 覆盖且 soundness 闭合的子集。

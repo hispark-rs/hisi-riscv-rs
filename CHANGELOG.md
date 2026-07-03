@@ -15,12 +15,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   a new `cache` module for the non-coherent D-cache, and `enable_controller()`
   bypasses the M_DMA auto-clock-gate.
 - **UART boot clock** resolved: flashboot's console runs on the raw TCXO (confirmed
-  **40 MHz** on this board), not the 160 MHz PLL — new `uart::Config::clock_hz` +
-  `soc::chip::uart_boot_clock_hz()`. Two real driver bugs (`wdt` saturate-before-
-  narrow, `sfc` floor-before-mask) found + fixed by new property tests.
+  **40 MHz** on this board), not the 160 MHz PLL — use `uart::Config { clock:
+  UartClock::Boot, .. }` backed by `soc::chip::uart_boot_clock_hz()`. Two real driver
+  bugs (`wdt` saturate-before-narrow, `sfc` floor-before-mask) found + fixed by new
+  property tests.
 
 ### Added
 
+- **HAL HIL default driver suite expanded to 25 self-contained WS63 tests, all
+  passing on silicon** via `probe-rs run` + `embedded-test`. New coverage: UART
+  boot-clock divider and TX flush, I2C invalid 7-bit address rejection, PWM
+  `SetDutyCycle` out-of-range error, TCXO 64-bit counter, TRNG byte fill path, and
+  WDT counter/feed liveness.
 - **HIL suite grown to 12 driver tests, all passing on silicon** — added
   `efuse_read_byte0_ok` (eFuse read path), `trng_produces_entropy` (real TRNG
   entropy), and `tsensor_reads_in_range` (on-die temperature), all
@@ -28,6 +34,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **HAL stable API narrowed for 0.6.0** — default builds now expose only scoped
+  HIL/soundness-closed surfaces. Public DMA, interrupt/waker async helpers,
+  `embassy`, software reset, and other unproven knobs require `unstable`. Removed
+  the no-op GPIO `OutputConfig::open_drain`, replaced raw UART `clock_hz` with
+  typed `UartClock`, reject invalid I2C 7-bit addresses, and make PWM duty writes
+  fallible for out-of-range duty.
+- **BS2X target marked experimental** — `chip-bs21` now requires `unstable`; BS20/BS21
+  examples and HIL feature forwarding opt in explicitly. The stable API promise is
+  scoped to the WS63 HIL-proven subset until BS2X silicon HIL exists.
 - **ws63-pac**: `TIMER%s_CONTROL` gains the `cnt_req`/`cnt_lock` fields and its
   `mode` enum is corrected to the vendor values (`OneShot=0/Periodic=1/FreeRun=3`),
   regenerated from the SVD. (The DMA block was already silicon-correct.) The SVD

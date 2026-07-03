@@ -20,7 +20,3 @@ embassy-executor = { version = "0.10", features = ["platform-riscv32", "executor
 embassy-time = { version = "0.5", features = ["tick-hz-1_000_000"] }
 static_cell = "2"
 riscv = "0.13"
-
-[profile.release]
-opt-level = "s"
-lto = true

@@ -50,7 +50,7 @@ For each submodule with changes (`git -C <sub> status -s`), in the order above:
 2. **Commit** with a clear message; end with the Co-Authored-By trailer:
    ```bash
    git -C <sub> add -A
-   git -C <sub> commit -m "<subject>" -m "Co-Authored-By: Codex Opus 4.8 <noreply@anthropic.com>"
+   git -C <sub> commit -m "<subject>"
    ```
 3. **Push** to its branch:
    ```bash
@@ -61,7 +61,7 @@ Then the **parent** repo:
 
 ```bash
 git add <changed-submodules> Cargo.lock <other-parent-files>   # NOT transient agent worktrees
-git commit -m "chore: update submodule pointers — <what>" -m "Co-Authored-By: Codex Opus 4.8 <noreply@anthropic.com>"
+git commit -m "chore: update submodule pointers — <what>"
 git push origin main
 ```
 
@@ -79,6 +79,6 @@ git status -s                   # clean (except transient agent worktrees)
 - **Detached HEAD that is AHEAD of the local branch**: use `checkout -B <branch>` only
   after confirming the old branch is an ancestor (`merge-base --is-ancestor`), so you
   fast-forward and lose nothing.
-- **Never add transient agent worktrees** — they are harness state, not repo content.
+- **Never add transient agent worktrees** (`.claude/worktrees/`, Codex worktrees, or similar) — they are harness state, not repo content.
 - **Cargo.lock** changes belong with the parent commit (it records the new pointers
   indirectly via path/patch deps).

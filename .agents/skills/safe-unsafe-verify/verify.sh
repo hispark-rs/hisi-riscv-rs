@@ -54,6 +54,17 @@ unsafe_count="$(grep -RIn --include='*.rs' 'unsafe' "$HAL_DIR/src" | wc -l | tr 
           printf -- "- %s:%s: %s wraps or reaches unsafe within the next 40 lines\n" "${file#$ROOT/}" "$line" "$fn_name"
         fi
       done
+  echo
+  echo "## Critical-Section Discipline Candidates"
+  echo
+  echo "Heuristic only. Review each irq-disabled / critical-section region for waits,"
+  echo "transfers, bulk work, user callbacks, block_on, delay, and borrows crossing await."
+  echo
+  grep -RInE --include='*.rs' 'critical_section::with|interrupt::free|disable\(|enable\(' "$HAL_DIR/src" \
+    | sed "s#^$ROOT/##" \
+    | while IFS=: read -r file line rest; do
+        printf -- "- %s:%s: %s\n" "$file" "$line" "$rest"
+      done
 } > "$OUT"
 
 if [ "$AUDIT_ONLY" -eq 0 ]; then

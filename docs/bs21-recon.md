@@ -3,10 +3,10 @@
 来源:`/root/fbb_bs2x`(HiSpark `fbb_bs2x`,部分稀疏检出)。本文是后续所有阶段的 ground truth,角色等同 `fbb_ws63` 之于 WS63。
 
 > **里程碑 M1 — 已达成（2026-06-07）。** BS21 的 `blinky` + `uart_hello`(`examples/bs21/`,
-> `--features chip-bs21` 的 HAL + BS21 `memory.x`)在 `qemu-system-riscv32 -M bs21` 上**端到端启动**:
+> `--features chip-bs21,unstable` 的 HAL + BS21 `memory.x`)在 `qemu-system-riscv32 -M bs21` 上**端到端启动**:
 > uart_hello 打印横幅(UART0 @ 0x52081000),blinky 翻转 GPIO0(@ 0x57010000,0 条非法指令陷阱)。
 > `ws63-qemu/scripts/bs21-smoke-test.sh` 全绿;WS63 不回归(`-M ws63` + 5/5 qtest 仍绿)。
-> 落地:`crates/pac/bs2x-pac`、`crates/hisi-riscv-hal`(`chip-ws63` 默认 / `chip-bs21`)、`crates/hisi-riscv-rt`(芯片门控)、
+> 落地:`crates/pac/bs2x-pac`、`crates/hisi-riscv-hal`(`chip-ws63` 默认 / `chip-bs21,unstable`)、`crates/hisi-riscv-rt`(芯片门控)、
 > `examples/bs21/`(独立 workspace)、`ws63-qemu` 的 `hw/riscv/{hisi_riscv31.h,bs21.c}` + `-M bs21`。
 > **推后(随连接性):** linx131 自定义 ISA 解码、ROM 拦截、全外设对齐、共享模型拆到
 > `hisi_riscv31.c`(`CONFIG_HISI_RISCV31`)、CPU 改名 `hisi-riscv31`、BLE/SLE 厂商 blob。
@@ -87,5 +87,5 @@ ROM 驻留 secure-libc/printf:`memset_s=0x3d1dc`、`memcpy_s=0x3da4e`、`sprintf
 ## M1 路径(关键结论)
 
 BS21 的 **Rust blinky + uart_hello 只用标准 RV32IMFC** → **不需要 linx131 解码器,也不需要 ROM 拦截**(那些是厂商 C 固件的事,随连接性推后)。
-故 M1 = 现有 `ws63` 工具链 + 一个 `-M bs21` QEMU 机器(标准 riscv + LOCI 中断模型 + BS21 内存图/UART/GPIO)+ `chip-bs21` 的 HAL(GPIO/UART)+ BS21 `memory.x`。
+故 M1 = 现有 `ws63` 工具链 + 一个 `-M bs21` QEMU 机器(标准 riscv + LOCI 中断模型 + BS21 内存图/UART/GPIO)+ `chip-bs21,unstable` 的 HAL(GPIO/UART)+ BS21 `memory.x`。
 **M1 后续进展（2026-06 至今）**:问题 5(UART/GPIO 寄存器同 WS63 IP)+ 问题 2(LOCI CSR 同族)均已确认(见 QEMU 验证 + 5/5 smoke 绿)。BS21/BS20 的全外设覆盖已在 QEMU 上实证(SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration)；链接脚本集成完成；async/embassy 已就位。阶段 1 HIL 脚手架已准备好,待真机到位。

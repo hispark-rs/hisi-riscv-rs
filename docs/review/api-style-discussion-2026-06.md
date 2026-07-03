@@ -191,7 +191,7 @@ A strong, esp-hal-aligned base. These are already nailed — don't re-open them:
 
 `default = ["chip-ws63", "rt", "dep:critical-section"]`; `chip-ws63` **XOR** `chip-bs21`, each pulling exactly one PAC. Mutual exclusion is enforced correctly by `compile_error!` (`lib.rs:32`). But mutually-exclusive features violate Cargo's additivity rule, with three concrete consequences:
 
-- **`--all-features` cannot resolve** (pulls both PACs) — acknowledged in `Cargo.toml:150`; CI replaces it with a matrix `["chip-ws63,rt,async,embassy", "chip-bs21,rt"]`.
+- **`--all-features` cannot resolve** (pulls both PACs) — acknowledged in `Cargo.toml:150`; CI replaces it with a matrix `["chip-ws63,rt,async,embassy", "chip-bs21,rt,unstable"]`.
 - **docs.rs renders wrong** — **no `[package.metadata.docs.rs]`** at all, so docs.rs builds default features on its default *host* target (no riscv target, may not render the BS21 surface). This is esp-hal's single most important multi-chip-docs move, and it's absent.
 - **semver-checks default ambiguity** — the default build is WS63-only; the BS2X surface isn't checked by the default invocation.
 

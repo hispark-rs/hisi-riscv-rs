@@ -15,12 +15,12 @@ use hisi_riscv_hal::Peripherals;
 use hisi_riscv_hal::keyscan::Keyscan;
 use hisi_riscv_hal::pdm::Pdm;
 use hisi_riscv_hal::qdec::Qdec;
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
+use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
 use hisi_riscv_rt::entry;
 
-fn put_dec_i16(uart: &Uart<'_, impl core::any::Any>, v: i16) {
+fn put_dec_i16(uart: &Uart<'_, impl UartInstance>, v: i16) {
     if v < 0 {
-        uart.write(0, b"-");
+        uart.write(b"-");
     }
     let mut n = v.unsigned_abs() as u32;
     let mut buf = [0u8; 6];
@@ -33,36 +33,33 @@ fn put_dec_i16(uart: &Uart<'_, impl core::any::Any>, v: i16) {
             break;
         }
     }
-    uart.write(0, &buf[i..]);
+    uart.write(&buf[i..]);
 }
 
 #[entry]
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, UartConfig::default());
-    uart.write(0, b"\r\nBS2X HID demo (KEYSCAN + QDEC)\r\n");
+    uart.write(b"\r\nBS2X HID demo (KEYSCAN + QDEC)\r\n");
 
     // KEYSCAN — read one key from a 3x3 matrix.
     let ks = Keyscan::new(p.KEYSCAN, 3, 3);
     let key = ks.read_key();
     let key_ok = match key {
         Some(k) => {
-            uart.write(0, b"  key: row=");
+            uart.write(b"  key: row=");
             put_dec_i16(&uart, k.row as i16);
-            uart.write(0, b" col=");
+            uart.write(b" col=");
             put_dec_i16(&uart, k.col as i16);
-            uart.write(
-                0,
-                if k.pressed {
-                    b" pressed\r\n"
-                } else {
-                    b" released\r\n"
-                },
-            );
+            uart.write(if k.pressed {
+                b" pressed\r\n"
+            } else {
+                b" released\r\n"
+            });
             k.row == 2 && k.col == 1 && k.pressed
         }
         None => {
-            uart.write(0, b"  key: none\r\n");
+            uart.write(b"  key: none\r\n");
             false
         }
     };
@@ -70,28 +67,28 @@ fn main() -> ! {
     // QDEC — read the signed accumulated count.
     let qd = Qdec::new(p.QDEC);
     let count = qd.read_count();
-    uart.write(0, b"  qdec count = ");
+    uart.write(b"  qdec count = ");
     put_dec_i16(&uart, count);
-    uart.write(0, b"\r\n");
+    uart.write(b"\r\n");
     let qdec_ok = count == -5;
 
     // PDM — bring up the audio path and CAPTURE 4 PCM samples from the UP FIFO.
     let pdm = Pdm::new(p.PDM);
     let mut samples = [0u32; 4];
     let got = pdm.capture(&mut samples);
-    uart.write(0, b"  pdm captured ");
+    uart.write(b"  pdm captured ");
     put_dec_i16(&uart, got as i16);
-    uart.write(0, b" samples, [0]=");
+    uart.write(b" samples, [0]=");
     put_dec_i16(&uart, (samples[0] >> 16) as i16);
-    uart.write(0, b"\r\n");
+    uart.write(b"\r\n");
     // The model feeds an ascending ramp ((n+1)<<16); a real capture is monotonic.
     let pdm_ok =
         got == 4 && samples[0] == 1 << 16 && samples[1] == 2 << 16 && samples[3] == 4 << 16;
 
     if key_ok && qdec_ok && pdm_ok {
-        uart.write(0, b"  HID demo OK\r\n");
+        uart.write(b"  HID demo OK\r\n");
     } else {
-        uart.write(0, b"  HID demo MISMATCH\r\n");
+        uart.write(b"  HID demo MISMATCH\r\n");
     }
 
     loop {

@@ -15,12 +15,13 @@ on hisi-riscv-hal unsafe code:
 | **1. Inventory** | Count and map all `unsafe` occurrences | `verify.sh` + `grep` | ~10 s |
 | **2. SAFETY comment baseline** | Run `clippy::undocumented_unsafe_blocks` and record warnings | clippy | ~30 s |
 | **3. Unsound check** | Scan safe→unsafe forwarding candidates for manual review | heuristic grep | ~30 s |
-| **4. Miri readiness** | Report whether Miri is available for host-testable paths | rustup/cargo probe | ~5 s |
-| **5. Kani readiness** | Report whether Kani harnesses/tooling exist | file/tool probe | ~5 s |
+| **4. Critical-section discipline** | Scan irq-disabled / `critical_section::with` sites for long work, waits, and callbacks | heuristic grep + manual review | ~10 s |
+| **5. Miri readiness** | Report whether Miri is available for host-testable paths | rustup/cargo probe | ~5 s |
+| **6. Kani readiness** | Report whether Kani harnesses/tooling exist | file/tool probe | ~5 s |
 
 > **User-invoked** (`/safe-unsafe-verify`). Run this before any release that touches
 > unsafe code. Today this is a readiness/baseline tool, not a proof that the crate is
-> sound. Step 4–5 require manual harness setup; the skill reports what's missing and
+> sound. Step 5–6 require manual harness setup; the skill reports what's missing and
 > does not auto-install tools.
 
 ---
@@ -97,7 +98,43 @@ cargo clippy --no-deps --no-default-features --features chip-ws63 \
 >   -W clippy::undocumented_unsafe_blocks
 > ```
 
-### Step 4 — Miri dynamic UB detection
+### Step 4 — Critical-section discipline
+
+This HAL targets the common product shapes:
+
+- **single hart + no A extension** (WS63 current path): RMW/CAS is implemented with
+  `portable-atomic` over `critical-section-single-hart`, i.e. short irq-disabled
+  regions.
+- **multi hart + A extension** (future/other products): single-word state can use
+  hardware atomics, but compound invariants still need a real lock or
+  `critical-section` boundary.
+
+Review rule: `critical_section::with` and irq-disabled regions may protect only short
+Rust memory metadata: singleton/channel claims, refcounts, small state enums, waker
+slots, and IRQ bookkeeping. They must not wait for hardware, perform transfers, bulk
+copy/cache-maintain large buffers, call user callbacks/closures, `delay`, `block_on`,
+or hold borrows across `.await`.
+
+Public APIs must not expose a safe "run arbitrary closure with interrupts masked"
+surface. If an escape hatch such as `interrupt::free` is retained, it stays
+`unstable` and `unsafe` so the short/non-blocking contract is explicit at the call
+site.
+
+Manual scan:
+```bash
+rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-riscv-hal/src
+```
+
+Flag any closure / irq-disabled region containing `while`, `loop`, `wait`, `delay`,
+`transfer`, `read_dma`, `write_dma`, `block_on`, `callback`, `Fn`, or unknown user
+calls. A long hardware transaction should be split into: short CS to claim / mark
+`Busy`, outside-CS MMIO or wait, short CS to clear state and wake.
+
+Also flag safe raw PAC escape hatches (`register_block()` returning a PAC
+`RegisterBlock` reference). They bypass typed-config and unstable driver gates; keep
+them `unstable` + `unsafe`, or replace them with a typed wrapper.
+
+### Step 5 — Miri dynamic UB detection
 
 Miri cannot run no_std RISC-V code directly. The check works on **host-testable
 standalone functions** only (pure-logic helpers, const fns, newtype methods).
@@ -112,7 +149,7 @@ If Miri is not installed:
 rustup +nightly component add miri
 ```
 
-### Step 5 — Kani model checking (manual harness)
+### Step 6 — Kani model checking (manual harness)
 
 Kani verifies pure-logic functions exhaustively. Candidates in the HAL:
 
@@ -146,6 +183,7 @@ After running, the skill produces a **verification readiness report**:
 Unsafe occurrences:  N
 Clippy undocumented: M warnings
 Forwarding candidates: K
+Critical-section review items: L
 Miri: available / missing
 Kani harnesses: present / missing
 ```

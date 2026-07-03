@@ -2,6 +2,8 @@
 
 `examples/ws63/` 下 18 个示例。下表的成功标记串、失败标记串、是否需接线均直接取自各 `examples/ws63/<name>/src/main.rs`。所有 UART 输出走 **UART0 @ 115200 8N1**；`semihost_selftest` 走 RISC-V 半主机（semihosting），不走 UART。
 
+0.6.0 起默认 HAL 只暴露 HIL/soundness 已闭合的稳定 API；演示实验性面的示例会在自己的 `Cargo.toml` 显式启用 `unstable`，例如 `dma_loopback`、`async_delay`、`async_bus`、`embassy_*`、`reset_demo`。
+
 如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。HIL 标记串汇总见 [HIL 标记串与环境变量](07-hil-markers.md)。
 
 ## 一览表

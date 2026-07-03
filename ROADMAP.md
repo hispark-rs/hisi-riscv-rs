@@ -115,7 +115,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
 >    并经 ws63-qemu 的 `timer_irq`/`gpio_irq` 端到端验证——这是首个**有软件在环验证信号**的正确性修复。
 > 5. **I2C 超时**（2026-06-01）：`i2c.rs` 全部无界忙等改为有界 `wait_until` → `I2cError::Timeout`（对齐 SPI）。
 > 6. **system reset**（2026-06-01）：`software_reset` 触发 `GLB_CTL_M(0x40002110)` bit2 全芯片复位、`reset_reason`
->    解码 `SYS_RST_RECORD_0(0x400000A0)`（WDT/软件/上电），经 ws63-qemu 新增复位模型 + `reset_demo` 往返验证。
+>    解码 `SYS_RST_RECORD_0(0x400000A0)`（WDT/软件/上电），经 ws63-qemu 新增复位模型 + `reset_demo` 往返验证。0.6.0 默认稳定面只保留 `reset_reason`; `software_reset*` 需 `unstable`，直到有 opt-in 复位 HIL。
 > 7. **死代码清理**（2026-06-01）：删除 `ClockControl`/`PeripheralGuard`/`REF_COUNTS` RAII 时钟守卫、
 >    `DriverMode`/`Blocking`/`Async` marker、`DmaEligible`/`DmaChannelFor` 绑定 trait、safety.rs 的恒真计数断言；
 >    保留 `Peripheral` enum + `cken_info` 门控图 + `PERIPHERAL_COUNT` 及 MMIO 地址范围/算术溢出断言。
@@ -163,7 +163,7 @@ HAL 是手段，不是终点。一切排序以"离能联网更近"为准绳。
   恒返回 `PowerOn` 的假值，按 fbb_ws63 `reboot_porting.c` 实现——`software_reset` 置 `GLB_CTL_M(0x40002110)` bit2
   触发全芯片复位；`reset_reason` 读 `SYS_RST_RECORD_0(0x400000A0)` 解码 WDT(bit0)/软件(bit1)/上电(bit3) 并经
   `SYS_DIAG_CLR_1(0x400000A4)` 清位。ws63-qemu 新增对应复位模型，`reset_demo` 示例端到端验证往返
-  （冷启动 → `software_reset` → 重启 → `reset_reason`=Software）。
+  （冷启动 → `software_reset` → 重启 → `reset_reason`=Software）。0.6.0 起 `software_reset*` 在 `unstable` 后，默认稳定 API 只承诺 `reset_reason`。
 - ✅ **GPIO pull**（中，已修 2026-06-01）：`init_input` 不再静默忽略 `InputConfig.pull`——经 IO_CONFIG pad 控制寄存器
   （`pad_gpio_NN_ctrl` @ IO_CONFIG+0x800+N*4，PE=bit9/PS=bit10）读-改-写落地，保留 drive/Schmitt/IE 位（pad 仅 0..=14 有，
   对齐 `io_config::build_pad_ctrl` 编码）。新增 `InterruptTrigger`（上升/下降沿、高/低电平）+ `Input::set_interrupt_trigger`

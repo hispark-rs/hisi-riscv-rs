@@ -10,7 +10,7 @@
 #![no_main]
 
 use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::dma::{DmaChannelConfig, DmaDriver};
+use hisi_riscv_hal::dma::DmaDriver;
 use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
 use hisi_riscv_hal::usb::{Speed, Usb};
 use hisi_riscv_rt::entry;
@@ -19,56 +19,45 @@ use hisi_riscv_rt::entry;
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, UartConfig::default());
-    uart.write(0, b"\r\nBS2X DMA mem-to-mem (MDMA ch0)\r\n");
+    uart.write(b"\r\nBS2X DMA mem-to-mem (MDMA ch0)\r\n");
 
-    let src: [u32; 4] = [0xDEAD_BEEF, 0x1234_5678, 0xCAFE_BABE, 0x0BAD_F00D];
-    let mut dst: [u32; 4] = [0; 4];
+    #[repr(C, align(32))]
+    struct Words([u32; 4]);
+    static SRC: Words = Words([0xDEAD_BEEF, 0x1234_5678, 0xCAFE_BABE, 0x0BAD_F00D]);
+    static mut DST: Words = Words([0; 4]);
+    // SAFETY: this example is single-threaded and owns the DMA destination buffer.
+    let dst: &'static mut [u32] = unsafe { &mut (*core::ptr::addr_of_mut!(DST)).0 };
 
-    let mut dma = DmaDriver::new_dma(p.DMA);
-    dma.enable_controller();
-    let cfg = DmaChannelConfig::default(); // MemToMem, 32-bit, inc src+dst
-    dma.configure_channel(
-        0,
-        src.as_ptr() as u32,
-        dst.as_mut_ptr() as u32,
-        src.len() as u16,
-        &cfg,
-    );
-    dma.enable_channel(0);
+    let dma = DmaDriver::new_dma(p.DMA);
+    let chs = dma.split_channels().expect("DMA channels already claimed");
+    let transfer = dma
+        .start_mem_to_mem(chs.ch0, &SRC.0[..], dst)
+        .expect("DMA start failed");
+    let (_dma, _ch0, _src, dst) = transfer.wait().expect("DMA wait failed");
 
-    // Wait for transfer-complete (bit 0 of the done mask).
-    let mut spins = 0u32;
-    while dma.raw_interrupt_status().0 & 0x1 == 0 {
-        spins += 1;
-        if spins > 1_000_000 {
-            break;
-        }
-        core::hint::spin_loop();
-    }
-
-    let dma_ok = dst == src;
+    let dma_ok = dst == &SRC.0[..];
 
     // USB — read the DWC OTG core-ID (presence check; full USB stack deferred).
     let mut usb = Usb::new(p.USB);
     let usb_ok = match usb.device_enumerate() {
         Ok(Speed::High) => {
-            uart.write(0, b"  usb device enumerated at high speed\r\n");
+            uart.write(b"  usb device enumerated at high speed\r\n");
             true
         }
         Ok(_) => {
-            uart.write(0, b"  usb device enumerated (other speed)\r\n");
+            uart.write(b"  usb device enumerated (other speed)\r\n");
             true
         }
         Err(_) => {
-            uart.write(0, b"  usb bring-up failed\r\n");
+            uart.write(b"  usb bring-up failed\r\n");
             false
         }
     };
 
     if dma_ok && usb_ok {
-        uart.write(0, b"  DMA OK\r\n");
+        uart.write(b"  DMA OK\r\n");
     } else {
-        uart.write(0, b"  DMA MISMATCH\r\n");
+        uart.write(b"  DMA MISMATCH\r\n");
     }
 
     loop {

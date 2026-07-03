@@ -51,7 +51,35 @@ For each module that contains `unsafe`, check:
 3. **Drop safety**: does `impl Drop` cancel-then-quiesce hardware? (DMA channels, clocks.)
    If not, a panic while the hardware is active can leave the system in an inconsistent state.
 
-### Phase 4 — Unsafe trait impls
+### Phase 4 — Atomic / critical-section discipline
+
+Audit irq-disabled and `critical_section::with` regions. Product assumptions:
+
+- Common current target: **single hart + no A extension**. RMW/CAS comes from
+  `portable-atomic` over `critical-section-single-hart`, so critical sections
+  disable interrupts and must stay short.
+- Common future/other target: **multi hart + A extension**. Single-word state may
+  use hardware atomics, but compound invariants still require a real lock,
+  critical-section boundary, or platform synchronization.
+- Other combinations are not default product targets; do not assume disabling the
+  current hart's interrupts provides cross-hart mutual exclusion.
+
+For each `critical_section::with`, `interrupt::free`, explicit interrupt disable, or
+manual restore pattern:
+
+1. Is the protected work only short Rust memory metadata (claim flag, refcount,
+   state enum, waker slot, IRQ bookkeeping)?
+2. Flag as a soundness/realtime issue if it waits for hardware, polls FIFO/DMA/clock,
+   performs SPI/UART/I2C/DMA transfers, bulk copies or large cache maintenance,
+   delays, `block_on`s, calls user callbacks/closures/trait objects, or holds a
+   borrow across `.await`.
+3. For ISR paths, verify the handler only ack/record/wake while inside internal
+   critical sections. User callback logic must run outside HAL-held critical
+   sections; if an API intentionally invokes an ISR-context callback, it must be
+   documented as ISR-context and must not be called while holding the HAL's
+   critical section.
+
+### Phase 5 — Unsafe trait impls
 
 Check each `unsafe impl Send` / `unsafe impl Sync`:
 1. Is the type `Send`/`Sync` *because* it only contains `Send`/`Sync` fields (no interior
@@ -60,7 +88,7 @@ Check each `unsafe impl Send` / `unsafe impl Sync`:
    guard that must not cross an interrupt boundary)?
 3. Are all `unsafe impl Send for ...` justified in a SAFETY comment?
 
-### Phase 5 — Report
+### Phase 6 — Report
 
 Output a markdown report:
 
@@ -72,6 +100,7 @@ Output a markdown report:
 - **Tier D (missing SAFETY)**: M
 - **Soundness issues found**: P
 - **Unsound safe→unsafe forwarding**: Q
+- **Critical-section discipline issues**: R
 
 ## By severity
 
@@ -93,6 +122,9 @@ Output a markdown report:
 
 ## Unsafe trait impls
 - `unsafe impl Send for ...`: file:line, justification ✅/❌
+
+## Critical-section discipline
+- `src/foo.rs:LINE`: acceptable short metadata update / issue and suggested split
 ```
 
 ## Important rules
@@ -103,4 +135,4 @@ Output a markdown report:
 - **MMIO reads** (e.g. `r.spi_dr().read().bits(rx)`) are still `unsafe` — the read
   address could be wrong. Flag missing SAFETY comments on reads too.
 - **Inline asm!** (`core::arch::asm!`) is unsafe by definition — check that the
-  assembly instruction and argument passing are correctly documented.
+  assembly instruction and argument passing are correctly documented."""

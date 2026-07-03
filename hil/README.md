@@ -115,7 +115,7 @@ probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）** 逐�
   结构性地址映射不变式（不属于任何单个 HAL 驱动）。
 - **`hisi-riscv-hal/tests/hil.rs`** —— HAL **驱动**在板测试（GPIO/TCXO/UART/clock/system，
   及 `#[ignore]` 的 timer/DMA）。它们与所测代码同处一 crate，随 HAL 发布与运行，并继承 HAL 的芯片
-  门控（`chip-ws63` 默认，`chip-bs21` 经 `--features chip-bs21`）。在板跑（用 `--test hil`
+  门控（`chip-ws63` 默认，实验性 `chip-bs21` 经 `--features chip-bs21,unstable`）。在板跑（用 `--test hil`
   只构建这一 embedded-test 集成测试目标——HAL 的主机单测在 `src/*.rs` 的 lib 测试目标里用默认
   libtest harness，而裸机 `riscv32imfc` target 没有 `test`/`std` crate，不加 `--test hil` 的
   裸 `cargo test --target riscv…` 会去构建那个 lib 测试目标并链接失败）：

@@ -1,6 +1,6 @@
 ---
 name: typed-config
-description: Make a hisi-riscv-hal driver's CONFIG surface "if it compiles, it runs on silicon" — design, review, or tighten a Config / new() / configure() so a value you can WRITE is a value that RUNS, with no parameter that compiles but is silently clamped, truncated, left without a clock, or dependent on an unenforced precondition. Use when adding a driver, reviewing/PR-ing a config API, tightening one for the 0.5.0 config pass, or diagnosing a "compiles but wrong/dead on hardware" bug. Applies the project's primary API convention (see AGENTS.md "Typed config").
+description: Make a hisi-riscv-hal driver's CONFIG surface "if it compiles, it runs on silicon" — design, review, or tighten a Config / new() / configure() so a value you can WRITE is a value that RUNS, with no parameter that compiles but is silently clamped, truncated, left without a clock, or dependent on an unenforced precondition. Use when adding a driver, reviewing/PR-ing a config API, tightening one for the 0.5.0 config pass, or diagnosing a "compiles but wrong/dead on hardware" bug. Applies the project's primary API convention (see root Agent Instructions "Typed config").
 ---
 
 # Typed config — "if it compiles, it runs on silicon"
@@ -87,4 +87,4 @@ bound — don't trust the PAC/SDK width alone.
 
 `crates/hisi-riscv-hal/src/pwm.rs` — `PwmPeriod` (u16, `from_count`/`try_from_hz`),
 `Duty` (0..=100), `configure` self-brings-up the clock tree, `SetDutyCycle` kept.
-AGENTS.md → "Typed config — if it compiles, it runs on silicon".
+Root Agent Instructions (`CLAUDE.md` / `AGENTS.md`) → "Typed config — if it compiles, it runs on silicon".

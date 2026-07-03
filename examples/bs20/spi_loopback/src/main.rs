@@ -24,7 +24,7 @@ use hisi_riscv_rt::entry;
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, UartConfig::default());
-    uart.write(0, b"\r\nBS2X SPI loopback (SPI0, Mode0, 1 MHz)\r\n");
+    uart.write(b"\r\nBS2X SPI loopback (SPI0, Mode0, 1 MHz)\r\n");
 
     let mut spi = Spi::new_spi0(
         p.SPI0,
@@ -38,9 +38,9 @@ fn main() -> ! {
     let tx = [0xA5u8, 0x3C, 0xFF, 0x01];
     let mut rx = [0u8; 4];
     match spi.transfer(&tx, &mut rx) {
-        Ok(()) if rx == tx => uart.write(0, b"  SPI loopback OK\r\n"),
-        Ok(()) => uart.write(0, b"  SPI loopback MISMATCH\r\n"),
-        Err(_) => uart.write(0, b"  SPI error (timeout)\r\n"),
+        Ok(()) if rx == tx => uart.write(b"  SPI loopback OK\r\n"),
+        Ok(()) => uart.write(b"  SPI loopback MISMATCH\r\n"),
+        Err(_) => uart.write(b"  SPI error (timeout)\r\n"),
     }
 
     loop {
