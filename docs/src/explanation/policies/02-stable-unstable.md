@@ -30,13 +30,20 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 
 软门而非硬删的好处：一个被遗漏的 stable→unstable 引用不会编译失败（它通过 `pub(crate)` 还能编过），而且 host 单测照样能跑（`#[cfg(test)]` 模块在 crate 内能看到 `pub(crate)` 项）。
 
-模块级用 `unstable_module!` 宏（`#[cfg(feature="unstable")] pub mod` + `#[cfg(not)] #[allow(unused)] pub(crate) mod`，esp-hal 同款 crate-local 形式）。
+模块级用两类 crate-local 宏：
+
+- `unstable_module!` 是**模块软门**：`unstable` 开时 `pub mod`，默认时 `pub(crate) mod` + `#[doc(hidden)]`/
+  `#[allow(dead_code)]`。适合 DMA 这类 crate 内仍可能被测试或其它模块引用的实验面。
+- `unstable_driver!` 是**驱动硬门**：`unstable` 开时才编译 `pub mod`，默认时整个模块不存在。适合 standalone
+  且默认稳定面不依赖的驱动/集成层，例如 `asynch` / `embassy` 这类 feature + unstable 双重同意的路径。
 
 ### 门控规则（关键）
 
 - **inherent impl 块不挂属性** —— `instability` 对 impl 块是**硬删**（关时整个消失），会让被它调的私有函数变 dead_code。只挂 impl 块里的**各个 pub fn**（软门 `pub(crate)`，私有 helper 不受影响）。
 - **`impl Drop` 不挂** —— 保持它调的 helper 活着。
 - **trait impl 可以整块挂**（关时消失，安全）。
+- **standalone 实验驱动可用 `unstable_driver!` 硬门**，前提是默认稳定代码没有任何路径依赖该模块；否则用
+  `unstable_module!` 软门，保持 crate 内引用可编译。
 - **STABLE 的 pub fn 签名里不能出现 UNSTABLE 类型**（`private_interfaces` lint）。如果 `write_dma`（STABLE）接收 `DmaChannel`，那 `DmaChannel` 也必须 STABLE。
 - **`async`/`embassy` 不等于自动稳定。** `async` feature 只表示用户同意编译 async trait impl；当前只有 SPI/I2C 的 blocking-backed async traits 随 `async` 暴露。`asynch::block_on`、`IrqSignal`、GPIO wait、timer async delay、UART async I/O、DMA/LSADC async hook 还需 `unstable`。`embassy` 模块也需 `embassy + unstable`。
 
@@ -62,11 +69,14 @@ hisi-riscv-hal = { version = "0.6", features = ["chip-ws63"] }
 
 ## 毕业流程（unstable → stable）
 
-一个接口写了 HIL 测试并在硅片上跑过后，**删掉 `#[instability::unstable]`**（或把模块从 `unstable_module!` 里移出来）即可。软门下项本来就在编译里（只是 `pub(crate)`），删属性瞬间从 `pub(crate)` 变 `pub`，lint 状态不变 —— **零残留、零新 lint**。可选地换成 `#[instability::stable(since = "0.x.0")]` 保留一个"已在 X 版稳定"的文档标注。
+一个接口写了 HIL 测试并在硅片上跑过后，**删掉 `#[instability::unstable]`**（或把模块从 `unstable_module!` /
+`unstable_driver!` 里移出来）即可。软门下项本来就在编译里（只是 `pub(crate)`），删属性瞬间从
+`pub(crate)` 变 `pub`，lint 状态不变；硬门毕业时要额外确认默认 feature 组合也能编译。可选地换成
+`#[instability::stable(since = "0.x.0")]` 保留一个"已在 X 版稳定"的文档标注。
 
-## 构建矩阵
+## 发布门控矩阵
 
-CI 验证正例组合（全过 `clippy -D warnings`），并额外确认 BS2X stable-off 负例会失败：
+发布前的门控应覆盖这些正例组合（全过 `clippy -D warnings`），并额外确认 BS2X stable-off 负例会失败：
 
 ```
 {ws63,rt}  {ws63,rt,unstable}  {ws63,rt,async,embassy}

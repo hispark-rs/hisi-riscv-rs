@@ -4,7 +4,7 @@
 
 0.6.0 起默认 HAL 只暴露 HIL/soundness 已闭合的稳定 API；演示实验性面的示例会在自己的 `Cargo.toml` 显式启用 `unstable`，例如 `dma_loopback`、`async_delay`、`async_bus`、`embassy_*`、`reset_demo`。
 
-如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。HIL 标记串汇总见 [HIL 标记串与环境变量](07-hil-markers.md)。
+如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。HIL 脚本环境变量见 [HIL 脚本环境变量](07-hil-markers.md)。
 
 ## 一览表
 
@@ -27,8 +27,11 @@
 | `semihost_selftest` | CPU 自检（M/F 扩展、mcycle），半主机退出码 | semihosting | 退出码 `0`，console `semihost_selftest: PASS` | 否⁸ | ✅ | ❌⁸ |
 | `custom_memory` | 验证 per-example `memory.x` 覆盖 rt 自带 | UART | `custom_memory: OK (per-example memory.x in effect)` | 否 | ✅ | ⚠️ |
 | `wifi_blob_link` | `--whole-archive` 链接 Wi-Fi ROM-data blob + 重定位证明 | UART | `BLOB LINK SPIKE: PASS` | 否⁷ | ✅ | ⚠️ |
+| `xip_flash_clk_hazard` | 演示 XIP 执行中切 flash 时钟会挂死 | UART | `XIP-HAZARD: before flash-clock switch` | 否 | ✅ | ❌¹⁰ |
 
-图例（**真机**列）：✅ 已在真实硅片上验证通过；⚠️ QEMU 通过、真机尚未逐一验证（bring-up 进行中）；❌ 该观测通道真机不适用。截至 2026-06-14，只有 `blinky` 经硅片确认；其余 UART 类示例的真机标记串套件正在 bring-up（见 [HIL 测试框架](../explanation/07-hil-framework.md)）。
+图例（**真机**列）：✅ 已在真实硅片上验证通过；⚠️ QEMU 通过、真机示例 smoke 尚未逐一验证；❌ 真机不适用或不纳入常规 HIL。
+HAL 驱动级 embedded-test HIL 是另一条轨道：截至 2026-07-03，WS63 HAL 套件 26/26 真机通过，stable API 证据见
+[Stable API 清单与门控状态](10-stable-api.md)。
 
 注：
 1. `gpio_irq` / `embassy_async_io` 把 GPIO0 pin0 设为输出，依赖 ws63-qemu 建模的 输出→输入 自环产生边沿；真机需相应注入/接线。
@@ -40,6 +43,8 @@
 7. `rf_port_demo` / `wifi_blob_link` 需厂商 blob `libwifi_rom_data.a`（ws63-RF 子模块）链接到位。
 8. `semihost_selftest` 需 QEMU `-semihosting`；真机半主机陷阱为 no-op，`exit` 只自旋。
 9. `uart_hello` 真机上已确认能跑到 `main` 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。
+10. `xip_flash_clk_hazard` 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，
+    常规 HIL 不运行它。
 
 ## 成功标记串（逐字，用于 grep）
 
@@ -61,6 +66,7 @@
 | `semihost_selftest` | console `semihost_selftest: PASS`（半主机退出码 0） |
 | `custom_memory` | `custom_memory: OK (per-example memory.x in effect)` |
 | `wifi_blob_link` | `BLOB LINK SPIKE: PASS` |
+| `xip_flash_clk_hazard` | `XIP-HAZARD: before flash-clock switch`（且不出现 `XIP-HAZARD: after switch`） |
 
 > `blinky` 无 UART 输出，只能由 GPIO0 翻转观测。
 
@@ -76,6 +82,7 @@
 | `semihost_selftest` | console `semihost_selftest: FAIL`（退出码 1）；`semihost_selftest: PANIC`（退出码 2） |
 | `custom_memory` | `custom_memory: FAIL (unexpected memory.x)` |
 | `wifi_blob_link` | `BLOB LINK SPIKE: FAIL`（验证少于 13/13） |
+| `xip_flash_clk_hazard` | `XIP-HAZARD: after switch (BUG: should not appear)` |
 
 其余示例（`blinky`、`gpio_irq`、`timer_irq`、`reset_demo`、`async_delay`、`embassy_*`、`uart_hello`）无显式 FAIL 串；失败表现为成功标记串始终不出现。各 UART 示例的 `#[panic_handler]` 仅静默自旋（不输出），唯一例外是 `semihost_selftest`（写 `semihost_selftest: PANIC\n` 并 `exit(2)`）。
 

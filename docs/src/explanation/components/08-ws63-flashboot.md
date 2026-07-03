@@ -35,7 +35,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 ```
 
 - 它是一个 `[[bin]]`（`Cargo.toml:13-15`，产物名 `flashboot`），仅依赖 `riscv` 与 `critical-section`（`Cargo.toml:20-22`）。
-- 在工作区中它是 `members` 之一（`cargo check --workspace` 仍覆盖），但**不在 `default-members`** 中，默认 `cargo build` 不构建它（根 `Cargo.toml` `default-members` 仅含 `ws63-pac`/`hisi-riscv-hal`/`hisi-riscv-rt`）。
+- 在工作区中它是 `members` 之一（`cargo check --workspace` 仍覆盖），但**不在 `default-members`** 中，默认 `cargo build` 不构建它（根 `Cargo.toml` `default-members` 是库 + WS63 示例集合，不含 `chips/ws63/flashboot`）。
 - 它逻辑上位于 PAC/HAL 之"下"：在硬件上电后、Rust 应用（用 `hisi-riscv-rt` 启动 + `hisi-riscv-hal` 驱动）运行之"前"运行，但在代码上与三者完全解耦。
 
 ## 关键设计

@@ -64,7 +64,7 @@ cat /dev/ttyUSB0
 看完按 `Ctrl-C` 退出 `cat`。
 
 > blinky 自身不打印串口（它只翻转 GPIO），所以这里看到的是 **flashboot 的启动日志**，
-> 不是应用输出。UART0 接线与端口的细节见 [HIL 标记串与环境变量](../../reference/07-hil-markers.md)。
+> 不是应用输出。UART0 接线与端口的细节见 [HIL 脚本环境变量](../../reference/07-hil-markers.md)。
 
 ## 第 4 步：认识 HIL 冒烟测试
 

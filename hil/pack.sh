@@ -39,6 +39,7 @@ WS63_RS="${WS63_RS:-$HERE}"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
 CHIP="${CHIP:-ws63}"
 TARGET_DIR="$WS63_RS/examples/ws63/target/riscv32imfc-unknown-none-elf/release"
+ROOT_TARGET_DIR="$WS63_RS/target/riscv32imfc-unknown-none-elf/release"
 
 ARG="${1:?usage: pack.sh <program.elf|program.bin|example-name> [output.img]}"
 
@@ -54,15 +55,17 @@ resolve_input() {
     case "$a" in
         *.elf | *.bin) [ -f "$a" ] && { echo "$a"; return; } ;;
     esac
+    [ -f "$ROOT_TARGET_DIR/$a" ] && { echo "$ROOT_TARGET_DIR/$a"; return; }
+    [ -f "$ROOT_TARGET_DIR/$a.bin" ] && { echo "$ROOT_TARGET_DIR/$a.bin"; return; }
     [ -f "$TARGET_DIR/$a" ] && { echo "$TARGET_DIR/$a"; return; }
     [ -f "$TARGET_DIR/$a.bin" ] && { echo "$TARGET_DIR/$a.bin"; return; }
-    echo "ERROR: cannot resolve program '$a' (looked in $TARGET_DIR)" >&2
+    echo "ERROR: cannot resolve program '$a' (looked in $ROOT_TARGET_DIR and $TARGET_DIR)" >&2
     exit 1
 }
 
 INPUT="$(resolve_input "$ARG")"
 BASE="$(basename "${INPUT%.*}")"
-IMG="${2:-$TARGET_DIR/$BASE.img}"
+IMG="${2:-$(dirname "$INPUT")/$BASE.img}"
 
 ADDR_ARGS=()
 [ -n "${APP_ADDR:-}" ] && ADDR_ARGS=(--app-addr "$APP_ADDR")

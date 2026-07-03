@@ -55,7 +55,7 @@ clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
   保留标准 `u16`/`&[u8]` + `Result`（`Result` 即 embedded-hal 的非法输入惯用法），不改 trait 签名。
 
 危险外设（`Wdt`/`PwmChannel`/`Output`）实现 scoped `Drop`（停表/关输出/回高阻）；逃生口按 HIL
-证据分别稳定或门控（如 `Watchdog::into_armed` 已验证，`PwmChannel::into_running` 仍是 unstable）。
+证据分别稳定或门控（如 `Watchdog::into_armed`/`leak` 已验证，`PwmChannel::into_running` 仍是 unstable）。
 DMA 提供拥有缓冲区的
 `Transfer` guard（`embedded_dma` bound + 缓存维护折进类型），safe 代码里 use-after-free 不可表达。
 每个收紧面都有 host newtype/property 测试，并在连接的真机经 HIL 套件（`tests/hil.rs`）复验。
@@ -128,13 +128,13 @@ DMA 提供拥有缓冲区的
 | 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`、`lsadc.rs` | 🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍按阶段 2 推进 |
 | 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言；模块头措辞夸大 | `safety.rs` | ✅ 阶段2已修：删除恒真断言 + 夸大措辞 |
 | 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 已清：async marker(`Blocking`/`Async`)、vestigial `DmaWord`、RAII 时钟守卫、`DmaEligible`/`DmaChannelFor` 均已删除；真正的异步层按 `async`/`unstable` 分层暴露 |
-| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | 🟡 已大幅缓解：ws63-qemu `smoke-test.sh` 用**真实固件**端到端验证（含异步/embassy 示例 + C SDK 交叉验证）；真机 HIL 冒烟仍待补（阶段 1 尾） |
+| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | ✅ 已破：ws63-qemu `smoke-test.sh` 用真实固件端到端验证；WS63 HAL embedded-test 套件已在真机通过（2026-07-03，26/26），stable 边界见参考页 |
 
 ## 改进项与排期
 
 按 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)（多数已完成，下记现状）：
 
-- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**大幅替代（`smoke-test.sh` 跑真实固件 + C SDK 交叉验证）；🟡 真机 HIL 冒烟仍待补。
+- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代（2026-07-03，26/26）。示例级 smoke 与连接性 HIL 继续按参考页分轨推进。
 - **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
 - **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
 - **阶段 4-5（porting 层 + HCC IPC + 连接性）**：HAL 之上接入 WiFi/BLE/SLE 协议栈所需的 porting 与 IPC 通道。

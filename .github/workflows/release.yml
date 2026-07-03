@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 
-# Toolchain + default target come from rust-toolchain.toml (stable + riscv32imc).
+# Toolchain + default target come from rust-toolchain.toml (`hisi-riscv` + riscv32imfc).
 
 jobs:
   # ── Create GitHub Release ─────────────────────────────────────
@@ -23,8 +23,8 @@ jobs:
       - name: Install hisi-riscv toolchain
         run: bash .github/scripts/install-toolchain.sh
 
-      # Build the default-members (libraries + blinky). blinky links and is packaged
-      # below; the experimental flashboot binary is not built/attached here.
+      # Build the default-members (libraries + WS63 examples). Only blinky is
+      # packaged below; the experimental flashboot binary is not built/attached here.
       - name: Build default members (release)
         run: cargo build --release
 

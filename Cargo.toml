@@ -32,12 +32,11 @@ members = [
     #   cargo test -p tests-hil --target riscv32imfc-unknown-none-elf --no-run
     "tests-hil",
 ]
-# default-members = the libraries + the blinky example (which links via hisi-riscv-rt's
-# exported linker scripts; see hisi-riscv-rt/build.rs + ws63-examples/blinky/build.rs).
-# ws63-flashboot is excluded: it is experimental and NOT secure boot
-# (see ws63-flashboot/README.md). It stays a workspace `member` so
-# `cargo check --workspace` covers it; build it explicitly with
-# `cargo build -p ws63-flashboot`.
+# default-members = the libraries + the WS63 example set (each example links via
+# hisi-riscv-rt's exported linker scripts; see hisi-riscv-rt/build.rs plus each
+# example's build.rs). ws63-flashboot and tests-hil stay workspace members but are
+# excluded from a plain `cargo build`: flashboot is experimental/non-secure-boot,
+# and tests-hil is an on-target test crate that must be run explicitly.
 default-members = [
     "crates/pac/ws63-pac",
     "crates/hisi-riscv-hal",

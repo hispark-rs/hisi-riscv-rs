@@ -1,6 +1,7 @@
-# HIL 标记串与环境变量
+# HIL 脚本环境变量
 
-HIL（hardware-in-the-loop）框架的标记串与环境变量参考。事实取自 `hil/hil-smoke.sh`、`hil/flash.sh`、`hil/pack.sh`、`hil/cargo-run-hw.sh`。
+HIL（hardware-in-the-loop）脚本的环境变量参考。事实取自 `hil/hil-smoke.sh`、`hil/flash.sh`、`hil/pack.sh`、`hil/cargo-run-hw.sh`。
+完整示例清单、成功标记串和失败标记串的唯一事实源是 [示例目录与验证标记串](02-examples.md)。
 
 HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运行步骤见 [运行 HIL 冒烟测试](../how-to/07-run-hil-tests.md)。
 
@@ -11,9 +12,10 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 | UART0 = `/dev/ttyUSB0` | 板子 UART0（示例输出） | 115200 8N1 |
 | `ttyACM0` | J-Link VCOM | — |
 
-## `hil-smoke.sh` 检查的标记串
+## `hil-smoke.sh` 当前检查的 grep 模式
 
-`hil-smoke.sh` 逐例烧录后读 UART，用 `grep -qE` 匹配下列模式（`check <example> <egrep> <desc>`）：
+`hil-smoke.sh` 逐例烧录后读 UART，用 `grep -qE` 匹配下列模式（`check <example> <egrep> <desc>`）。这是脚本行为参考，
+不是完整示例标记串清单；完整清单见 [示例目录与验证标记串](02-examples.md)。
 
 | 示例 | 匹配的 egrep 模式 | 描述 |
 |------|-------------------|------|
@@ -25,21 +27,6 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 | `i2c_scan` | `scan done|no devices` | I2C0 扫描 |
 
 `blinky`（GPIO 翻转无 UART，需 LED/逻辑分析仪）与 `semihost_selftest`（需 debugger 半主机）在裸 HIL 跳过。总结果：全过打印 `HIL SMOKE: PASS`，否则 `HIL SMOKE: FAIL` 并 `exit 1`。
-
-## 各示例标记串（HIL 期望）
-
-| 示例 | 成功标记串 |
-|------|-----------|
-| `uart_hello` | `Hello from WS63 on QEMU!` |
-| `timer_irq` | `OK: timer interrupts delivered`（或周期性 `timer irq #N`） |
-| `gpio_irq` | `OK: custom local IRQ (>=32) delivered`（或 `gpio irq #N`） |
-| `reset_demo` | `OK: software reset observed` |
-| `spi_loopback` | `SPI loopback OK` |
-| `i2c_scan` | `scan done` / `no devices acked` |
-| `blinky` | 无（GPIO0 翻转） |
-| `semihost_selftest` | 半主机退出码 0 / console `semihost_selftest: PASS`（裸 HIL 跳过） |
-
-完整 18 例标记串见 [示例目录与验证标记串](02-examples.md)。
 
 ## 环境变量
 

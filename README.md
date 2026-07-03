@@ -12,7 +12,7 @@ runnable **without hardware** on the sister project
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
-> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-06):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and on-silicon validation (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in [`ROADMAP.md`](ROADMAP.md). Full QEMU bring-up done for both chips; HIL scaffolding ready. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
+> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in [`ROADMAP.md`](ROADMAP.md). Full QEMU bring-up done for both chips; the WS63 HAL driver HIL suite now passes on real silicon (26/26 on 2026-07-03), while example smoke and connectivity HIL continue separately. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
 
 ## Crates
 
@@ -24,7 +24,7 @@ in-tree and are not published.
 |-------|------|-----------|
 | [`ws63-pac`](crates/pac/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
 | [`bs2x-pac`](crates/pac/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
-| [`hisi-riscv-hal`](crates/hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Multi-chip: `chip-ws63` (default) / experimental `chip-bs21` (`unstable` required) | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
+| [`hisi-riscv-hal`](crates/hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
@@ -40,10 +40,11 @@ owns them**, so generation inputs / vendor blobs are not reached into laterally:
 ```
 hisi-riscv-rs/
 ├── crates/                    # core publishable library crates
-│   ├── ws63-pac/              # submodule
-│   │   └── ws63-svd/          # submodule of ws63-pac — svd2rust source (WS63.svd)
-│   ├── bs2x-pac/              # submodule
-│   │   └── bs2x-svd/          # submodule of bs2x-pac — svd2rust source (BS2X.svd)
+│   ├── pac/
+│   │   ├── ws63-pac/          # submodule
+│   │   │   └── ws63-svd/      # submodule of ws63-pac — svd2rust source (WS63.svd)
+│   │   └── bs2x-pac/          # submodule
+│   │       └── bs2x-svd/      # submodule of bs2x-pac — svd2rust source (BS2X.svd)
 │   ├── hisi-riscv-hal/        # submodule (multi-chip: chip-ws63 / chip-bs21)
 │   └── hisi-riscv-rt/         # submodule
 ├── examples/                  # application examples
@@ -163,7 +164,7 @@ Release** — it does not publish the library crates.
 - [`docs/src/explanation/components/01-overview.md`](docs/src/explanation/components/01-overview.md) — the whole picture (Chinese), with per-component docs alongside.
 - [`docs/review/`](docs/review/) — the architecture review ledger.
 - [`ROADMAP.md`](ROADMAP.md) — remediation plan and the path to connectivity (incl. the BS2X BLE radio-interface feasibility analysis).
-- **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21`) is software-complete, pending on-silicon validation.
+- **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21`) is in use for WS63 HIL; connectivity bring-up remains open.
 
 ## License
 

@@ -36,7 +36,7 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # Install it first (see rust-toolchain.toml / https://github.com/hispark-rs/hisi-riscv-rust-toolchain):
 #   curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
 #   mkdir -p ~/.rustup/toolchains/hisi-riscv && tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
-cargo build                         # Build libraries + blinky (default-members) — works:
+cargo build                         # Build libraries + default-member WS63 examples — works:
                                     # the default-member ws63 examples pull chip-ws63 onto
                                     # the shared hal via feature unification.
 cargo check --workspace             # Full workspace check — also works (unifies chip-ws63).
@@ -207,10 +207,10 @@ Seven GitHub Actions workflows in `.github/workflows/`:
 - `ci.yml` — main CI (build, clippy, fmt, workspace, host test, audit)
 - `ci-nightly.yml` — daily nightly builds + binary size report
 - `documentation.yml` — `cargo doc` build + GitHub Pages deploy + link check
+- `hil.yml` — self-hosted WS63 hardware-in-the-loop suite
 - `issue-handler.yml` — auto-label + first-contributor welcome
 - `merge-conflict.yml` — conflict marker detection + PR labeling
-- `release.yml` — GitHub Release on tag + crates.io publish
-- `dependabot.yml` — weekly Cargo + monthly Actions updates
+- `release.yml` — parent-repo firmware GitHub Release on tag; crates.io publishing is owned by each crate repo
 
 ## Stable / Unstable API gating (0.6.0+)
 
@@ -224,10 +224,12 @@ The mechanism mirrors esp-hal: the [`instability`](https://crates.io/crates/inst
 proc-macro (`#[instability::unstable]`) soft-gates an item — `pub` when `unstable`
 is on, `pub(crate)` + `#[allow(dead_code)]` when off (the item stays compiling
 in-crate, so a missed stable→unstable reference doesn't break the build). Module-
-level gating uses the crate-local `unstable_module!` macro (esp-hal form:
+level soft gating uses the crate-local `unstable_module!` macro (esp-hal form:
 `pub mod` when on, `pub(crate) mod` when off; `#[doc(hidden)]`, forwards
-`$(#[$meta])*` incl. `#[path]`). Both are in `src/macros.rs` (crate-private,
-`#[macro_use]` — NOT `#[macro_export]`).
+`$(#[$meta])*` incl. `#[path]`). Standalone experimental drivers may instead use
+the crate-local `unstable_driver!` hard gate (`pub mod` when on, absent when off)
+when no stable code depends on the module. Both gating macros are in
+`src/macros.rs` (crate-private, `#[macro_use]` — NOT `#[macro_export]`).
 
 **Gating rules:**
 - **Inherent impl blocks** stay UNGATED — gate each `pub fn` individually
@@ -237,6 +239,9 @@ level gating uses the crate-local `unstable_module!` macro (esp-hal form:
 - **STABLE pub fn taking an UNSTABLE type** as param/return is FORBIDDEN
   (`private_interfaces` lint). If a STABLE method needs an UNSTABLE type, either
   the type becomes STABLE or the method becomes UNSTABLE.
+- **Standalone experimental modules** MAY use `unstable_driver!` only when default
+  stable code has no dependency on that module. Otherwise use `unstable_module!`
+  to keep crate-internal references compiling while hiding the external API.
 - **`async`/`embassy`** are feature-gates (consent-by-feature). `embassy` is ALSO
   `unstable`-gated (no end-to-end HIL). `async` alone only exposes the blocking-
   backed SPI/I2C async trait impls; interrupt/waker-backed helpers and drivers are
@@ -247,52 +252,15 @@ level gating uses the crate-local `unstable_module!` macro (esp-hal form:
   with `#[instability::stable(since = "0.x.0")]` to keep a "Stabilized in version X"
   doc note.
 
-**What's STABLE (HIL-proven on WS63 silicon — ungated):** scoped default-facing
-subsets of gpio (`Input`/`Output`/`Flex`, `GpioBank`; not GPIO IRQ), spi (SPI0
-blocking + blocking-backed `async` trait impl), uart (UART0/1 blocking,
-`BaudRate`, `UartClock`, `UartPort`/sealed `UartInstance`), timer (`TimerChannel`
-raw configure/enable/current/interrupt paths; not one-shot/periodic wrappers),
-tcxo, pwm (Ch0 config/enable/disable + `PwmPeriod`/`Duty`/`PwmChannelId`,
-fallible duty writes), wdt (typed configure/feed/counter/drop/`into_armed`; not
-WDT IRQ), trng default blocking read + byte-fill path, efuse read-only byte path
-(`EfuseDriver`/`EfuseByteAddress`/`read_byte`), clock metadata,
-`System::reset_reason`, peripherals (ownership tokens only; raw register blocks
-are unstable), interrupt identity/types (`Priority`/`Threshold`) plus basic
-enable/disable/pending paths, i2c (WS63 v150 I2C0 blocking + blocking-backed
-`async` trait impl with 7-bit address rejection), i2s master config/liveness subset,
-io_config GPIO/UART mux
-(`GpioPad`/`UartPad`/`MuxFunction`), lsadc scan-config subset, tsensor basic
-conversion subset, and infrastructure: `Duration`/
-`Rate`, prelude, macros, soc. The sealed-trait `private` module is crate-internal,
-not public API.
+**Current STABLE / UNSTABLE split:** do not duplicate the inventory here. The
+single source of truth is
+[`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md);
+this section only records the policy and mechanism. When changing public API
+gates, update that reference page and the HIL evidence/review notes in the same
+change.
 
-**What's UNSTABLE (no on-silicon HIL or soundness not closed — gated):** the public
-`cache` module (by-range D-cache CSR maintenance; tied to DMA/cache-line ownership
-invariants), raw PAC `register_block()` escape hatches, the public `dma` module as
-a whole (`Dma0`/`Sdma0`, `DmaDriver`, typed channel tokens,
-mem-to-mem `Transfer`, `DmaTransferSize`/`DmaSyncMask`, peripheral-paced
-`SpiDma`/`UartDma`, `PeripheralTransfer`, `DmaFrame`/`PeriKind`/`PeriDmaCtl`, and
-all DMA async hooks), interrupt/waker async helpers (`asynch::block_on`,
-`IrqSignal`, GPIO `Wait`, timer `AsyncDelay`, UART async I/O, LSADC async),
-`embassy`, `EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`,
-`System::software_reset*`, `Instant::now`/`elapsed`, `interrupt::free`, GPIO IRQ
-APIs (`InterruptTrigger`, per-pin enable/clear/pending/trigger), unverified
-instance constructors (`Uart::new_uart2`, `Spi::new_spi1`, `I2c::new_i2c1`),
-timer one-shot/periodic wrappers, WDT IRQ methods, PWM polarity/start/pulse-count
-and `into_running`, I2S slave role/config, interrupt priority/threshold
-setters/getters, SFC pad config, broad I2S data/FIFO/IRQ methods, broad LSADC
-analog/conversion/filter/calibration/data-path methods, broad TSENSOR mode/
-threshold/interrupt/auto-refresh/calibration/blocking-read/disable/clear-status
-methods, TRNG manual clock/divider/status knobs plus non-blocking `read` and
-`fill_words`, eFuse status, WS63 untested drivers (`clock_init`/`km`/`pke`/
-`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63/`delay`), entire BS2X chip target
-(`chip-bs21` requires `unstable` — no BS2X silicon board, QEMU only), + matching
-unstable `prelude` re-exports (`Delay`,
-`InterruptTrigger`, `OneShotTimer`/`PeriodicTimer`, `Dma0`/`DmaDriver`/`Sdma0`,
-`RtcDriver`, `SfcDriver`, `UlpGpioPin`).
-
-**Build matrix** (CI must verify all positive rows + clippy `-D warnings`, plus
-the BS2X negative gate):
+**Release gate matrix** (verify all positive rows + clippy `-D warnings`, plus
+the BS2X negative gate before changing public API gates):
 `{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async,embassy}`,
 `{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`,
 `{bs21,rt,unstable}`. `{bs21,rt}` without `unstable` must fail with the BS2X

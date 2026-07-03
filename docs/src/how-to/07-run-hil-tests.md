@@ -1,6 +1,6 @@
 # 如何运行 HIL 冒烟测试
 
-`hil/hil-smoke.sh` 把每个示例逐个烧到真机、读串口、断言它打印了预期的标记串。它验证 QEMU 证明不了的部分——**真实时钟/时序、真实外设**（尤其是修正后的 24 MHz TCXO 定时器和 160 MHz UART 波特基准）。HIL 框架背景见[HIL 测试框架](../explanation/components/00-index.md)，全部标记串见[HIL 标记串与环境变量](../reference/07-hil-markers.md)。
+`hil/hil-smoke.sh` 把每个示例逐个烧到真机、读串口、断言它打印了预期的标记串。它验证 QEMU 证明不了的部分——**真实时钟/时序、真实外设**（尤其是修正后的 24 MHz TCXO 定时器和 160 MHz UART 波特基准）。HIL 框架背景见[HIL 测试框架](../explanation/07-hil-framework.md)，示例标记串见[示例目录与验证标记串](../reference/02-examples.md)，脚本变量见[HIL 脚本环境变量](../reference/07-hil-markers.md)。
 
 > 前提：板子接好、UART0 接到 host、烧录环境就绪（见[用 probe-rs 烧录](04-flash-probe-rs.md)，hil-smoke 默认通过 `hil/flash.sh` 烧录，即默认 `METHOD=probe-rs`）。
 
@@ -53,5 +53,5 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 
 ## 封装与 CI
 
-- `.claude/skills/hil-smoke` 是这个脚本的 wrapper skill，给 agent 一键跑全套 HIL 冒烟。
+- `.agents/skills/hil-smoke` 是这个脚本的 wrapper skill，给 agent 一键跑全套 HIL 冒烟。
 - `.github/workflows/hil.yml` 在 **self-hosted runner**（接了真板子的机器）上跑同一脚本，把真机回归纳入 CI。
