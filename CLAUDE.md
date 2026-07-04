@@ -15,15 +15,15 @@ crates/      core publishable library crates
   hisi-riscv-hal/ (submodule)                  hisi-riscv-rt/ (submodule)
 examples/    application examples
   ws63/        (= ws63-examples submodule: blinky, uart_hello, …)
-  bs21/        (in-tree, isolated workspace: BS21 blinky + uart_hello)
-  bs20/        (in-tree, isolated workspace: BS20 blinky + uart_hello)
+  bs21/        (in-tree, isolated workspace; current members in docs reference)
+  bs20/        (in-tree, isolated workspace; current members in docs reference)
 chips/       chip-specific support
   ws63/        guide/ (submodule)  rf/ (in-tree, nests ws63-RF)  flashboot/ (in-tree)
   bs2x/        guide/ (submodule)
 docs/        architecture docs (Chinese)        hil/  hardware-in-the-loop scripts
 ```
 
-Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-riscv-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` is a separate isolated workspace (build with `--manifest-path examples/bs21/Cargo.toml`).
+Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-riscv-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` and `examples/bs20` are separate isolated workspaces (build with `--manifest-path examples/bs21/Cargo.toml` / `examples/bs20/Cargo.toml`); their current member lists live in `docs/src/reference/02-examples.md`.
 
 **Docs (Chinese):** the full handbook is an mdBook under [`docs/`](docs/) (build with `mdbook build docs`, serve with `mdbook serve docs`), organized by the [Diátaxis](https://diataxis.fr/) framework (tutorials / how-to / reference / explanation). The per-component architecture deep-dives now live under [`docs/src/explanation/components/`](docs/src/explanation/components/) (e.g. `overview.md` for the whole picture); the full review ledger is in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), and the remediation plan in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — they record known defects and the intended direction (connectivity is the north star).
 

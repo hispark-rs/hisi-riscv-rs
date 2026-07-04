@@ -3,7 +3,7 @@
 本仓库现在有两条 HIL（hardware-in-the-loop）轨道：
 
 - **HAL 驱动级 HIL**：`embedded-test` + semihosting，经 `probe-rs run` 在真 WS63 上逐个运行 `#[test]`。这是 stable API 的证据线。
-- **示例级 smoke**：逐个烧录示例、读 UART、grep 标记串。它验证完整示例镜像与 QEMU smoke 的真机一致性。
+- **示例级 smoke**：烧录常规 UART smoke 子集、读 UART、grep 标记串。它验证完整示例镜像与 QEMU smoke 的真机一致性；无 UART 的 `blinky` 和需要半主机的示例不在裸 UART smoke 子集里。
 
 HIL 框架背景见 [HIL 测试框架](../explanation/07-hil-framework.md)；runner 和脚本变量见
 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；示例标记串事实源见
@@ -63,7 +63,9 @@ cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
 
 ## 跑示例级 UART smoke
 
-`hil/hil-smoke.sh` 把每个示例逐个烧到真机、读串口、断言它打印了预期标记串：
+CI 等价入口是 `.agents/skills/hil-smoke/hil.sh ws63`：它先做 chip/preflight 封装，WS63 全套再委托
+`hil/hil-smoke.sh`。后者是 WS63 primitive 脚本，会把常规 UART smoke 子集逐个烧到真机、读串口、
+断言它打印了预期 grep 模式：
 
 ```bash
 PORT=/dev/ttyUSB0 \
@@ -88,7 +90,7 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 | `SETTLE` | 每次烧完读串口的秒数 | `4` |
 | `MONITOR` | 自定义“打印原始 UART 到 stdout”的命令 | 直接 `cat $PORT` |
 
-脚本当前检查的 grep 模式见 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；
+脚本当前检查的 UART smoke 子集和 grep 模式见 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；
 完整示例清单与真机状态见 [示例目录与验证标记串](../reference/02-examples.md)。
 
 ## 读懂结果
@@ -101,6 +103,6 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 
 ## CI 与 agent 封装
 
-- `.agents/skills/hil-smoke` 只封装**示例级** UART smoke。
+- `.agents/skills/hil-smoke` 只封装**示例级** UART smoke；当前 CI 真机 runner 只接 WS63。
 - `hil/embedded-test-runner.sh` 是 HAL / `tests-hil` 的 on-target test runner。
 - `.github/workflows/hil.yml` 是接真板的 self-hosted runner 入口；GitHub-hosted runner 不会运行它。

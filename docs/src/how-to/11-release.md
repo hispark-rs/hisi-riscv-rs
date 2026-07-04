@@ -162,7 +162,13 @@ cargo fmt --all -- --check
 
 ```bash
 mdbook build docs
+python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs --links
+python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs --current-claims
+python3 .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
 ```
+
+`--current-claims` 会列出需要人工复核的“当前 / 默认 / stable”等表述；它是漂移线索扫描，输出不等于必然错误。
 
 然后 tag 父仓：
 

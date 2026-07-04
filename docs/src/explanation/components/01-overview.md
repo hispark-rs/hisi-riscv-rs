@@ -46,8 +46,8 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `crates/hisi-riscv-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-riscv-hal.md](04-hisi-riscv-hal.md) |
 | `crates/hisi-riscv-rt` | submodule | 运行时：启动、中断向量、链接脚本、critical-section | [hisi-riscv-rt.md](05-hisi-riscv-rt.md) |
 | `examples/ws63/*` | in-tree 独立工作区 | WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…） | [ws63-examples.md](07-ws63-examples.md) |
-| `examples/bs21/*` | in-tree 独立工作区 | BS2X 应用示例（blinky/spi/i2c/gadc/keyscan/qdec/rtc/trng/wdt/dma/pdm/usb…，全外设功能覆盖） | [ws63-examples.md](07-ws63-examples.md) |
-| `examples/bs20/` | in-tree 独立工作区 | BS20（M1）示例 | — |
+| `examples/bs21/*` | in-tree 独立工作区 | BS2X/BS21 示例；成员清单见参考页 | [ws63-examples.md](07-ws63-examples.md) |
+| `examples/bs20/` | in-tree 独立工作区 | BS20（M1）示例；不是 BS21 示例全集 | [ws63-examples.md](07-ws63-examples.md) |
 | `chips/ws63/flashboot` | in-tree | **实验性**二级引导（非安全启动） | [ws63-flashboot.md](08-ws63-flashboot.md) |
 | `chips/ws63/rf/` | in-tree | WS63 Wi-Fi porting 层 `ws63-rf-rs` | — |
 | `chips/ws63/rf/ws63-RF` | submodule（嵌套） | WS63 闭源协议栈 blob + porting 接口 | [ws63-RF.md](09-ws63-rf.md) |
@@ -57,7 +57,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 ## 核心设计模式
 ## 调试支持
 
-- **probe-rs**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs) 分支 `add-hisilicon-ws63-bs21`，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL（2026-07-03 HAL 套件 26/26 通过）。用法：`probe-rs run --chip ws63 <bin>` 进行实时调试与 on-silicon 烧录。
+- **probe-rs**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs) 分支 `add-hisilicon-ws63-bs21`，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 [Stable API 清单](../../reference/10-stable-api.md)。用法：`probe-rs run --chip ws63 <bin>` 进行实时调试与 on-silicon 烧录。
 
 
 
@@ -110,7 +110,8 @@ cargo build -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 
    - **WS63 Wi-Fi**（ROADMAP 阶段 3-5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测（阶段 4），符号闭合已达成；真机连通待 HIL（阶段 5）。
    - **BS2X BLE/SLE**（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 `hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md`。
 2. ~~示例无法链接~~ **（已修，阶段 1）**；~~多芯片支持~~ **（已实现）**：hisi-riscv-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
-3. **硬件在环（HIL）进度**：HAL 驱动级 WS63 embedded-test 套件已在真机通过（2026-07-03，26/26）；示例级 smoke 与连接性 HIL 仍按
+3. **硬件在环（HIL）进度**：HAL 驱动级 WS63 embedded-test 证据基线见
+   [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 仍按
    [HIL 测试框架](../07-hil-framework.md) 和 [示例目录与验证标记串](../../reference/02-examples.md) 分轨推进。
 4. **正确性修复状态**：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等核心问题已修（ROADMAP 阶段 2）；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；上板验证仍待硬件（时钟精度、外设时序）。
 

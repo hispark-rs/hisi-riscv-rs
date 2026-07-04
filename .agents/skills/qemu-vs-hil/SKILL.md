@@ -39,7 +39,7 @@ Output is a parity table:
    and greps the *same* marker. If not (no board), the HIL column reads `n/a` and only the
    QEMU column is filled.
 4. Flags `DIVERGE` when QEMU and silicon disagree on a marker, and points you at the
-   `hil-triage` subagent for the failing log.
+   `hil-regression` skill for the failing log.
 
 ## Why the timing notes matter
 
@@ -55,7 +55,7 @@ silicon agrees:
 
 Thin orchestrator over the two engines — it does not duplicate their logic:
 `qemu-smoke` (SIL) + `hil-smoke` (HIL), one shared marker table. On a divergence,
-hand the captured UART to the **`hil-triage`** subagent.
+hand the captured UART to the **`hil-regression`** skill.
 
 ## Gotchas
 

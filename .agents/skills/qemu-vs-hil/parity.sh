@@ -34,7 +34,7 @@ SET="uart_hello timer_irq gpio_irq reset_demo spi_loopback i2c_scan"
 # shared marker table (HIL truth) + which rows are timing-sensitive (QEMU can't prove)
 marker_for() { case "$1" in
     uart_hello) echo "Hello from $BANNER" ;; timer_irq) echo "timer irq #|OK: timer" ;;
-    gpio_irq) echo "gpio irq #" ;; reset_demo) echo "reset_reason=Software" ;;
+    gpio_irq) echo "gpio irq #" ;; reset_demo) echo "OK: software reset observed" ;;
     spi_loopback) echo "SPI loopback OK" ;; i2c_scan) echo "scan done|no devices" ;; *) echo "" ;; esac; }
 timing_note() { case "$1" in
     uart_hello) echo "← 160 MHz baud base" ;; timer_irq) echo "← 24 MHz TCXO period" ;; *) echo "" ;; esac; }
@@ -85,4 +85,4 @@ if [ "$hil_ready" = 0 ]; then
     exit 0
 fi
 [ "$div" = 0 ] && { echo "  PARITY: QEMU ≡ silicon on all markers ✓"; exit 0; } \
-               || { echo "  PARITY: DIVERGENCE found — feed the failing UART log to the hil-triage subagent."; exit 1; }
+               || { echo "  PARITY: DIVERGENCE found — feed the failing UART log to the hil-regression skill."; exit 1; }

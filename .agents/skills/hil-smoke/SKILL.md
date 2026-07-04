@@ -6,9 +6,8 @@ disable-model-invocation: true
 
 The hardware-in-the-loop counterpart to `qemu-smoke`: same chip→example model, but it
 flashes silicon and reads the board's UART instead of booting QEMU. It validates exactly
-what emulation can't at the example-image level — real boot, UART, timing, and board
-wiring (see the bring-up table in `hil/README.md`). User-invoked: it writes firmware
-to hardware.
+what emulation can't at the example-image level: real boot, UART, timing, and board
+wiring. User-invoked: it writes firmware to hardware.
 
 > **Scope**: this skill is only the UART/example smoke track. The HAL stable API proof
 > track is `cargo test -p hisi-riscv-hal --test hil` through `hil/embedded-test-runner.sh`
@@ -18,7 +17,7 @@ to hardware.
 
 ```bash
 bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
-#   chip:    ws63 | bs21 | bs21e | bs22 | bs20
+#   chip:    ws63 (BS2X HIL currently reports NOT-READY; use QEMU until a rig exists)
 #   example: uart_hello | timer_irq | gpio_irq | reset_demo | spi_loopback | i2c_scan | …
 ```
 
@@ -39,22 +38,16 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 
 - **Build split** — identical to `qemu-smoke`: WS63 examples are root-workspace members
   (`cargo build -p <ex>`); BS2X examples are isolated workspaces (`--manifest-path`).
-  `bs21e`/`bs22` reuse the `examples/bs21` binaries (banner says **BS21**); `bs20` is its
-  own dir.
+  BS2X examples remain QEMU/build targets until a chip-specific HIL rig exists.
 - **Serial autodetect** — if exactly one `/dev/ttyUSB*`/`ttyACM*`, uses it; else set `PORT`.
 - **LOADERBOOT autodiscovery** — finds a vendor `*loaderboot*.bin` under `/root/fbb_ws63`
   (WS63) or `/root/fbb_bs2x` (BS2X), skipping signed variants; override with `LOADERBOOT=`.
-- **Markers** (mirror `hil/hil-smoke.sh`, chip-aware banner):
-
-  | example | passes when |
-  |---------|-------------|
-  | `uart_hello` | `Hello from <WS63\|BS21\|BS20>` (validates the **160 MHz baud base**) |
-  | `timer_irq` | `timer irq #` / `OK: timer` (validates the **24 MHz TCXO timer** — 10× off ⇒ still on 240 MHz) |
-  | `gpio_irq` | `gpio irq #` |
-  | `reset_demo` | `reset_reason=Software` |
-  | `spi_loopback` | `SPI loopback OK` (**short MOSI↔MISO first**) |
-  | `i2c_scan` | `scan done` / `no devices` |
-  | `blinky` | no UART — verify with an LED / logic analyzer |
+- **Markers** — WS63 full-suite matching delegates to `hil/hil-smoke.sh`, which is
+  documented in `docs/src/reference/07-hil-markers.md`. Single-example runs use
+  this skill's `marker_for()` helper for chip-aware banners; keep it in sync with
+  `hil/hil-smoke.sh` via
+  `.agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py`.
+  `blinky` has no UART marker; verify it with an LED or logic analyzer.
 
 ## Env overrides
 
@@ -76,14 +69,16 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 - `qemu-smoke` = software-in-the-loop (boot in QEMU). `hil-smoke` = hardware-in-the-loop
   (flash silicon). Same chip/example surface so results line up.
 - `qemu-vs-hil` runs **both** and diffs the markers — the QEMU↔silicon parity check.
-- On a HIL failure, hand the captured UART + the example to the **`hil-triage`** subagent.
+- On a HIL failure, hand the captured UART + the example to the **`hil-regression`** skill.
 
 ## Gotchas
 
 - **No board ⇒ can't flash.** Use `--preflight`; the real path fails fast with a clear
   message if the port/loaderboot/hisiflash are missing.
-- **BS2X HIL is unverified** — the QEMU path is solid; on-silicon BS21/BS20 awaits a board.
+- **BS2X HIL is not wired yet** — the QEMU path is solid; on-silicon BS21/BS20 awaits
+  a chip-specific board rig, runner label, and flash variables.
 - `ADDRESS` is a flash *offset*, not the XIP base — wrong value can misflash. Verify it.
 - The actual flash goes through `hil/flash.sh` with `HIL_CONFIRM=1`; the default WS63
   path is patched `probe-rs`, while `METHOD=hisiflash` uses the vendor loaderboot/YMODEM path.
-- A first board may need the patched `probe-rs`, `hisi-fwpkg`, and `gdb-multiarch` (see `hil/README.md`).
+- A first board may need the patched `probe-rs`, `hisi-fwpkg`, and `gdb-multiarch`
+  (see `docs/src/how-to/07-run-hil-tests.md` and `docs/src/reference/08-cli-tools.md`).

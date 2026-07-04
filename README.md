@@ -12,7 +12,7 @@ runnable **without hardware** on the sister project
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
-> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in [`ROADMAP.md`](ROADMAP.md). Full QEMU bring-up done for both chips; the WS63 HAL driver HIL suite now passes on real silicon (26/26 on 2026-07-03), while example smoke and connectivity HIL continue separately. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
+> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in [`ROADMAP.md`](ROADMAP.md). Full QEMU bring-up done for both chips; the WS63 HAL driver-level HIL evidence is tracked in [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md), while example smoke and connectivity HIL continue separately. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
 
 ## Crates
 
@@ -29,8 +29,8 @@ in-tree and are not published.
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
 | [`ws63-examples`](examples/ws63/) | Runnable WS63 examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
-| [`bs21-examples`](examples/bs21/) | BS21 examples (blinky, uart_hello, spi_loopback, gadc_read, i2c_scan, hid_demo, clock_rng, pwm_wdt, dma_mem) — isolated workspace, builds for `-M bs21` | — |
-| [`bs20-examples`](examples/bs20/) | BS20 examples (same as BS21; isolated workspace, 128K RAM variant) — builds for `-M bs20` | — |
+| [`bs21-examples`](examples/bs21/) | BS21 isolated workspace; current member list is in [`docs/src/reference/02-examples.md`](docs/src/reference/02-examples.md) | — |
+| [`bs20-examples`](examples/bs20/) | BS20 isolated workspace (128K RAM variant); current member list is in [`docs/src/reference/02-examples.md`](docs/src/reference/02-examples.md) | — |
 
 ## Repository layout
 
@@ -135,20 +135,16 @@ WS63_RS=../ws63-rs bash scripts/smoke-test.sh   # boots ws63-rs examples + asser
 
 ## Async & embassy
 
-`hisi-riscv-hal` has an interrupt + waker driven async layer (no heap, no global
-executor required), built on `embedded-hal-async` / `embedded-io-async`. It runs
-on the no-atomics WS63 core via the existing portable-atomic + critical-section
-polyfill. Two opt-in features:
+`hisi-riscv-hal` has an async layer (no heap, no global executor required), built on
+`embedded-hal-async` / `embedded-io-async`. It runs on the no-atomics WS63 core via
+portable-atomic + critical-section, but the public surface is deliberately split:
 
-- **`async`** — `embedded_hal_async::delay::DelayNs` (on a TIMER), `digital::Wait`
-  (GPIO edges), `embedded_io_async::{Read, Write}` (UART), plus a minimal `wfi`
-  `block_on`. Drivers expose `on_interrupt` hooks rather than installing ISRs.
-- **`embassy`** — an [`embassy-time`](https://docs.rs/embassy-time) `Driver`
-  (`now()` from the TCXO 64-bit counter, alarms from a TIMER), so
-  [`embassy-executor`](https://docs.rs/embassy-executor) (platform-riscv32) runs
-  `Timer::after` + multi-task scheduling + the async drivers above.
+- **`async`** — stable blocking-backed async trait impls for SPI/I2C.
+- **`async + unstable`** — interrupt/waker helpers such as `block_on`, `IrqSignal`,
+  GPIO wait, timer delay, UART async I/O, and DMA/LSADC async hooks.
+- **`embassy + unstable`** — the embassy-time driver and embassy examples.
 
-Validated on hisi-riscv-qemu — see `examples/ws63/{async_delay, embassy_multitask, embassy_async_io}`.
+See [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md) for the current boundary.
 
 ## Releasing
 

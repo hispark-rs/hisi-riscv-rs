@@ -17,7 +17,7 @@
   - 裸寄存器布局与地址映射（属 `ws63-pac`）。
   - 启动汇编、链接脚本、中断向量表（属 `hisi-riscv-rt`）。
   - 应用业务逻辑（属 `ws63-examples`）。
-  - 连接性协议栈（WiFi/BLE/SLE）、porting 层、HCC IPC（尚未实现，见 ROADMAP 阶段 4-5）。
+  - 连接性协议栈（WiFi/BLE/SLE）、RF porting 层与 HCC IPC（属 `ws63-rf-rs`/厂商 blob 边界；HAL 只提供底层外设能力）。
 
 `#![no_std]`、无堆、无 `Vec`（`lib.rs:20`）。寄存器访问全部经 `unsafe { w.bits(...) }` 封装在驱动方法内部。
 
@@ -121,21 +121,21 @@ DMA 提供拥有缓冲区的
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
 | 严重 | 正确性 | 中断子系统曾建在不存在的 PLIC 模型上。WS63 用自定义 CSR（`LOCIPRI`=0xBC0 / `LOCIEN`=0xBE0 / `LOCIPD`=0xBE8） | `interrupt.rs` | ✅ 阶段2已修：重写为 LOCIPRI/LOCIEN/LOCIPD CSR 模型 + 优先级/阈值；ws63-qemu `timer_irq`/`gpio_irq`(IRQ≥32) 端到端验证 |
-| 严重 | 正确性 | SPI `ctra` 写入 `trsm=3`（bits 19:18），该值是 EEPROM-Read 模式；全双工 TX+RX 应为 `0`。注释误写"TX+RX mode"导致 `transfer`/`SpiBus` 全双工语义不成立 | `spi.rs:76` | 已排期(ROADMAP 阶段 2) |
+| 严重 | 正确性 | SPI `ctra` 写入 `trsm=3`（bits 19:18），该值是 EEPROM-Read 模式；全双工 TX+RX 应为 `0`。注释误写"TX+RX mode"导致 `transfer`/`SpiBus` 全双工语义不成立 | `spi.rs:76` | ✅ 阶段2已修：TRSM 改为全双工模式，`spi_loopback`/`SpiBus` 语义经 QEMU smoke 验证；真机外部回环仍属示例 smoke/台架增量 |
 | 高 | 正确性 | I2C/SPI 多处无超时死循环；错误码定义却从不返回 | `spi.rs`、`i2c.rs` | ✅ 阶段2已修：I2C/SPI 加 bounded 超时并真正返回 `Timeout` 等错误 |
 | 高 | 正确性 | `software_reset` 执行 `ebreak`（非系统复位）；`reset_reason` 恒返回 `PowerOn` | `system.rs` | ✅ 阶段2已修：`software_reset` 置 GLB_CTL_M 复位位，`reset_reason` 解析 SYS_RST_RECORD；ws63-qemu `reset_demo` 往返验证 |
 | 中 | 正确性 | GPIO `InputConfig.pull` 被静默忽略：`init_input` 只设 OEN | `gpio.rs` | ✅ 阶段2已修：`init_input` 经 IO_CONFIG pad 寄存器应用上下拉 + 中断触发模式 |
 | 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`、`lsadc.rs` | 🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍按阶段 2 推进 |
 | 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言；模块头措辞夸大 | `safety.rs` | ✅ 阶段2已修：删除恒真断言 + 夸大措辞 |
 | 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 已清：async marker(`Blocking`/`Async`)、vestigial `DmaWord`、RAII 时钟守卫、`DmaEligible`/`DmaChannelFor` 均已删除；真正的异步层按 `async`/`unstable` 分层暴露 |
-| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | ✅ 已破：ws63-qemu `smoke-test.sh` 用真实固件端到端验证；WS63 HAL embedded-test 套件已在真机通过（2026-07-03，26/26），stable 边界见参考页 |
+| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | ✅ 已破：ws63-qemu `smoke-test.sh` 用真实固件端到端验证；WS63 HAL embedded-test 套件已在真机通过，精确覆盖与 stable 边界见参考页 |
 
 ## 改进项与排期
 
 按 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)（多数已完成，下记现状）：
 
-- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代（2026-07-03，26/26）。示例级 smoke 与连接性 HIL 继续按参考页分轨推进。
-- **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 SPI `trsm`、eFuse/LSADC 逐寄存器复核仍在推进。
+- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
+- **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ SPI `trsm` 全双工模式修复；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 eFuse/LSADC 逐寄存器复核仍在推进。
 - **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
-- **阶段 4-5（porting 层 + HCC IPC + 连接性）**：HAL 之上接入 WiFi/BLE/SLE 协议栈所需的 porting 与 IPC 通道。
+- **阶段 4-5（porting 层 + HCC IPC + 连接性）**：`ws63-rf-rs` 已承接 RF porting/HCC/netif 数据通路，HAL 的边界是继续提供可组合的底层外设；剩余风险在 blob 链接、pbuf/TX-sink pin 与真机连通。
 - **阶段 6（async）**：在确有异步消费者后再恢复 `Blocking`/`Async` 类型状态（阶段 2 已先删除空壳）。

@@ -44,7 +44,7 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 以 `blinky` 为最小模板说明裸机入口形态，其余示例在此之上各增量演示一个子系统：
 
 - **入口与运行时集成**：用 `#[entry]`（来自 `hisi_riscv_rt`）声明 `fn main() -> !`，并自带 `#[panic_handler]`（自旋空转）。这是 `riscv-rt` 体系下的标准裸机入口形态。
-- **GPIO 使用方式**：`blinky` 用 **legacy 类型态 GPIO**（`create_output_pin` + `set_high()/set_low()`）；`gpio_irq` 则演示新的输入 + 中断路径。HAL 的 `OutputConfig`/`InputConfig` 构建器 API 已落地，示例正逐步覆盖。
+- **GPIO 使用方式**：`blinky` 走现代 `AnyPin::init_output(OutputConfig)` 路径；`gpio_irq` 演示输入 + 中断路径。逐项示例状态以 [示例目录与验证标记串](../../reference/02-examples.md) 为准。
 - **延时实现**：`blinky` 的 `delay_ms` 是**手写忙等**（按 240 MHz 估算，绕过 HAL timer），属「最小可演示」而非最佳实践；`async_delay` / `embassy_multitask` 演示了正确的 `DelayNs` / `Timer::after` 路径。
 - **自定义内存布局**：`custom_memory` 演示用示例自带的 `memory.x` 覆盖 `hisi-riscv-rt` 的 bundled 链接脚本（`hisi-riscv-rt` 的默认 feature `bundled-memory-x`，关掉后由示例侧提供），从而不与 rt 冲突。
 - **semihosting / CI 信号**：`semihost_selftest` 用 semihosting `exit()` 给 CI 一个免解析 UART 的 pass/fail 退出码。
@@ -67,14 +67,14 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 |--------|------|------|------|
 | 高 | 构建 | （曾）`blinky` 无法链接：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游二进制 | ✅ 已修：`hisi-riscv-rt` 导出 `ws63-link.x` + 各 `build.rs` 用 `-Tws63-link.x`，WS63 示例集合已回到 `default-members` |
 | 高 | 方向 | （曾）唯一示例（blinky）+ 手写忙等，无法证明其余驱动可用 | ✅ 大部已破：现有 UART/Timer/GPIO/DMA + async SPI/I2C 等 13 个额外示例 |
-| 中 | 演示覆盖 | `blinky` 仍用 legacy `create_output_pin`，未直接演示 `OutputConfig`/`InputConfig` | 🟡 `gpio_irq` 已演示输入/中断路径；`blinky` 升级待排期 |
+| 中 | 演示覆盖 | `blinky` 曾用 legacy `create_output_pin`，未直接演示 `OutputConfig`/`InputConfig` | ✅ 已修：`blinky` 走现代 `OutputConfig` 输出路径；`gpio_irq` 继续覆盖输入/中断 |
 | 中 | 文档 | 旧构建指引曾指向自定义 JSON target | ✅ 已统一为 builtin `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable `riscv32imc`） |
 | 低 | 依赖 | `blinky/Cargo.toml` 多声明 `ws63-pac` 直接依赖，源码未用 | 🟡 排期阶段 2 死代码清理 |
 | — | 连接性 | 缺真实 Wi-Fi/BLE/SLE 链路示例 | 🔴 待 blob 上板 HIL（阶段 5） |
 
 ## 改进项与排期
 
-- **ROADMAP 阶段 1（已大部完成）**：链接脚本传播已修、示例覆盖面已扩。剩余：把 `blinky` 升级为使用 `OutputConfig`/`InputConfig` 配置 API；真机上板点灯验证。
+- **ROADMAP 阶段 1（已大部完成）**：链接脚本传播已修、示例覆盖面已扩；`blinky` 已切到现代 `OutputConfig` 输出路径并完成真机点灯验证。
 - **ROADMAP 阶段 2（死代码清理）**：清理 `blinky` 冗余的 `ws63-pac` 直接依赖等。
 - **ROADMAP 阶段 5（连接性示例）** 🔴：在 blob 上板（HIL）后新增 Wi-Fi/BLE/SLE 真实链路示例，使示例集真正覆盖 SoC 核心能力。
 - **ROADMAP 阶段 6（async）** ✅ 已完成：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 四个异步示例已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](06-async-embassy.md)）。

@@ -5,21 +5,72 @@ on:
   push:
     branches: [main, master]
     paths:
+      - '.agents/skills/**'
+      - '.github/workflows/documentation.yml'
+      - '.github/workflows/hil.yml'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'crates/hisi-riscv-hal'
       - 'crates/hisi-riscv-hal/src/**'
+      - 'crates/hisi-riscv-hal/tests/**'
       - 'crates/hisi-riscv-hal/Cargo.toml'
+      - 'crates/hisi-riscv-rt'
+      - 'crates/pac/ws63-pac'
       - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
+      - 'examples/ws63'
+      - 'examples/ws63/**'
+      - 'examples/bs21/**'
+      - 'examples/bs20/**'
+      - 'hil/**'
   pull_request:
     branches: [main, master]
     paths:
+      - '.agents/skills/**'
+      - '.github/workflows/documentation.yml'
+      - '.github/workflows/hil.yml'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'crates/hisi-riscv-hal'
       - 'crates/hisi-riscv-hal/src/**'
+      - 'crates/hisi-riscv-hal/tests/**'
+      - 'crates/hisi-riscv-hal/Cargo.toml'
+      - 'crates/hisi-riscv-rt'
+      - 'crates/pac/ws63-pac'
       - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
+      - 'examples/ws63'
+      - 'examples/ws63/**'
+      - 'examples/bs21/**'
+      - 'examples/bs20/**'
+      - 'hil/**'
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # ── Drift checks for generated/duplicated documentation facts ──────────────
+  docs-drift:
+    name: Documentation Drift Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Check agent guide sync
+        run: cmp -s AGENTS.md CLAUDE.md
+
+      - name: Check embedded-test HIL registrations
+        run: python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
+
+      - name: Check HIL smoke marker references
+        run: python3 .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+
   # ── Build API docs ────────────────────────────────────────────
   docs:
     name: Build API Documentation

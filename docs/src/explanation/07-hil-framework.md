@@ -78,14 +78,12 @@ QEMU↔硅片的分歧高度集中在固定几类：
 诊断时对时序类症状要做算术：从 HAL 的时钟常量算出期望周期/波特，再从实测值反推真实时钟是多少，
 用数字定位，而不是只凭现象猜。
 
-## 当前 bring-up 状态（2026-07-03）
+## 当前 bring-up 状态
 
 这里要分清两条 HIL 轨道，否则文档很容易互相打架：
 
-- **HAL 驱动级 embedded-test：WS63 真机 26/26 通过。** 这是 `hisi-riscv-hal` 的稳定 API 证据线：
-  GPIO、UART、Timer、TCXO、PWM Ch0 register-latch、WDT（含 `into_armed`/`leak`）、TRNG、eFuse、I2C0
-  配置/拒绝非法地址、I2S master liveness、LSADC/TSENSOR basic path 等都在连接的 WS63 板上跑过。
-  当前 stable/unstable 边界以 [Stable API 清单与门控状态](../reference/10-stable-api.md) 为唯一事实源。
+- **HAL 驱动级 embedded-test：默认稳定面已有 WS63 真机证据。** 这是 `hisi-riscv-hal` 的稳定 API 证据线；
+  当前用例数、覆盖面与 stable/unstable 边界以 [Stable API 清单与门控状态](../reference/10-stable-api.md) 为唯一事实源。
 - **跨切面 `tests-hil`：** 用同一个 embedded-test runner 覆盖 CPU/PAC/critical-section 这类非单驱动事实；
   它是补充证据，不替代 HAL 驱动级 suite。
 - **示例 smoke：仍按示例逐项推进。** 它证明完整示例镜像的 UART/semihosting/GPIO 标记在 QEMU 和真机上的一致性，

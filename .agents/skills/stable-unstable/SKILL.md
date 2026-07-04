@@ -51,20 +51,32 @@ When adding a new driver/API that has no HIL test yet:
 
 When an unstable API gets a HIL test passing on real WS63 silicon:
 
-1. **Write the HIL test** in `tests/hil.rs` (self-contained or `hil-loopback`). Gate it `#[cfg(feature = "unstable")]` for now.
-2. **Run it on silicon** (`justfile hil` with `--features chip-ws63,unstable[,async]`). It must PASS.
+1. **Write the HIL test** with the current embedded-test layout: put the helper in
+   `crates/hisi-riscv-hal/tests/hil/<driver>.rs`, then register a tiny wrapper in
+   `crates/hisi-riscv-hal/tests/hil.rs`. Gate it `#[cfg(feature = "unstable")]`
+   for now if it exercises unstable public API.
+2. **Run it on silicon** through `hil/embedded-test-runner.sh` with the needed
+   features; see `docs/src/how-to/07-run-hil-tests.md`. It must PASS.
 3. **Remove the gate**: delete `#[instability::unstable]` from the item, OR move the module out of `unstable_module!` to a plain `pub mod foo;`.
 4. **Remove `#[cfg(feature = "unstable")]` from the HIL test** (it's now stable — should run in the default suite).
-5. **Update docs**: optionally add `#[instability::stable(since = "0.x.0")]` to keep a "Stabilized in version X" note.
+5. **Update docs**: update `docs/src/reference/10-stable-api.md` in the same
+   change; optionally add `#[instability::stable(since = "0.x.0")]` to keep a
+   "Stabilized in version X" note.
 6. **Update examples**: if the example had `unstable` just for this surface, check if it still needs it (other surfaces may still be unstable).
-7. **Verify**: `cargo clippy` (unstable OFF — the now-stable item must not produce `dead_code` since it's `pub`), + `cargo test` + HIL run (without `unstable` now includes the graduated test).
+7. **Verify**: `cargo clippy` (unstable OFF — the now-stable item must not produce
+   `dead_code` since it's `pub`) plus the embedded-test HIL run. Once the gate is
+   removed, the graduated test should run without `unstable` unless it also needs
+   a separate opt-in such as `hil-loopback`.
 
 ## Workflow 3: Audit gating compliance
 
 To check whether an item should be STABLE or UNSTABLE:
 
 1. **Find the item** in `src/*.rs` (grep for the struct/fn/enum/mod name).
-2. **Check for a HIL test**: grep `tests/hil.rs` for a test that calls/constructs this item. Does it run on WS63 silicon? (self-contained tests run by default; `hil-loopback` tests need jumpers; `hil-rtc` is opt-in and may not have run on this board.)
+2. **Check for a HIL test**: inspect `tests/hil.rs` and the corresponding
+   `tests/hil/<driver>.rs` helper for a test that calls/constructs this item. Does
+   it run on WS63 silicon? (self-contained tests run by default; `hil-loopback`
+   tests need jumpers; `hil-rtc` is opt-in and may not have run on this board.)
 3. **Verdict**: HIL test exists + runs on connected silicon → STABLE. No HIL test (or opt-in never ran) → UNSTABLE.
 4. **Check the current gate**: is the item `#[instability::unstable]` or in `unstable_module!`? If STABLE but gated → it's a graduation candidate. If UNSTABLE but not gated → it's a gap (gate it).
 
@@ -85,4 +97,8 @@ grep -n 'feature = "unstable"' crates/hisi-riscv-hal/tests/hil.rs
 
 ## What's currently STABLE vs UNSTABLE
 
-See `docs/src/reference/10-stable-api.md` for the current stable/unstable split, and `docs/src/explanation/policies/02-stable-unstable.md` for the policy/mechanism. The split is audited against `tests/hil.rs` — the rule is "HIL-proven on WS63 silicon = STABLE; everything else = UNSTABLE".
+See `docs/src/reference/10-stable-api.md` for the current stable/unstable split,
+and `docs/src/explanation/policies/02-stable-unstable.md` for the
+policy/mechanism. The split is audited against `tests/hil.rs` plus the helper files
+under `tests/hil/`: the rule is "HIL-proven on WS63 silicon = STABLE; everything
+else = UNSTABLE".

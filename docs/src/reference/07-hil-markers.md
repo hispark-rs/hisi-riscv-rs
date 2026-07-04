@@ -1,7 +1,8 @@
 # HIL 脚本与 runner 环境变量
 
 HIL（hardware-in-the-loop）脚本和 cargo runner 的环境变量参考。事实取自
-`hil/embedded-test-runner.sh`、`hil/hil-smoke.sh`、`hil/flash.sh`、`hil/pack.sh`、`hil/cargo-run-hw.sh`。
+`hil/embedded-test-runner.sh`、`hil/hil-smoke.sh`、`hil/flash.sh`、`hil/pack.sh`、`hil/cargo-run-hw.sh`
+以及 CI/agent wrapper `.agents/skills/hil-smoke/hil.sh`。
 完整示例清单、成功标记串和失败标记串的唯一事实源是 [示例目录与验证标记串](02-examples.md)。
 
 HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运行步骤见
@@ -13,6 +14,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 |------|------|----------|
 | `hil/embedded-test-runner.sh` | `hisi-riscv-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
+| `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | probe-rs download/reset 或 hisiflash |
 | `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | probe-rs download/reset，可选 UART stream |
 

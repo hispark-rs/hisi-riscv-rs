@@ -42,6 +42,14 @@ case "$CHIP" in
     bs20)            MANIFEST="$REPO/examples/bs20/Cargo.toml"; WS="examples/bs20"; TDIR="$REPO/examples/bs20/target/$TARGET/release"; PFX="bs20_"; BANNER="BS20"; SDK="/root/fbb_bs2x"; DEFAULT_ADDRESS="0x90000"; CHIP_KIND="bs21" ;;
     *) echo "FATAL: unknown chip '$CHIP' (ws63|bs21|bs21e|bs22|bs20)"; exit 2 ;;
 esac
+
+if [ "$CHIP" != ws63 ]; then
+    echo "BS2X hardware HIL is not wired into this runner yet (chip=$CHIP)."
+    echo "Use qemu-smoke for BS2X today, or add a chip-specific HIL rig first."
+    [ "$PREFLIGHT" = 1 ] && { echo "  → NOT-READY (preflight changed nothing)"; exit 1; }
+    exit 2
+fi
+
 ADDRESS="${ADDRESS:-$DEFAULT_ADDRESS}"
 SET="uart_hello timer_irq gpio_irq reset_demo spi_loopback i2c_scan"
 
@@ -63,7 +71,7 @@ marker_for() {
         uart_hello)   echo "Hello from $BANNER" ;;
         timer_irq)    echo "timer irq #|OK: timer" ;;
         gpio_irq)     echo "gpio irq #" ;;
-        reset_demo)   echo "reset_reason=Software" ;;
+        reset_demo)   echo "OK: software reset observed" ;;
         spi_loopback) echo "SPI loopback OK" ;;
         i2c_scan)     echo "scan done|no devices" ;;
         *) echo "" ;;

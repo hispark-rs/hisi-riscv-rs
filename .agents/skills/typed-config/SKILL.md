@@ -76,10 +76,11 @@ bound — don't trust the PAC/SDK width alone.
    signatures untouched (return `Result` there). Mirror `pwm.rs` (`PwmPeriod`/`Duty`).
 5. **Update** the host unit/property tests (the newtype's accept/reject bounds) and
    the `tests/hil.rs` test for the driver.
-6. **Validate on the board** (the silicon proof — see the `run-ws63-rs` / `hil-smoke`
-   skills + `hil/embedded-test-runner.sh`). Register/poll-level facts are
-   board-confirmable; scope-only behavior (actual waveform) and board-population
-   preconditions (RTC crystal) are not — say so.
+6. **Validate on the board** (the silicon proof): use the `embedded-test-hil`
+   skill and `hil/embedded-test-runner.sh` for driver-level register/config facts.
+   Use `hil-smoke` only for complete example-image behavior. Register/poll-level
+   facts are board-confirmable; scope-only behavior (actual waveform) and
+   board-population preconditions (RTC crystal) are not — say so.
 7. **Breaking** change → batch it (one minor bump) and let `cargo-semver-checks`
    confirm the bump (see CI / `just semver`).
 

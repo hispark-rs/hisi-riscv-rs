@@ -72,8 +72,8 @@ cat /dev/ttyUSB0
 
 - **HAL 驱动级**：`embedded-test` + semihosting，通过 `hil/embedded-test-runner.sh` 在真板逐个运行
   `hisi-riscv-hal/tests/hil.rs` 里的 Rust `#[test]`。这是 stable API 的证据线。
-- **示例级 smoke**：`hil/hil-smoke.sh` 把每个示例烧上去、读 UART、断言它打印了预期标记串。它是 QEMU
-  冒烟测试在真硅片上的对应物。
+- **示例级 smoke**：`hil/hil-smoke.sh` 把常规 UART smoke 子集烧上去、读 UART、断言它打印了预期
+  grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或需要半主机的示例另走人工/调试器路径。
 
 示例级 smoke 大致这样工作（概念示意，**本课不要求你真的运行**）：
 
@@ -81,7 +81,7 @@ cat /dev/ttyUSB0
 PORT=/dev/ttyUSB0 hil/hil-smoke.sh
 ```
 
-脚本会逐个示例：用 `hil/flash.sh` 烧录 → 读几秒 UART → 用 `grep` 检查预期标记串，
+脚本会逐个检查 UART smoke 子集：用 `hil/flash.sh` 烧录 → 读几秒 UART → 用 `grep` 检查预期模式，
 比如 `uart_hello` 应出现 `Hello from WS63`、`timer_irq` 应出现 `timer irq #`。
 而 blinky 因为没有串口输出，脚本会特别提示"请用 LED / 逻辑分析仪人工确认"——
 正是你在第 2、3 步亲手做的事。

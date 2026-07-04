@@ -31,7 +31,7 @@ HIL runner 与脚本环境变量见 [HIL 脚本与 runner 环境变量](07-hil-m
 | `xip_flash_clk_hazard` | 演示 XIP 执行中切 flash 时钟会挂死 | UART | `XIP-HAZARD: before flash-clock switch` | 否 | ✅ | ❌¹⁰ |
 
 图例（**真机**列）：✅ 已在真实硅片上验证通过；⚠️ QEMU 通过、真机示例 smoke 尚未逐一验证；❌ 真机不适用或不纳入常规 HIL。
-HAL 驱动级 embedded-test HIL 是另一条轨道：截至 2026-07-03，WS63 HAL 套件 26/26 真机通过，stable API 证据见
+HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例数与覆盖边界见
 [Stable API 清单与门控状态](10-stable-api.md)。
 
 注：
@@ -96,3 +96,16 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：截至 2026-07-03，WS63 HA
 | `2` | PANIC — 触达 Rust panic handler | `semihost_selftest: PANIC\n` |
 
 机制：`exit(code)` 发 `SYS_EXIT_EXTENDED` (0x20) + `ADP_STOPPED_APPLICATION_EXIT` (0x2_0026) 块 `[reason, code]`，使 QEMU 进程退出码等于 `code`。console 写经 `SYS_WRITE0`，串末需 NUL（`\0`）。
+
+## BS2X isolated workspaces
+
+BS2X 示例不在根 workspace 中；它们各自是隔离 workspace，避免和 WS63 示例一起统一
+`hisi-riscv-hal` 的 chip feature。当前成员事实取自各自 `Cargo.toml` 的 `[workspace].members`：
+
+| 工作区 | members | 备注 |
+|--------|---------|------|
+| `examples/bs21` | `blinky`, `uart_hello`, `spi_loopback`, `gadc_read`, `i2c_scan`, `hid_demo`, `clock_rng`, `pwm_wdt`, `dma_mem`, `embassy_multitask`, `timer_irq` | 用 `chip-bs21`；QEMU machines `bs21`/`bs21e`/`bs22` 复用这一组 |
+| `examples/bs20` | `blinky`, `uart_hello`, `spi_loopback`, `gadc_read`, `i2c_scan`, `hid_demo`, `clock_rng`, `pwm_wdt`, `dma_mem` | BS20/M1 128K RAM 变体；不是 BS21 示例全集 |
+
+BS2X 目前没有接入真机 HIL runner；常规验证路径是构建和 QEMU smoke。不要把 WS63 的
+`hil/hil-smoke.sh` UART marker 子集外推到 BS2X。
