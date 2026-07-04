@@ -7,6 +7,23 @@ disable-model-invocation: true
 Turns the 15-minute release babysit into one command: tag → watch the matrix →
 verify assets. Run it **from inside the target repo** (it uses `gh`, which resolves
 the repo from the git remote). User-invoked because it pushes tags and triggers CI.
+Full repository procedure and ownership rules live in
+`docs/src/how-to/11-release.md`.
+
+## Preflight
+
+For every independently published Rust crate in this ecosystem
+(`hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-pac`, `bs2x-pac`), `Cargo.lock` is part
+of the release input even when the crate is a library. Before tagging:
+
+```bash
+cargo generate-lockfile --locked
+git diff --exit-code -- Cargo.lock
+cargo package --locked --no-verify
+```
+
+If the crate lives as a submodule in `hisi-riscv-rs`, commit any `Cargo.lock`
+change **inside that submodule** before bumping the parent pointer.
 
 ## Usage
 
@@ -64,6 +81,8 @@ Hosts = `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `aarch64-apple-
 ## Gotchas
 
 - Needs `gh` authenticated with access to the repo.
+- Library crate repos intentionally commit `Cargo.lock`; a missing or dirty lockfile
+  is a release blocker, not a harmless library-crate convention.
 - Library crates (`publish.yml`) produce **no GitHub release** — a `success` conclusion
   means the publish step ran; crates.io index propagation lags, and the crates.io API
   may be unreachable from a sandbox, so confirm the new version separately.

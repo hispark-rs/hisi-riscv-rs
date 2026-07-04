@@ -16,10 +16,11 @@
 
 ## 测试 · Test
 
-- [如何运行 HIL 冒烟测试](07-run-hil-tests.md) —— `hil/hil-smoke.sh` 逐示例的 UART 标记断言、环境变量、读懂通过/失败。
+- [如何运行 HIL 测试](07-run-hil-tests.md) —— HAL `embedded-test` 真机套件、`tests-hil`、示例级 UART smoke 及结果判读。
 - [如何用 probe-rs 调试与读内存](08-debug-probe-rs.md) —— 用补丁版 probe-rs `read`、`reset_and_halt`、读 CSR/内存、用 HW 断点抓应用入口、dump ROM。
 
 ## 开发 · Develop
 
 - [如何从模板新建一个工程](09-new-project.md) —— `cargo generate` 从 hisi-rs-template 起步，用生成的 justfile 完成首次构建+烧录。
 - [如何新增一个外设驱动](10-add-driver.md) —— HAL 驱动模块范式、外设单例宏、sealed trait，以及配一个带 PASS 标记的 HIL 示例。
+- [如何发布 crate 与父仓 release](11-release.md) —— 子仓 crates.io 发布、父仓 firmware release、`Cargo.lock`/`--locked` 门禁和 submodule pointer 顺序。

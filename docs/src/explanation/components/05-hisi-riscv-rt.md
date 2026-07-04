@@ -33,7 +33,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws
                                   hisi-riscv-rt ─┘  提供启动/向量/链接脚本
 ```
 
-`hisi-riscv-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它依赖 `ws63-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`。
+`hisi-riscv-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它对外通过 registry 版本依赖消费 `ws63-pac` / `bs2x-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`；standalone CI / publish 使用自己的 `Cargo.lock` 从 crates.io 解析，monorepo 本地开发则由父仓根 `Cargo.toml` 的 `[patch.crates-io]` 指向本地 PAC submodule。
 
 > 链接脚本传播（已解决）：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游 bin。早先这导致示例无法链接；**现已修**——`build.rs` 改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x`，bin 用 `-Tws63-link.x` 引入（`rustc-link-search` 会传播）。见评审“问题”表「本轮已修」条。
 
@@ -89,7 +89,7 @@ ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws
 | 高 | 构建 | （已修）MIE 中断宏 typo：`call mie\()_interrupt_handler` 缺少 `\n`，宏展开后符号名错误 | `asm/startup.S:397`（现为 `call mie\n\()_interrupt_handler`）| 本轮已修 |
 | 中 | 构建 | （已修）栈顶符号 `__irq/exc/nmi_stack_top__` 在 `.stacks (NOLOAD)` 仅符号区被 `--gc-sections` 回收 → 链接期未定义；已在 `memory.x` 顶层加 GC-safe fallback | `layout.ld:199-204`（说明）；`memory.x:76-78`（fallback）| 本轮已修 |
 | 中 | 构建 | （已修）`riscv` 启用 `critical-section-single-hart`，为无原子扩展的 WS63 提供单 hart CS 实现，支撑 PAC `take()` 与 HAL portable-atomic | `Cargo.toml`（`riscv` features）| 本轮已修 |
-| 低 | 构建/发布 | （已修）`ws63-pac` 依赖补充 `version`（`version = "0.1", path = ...`）以便 `cargo publish` | `Cargo.toml`（ws63-pac 依赖）| 本轮已修 |
+| 低 | 构建/发布 | （已修）`ws63-pac` / `bs2x-pac` 采用 registry 版本依赖；本地 checkout 仅由父仓 `[patch.crates-io]` 在开发时接管，发布仓不携带 path/git patch | `Cargo.toml`（PAC 依赖）；父仓 `Cargo.toml`（`[patch.crates-io]`）| 本轮已修 |
 
 > 说明：构建完整性修复中与本组件相关的还包括——双 PAC 实例消除（根 `[patch.crates-io]` 指向本地，cargo tree 单一实例）、无原子 ISA 下实测产物零原子指令（lr/sc/amo）。默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`（硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）。这些在仓库级评审中记录，本组件直接相关项已并入上表。
 

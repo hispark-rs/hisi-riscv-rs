@@ -212,6 +212,26 @@ Seven GitHub Actions workflows in `.github/workflows/`:
 - `merge-conflict.yml` — conflict marker detection + PR labeling
 - `release.yml` — parent-repo firmware GitHub Release on tag; crates.io publishing is owned by each crate repo
 
+### Release lockfile policy
+
+完整操作流程见 [`docs/src/how-to/11-release.md`](docs/src/how-to/11-release.md)。
+
+Every independently published Rust repository in this ecosystem commits its own
+`Cargo.lock`, including library crates. This applies to `hisi-riscv-hal`,
+`hisi-riscv-rt`, `ws63-pac`, and `bs2x-pac`. Their standalone CI and `publish.yml`
+must use `--locked`; release preflight is:
+
+```bash
+cargo generate-lockfile --locked
+git diff --exit-code -- Cargo.lock
+cargo package --locked --no-verify
+```
+
+Do not rely on the parent workspace lockfile for a submodule crate release. If a
+submodule lockfile changes, commit it inside that submodule before updating the
+parent submodule pointer. The parent `Cargo.lock` only records the parent workspace
+resolution.
+
 ## Stable / Unstable API gating (0.6.0+)
 
 **Policy: an API is STABLE only if a named HIL test exercises it on real WS63

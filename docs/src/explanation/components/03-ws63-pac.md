@@ -25,7 +25,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 ```
 
 - 上游：`ws63-svd` 的 XML 描述，经 `svd2rust v0.37.1` 一次性生成（`src/lib.rs:1` doc 注释标注版本）。
-- 下游：`hisi-riscv-hal`（安全驱动）与 `hisi-riscv-rt`（启动/链接）均消费本 crate。两者通过 **registry 版本依赖** `version = "0.1"` 声明（`crates/hisi-riscv-hal/Cargo.toml:12`、`crates/hisi-riscv-rt/Cargo.toml:21`），在 monorepo 内由根 `Cargo.toml` 的 `[patch.crates-io]` 重定向到本地路径（`Cargo.toml:50-51`），保证全工作区只链接**单一** PAC 实例。
+- 下游：`hisi-riscv-hal`（安全驱动）与 `hisi-riscv-rt`（启动/链接）均消费本 crate。两者对外通过 **registry 版本依赖** 声明（`ws63-pac = "0.2"`；BS2X 路径使用 `bs2x-pac = "0.1"`），standalone CI / publish 按各自 `Cargo.lock` 从 crates.io 解析；在 monorepo 内由根 `Cargo.toml` 的 `[patch.crates-io]` 重定向到本地 submodule，保证开发时全工作区只链接**单一** PAC 实例。
 
 ## 关键设计
 
@@ -59,7 +59,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 本轮（2026-05-31，ROADMAP 阶段 0）已完成的构建完整性修复中，与本 crate 直接相关：
 
 - **双 PAC 消除**：`hisi-riscv-hal`/`ws63-flashboot` 改为 registry 版本依赖，根 `Cargo.toml` 用 `[patch.crates-io]` 统一指向本地（`Cargo.toml:50-51`），全工作区单实例。
-- **版本对齐**：`0.1.0` → `0.1.1`（与 tag 后新增的 KM 寄存器对齐），其后随各仓自有流水线发布到 **`0.1.3`**。
+- **版本对齐**：`0.1.x` 后随 SPI_WSR / TIMER 修复发布到 **`0.2.0`**；下游 HAL/RT 通过 registry 版本依赖消费，父仓开发用 `[patch.crates-io]` 指向本地 submodule。
 - **ISA 协同**：`rt` feature 导出 `RISCV_RT_BASE_ISA=rv32i`（`build.rs:16`），配合默认 target = builtin、无原子的 **`riscv32imfc-unknown-none-elf`**（硬件单精度浮点 ilp32f，原子由 portable-atomic critical-section polyfill 提供）。
 
 仍需后续处理（指向 ROADMAP 对应阶段）：

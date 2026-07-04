@@ -27,6 +27,16 @@ SLUG="$(gh "${GHR[@]}" repo view --json nameWithOwner -q .nameWithOwner 2>/dev/n
 [ -n "$SLUG" ] || { echo "FATAL: gh can't resolve the repo (auth? remote?)"; exit 2; }
 echo "════════ release-train: $SLUG @ $TAG ════════"
 
+# ── 0. release input preflight for standalone Rust crate repos ────────────────
+if [ -f Cargo.toml ] && grep -q '^\[package\]' Cargo.toml; then
+    command -v cargo >/dev/null 2>&1 || { echo "FATAL: cargo not found"; exit 2; }
+    echo "==> cargo lockfile/package preflight"
+    cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }
+    git ls-files --error-unmatch Cargo.lock >/dev/null 2>&1 || { echo "FATAL: Cargo.lock is not tracked"; exit 2; }
+    git diff --exit-code -- Cargo.lock || { echo "FATAL: Cargo.lock changed during preflight"; exit 2; }
+    cargo package --locked --no-verify || { echo "FATAL: cargo package preflight failed"; exit 2; }
+fi
+
 # ── 1. ensure the tag is on the remote ───────────────────────────────────────
 if git ls-remote --tags origin "refs/tags/$TAG" 2>/dev/null | grep -q "$TAG"; then
     echo "==> tag $TAG already on origin"

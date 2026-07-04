@@ -2,7 +2,7 @@
 
 这一章不是教你"怎么做"，也不是给你查"叫什么"的索引——它讲的是**为什么**：
 为什么栈这样分层、为什么要一条自定义工具链、为什么一个裸 ELF 在硅片上不会启动、
-为什么我们用 UART 里的一行字符串来判定一次硬件测试是否通过。
+为什么驱动级测试用 embedded-test/semihosting、示例级测试仍用 UART 标记串。
 
 如果你想动手，去 [教程](../tutorials/00-index.md) 或 [操作指南](../how-to/00-index.md)；
 如果你想查一个确切的地址、字段或 API，去 [参考](../reference/00-index.md)。
@@ -40,8 +40,10 @@
   为什么一个全零"假签名"镜像照样能启动、真正签名又需要什么。
 - [QEMU 模型](06-qemu-model.md)——hisi-riscv-qemu 为什么存在、它**能**模拟什么、**不能**
   模拟什么，以及 QEMU 里跑和真硅片上跑的根本差别。
-- [HIL 测试框架](07-hil-framework.md)——硬件在环测试的哲学：为什么用 UART 标记串做验证通道、
-  QEMU↔硅片的几类分歧、以及**诚实的当前 bring-up 状态**。
+- [HIL 测试框架](07-hil-framework.md)——硬件在环测试的哲学：驱动级 embedded-test 与示例级 UART smoke
+  为什么分轨、QEMU↔硅片的几类分歧、以及**诚实的当前 bring-up 状态**。
+- [仓库与发布模型](08-repository-release-model.md)——为什么把 PAC、runtime、HAL、示例和工具拆成可独立发布
+  的底座，为什么父仓只是集成台，为什么 release 使用 crates.io 依赖而本地开发用 `[patch.crates-io]`。
 
 ## 组件深入文档
 

@@ -80,5 +80,7 @@ git status -s                   # clean (except transient agent worktrees)
   after confirming the old branch is an ancestor (`merge-base --is-ancestor`), so you
   fast-forward and lose nothing.
 - **Never add transient agent worktrees** (`.claude/worktrees/`, Codex worktrees, or similar) — they are harness state, not repo content.
-- **Cargo.lock** changes belong with the parent commit (it records the new pointers
-  indirectly via path/patch deps).
+- **Cargo.lock ownership follows the repo that resolves it.** Independently published
+  Rust submodules (`hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-pac`, `bs2x-pac`) commit
+  their own `Cargo.lock` inside the submodule. The parent `Cargo.lock` belongs only
+  with the parent commit.
