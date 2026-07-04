@@ -90,8 +90,8 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
   保证全仓库只链接一个 PAC（否则 `DEVICE_PERIPHERALS` 单例静态重复、类型不兼容）。
 - **default-members = 库 + WS63 示例集合**。根 `Cargo.toml` 的 `default-members` 是构建事实源；当前示例清单与状态见
   [示例目录与验证标记串](../../reference/02-examples.md)。各示例经 hisi-riscv-rt 导出的链接脚本可正常链接
-  （`hisi-riscv-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录 + `ws63-link.x` 包装脚本，示例侧 `build.rs`
-  以 `-Tws63-link.x` 引入）。实验性的 `ws63-flashboot` 不在默认构建里，仍是 `member`，`cargo check --workspace`
+  （`hisi-riscv-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录 + `hisi-riscv-link.x` 包装脚本，示例侧 `build.rs`
+  以 `-Thisi-riscv-link.x` 引入）。实验性的 `ws63-flashboot` 不在默认构建里，仍是 `member`，`cargo check --workspace`
   覆盖。
 
 常用命令：

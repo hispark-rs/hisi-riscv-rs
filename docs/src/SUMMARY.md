@@ -60,3 +60,4 @@
     - [ws63-flashboot](explanation/components/08-ws63-flashboot.md)
     - [ws63-RF](explanation/components/09-ws63-rf.md)
     - [ws63-guide](explanation/components/10-ws63-guide.md)
+    - [Hi3322 runtime 移植预研](explanation/components/hi3322-runtime-porting.md)
