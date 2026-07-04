@@ -1,7 +1,7 @@
 //! Build script for the BS20 uart_hello example.
 //!
-//! BS20 has its own memory map, so this crate ships its own `memory.x` (hisi-riscv-rt's
-//! bundled WS63 one is disabled via `default-features = false`). Copy ours into
+//! BS20 has its own memory map, so this example ships its own `memory.x` (the
+//! runtime's bundled default is disabled via `default-features = false`). Copy ours into
 //! OUT_DIR and put that dir on the linker search path, so `hisi-riscv-link.x`'s
 //! `INCLUDE memory.x` resolves to THIS file (exactly one on the path → no
 //! link-order ambiguity).
