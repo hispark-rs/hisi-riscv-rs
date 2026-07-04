@@ -1,0 +1,4 @@
+interface:
+  display_name: "Embedded-Test HIL"
+  short_description: "Write and run on-target HAL HIL tests"
+  default_prompt: "Use $embedded-test-hil to add or run an embedded-test HIL case for a HAL driver."
