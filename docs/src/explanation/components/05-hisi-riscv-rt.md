@@ -2,12 +2,12 @@
 
 `hisi-riscv-rt` 是最终 firmware bin 进入 Rust `main()` 前经过的 runtime crate。它现在的外部 Interface 有意保持很薄：复用 `riscv-rt` 的 `#[entry]` / `#[pre_init]`，重导出当前 PAC 的 interrupt enum，并为单 hart / 无 A 扩展产品路径注册全局 critical-section 实现。
 
-真正和芯片绑定的 reset、trap、linker、`device.x`、boot header 被收进 startup adapter。这个拆分记录在 [ADR 0001](../../../adr/0001-runtime-adapter-seams.md)。
+真正和芯片绑定的 reset、trap、linker、boot header 被收进 startup adapter；中断符号 `device.x` 则由当前 PAC 的 `rt` feature 负责。这个拆分记录在 [ADR 0001](../../../adr/0001-runtime-adapter-seams.md)。
 
 ## Adapter 分层
 
 - **`rt_core`**：芯片中立层，只承接 `riscv-rt` re-export 与通用 linker contract，不放芯片地址。
-- **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,device.x,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、cache CSR、trap dispatch、段搬运、link-time boot header。
+- **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、cache CSR、trap dispatch、段搬运、link-time boot header；`device.x` 来自 `ws63-pac/rt`。
 - **BS2X compatibility adapter**：BS20/BS21 示例自带 `memory.x`，`bs2x-pac/rt` 提供 `device.x`，当前仍复用 legacy M-core startup/layout。它是兼容路径，不是“已经有独立 BS2X runtime 验证”的声明。
 - **Hi3322 placeholder**：不暴露可启动 feature。Hi3322 的 TES/TEE reset、CLIC、内存分区和镜像格式见 [Hi3322 runtime 移植预研](hi3322-runtime-porting.md)。
 
@@ -19,7 +19,7 @@
 -Thisi-riscv-link.x
 ```
 
-`build.rs` 把 adapter 资源复制到 `OUT_DIR`，并生成 `hisi-riscv-link.x`，按顺序 `INCLUDE memory.x`、`layout.ld`、`device.x`、`riscv-rt-symbols.x`。WS63 `boot-header` feature 额外 `INCLUDE boot-header.x`。
+`build.rs` 把 adapter 资源复制到 `OUT_DIR`，并生成 `hisi-riscv-link.x`，按顺序 `INCLUDE memory.x`、`layout.ld`、`device.x`、`riscv-rt-symbols.x`。其中 `device.x` 由当前 PAC 的 `rt` feature 放到 linker search path；WS63 `boot-header` feature 额外 `INCLUDE boot-header.x`。
 
 `ws63-link.x` 仍生成，但只是兼容别名；新示例、HIL 与文档都应使用 `hisi-riscv-link.x`。
 
@@ -40,7 +40,7 @@ WS63 的 `bundled-memory-x` 只在同时启用 `chip-ws63` 时发出 WS63 `memor
 
 - WS63 direct-mode trap dispatch 与 local IRQ 表；
 - WS63 cache CSR、PMP workaround、boot header；
-- BS2X 专属中断符号表；
+- BS2X/Hi3322 专属中断符号表；
 - Hi3322 TES/TEE reset、CLIC 与 SELiteOS 分区模型。
 
 ## Critical-section 职责

@@ -12,7 +12,9 @@ Accepted
 linker scripts, WS63 `device.x`, and the optional WS63 boot header lived at the
 crate root. BS2X examples later reused parts of that implementation by supplying
 their own `memory.x` and PAC `device.x`, but the exported linker script was still
-named `ws63-link.x`. Future Hi3322 work has a different platform shape again:
+named `ws63-link.x`. The same ownership rule should apply to WS63 too: PAC crates
+own interrupt symbols, runtime adapters own startup/layout/header resources.
+Future Hi3322 work has a different platform shape again:
 the vendor SELiteOS path uses TES/TEE CSRs (`tmtvec`, `tmstatus`, `tmedeleg`,
 `tmesvec`), CLIC setup, and a different memory partition model.
 
@@ -29,6 +31,9 @@ Keep the public crate name `hisi-riscv-rt`, but split its implementation into:
 - chip startup adapters: WS63 owns its reset/linker/header facts; BS2X is an
   explicit compatibility adapter; Hi3322 remains a documented placeholder until
   PAC, linker, image packaging, and board validation exist.
+- interrupt symbols (`device.x`) stay in the active PAC's `rt` feature
+  (`ws63-pac/rt`, `bs2x-pac/rt`, and future chip PACs); the runtime entry script
+  only includes `device.x`.
 - image packaging remains outside the core runtime, owned by chip adapters and
   tools such as `hisi-fwpkg`.
 

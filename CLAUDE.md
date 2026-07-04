@@ -75,7 +75,7 @@ hisi-riscv-rt (riscv-rt facade + chip startup adapters)
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for all 35 peripherals. The `Peripherals::take()` singleton pattern ensures one-time access.
 - **`hisi-riscv-hal`**: 43 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
-- **`hisi-riscv-rt`**: Runtime crate — thin `riscv-rt` entry facade plus chip startup adapters. WS63 owns `asm/ws63` + `linker/ws63`; BS2X currently reuses the legacy adapter with per-example `memory.x` and `bs2x-pac/rt` `device.x`.
+- **`hisi-riscv-rt`**: Runtime crate — thin `riscv-rt` entry facade plus chip startup adapters. WS63 owns `asm/ws63` + `linker/ws63` startup/layout/header resources and uses `ws63-pac/rt` for `device.x`; BS2X currently reuses the legacy adapter with per-example `memory.x` and `bs2x-pac/rt` `device.x`.
 
 ### Peripheral Singleton Pattern
 

@@ -21,7 +21,7 @@ ws63-svd (XML)
    ▼
 ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
    │
-   └──► hisi-riscv-rt（rt feature 提供 device.x 中断向量 + RISCV_RT_BASE_ISA）
+   └──► hisi-riscv-rt（通过 chip-ws63 启用 ws63-pac/rt，并在 linker contract 中 INCLUDE device.x）
 ```
 
 - 上游：`ws63-svd` 的 XML 描述，经 `svd2rust v0.37.1` 一次性生成（`src/lib.rs:1` doc 注释标注版本）。

@@ -29,10 +29,10 @@ ws63-svd (XML)
    ▼
 ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
                 ▲
-       hisi-riscv-rt（启动汇编 / 链接脚本 / 中断向量）并行提供运行期支撑
+       hisi-riscv-rt（启动汇编 / 链接脚本；中断符号来自 PAC/rt）并行提供运行期支撑
 ```
 
-`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期向量表由 `hisi-riscv-rt` 的 `device.x` 提供。
+`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期中断符号由当前 PAC 的 `rt` feature（WS63 为 `ws63-pac/rt`）提供，并由 `hisi-riscv-rt` 的 linker contract 引入。
 
 依赖：`embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`nb`、`portable-atomic`、`riscv`。
 
