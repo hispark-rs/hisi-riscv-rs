@@ -11,6 +11,8 @@ name: HIL (hardware-in-the-loop)
 # (flashing is destructive); the nightly schedule is left commented for when a board is
 # permanently wired up.
 #
+# This workflow currently drives the example-level smoke suite through the vendor
+# hisiflash path; the HAL embedded-test suite uses hil/embedded-test-runner.sh.
 # Runner provides the board params via environment or repo variables:
 #   HIL_PORT        board UART0 serial port (e.g. /dev/ttyUSB0)
 #   HIL_LOADERBOOT  vendor loaderboot.bin path on the runner
@@ -53,6 +55,7 @@ jobs:
 
       - name: Preflight (no writes — fails fast if the rig is incomplete)
         env:
+          METHOD: hisiflash
           PORT: ${{ vars.HIL_PORT }}
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
@@ -60,6 +63,7 @@ jobs:
 
       - name: HIL smoke
         env:
+          METHOD: hisiflash
           PORT: ${{ vars.HIL_PORT }}
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}

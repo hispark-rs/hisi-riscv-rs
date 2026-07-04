@@ -20,7 +20,7 @@
 
 1. [搭建环境（贡献生态）](01-setup.md) —— 克隆monorepo、装工具链/QEMU/probe-rs，并以一次成功的 `cargo build -p blinky` 收尾。
 2. [构建与运行示例集](02-examples.md) —— 在 QEMU 里跑完整示例目录：GPIO、UART、中断、半主机退出码。
-3. [第一次硬件在环测试](03-hil.md) —— 把 blinky 烧到真板，观察 GPIO 翻转，认识 `hil/hil-smoke.sh`。
+3. [第一次硬件在环测试](03-hil.md) —— 把 blinky 烧到真板，观察 GPIO 翻转，认识 embedded-test 与示例 smoke 两条 HIL 轨道。
 
 学完这三课，你就能在这个仓库里构建、运行并验证示例与改动了。开始吧 ——
 [搭建环境（贡献生态）](01-setup.md)。

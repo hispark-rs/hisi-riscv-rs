@@ -1,18 +1,18 @@
 ---
 name: hil-smoke
-description: Build a ws63-rs example for a HiSilicon chip, flash it to a REAL board via hisiflash, read UART, and assert the bring-up marker — the silicon twin of qemu-smoke. Use to validate firmware on hardware (real clocks/timing/peripherals that QEMU can't prove), or run --preflight to check the HIL rig with no board attached.
+description: Build a ws63-rs example for a HiSilicon chip, flash it to a REAL board via the repo HIL flash path, read UART, and assert the example marker — the silicon twin of qemu-smoke. Use for example-level hardware smoke; HAL driver-level evidence uses embedded-test via hil/embedded-test-runner.sh instead.
 disable-model-invocation: true
 ---
 
 The hardware-in-the-loop counterpart to `qemu-smoke`: same chip→example model, but it
 flashes silicon and reads the board's UART instead of booting QEMU. It validates exactly
-what emulation can't — the real 24 MHz TCXO timer, the 160 MHz UART baud base, real
-peripheral timing (see the bring-up table in `hil/README.md`). User-invoked: it writes
-firmware to hardware.
+what emulation can't at the example-image level — real boot, UART, timing, and board
+wiring (see the bring-up table in `hil/README.md`). User-invoked: it writes firmware
+to hardware.
 
-> **Status**: the `hil/` layer is scaffolding until first-board bring-up — `PORT`,
-> `LOADERBOOT`, and `ADDRESS` get pinned against the real board then. Run `--preflight`
-> anytime (no board needed) to see what's still missing.
+> **Scope**: this skill is only the UART/example smoke track. The HAL stable API proof
+> track is `cargo test -p hisi-riscv-hal --test hil` through `hil/embedded-test-runner.sh`
+> (`embedded-test` + semihosting), documented in `docs/src/how-to/07-run-hil-tests.md`.
 
 ## Usage
 
@@ -29,7 +29,7 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
   ```
 - **Single example**: build → flash → read UART → assert the chip-aware marker.
   ```bash
-  PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x200000 \
+  PORT=/dev/ttyUSB0 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml \
     bash .agents/skills/hil-smoke/hil.sh ws63 uart_hello
   ```
 - **Full suite**: WS63 delegates to the in-tree `hil/hil-smoke.sh` (source of truth);
@@ -61,8 +61,10 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
 | var | default | purpose |
 |-----|---------|---------|
 | `PORT` | autodetect one ttyUSB*/ttyACM* | board UART0 serial port |
-| `LOADERBOOT` | autodiscover from the SDK | vendor loaderboot.bin (pushed before the program) |
-| `ADDRESS` | `0x200000` | program flash offset — **verify against the partition table** |
+| `METHOD` | `probe-rs` | flash path used by `hil/flash.sh`; set `hisiflash` for the vendor path |
+| `PROBE_RS_YAML` | none | WS63 chip-description YAML for the probe-rs path |
+| `LOADERBOOT` | autodiscover from the SDK | vendor loaderboot.bin, only for `METHOD=hisiflash` |
+| `ADDRESS` | ws63 `0x230000`, BS2X `0x90000` | program flash offset for `METHOD=hisiflash` |
 | `BAUD` | hisiflash 921600 | flash baud |
 | `UART_BAUD` | `115200` | the example's UART0 baud |
 | `SETTLE` | `4` | seconds to read UART after each flash |
@@ -82,6 +84,6 @@ bash .agents/skills/hil-smoke/hil.sh <chip> [example] [--preflight]
   message if the port/loaderboot/hisiflash are missing.
 - **BS2X HIL is unverified** — the QEMU path is solid; on-silicon BS21/BS20 awaits a board.
 - `ADDRESS` is a flash *offset*, not the XIP base — wrong value can misflash. Verify it.
-- The actual flash goes through `hil/flash.sh` with `HIL_CONFIRM=1`; configured agent hooks
-  block unconfirmed `hisiflash write-program`.
-- A first board may need `cargo install hisiflash-cli` and `gdb-multiarch` (see `hil/README.md`).
+- The actual flash goes through `hil/flash.sh` with `HIL_CONFIRM=1`; the default WS63
+  path is patched `probe-rs`, while `METHOD=hisiflash` uses the vendor loaderboot/YMODEM path.
+- A first board may need the patched `probe-rs`, `hisi-fwpkg`, and `gdb-multiarch` (see `hil/README.md`).

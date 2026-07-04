@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 # hil-smoke driver — the SILICON twin of qemu-smoke. Build a ws63-rs example for a
-# chip, flash it to a real board via hisiflash, read UART, and assert the expected
-# marker. Mirrors hil/hil-smoke.sh's markers; adds the chip→workspace build split,
-# serial-port autodetect, LOADERBOOT autodiscovery, and a board-free --preflight.
+# chip, flash it to a real board via hil/flash.sh, read UART, and assert the
+# expected marker. Mirrors hil/hil-smoke.sh's markers; adds the chip→workspace
+# build split, serial-port autodetect, vendor LOADERBOOT autodiscovery for the
+# hisiflash path, and a board-free --preflight.
 #
 #   bash hil.sh <chip> [example] [--preflight]
 #     chip:    ws63 | bs21 | bs21e | bs22 | bs20
 #     example: uart_hello | timer_irq | gpio_irq | reset_demo | spi_loopback | i2c_scan | …
 #              (omit → the chip's full HIL smoke set)
-#     --preflight: check the HIL environment (board/port/hisiflash/loaderboot/toolchain)
-#                  WITHOUT building or flashing. Runnable with NO board attached.
+#     --preflight: check the HIL environment WITHOUT building or flashing.
+#                  Runnable with NO board attached.
 #
-# Env (same spirit as hil/flash.sh): PORT BAUD UART_BAUD LOADERBOOT ADDRESS HISIFLASH SETTLE
+# Env (same spirit as hil/flash.sh): METHOD PORT BAUD UART_BAUD PROBE_RS_YAML
+#   LOADERBOOT ADDRESS HISIFLASH SETTLE
 #   PORT       board UART0 serial port (autodetected if exactly one ttyUSB*/ttyACM*)
-#   LOADERBOOT vendor loaderboot.bin (autodiscovered from fbb_ws63 / fbb_bs2x if unset)
-#   ADDRESS    program flash offset (default 0x200000 — VERIFY vs the partition table)
+#   METHOD     probe-rs (default) or hisiflash
+#   PROBE_RS_YAML chip-description YAML for METHOD=probe-rs
+#   LOADERBOOT vendor loaderboot.bin for METHOD=hisiflash (autodiscovered if unset)
+#   ADDRESS    program flash offset for METHOD=hisiflash (ws63 0x230000 / bs2x 0x90000)
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +26,7 @@ REPO="$(cd "$HERE/../../.." && pwd)"            # .agents/skills/hil-smoke → r
 TARGET=riscv32imfc-unknown-none-elf
 SETTLE="${SETTLE:-4}"
 UART_BAUD="${UART_BAUD:-115200}"
-ADDRESS="${ADDRESS:-0x200000}"
+METHOD="${METHOD:-probe-rs}"
 HISIFLASH="${HISIFLASH:-hisiflash}"
 
 CHIP="${1:-}"; shift || true
@@ -33,11 +37,12 @@ for a in "$@"; do case "$a" in --preflight) PREFLIGHT=1 ;; *) EXAMPLE="$a" ;; es
 # ── chip → build manifest / target dir / bin prefix / banner / loaderboot SDK ──
 # bs21e/bs22 reuse the examples/bs21 (chip-bs21) binaries → banner says BS21.
 case "$CHIP" in
-    ws63)            MANIFEST="$REPO/Cargo.toml"; WS=""; TDIR="$REPO/target/$TARGET/release"; PFX="";      BANNER="WS63"; SDK="/root/fbb_ws63" ;;
-    bs21|bs21e|bs22) MANIFEST="$REPO/examples/bs21/Cargo.toml"; WS="examples/bs21"; TDIR="$REPO/examples/bs21/target/$TARGET/release"; PFX="bs21_"; BANNER="BS21"; SDK="/root/fbb_bs2x" ;;
-    bs20)            MANIFEST="$REPO/examples/bs20/Cargo.toml"; WS="examples/bs20"; TDIR="$REPO/examples/bs20/target/$TARGET/release"; PFX="bs20_"; BANNER="BS20"; SDK="/root/fbb_bs2x" ;;
+    ws63)            MANIFEST="$REPO/Cargo.toml"; WS=""; TDIR="$REPO/target/$TARGET/release"; PFX="";      BANNER="WS63"; SDK="/root/fbb_ws63"; DEFAULT_ADDRESS="0x230000"; CHIP_KIND="ws63" ;;
+    bs21|bs21e|bs22) MANIFEST="$REPO/examples/bs21/Cargo.toml"; WS="examples/bs21"; TDIR="$REPO/examples/bs21/target/$TARGET/release"; PFX="bs21_"; BANNER="BS21"; SDK="/root/fbb_bs2x"; DEFAULT_ADDRESS="0x90000"; CHIP_KIND="bs21" ;;
+    bs20)            MANIFEST="$REPO/examples/bs20/Cargo.toml"; WS="examples/bs20"; TDIR="$REPO/examples/bs20/target/$TARGET/release"; PFX="bs20_"; BANNER="BS20"; SDK="/root/fbb_bs2x"; DEFAULT_ADDRESS="0x90000"; CHIP_KIND="bs21" ;;
     *) echo "FATAL: unknown chip '$CHIP' (ws63|bs21|bs21e|bs22|bs20)"; exit 2 ;;
 esac
+ADDRESS="${ADDRESS:-$DEFAULT_ADDRESS}"
 SET="uart_hello timer_irq gpio_irq reset_demo spi_loopback i2c_scan"
 
 # ── env helpers (shared by preflight + the real run) ──────────────────────────
@@ -52,6 +57,7 @@ discover_loaderboot() {
     find "$SDK" -iname '*loaderboot*.bin' 2>/dev/null | grep -vi sign | head -1
 }
 have_hisiflash() { command -v "$HISIFLASH" >/dev/null 2>&1; }
+have_probe_rs() { command -v "${PROBE_RS:-probe-rs}" >/dev/null 2>&1; }
 marker_for() {
     case "$1" in
         uart_hello)   echo "Hello from $BANNER" ;;
@@ -69,13 +75,21 @@ if [ "$PREFLIGHT" = 1 ]; then
     echo "════════ hil-smoke preflight: chip=$CHIP ════════"
     rdy=0
     if rustup toolchain list 2>/dev/null | grep -q hisi-riscv; then echo "  [ok]   hisi-riscv toolchain linked"; else echo "  [MISS] hisi-riscv toolchain — see run-ws63-rs skill"; rdy=1; fi
-    if have_hisiflash; then echo "  [ok]   hisiflash: $(command -v $HISIFLASH)"; else echo "  [MISS] hisiflash — \`cargo install hisiflash-cli\` (or build /root/hisiflash)"; rdy=1; fi
+    echo "  [info] METHOD=$METHOD"
+    if [ "$METHOD" = "hisiflash" ]; then
+        if have_hisiflash; then echo "  [ok]   hisiflash: $(command -v $HISIFLASH)"; else echo "  [MISS] hisiflash — \`cargo install hisiflash-cli\` (or build /root/hisiflash)"; rdy=1; fi
+    else
+        if have_probe_rs; then echo "  [ok]   probe-rs: $(command -v ${PROBE_RS:-probe-rs})"; else echo "  [MISS] probe-rs — install the hispark-rs/probe-rs fork"; rdy=1; fi
+        if [ -n "${PROBE_RS_YAML:-}" ] && [ -f "$PROBE_RS_YAML" ]; then echo "  [ok]   PROBE_RS_YAML: $PROBE_RS_YAML"; else echo "  [MISS] PROBE_RS_YAML=<HiSilicon_WS63.yaml> for METHOD=probe-rs"; rdy=1; fi
+    fi
     P="$(detect_port)"; if [ -n "$P" ]; then echo "  [ok]   serial port: $P"; else
         n=$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null | grep -c .)
         [ "$n" = 0 ] && echo "  [MISS] no board serial port (/dev/ttyUSB*|ttyACM*) — attach a board, or set PORT=" || echo "  [WARN] $n serial ports — set PORT= to pick one"
         rdy=1; fi
-    L="$(discover_loaderboot)"; if [ -n "$L" ] && [ -f "$L" ]; then echo "  [ok]   loaderboot: $L"; else echo "  [MISS] no loaderboot under $SDK — build the SDK or set LOADERBOOT="; rdy=1; fi
-    echo "  [info] ADDRESS=$ADDRESS (default — VERIFY against the board partition table)"
+    if [ "$METHOD" = "hisiflash" ]; then
+        L="$(discover_loaderboot)"; if [ -n "$L" ] && [ -f "$L" ]; then echo "  [ok]   loaderboot: $L"; else echo "  [MISS] no loaderboot under $SDK — build the SDK or set LOADERBOOT="; rdy=1; fi
+        echo "  [info] ADDRESS=$ADDRESS (default — VERIFY against the board partition table)"
+    fi
     [ "$CHIP" != ws63 ] && echo "  [warn] BS2X real-hardware HIL is UNVERIFIED (see hil/README.md); QEMU path is solid"
     echo "  → $([ $rdy = 0 ] && echo READY || echo NOT-READY) (preflight changed nothing)"
     exit $rdy
@@ -83,9 +97,14 @@ fi
 
 # ── real run: resolve env, build, then flash + read + assert ──────────────────
 PORT="$(detect_port)";        [ -n "$PORT" ]        || { echo "FATAL: no serial port — set PORT=/dev/ttyUSBx"; exit 2; }
-LOADERBOOT="$(discover_loaderboot)"; [ -n "$LOADERBOOT" ] && [ -f "$LOADERBOOT" ] || { echo "FATAL: no LOADERBOOT — set LOADERBOOT=<vendor loaderboot.bin>"; exit 2; }
-have_hisiflash || { echo "FATAL: hisiflash not found — cargo install hisiflash-cli"; exit 2; }
-export PORT LOADERBOOT ADDRESS HISIFLASH UART_BAUD SETTLE WS63_RS="$REPO"
+if [ "$METHOD" = "hisiflash" ]; then
+    LOADERBOOT="$(discover_loaderboot)"; [ -n "$LOADERBOOT" ] && [ -f "$LOADERBOOT" ] || { echo "FATAL: no LOADERBOOT — set LOADERBOOT=<vendor loaderboot.bin>"; exit 2; }
+    have_hisiflash || { echo "FATAL: hisiflash not found — cargo install hisiflash-cli"; exit 2; }
+else
+    have_probe_rs || { echo "FATAL: probe-rs not found — install the hispark-rs/probe-rs fork"; exit 2; }
+    [ -n "${PROBE_RS_YAML:-}" ] && [ -f "$PROBE_RS_YAML" ] || { echo "FATAL: set PROBE_RS_YAML=<HiSilicon_WS63.yaml> for METHOD=probe-rs"; exit 2; }
+fi
+export METHOD PORT LOADERBOOT ADDRESS HISIFLASH UART_BAUD SETTLE WS63_RS="$REPO" CHIP_KIND
 
 build() {  # ws63 via -p in root ws; bs2x via the isolated-workspace manifest
     if [ -z "$WS" ]; then
@@ -114,7 +133,12 @@ do_check() {   # build+flash+read+assert one example; echoes PASS/FAIL
     else echo "  FAIL $ex — '$pat' not seen. Got:"; echo "$out" | tail -4 | sed 's/^/    /'; return 1; fi
 }
 
-echo "════════ hil-smoke: chip=$CHIP  port=$PORT  loaderboot=$(basename "$LOADERBOOT")  addr=$ADDRESS ════════"
+if [ "$METHOD" = "hisiflash" ]; then
+    flash_desc="loaderboot=$(basename "$LOADERBOOT") addr=$ADDRESS"
+else
+    flash_desc="probe-rs yaml=$(basename "$PROBE_RS_YAML")"
+fi
+echo "════════ hil-smoke: chip=$CHIP  port=$PORT  method=$METHOD  $flash_desc ════════"
 
 # single example
 if [ -n "$EXAMPLE" ]; then do_check "$EXAMPLE"; exit $?; fi

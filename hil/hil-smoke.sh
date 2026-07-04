@@ -5,7 +5,8 @@
 # (notably the corrected 24 MHz TCXO timer + 160 MHz UART baud). REQUIRES a board
 # + the flash env (see hil/flash.sh + hil/README.md).
 #
-# Usage:  PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x200000 hil/hil-smoke.sh
+# Usage:  PORT=/dev/ttyUSB0 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/hil-smoke.sh
+#         METHOD=hisiflash PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x230000 hil/hil-smoke.sh
 #
 # Env: same as flash.sh (PORT/BAUD/LOADERBOOT/ADDRESS/HISIFLASH), plus:
 #   SETTLE   seconds to read UART after each flash (default 4)

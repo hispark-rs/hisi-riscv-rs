@@ -64,15 +64,18 @@ cat /dev/ttyUSB0
 看完按 `Ctrl-C` 退出 `cat`。
 
 > blinky 自身不打印串口（它只翻转 GPIO），所以这里看到的是 **flashboot 的启动日志**，
-> 不是应用输出。UART0 接线与端口的细节见 [HIL 脚本环境变量](../../reference/07-hil-markers.md)。
+> 不是应用输出。UART0 接线与端口的细节见 [HIL 脚本与 runner 环境变量](../../reference/07-hil-markers.md)。
 
-## 第 4 步：认识 HIL 冒烟测试
+## 第 4 步：认识两条 HIL 轨道
 
-手动烧一个示例、肉眼看一个结果，是理解 HIL 的好起点。但当示例越来越多时，
-我们希望**自动**把每个示例烧上去、读 UART、断言它打印了预期的标记串。
-仓库里的 `hil/hil-smoke.sh` 就是干这个的——它是 QEMU 冒烟测试在真硅片上的对应物。
+手动烧一个示例、肉眼看一个结果，是理解 HIL 的好起点。但仓库里现在有两条自动化 HIL 轨道：
 
-它大致这样工作（概念示意，**本课不要求你真的运行**）：
+- **HAL 驱动级**：`embedded-test` + semihosting，通过 `hil/embedded-test-runner.sh` 在真板逐个运行
+  `hisi-riscv-hal/tests/hil.rs` 里的 Rust `#[test]`。这是 stable API 的证据线。
+- **示例级 smoke**：`hil/hil-smoke.sh` 把每个示例烧上去、读 UART、断言它打印了预期标记串。它是 QEMU
+  冒烟测试在真硅片上的对应物。
+
+示例级 smoke 大致这样工作（概念示意，**本课不要求你真的运行**）：
 
 ```bash
 PORT=/dev/ttyUSB0 hil/hil-smoke.sh
@@ -85,7 +88,7 @@ PORT=/dev/ttyUSB0 hil/hil-smoke.sh
 
 > HIL 框架的整体设计、标记串约定、它和 QEMU 冒烟测试的关系，见
 > [HIL 测试框架](../../explanation/07-hil-framework.md) 与
-> [运行 HIL 冒烟测试](../../how-to/07-run-hil-tests.md)。
+> [运行 HIL 测试](../../how-to/07-run-hil-tests.md)。
 
 恭喜！你已经完成了贡献者路径的全部三课：克隆仓库、装好工具链，在 QEMU 里跑通了
 示例集，最后在真正的 WS63 芯片上完成了第一次硬件在环测试。

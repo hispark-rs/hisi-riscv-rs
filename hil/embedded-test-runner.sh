@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Cargo *runner* for on-target HIL tests (the `tests-hil` crate). Turns
+# Cargo *runner* for on-target HIL tests (`hisi-riscv-hal --test hil` and
+# `tests-hil`). Turns
 # `cargo test --target riscv32imfc-unknown-none-elf` into "run each embedded-test
 # case on a real WS63 board over semihosting" instead of "boot in QEMU".
 #
@@ -7,8 +8,8 @@
 # where the trailing args are the libtest/embedded-test args (e.g. `--list`, a
 # test-name filter, `--exact`). This script:
 #   1. fills the WS63 boot-header body SHA-256 in place via `hisi-fwpkg patch-hash`
-#      (the ELF already carries the 0x300 header because tests-hil builds
-#      hisi-riscv-rt with the `boot-header` feature), then
+#      (the WS63 test ELF already carries the 0x300 header via hisi-riscv-rt's
+#      `boot-header` feature), then
 #   2. hands the ELF straight to the patched probe-rs fork's `probe-rs run`,
 #      which detects the `.embedded_test` section, flashes/boots the ELF, and
 #      drives each test in turn over semihosting (SYS_GET_CMDLINE / SYS_EXIT),
@@ -17,7 +18,8 @@
 # Enable it for the test invocation only (does NOT touch the QEMU `cargo run`
 # default in .cargo/config.toml):
 #   CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-#       cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+#       cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+#           --target riscv32imfc-unknown-none-elf --test hil
 #
 # Env (all optional, sensible defaults — mirrors hil/cargo-run-hw.sh):
 #   PROBE_RS     probe-rs binary                 (default: `probe-rs` in PATH; needs the

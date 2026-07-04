@@ -4,7 +4,8 @@
 
 0.6.0 起默认 HAL 只暴露 HIL/soundness 已闭合的稳定 API；演示实验性面的示例会在自己的 `Cargo.toml` 显式启用 `unstable`，例如 `dma_loopback`、`async_delay`、`async_bus`、`embassy_*`、`reset_demo`。
 
-如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。HIL 脚本环境变量见 [HIL 脚本环境变量](07-hil-markers.md)。
+如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。
+HIL runner 与脚本环境变量见 [HIL 脚本与 runner 环境变量](07-hil-markers.md)。
 
 ## 一览表
 

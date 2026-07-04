@@ -16,6 +16,6 @@
 | [Stable API 清单与门控状态](10-stable-api.md) | `hisi-riscv-hal` 0.6.0 默认 stable 面和 `unstable` feature 门后的 API |
 | [工具链与编译目标](05-toolchain.md) | `hisi-riscv` 工具链通道、目标三元组、`rust-toolchain.toml`、`.cargo/config.toml` |
 | [应用镜像格式与签名](06-image-format.md) | 0x300 镜像头字段布局、fwpkg V1 容器、CRC16 |
-| [HIL 脚本环境变量](07-hil-markers.md) | HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源 |
+| [HIL 脚本与 runner 环境变量](07-hil-markers.md) | `embedded-test` runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源 |
 | [CLI 工具速查](08-cli-tools.md) | `hisi-fwpkg`、补丁版 `probe-rs`、QEMU、`hisiflash` 命令与仓库清单 |
 | [已知问题索引](09-known-issues.md) | 工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue |

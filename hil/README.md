@@ -8,9 +8,17 @@ ws63-qemu 已把固件「跑得足够真」做软件在环验证；这一层是�
 > ✅ **HAL 驱动级 HIL（2026-07-03）**：`hisi-riscv-hal/tests/hil.rs` 在真实 WS63 硅片上 26/26 通过；
 > stable API 边界见 `docs/src/reference/10-stable-api.md`。
 
-打包用 [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)；烧录有两条已记录的路径：
-**probe-rs download**（验证主路径，需补丁版 fork）与 **hisiflash YMODEM**（厂商路径）。QEMU 端调试见
+打包/补哈希用 [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)；烧录有两条已记录的路径：
+**probe-rs download/run**（验证主路径，需补丁版 fork）与 **hisiflash YMODEM**（厂商路径）。QEMU 端调试见
 `ws63-qemu/scripts/debug.sh`。
+
+WS63 现在有两种可启动产物路径，别混在一起：
+
+- **route 2（推荐，cargo-run / embedded-test 路径）**：`hisi-riscv-rt` 的 `boot-header` feature 在链接期把
+  0x300 header 烤进 ELF；链接后只需 `hisi-fwpkg patch-hash <elf>`，再直接 `probe-rs download/run <elf>`。
+- **route 1（`hil/flash.sh` 示例 smoke 兼容路径）**：`hil/pack.sh` 调 `hisi-fwpkg image` 产出
+  `*.img`，再 `probe-rs download --binary-format bin --base-address ... <img>`。
+
 > **多芯片支持**：本文针对 WS63 HIL。BS21/BS2X（BLE/SLE，无 Wi-Fi）也有 QEMU 镜像 + 链接脚本，但真机支持仍待验证（见 `chips/bs2x/guide`）。
 
 ## 端到端流程（真机验证 2026-06-14）
@@ -19,14 +27,18 @@ ws63-qemu 已把固件「跑得足够真」做软件在环验证；这一层是�
 # 1. 用 hisi-riscv 工具链（riscv32imfc，硬浮点）构建——已是默认 target
 cargo build -p blinky --release
 
-# 2. 打包成可启动 app image（补 0x300 HiSilicon header；本片 secure-boot 关闭，
-#    dummy 签名 + 正确 header 即可启动）。hisi-fwpkg 直接吃 ELF 或裸 bin。
-CHIP=ws63 hil/pack.sh blinky            # -> target/.../blinky.img
+# 2. WS63 route 2：ELF 已含 0x300 boot header，只需补真实 body SHA-256
+hisi-fwpkg patch-hash target/riscv32imfc-unknown-none-elf/release/blinky
 
-# 3a. 烧录【验证主路径】：补丁版 probe-rs fork，把 .img 写进 XIP flash 的 app 分区并复位
+# 3a. 烧录【验证主路径】：补丁版 probe-rs fork，把 ELF 写进 XIP flash 的 app 分区并复位
+probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \
+    target/riscv32imfc-unknown-none-elf/release/blinky
+probe-rs reset --chip WS63 --chip-description-path HiSilicon_WS63.yaml
+
+# 3b. 示例 smoke 也可走 hil/flash.sh：它内部产出 .img 后 download/reset
 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/flash.sh blinky
 
-# 3b. 或【厂商路径】：打成 .fwpkg，再用 hisiflash 走 YMODEM 烧录
+# 3c. 或【厂商路径】：打成 .fwpkg，再用 hisiflash 走 YMODEM 烧录
 FWPKG=1 hil/pack.sh blinky              # 额外产出 blinky.fwpkg
 hisiflash flash target/.../blinky.fwpkg
 ```
@@ -37,15 +49,16 @@ hisiflash flash target/.../blinky.fwpkg
 （app 分区 = WS63 flash `0x230000`，故入口 = `0x230300`）。app 分区开头必须是 0x300 字节的
 HiSilicon **image header**，缺了它复位后 PC 落在程序之前的 header 区（或 SRAM 残留），不会进你的程序。
 
-[`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg) 补上这层。两个子命令：
-- `image` —— ELF/bin → 裸 image（0x300 header + body，含 body 的 SHA-256；secure boot 关时签名 dummy 即可）。
-  这是 probe-rs 路径要烧的产物。
-- `pack` —— 上面的 image 再包进单分区 fwpkg（V1 容器 + CRC），供厂商 hisiflash 烧录。
+[`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg) 补上这层。三种相关操作：
+- `patch-hash` —— WS63 route 2：ELF 已含 link-time 0x300 header；该命令只把真实 body SHA-256 填回头部。
+- `image` —— route 1：ELF/bin → 裸 image（0x300 header + body，含 body 的 SHA-256）。BS2X 仍主要走这条；
+  `hil/flash.sh` 的示例 smoke 兼容路径也会用它产 `.img`。
+- `pack` —— 把 image 再包进单分区 fwpkg（V1 容器 + CRC），供厂商 hisiflash 烧录。
 
 ```bash
 cargo install hisi-fwpkg-cli            # 或 cargo install --path <hisi-fwpkg>/crates/hisi-fwpkg-cli
 
-CHIP=ws63 hil/pack.sh blinky            # -> blinky.img（默认；probe-rs 路径用）
+CHIP=ws63 hil/pack.sh blinky            # -> blinky.img（route 1 / hil-smoke 兼容路径用）
 FWPKG=1   hil/pack.sh blinky            # 额外产出 blinky.fwpkg（hisiflash 路径用）
 ```
 
@@ -93,18 +106,18 @@ hisiflash info  target/.../blinky.fwpkg   # 静态校验结构（V1 / 分区 / C
 hisiflash flash target/.../blinky.fwpkg
 ```
 
-## 全套 HIL 冒烟
+## 示例级 HIL 冒烟
 
 ```bash
 sudo apt-get install -y gdb-multiarch  # 真机/QEMU 调试（rust-gdb 驱动它）
 
 # 逐例烧录 + 读 UART + 比对标记，镜像 QEMU smoke-test
-PORT=/dev/ttyUSB0 LOADERBOOT=/path/loaderboot.bin ADDRESS=0x230000 \
-    hil/hil-smoke.sh
+PORT=/dev/ttyUSB0 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/hil-smoke.sh
 ```
 
 环境变量：`PORT`（串口）、`BAUD`（烧录波特，hisiflash 默认 921600）、`UART_BAUD`（例子 UART0 波特，默认
-115200）、`LOADERBOOT`、`ADDRESS`、`HISIFLASH`（二进制名）、`SETTLE`（每次烧录后读 UART 秒数）。
+115200）、`PROBE_RS_YAML`（probe-rs 路径）、`LOADERBOOT`/`ADDRESS`/`HISIFLASH`（hisiflash 路径）、
+`SETTLE`（每次烧录后读 UART 秒数）。
 
 ## 在板跑 `cargo test`（embedded-test + 半主机）
 
@@ -120,20 +133,31 @@ probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）** 逐�
   门控（HAL standalone 无默认芯片；WS63 显式 `--features chip-ws63,rt`，实验性 `chip-bs21` 经 `--features chip-bs21,unstable`）。在板跑（用 `--test hil`
   只构建这一 embedded-test 集成测试目标——HAL 的主机单测在 `src/*.rs` 的 lib 测试目标里用默认
   libtest harness，而裸机 `riscv32imfc` target 没有 `test`/`std` crate，不加 `--test hil` 的
-  裸 `cargo test --target riscv…` 会去构建那个 lib 测试目标并链接失败）：
-  `CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt --target riscv32imfc-unknown-none-elf --test hil`
+  裸 `cargo test --target riscv…` 会去构建那个 lib 测试目标并链接失败）。
 
-测试 ELF 自带 0x300 启动头（`tests-hil` 以 `hisi-riscv-rt` 的 `boot-header` feature 构建），
-runner 只需 `hisi-fwpkg patch-hash` 补头部 body SHA-256 即可启动。embedded-test 自带 `main`
+WS63 测试 ELF 自带 0x300 启动头（通过 `hisi-riscv-rt` 的 `boot-header` feature），runner 只需
+`hisi-fwpkg patch-hash` 补头部 body SHA-256 即可启动。embedded-test 自带 `main`
 入口（导出为 C 符号 `main`，由 `hisi-riscv-rt` 的 `runtime_init` 调用）和 `#[panic_handler]`，
 所以测试文件**不**用 `#[entry]`、也不写 panic handler。
 
 ```bash
-# 1. 仅构建测试 ELF（不上板）——产出在 target/.../deps/hil-*
-cargo test -p tests-hil --target riscv32imfc-unknown-none-elf --no-run
+# 1. HAL 驱动级：仅构建测试 ELF（不上板）
+cargo test -p hisi-riscv-hal \
+    --no-default-features --features chip-ws63,rt \
+    --target riscv32imfc-unknown-none-elf \
+    --test hil --no-run
 
-# 2. 在板跑全部用例：用 hil/embedded-test-runner.sh 作为该次 test 调用的 runner
+# 2. HAL 驱动级：在板跑全部用例
 #    （只覆盖这一次；.cargo/config.toml 里 `cargo run` 仍走 QEMU，不受影响）
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+    cargo test -p hisi-riscv-hal \
+        --no-default-features --features chip-ws63,rt \
+        --target riscv32imfc-unknown-none-elf \
+        --test hil
+
+# 3. 跨切面 tests-hil：在板跑全部用例
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
     cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
 ```
@@ -189,13 +213,13 @@ RUST_GDB=gdb-multiarch rustup run ws63 rust-gdb \
 
 `rust-gdb` 会自动加载 ws63 工具链的 Rust 美化打印器；JTAG/SWD 引脚见 ws63-guide ch7。
 
-> 状态：**Rust → flash → 启动**主流程（构建 → `hisi-fwpkg image` → `probe-rs download @0x230000` → `reset`）
+> 状态：**Rust → flash → 启动**主流程（构建 → `hisi-fwpkg patch-hash` → `probe-rs download` → `reset`）
 > 已于 2026-06-14 真机验证（blinky 启动 + 翻转 GPIO0）；HAL 驱动级 embedded-test HIL 已于 2026-07-03
 > 26/26 通过。示例 smoke 与连接性 HIL 继续按板逐项推进；无板时仅可做构建 + 打包（不触碰硬件）。
 
 ## 参考
 
 - **ROADMAP**：见 [`ROADMAP.md`](../ROADMAP.md) 阶段 1–2 bring-up 规划 + QEMU 验收标准。
-- **真机验证状态**：Rust → flash → 启动主流程已于 2026-06-14 在真 WS63 硅片上跑通（blinky）；HAL 驱动级 HIL 已于 2026-07-03 26/26 通过。后续真机门禁见上方 bring-up 清单步 3–9。
+- **真机验证状态**：Rust → flash → 启动主流程已于 2026-06-14 在真 WS63 硅片上跑通（blinky）；HAL 驱动级 embedded-test HIL 已于 2026-07-03 26/26 通过。后续真机门禁见上方 bring-up 清单步 3–9。
 - **QEMU 验证范围**：时钟树改正、IRQ 投递、DMA 握手已在 ws63-qemu 上验证；真机需验证时序精度、真实外设行为、RF blob 链接。
 - **连接性**：WS63 Wi-Fi porting 见 `chips/ws63/rf`；BS2X BLE/SLE 可行性分析见 `chips/bs2x/guide/README.md`。

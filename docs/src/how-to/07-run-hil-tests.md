@@ -1,16 +1,77 @@
-# 如何运行 HIL 冒烟测试
+# 如何运行 HIL 测试
 
-`hil/hil-smoke.sh` 把每个示例逐个烧到真机、读串口、断言它打印了预期的标记串。它验证 QEMU 证明不了的部分——**真实时钟/时序、真实外设**（尤其是修正后的 24 MHz TCXO 定时器和 160 MHz UART 波特基准）。HIL 框架背景见[HIL 测试框架](../explanation/07-hil-framework.md)，示例标记串见[示例目录与验证标记串](../reference/02-examples.md)，脚本变量见[HIL 脚本环境变量](../reference/07-hil-markers.md)。
+本仓库现在有两条 HIL（hardware-in-the-loop）轨道：
 
-> 前提：板子接好、UART0 接到 host、烧录环境就绪（见[用 probe-rs 烧录](04-flash-probe-rs.md)，hil-smoke 默认通过 `hil/flash.sh` 烧录，即默认 `METHOD=probe-rs`）。
+- **HAL 驱动级 HIL**：`embedded-test` + semihosting，经 `probe-rs run` 在真 WS63 上逐个运行 `#[test]`。这是 stable API 的证据线。
+- **示例级 smoke**：逐个烧录示例、读 UART、grep 标记串。它验证完整示例镜像与 QEMU smoke 的真机一致性。
 
-## 运行
+HIL 框架背景见 [HIL 测试框架](../explanation/07-hil-framework.md)；runner 和脚本变量见
+[HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；示例标记串事实源见
+[示例目录与验证标记串](../reference/02-examples.md)。
+
+> 前提：补丁版 `probe-rs` fork 和 `hisi-fwpkg` 已安装；WS63 的 `HiSilicon_WS63.yaml` 可用。
+> probe-rs 烧录路径见[用 probe-rs 烧录](04-flash-probe-rs.md)。
+
+## 跑 HAL 驱动级 embedded-test
+
+这是默认 stable API 毕业要看的真机测试。命令里的 runner 只作用于这一次 `cargo test`：
 
 ```bash
-PORT=/dev/ttyUSB0 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/hil-smoke.sh
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+cargo test -p hisi-riscv-hal \
+    --no-default-features --features chip-ws63,rt \
+    --target riscv32imfc-unknown-none-elf \
+    --test hil
 ```
 
-走厂商烧录路径时把 flash.sh 那套环境变量带上：
+只构建测试 ELF、不烧板：
+
+```bash
+cargo test -p hisi-riscv-hal \
+    --no-default-features --features chip-ws63,rt \
+    --target riscv32imfc-unknown-none-elf \
+    --test hil --no-run
+```
+
+传给 `embedded-test` 的过滤参数放在 `--` 后面：
+
+```bash
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+cargo test -p hisi-riscv-hal \
+    --no-default-features --features chip-ws63,rt \
+    --target riscv32imfc-unknown-none-elf \
+    --test hil -- gpio_output_readback
+```
+
+`hil/embedded-test-runner.sh` 会先对测试 ELF 执行 `hisi-fwpkg patch-hash`，再调用补丁版
+`probe-rs run --chip WS63 ... <elf>`。`embedded-test` 自带入口、panic handler 与 semihosting
+测试调度；测试结果以 libtest 兼容格式回到 `cargo test`。
+
+## 跑跨切面 tests-hil
+
+`tests-hil` 是独立 workspace member，覆盖 CPU/PAC/critical-section 这类不属于单个 HAL 驱动的冒烟事实：
+
+```bash
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+```
+
+它不在 `default-members` 里，普通 `cargo build` 不会拉 `embedded-test`。
+
+## 跑示例级 UART smoke
+
+`hil/hil-smoke.sh` 把每个示例逐个烧到真机、读串口、断言它打印了预期标记串：
+
+```bash
+PORT=/dev/ttyUSB0 \
+PROBE_RS_YAML=/path/HiSilicon_WS63.yaml \
+hil/hil-smoke.sh
+```
+
+走厂商串口烧录路径时，把 `hil/flash.sh` 的 hisiflash 环境变量带上：
 
 ```bash
 METHOD=hisiflash PORT=/dev/ttyUSB0 \
@@ -18,40 +79,28 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
     hil/hil-smoke.sh
 ```
 
-环境变量（与 `hil/flash.sh` 同：`PORT`/`BAUD`/`LOADERBOOT`/`ADDRESS`/`HISIFLASH`/`PROBE_RS_YAML`…），外加：
+`hil-smoke.sh` 额外消费：
 
 | 变量 | 含义 | 默认 |
 | --- | --- | --- |
-| `PORT` | 板子 UART0（**必填**） | — |
-| `UART_BAUD` | 示例的 UART0 波特率（8N1） | `115200` |
+| `PORT` | 板子 UART0（必填） | - |
+| `UART_BAUD` | 示例 UART0 波特率（8N1） | `115200` |
 | `SETTLE` | 每次烧完读串口的秒数 | `4` |
-| `MONITOR` | 自定义「打印原始 UART 到 stdout」的命令 | 直接 `cat $PORT` |
+| `MONITOR` | 自定义“打印原始 UART 到 stdout”的命令 | 直接 `cat $PORT` |
 
-## 它检查哪些标记串
-
-脚本逐示例烧录后，在 `SETTLE` 秒内 `grep -E` 串口输出找下面的模式（命中即 PASS）：
-
-| 示例 | 期望标记串（egrep） | 验证什么 |
-| --- | --- | --- |
-| `uart_hello` | `Hello from WS63` | UART banner（验证 160 MHz 波特基准） |
-| `timer_irq` | `timer irq #` 或 `OK: timer` | 定时器中断投递（验证 24 MHz TCXO 时钟） |
-| `gpio_irq` | `gpio irq #` | GPIO 中断投递 |
-| `reset_demo` | `reset_reason=Software` | 软复位 + 复位原因 |
-| `spi_loopback` | `SPI loopback OK` | 阻塞 SPI0（**真机需先短接 MOSI↔MISO**） |
-| `i2c_scan` | `scan done` 或 `no devices` | I2C0 总线扫描 |
-
-两个示例不在自动断言里：`blinky`（GPIO0 翻转无 UART——用 LED / 逻辑分析仪看）、`semihost_selftest`（需要调试器的 semihosting——裸 HIL 跳过）。
+脚本当前检查的 grep 模式见 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；
+完整示例清单与真机状态见 [示例目录与验证标记串](../reference/02-examples.md)。
 
 ## 读懂结果
 
-- 每个 `check` 打印 `PASS: '<pat>' seen` 或 `FAIL`。FAIL 时会把串口最后几行 / flash 错误尾部打印出来帮你定位。
-- 末行汇总 `HIL SMOKE: PASS`（退出码 0）或 `HIL SMOKE: FAIL`（退出码 = 失败数 / 非零）。
-- 常见 FAIL 原因：
-  - **flash failed**：烧录环境没配好（缺 yaml/LOADERBOOT/探针），看尾部错误。
-  - **标记串没出现但板子像在跑**：`UART_BAUD` 不对（示例用 8N1，默认 115200），或 `SETTLE` 太短没等到输出——调大 `SETTLE`。
-  - **`spi_loopback` FAIL**：真机上没短接 MOSI↔MISO（QEMU 会自环，真机不会）。
+- `embedded-test` 路径：每个 Rust `#[test]` 以 libtest 风格输出 `ok` / `FAILED`；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。
+- 示例 smoke 路径：每个 `check` 打印 `PASS: '<pat>' seen` 或 `FAIL`；末行汇总 `HIL SMOKE: PASS` / `FAIL`。
+- `probe-rs run` 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21` 分支。
+- `embedded-test` 没有任何用例输出：先查 `PROBE_YAML`、`hisi-fwpkg patch-hash`、semihosting 通道和测试 ELF 是否用 `--test hil` 构建。
+- UART 标记串没出现但板子像在跑：查 `UART_BAUD`、`SETTLE`、UART0 接线；`spi_loopback` 还需要真机短接 MOSI/MISO。
 
-## 封装与 CI
+## CI 与 agent 封装
 
-- `.agents/skills/hil-smoke` 是这个脚本的 wrapper skill，给 agent 一键跑全套 HIL 冒烟。
-- `.github/workflows/hil.yml` 在 **self-hosted runner**（接了真板子的机器）上跑同一脚本，把真机回归纳入 CI。
+- `.agents/skills/hil-smoke` 只封装**示例级** UART smoke。
+- `hil/embedded-test-runner.sh` 是 HAL / `tests-hil` 的 on-target test runner。
+- `.github/workflows/hil.yml` 是接真板的 self-hosted runner 入口；GitHub-hosted runner 不会运行它。

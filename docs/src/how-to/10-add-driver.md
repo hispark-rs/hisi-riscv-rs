@@ -117,7 +117,43 @@ rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-
 
 ## 5. 配一个带 PASS 标记的 HIL 示例
 
-新建一个示例 crate（如 `examples/ws63/myperiph_demo`），用 UART0 打印一个**HIL 能 grep 的标记串**，并在根 `Cargo.toml` 的 `members` / `default-members` 里登记它。骨架（仿 `spi_loopback`）：
+先在 HAL crate 里加一个 on-target `embedded-test` 用例。这是 stable API 毕业的主证据线；示例级 UART
+smoke 只证明完整示例镜像能端到端运行，不能替代驱动级测试。
+
+做法：
+
+1. 在 `crates/hisi-riscv-hal/tests/hil/<driver>.rs` 放具体测试实现。
+2. 在 `crates/hisi-riscv-hal/tests/hil.rs` 加一个很小的 `#[test]` wrapper 调用它。
+3. 如果测试用到还未稳定的 API，先按 `#[cfg(feature = "unstable")]` gate；毕业时再去掉 gate，并同步
+   更新 [Stable API 清单与门控状态](../reference/10-stable-api.md)。
+
+最小形态：
+
+```rust
+// crates/hisi-riscv-hal/tests/hil/myperiph.rs
+#[cfg(feature = "chip-ws63")]
+pub(crate) fn myperiph_register_latches() {
+    let p = unsafe { hal::peripherals::Myperiph::steal() };
+    let mut dev = hal::myperiph::MyDriver::new(p, Default::default());
+    dev.configure(Default::default()).expect("configure on live silicon");
+    assert!(dev.status_latched());
+}
+```
+
+然后用真板跑：
+
+```bash
+PROBE_YAML=/path/HiSilicon_WS63.yaml \
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
+cargo test -p hisi-riscv-hal \
+    --no-default-features --features chip-ws63,rt \
+    --target riscv32imfc-unknown-none-elf \
+    --test hil -- myperiph_register_latches
+```
+
+如果还需要展示完整应用，再新建一个示例 crate（如 `examples/ws63/myperiph_demo`），用 UART0 打印一个
+**HIL 能 grep 的标记串**，并在根 `Cargo.toml` 的 `members` / `default-members` 里登记它。骨架（仿
+`spi_loopback`）：
 
 ```rust
 #![no_std]
@@ -143,7 +179,9 @@ fn main() -> ! {
 fn panic(_: &core::panic::PanicInfo) -> ! { loop { core::hint::spin_loop() } }
 ```
 
-标记串约定：用一个稳定、唯一、好 grep 的短语（如 `MyPeriph OK`）。然后把它登进 HIL 冒烟脚本，让 `hil/hil-smoke.sh` 自动断言它（脚本里加一行 `check myperiph_demo "MyPeriph OK" "..."`，并把完整标记串登记到[示例目录与验证标记串](../reference/02-examples.md)）。
+标记串约定：用一个稳定、唯一、好 grep 的短语（如 `MyPeriph OK`）。如果这个示例要进入常规示例 smoke，
+再把它登进 `hil/hil-smoke.sh`（脚本里加一行 `check myperiph_demo "MyPeriph OK" "..."`），并把完整
+标记串登记到[示例目录与验证标记串](../reference/02-examples.md)。
 
 ## 6. 验证
 
@@ -152,6 +190,6 @@ cargo check -p hisi-riscv-hal              # 驱动能编过（host 上 check）
 cargo build -p myperiph_demo --release     # 示例能编出 ELF
 ```
 
-再按[如何运行 HIL 冒烟测试](07-run-hil-tests.md)烧到真机看标记串。
+再按[如何运行 HIL 测试](07-run-hil-tests.md)跑 HAL embedded-test；若加了示例，再跑示例级 UART smoke。
 
 > 提交时记得：HAL 与示例若在 submodule 里，**先在 submodule 内 commit，再更新父仓库的 submodule 指针**（见 `CLAUDE.md`）。
