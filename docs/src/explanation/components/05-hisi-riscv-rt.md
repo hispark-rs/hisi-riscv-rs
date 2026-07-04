@@ -8,8 +8,57 @@
 
 - **`rt_core`**：芯片中立层，只承接 `riscv-rt` re-export 与通用 linker contract，不放芯片地址。
 - **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、cache CSR、trap dispatch、段搬运、link-time boot header；`device.x` 来自 `ws63-pac/rt`。
-- **BS2X compatibility adapter**：BS20/BS21 示例自带 `memory.x`，`bs2x-pac/rt` 提供 `device.x`，当前仍复用 legacy M-core startup/layout。它是兼容路径，不是“已经有独立 BS2X runtime 验证”的声明。
+- **BS2X compatibility adapter**：`linker/bs2x/{memory.x,layout.ld,boot-header.x}` 收纳 BS2X adapter 事实；`memory.x` 默认是 BS21/BS2X 160K L2RAM，BS20/自定义板卡可继续自带 `memory.x` 覆盖；`bs2x-pac/rt` 提供 `device.x`。当前仍复用 legacy M-core startup，它是 `unstable` 兼容路径，不是“已经有独立 BS2X runtime HIL 验证”的声明。`boot-header.x` 只放占位说明，尚未被 build.rs include。
 - **Hi3322 placeholder**：不暴露可启动 feature。Hi3322 的 TES/TEE reset、CLIC、内存分区和镜像格式见 [Hi3322 runtime 移植预研](hi3322-runtime-porting.md)。
+
+## 架构图
+
+```text
+下游 firmware / examples
+        │
+        ├── uses hisi-riscv-hal ───────► 当前芯片 PAC
+        │                                  ├── interrupt enum
+        │                                  └── device.x via PAC/rt
+        │
+        └── uses hisi-riscv-rt
+               │
+               ├── rt_core
+               │     └── re-export riscv-rt::{entry, pre_init}
+               │
+               ├── chip startup adapters
+               │     ├── ws63
+               │     │     ├── asm/ws63/startup.S
+               │     │     ├── linker/ws63/memory.x
+               │     │     ├── linker/ws63/layout.ld
+               │     │     └── linker/ws63/boot-header.x
+               │     │
+               │     ├── bs2x
+               │     │     └── compatibility adapter
+               │     │           ├── linker/bs2x/memory.x
+               │     │           ├── linker/bs2x/layout.ld
+               │     │           ├── linker/bs2x/boot-header.x placeholder
+               │     │           └── reuse legacy startup for now
+               │     │
+               │     └── hi3322
+               │           └── placeholder/spec only; no bootable feature
+               │
+               ├── linker/common/riscv-rt-symbols.x
+               │
+               └── build.rs
+                     ├── emits hisi-riscv-link.x
+                     ├── emits ws63-link.x compatibility alias
+                     ├── copies runtime-owned memory/layout/header fragments
+                     └── does not own device.x
+```
+
+特性选择把 runtime adapter 和 PAC 事实源绑在一起：
+
+```toml
+chip-ws63 = ["dep:ws63-pac", "ws63-pac/rt"]
+chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
+```
+
+这条边界很重要：**PAC owns interrupt enum + `device.x`; `hisi-riscv-rt` owns reset/startup、linker layout contract、默认 `memory.x`、boot-header、critical-section 注册。** 因此 `hisi-riscv-link.x` 会 `INCLUDE device.x`，但这个文件必须来自当前 PAC 的 `rt` feature，而不是 runtime crate 自己私藏一份芯片中断符号。
 
 ## Linker contract
 
@@ -23,7 +72,16 @@
 
 `ws63-link.x` 仍生成，但只是兼容别名；新示例、HIL 与文档都应使用 `hisi-riscv-link.x`。
 
-WS63 的 `bundled-memory-x` 只在同时启用 `chip-ws63` 时发出 WS63 `memory.x`。BS2X 构建不会复制 WS63 `memory.x`，而是由示例或下游工程自己提供内存布局。
+`bundled-memory-x` 发出当前 chip 的默认 `memory.x`：WS63 发出 WS63 memory map，BS2X 发出 BS21/BS2X 160K L2RAM 默认图。BS20 的 L2RAM 是 128K，因此 BS20 示例仍关闭 `bundled-memory-x` 并自带 `memory.x`。这不是第二份事实源，而是下游覆盖 runtime 默认的 linker contract：同一 firmware link graph 中仍只能有一个 `memory.x` 被解析。
+
+## Stable / unstable 边界
+
+`hisi-riscv-rt` 也采用稳定/不稳定边界，但它的颗粒度不是 HAL 外设 API 清单，而是 runtime adapter 承诺：
+
+- **STABLE**：薄 `riscv-rt` facade（`entry` / `pre_init`）、WS63 默认 startup/linker 路径、WS63 `boot-header`。
+- **UNSTABLE**：`chip-bs21` BS2X compatibility adapter、`riscv-rt-start-experiment`。
+
+这样做的原因是 BS2X 现在有 QEMU/build 证据，但没有 BS2X 板级 HIL；而 `riscv-rt-start-experiment` 还没有证明能替代当前 reset path。WS63 HAL/HIL 仍是当前 release gate 的稳定证据主线。
 
 ## riscv-rt 复用边界
 
@@ -40,7 +98,7 @@ WS63 的 `bundled-memory-x` 只在同时启用 `chip-ws63` 时发出 WS63 `memor
 
 - WS63 direct-mode trap dispatch 与 local IRQ 表；
 - WS63 cache CSR、PMP workaround、boot header；
-- BS2X/Hi3322 专属中断符号表；
+- BS2X/Hi3322 专属 reset/vector/interrupt-controller 初始化；
 - Hi3322 TES/TEE reset、CLIC 与 SELiteOS 分区模型。
 
 ## Critical-section 职责

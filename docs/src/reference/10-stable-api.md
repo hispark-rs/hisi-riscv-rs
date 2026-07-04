@@ -4,7 +4,7 @@
 [稳定 / 不稳定 API 门控政策](../explanation/policies/02-stable-unstable.md)；历史评审文件只记录当时状态，
 不作为当前 API 清单。
 
-**证据基线（2026-07-03）：** WS63 真机 `tests/hil.rs` embedded-test 套件 26/26 通过。下面的 STABLE 表只列默认
+**证据基线（2026-07-04）：** WS63 真机 `tests/hil.rs` embedded-test 套件 26/26 通过。下面的 STABLE 表只列默认
 `features = ["chip-ws63", "rt"]` 面向用户公开的子集；凡需额外台架、opt-in feature、或 soundness 不变量尚未闭合的入口，
 即使代码存在，也放在 UNSTABLE。
 
@@ -43,5 +43,5 @@
 - **不可逆 / 未闭合 soundness 的路径**：`EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`（默认稳定面只保留自动 clock period + 单字节只读路径）、`System::software_reset*`、`Instant::now`/`elapsed`、`interrupt::free`、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。
 - **embassy**：无端到端 HIL（`timer_int0_named_routing` 还专门 `not(feature="embassy")` 排除它）。
 - **WS63 未测试驱动**：`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。
-- **整个 BS2X target**（无 BS2X 板）：`chip-bs21` 需要 `unstable`；这覆盖共享驱动、`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 等 BS2X-only 模块。
+- **整个 BS2X target**（无 BS2X 板）：`chip-bs21` 需要 `unstable`；这覆盖共享驱动、`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 等 BS2X-only 模块；`hisi-riscv-rt` 的 BS2X compatibility adapter 也同样要求 `unstable`。
 - **prelude 的 unstable re-export**：`Delay`、`InterruptTrigger`、`OneShotTimer`/`PeriodicTimer`、`Dma0`/`DmaDriver`/`Sdma0`、`RtcDriver`、`SfcDriver`、`UlpGpioPin`。

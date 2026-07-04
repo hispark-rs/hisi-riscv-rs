@@ -19,8 +19,8 @@
 - [ws63-svd.md](02-ws63-svd.md)——SVD 真值（CMSIS-SVD XML）+ 生成工具，整条链的最底层真值来源。
 - [ws63-pac.md](03-ws63-pac.md)——svd2rust 生成的裸寄存器访问层（含 BS2X 的 bs2x-pac）。
 - [hisi-riscv-hal.md](04-hisi-riscv-hal.md)——手写的安全驱动层，多芯片、可选 async/embassy。
-- [hisi-riscv-rt.md](05-hisi-riscv-rt.md)——运行时：启动汇编、中断向量、链接脚本、
-  critical-section 实现。
+- [hisi-riscv-rt.md](05-hisi-riscv-rt.md)——运行时：`riscv-rt` facade、启动汇编、
+  linker contract、chip adapter、critical-section 实现。
 - [async-embassy.md](06-async-embassy.md)——HAL 异步层的实现细节：`block_on`/`IrqSignal`、
   每驱动 `on_interrupt` 钩子、embassy-time `Driver`、代码地图与上游化路线
   （概念总览见 [async 与 embassy](../04-async-embassy.md)）。
