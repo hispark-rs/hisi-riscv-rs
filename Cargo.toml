@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/pac/ws63-pac",
     "crates/pac/bs2x-pac",
+    "crates/pac/hi3322-pac",
     "crates/hisi-riscv-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
@@ -70,6 +71,7 @@ repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 
 [workspace.dependencies]
 ws63-pac = { path = "crates/pac/ws63-pac" }
+hi3322-pac = { path = "crates/pac/hi3322-pac" }
 hisi-riscv-hal = { path = "crates/hisi-riscv-hal" }
 hisi-riscv-rt  = { path = "crates/hisi-riscv-rt" }
 
@@ -89,6 +91,7 @@ critical-section = "1"
 [patch.crates-io]
 ws63-pac = { path = "crates/pac/ws63-pac" }
 bs2x-pac = { path = "crates/pac/bs2x-pac" }
+hi3322-pac = { path = "crates/pac/hi3322-pac" }
 # hisi-riscv-hal now depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
 hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }

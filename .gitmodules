@@ -19,6 +19,9 @@
 [submodule "bs2x-pac"]
 	path = crates/pac/bs2x-pac
 	url = https://github.com/hispark-rs/bs2x-pac.git
+[submodule "hi3322-pac"]
+	path = crates/pac/hi3322-pac
+	url = https://github.com/hispark-rs/hi3322-pac.git
 [submodule "bs2x-guide"]
 	path = chips/bs2x/guide
 	url = https://github.com/hispark-rs/bs2x-guide.git
