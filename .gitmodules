@@ -28,3 +28,6 @@
 [submodule "crates/hisi-rs-template"]
 	path = crates/hisi-rs-template
 	url = https://github.com/hispark-rs/hisi-rs-template.git
+[submodule "crates/pac/hi3322-pac"]
+	path = crates/pac/hi3322-pac
+	url = https://github.com/hispark-rs/hi3322-pac.git
