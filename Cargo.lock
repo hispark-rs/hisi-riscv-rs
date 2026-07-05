@@ -589,6 +589,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hisi-panic-handler"
+version = "0.1.0"
+
+[[package]]
 name = "hisi-riscv-hal"
 version = "0.6.0"
 dependencies = [
@@ -1368,6 +1372,28 @@ dependencies = [
 name = "uart_hello"
 version = "0.1.0"
 dependencies = [
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+ "ws63-pac",
+]
+
+[[package]]
+name = "uart_stepbystep"
+version = "0.1.0"
+dependencies = [
+ "hisi-panic-handler",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "riscv",
+ "ws63-pac",
+]
+
+[[package]]
+name = "uart_tailcall"
+version = "0.1.0"
+dependencies = [
+ "hisi-panic-handler",
  "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
