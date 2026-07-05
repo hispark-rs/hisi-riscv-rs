@@ -1242,6 +1242,7 @@ dependencies = [
 name = "uart_hello"
 version = "0.1.0"
 dependencies = [
+ "hisi-panic-handler",
  "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",

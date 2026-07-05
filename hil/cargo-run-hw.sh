@@ -49,9 +49,6 @@ if [ -n "${PORT:-}" ]; then
     echo "run-hw: nRST + capturing $PORT @ ${UART_BAUD} for ${MONITOR}s"
     PORT="$PORT" UART_BAUD="$UART_BAUD" MONITOR="$MONITOR" \
         uv run "$SCRIPT_DIR/nrst-and-capture.py"
-else
-    echo "run-hw: resetting chip to boot the app"
-    "$PROBE_RS" reset --chip "$PROBE_CHIP" "${yaml_args[@]}"
 fi
 
 echo "run-hw: done."
