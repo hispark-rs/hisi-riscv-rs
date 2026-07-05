@@ -46,7 +46,7 @@
                │
                └── build.rs
                      ├── emits hisi-riscv-link.x
-                     ├── emits ws63-link.x compatibility alias
+                     
                      ├── copies runtime-owned memory/layout/header fragments
                      └── does not own device.x
 ```
@@ -70,7 +70,6 @@ chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
 
 `build.rs` 把 adapter 资源复制到 `OUT_DIR`，并生成 `hisi-riscv-link.x`，按顺序 `INCLUDE memory.x`、`layout.ld`、`device.x`、`riscv-rt-symbols.x`。其中 `device.x` 由当前 PAC 的 `rt` feature 放到 linker search path；WS63 `boot-header` feature 额外 `INCLUDE boot-header.x`。
 
-`ws63-link.x` 仍生成，但只是兼容别名；新示例、HIL 与文档都应使用 `hisi-riscv-link.x`。
 
 `bundled-memory-x` 发出当前 chip 的默认 `memory.x`：WS63 发出 WS63 memory map，BS2X 发出 BS21/BS2X 160K L2RAM 默认图。BS20 的 L2RAM 是 128K，因此 BS20 示例仍关闭 `bundled-memory-x` 并自带 `memory.x`。这不是第二份事实源，而是下游覆盖 runtime 默认的 linker contract：同一 firmware link graph 中仍只能有一个 `memory.x` 被解析。
 
