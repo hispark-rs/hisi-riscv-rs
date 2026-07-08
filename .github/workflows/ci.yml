@@ -107,6 +107,8 @@ jobs:
       # Gating: no `continue-on-error`, no `| head` (which would swallow the exit code).
       # ws63-flashboot is now clippy-clean too (was excluded as experimental), so the
       # whole workspace is gated.
+      - name: Check HAL register-access policy
+        run: python3 crates/hisi-riscv-hal/scripts/check-register-access.py
       - name: Run clippy
         run: cargo clippy --workspace -- -D warnings
 
