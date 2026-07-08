@@ -7,6 +7,8 @@ members = [
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
     "examples/ws63/uart_hello",
+    "examples/ws63/uart_tailcall",
+    "examples/ws63/uart_stepbystep",
     "examples/ws63/timer_irq",
     "examples/ws63/gpio_irq",
     "examples/ws63/reset_demo",
@@ -43,6 +45,8 @@ default-members = [
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
     "examples/ws63/uart_hello",
+    "examples/ws63/uart_tailcall",
+    "examples/ws63/uart_stepbystep",
     "examples/ws63/timer_irq",
     "examples/ws63/gpio_irq",
     "examples/ws63/reset_demo",
@@ -92,6 +96,7 @@ bs2x-pac = { path = "crates/pac/bs2x-pac" }
 # hisi-riscv-hal now depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
 hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }
+hisi-panic-handler = { path = "crates/hisi-panic-handler" }
 
 [profile.release]
 opt-level = "s"

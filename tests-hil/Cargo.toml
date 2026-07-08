@@ -60,7 +60,7 @@ chip-ws63 = [
     # WS63-only: bake the 0x300 image header into the test ELF (bootable by flashboot).
     "hisi-riscv-rt/boot-header",
     # WS63-only: pull rt's bundled WS63 memory.x onto the link-search path so
-    # ws63-link.x's `INCLUDE memory.x` resolves. (default-features=false dropped it;
+    # hisi-riscv-link.x's `INCLUDE memory.x` resolves. (default-features=false dropped it;
     # rt's default had it on.) BS21 has no bundled memory.x — a BS21 board would
     # supply its own here (see examples/bs21/clock_rng), which is out of scope.
     "hisi-riscv-rt/bundled-memory-x",

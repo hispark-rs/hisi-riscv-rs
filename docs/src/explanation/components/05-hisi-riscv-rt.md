@@ -1,100 +1,114 @@
-# hisi-riscv-rt 架构与评审
+# hisi-riscv-rt 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+`hisi-riscv-rt` 是最终 firmware bin 进入 Rust `main()` 前经过的 runtime crate。它现在的外部 Interface 有意保持很薄：复用 `riscv-rt` 的 `#[entry]` / `#[pre_init]`，重导出当前 PAC 的 interrupt enum，并为单 hart / 无 A 扩展产品路径注册全局 critical-section 实现。
 
-> **2026-06 更新**：同一 runtime 服务 WS63 与 BS2X（BS21/BS20）。BS2X 示例自带按芯片的 `memory.x`（BS21E/BS22 160K、BS20 128K L2RAM），见 `examples/bs21` / `examples/bs20`。
+真正和芯片绑定的 reset、trap、linker、boot header 被收进 startup adapter；中断符号 `device.x` 则由当前 PAC 的 `rt` feature 负责。这个拆分记录在 `docs/adr/0001-runtime-adapter-seams.md`。
 
-## 职责与边界
+## Adapter 分层
 
-`hisi-riscv-rt` 是 WS63（RISC-V RV32IMFC_Zicsr）的最小运行时（runtime），负责把芯片从复位状态带到可执行 Rust `main()` 的环境。
+- **`rt_core`**：芯片中立层，只承接 `riscv-rt` re-export 与通用 linker contract，不放芯片地址。
+- **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、trap dispatch、段搬运、link-time boot header；`device.x` 来自 `ws63-pac/rt`。
+- **BS2X compatibility adapter**：`linker/bs2x/{memory.x,layout.ld,boot-header.x}` 收纳 BS2X adapter 事实；`memory.x` 默认是 BS21/BS2X 160K L2RAM，BS20/自定义板卡可继续自带 `memory.x` 覆盖；`bs2x-pac/rt` 提供 `device.x`。当前仍复用 legacy M-core startup，它是 `unstable` 兼容路径，不是“已经有独立 BS2X runtime HIL 验证”的声明。`boot-header.x` 只放占位说明，尚未被 build.rs include。
+- **Hi3322 placeholder**：不暴露可启动 feature。Hi3322 的 TES/TEE reset、CLIC、内存分区和镜像格式见 [Hi3322 runtime 移植预研](hi3322-runtime-porting.md)。
 
-**负责：**
+## 架构图
 
-- **复位向量**：`reset_vector` 作为链接到 PROGRAM 区最前端的入口（`asm/startup.S:18-26`、`layout.ld:19` 的 `ENTRY(reset_vector)`）。
-- **CPU 早期初始化**：清 PMP、设 `mtvec`、关中断、开 FPU、清 `fcsr`、初始化 `gp`/`sp`、栈金丝雀填充（`asm/startup.S:28-73`）。
-- **trap/中断向量与汇编分发**：异常入口 `trap_entry`、NMI、6 个 MIE 中断、60 个 local 中断的向量与寄存器保存/恢复（`asm/startup.S:76-428`）。
-- **段重定位**：ROM data/BSS、TCM text/data/BSS、SRAM text、`.data`、`.bss` 从 flash 拷到 RAM 并清零（`src/startup.rs:75-193`）。
-- **缓存与 PMP**：I/D cache 使能（`src/startup.rs:59-69`），PMP 由 startup.S 在复位时清零（doc 注释提到 PMP 配置，但当前仅做禁用）。
-- **链接脚本**：内存布局（`memory.x`）、段布局（`layout.ld`）、中断符号默认值（`device.x`）。`build.rs` 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），下游 bin 用一个 `-Tws63-link.x` 引入。**`bundled-memory-x` 默认 feature**：hisi-riscv-rt 默认把自己的 `memory.x` 放上链接搜索路径（零配置）；需要自定义布局的 bin 设 `default-features = false` 自带 `memory.x`（见 `examples/ws63/custom_memory`）。
-- **入口属性与 prelude**：re-export `riscv_rt::entry` 与 PAC 中断类型（`src/lib.rs:44-64`）。
-- **临界区基础设施**：作为持有单一应用 hart 的 crate，启用 `riscv` 的 `critical-section-single-hart`，为全固件提供唯一的 `critical-section` 实现（`Cargo.toml` 依赖注释；支撑 PAC 的 `Peripherals::take()` 与 HAL 的 portable-atomic polyfill）。
-
-**不负责：**
-
-- 不实现中断控制器逻辑（SYS_CTL1 / LOCIPRI / LOCIEN 的优先级与使能仅在 device.x 给出占位符，实际派发模型有误，见评审）。
-- 不提供堆分配器（`.heap` 段仅预留地址，无 allocator）。
-- 不做镜像头/验签/AB 切换（属 flashboot 与下游范畴）。
-- 不做 porting/HCC/blob 连接性相关初始化。
-
-## 在依赖链中的位置
-
-```console
-ws63-svd (XML) → ws63-pac (svd2rust 生成) → hisi-riscv-hal → examples/ws63/*
-                                  hisi-riscv-rt ─┘  提供启动/向量/链接脚本
+```text
+下游 firmware / examples
+        │
+        ├── uses hisi-riscv-hal ───────► 当前芯片 PAC
+        │                                  ├── interrupt enum
+        │                                  └── device.x via PAC/rt
+        │
+        └── uses hisi-riscv-rt
+               │
+               ├── rt_core
+               │     └── re-export riscv-rt::{entry, pre_init}
+               │
+               ├── chip startup adapters
+               │     ├── ws63
+               │     │     ├── asm/ws63/startup.S
+               │     │     ├── linker/ws63/memory.x
+               │     │     ├── linker/ws63/layout.ld
+               │     │     └── linker/ws63/boot-header.x
+               │     │
+               │     ├── bs2x
+               │     │     └── compatibility adapter
+               │     │           ├── linker/bs2x/memory.x
+               │     │           ├── linker/bs2x/layout.ld
+               │     │           ├── linker/bs2x/boot-header.x placeholder
+               │     │           └── reuse legacy startup for now
+               │     │
+               │     └── hi3322
+               │           └── placeholder/spec only; no bootable feature
+               │
+               ├── linker/common/riscv-rt-symbols.x
+               │
+               └── build.rs
+                     ├── emits hisi-riscv-link.x
+                     
+                     ├── copies runtime-owned memory/layout/header fragments
+                     └── does not own device.x
 ```
 
-`hisi-riscv-rt` 是“横切”运行时：它不在 PAC→HAL→examples 这条数据流主线上，而是为最终的 **bin（examples）** 提供入口、trap 向量与链接脚本。它对外通过 registry 版本依赖消费 `ws63-pac` / `bs2x-pac`（仅为 re-export 中断类型与共享单一 PAC 实例）、`riscv` 与 `riscv-rt`；standalone CI / publish 使用自己的 `Cargo.lock` 从 crates.io 解析，monorepo 本地开发则由父仓根 `Cargo.toml` 的 `[patch.crates-io]` 指向本地 PAC submodule。
+特性选择把 runtime adapter 和 PAC 事实源绑在一起：
 
-> 链接脚本传播（已解决）：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游 bin。早先这导致示例无法链接；**现已修**——`build.rs` 改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x`，bin 用 `-Tws63-link.x` 引入（`rustc-link-search` 会传播）。见评审“问题”表「本轮已修」条。
+```toml
+chip-ws63 = ["dep:ws63-pac", "ws63-pac/rt"]
+chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
+```
 
-## 关键设计
+这条边界很重要：**PAC owns interrupt enum + `device.x`; `hisi-riscv-rt` owns reset/startup、linker layout contract、默认 `memory.x`、boot-header、critical-section 注册。** 因此 `hisi-riscv-link.x` 会 `INCLUDE device.x`，但这个文件必须来自当前 PAC 的 `rt` feature，而不是 runtime crate 自己私藏一份芯片中断符号。
 
-### 启动序列（标准 RV32 bring-up）
+## Linker contract
 
-`asm/startup.S` 的复位流程对照 fbb_ws63 SDK 的 `start.S`，符合标准 RV32 裸机启动惯例：
+下游 bin 使用一个中性脚本名：
 
-1. 清 `pmpcfg0..3`（`startup.S:30-37`，EDA/仿真 workaround）。
-2. `la t0, trap_vector; csrw mtvec, t0`（`startup.S:40-41`）。
-3. 关中断：`csrwi mstatus,0` + `csrwi mie,0`（`startup.S:44-45`）。
-4. 开 FPU：`mstatus.FS=0b11`，清 `fflags`（`startup.S:48-50`）。
-5. 初始化 `gp`（`norelax` 包裹，`startup.S:53-56`）与 `sp = __stack_top__`（`startup.S:59`）。
-6. 栈金丝雀填充 `0xefbeadde`（`startup.S:62-70`）。
-7. `tail runtime_init`（`startup.S:73`）→ Rust 侧做重定位/清 BSS/再开 `mie`（`src/startup.rs:21-50`）。
+```text
+-Thisi-riscv-link.x
+```
 
-内存地址（BOOTROM 0x100000、ROM 0x109000、ITCM 0x14C000、DTCM 0x180000、FLASH 0x200000、PROGRAM 0x230300、SRAM 0xA00000）与 fbb_ws63 一致（`memory.x:16-41`）。
+`build.rs` 把 adapter 资源复制到 `OUT_DIR`，并生成 `hisi-riscv-link.x`，按顺序 `INCLUDE memory.x`、`layout.ld`、`device.x`、`riscv-rt-symbols.x`。其中 `device.x` 由当前 PAC 的 `rt` feature 放到 linker search path；WS63 `boot-header` feature 额外 `INCLUDE boot-header.x`。
 
-### trap/异常/中断汇编分发
 
-- **异常**：`trap_entry`（`startup.S:320`）用 `save_all`（36 字，含 `mcause`/`mbadaddr`/`ccause` 自定义 CSR）保存上下文，通过 `mscratch` 切到 `__exc_stack_top__`（`startup.S:327-328`），按 `mcause` 索引 `.rodata` 中的 `excp_vect_table`（`startup.S:132-153`、335-342）分发；M-mode ecall 单独走 `handle_ecall_m`（`startup.S:356-361`）。
-- **NMI**：切到 `__nmi_stack_top__`，调 `nmi_handler`（`startup.S:369-383`）。
-- **MIE 中断**：`mie_interrupt_handler` 宏生成 6 个（bits 26-31），切到 `__irq_stack_top__`，`call mie\n\()_interrupt_handler`（`startup.S:389-410`）。
-- **local 中断**：60 个向量统一进 `local_interrupt_handler`，调 `local_isr_dispatch`（`startup.S:418-428`）。
+`bundled-memory-x` 发出当前 chip 的默认 `memory.x`：WS63 发出 WS63 memory map，BS2X 发出 BS21/BS2X 160K L2RAM 默认图。BS20 的 L2RAM 是 128K，因此 BS20 示例仍关闭 `bundled-memory-x` 并自带 `memory.x`。这不是第二份事实源，而是下游覆盖 runtime 默认的 linker contract：同一 firmware link graph 中仍只能有一个 `memory.x` 被解析。
 
-每条 trap 路径都做了 `mscratch` 栈切换 + 上下文保存，异常路径还按 `mcause` 做表驱动派发，结构清晰。
+## Stable / unstable 边界
 
-### 链接脚本布局
+`hisi-riscv-rt` 也采用稳定/不稳定边界，但它的颗粒度不是 HAL 外设 API 清单，而是 runtime adapter 承诺：
 
-`layout.ld` 改编自 fbb_ws63 的 `linker.prelds`：ITCM 放 patch 表/ROM-RAM 回调/TCM text；DTCM 放 ROM data/BSS、TCM data/BSS；SRAM 放 SRAM text、`.data`、`.bss`、栈、堆；FLASH(PROGRAM) 放 `.text`/`.rodata` 与各初始化段 LMA。`.startup` 段 `KEEP(*(.text.entry))` 确保复位向量在 PROGRAM 区最前（`layout.ld:125-129`）。栈区在 `.stacks (NOLOAD)` 内自高地址向下生长（`layout.ld:189-216`）。
+- **STABLE**：薄 `riscv-rt` facade（`entry` / `pre_init`）、WS63 默认 startup/linker 路径、WS63 `boot-header`。
+- **UNSTABLE**：`chip-bs21` BS2X compatibility adapter、`riscv-rt-start-experiment`。
 
-### ISA / 原子性
+这样做的原因是 BS2X 现在有 QEMU/build 证据，但没有 BS2X 板级 HIL；而 `riscv-rt-start-experiment` 虽然用于验证更深的 `riscv-rt` 复用路径，但仍不是默认 release gate。WS63 HAL/HIL 仍是当前 release gate 的稳定证据主线。
 
-`build.rs` 设 `RISCV_RT_BASE_ISA=rv32i`（无原子扩展）。默认 target 是 builtin 的 **`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 ilp32f）；无 A 扩展，原子由 portable-atomic 的 critical-section polyfill 提供，`hisi-riscv-rt` 启用 `riscv` 的 `critical-section-single-hart` 作为整个固件唯一的 CS 实现（`Cargo.toml`）。这套 CS 也支撑 hisi-riscv-hal 的 `async`/`embassy` 异步层。
+## riscv-rt 复用边界
 
-## 评审发现
+当前默认路径仍保留自定义 startup，原因是 WS63/BS2X 已有 QEMU/HIL 证据依赖这条 reset/trap/linker 组合。为了继续向 `riscv-rt` 靠拢，crate 保留非默认 `riscv-rt-start-experiment` feature 作为实验门禁；它把标准 `.data`/`.bss`/FPU/gp/sp 初始化交给 `riscv-rt` 的 `_start`，但默认 reset path 尚未切过去，默认 release gate 也不依赖它。
 
-### 优点
+可以继续迁给 `riscv-rt` 的部分：
 
-- **标准 RV32 启动**：PMP 清零、`mtvec`、关中断、FPU、`gp`/`sp`、栈金丝雀、BSS/data 重定位齐备，流程对照 fbb_ws63（`asm/startup.S:28-73`、`src/startup.rs:75-193`）。
-- **内存地址权威**：`memory.x` 各区起始/长度与 fbb_ws63 SDK 对齐（`memory.x:16-41`）。
-- **trap 汇编质量高**：异常/IRQ/NMI 均有 `mscratch` 栈切换 + 分栈（exc/irq/nmi 独立栈），异常按 `mcause` 索引 `excp_vect_table` 表驱动分发（`asm/startup.S:318-428`、132-153）。
-- **单一 CS 实现的依赖边界清晰**：由持有 hart 的 `hisi-riscv-rt` 独家启用 `critical-section-single-hart`，避免多处重复实现（`Cargo.toml` 注释）。
+- `#[entry]` / `#[pre_init]`；
+- 标准 `.data`/`.bss` 初始化；
+- FPU/gp/sp 等普通 RISC-V `_start` 工作；
+- `memory.x` 区域别名 contract。
 
-### 问题
+仍应留在 chip adapter 的部分：
 
-| 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
-|--------|------|------|-----------------|------|
-| 高 | 正确性 | `mtvec` 以 Direct 模式写入（`la t0,trap_vector; csrw mtvec,t0`，未 `ori` 设置 MODE=Vectored），但同时构建了完整的 Vectored 跳转表（含 NMI/MIE/local 各项），导致除 `trap_entry` 外的向量项全部失效——所有 trap 都落到偏移 0 的异常入口 | `asm/startup.S:40-41`（Direct 写法）vs `asm/startup.S:88-127`（Vectored 表）| 已排期(ROADMAP 阶段 2，随中断子系统重构修正模式/表) |
-| 中 | 正确性 | trap 相关段（`.trap`/`.trap.exception`/`.trap.nmi`/`.trap.mie*`/`.trap.local`）在 `layout.ld` 无显式输出段放置，成为孤立段（orphan），布局/对齐依赖链接器默认行为 | `asm/startup.S:85,318,367,390,416`（段声明）；`layout.ld:28-224`（无对应 `*(.trap*)` 放置）| 已排期(ROADMAP 阶段 2) |
-| 高 | 构建 | （已修）链接脚本不传播到下游二进制：`build.rs` 原用 `cargo:rustc-link-arg=-T...` 注入，但该 arg 来自 lib 依赖、不传递到 bin；示例改用 lld 默认布局、`__exc/nmi/irq_stack_top__` 未定义 → blinky 链接失败。现改为 `cargo:rustc-link-search` 导出 OUT_DIR + 生成 `ws63-link.x` 包装脚本（按 memory→layout→device→symbols `INCLUDE`），blinky `build.rs` 以 `-Tws63-link.x` 引入 → **blinky 现可链接** | `build.rs`（link-search + ws63-link.x）；`examples/ws63/blinky/build.rs` | 本轮已修 |
-| 高 | 构建 | （已修）MIE 中断宏 typo：`call mie\()_interrupt_handler` 缺少 `\n`，宏展开后符号名错误 | `asm/startup.S:397`（现为 `call mie\n\()_interrupt_handler`）| 本轮已修 |
-| 中 | 构建 | （已修）栈顶符号 `__irq/exc/nmi_stack_top__` 在 `.stacks (NOLOAD)` 仅符号区被 `--gc-sections` 回收 → 链接期未定义；已在 `memory.x` 顶层加 GC-safe fallback | `layout.ld:199-204`（说明）；`memory.x:76-78`（fallback）| 本轮已修 |
-| 中 | 构建 | （已修）`riscv` 启用 `critical-section-single-hart`，为无原子扩展的 WS63 提供单 hart CS 实现，支撑 PAC `take()` 与 HAL portable-atomic | `Cargo.toml`（`riscv` features）| 本轮已修 |
-| 低 | 构建/发布 | （已修）`ws63-pac` / `bs2x-pac` 采用 registry 版本依赖；本地 checkout 仅由父仓 `[patch.crates-io]` 在开发时接管，发布仓不携带 path/git patch | `Cargo.toml`（PAC 依赖）；父仓 `Cargo.toml`（`[patch.crates-io]`）| 本轮已修 |
+- WS63 direct-mode trap dispatch 与 local IRQ 表；
+- WS63 boot header 与 flashboot 镜像入口 contract；
+- BS2X/Hi3322 专属 reset/vector/interrupt-controller 初始化；
+- Hi3322 TES/TEE reset、CLIC 与 SELiteOS 分区模型。
 
-> 说明：构建完整性修复中与本组件相关的还包括——双 PAC 实例消除（根 `[patch.crates-io]` 指向本地，cargo tree 单一实例）、无原子 ISA 下实测产物零原子指令（lr/sc/amo）。默认 target 现为 ws63 工具链 builtin 的 `riscv32imfc-unknown-none-elf`（硬浮点；2026-05-31 曾过渡用 stable `riscv32imc`）。这些在仓库级评审中记录，本组件直接相关项已并入上表。
+## Critical-section 职责
 
-## 改进项与排期
+当前产品主路径是单 hart + 无 A 扩展。`hisi-riscv-rt` 启用 `riscv/critical-section-single-hart`，为 PAC `Peripherals::take()` 和 HAL 的 `portable-atomic` polyfill 提供唯一全局实现。
 
-- **阶段 1（链接脚本集成 ✅ 已完成 / 上板待硬件）**：链接脚本不传播问题已解决（`rustc-link-search` + `ws63-link.x` 包装脚本 + blinky `build.rs` 引入），blinky 现可链接并产出 `.bin`。剩余：真机上板冒烟、用 `readelf` 核实 WS63 布局生效。
-- **阶段 2（死代码清理 + 正确性修复）**：修正 `mtvec` 模式与向量表的不一致（Direct vs Vectored）；为 trap 段在 `layout.ld` 增加显式输出段放置；统一 `.stacks` 布局与 `memory.x` 栈顶 fallback；并随中断子系统模型纠正（PLIC vs LOCIPRI/LOCIEN）一并处理。对应上表前两行。
-- 其余仓库级排期（efuse/lsadc、flashboot 镜像头/验签/AB、porting+HCC+blob 连接性、async）见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 阶段 2-6，与本运行时组件无直接耦合。
+这不是跨 hart 锁。未来多 hart + A 扩展产品可以用硬件 atomics 处理单字标志/计数，但复合不变量仍需要真正的锁、`critical-section` 或平台级同步。
+
+## 维护规则
+
+- 新芯片先新增 adapter 或 adapter spec，不在 WS63 startup 里堆 feature 分支。
+- 新 linker 事实放在对应 `linker/<chip>/`，通用符号才放 `linker/common/`。
+- 修改 linker 脚本后必须验证 `custom_memory`、WS63 boot-header 地址和至少一个示例链接。
+- Hi3322 在 PAC、linker、镜像打包和板级证据存在前，不新增 `chip-hi3322`。

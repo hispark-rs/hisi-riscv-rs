@@ -15,7 +15,7 @@
 target = "riscv32imfc-unknown-none-elf"
 
 [target.riscv32imfc-unknown-none-elf]
-runner = "gdb-multiarch"
+runner = ".cargo/run-riscv.sh"
 # Disable RISC-V linker relaxation (matches the vendor C SDK flow; avoids gp-relative
 # relaxation surprises with the custom linker scripts in hisi-riscv-rt).
 rustflags = ["-C", "link-arg=--no-relax"]

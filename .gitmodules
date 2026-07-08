@@ -22,3 +22,12 @@
 [submodule "bs2x-guide"]
 	path = chips/bs2x/guide
 	url = https://github.com/hispark-rs/bs2x-guide.git
+[submodule "crates/hisi-panic-handler"]
+	path = crates/hisi-panic-handler
+	url = https://github.com/hispark-rs/hisi-panic-handler.git
+[submodule "crates/hisi-rs-template"]
+	path = crates/hisi-rs-template
+	url = https://github.com/hispark-rs/hisi-rs-template.git
+[submodule "crates/pac/hi3322-pac"]
+	path = crates/pac/hi3322-pac
+	url = https://github.com/hispark-rs/hi3322-pac.git

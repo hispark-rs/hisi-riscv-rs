@@ -29,10 +29,10 @@ ws63-svd (XML)
    ▼
 ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
                 ▲
-       hisi-riscv-rt（启动汇编 / 链接脚本 / 中断向量）并行提供运行期支撑
+       hisi-riscv-rt（启动汇编 / 链接脚本；中断符号来自 PAC/rt）并行提供运行期支撑
 ```
 
-`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期向量表由 `hisi-riscv-rt` 的 `device.x` 提供。
+`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期中断符号由当前 PAC 的 `rt` feature（WS63 为 `ws63-pac/rt`）提供，并由 `hisi-riscv-rt` 的 linker contract 引入。
 
 依赖：`embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`nb`、`portable-atomic`、`riscv`。
 
@@ -134,7 +134,7 @@ DMA 提供拥有缓冲区的
 
 按 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)（多数已完成，下记现状）：
 
-- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `ws63-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
+- **阶段 1（bring-up + 链接脚本集成）**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `hisi-riscv-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
 - **阶段 2（死代码清理 + 正确性修复）**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ SPI `trsm` 全双工模式修复；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 eFuse/LSADC 逐寄存器复核仍在推进。
 - **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
 - **阶段 4-5（porting 层 + HCC IPC + 连接性）**：`ws63-rf-rs` 已承接 RF porting/HCC/netif 数据通路，HAL 的边界是继续提供可组合的底层外设；剩余风险在 blob 链接、pbuf/TX-sink pin 与真机连通。

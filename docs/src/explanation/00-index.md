@@ -47,7 +47,7 @@
 
 ## 组件深入文档
 
-[组件深入文档索引](components/00-index.md) 列出了 10 篇**逐组件**的权威深入文档
-（HAL、rt、pac、svd、示例、flashboot、RF、guide、async-embassy）。
+[组件深入文档索引](components/00-index.md) 列出了**逐组件/平台**的权威深入文档
+（HAL、rt、pac、svd、示例、flashboot、RF、guide、async-embassy、Hi3322 runtime 预研）。
 本章的概念章节会**链接进**这些深入文档：概念章讲"为什么、怎么串起来"，
 深入文档讲"这一个组件内部到底怎么实现"。两者互补——读概念建立全局，读深入查实现。

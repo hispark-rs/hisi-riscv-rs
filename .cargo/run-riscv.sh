@@ -1,0 +1,1 @@
+/Users/sanchuan/Documents/hispark-rs/hisi-riscv-rs/hil/cargo-run-hw.sh

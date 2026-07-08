@@ -1,6 +1,6 @@
 # 内存映射
 
-本页复现 WS63 的内存布局，事实取自 [`crates/hisi-riscv-rt/memory.x`](https://github.com/hispark-rs/hisi-riscv-rt) 与 [`crates/hisi-riscv-rt/asm/startup.S`](https://github.com/hispark-rs/hisi-riscv-rt)。默认配置：576K SRAM、16K ITCM、16K DTCM。TCM 与 SRAM 大小可经 CONFIG 标志配置（参见 fbb_ws63）。
+本页复现 WS63 的内存布局，事实取自 `crates/hisi-riscv-rt/linker/ws63/memory.x` 与 `crates/hisi-riscv-rt/asm/ws63/startup.S`；中断符号 `device.x` 由 `ws63-pac/rt` 提供。默认配置：576K SRAM、16K ITCM、16K DTCM。TCM 与 SRAM 大小可经 CONFIG 标志配置（参见 fbb_ws63）。
 
 启动流程的"为什么"见 [启动流程](../explanation/02-boot-flow.md)。
 
@@ -83,6 +83,6 @@ riscv-rt v0.14 所需符号：
 
 ## 复位向量
 
-`startup.S` 中 `reset_vector` 位于 `.text.entry` 段，链接为程序内存第一项，内容为 `j HandleReset`。`HandleReset` 依次：禁用 PMP（`pmpcfg0..3 = 0`）、以 vectored 模式（`mtvec[1:0]=01`）装载 `trap_vector`、关中断、使能 FPU（`mstatus.FS = 0b11`）、初始化 `gp`。
+`startup.S` 中 `reset_vector` 位于 `.text.entry` 段，链接为程序内存第一项，内容为 `j HandleReset`。`HandleReset` 依次：保留 PMP 原状态（原厂只在 `CHIP_EDA` 仿真路径清 `pmpcfg*`）、以 direct 模式（`mtvec[1:0]=00`）装载 `trap_vector`、关中断、使能 FPU（`mstatus.FS = 0b11`）、初始化 `gp` / `sp` 并进入 `runtime_init`。
 
 > 复位地址 `0x100000` 是掩膜 ROM 入口；上电后由 ROM 经 flashboot 转交到 app 入口 `0x230300`。

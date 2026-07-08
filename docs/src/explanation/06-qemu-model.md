@@ -40,7 +40,7 @@ hisi-riscv-qemu 正是这么做的：加 `hw/riscv/ws63.c`，只构建 `riscv32-
   一致**（实测 1e6 循环三次都是同一个 tick 数）。这让 CI 回归可重现。
 
 这是一个**真值驱动**的模型：外设基址/寄存器对着 `WS63.svd`，内存布局对着
-`hisi-riscv-rt` 的 `memory.x`/`layout.ld`，UART 行为对着 HAL 的 `uart.rs` + SDK 头文件。
+`hisi-riscv-rt` 的 adapter linker 脚本，UART 行为对着 HAL 的 `uart.rs` + SDK 头文件。
 也就是说它和真硅片共享同一批真值来源——这是它能当"软件在环替身"的前提。
 
 ## 它模拟不了什么
