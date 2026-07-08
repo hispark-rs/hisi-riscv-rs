@@ -96,14 +96,14 @@ SFC（flash 控制器）必须已经被初始化成可读状态——这正是 f
 [hisi-riscv-rt](components/05-hisi-riscv-rt.md) 的启动序列。这段代码做的是每个裸机 Rust 程序
 都需要、但又必须按 WS63 实际情况定制的事，大致顺序：
 
-1. **PMP 清零**——把物理内存保护配成不挡路（否则后续访问可能陷入）；
-2. **设置 `mtvec`**——安装中断/异常向量基址（向量化模式）；
+1. **保留 PMP 原状态**——真实 WS63 app 启动路径不清 `pmpcfg*`；原厂只在 `CHIP_EDA` 仿真路径做这件事；
+2. **设置 `mtvec`**——以 direct 模式安装中断/异常入口，后续由 runtime 按 `mcause` 分发；
 3. **初始化 `gp` / `sp`**——`gp` 用于 linker relaxation 的全局指针寻址，`sp` 指向栈顶；
 4. **栈染色（stack paint）**——往栈区填已知图案，便于事后测高水位 / 检测溢出；
 5. **`runtime_init`**——把 `.data` 从 flash 拷到 RAM、清 `.bss`，让静态变量就位；
 6. **调用 `main()`**——到这里你的代码才真正开始跑。
 
-这套序列为什么不能省、为什么 `gp`/`sp`/PMP 这些必须由 rt 而不是应用来做，
+这套序列为什么不能省、为什么 `gp`/`sp`、trap 初始化和段搬运这些必须由 rt 而不是应用来做，
 属于 rt 这一层的职责；它的链接脚本（`memory.x` / `layout.ld`）如何把段摆到正确地址、
 又如何把脚本传播给下游的 bin，见 [hisi-riscv-rt 深入文档](components/05-hisi-riscv-rt.md)。
 

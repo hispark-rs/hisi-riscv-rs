@@ -83,6 +83,6 @@ riscv-rt v0.14 所需符号：
 
 ## 复位向量
 
-`startup.S` 中 `reset_vector` 位于 `.text.entry` 段，链接为程序内存第一项，内容为 `j HandleReset`。`HandleReset` 依次：禁用 PMP（`pmpcfg0..3 = 0`）、以 vectored 模式（`mtvec[1:0]=01`）装载 `trap_vector`、关中断、使能 FPU（`mstatus.FS = 0b11`）、初始化 `gp`。
+`startup.S` 中 `reset_vector` 位于 `.text.entry` 段，链接为程序内存第一项，内容为 `j HandleReset`。`HandleReset` 依次：保留 PMP 原状态（原厂只在 `CHIP_EDA` 仿真路径清 `pmpcfg*`）、以 direct 模式（`mtvec[1:0]=00`）装载 `trap_vector`、关中断、使能 FPU（`mstatus.FS = 0b11`）、初始化 `gp` / `sp` 并进入 `runtime_init`。
 
 > 复位地址 `0x100000` 是掩膜 ROM 入口；上电后由 ROM 经 flashboot 转交到 app 入口 `0x230300`。

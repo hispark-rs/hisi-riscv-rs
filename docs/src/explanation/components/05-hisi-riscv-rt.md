@@ -7,7 +7,7 @@
 ## Adapter 分层
 
 - **`rt_core`**：芯片中立层，只承接 `riscv-rt` re-export 与通用 linker contract，不放芯片地址。
-- **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、cache CSR、trap dispatch、段搬运、link-time boot header；`device.x` 来自 `ws63-pac/rt`。
+- **WS63 adapter**：`asm/ws63/startup.S`、`linker/ws63/{memory.x,layout.ld,boot-header.x}`、`src/chips/ws63/startup.rs`。它拥有 WS63 reset、trap dispatch、段搬运、link-time boot header；`device.x` 来自 `ws63-pac/rt`。
 - **BS2X compatibility adapter**：`linker/bs2x/{memory.x,layout.ld,boot-header.x}` 收纳 BS2X adapter 事实；`memory.x` 默认是 BS21/BS2X 160K L2RAM，BS20/自定义板卡可继续自带 `memory.x` 覆盖；`bs2x-pac/rt` 提供 `device.x`。当前仍复用 legacy M-core startup，它是 `unstable` 兼容路径，不是“已经有独立 BS2X runtime HIL 验证”的声明。`boot-header.x` 只放占位说明，尚未被 build.rs include。
 - **Hi3322 placeholder**：不暴露可启动 feature。Hi3322 的 TES/TEE reset、CLIC、内存分区和镜像格式见 [Hi3322 runtime 移植预研](hi3322-runtime-porting.md)。
 
@@ -80,11 +80,11 @@ chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
 - **STABLE**：薄 `riscv-rt` facade（`entry` / `pre_init`）、WS63 默认 startup/linker 路径、WS63 `boot-header`。
 - **UNSTABLE**：`chip-bs21` BS2X compatibility adapter、`riscv-rt-start-experiment`。
 
-这样做的原因是 BS2X 现在有 QEMU/build 证据，但没有 BS2X 板级 HIL；而 `riscv-rt-start-experiment` 还没有证明能替代当前 reset path。WS63 HAL/HIL 仍是当前 release gate 的稳定证据主线。
+这样做的原因是 BS2X 现在有 QEMU/build 证据，但没有 BS2X 板级 HIL；而 `riscv-rt-start-experiment` 虽然用于验证更深的 `riscv-rt` 复用路径，但仍不是默认 release gate。WS63 HAL/HIL 仍是当前 release gate 的稳定证据主线。
 
 ## riscv-rt 复用边界
 
-当前默认路径仍保留自定义 startup，原因是 WS63/BS2X 已有 QEMU/HIL 证据依赖这条 reset/trap/linker 组合。为了继续向 `riscv-rt` 靠拢，crate 预留了非默认 `riscv-rt-start-experiment` feature 作为后续实验门禁；它现在只做 WS63-only 约束与文档标记，尚未把默认 reset path 切到 `riscv-rt` 的 `_start`，默认 release gate 也不依赖它。
+当前默认路径仍保留自定义 startup，原因是 WS63/BS2X 已有 QEMU/HIL 证据依赖这条 reset/trap/linker 组合。为了继续向 `riscv-rt` 靠拢，crate 保留非默认 `riscv-rt-start-experiment` feature 作为实验门禁；它把标准 `.data`/`.bss`/FPU/gp/sp 初始化交给 `riscv-rt` 的 `_start`，但默认 reset path 尚未切过去，默认 release gate 也不依赖它。
 
 可以继续迁给 `riscv-rt` 的部分：
 
@@ -96,7 +96,7 @@ chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
 仍应留在 chip adapter 的部分：
 
 - WS63 direct-mode trap dispatch 与 local IRQ 表；
-- WS63 cache CSR、PMP workaround、boot header；
+- WS63 boot header 与 flashboot 镜像入口 contract；
 - BS2X/Hi3322 专属 reset/vector/interrupt-controller 初始化；
 - Hi3322 TES/TEE reset、CLIC 与 SELiteOS 分区模型。
 
