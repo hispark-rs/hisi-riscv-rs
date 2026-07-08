@@ -2,7 +2,7 @@
 
 `hisi-riscv-rt` 是最终 firmware bin 进入 Rust `main()` 前经过的 runtime crate。它现在的外部 Interface 有意保持很薄：复用 `riscv-rt` 的 `#[entry]` / `#[pre_init]`，重导出当前 PAC 的 interrupt enum，并为单 hart / 无 A 扩展产品路径注册全局 critical-section 实现。
 
-真正和芯片绑定的 reset、trap、linker、boot header 被收进 startup adapter；中断符号 `device.x` 则由当前 PAC 的 `rt` feature 负责。这个拆分记录在 [ADR 0001](../../../adr/0001-runtime-adapter-seams.md)。
+真正和芯片绑定的 reset、trap、linker、boot header 被收进 startup adapter；中断符号 `device.x` 则由当前 PAC 的 `rt` feature 负责。这个拆分记录在 [ADR 0001](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/adr/0001-runtime-adapter-seams.md)。
 
 ## Adapter 分层
 
