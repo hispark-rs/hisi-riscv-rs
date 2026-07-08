@@ -29,13 +29,17 @@ PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 po
 - 在**目标仓库**的默认发布分支上 release，不在 detached HEAD 上打 tag。
 - 独立发布的 Rust crate 必须提交自己的 `Cargo.lock`，即使它是 library crate。
 - 发布仓的 `Cargo.toml` 使用 crates.io 版本依赖；本地 checkout 只由父仓根 `Cargo.toml` 的 `[patch.crates-io]` 接管。不要把 path/git patch 放进要发布的 crate manifest。
-- `Cargo.lock` 必须已跟踪、干净，并能通过 `--locked`：
+- `Cargo.lock` 必须已跟踪、干净，并能通过 standalone preflight。子仓位于父仓
+  `hisi-riscv-rs` 下面时，不要直接在子目录里用 `cargo generate-lockfile`
+  判断发布 lockfile 是否正确；Cargo 可能向上发现父仓 workspace 和
+  `[patch.crates-io]`，生成一个被本地 checkout 污染的 lockfile。用父仓脚本把
+  crate 复制到临时独立目录后再解析：
 
 ```bash
-cargo generate-lockfile --locked
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
-cargo package --locked --no-verify
 ```
 
 - 改 public API 时同步更新 rustdoc/手册。HAL stable/unstable 变化必须同步更新 [Stable API 清单](../reference/10-stable-api.md)，并有对应真机 HIL 证据。
@@ -63,16 +67,15 @@ git switch main          # ws63-pac / bs2x-pac
 ```bash
 $EDITOR Cargo.toml       # package.version
 $EDITOR CHANGELOG.md
-cargo generate-lockfile
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
 ```
 
 做 release preflight：
 
 ```bash
-cargo generate-lockfile --locked
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
-cargo package --locked --no-verify
 ```
 
 再跑该仓自己的 CI 等价命令。精确矩阵以子仓 `.github/workflows/ci.yml` 为准；本地至少跑 workflow 里的 locked check/doc/clippy。常用形态：
@@ -181,7 +184,9 @@ git push origin vX.Y.Z
 
 ## 5. 常见失败
 
-- **`--locked` 失败**：`Cargo.lock` 缺失或过期。先正常 `cargo generate-lockfile`，提交 lockfile，再重跑 `--locked`。
+- **`--locked` 失败**：`Cargo.lock` 缺失或过期。先用
+  `python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update`
+  在父仓外的临时独立目录重新解析并回填 lockfile，提交后再重跑 preflight。
 - **`Cargo.lock is not tracked`**：lockfile 还是 untracked；这是 release blocker，`git add Cargo.lock` 后再提交。
 - **`cargo publish` 抱怨 path/git dependency**：发布 manifest 里混进本地开发依赖。把发布依赖改回 crates.io 版本依赖；本地替换放父仓 `[patch.crates-io]`。
 - **下游解析不到刚发布的上游 crate**：crates.io index 还没传播，等一会儿再跑下游 `cargo generate-lockfile`。

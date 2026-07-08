@@ -19,11 +19,25 @@ TAG="${1:-}"
 EXPECT="${2:-}"
 [ -n "$TAG" ] || { echo "usage: train.sh <tag> [expected_asset_count]   (run inside the repo)"; exit 2; }
 WAIT_RUN="${WAIT_RUN:-90}"
-GHR=(); [ -n "${REPO:-}" ] && GHR=(-R "$REPO")
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
+STANDALONE_LOCK="$REPO_ROOT/scripts/cargo-standalone-lock.py"
+
+gh_repo() {
+    if [ -n "${REPO:-}" ]; then
+        gh "$@" --repo "$REPO"
+    else
+        gh "$@"
+    fi
+}
 
 command -v gh >/dev/null 2>&1 || { echo "FATAL: gh CLI not found"; exit 2; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "FATAL: not a git repo"; exit 2; }
-SLUG="$(gh "${GHR[@]}" repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)"
+if [ -n "${REPO:-}" ]; then
+    SLUG="$(gh repo view "$REPO" --json nameWithOwner -q .nameWithOwner 2>/dev/null)"
+else
+    SLUG="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)"
+fi
 [ -n "$SLUG" ] || { echo "FATAL: gh can't resolve the repo (auth? remote?)"; exit 2; }
 echo "════════ release-train: $SLUG @ $TAG ════════"
 
@@ -31,10 +45,15 @@ echo "════════ release-train: $SLUG @ $TAG ═══════
 if [ -f Cargo.toml ] && grep -q '^\[package\]' Cargo.toml; then
     command -v cargo >/dev/null 2>&1 || { echo "FATAL: cargo not found"; exit 2; }
     echo "==> cargo lockfile/package preflight"
-    cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }
     git ls-files --error-unmatch Cargo.lock >/dev/null 2>&1 || { echo "FATAL: Cargo.lock is not tracked"; exit 2; }
+    if [ -f "$STANDALONE_LOCK" ] && command -v python3 >/dev/null 2>&1; then
+        python3 "$STANDALONE_LOCK" . --package \
+            || { echo "FATAL: standalone Cargo.lock/package preflight failed"; exit 2; }
+    else
+        cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }
+        cargo package --locked --no-verify || { echo "FATAL: cargo package preflight failed"; exit 2; }
+    fi
     git diff --exit-code -- Cargo.lock || { echo "FATAL: Cargo.lock changed during preflight"; exit 2; }
-    cargo package --locked --no-verify || { echo "FATAL: cargo package preflight failed"; exit 2; }
 fi
 
 # ── 1. ensure the tag is on the remote ───────────────────────────────────────
@@ -54,11 +73,11 @@ fi
 echo "==> waiting for the workflow run on $TAG (≤${WAIT_RUN}s)"
 pick_run() {
     if [ -n "${WORKFLOW:-}" ]; then
-        gh "${GHR[@]}" run list --workflow "$WORKFLOW" --branch "$TAG" --limit 1 \
+        gh_repo run list --workflow "$WORKFLOW" --branch "$TAG" --limit 1 \
             --json databaseId -q '.[0].databaseId' 2>/dev/null; return
     fi
     # rank candidate runs on the tag: release/publish > build > non-CI > anything
-    gh "${GHR[@]}" run list --branch "$TAG" --limit 20 \
+    gh_repo run list --branch "$TAG" --limit 20 \
         --json databaseId,workflowName 2>/dev/null | jq -r '
         ([.[] | select(.workflowName|test("release|publish|deploy";"i"))] +
          [.[] | select(.workflowName|test("build";"i"))] +
@@ -72,22 +91,22 @@ for _ in $(seq 1 $((WAIT_RUN / 5))); do
     sleep 5
 done
 [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ] || { echo "FATAL: no run found for $TAG after ${WAIT_RUN}s"; exit 2; }
-echo "    run: $(gh "${GHR[@]}" run view "$RUN_ID" --json workflowName,url -q '"[\(.workflowName)] \(.url)"')"
+echo "    run: $(gh_repo run view "$RUN_ID" --json workflowName,url -q '"[\(.workflowName)] \(.url)"')"
 
 # ── 3. watch to completion, then dump per-leg conclusions ─────────────────────
 echo "==> watching run $RUN_ID …"
-gh "${GHR[@]}" run watch "$RUN_ID" --interval 15 --exit-status >/dev/null 2>&1
+gh_repo run watch "$RUN_ID" --interval 15 --exit-status >/dev/null 2>&1
 WATCH_RC=$?
-CONCL="$(gh "${GHR[@]}" run view "$RUN_ID" --json conclusion -q .conclusion)"
+CONCL="$(gh_repo run view "$RUN_ID" --json conclusion -q .conclusion)"
 echo "==> run conclusion: ${CONCL:-?}  (watch rc=$WATCH_RC)"
 echo "    per-leg:"
-gh "${GHR[@]}" run view "$RUN_ID" --json jobs \
+gh_repo run view "$RUN_ID" --json jobs \
     -q '.jobs[] | "      \(.name): \(.conclusion // .status)"'
 
 # ── 4. verify the published release assets ───────────────────────────────────
 echo "==> release assets for $TAG:"
-if gh "${GHR[@]}" release view "$TAG" >/dev/null 2>&1; then
-    mapfile -t ASSETS < <(gh "${GHR[@]}" release view "$TAG" --json assets -q '.assets[].name')
+if gh_repo release view "$TAG" >/dev/null 2>&1; then
+    mapfile -t ASSETS < <(gh_repo release view "$TAG" --json assets -q '.assets[].name')
     for a in "${ASSETS[@]}"; do echo "      $a"; done
     N="${#ASSETS[@]}"
     echo "    asset count: $N${EXPECT:+  (expected $EXPECT)}"

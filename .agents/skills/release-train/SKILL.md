@@ -17,10 +17,18 @@ For every independently published Rust crate in this ecosystem
 of the release input even when the crate is a library. Before tagging:
 
 ```bash
-cargo generate-lockfile --locked
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git diff --exit-code -- Cargo.lock
-cargo package --locked --no-verify
 ```
+
+Why the helper exists: when a crate repo is checked out as a submodule under
+`hisi-riscv-rs`, Cargo can discover the parent workspace and its
+`[patch.crates-io]` entries. Running Cargo directly from the submodule path can
+therefore generate a parent-influenced lockfile instead of the standalone
+crates.io lockfile that CI/publish uses. The helper copies the crate to a temp
+directory outside the parent workspace, runs Cargo there, and compares or updates
+the real `Cargo.lock`.
 
 If the crate lives as a submodule in `hisi-riscv-rs`, commit any `Cargo.lock`
 change **inside that submodule** before bumping the parent pointer.
