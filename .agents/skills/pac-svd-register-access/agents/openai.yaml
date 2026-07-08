@@ -1,0 +1,4 @@
+interface:
+  display_name: "PAC/SVD Register Access"
+  short_description: "Guard HAL register access via PAC and SVD"
+  default_prompt: "Use $pac-svd-register-access to review or fix a HAL register access issue from SVD through PAC and CI."
