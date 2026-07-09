@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 # Toolchain + default target come from rust-toolchain.toml (`hisi-riscv` + riscv32imfc).
 
@@ -63,6 +65,45 @@ jobs:
             target/riscv32imfc-unknown-none-elf/release/blinky.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install mdBook
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+
+      - name: Seed existing versioned docs site
+        run: scripts/seed-docs-site.sh --out site
+
+      - name: Build mdBook handbook
+        run: mdbook build docs
+        env:
+          DOC_VERSION: ${{ github.ref_name }}
+          LATEST_VERSION: ${{ github.ref_name }}
+
+      - name: Assemble versioned handbook
+        run: python3 scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${GITHUB_REF_NAME}" --book docs/book --out site
+
+      - name: Build versioned API documentation
+        run: scripts/build-rustdoc-site.sh --version "${GITHUB_REF_NAME}" --out site
+        env:
+          LATEST_VERSION: ${{ github.ref_name }}
+
+      - name: Check versioned docs site
+        run: python3 scripts/check-versioned-docs.py site
+
+      - name: Persist versioned docs state
+        run: scripts/publish-docs-state.sh --site site --message "Update docs site for ${GITHUB_REF_NAME}"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - name: Deploy versioned docs to GitHub Pages
+        uses: actions/deploy-pages@v5
 
   # ── crates.io publishing is OWNED BY EACH CRATE'S OWN REPO ─────────────────
   # The monorepo tag only cuts the firmware GitHub Release above. Each library

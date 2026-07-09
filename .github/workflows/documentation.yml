@@ -86,6 +86,12 @@ jobs:
       - name: Check tutorial snippet contracts
         run: python3 scripts/check-tutorial-snippets.py
 
+      - name: Check chip docs metadata
+        run: python3 scripts/check-chip-docs.py
+
+      - name: Check versioned docs metadata
+        run: python3 scripts/check-versioned-docs.py
+
   # ── Executable happy path (no hardware) ───────────────────────
   happy-path:
     name: Happy Path Smoke (no hardware)
@@ -133,21 +139,25 @@ jobs:
         with:
           tool: mdbook
 
+      - name: Seed existing versioned docs site
+        run: scripts/seed-docs-site.sh --out site
+
+      - name: Resolve published latest docs version
+        run: echo "LATEST_VERSION=$(python3 scripts/read-doc-latest.py --site site)" >> "$GITHUB_ENV"
+
       - name: Build the mdBook handbook (docs/ -> docs/book)
         run: mdbook build docs
+        env:
+          DOC_VERSION: main
 
-      - name: Build API documentation (hisi-riscv-hal/pac/rt)
-        # hisi-riscv-hal has no default chip (0.5.0); select chip-ws63 so its
-        # `soc::pac`/`soc::chip` resolve and the no-chip compile_error stays silent.
-        run: cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps --features hisi-riscv-hal/chip-ws63
+      - name: Assemble versioned handbook
+        run: python3 scripts/assemble-docs-site.py --version main --latest-version "${LATEST_VERSION}" --book docs/book --out site
 
-      - name: Assemble the site (handbook at /, rustdoc under /api)
-        run: |
-          rm -rf site && mkdir -p site/api
-          cp -r docs/book/. site/
-          cp -r target/riscv32imfc-unknown-none-elf/doc/. site/api/
-          # rustdoc has no root index.html; redirect /api/ to the HAL crate's docs.
-          printf '<!doctype html><meta http-equiv="refresh" content="0; url=hisi_riscv_hal/index.html">\n' > site/api/index.html
+      - name: Build versioned API documentation
+        run: scripts/build-rustdoc-site.sh --version main --out site
+
+      - name: Check versioned docs site
+        run: python3 scripts/check-versioned-docs.py site
 
       - name: Upload docs artifact
         uses: actions/upload-artifact@v7
@@ -173,6 +183,9 @@ jobs:
         with:
           name: api-docs
           path: docs-output
+
+      - name: Persist versioned docs state
+        run: scripts/publish-docs-state.sh --site docs-output --message "Update main docs site"
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
