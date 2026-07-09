@@ -47,7 +47,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install hisi-riscv toolchain
+      - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
       - name: Ensure hisiflash

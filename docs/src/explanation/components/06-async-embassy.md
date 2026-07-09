@@ -70,17 +70,17 @@ WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
 1. **embassy 支持 —— 两种正规模型,WS63 走 out-of-tree 那条**。
    embassy 仓库**确实**收录了一批 **in-tree HAL**(`embassy-nrf`/`-stm32`/`-rp`/`-nxp`/`-imxrt`/`-microchip`/`-mspm0`/`-mcxa`…,主要是主流 Cortex-M),它们由 embassy 维护者**承诺维护**、与 embassy 内部同步演进。
    但 embassy 同时提供一套**给树外 HAL 用的接缝**(`embassy-time-driver` + `embassy-time-queue-utils` + `embassy-executor` 的 platform 抽象)—— 树外 HAL 只实现这些 trait 即可,**无需进 embassy 仓库**。最大的例子是 **esp-hal**(Espressif 自己维护、在 esp-rs/esp-hal,**不在** embassy 仓库),社区还有 ch32-hal/py32-hal 等几十个。
-   **WS63 属于后者(esp-hal 模型)**,原因:① in-tree 要 embassy 维护者**采纳并长期维护**该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 全部基于 **stable rustc 标准 target** 构建,而 WS63 现在依赖自定义 `ws63` 工具链(无原子 target 烤进 builtin)——这是进 embassy CI 的硬阻塞(见第 3 点);③ hisi-riscv-hal 本就是**独立 HAL**(阻塞 embedded-hal + 可选 embassy),天然适合树外。
+   **WS63 属于后者(esp-hal 模型)**,原因:① in-tree 要 embassy 维护者**采纳并长期维护**该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 通常基于标准 Rust 工具链和主线 CI 构建,而 WS63 仍需要 `-Zbuild-std`、QEMU fork 和板级 HIL 证据来闭环;③ hisi-riscv-hal 本就是**独立 HAL**(阻塞 embedded-hal + 可选 embassy),天然适合树外。
    所以**上游化 = 把带 `embassy` feature 的 hisi-riscv-hal 发布到 crates.io**(版本结构已就绪),而**不是**塞进 embassy monorepo。想更解耦可拆 `embassy-time-ws63`,但非必需。
    - 跟版:盯 `embassy-time-driver`(现 0.2)/`embassy-time-queue-utils`(0.3)/`embassy-executor`(0.10)的 semver;破坏性改动(如 `Driver` 从 alarm-handle 改成 `schedule_wake`+queue)集中在 `embassy.rs` 一个文件。
 
 2. **embassy-executor 已是上游**:我们直接用 `platform-riscv32`,**零改动**。无 CAS 支持是它已有能力(thumbv6m 同理)。无需上游任何东西。
 
-3. **工具链 / target**(最大的"非上游"项):现在依赖自定义 `ws63` rustc(把 `riscv32imfc-unknown-none-elf` 无原子 target 烤成 builtin)。两条上游路:
-   - **短期**:改用 rustc **已有的稳定 target**(如 `riscv32imc`/`riscv32imac`)+ `-Z build-std` + `build-std-features`,去掉自定义工具链依赖 —— 代价是需要 nightly/`-Z`。
-   - **长期**:把这个 target spec 提交进 rustc(niche,门槛高),或推动官方加 `riscv32imfc-*`。
+3. **工具链 / target**: `riscv32imfc-unknown-none-elf` 已进入 upstream rustc nightly,生态主线已脱离自定义 rustc。剩余两步是:
+   - **短期**:业务仓 pin 已验证 nightly,用 `rust-src` + `-Zbuild-std=core,alloc` 构建。
+   - **长期**:推动 rustup 分发该 target 的预编译 `rust-std`,并用外部 radar 积累 Tier-2 readiness 证据。
    - 现状对异步**无影响**:异步只依赖 `portable-atomic`+`critical-section`,与 target 是否上游正交。
 
 4. **QEMU 模型**(ws63-qemu):把 `-M ws63` 板卡 + `-cpu ws63` 命名核 + xlinx 自定义 ISA 解码上游到 QEMU —— 这是 ws63-qemu ROADMAP 阶段 6([github.com/hispark-rs/hisi-riscv-qemu](https://github.com/hispark-rs/hisi-riscv-qemu))。与本仓异步无直接关系,但能让 CI 不依赖 fork 的 QEMU。
 
-> 简言之:**异步/embassy 这块本身已经是「按上游约定正确实现」**,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 摆脱自定义 rustc 工具链、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。
+> 简言之:**异步/embassy 这块本身已经是「按上游约定正确实现」**,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 让官方 target 获得 rustup std 组件/Tier-2 证据、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。

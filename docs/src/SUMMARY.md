@@ -14,7 +14,7 @@
     - [构建与运行示例集](tutorials/contrib/02-examples.md)
     - [第一次硬件在环测试](tutorials/contrib/03-hil.md)
 - [操作指南 · How-to](how-to/00-index.md)
-  - [安装 hisi-riscv 工具链](how-to/01-install-toolchain.md)
+  - [安装官方 Rust 工具链](how-to/01-install-toolchain.md)
   - [构建一个示例](how-to/02-build-example.md)
   - [打包成可启动镜像（hisi-fwpkg）](how-to/03-package-image.md)
   - [用 probe-rs 烧录到真机](how-to/04-flash-probe-rs.md)

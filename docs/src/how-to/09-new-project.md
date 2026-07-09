@@ -2,7 +2,7 @@
 
 要从零起一个 WS63/BS2X 应用，用 `cargo generate` 从模板仓库 [hisi-rs-template](https://github.com/hispark-rs/hisi-rs-template) 生成——它帮你配好工具链、链接脚本、依赖和一份 `justfile`，开箱即可构建+烧录。
 
-> 前提：已[安装 hisi-riscv 工具链](01-install-toolchain.md)；`cargo install cargo-generate`。
+> 前提：已[安装官方 Rust 工具链](01-install-toolchain.md)；`cargo install cargo-generate`。
 
 ## 生成
 
@@ -31,8 +31,8 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
 
 | 配方 | 做什么 |
 | --- | --- |
-| `just build` | `cargo build --release` 编出 ELF |
-| `just run` | 在 QEMU 里跑（`cargo run --release`） |
+| `just build` | `cargo build -Zbuild-std=core,alloc --release` 编出 ELF |
+| `just run` | 在 QEMU 里跑（`cargo run -Zbuild-std=core,alloc --release`） |
 | `just patch`（WS63 例外） | build 后 `hisi-fwpkg patch-hash {{elf}}`，用于 `probe-rs run` / embedded-test 这类需要 ELF 元数据的路径 |
 | `just image` | build 后 `hisi-fwpkg plan --image-output` 生成 `*.img` + `*.plan.json` |
 | `just flash` | 从 plan 读取 `base_addr`，用 `probe-rs download --binary-format bin --base-address` 烧完整 image |

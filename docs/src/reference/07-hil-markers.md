@@ -43,7 +43,7 @@ Cargo 以 `<runner> <built-test-elf> [embedded-test args...]` 调用 runner。�
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf --test hil
 ```
 

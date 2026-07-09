@@ -3,12 +3,12 @@
 本课带你装好全部工具、克隆带子模块的monorepo，并以一次成功的编译收尾。
 请逐步执行，每一步都有可见的结果。
 
-> 本课只求"把工具跑起来"。每个工具的深入安装与故障排查（含 **IDE / rust-analyzer
-> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/01-install-toolchain.md)。
+> 本课只求"把工具跑起来"。每个工具的深入安装与故障排查见
+> [安装官方 Rust 工具链](../../how-to/01-install-toolchain.md)。
 
 ## 第 0 步：安装 Rust（rustup）
 
-下面的工具链 link、子模块克隆、编译都依赖 `rustup` / `cargo`。如果还没装，按 Rust 官方
+下面的工具链安装、子模块克隆、编译都依赖 `rustup` / `cargo`。如果还没装，按 Rust 官方
 指引装一下（一条命令、跨平台）：
 
 {{#tutorial-snippet contrib_setup_rustup}}
@@ -16,27 +16,21 @@
 > 官方安装页（含 Windows / 其它方式）：<https://www.rust-lang.org/tools/install>。
 > 装完确认：`rustup --version` 和 `cargo --version` 都能打印版本即可。
 
-## 第 1 步：安装 hisi-riscv 工具链
+## 第 1 步：安装官方 Rust nightly
 
 WS63 应用核是 `riscv32imfc-unknown-none-elf`（硬件单精度浮点、无原子扩展）。
-这个目标被内建进了一个自定义的 `hisi-riscv` 工具链——它**不是** rustup 频道，需要手动下载并链接。
-
-下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），**直接解压进 rustup 的 toolchains 目录**——rustup 会自动识别，无需 `link`：
+这个 target 已经进入官方 `rustc` nightly；当前 rustup 还没有它的预编译
+`rust-std` 组件，所以需要安装 `rust-src`，由仓库的 RISC-V 构建命令使用
+`-Zbuild-std=core,alloc`。
 
 {{#tutorial-snippet contrib_setup_toolchain}}
 
-> tarball 顶层是 `stage2/`，`--strip-components=1` 把它剥掉，让 `bin/lib/libexec`
-> 落到 `hisi-riscv/` 根下；工具链自包含，删掉下载的临时文件也不影响。
-
-确认链接成功：
+确认 target 和 rustup 组件状态：
 
 {{#tutorial-snippet contrib_setup_check_toolchain}}
 
-你应当看到：
-
-```console
-hisi-riscv
-```
+第一行应能看到 `riscv32imfc-unknown-none-elf`。第二行现在通常会提示还没有预编译
+`rust-std`，这是预期状态。
 
 ## 第 2 步：克隆仓库（带子模块）
 
@@ -46,8 +40,8 @@ hisi-riscv
 
 > 如果你已经克隆但忘了子模块，补一句：`git submodule update --init --recursive`。
 
-仓库根目录的 `rust-toolchain.toml` 已经把频道钉成了 `hisi-riscv`，
-所以在本仓库内执行的所有 `cargo` 命令都会自动用上刚装好的工具链。
+仓库根目录的 `rust-toolchain.toml` 已经把频道钉成了验证过的官方 nightly。
+RISC-V 构建命令需要带 `-Zbuild-std=core,alloc`；教程里的命令片段和 CI 都覆盖这一点。
 
 ## 第 3 步：安装 QEMU 模拟器
 
@@ -72,7 +66,7 @@ hisi-riscv
 - **打过补丁的 probe-rs 分支**（`hispark-rs/probe-rs`，分支 `add-hisilicon-ws63-bs21`）：
   上游 probe-rs 不认识 WS63，必须用这个分支，并配上 `HiSilicon_WS63.yaml`。
 
-安装方法（深入说明见 [安装工具链](../../how-to/01-install-toolchain.md) 与
+安装方法（深入说明见 [安装官方 Rust 工具链](../../how-to/01-install-toolchain.md) 与
 [用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)）：
 
 {{#tutorial-snippet contrib_install_flash_tools}}

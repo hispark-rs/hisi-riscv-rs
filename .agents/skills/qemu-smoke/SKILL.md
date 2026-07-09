@@ -4,8 +4,8 @@ description: Build a ws63-rs example for a HiSilicon chip (ws63/bs21/bs21e/bs22/
 disable-model-invocation: true
 ---
 
-End-to-end emulation check: builds example firmware with the custom `hisi-riscv`
-toolchain, then boots it on the matching `-M <chip>` machine in the
+End-to-end emulation check: builds example firmware with the pinned official Rust
+nightly (`-Zbuild-std=core,alloc`), then boots it on the matching `-M <chip>` machine in the
 [hisi-riscv-qemu](https://github.com/hispark-rs/hisi-riscv-qemu) fork and asserts the
 expected output. This is what `run-ws63-rs` (build/lint/test) stops short of — actually
 *running* the firmware. User-invoked because it spawns QEMU processes.

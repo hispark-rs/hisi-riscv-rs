@@ -4,8 +4,8 @@
 
 ## 构建 · Build
 
-- [如何安装 hisi-riscv 工具链](01-install-toolchain.md) —— 下载/链接（或源码构建）自定义硬浮点 rustc 工具链，并验证 `riscv32imfc` target。
-- [如何构建一个示例](02-build-example.md) —— 从仓库根工作区 `cargo build -p <name> --release`，ELF 落点，release/debug 与 objcopy 到 bin。
+- [如何安装官方 Rust 工具链](01-install-toolchain.md) —— 安装 pinned nightly、`rust-src` 与 LLVM tools，并验证 `riscv32imfc` target。
+- [如何构建一个示例](02-build-example.md) —— 从仓库根工作区 `cargo build -Zbuild-std=core,alloc -p <name> --release`，ELF 落点，release/debug 与 objcopy 到 bin。
 
 ## 打包与烧录 · Flash
 

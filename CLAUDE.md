@@ -30,28 +30,24 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 ## Build Commands
 
 ```bash
-# Builds with the custom `hisi-riscv` toolchain (rust-toolchain.toml): stable rustc with the
-# WS63 target riscv32imfc-unknown-none-elf (hardware single-float ilp32f, no atomics)
-# baked in as a builtin — default target set in .cargo/config.toml, no -Z build-std.
-# Install it first (see rust-toolchain.toml / https://github.com/hispark-rs/hisi-riscv-rust-toolchain):
-#   curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-#   mkdir -p ~/.rustup/toolchains/hisi-riscv && tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
-cargo build                         # Build libraries + default-member WS63 examples — works:
-                                    # the default-member ws63 examples pull chip-ws63 onto
-                                    # the shared hal via feature unification.
-cargo check --workspace             # Full workspace check — also works (unifies chip-ws63).
+# Builds with the official upstream Rust nightly pinned in rust-toolchain.toml.
+# rustc knows riscv32imfc-unknown-none-elf (hardware single-float ilp32f, no atomics),
+# but rustup does not ship its prebuilt rust-std component yet, so RISC-V commands
+# use `-Zbuild-std=core,alloc`. Default target is set in .cargo/config.toml.
+cargo build -Zbuild-std=core,alloc                         # Build libraries + default-member WS63 examples.
+cargo check -Zbuild-std=core,alloc --workspace             # Full workspace check.
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
-cargo check -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
-cargo check -p ws63-pac             # Check PAC only
-cargo build -p blinky --release     # Build example
+cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
+cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
+cargo check -Zbuild-std=core,alloc -p ws63-pac             # Check PAC only
+cargo build -Zbuild-std=core,alloc -p blinky --release     # Build example
 
 # Specific target override
-cargo check --target riscv32imfc-unknown-none-elf
+cargo check -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf
 
 # Clippy & format
-cargo clippy --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf -- -D warnings
 cargo fmt --all -- --check
 
 # Submodule operations

@@ -8,21 +8,25 @@ Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
 
 ## Toolchain (required)
 
-ws63-rs builds with the custom **`hisi-riscv`** toolchain: a stable rustc with the WS63
-target `riscv32imfc-unknown-none-elf` (RV32IMFC, hardware single-float `ilp32f`, no
-atomics) baked in as a **builtin** — so builds need **no `-Z build-std`**. The default
-target is set in `.cargo/config.toml`; `rust-toolchain.toml` pins `channel = "hisi-riscv"`.
+ws63-rs builds with the official upstream Rust nightly pinned in
+`rust-toolchain.toml`. The WS63 target is `riscv32imfc-unknown-none-elf`
+(RV32IMFC, hardware single-float `ilp32f`, no atomics). rustc knows this target,
+but rustup does not ship a prebuilt std component for it yet, so RISC-V builds use
+`-Zbuild-std=core,alloc`. The default target is set in `.cargo/config.toml`.
 
-Install it first (it is not a distributable rustup channel) — extract straight into
-rustup's toolchains dir, no `link` needed:
+Install the pinned toolchain first:
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+rustup toolchain install nightly-2026-07-09 \
+  --profile minimal \
+  --component rust-src \
+  --component clippy \
+  --component rustfmt \
+  --component llvm-tools-preview
 ```
 
-The `hisi-riscv` toolchain bundles rustc, cargo, rustfmt, clippy, and rustdoc.
+The `hisi-riscv-rust-toolchain` repo is now the upstream nightly radar, not the
+default custom rustc install path.
 
 ## Build (agent path)
 
@@ -40,17 +44,17 @@ scripts to downstream bins).
 ## Quick commands
 
 ```bash
-cargo build                      # default-members: libs + blinky (uses config default target)
-cargo check --workspace          # everything incl. flashboot
-cargo clippy --workspace -- -D warnings
+cargo build -Zbuild-std=core,alloc                      # default-members: libs + blinky
+cargo check -Zbuild-std=core,alloc --workspace          # everything incl. flashboot
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 cargo fmt --all -- --check
-cargo build -p ws63-flashboot --release   # experimental flashboot (excluded from default build)
+cargo build -Zbuild-std=core,alloc -p ws63-flashboot --release   # experimental flashboot
 ```
 
 ## Documentation
 
 ```bash
-cargo doc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
+cargo doc -Zbuild-std=core,alloc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
 # Output: target/riscv32imfc-unknown-none-elf/doc/hisi_riscv_hal/index.html
 ```
 
@@ -63,8 +67,8 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
 
 ## Gotchas
 
-- **Needs the `hisi-riscv` toolchain** (above). A stock rustup toolchain does not have the
-  `riscv32imfc` target and will fail with "target may not be installed".
+- **Needs the pinned nightly + rust-src** (above). Missing `-Zbuild-std=core,alloc`
+  or `rust-src` usually shows up as "can't find crate for core".
 - **Single PAC instance**: the root `Cargo.toml` `[patch.crates-io]` redirects the
   `ws63-pac` registry dep to the local submodule. Don't add a second `ws63-pac` source.
 - **`ws63-pac/src/lib.rs` is svd2rust-generated** — do not hand-edit it (a PreToolUse
@@ -77,9 +81,9 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
 
 | Symptom | Fix |
 |---------|-----|
-| `target may not be installed` / `riscv32imfc` unknown | Install + link the `hisi-riscv` toolchain (see Toolchain) |
+| `can't find crate for core` | Install `rust-src` and pass `-Zbuild-std=core,alloc` for RISC-V commands |
 | `failed to load manifest for workspace member` | `git submodule update --init --recursive` |
 | `error[E0463]: can't find crate for proc_macro2` (fresh CI) | Stale cross-toolchain `target/` cache — don't cache `target/` across toolchains |
-| `clippy FAILED` | `cargo clippy --workspace --exclude ws63-flashboot -- -D warnings` to see warnings |
+| `clippy FAILED` | `cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings` to see warnings |
 | `formatting FAILED` | `cargo fmt --all` to auto-fix (a PostToolUse hook also auto-formats `.rs` on edit) |
 | blinky link error `__*_stack_top__` undefined | ensure hisi-riscv-rt is up to date (it exports `ws63-link.x` for downstream bins) |

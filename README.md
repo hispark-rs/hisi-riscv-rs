@@ -6,7 +6,8 @@ BLE + SLE/NearLink), all single-core RV32IMFC (hard-float `ilp32f`, no atomics) 
 
 This monorepo bundles per-chip `svd2rust` peripheral-access crates, a hand-written
 multi-chip safe HAL, a runtime, a porting layer for the closed-source Wi-Fi/BLE
-blobs, and runnable examples — buildable today with a custom Rust toolchain, and
+blobs, and runnable examples — buildable today with the official upstream Rust
+nightly target path, and
 runnable **without hardware** on the sister project
 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) (machines
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
@@ -73,34 +74,34 @@ git submodule update --init --recursive
 
 ## Getting started
 
-### 1. Install the `hisi-riscv` toolchain
+### 1. Install the pinned official Rust nightly
 
 The default target `riscv32imfc-unknown-none-elf` (hardware single-float
-`ilp32f`, no atomics) is **baked into a custom rustc** as a builtin, so no
-`-Z build-std` is needed. It is not a distributable rustup channel — install it
-first by extracting straight into rustup's toolchains dir (see
-[`rust-toolchain.toml`](rust-toolchain.toml) and the
-[hisi-riscv-rust-toolchain](https://github.com/hispark-rs/hisi-riscv-rust-toolchain) repo):
+`ilp32f`, no atomics) is an upstream rustc builtin target in the pinned nightly.
+rustup does not ship a prebuilt std component for it yet, so RISC-V builds use
+`rust-src` plus `-Zbuild-std=core,alloc`:
 
 ```bash
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-# tarball top-level is stage2/; --strip-components=1 drops it; rustup auto-discovers the dir (no `link` needed)
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 ```
 
 ### 2. Build
 
 ```bash
-cargo build                  # libraries + the default-member examples
-cargo check --workspace      # full workspace (incl. flashboot)
-cargo build -p blinky --release
+cargo build -Zbuild-std=core,alloc                  # libraries + default-member examples
+cargo check -Zbuild-std=core,alloc --workspace      # full workspace (incl. flashboot)
+cargo build -Zbuild-std=core,alloc -p blinky --release
 ```
 
 Lint / format:
 
 ```bash
-cargo clippy --workspace
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 cargo fmt --all -- --check
 ```
 

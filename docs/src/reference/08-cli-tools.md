@@ -144,6 +144,6 @@ cargo install hisiflash-cli
 | `hisi-rs-template` | cargo-generate 模板（WS63/BS2X 新工程脚手架） | github.com/hispark-rs/hisi-rs-template |
 | `hisi-fwpkg` | app 镜像 / fwpkg 打包工具（`plan`/`image`/`patch-hash`/`pack`） | github.com/hispark-rs/hisi-fwpkg |
 | `probe-rs`（fork） | 补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法） | github.com/hispark-rs/probe-rs（branch `add-hisilicon-ws63-bs21`） |
-| `hisi-riscv-rust-toolchain` | 自定义 rustc（riscv32imfc builtin，硬浮点） | github.com/hispark-rs/hisi-riscv-rust-toolchain |
+| `hisi-riscv-rust-toolchain` | 官方 Rust nightly 外部 radar（riscv32imfc target / rustup std / Tier-2 readiness） | github.com/hispark-rs/hisi-riscv-rust-toolchain |
 | `hisi-riscv-qemu` | QEMU fork（`-M ws63/bs21/bs21e/bs22/bs20`） | github.com/hispark-rs/hisi-riscv-qemu |
 | `hisiflash` | 串口/YMODEM 烧录 CLI | github.com/hispark-rs/hisiflash |

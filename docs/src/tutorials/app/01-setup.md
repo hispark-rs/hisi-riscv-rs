@@ -3,8 +3,8 @@
 本课带你装好开发 WS63 应用所需的全部工具。注意：**你不需要克隆monorepo**——
 所有库依赖都来自 crates.io，工程将在下一课用 `cargo generate` 生成。
 
-> 本课只求"把工具装上"。每个工具的深入说明与故障排查（含 **IDE / rust-analyzer
-> 已知问题**）见 [安装 hisi-riscv 工具链](../../how-to/01-install-toolchain.md)。
+> 本课只求"把工具装上"。每个工具的深入说明与故障排查见
+> [安装官方 Rust 工具链](../../how-to/01-install-toolchain.md)。
 
 ## 第 0 步：安装 Rust（rustup）
 
@@ -16,30 +16,21 @@
 > 官方安装页（含 Windows / 其它方式）：<https://www.rust-lang.org/tools/install>。
 > 装完确认：`rustup --version` 和 `cargo --version` 都能打印版本即可。
 
-## 第 1 步：安装 hisi-riscv 工具链
+## 第 1 步：安装官方 Rust nightly
 
 WS63 应用核是 `riscv32imfc-unknown-none-elf`（硬件单精度浮点、无原子扩展）。
-这个目标被内建进了一个自定义的 `hisi-riscv` 工具链——它**不是** rustup 频道，需要手动下载并链接。
-
-下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），**直接解压进 rustup 的 toolchains 目录**——rustup 会自动识别，无需 `link`：
+这个 target 已经进入官方 `rustc` nightly；当前 rustup 还没有它的预编译
+`rust-std` 组件，所以需要安装 `rust-src`，由项目在构建时用
+`-Zbuild-std=core,alloc` 编出 `core` / `alloc`。
 
 {{#tutorial-snippet app_setup_toolchain}}
 
-> tarball 顶层是 `stage2/`，`--strip-components=1` 把它剥掉，让 `bin/lib/libexec`
-> 落到 `hisi-riscv/` 根下。这样工具链自包含，删掉下载的临时文件也不影响。
->
-> 其它主机把 `HOST` 换成对应三元组即可：`aarch64-unknown-linux-gnu`、
-> `aarch64-apple-darwin`、`x86_64-pc-windows-msvc`。
-
-确认链接成功：
+确认 target 和 rustup 组件状态：
 
 {{#tutorial-snippet app_setup_check_toolchain}}
 
-你应当看到：
-
-```console
-hisi-riscv
-```
+第一行应能看到 `riscv32imfc-unknown-none-elf`。第二行现在通常会提示还没有预编译
+`rust-std`，这是预期状态。
 
 ## 第 2 步：安装 cargo-generate 与 just
 
@@ -81,7 +72,7 @@ hisi-riscv
 
 ## 第 6 步：验证工具链
 
-`hisi-riscv` 工具链内建了 WS63 目标，确认它在目标列表里：
+确认当前工程目录里 `rustc` 能看到 WS63 目标：
 
 {{#tutorial-snippet app_setup_check_target}}
 
@@ -91,8 +82,9 @@ hisi-riscv
 riscv32imfc-unknown-none-elf
 ```
 
-> 看到这一行就说明工具链装好了。下一课生成的工程里有 `rust-toolchain.toml`，
-> 会自动选用 `hisi-riscv`，所以在工程目录里直接敲 `cargo` 即可，无需 `+hisi-riscv`。
+> 看到这一行就说明 pinned nightly 生效了。下一课生成的工程里有
+> `rust-toolchain.toml` 和 `justfile`，会自动选用该 nightly，并在构建 recipe
+> 中带上 `-Zbuild-std=core,alloc`。
 
 工具齐了！下一课我们生成你的第一个工程 ——
 [从模板创建你的第一个工程](02-first-project.md)。

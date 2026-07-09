@@ -78,9 +78,9 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 ## 构建与目标（target）
 
 - **默认 target / 工具链**：**`riscv32imfc-unknown-none-elf`**（RV32IMFC，硬件单精度浮点 `ilp32f`，无原子），
-  由自定义 **`hisi-riscv`** 工具链提供（stable rustc 把该 target 烤成 builtin，故**无需 `-Z build-std`**，
-  工具链自带预编译 core/alloc）。`rust-toolchain.toml` pin `channel = "hisi-riscv"`；安装见
-  <https://github.com/hispark-rs/hisi-riscv-rust-toolchain>（解压进 `~/.rustup/toolchains/hisi-riscv/`，rustup 自动识别）。
+  由官方 upstream Rust nightly 提供 builtin target。`rust-toolchain.toml` pin
+  `nightly-2026-07-09`；当前 rustup 尚无该 target 的预编译 `rust-std` 组件，所以 RISC-V
+  构建命令显式使用 `-Zbuild-std=core,alloc`。
   - WS63 核**无原子（A）扩展**：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
     RMW 走 `portable-atomic` 的 critical-section polyfill，**不发 `lr/sc/amo`**。原默认 `riscv32imafc`
     会发原子指令、在硅片上触发非法指令陷阱，已弃用。
@@ -97,11 +97,11 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 常用命令：
 
 ```bash
-cargo build --release          # 构建库 + default-member WS63 示例
-cargo check --workspace        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy --workspace -- -D warnings
-cargo build -p blinky             # 单独构建一个示例
-cargo build -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
+cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
+cargo check -Zbuild-std=core,alloc --workspace        # 检查全部（含 blinky/flashboot，不链接）
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
+cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```
 
 ## 已知的全局性问题（详见评审台账）

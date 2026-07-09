@@ -82,7 +82,7 @@ marker_for() {
 if [ "$PREFLIGHT" = 1 ]; then
     echo "════════ hil-smoke preflight: chip=$CHIP ════════"
     rdy=0
-    if rustup toolchain list 2>/dev/null | grep -q hisi-riscv; then echo "  [ok]   hisi-riscv toolchain linked"; else echo "  [MISS] hisi-riscv toolchain — see run-ws63-rs skill"; rdy=1; fi
+    if rustc --print target-list 2>/dev/null | grep -qx riscv32imfc-unknown-none-elf; then echo "  [ok]   rustc target: riscv32imfc-unknown-none-elf"; else echo "  [MISS] pinned nightly target — see run-ws63-rs skill"; rdy=1; fi
     echo "  [info] METHOD=$METHOD"
     if [ "$METHOD" = "hisiflash" ]; then
         if have_hisiflash; then echo "  [ok]   hisiflash: $(command -v $HISIFLASH)"; else echo "  [MISS] hisiflash — \`cargo install hisiflash-cli\` (or build /root/hisiflash)"; rdy=1; fi
@@ -117,9 +117,9 @@ export METHOD PORT LOADERBOOT ADDRESS HISIFLASH UART_BAUD SETTLE WS63_RS="$REPO"
 build() {  # ws63 via -p in root ws; bs2x via the isolated-workspace manifest
     if [ -z "$WS" ]; then
         local pf=""; for c in $1; do pf="$pf -p $c"; done
-        echo "==> cargo build --release$pf"; ( cd "$REPO" && cargo build --release $pf )
+        echo "==> cargo build -Zbuild-std=core,alloc --release$pf"; ( cd "$REPO" && cargo build -Zbuild-std=core,alloc --release $pf )
     else
-        echo "==> cargo build --manifest-path $WS/Cargo.toml --release"; ( cd "$REPO" && cargo build --manifest-path "$MANIFEST" --release )
+        echo "==> cargo build -Zbuild-std=core,alloc --manifest-path $WS/Cargo.toml --release"; ( cd "$REPO" && cargo build -Zbuild-std=core,alloc --manifest-path "$MANIFEST" --release )
     fi
 }
 read_serial() {  # raw UART for $1 s; override with $MONITOR for your adapter

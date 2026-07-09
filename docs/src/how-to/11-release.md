@@ -88,13 +88,13 @@ cargo clippy --locked --all-features
 cargo doc --locked --no-deps --document-private-items
 
 # hisi-riscv-rt
-cargo +hisi-riscv check --locked --target riscv32imfc-unknown-none-elf
-cargo +hisi-riscv clippy --locked --target riscv32imfc-unknown-none-elf -- -D warnings
-cargo +hisi-riscv doc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
+cargo check -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo doc -Zbuild-std=core,alloc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
 
 # hisi-riscv-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
-cargo check --locked --no-default-features --features chip-ws63,rt,async,embassy
-cargo check --locked --no-default-features --features chip-bs21,rt,unstable
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async,embassy
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-bs21,rt,unstable
 ```
 
 HAL release 如果改变 stable API、驱动行为、unsafe 封装或 HIL 证据，继续跑对应专项检查：
@@ -103,7 +103,7 @@ HAL release 如果改变 stable API、驱动行为、unsafe 封装或 HIL 证据
 # HAL driver-level embedded-test；详见 how-to/07-run-hil-tests.md
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=../../hil/embedded-test-runner.sh \
-cargo test --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
 ```
@@ -157,7 +157,7 @@ git push origin main
 ```bash
 git submodule status --recursive
 git status --short
-cargo build --release
+cargo build -Zbuild-std=core,alloc --release
 cargo fmt --all -- --check
 ```
 

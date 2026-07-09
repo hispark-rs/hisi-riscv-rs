@@ -1,29 +1,25 @@
 #!/usr/bin/env bash
-# Install the custom `hisi-riscv` toolchain (stable rustc with the riscv32imfc
-# hard-float target baked in as a builtin) by extracting it straight into rustup's
-# toolchains dir — rustup auto-discovers any directory there, so no
-# `rustup toolchain link` is needed and the toolchain is self-contained.
-# Idempotent. Used by the CI workflows since hisi-riscv-rs pins
-# `channel = "hisi-riscv"` in rust-toolchain.toml. (CI runs on x86_64 Linux; the
-# release also ships aarch64-linux, macOS x86_64/aarch64, and windows x86_64 tarballs.)
+# Install the official upstream Rust toolchain pinned by rust-toolchain.toml.
+#
+# `riscv32imfc-unknown-none-elf` is a rustc builtin target in this nightly, but
+# rustup does not provide a prebuilt std component for it yet. CI therefore
+# installs rust-src and RISC-V build commands pass `-Zbuild-std=core,alloc`.
 set -euo pipefail
 
-VER="v1.96.0-3"
-BASE="hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu"
-URL="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/download/${VER}/${BASE}.tar.gz"
+TOOLCHAIN="${RUST_TOOLCHAIN:-nightly-2026-07-09}"
 
-if rustup toolchain list 2>/dev/null | grep -q '^hisi-riscv'; then
-  echo "hisi-riscv toolchain already installed"
-  exit 0
+rustup toolchain install "$TOOLCHAIN" \
+  --profile minimal \
+  --component rust-src \
+  --component clippy \
+  --component rustfmt \
+  --component llvm-tools-preview
+
+rustc +"$TOOLCHAIN" --version
+rustc +"$TOOLCHAIN" --print target-list | grep -qx 'riscv32imfc-unknown-none-elf'
+
+if rustup target list --toolchain "$TOOLCHAIN" | grep -Eq '^riscv32imfc-unknown-none-elf([[:space:]]|$)'; then
+  echo "rustup ships prebuilt rust-std for riscv32imfc-unknown-none-elf"
+else
+  echo "rustup has no prebuilt rust-std for riscv32imfc-unknown-none-elf; using -Zbuild-std=core,alloc"
 fi
-
-TC_DIR="${RUSTUP_HOME:-$HOME/.rustup}/toolchains/hisi-riscv"
-TMP="${RUNNER_TEMP:-/tmp}/hisi-riscv-toolchain.tar.gz"
-echo "Downloading $URL"
-curl -fsSL --retry 3 -o "$TMP" "$URL"
-mkdir -p "$TC_DIR"
-# The tarball's top-level dir is stage2/; --strip-components=1 drops it so that
-# bin/lib/libexec land directly under <toolchains>/hisi-riscv/.
-tar --strip-components=1 -C "$TC_DIR" -xzf "$TMP"
-echo "installed hisi-riscv -> $TC_DIR"
-rustc +hisi-riscv --version

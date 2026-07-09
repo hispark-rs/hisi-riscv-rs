@@ -16,12 +16,12 @@
 
 - 一台 Linux 电脑（本路径在 x86_64 Linux 上验证）。
 - 已安装 [`rustup`](https://rustup.rs)、`git`、`curl`。
-- 第 1 课会带你装好其余工具（自定义工具链、`cargo-generate`、`just`、烧录器、可选 QEMU）。
+- 第 1 课会带你装好其余工具（官方 pinned nightly、`cargo-generate`、`just`、烧录器、可选 QEMU）。
 - **开发板可选**：QEMU 不需要硬件；只有要烧真机（第 2 课后半段）时才需要一块 WS63 开发板。
 
 ## 三节课
 
-1. [搭建环境（应用开发）](01-setup.md) —— 装好 `hisi-riscv` 工具链、`cargo-generate`、`just`、`hisi-fwpkg`、烧录用的 probe-rs 分支，以及可选的 QEMU。
+1. [搭建环境（应用开发）](01-setup.md) —— 装好官方 Rust nightly、`cargo-generate`、`just`、`hisi-fwpkg`、烧录用的 probe-rs 分支，以及可选的 QEMU。
 2. [从模板创建你的第一个工程](02-first-project.md) —— `cargo generate` 生成 blinky 工程，`just run` 在 QEMU 里跑，再 `just flash` 烧到真板看 LED 闪。
 3. [改造成一个 UART 程序](03-uart.md) —— 用 `uart_hello` 起手，在 QEMU 里看到 `Hello from WS63 ...`。
 

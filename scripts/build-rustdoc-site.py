@@ -60,7 +60,7 @@ def build_chip(chip: str, meta: dict[str, object], version: str, out: Path, targ
     if target_doc.exists():
         shutil.rmtree(target_doc)
 
-    cmd = ["cargo", "doc"]
+    cmd = ["cargo", "doc", "-Zbuild-std=core,alloc"]
     for package in packages:
         cmd.extend(["-p", package])
     cmd.append("--no-deps")

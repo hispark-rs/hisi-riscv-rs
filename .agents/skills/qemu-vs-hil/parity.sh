@@ -43,7 +43,7 @@ timing_note() { case "$1" in
 WS63_QEMU="${WS63_QEMU:-/root/ws63-qemu}"
 QEMU_BIN="${QEMU_BIN:-}"; [ -z "$QEMU_BIN" ] && { command -v qemu-system-riscv32 >/dev/null 2>&1 && QEMU_BIN=qemu-system-riscv32 || QEMU_BIN="$WS63_QEMU/qemu/build/qemu-system-riscv32"; }
 qemu_ok=1; [ -x "$QEMU_BIN" ] || command -v "$QEMU_BIN" >/dev/null 2>&1 || qemu_ok=0
-build() { if [ -z "$WS" ]; then ( cd "$REPO" && cargo build --release -p "$1" ); else ( cd "$REPO" && cargo build --manifest-path "$MANIFEST" --release ); fi; }
+build() { if [ -z "$WS" ]; then ( cd "$REPO" && cargo build -Zbuild-std=core,alloc --release -p "$1" ); else ( cd "$REPO" && cargo build -Zbuild-std=core,alloc --manifest-path "$MANIFEST" --release ); fi; }
 qemu_run() { local elf="$1"; timeout "$TIMEOUT" "$QEMU_BIN" -M "$CHIP" -nographic -bios none -kernel "$elf" </dev/null 2>&1; }
 
 # ── HIL side: is the rig ready? (preflight, no writes) ────────────────────────

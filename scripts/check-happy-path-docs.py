@@ -34,6 +34,18 @@ PATTERNS = [
         "probe-rs smoke/download docs must use plan image + --binary-format bin",
     ),
     (
+        re.compile(r"\+hisi-riscv\b|channel\s*=\s*\"hisi-riscv\""),
+        "happy-path docs must use the official pinned nightly, not the legacy hisi-riscv toolchain",
+    ),
+    (
+        re.compile(r"hisi-riscv-rust-[0-9][^\\s`]*\\.tar\\.gz"),
+        "happy-path docs must not recommend legacy custom rustc tarballs",
+    ),
+    (
+        re.compile(r"rustup\s+target\s+add\s+riscv32imfc-unknown-none-elf"),
+        "rustup does not ship this target's rust-std component yet; use rust-src + -Zbuild-std",
+    ),
+    (
         re.compile(r"hisi-riscv-hal\s*=\s*[{ ]version\s*=\s*\"0\.(?:4|5|6)(?:\"|[^\"]*\"(?!0-alpha\.1))"),
         "template happy path must not drift to an old HAL dependency",
     ),
@@ -46,6 +58,14 @@ PATTERNS = [
 ALLOW = [
     re.compile(r"Historical Notes"),
     re.compile(r"docs/review/"),
+    re.compile(r"legacy", re.IGNORECASE),
+    re.compile(r"历史"),
+    re.compile(r"不要.*rustup\s+target\s+add"),
+    re.compile(r"不能用.*rustup\s+target\s+add"),
+    re.compile(r"rustup\s+target\s+add.*不是可用"),
+    re.compile(r"rustup\s+target\s+add.*找不到"),
+    re.compile(r"no prebuilt rust-std"),
+    re.compile(r"has no prebuilt rust-std"),
     re.compile(r"0\.5\.0\+ has NO default chip"),
     re.compile(r"hisi-fwpkg-cli 0\.3\.0"),
 ]
@@ -88,4 +108,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

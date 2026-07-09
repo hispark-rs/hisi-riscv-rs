@@ -19,7 +19,7 @@ HIL 框架背景见 [HIL 测试框架](../explanation/07-hil-framework.md)；run
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
@@ -28,7 +28,7 @@ cargo test -p hisi-riscv-hal \
 只构建测试 ELF、不烧板：
 
 ```bash
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -39,7 +39,7 @@ cargo test -p hisi-riscv-hal \
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- gpio_output_readback
@@ -56,7 +56,7 @@ cargo test -p hisi-riscv-hal \
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+cargo test -Zbuild-std=core,alloc -p tests-hil --target riscv32imfc-unknown-none-elf
 ```
 
 它不在 `default-members` 里，普通 `cargo build` 不会拉 `embedded-test`。

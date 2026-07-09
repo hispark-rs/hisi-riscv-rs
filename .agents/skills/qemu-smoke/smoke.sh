@@ -78,17 +78,18 @@ case "$CHIP" in
     *) echo "FATAL: unknown chip '$CHIP' (ws63|bs21|bs21e|bs22|bs20)"; exit 2 ;;
 esac
 PROFLAG=""; [ "$PROFILE" = release ] && PROFLAG="--release"
+BUILD_STD="-Zbuild-std=core,alloc"
 
 build() {  # build the given crate(s); ws63 via -p in the root ws, bs2x via manifest
     local crates="$1"
     if [ -z "$WS" ]; then
         local pflags=""; for c in $crates; do pflags="$pflags -p $c"; done
-        echo "==> cargo build $PROFLAG$pflags  (ws63 workspace)"
-        ( cd "$REPO" && cargo build $PROFLAG $pflags ) || return 1
+        echo "==> cargo build $BUILD_STD $PROFLAG$pflags  (ws63 workspace)"
+        ( cd "$REPO" && cargo build $BUILD_STD $PROFLAG $pflags ) || return 1
     else
         # isolated bs2x workspace — build the whole small workspace in one shot
-        echo "==> cargo build --manifest-path $WS/Cargo.toml $PROFLAG  (bs2x isolated workspace)"
-        ( cd "$REPO" && cargo build --manifest-path "$MANIFEST" $PROFLAG ) || return 1
+        echo "==> cargo build $BUILD_STD --manifest-path $WS/Cargo.toml $PROFLAG  (bs2x isolated workspace)"
+        ( cd "$REPO" && cargo build $BUILD_STD --manifest-path "$MANIFEST" $PROFLAG ) || return 1
     fi
 }
 

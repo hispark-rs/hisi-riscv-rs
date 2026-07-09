@@ -101,7 +101,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install hisi-riscv toolchain
+      - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
       - name: Install happy-path tools
@@ -121,13 +121,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install hisi-riscv toolchain
+      - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
       - name: Cache cargo registry
         uses: actions/cache@v6
         with:
-          # registry/git only — target/ is toolchain-specific (see ci.yml note).
+          # registry/git only — target/ is pinned-nightly/build-std specific.
           path: |
             ~/.cargo/registry/
             ~/.cargo/git/

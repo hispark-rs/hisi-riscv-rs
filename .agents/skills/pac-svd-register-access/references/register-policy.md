@@ -127,10 +127,10 @@ cd crates/pac/bs2x-pac/bs2x-svd && uv run validate.py && bash regen.sh
 For HAL register behavior:
 
 ```bash
-cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf
-cargo clippy -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
-cargo check -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf
-cargo clippy -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
 ```
 
 For public API or stable behavior changes, also use `stable-unstable`,

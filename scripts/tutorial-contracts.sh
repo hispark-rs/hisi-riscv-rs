@@ -67,14 +67,18 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # docs:end
 
 # docs:start app_setup_toolchain
-HOST=x86_64-unknown-linux-gnu
-curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-$HOST.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 # docs:end
 
 # docs:start app_setup_check_toolchain
-rustup toolchain list | grep hisi-riscv
+rustc +nightly-2026-07-09 --print target-list | grep riscv32imfc
+rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
+    echo "rustup has no prebuilt rust-std yet; use -Zbuild-std=core,alloc"
 # docs:end
 
 # docs:start install_cargo_generate_just
@@ -100,7 +104,7 @@ qemu-system-riscv32 -M help | grep ws63
 # docs:end
 
 # docs:start app_setup_check_target
-rustc +hisi-riscv --print target-list | grep riscv32imfc
+rustc --print target-list | grep riscv32imfc
 # docs:end
 
 # docs:start app_first_generate
@@ -140,13 +144,18 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # docs:end
 
 # docs:start contrib_setup_toolchain
-curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 # docs:end
 
 # docs:start contrib_setup_check_toolchain
-rustup toolchain list | grep hisi-riscv
+rustc +nightly-2026-07-09 --print target-list | grep riscv32imfc
+rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
+    echo "rustup has no prebuilt rust-std yet; use -Zbuild-std=core,alloc"
 # docs:end
 
 # docs:start contrib_clone_repo
@@ -180,7 +189,7 @@ probe-rs --version
 
 # docs:start contrib_build_blinky
 cd ../hisi-riscv-rs
-cargo build -p blinky --release
+cargo build -Zbuild-std=core,alloc -p blinky --release
 # docs:end
 
 # docs:start contrib_ls_blinky
@@ -188,55 +197,55 @@ ls target/riscv32imfc-unknown-none-elf/release/blinky
 # docs:end
 
 # docs:start contrib_example_template
-cargo build -p <name> --release
+cargo build -Zbuild-std=core,alloc -p <name> --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/<name>
 # docs:end
 
 # docs:start contrib_example_template.ws63
-cargo build -p <name> --release
+cargo build -Zbuild-std=core,alloc -p <name> --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/<name>
 # docs:end
 
 # docs:start contrib_example_template.bs21
-cargo build --manifest-path examples/bs21/Cargo.toml --release
+cargo build -Zbuild-std=core,alloc --manifest-path examples/bs21/Cargo.toml --release
 qemu-system-riscv32 -M bs21 -nographic -bios none \
     -kernel examples/bs21/target/riscv32imfc-unknown-none-elf/release/bs21_<name>
 # docs:end
 
 # docs:start contrib_example_template.bs20
-cargo build --manifest-path examples/bs20/Cargo.toml --release
+cargo build -Zbuild-std=core,alloc --manifest-path examples/bs20/Cargo.toml --release
 qemu-system-riscv32 -M bs20 -nographic -bios none \
     -kernel examples/bs20/target/riscv32imfc-unknown-none-elf/release/bs20_<name>
 # docs:end
 
 # docs:start contrib_run_blinky
-cargo build -p blinky --release
+cargo build -Zbuild-std=core,alloc -p blinky --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/blinky
 # docs:end
 
 # docs:start contrib_run_uart_hello
-cargo build -p uart_hello --release
+cargo build -Zbuild-std=core,alloc -p uart_hello --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
 # docs:end
 
 # docs:start contrib_run_timer_irq
-cargo build -p timer_irq --release
+cargo build -Zbuild-std=core,alloc -p timer_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/timer_irq
 # docs:end
 
 # docs:start contrib_run_gpio_irq
-cargo build -p gpio_irq --release
+cargo build -Zbuild-std=core,alloc -p gpio_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/gpio_irq
 # docs:end
 
 # docs:start contrib_run_semihost_selftest
-cargo build -p semihost_selftest --release
+cargo build -Zbuild-std=core,alloc -p semihost_selftest --release
 qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
     -kernel target/riscv32imfc-unknown-none-elf/release/semihost_selftest
 # docs:end
@@ -246,7 +255,7 @@ echo $?
 # docs:end
 
 # docs:start hil_flash_blinky
-cargo build -p blinky --release
+cargo build -Zbuild-std=core,alloc -p blinky --release
 
 hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
     --chip ws63 --image-output blinky.img > blinky.plan.json
@@ -278,11 +287,11 @@ git -C "$ROOT" submodule status --recursive >/dev/null
 echo "tutorial-contracts: building tutorial examples"
 (
     cd "$ROOT"
-    cargo build -p blinky --release
-    cargo build -p uart_hello --release
-    cargo build -p timer_irq --release
-    cargo build -p gpio_irq --release
-    cargo build -p semihost_selftest --release
+    cargo build -Zbuild-std=core,alloc -p blinky --release
+    cargo build -Zbuild-std=core,alloc -p uart_hello --release
+    cargo build -Zbuild-std=core,alloc -p timer_irq --release
+    cargo build -Zbuild-std=core,alloc -p gpio_irq --release
+    cargo build -Zbuild-std=core,alloc -p semihost_selftest --release
 )
 
 ELF="$ROOT/target/riscv32imfc-unknown-none-elf/release/uart_hello"
@@ -340,8 +349,8 @@ run_template_case() {
             --no-workspace \
             --silent
         cd "$project"
-        cargo check
-        cargo build --release
+        cargo check -Zbuild-std=core,alloc
+        cargo build -Zbuild-std=core,alloc --release
         just --list >/dev/null
         if [ "$build_image" = "image" ]; then
             just image

@@ -1,6 +1,6 @@
 ---
 name: release-train
-description: Drive one hispark-rs repo's tag-triggered release to the finish line — push the v* tag, watch the multi-platform CI matrix to completion, report every leg, and verify the published GitHub release assets (or note a crates.io publish). Use to cut or babysit a release of the toolchain, QEMU fork, or a library crate.
+description: Drive one hispark-rs repo's tag-triggered release to the finish line — push the v* tag, watch the multi-platform CI matrix to completion, report every leg, and verify the published GitHub release assets (or note a crates.io publish). Use to cut or babysit a release of the QEMU fork or a library crate; the old custom Rust toolchain tarball release path is legacy.
 disable-model-invocation: true
 ---
 
@@ -45,9 +45,6 @@ Examples (the live repos in this ecosystem):
 # QEMU fork — 4-platform release matrix
 cd /root/ws63-qemu        && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.4.6 7
 
-# Custom toolchain — 4 host tarballs + 4 .sha256
-cd /root/ws63-rust-toolchain && bash /root/ws63-rs/.agents/skills/release-train/train.sh v1.96.0-2 8
-
 # A library crate — crates.io publish (no GitHub assets; watches publish.yml)
 cd /root/ws63-rs/crates/hisi-riscv-hal && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.3.1
 ```
@@ -72,7 +69,7 @@ Exit 0 only if the run concluded `success` **and** the asset check passed.
 
 | repo | workflow | assets | count |
 |------|----------|--------|-------|
-| `hisi-riscv-rust-toolchain` | `build.yml` | `hisi-riscv-rust-<ver>-<host>.tar.gz` + `.sha256` × 4 hosts | 8 |
+| `hisi-riscv-rust-toolchain` | `build.yml` | no release assets; this repo is now official nightly radar | — |
 | `hisi-riscv-qemu` | `release.yml` | `hisi-riscv-qemu-<host>.{tar.gz,zip}` × 4 + legacy binary + `SHA256SUMS` + src tarball | 7 |
 | `hisi-riscv-hal` / `-rt` / `ws63-pac` / `bs2x-pac` | `publish.yml` | none (crates.io) | — |
 

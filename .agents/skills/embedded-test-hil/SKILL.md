@@ -60,7 +60,7 @@ For detailed patterns and anti-patterns, read [references/patterns.md](reference
 Build the HAL test ELF only:
 
 ```bash
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -71,7 +71,7 @@ Run on real WS63:
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
@@ -82,7 +82,7 @@ Filter one test:
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- wdt_leak_keeps_watchdog_armed
@@ -93,7 +93,7 @@ Run cross-cutting `tests-hil`:
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+cargo test -Zbuild-std=core,alloc -p tests-hil --target riscv32imfc-unknown-none-elf
 ```
 
 ## Review Checklist

@@ -3,9 +3,10 @@
 # Usage: bash driver.sh [check|doc|clippy|fmt|all]
 
 set -euo pipefail
-# Default target comes from .cargo/config.toml (riscv32imfc-unknown-none-elf, the
-# no-atomic hard-float target baked into the `ws63` toolchain). Override via TARGET=.
+# Default target comes from .cargo/config.toml (riscv32imfc-unknown-none-elf).
+# rustup has no prebuilt std for it yet, so RISC-V cargo commands use build-std.
 TARGET="${TARGET:-riscv32imfc-unknown-none-elf}"
+BUILD_STD="-Zbuild-std=core,alloc"
 PASS=0
 FAIL=0
 
@@ -28,25 +29,25 @@ check_step() {
 # ── Library check ──────────────────────────────────────────────────
 run_check() {
     banner "cargo check"
-    check_step "hisi-riscv-hal"      "cargo check -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET"
-    check_step "ws63-pac"      "cargo check -p ws63-pac --target $TARGET"
-    check_step "hisi-riscv-rt"        "cargo check -p hisi-riscv-rt --target $TARGET"
-    check_step "blinky (check)" "cargo check -p blinky --target $TARGET"
-    check_step "workspace"      "cargo check --workspace --target $TARGET"
+    check_step "hisi-riscv-hal"      "cargo check $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET"
+    check_step "ws63-pac"      "cargo check $BUILD_STD -p ws63-pac --target $TARGET"
+    check_step "hisi-riscv-rt"        "cargo check $BUILD_STD -p hisi-riscv-rt --target $TARGET"
+    check_step "blinky (check)" "cargo check $BUILD_STD -p blinky --target $TARGET"
+    check_step "workspace"      "cargo check $BUILD_STD --workspace --target $TARGET"
 
     banner "cargo doc"
-    check_step "hisi-riscv-hal docs"  "cargo doc -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET --no-deps 2>/dev/null"
+    check_step "hisi-riscv-hal docs"  "cargo doc $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET --no-deps 2>/dev/null"
 
     banner "blinky release build (links via hisi-riscv-rt linker scripts)"
     # blinky links now (dual-PAC fixed + hisi-riscv-rt exports its linker scripts), so do a
     # real release build, not just check.
-    check_step "blinky build"  "cargo build -p blinky --target $TARGET --release"
+    check_step "blinky build"  "cargo build $BUILD_STD -p blinky --target $TARGET --release"
 }
 
 # ── Clippy ─────────────────────────────────────────────────────────
 run_clippy() {
     banner "cargo clippy"
-    check_step "hisi-riscv-hal clippy" "cargo clippy -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET -- -D warnings 2>&1 | grep -q 'Finished'"
+    check_step "hisi-riscv-hal clippy" "cargo clippy $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET -- -D warnings 2>&1 | grep -q 'Finished'"
 }
 
 # ── Format ─────────────────────────────────────────────────────────

@@ -1,116 +1,74 @@
 # 硬浮点工具链
 
-这一篇解释一个看起来"过度工程"的决定：**为什么 WS63 要用一条自定义的 rustc——把
-`riscv32imfc-unknown-none-elf` 烤进 builtin 的 `hisi-riscv` 工具链——而不是用现成的
-stable rustc 加 `-Z build-std`？** 这背后串着三个互相牵连的约束：硬浮点 ABI、没有原子扩展、
-以及 code model。逐项的安装与版本细节见
-[工具链与编译目标](../reference/05-toolchain.md) 和
-[安装 hisi-riscv 工具链](../how-to/01-install-toolchain.md)；这里只讲**为什么是这条路**。
+这一篇解释为什么本生态使用 `riscv32imfc-unknown-none-elf`，以及为什么当前构建方式是**官方 Rust nightly + `rust-src` + `-Zbuild-std=core,alloc`**。
+
+安装与版本事实见[工具链与编译目标](../reference/05-toolchain.md)和[安装官方 Rust 工具链](../how-to/01-install-toolchain.md)；这里讲设计原因和历史取舍。
 
 ## 这颗核到底是什么
 
-WS63 的核是 **RV32IMFC**：
+WS63 / BS2X 应用核是 **RV32IMFC**：
 
-- **I**（基础整数）、**M**（乘除）、**C**（压缩指令）——常规；
-- **F**（单精度浮点）——**有**硬件浮点单元；
-- **没有 A**（原子扩展）——`lr.w/sc.w/amo*` 这些指令会**陷入非法指令**。
+- **I/M/C**：基础整数、乘除、压缩指令；
+- **F**：有单精度 FPU；
+- **没有 A**：`lr.w` / `sc.w` / `amo*` 会触发非法指令。
 
-这两个非常规点（有 F、没有 A）合起来，把"选哪个编译目标"这件事从"随手挑个标准 target"
-变成了一道需要权衡的题。
+这意味着目标必须同时表达两件事：使用硬浮点 ABI，又不能让编译器生成硬件原子指令。
 
 ## 为什么硬浮点（ilp32f ABI）
 
-既然硅片**有** FPU，最自然的选择就是让它用起来——也就是 **ilp32f** ABI：浮点参数走浮点
-寄存器、浮点运算发真正的 `f*` 指令，而不是软件模拟。软浮点（ilp32）当然也能跑（编译器把
-`f32` 运算翻成调用 `libgcc`/`compiler-builtins` 里的软件例程），但那是在一颗有 FPU 的核上
-**白白浪费硬件**、还更慢更大。
+硅片有 FPU，所以 Rust 固件应使用 **ilp32f** ABI：浮点参数走浮点寄存器，`f32` 运算生成真实 FPU 指令。软浮点当然也能跑，但会浪费硬件，并且代码更慢更大。
 
-但硬浮点 ABI 的真正分量不只在性能。**ilp32f 是一条 ABI 边界**——用 ilp32f 编的代码和用
-ilp32 编的代码**不能直接链接**（浮点参数的传递约定不同）。而 WS63 的北极星是连接性，
-连接性意味着最终要和**厂商的闭源 blob** 链接，那些 blob 是用厂商 gcc 按 **ilp32f** 编的。
-所以选 ilp32f 不仅是"用上 FPU"，更是"为了将来能和 vendor blob 在同一个 ABI 上对接"
-——这是阶段 3（blob 链接）的前置条件。这一层动机，使硬浮点从"优化"升级成"必需"。
+更重要的是 ABI 边界。WS63 的连接性目标最终需要和厂商闭源 blob 链接；这些 blob 按厂商 gcc 的 **ilp32f** ABI 产出。Rust 侧如果用 ilp32 软浮点，浮点参数传递约定就不一致，后续 blob 链接会变得不可控。因此硬浮点不是单纯优化，而是长期互操作前提。
 
 ## 为什么没有原子是个真问题
 
-RV32IMFC 缺 A 扩展，意味着任何会发 `lr/sc/amo` 的代码在硅片上都会**陷入**。
-而 Rust 的 `core::sync::atomic` 默认假设有原子指令。历史上一度用过 `riscv32imafc`
-（带 A）作为权宜——但那会让编译器发原子指令、在真硅片上触发非法指令陷阱，所以**被弃用**。
+如果误用带 `A` 扩展的 target，例如 `riscv32imafc`，编译器可以合法发出 `lr/sc/amo*`。但这些指令在真硅片上不存在，会直接陷入非法指令。
 
-正解是两段配合：
+正确模型是：
 
-1. **目标本身声明为无原子**——用 forced-atomics + no-CAS 配置，让原子 load/store 降级成
-   普通 `ld/st`（单核下这是安全的），而需要 RMW（compare-and-swap 之类）的操作**不发
-   原子指令**；
-2. **RMW 走 polyfill**——`portable-atomic`（开 `critical-section` feature）把 CAS
-   实现成"关中断 → 读改写 → 开中断"的临界区，`hisi-riscv-rt` 提供
-   `critical-section-single-hart` 这个单核实现。
+- target 声明无原子扩展；
+- 单 hart 下原子 load/store 可降为普通 load/store；
+- RMW/CAS 由 `portable-atomic` 通过 `critical-section` polyfill 实现；
+- `hisi-riscv-rt` 提供当前产品路径所需的 single-hart critical-section 实现。
 
-这套机制正是 async/embassy 能在这颗核上跑的地基（见 [async 与 embassy](04-async-embassy.md)）。
-它和"用不用自定义工具链"正交——但**目标必须被正确声明为无原子**，否则 polyfill 也救不了，
-编译器照样会在别处发出原子指令。
+所以 `riscv32imfc-unknown-none-elf` 的价值不是“名字更贴近芯片”这么简单，而是防止整个生态误发 A 扩展指令。
 
-## 核心抉择：自定义 builtin target，还是 `-Z build-std`？
+## 为什么现在仍需要 `-Zbuild-std`
 
-到这里问题收敛成：我们需要一个**标准 rustc 里没有的目标**（`riscv32imfc`，硬浮点、无原子）。
-Rust 提供两条路拿到一个非标准 target，二者是真正的取舍：
+`rust-lang/rust#158473` 已经把 `riscv32imfc-unknown-none-elf` 加进 upstream rustc，当前 nightly 的 `rustc --print target-list` 能看到它。这个状态解决了“rustc 不认识 target”的问题。
 
-### 路线 A：`-Z build-std`（用现成 stable rustc + nightly 特性）
+但 rustup 还没有为该 target 分发预编译 `rust-std` 组件。也就是说，`rustup target add riscv32imfc-unknown-none-elf` 还不是可用安装路径。短期构建必须让 Cargo 从 `rust-src` 编译 `core` / `alloc`：
 
-写一个 `*.json` 自定义 target spec，然后让 cargo 用 `-Z build-std` **从源码现编 `core`/`alloc`**。
-- **好处**：不用自己造工具链，跟着官方 rustc 走。
-- **代价**：`-Z build-std` 是 **nightly-only** 的不稳定特性。整条工具链就被钉死在 nightly
-  上——nightly 每天变、偶尔回归，CI 的可重现性变差，用户也得装 nightly + rust-src。
-  对一个要给别人用、要长期维护的嵌入式 SDK，"必须 nightly"是个不小的负担。
+```bash
+cargo build -Zbuild-std=core,alloc --release
+```
 
-### 路线 B：自定义 rustc，把 target 烤成 builtin（现在走的路）
+这就是当前 pinned nightly 的原因：业务仓 pin 一个已验证 nightly 保证可复现；外部 radar 跟踪 latest nightly 的上游状态。
 
-构建一条 `hisi-riscv` 工具链：一个 **stable rustc**，但在编译它的时候就把
-`riscv32imfc-unknown-none-elf` 这个 target spec **编进 rustc 内部成为 builtin**，
-并**预编译好 `core`/`alloc`** 一起分发。
-- **好处**：用户拿到的是一条**稳定、自带预编译 core/alloc 的工具链**，`.cargo/config.toml`
-  里设好默认 target 就行，**完全不需要 `-Z build-std`、不需要 nightly**。
-  `cargo build` 直接出 RV32IMFC ilp32f 固件，可重现、好分发。
-- **代价**：得自己**维护这条工具链**——跟 rustc 版本、出多平台预编译包、走自己的 CI。
-  这是实打实的工程量，也是这套生态接受的那笔账。
+## 旧自定义工具链为什么退役
 
-权衡的结论很清楚：**用户体验和可重现性 > 维护方自己省事**。对一个嵌入式 SDK，"装好工具链
-就能稳定 `cargo build`"远比"维护方不用管工具链、但每个用户都得忍 nightly"更值。
-所以选了 B。工具链通过 `rust-toolchain.toml` pin 住 `channel = "hisi-riscv"`，
-解压进 `~/.rustup/toolchains/hisi-riscv/` 后 rustup 即自动识别。
+旧的 `hisi-riscv` 自定义 rustc tarball 解决过一个真实问题：当 upstream rustc 还没有这个 target 时，它把 target spec 烤成 builtin，并随工具链分发预编译 `core` / `alloc`。这让用户可以在 stable-like 体验下直接 `cargo build`。
+
+现在 upstream rustc 已经认识 target，继续依赖自定义 rustc 会带来更大的长期成本：
+
+- 生态仍被私有工具链绑定，难以上游化；
+- 每次 rustc 版本更新都需要维护自定义构建和多平台 tarball；
+- 外部项目、CI、template 难以复用标准 Rust 安装路径；
+- 推动 Tier 2 需要证明官方工具链路径持续可用，而不是继续绕开它。
+
+因此当前策略是：业务仓库使用官方 pinned nightly；`hisi-riscv-rust-toolchain` 仓库转型为外部 radar，持续检查 latest nightly、rustup std 组件、build-std、QEMU/HIL canary，并积累 Tier-2 readiness 证据。
 
 ## code model：medlow 还是 medany
 
-还有一个容易被忽略、但在裸机上会真出问题的旋钮：**code model**，它决定编译器怎么寻址
-全局符号。
+另一个裸机上会出问题的旋钮是 code model。WS63 的 flash、SRAM、外设分布在较高地址，不能假设所有符号都在低 2 GiB。
 
-- **medlow**：假设代码和数据都落在地址空间**低 2 GiB 以内**，用更短的寻址序列。
-- **medany**：用 PC 相对寻址，可以放在地址空间**任意位置**，序列略长。
+- **medlow**：假设代码和数据落在低地址，用更短寻址序列；
+- **medany**：使用 PC 相对寻址，能覆盖更灵活的地址布局。
 
-WS63 的地址布局把外设、flash、SRAM 散布在很高的地址（比如外设在 `0x4400_0000` 一带、
-SRAM 更高），全局符号未必落在低 2 GiB。所以这条工具链用 **medany**——这样不管链接脚本把
-段摆到哪个高地址，PC 相对寻址都能正确指到。如果误用 medlow，链接期或运行期会因为
-"地址放不进 medlow 的寻址范围"而出错。这件事和硬浮点、无原子一样，是"WS63 的地址空间
-不像教科书 RISC-V"逼出来的细节。
-
-## 一段不算短的历史
-
-这条路不是一步到位的：
-
-- **2026-05-31，阶段 0**：先用 stable rustc 里**已有的 builtin** `riscv32imc`（软浮点、
-  stable、免 build-std）做过渡——目的是先让整条构建/链接跑通，把"无原子 + critical-section"
-  这套机制验证出来。
-- **随后切到硬浮点工具链**：为了和 vendor blob 的 ilp32f ABI 对齐（阶段 3 的前置），
-  把目标换成 `riscv32imfc`，并为此造了 `hisi-riscv` 工具链。
-
-理解这段历史有助于读懂仓库里偶尔还能见到 `riscv32imc` 字样的地方——那是过渡期的遗存，
-现在的**默认与正解是 `riscv32imfc` + `hisi-riscv` 工具链**。
+当前 target 需要匹配这类高地址裸机布局，避免链接脚本把段放到高地址后出现寻址范围问题。
 
 ## 这件事对其他部分的影响
 
-值得强调的是：**异步/embassy 这块完全不在乎工具链是否上游**。异步只依赖
-`portable-atomic` + `critical-section`，与"target 是 builtin 还是 build-std"正交。
-真正被自定义工具链"绑住"的是**上游化**——只要还依赖自定义 rustc，hisi-riscv-hal 就难以
-进 embassy 那种"基于标准 stable target 构建"的 in-tree CI。所以"摆脱自定义工具链"
-（短期改用标准 target + build-std，长期推 target 进 rustc 主线）被列为一条独立的上游化
-工作线，详见 [async 与 embassy 深入文档](components/06-async-embassy.md) 里的上游化讨论。
+async / embassy 本身不关心 target 是“自定义工具链”还是“官方 nightly + build-std”；它关心的是无原子模型是否正确，以及 `portable-atomic` / `critical-section` 是否可靠。
+
+真正被工具链路径影响的是上游化：只要生态仍依赖私有 rustc，就很难进入更广泛的 Rust embedded CI。迁移到官方 target 后，剩下的路线更清晰：先用 build-std 维持可用性，再推动 rustup 预编译 std 组件和更高 tier 支持。

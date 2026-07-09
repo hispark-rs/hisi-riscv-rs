@@ -10,7 +10,8 @@ permissions:
   pages: write
   id-token: write
 
-# Toolchain + default target come from rust-toolchain.toml (`hisi-riscv` + riscv32imfc).
+# Toolchain + default target come from rust-toolchain.toml and .cargo/config.toml.
+# RISC-V release builds use the upstream target with `-Zbuild-std=core,alloc`.
 
 jobs:
   # ── Create GitHub Release ─────────────────────────────────────
@@ -22,21 +23,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install hisi-riscv toolchain
+      - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
       # Build the default-members (libraries + WS63 examples). Only blinky is
       # packaged below; the experimental flashboot binary is not built/attached here.
       - name: Build default members (release)
-        run: cargo build --release
+        run: cargo build -Zbuild-std=core,alloc --release
 
-      # Package the blinky firmware. rust-objcopy lives in the hisi-riscv toolchain's
-      # rustlib bin (bundled from the CI LLVM), not on PATH — resolve via the sysroot.
+      # Package the blinky firmware. rust-objcopy comes from llvm-tools-preview.
       - name: Package firmware
         run: |
           set -euo pipefail
           OUT=target/riscv32imfc-unknown-none-elf/release
-          OBJCOPY="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
+          OBJCOPY="$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
           shopt -s nullglob
           for elf in "$OUT"/blinky; do
             [ -f "$elf" ] || continue

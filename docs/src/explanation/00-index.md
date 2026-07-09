@@ -1,7 +1,7 @@
 # 原理与背景 · Explanation
 
 这一章不是教你"怎么做"，也不是给你查"叫什么"的索引——它讲的是**为什么**：
-为什么栈这样分层、为什么要一条自定义工具链、为什么一个裸 ELF 在硅片上不会启动、
+为什么栈这样分层、为什么要 `riscv32imfc` 硬浮点无原子 target、为什么一个裸 ELF 在硅片上不会启动、
 为什么驱动级测试用 embedded-test/semihosting、示例级测试仍用 UART 标记串。
 
 如果你想动手，去 [教程](../tutorials/00-index.md) 或 [操作指南](../how-to/00-index.md)；
@@ -32,8 +32,8 @@
   封进驱动、用 sealed trait 锁住扩展点。**为什么这样分层。**
 - [启动流程：mask ROM → flashboot → app](02-boot-flow.md)——从上电到 `main()` 的整条引导链，
   以及为什么"补 0x300 头部、烧到 app 分区"是必须的，**为什么一个裸 ELF 不会启动**。
-- [硬浮点工具链](03-hardfloat-toolchain.md)——为什么是一条把 `riscv32imfc` 烤进 builtin 的
-  自定义 rustc，**而不是** `-Z build-std`；hard-float ABI、无原子、code model 的来龙去脉。
+- [硬浮点工具链](03-hardfloat-toolchain.md)——为什么选择 `riscv32imfc` 硬浮点无原子 target，
+  以及当前为什么用官方 nightly + `rust-src` + `-Zbuild-std`。
 - [async 与 embassy](04-async-embassy.md)——阻塞驱动、`async` feature、`embassy` feature
   三者的关系，以及它**为什么能在一颗没有原子扩展的核上跑起来**。
 - [安全启动与签名](05-secure-boot.md)——为什么开发片把 secure boot **关掉**、这意味着什么、

@@ -93,9 +93,10 @@ HAL 用 crate 内部的 sealed trait（`private.rs` 里的 `Sealed` 超 trait）
 - **`#![no_std]`**：无堆、无 `Vec`、无 `String`。需要缓冲就用定长数组。这不是洁癖——
   WS63 是资源受限的裸机环境，引入分配器会带来确定性和体积代价，而嵌入式代码几乎总能用
   定长缓冲解决。
-- **目标是 `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f，无原子）**，由自定义
-  `hisi-riscv` 工具链提供。为什么是它而不是软浮点、为什么是自定义工具链而不是
-  `-Z build-std`——这件事本身就是一篇 [硬浮点工具链](03-hardfloat-toolchain.md)。
+- **目标是 `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f，无原子）**，由官方
+  Rust nightly 提供 builtin target。当前 rustup 还没有预编译 std 组件，所以 RISC-V
+  构建使用 `rust-src` + `-Zbuild-std=core,alloc`。为什么是它而不是软浮点，见
+  [硬浮点工具链](03-hardfloat-toolchain.md)。
 - **无原子怎么办**：这颗核没有 A 扩展，`lr/sc/amo` 会陷入。所以 RMW 原子全部走
   `portable-atomic` 的 critical-section polyfill，`hisi-riscv-rt` 提供
   `critical-section-single-hart` 实现。这一条让 async/embassy 能在这颗核上跑——
