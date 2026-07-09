@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PkeInstrAddrHigSpec"],"type":["InstrAddrHigR","InstrAddrHigW","R","W"]};

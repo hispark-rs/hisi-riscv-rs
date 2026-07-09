@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecLedpreDataSpec"],"type":["LedPreR","LedPreW","R","W"]};

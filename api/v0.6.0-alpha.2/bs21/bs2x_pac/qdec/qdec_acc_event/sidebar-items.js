@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecAccEventSpec"],"type":["AccEventCntR","AccEventCntW","R","W"]};

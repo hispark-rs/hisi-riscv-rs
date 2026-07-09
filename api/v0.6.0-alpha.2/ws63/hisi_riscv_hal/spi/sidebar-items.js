@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SpiError","SpiMode"],"struct":["Config","DataBits","Spi","SpiDma","SpiHz"]};

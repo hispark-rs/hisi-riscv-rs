@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["MicCtrlSpec"],"type":["DmicClkSelR","DmicClkSelW","DmicModeR","DmicModeW","DmicReverseR","DmicReverseW","R","SaradcGainR","SaradcGainW","W"]};

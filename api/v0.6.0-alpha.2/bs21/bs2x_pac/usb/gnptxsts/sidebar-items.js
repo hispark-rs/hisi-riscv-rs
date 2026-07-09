@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GnptxstsSpec"],"type":["NptxfspcavailR","NptxfspcavailW","NptxqspcavailR","NptxqspcavailW","NptxqtopR","NptxqtopW","R","W"]};

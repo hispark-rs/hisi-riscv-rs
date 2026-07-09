@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AdcChannel","GadcError"],"struct":["Gadc"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DstsSpec"],"type":["EnumspdR","EnumspdW","ErrticerrR","ErrticerrW","R","SoffnR","SoffnW","SuspstsR","SuspstsW","W"]};

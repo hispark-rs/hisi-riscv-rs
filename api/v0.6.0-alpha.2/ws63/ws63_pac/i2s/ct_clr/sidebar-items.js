@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CtClrSpec"],"type":["MergeEnW","R","RxEnW","RxIntrEnW","TxEnW","TxIntrEnW","W"]};

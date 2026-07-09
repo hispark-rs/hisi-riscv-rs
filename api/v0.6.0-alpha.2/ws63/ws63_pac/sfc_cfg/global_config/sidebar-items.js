@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FlashAddrMode","Mode"],"struct":["GlobalConfigSpec"],"type":["FlashAddrModeR","FlashAddrModeW","ModeR","ModeW","R","RdDelayR","RdDelayW","W","WpEnR","WpEnW"]};

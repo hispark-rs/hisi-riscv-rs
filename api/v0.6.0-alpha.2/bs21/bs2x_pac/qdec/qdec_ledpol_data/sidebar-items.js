@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecLedpolDataSpec"],"type":["EnR","EnW","PolR","PolW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DaintSpec"],"type":["InepintR","InepintW","R","W"]};

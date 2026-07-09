@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgAna1Spec"],"type":["CfgBufnEnR","CfgBufnEnW","CfgBufpEnR","CfgBufpEnW","CfgPgaEnR","CfgPgaEnW","CfgPgaVcmEnR","CfgPgaVcmEnW","CfgPreampEnR","CfgPreampEnW","CfgPreampOsDacEnR","CfgPreampOsDacEnW","CfgPreampVcmEnR","CfgPreampVcmEnW","CfgTsensorEnR","CfgTsensorEnW","R","W"]};
