@@ -14,7 +14,7 @@ probe-rs download --binary-format bin --base-address <plan.base_addr> <plan.imag
 
 ```bash
 cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+    --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 ```
 
 同时需要该 fork 随附的芯片描述 `HiSilicon_WS63.yaml`（在 fork 仓库 `probe-rs/targets/HiSilicon_WS63.yaml`）。烧录时用 `--chip-description-path` 指向它。

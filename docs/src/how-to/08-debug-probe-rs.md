@@ -2,7 +2,7 @@
 
 烧录之外，[补丁版 probe-rs fork](04-flash-probe-rs.md) 还能 attach 上去读内存、读 CSR、复位到指定状态、下硬件断点。本篇是真机诊断的常用招式。
 
-> 全部命令都需要 fork（`--branch add-hisilicon-ws63-bs21`）+ 其 `HiSilicon_WS63.yaml`。下面为简洁省略了 `--chip-description-path HiSilicon_WS63.yaml`，实跑时按需补上（或用 `PROBE_RS_YAML`/`--chip-description-path`）。
+> 全部命令都需要 fork（`--branch add-hisilicon-ws63-bs21-hil-baseline`）+ 其 `HiSilicon_WS63.yaml`。下面为简洁省略了 `--chip-description-path HiSilicon_WS63.yaml`，实跑时按需补上（或用 `PROBE_RS_YAML`/`--chip-description-path`）。
 
 ## 读内存 / flash
 

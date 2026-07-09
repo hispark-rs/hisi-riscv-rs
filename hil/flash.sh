@@ -7,7 +7,7 @@
 #   METHOD=probe-rs  (DEFAULT, the VALIDATED path)
 #       Builds the 0x300-header app image via hil/pack.sh, then writes it to the
 #       app partition in XIP flash with `probe-rs download` and resets. Needs the
-#       PATCHED FORK github.com/hispark-rs/probe-rs branch add-hisilicon-ws63-bs21
+#       PATCHED FORK github.com/hispark-rs/probe-rs branch add-hisilicon-ws63-bs21-hil-baseline
 #       (the WS63 target + ws63-sfc flash algo are NOT in upstream probe-rs yet)
 #       plus its HiSilicon_WS63.yaml chip description (PROBE_RS_YAML=).
 #
@@ -55,7 +55,7 @@ if [ "$METHOD" = "probe-rs" ]; then
     CHIP="${CHIP:-WS63}"
     command -v "$PROBE_RS" >/dev/null 2>&1 || {
         echo "ERROR: '$PROBE_RS' not found — install the PATCHED fork" >&2
-        echo "       github.com/hispark-rs/probe-rs (branch add-hisilicon-ws63-bs21);" >&2
+        echo "       github.com/hispark-rs/probe-rs (branch add-hisilicon-ws63-bs21-hil-baseline);" >&2
         echo "       upstream probe-rs has no WS63 target / ws63-sfc flash algo yet." >&2
         exit 1; }
     : "${PROBE_RS_YAML:?set PROBE_RS_YAML=<HiSilicon_WS63.yaml from the hispark-rs/probe-rs fork>}"

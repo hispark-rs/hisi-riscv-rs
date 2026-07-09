@@ -91,7 +91,7 @@ cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
 # docs:start install_probe_rs
 cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+    --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 # docs:end
 
 # docs:start app_setup_qemu
@@ -179,7 +179,7 @@ bash scripts/build.sh
 cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
 # 打过补丁的 probe-rs 分支
-cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools
+cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 # docs:end
 
 # docs:start contrib_check_flash_tools

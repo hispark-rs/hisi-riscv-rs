@@ -33,7 +33,7 @@ Cargo 以 `<runner> <built-test-elf> [embedded-test args...]` 调用 runner。�
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
-| `PROBE_RS` | `probe-rs` | probe-rs 二进制；需要 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21` 分支 |
+| `PROBE_RS` | `probe-rs` | probe-rs 二进制；需要 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21-hil-baseline` 分支 |
 | `PROBE_CHIP` | `WS63` | probe-rs `--chip` 值 |
 | `PROBE_YAML` | 空 | `--chip-description-path` YAML；需要显式指定时填 `HiSilicon_WS63.yaml` |
 | `HISI_FWPKG` | `hisi-fwpkg` | `hisi-fwpkg` 二进制名，用于 `patch-hash` |

@@ -97,7 +97,7 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 
 - `embedded-test` 路径：每个 Rust `#[test]` 以 libtest 风格输出 `ok` / `FAILED`；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。
 - 示例 smoke 路径：每个 `check` 打印 `PASS: '<pat>' seen` 或 `FAIL`；末行汇总 `HIL SMOKE: PASS` / `FAIL`。
-- `probe-rs run` 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21` 分支。
+- `probe-rs run` 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21-hil-baseline` 分支。
 - `embedded-test` 没有任何用例输出：先查 `PROBE_YAML`、`hisi-fwpkg patch-hash`、semihosting 通道和测试 ELF 是否用 `--test hil` 构建。
 - UART 标记串没出现但板子像在跑：查 `UART_BAUD`、`SETTLE`、UART0 接线；`spi_loopback` 还需要真机短接 MOSI/MISO。
 

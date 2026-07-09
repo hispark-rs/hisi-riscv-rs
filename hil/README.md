@@ -69,8 +69,8 @@ FWPKG=1   hil/pack.sh blinky            # 额外产出 blinky.fwpkg（hisiflash 
 ## 烧录路径 A：probe-rs download（验证主路径）
 
 这是 2026-06-14 在真硅片上跑通的路径。**需要补丁版 fork**
-[`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs/tree/add-hisilicon-ws63-bs21)
-（branch `add-hisilicon-ws63-bs21`）——**上游 probe-rs 还没有 WS63 target 与 `ws63-sfc` flash 算法**，
+[`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs/tree/add-hisilicon-ws63-bs21-hil-baseline)
+（branch `add-hisilicon-ws63-bs21-hil-baseline`）——**上游 probe-rs 还没有 WS63 target 与 `ws63-sfc` flash 算法**，
 用 mainline probe-rs 烧不了；同时需要该 fork 提供的 `HiSilicon_WS63.yaml` 芯片描述。
 
 `hil/flash.sh`（默认 `METHOD=probe-rs`）会先用 `pack.sh` 产出 `.img` 和 `.plan.json`，再执行：
@@ -164,7 +164,7 @@ CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
 ```
 
 runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `cargo-run-hw.sh`）：
-`PROBE_RS`（probe-rs 二进制，需补丁 fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21`）、
+`PROBE_RS`（probe-rs 二进制，需补丁 fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21-hil-baseline`）、
 `PROBE_CHIP`（默认 `WS63`）、`PROBE_YAML`（`--chip-description-path` 的 YAML，默认空=内置库）、
 `HISI_FWPKG`（默认 `hisi-fwpkg`）。runner 先 `hisi-fwpkg patch-hash <elf>`（原地补头），
 再 `probe-rs run --chip WS63 [--chip-description-path YAML] <elf> [embedded-test 参数]`。
@@ -210,7 +210,7 @@ RUST_GDB=gdb-multiarch rustup run ws63 rust-gdb \
     target/riscv32imfc-unknown-none-elf/release/blinky
 ```
 
-- **HiSilicon 定制（RISC-V-DM 后端）**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs/tree/add-hisilicon-ws63-bs21)（branch `add-hisilicon-ws63-bs21`） 已加 DM-behind-CoreSight mem-AP 适配 + `ws63-sfc` flash 算法。**`probe-rs download` 烧录已于 2026-06-14 真机验证**（上方烧录路径 A）；`probe-rs run --chip ws63` 调试可继续在此基础上推进。上游 probe-rs 暂无 WS63 target / flash 算法。
+- **HiSilicon 定制（RISC-V-DM 后端）**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs/tree/add-hisilicon-ws63-bs21-hil-baseline)（branch `add-hisilicon-ws63-bs21-hil-baseline`） 已加 DM-behind-CoreSight mem-AP 适配 + `ws63-sfc` flash 算法。**`probe-rs download` 烧录已于 2026-06-14 真机验证**（上方烧录路径 A）；`probe-rs run --chip ws63` 调试可继续在此基础上推进。上游 probe-rs 暂无 WS63 target / flash 算法。
 
 `rust-gdb` 会自动加载 ws63 工具链的 Rust 美化打印器；JTAG/SWD 引脚见 ws63-guide ch7。
 

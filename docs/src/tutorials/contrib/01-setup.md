@@ -63,7 +63,7 @@ RISC-V 构建命令需要带 `-Zbuild-std=core,alloc`；教程里的命令片段
 第 3 课要烧到真板，需要两个工具：
 
 - [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)：把 ELF 打包成可启动镜像（加 `0x300` 启动头）。
-- **打过补丁的 probe-rs 分支**（`hispark-rs/probe-rs`，分支 `add-hisilicon-ws63-bs21`）：
+- **打过补丁的 probe-rs 分支**（`hispark-rs/probe-rs`，分支 `add-hisilicon-ws63-bs21-hil-baseline`）：
   上游 probe-rs 不认识 WS63，必须用这个分支，并配上 `HiSilicon_WS63.yaml`。
 
 安装方法（深入说明见 [安装官方 Rust 工具链](../../how-to/01-install-toolchain.md) 与

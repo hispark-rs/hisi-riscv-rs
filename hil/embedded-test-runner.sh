@@ -29,7 +29,7 @@
 # Env (all optional, sensible defaults — mirrors hil/cargo-run-hw.sh):
 #   PROBE_RS     probe-rs binary                 (default: `probe-rs` in PATH; needs the
 #                                                 patched fork hispark-rs/probe-rs,
-#                                                 branch add-hisilicon-ws63-bs21)
+#                                                 branch add-hisilicon-ws63-bs21-hil-baseline)
 #   PROBE_CHIP   probe-rs --chip value           (default WS63)
 #   PROBE_YAML   --chip-description-path YAML     (default: empty = built-in DB)
 #   HISI_FWPKG   hisi-fwpkg binary               (default: `hisi-fwpkg` in PATH)
@@ -47,7 +47,7 @@ command -v "$HISI_FWPKG" >/dev/null 2>&1 || {
     exit 1
 }
 command -v "$PROBE_RS" >/dev/null 2>&1 || {
-    echo "embedded-test-runner: '$PROBE_RS' not found — needs the patched fork (hispark-rs/probe-rs, branch add-hisilicon-ws63-bs21)." >&2
+    echo "embedded-test-runner: '$PROBE_RS' not found — needs the patched fork (hispark-rs/probe-rs, branch add-hisilicon-ws63-bs21-hil-baseline)." >&2
     exit 1
 }
 

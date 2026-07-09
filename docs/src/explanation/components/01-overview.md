@@ -33,7 +33,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 │ chips/bs2x/guide (BS2X 中文硬件手册，Sphinx)
 │
 │ ws63-qemu (姊妹仓：`-M ws63/bs21/bs22/bs20` QEMU，WS63/BS2X 软件在环验证)
-│ probe-rs fork hispark-rs/add-hisilicon-ws63-bs21（RISC-V-DM + HiSilicon DebugSequence + flash-algorithm）
+│ probe-rs fork hispark-rs/add-hisilicon-ws63-bs21-hil-baseline（RISC-V-DM + HiSilicon DebugSequence + flash-algorithm）
 └──────────────────────────────────────────────────┘
 ```
 
@@ -57,7 +57,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 ## 核心设计模式
 ## 调试支持
 
-- **probe-rs**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs) 分支 `add-hisilicon-ws63-bs21`，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 [Stable API 清单](../../reference/10-stable-api.md)。用法：`probe-rs run --chip ws63 <bin>` 进行实时调试与 on-silicon 烧录。
+- **probe-rs**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs) 分支 `add-hisilicon-ws63-bs21-hil-baseline`，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 [Stable API 清单](../../reference/10-stable-api.md)。用法：`probe-rs run --chip ws63 <bin>` 进行实时调试与 on-silicon 烧录。
 
 
 

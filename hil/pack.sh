@@ -90,7 +90,7 @@ echo "==> done: $IMG"
 echo "    plan: $PLAN"
 echo
 echo "    FLASH (A) probe-rs — VALIDATED 2026-06-14, needs the hispark-rs/probe-rs FORK"
-echo "             branch add-hisilicon-ws63-bs21 + its HiSilicon_WS63.yaml (WS63 target +"
+echo "             branch add-hisilicon-ws63-bs21-hil-baseline + its HiSilicon_WS63.yaml (WS63 target +"
 echo "             ws63-sfc flash algo are NOT in upstream probe-rs yet):"
 echo "      probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \\"
 echo "          --binary-format bin --base-address $BASE_ADDR $IMG"

@@ -32,7 +32,7 @@ command -v "$HISI_FWPKG" >/dev/null 2>&1 || {
     exit 1
 }
 command -v "$PROBE_RS" >/dev/null 2>&1 || {
-    echo "run-hw: '$PROBE_RS' not found — needs the patched fork (hispark-rs/probe-rs, branch add-hisilicon-ws63-bs21)." >&2
+    echo "run-hw: '$PROBE_RS' not found — needs the patched fork (hispark-rs/probe-rs, branch add-hisilicon-ws63-bs21-hil-baseline)." >&2
     exit 1
 }
 

@@ -76,7 +76,7 @@ hisi-fwpkg pack blinky -o blinky.fwpkg --chip ws63 --name app
 
 ## `probe-rs`（补丁版 fork）
 
-**需补丁版 fork** [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs)（branch `add-hisilicon-ws63-bs21`）——上游 probe-rs 尚无 WS63 target 与 `ws63-sfc` flash 算法。需 fork 提供的 `HiSilicon_WS63.yaml` 芯片描述。
+**需补丁版 fork** [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs)（branch `add-hisilicon-ws63-bs21-hil-baseline`）——上游 probe-rs 尚无 WS63 target 与 `ws63-sfc` flash 算法。需 fork 提供的 `HiSilicon_WS63.yaml` 芯片描述。
 
 本项目用到的子命令与标志：
 
@@ -143,7 +143,7 @@ cargo install hisiflash-cli
 | `hisi-riscv-rs` | 主 monorepo（crates、examples、guides、SVD 均为子模块） | github.com/hispark-rs/hisi-riscv-rs |
 | `hisi-rs-template` | cargo-generate 模板（WS63/BS2X 新工程脚手架） | github.com/hispark-rs/hisi-rs-template |
 | `hisi-fwpkg` | app 镜像 / fwpkg 打包工具（`plan`/`image`/`patch-hash`/`pack`） | github.com/hispark-rs/hisi-fwpkg |
-| `probe-rs`（fork） | 补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法） | github.com/hispark-rs/probe-rs（branch `add-hisilicon-ws63-bs21`） |
+| `probe-rs`（fork） | 补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法） | github.com/hispark-rs/probe-rs（branch `add-hisilicon-ws63-bs21-hil-baseline`） |
 | `hisi-riscv-rust-toolchain` | 官方 Rust nightly 外部 radar（riscv32imfc target / rustup std / Tier-2 readiness） | github.com/hispark-rs/hisi-riscv-rust-toolchain |
 | `hisi-riscv-qemu` | QEMU fork（`-M ws63/bs21/bs21e/bs22/bs20`） | github.com/hispark-rs/hisi-riscv-qemu |
 | `hisiflash` | 串口/YMODEM 烧录 CLI | github.com/hispark-rs/hisiflash |
