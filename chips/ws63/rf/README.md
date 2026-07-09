@@ -73,8 +73,12 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **A real `.wifi_pkt_ram` NOLOAD region** in `hisi-riscv-rt` (here the symbols are a
-  scaffold `--defsym`).
+- **The runnable RF image path** that links the full init closure into an
+  application image. `hisi-riscv-rt` now owns the real `.wifi_pkt_ram` NOLOAD
+  region; `wifi_init_smoke --features full-init` currently reaches the next hard
+  blocker, stock `rust-lld` rejecting HiSilicon `R_RISCV_48_LLUI` relocation 58
+  in the Wi-Fi objects. Reproduce and compare with the vendor linker via
+  `tools/rf-reloc58-diagnose.sh`.
 - **Pinning the netif pbuf layout** to the WiFi build's `lwipopts.h` and the
   smoltcp TX sink to the blob's transmit symbol (on hardware).
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).

@@ -1330,6 +1330,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wifi_init_smoke"
+version = "0.1.0"
+dependencies = [
+ "hisi-panic-handler",
+ "hisi-riscv-hal",
+ "hisi-riscv-rt",
+ "ws63-rf-rs",
+]
+
+[[package]]
 name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

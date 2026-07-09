@@ -52,8 +52,8 @@
 //! WS63 mask-ROM symbol table (`ws63-rf-rs/ws63-RF/rom/ws63_acore_rom.lds`) and compiler-rt
 //! with **zero duplicate symbols**, and a `--gc-sections` link rooted at
 //! `uapi_wifi_init` leaves a **residual of just two symbols**
-//! (`__wifi_pkt_ram_begin__`/`__wifi_pkt_ram_end__` — linker `--defsym` region
-//! bounds, supplied by the firmware link). Reproduce with
+//! (`__wifi_pkt_ram_begin__`/`__wifi_pkt_ram_end__` — firmware linker region
+//! bounds, supplied by hisi-riscv-rt or an equivalent downstream layout). Reproduce with
 //! `ws63-rf-rs/tools/mac-link-residual.sh`. The earlier "~96 missing" figure was
 //! a whole-archive upper bound dominated by **off-path** BT-coexistence and
 //! alternate-OS-adapter code that Wi-Fi init never reaches (0 BT symbols on the

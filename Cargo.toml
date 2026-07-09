@@ -15,6 +15,7 @@ members = [
     "examples/ws63/dma_loopback",
     "examples/ws63/wifi_blob_link",
     "examples/ws63/rf_port_demo",
+    "examples/ws63/wifi_init_smoke",
     "examples/ws63/semihost_selftest",
     "examples/ws63/custom_memory",
     "examples/ws63/async_delay",

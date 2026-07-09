@@ -2,7 +2,7 @@
 //!
 //! `uapi_systick_get_ms` is real (reads the RISC-V `mcycle` counter).
 //! `uapi_tsensor_get_current_temp` returns a fixed safe value and `uapi_nv_read`
-//! is a stub — both need hisi-riscv-hal tsensor / a flash-NV backing (phase 4): the
+//! is a stub — both need hisi-riscv-hal tsensor / a flash-NV backing (RF2/RF3): the
 //! real `uapi_nv_read` returns calibrated RF parameters + the MAC address from
 //! flash/eFuse, without which the RF front-end cannot be calibrated.
 
@@ -44,7 +44,7 @@ fn read_mcycle() -> u64 {
 }
 
 /// Current chip temperature in °C. SCAFFOLD: fixed 25 °C (thermal-protection
-/// algorithms read this; a real reading needs the hisi-riscv-hal tsensor — phase 4).
+/// algorithms read this; a real reading needs the hisi-riscv-hal tsensor — RF2/RF3).
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_tsensor_get_current_temp() -> i32 {
     25
@@ -52,7 +52,7 @@ pub extern "C" fn uapi_tsensor_get_current_temp() -> i32 {
 
 /// Read an item from non-volatile storage. STUB: returns failure (no NV
 /// backing). The blob uses this for calibrated RF params / MAC address; until a
-/// flash-NV source is wired (phase 4) the RF front-end stays uncalibrated.
+/// flash-NV source is wired (RF2/RF3) the RF front-end stays uncalibrated.
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_nv_read(_id: u32, _buf: *mut c_void, _len: u32) -> i32 {
     crate::OSAL_NOK
@@ -67,7 +67,7 @@ pub extern "C" fn uapi_nv_write(_id: u32, _buf: *const c_void, _len: u32) -> i32
 // ── eFuse / TRNG / device identity ───────────────────────────────────────────
 // These feed RF calibration, the MAC address and crypto seeding. They are
 // SCAFFOLD values good enough to LINK and to bring the stack up under emulation;
-// a hardware run must source real eFuse/TRNG via hisi-riscv-hal (phase 4).
+// a hardware run must source real eFuse/TRNG via hisi-riscv-hal (RF2/RF3).
 
 /// One eFuse bit. STUB: always 0.
 #[unsafe(no_mangle)]

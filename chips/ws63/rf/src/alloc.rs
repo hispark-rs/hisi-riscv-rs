@@ -14,7 +14,7 @@ use linked_list_allocator::Heap;
 
 /// Scaffold heap size. The full Wi-Fi stack needs ~512 KB (the C SDK "local
 /// memory pool"); this is sized for the porting-layer smoke test.
-/// TODO(phase 4): back this with a reserved SRAM region sized from the C SDK.
+/// TODO(RF4): back this with a reserved SRAM region sized from the C SDK.
 const HEAP_SIZE: usize = 64 * 1024;
 /// Allocation alignment and size-header width.
 const HDR: usize = 8;

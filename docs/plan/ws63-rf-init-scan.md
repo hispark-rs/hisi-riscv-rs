@@ -27,6 +27,15 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   RF examples `--defsym` 定义。
 - 新增最小真机 example：`wifi_init_smoke`。它依赖 `ws63-rf-rs`，链接完整 Wi-Fi init
   需要的 blob set、ROM symbol table 和 runtime porting layer。
+- 当前实现状态：`wifi_init_smoke` 默认作为 RF1 image smoke 构建通过；开启
+  `--features full-init` 会拉入完整 vendor init closure，并稳定暴露 RF3 linker blocker：
+  stock `rust-lld` 在 vendor Wi-Fi 对象上报 unknown relocation 58。经
+  `tools/rf-reloc58-diagnose.sh` 对照，原厂 binutils 将该 relocation 解释为
+  HiSilicon `R_RISCV_48_LLUI`，并能 final-link；LLVM/upstream `lld` 按
+  `R_RISCV_IRELATIVE`/unknown path 处理，不能生成最终 executable。
+- 当前 evidence：`hisi-fwpkg plan --chip ws63 --image-output` 可为默认
+  `wifi_init_smoke` 生成 8.8 KiB image；`.wifi_pkt_ram` 是 `SHT_NOBITS`，未进入
+  flash body。
 - 保持 `rf_port_demo` / `netif_smoltcp_selftest` 作为 QEMU/host selftest，不把它们称为
   真实 Wi-Fi。
 
@@ -44,6 +53,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 ### RF3 -- Wi-Fi Init On Silicon
 
 - 调用最小 `uapi_wifi_init` / vendor init path。
+- 先解决 RF1 暴露的 HiSilicon `R_RISCV_48_LLUI` relocation 58：可选路径是
+  upstream `lld` 支持该 relocation、构建期使用原厂 linker，或实现受控 post-link /
+  object conversion；修复前不能宣称 stock `lld` 可直接生成完整 RF init executable。
 - 成功输出 `RF2_INIT_OK`；失败输出分类错误：
   ROM symbol fault、custom relocation fault、missing NV/eFuse、RF clock fault、
   IRQ not delivered、memory layout fault、blob panic。
@@ -86,7 +98,11 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 - No-hardware:
   - `cargo build -p ws63-rf-rs --release`
   - `cargo build -p rf_port_demo --release`
+  - `cargo build -p wifi_init_smoke --release`
+  - `cargo build -p wifi_init_smoke --release --features full-init` 预期失败并报
+    `unknown relocation (58)`，直到 RF3 linker blocker 被解决。
   - `chips/ws63/rf/tools/mac-link-residual.sh`
+  - `chips/ws63/rf/tools/rf-reloc58-diagnose.sh`
   - QEMU smoke：`rf_port_demo` 输出 `RF PORT DEMO: PASS`
   - `netif_smoltcp_selftest` 保持 ARP/selftest 通过。
 - Link/image:

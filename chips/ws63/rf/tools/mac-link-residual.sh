@@ -20,20 +20,27 @@
 # the ROM symbols are real-silicon addresses — so a *runnable* image is HIL, but
 # the relocatable link defers relocations and gives an exact symbol residual.
 #
-# Pure tooling: no hardware, no C compiler. Requires the hisi-riscv Rust toolchain
-# (for rust-lld + the rv32imfc compiler_builtins) and a built ws63-rf-rs rlib.
+# Pure tooling: no hardware, no C compiler. Requires the official pinned Rust
+# nightly used by the repo (for rust-lld + rv32imfc compiler_builtins) and a
+# built ws63-rf-rs rlib. This proves the relocatable symbol closure only; the
+# final executable link still needs support for HiSilicon R_RISCV_48_LLUI
+# relocation 58 (see rf-reloc58-diagnose.sh).
 set -u
 
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/
-root="$(cd "$here/.." && pwd)"                     # repo root
+root="$(cd "$here/../../.." && pwd)"               # repo root
 rf="$here/ws63-RF"                                 # nested submodule
-sysroot="$(rustc +hisi-riscv --print sysroot 2>/dev/null || rustc --print sysroot)"
+if [ -n "${RUSTUP_TOOLCHAIN:-}" ]; then
+  sysroot="$(rustc +"$RUSTUP_TOOLCHAIN" --print sysroot 2>/dev/null || rustc --print sysroot)"
+else
+  sysroot="$(rustc --print sysroot)"
+fi
 host_sysroot="$(rustc --print sysroot)"
 
 LLD="$(find "$sysroot" "$host_sysroot" -name rust-lld 2>/dev/null | head -1)"
 NM="$(find "$host_sysroot" -name llvm-nm 2>/dev/null | head -1)"
 RFRS="$(find "$root/target" -name libws63_rf_rs.rlib -path '*release*' 2>/dev/null | head -1)"
-BUILTINS="$(find "$sysroot" -name 'libcompiler_builtins-*.rlib' -path '*riscv32imfc*' 2>/dev/null | head -1)"
+BUILTINS="$(find "$root/target" "$sysroot" -name 'libcompiler_builtins-*.rlib' -path '*riscv32imfc*' 2>/dev/null | head -1)"
 ROM="$rf/rom/ws63_acore_rom.lds"
 
 for v in LLD NM RFRS BUILTINS; do
@@ -73,5 +80,6 @@ echo "   residual (after ROM table, C-contract): $(wc -l < "$T/reach_resid.txt")
 echo "   --- Wi-Fi-init residual ---"
 sed 's/^/     /' "$T/reach_resid.txt"
 echo
-echo "NOTE: residual entries prefixed __wifi_pkt_ram_* are linker --defsym symbols"
-echo "      (region bounds), supplied by the firmware link, not the porting layer."
+echo "NOTE: residual entries prefixed __wifi_pkt_ram_* are firmware linker symbols"
+echo "      (region bounds), supplied by hisi-riscv-rt's WS63 .wifi_pkt_ram section"
+echo "      or by an equivalent downstream runtime memory layout."

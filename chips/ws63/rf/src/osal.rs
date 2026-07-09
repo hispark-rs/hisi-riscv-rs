@@ -4,7 +4,7 @@
 //! primitive, via `mstatus.MIE`), `osal_udelay` (approximate busy-wait),
 //! `osal_flush_cache` (a data `fence`). Per-line IRQ management and
 //! threads/wait are typed stubs — they need the trap-delivery wiring and a task
-//! scheduler that ws63-rs does not have yet (ROADMAP phase 4 / phase 6).
+//! scheduler that ws63-rs does not have yet (RF2/RF3 follow-up).
 //!
 //! `osal_kmalloc`/`osal_kfree` live in [`crate::alloc`].
 
@@ -73,12 +73,12 @@ pub extern "C" fn osal_flush_cache(_addr: *mut c_void, _size: usize) {
     };
 }
 
-// ── Per-line IRQ management (STUB — needs trap-delivery wiring, phase 4) ─────
+// ── Per-line IRQ management (STUB — needs trap-delivery wiring, RF2/RF3) ─────
 
 type IrqHandler = Option<unsafe extern "C" fn(u32, *mut c_void)>;
 
 /// STUB: records nothing yet. Delivering blob IRQs needs the trap vector to
-/// route the WLAN/MAC line to this handler — wired in phase 4.
+/// route the WLAN/MAC line to this handler — wired in RF2/RF3.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_irq_request(_irq: u32, _handler: IrqHandler, _arg: *mut c_void) -> c_int {
     OSAL_OK
@@ -88,7 +88,7 @@ pub extern "C" fn osal_irq_request(_irq: u32, _handler: IrqHandler, _arg: *mut c
 pub extern "C" fn osal_irq_free(_irq: u32, _arg: *mut c_void) -> c_int {
     OSAL_OK
 }
-/// STUB: per-line enable needs the local-IRQ controller wiring (phase 4).
+/// STUB: per-line enable needs the local-IRQ controller wiring (RF2/RF3).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_irq_enable(_irq: u32) -> c_int {
     OSAL_OK

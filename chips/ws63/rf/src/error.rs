@@ -2,11 +2,11 @@
 //!
 //! The vendor public API (`wifi_init`, `wifi_sta_scan`, `wifi_sta_connect`, …,
 //! declared in `ws63-rf-rs/ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
-//! NOTE: those API symbols are **not** exported by any blob shipped in
-//! `ws63-rf-rs/ws63-RF/lib` — they live in the host-MAC library (`libwifi_driver_hmac.a`),
-//! which is not part of this delivery. So a safe Rust API over them is deferred
-//! until that layer is available; this module only provides the error mapping
-//! the future binding will use.
+//! NOTE: the current blob delivery exports the lower-level `uapi_wifi_init`
+//! symbol from `libwifi_driver_hmac.a`, while the public header still declares
+//! `wifi_init`. A safe Rust API over that layer is deferred until the final
+//! executable link can handle the vendor relocation 58 objects; this module only
+//! provides the error mapping the future binding will use.
 
 /// Vendor `errcode_t` (0 = success).
 pub type Errcode = u32;

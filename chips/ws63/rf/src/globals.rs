@@ -6,7 +6,7 @@
 //! content is the DMAC algorithm-main config + extended MAC resources from the
 //! C SDK dmac source (not provided in ws63-RF) — SCAFFOLD: zeroed, writable
 //! storage so the relocations resolve and the blob has somewhere to read/write.
-//! Populating them with correct values is a phase-4 TODO.
+//! Populating them with correct values is RF2/RF3 follow-up work.
 
 use core::cell::UnsafeCell;
 

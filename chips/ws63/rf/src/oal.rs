@@ -2,9 +2,9 @@
 //!
 //! A simple bump reservation inside the 48 KB Wi-Fi packet RAM delimited by the
 //! linker symbols `__wifi_pkt_ram_begin__ .. __wifi_pkt_ram_end__` (supplied by
-//! build.rs). This is enough for `oal_mem_rsv` static reservations and the
+//! the final firmware linker). This is enough for `oal_mem_rsv` static reservations and the
 //! pool-size bookkeeping the blob queries; the full netbuf sub-pool carving the
-//! C SDK does (TXBFEE/PROTECT/COEX/BEACON/NETBUF) is a phase-4 TODO.
+//! C SDK does (TXBFEE/PROTECT/COEX/BEACON/NETBUF) is RF4 follow-up work.
 
 use core::cell::Cell;
 use core::ffi::c_void;
@@ -29,7 +29,7 @@ static BUF_SIZE: AtomicUsize = AtomicUsize::new(0);
 static SKB_SIZE: AtomicUsize = AtomicUsize::new(0);
 
 /// Zero-copy netbuf header size used to align payloads. Scaffold constant; the
-/// C SDK derives this from the netbuf layout (phase-4 TODO).
+/// C SDK derives this from the netbuf layout (RF4 follow-up).
 const ZEROCOPY_HDR_SIZE: usize = 64;
 
 /// Get the zero-copy header size.
