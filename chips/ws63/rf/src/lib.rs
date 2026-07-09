@@ -143,3 +143,108 @@ pub(crate) fn log_emit(bytes: &[u8]) {
         }
     });
 }
+
+/// Force the C porting contract objects into the final link.
+///
+/// This is normally unnecessary with `rust-lld`, but it is useful for the RF
+/// vendor-link lane: GNU ld scans static archives left-to-right, while rustc's
+/// Rust rlibs can appear before the vendor Wi-Fi `.a` files that reference the
+/// C ABI symbols. A binary that calls this function makes those symbols
+/// live from Rust's side, so the linker does not depend on archive rescans.
+#[doc(hidden)]
+#[inline(never)]
+pub fn force_link_contract() {
+    macro_rules! keep {
+        ($symbol:path as $ty:ty) => {
+            let _ = core::hint::black_box($symbol as $ty);
+        };
+    }
+
+    use core::ffi::{c_char, c_int, c_long, c_uint, c_ulong, c_void};
+
+    keep!(alloc::osal_kmalloc as extern "C" fn(usize) -> *mut c_void);
+    keep!(alloc::osal_kfree as extern "C" fn(*mut c_void));
+
+    keep!(log::log_event_wifi_print0 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_wifi_print1 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_wifi_print2 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_wifi_print3 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_wifi_print4 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_print0 as extern "C" fn() -> c_int);
+    keep!(log::log_event_print1 as extern "C" fn() -> c_int);
+    keep!(log::log_event_print2 as extern "C" fn() -> c_int);
+    keep!(log::log_event_print3 as extern "C" fn() -> c_int);
+    keep!(log::log_event_print4 as extern "C" fn() -> c_int);
+    keep!(log::osal_printk as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::snprintf_s as extern "C" fn(*mut c_char, usize, *const c_char) -> c_int);
+    keep!(log::memset_s as extern "C" fn(*mut c_void, usize, c_int, usize) -> c_int);
+    keep!(log::memcpy_s as extern "C" fn(*mut c_void, usize, *const c_void, usize) -> c_int);
+
+    keep!(libc::malloc as extern "C" fn(c_ulong) -> *mut c_void);
+    keep!(libc::free as extern "C" fn(*mut c_void));
+    keep!(libc::memalign as extern "C" fn(c_ulong, c_ulong) -> *mut c_void);
+    keep!(libc::strcmp as extern "C" fn(*const c_char, *const c_char) -> c_int);
+    keep!(libc::strtol as extern "C" fn(*const c_char, *mut *mut c_char, c_uint) -> c_long);
+    keep!(libc::atoi as extern "C" fn(*const c_char) -> c_int);
+    keep!(libc::strstr as extern "C" fn(*const c_char, *const c_char) -> *mut c_char);
+    keep!(libc::tolower as extern "C" fn(c_int) -> c_int);
+    keep!(libc::gettimeofday as extern "C" fn(*mut osal_ext::OsalTimeval, *mut c_void) -> c_int);
+    keep!(libc::print_str as extern "C" fn(*const c_char));
+
+    keep!(osal::osal_irq_lock as extern "C" fn() -> c_ulong);
+    keep!(osal::osal_irq_restore as extern "C" fn(c_ulong));
+    keep!(osal::osal_udelay as extern "C" fn(u32));
+    keep!(osal::osal_flush_cache as extern "C" fn(*mut c_void, usize));
+    keep!(osal::osal_irq_enable as extern "C" fn(u32) -> c_int);
+    keep!(osal::osal_irq_disable as extern "C" fn(u32) -> c_int);
+    keep!(osal::osal_msleep as extern "C" fn(u32));
+    keep!(osal::osal_get_current_pid as extern "C" fn() -> c_int);
+    keep!(osal::osal_get_current_tid as extern "C" fn() -> c_int);
+
+    keep!(osal_adapt::osal_adapt_atomic_set as extern "C" fn(*mut osal_sync::OsalAtomic, c_int));
+    keep!(osal_adapt::osal_adapt_get_jiffies as extern "C" fn() -> u64);
+    keep!(osal_adapt::osal_adapt_irq_lock as extern "C" fn() -> c_uint);
+    keep!(osal_adapt::osal_adapt_irq_restore as extern "C" fn(c_uint));
+
+    keep!(osal_ext::osal_vmalloc as extern "C" fn(c_ulong) -> *mut c_void);
+    keep!(osal_ext::osal_vfree as extern "C" fn(*mut c_void));
+    keep!(osal_ext::osal_strlen as extern "C" fn(*const c_char) -> c_uint);
+    keep!(osal_ext::osal_strcmp as extern "C" fn(*const c_char, *const c_char) -> c_int);
+    keep!(
+        osal_ext::osal_adapt_strncmp
+            as extern "C" fn(*const c_char, *const c_char, c_uint) -> c_int
+    );
+    keep!(osal_ext::osal_memcmp as extern "C" fn(*const c_void, *const c_void, c_int) -> c_int);
+    keep!(
+        osal_ext::osal_strtol as extern "C" fn(*const c_char, *mut *mut c_char, c_uint) -> c_long
+    );
+    keep!(osal_ext::osal_get_jiffies as extern "C" fn() -> u64);
+    keep!(osal_ext::osal_gettimeofday as extern "C" fn(*mut osal_ext::OsalTimeval));
+    keep!(
+        osal_ext::osal_copy_to_user
+            as extern "C" fn(*mut c_void, *const c_void, c_ulong) -> c_ulong
+    );
+
+    keep!(netif::pbuf_alloc as extern "C" fn(c_int, u16, c_int) -> *mut c_void);
+    keep!(netif::pbuf_free as extern "C" fn(*mut c_void) -> u8);
+    keep!(netif::pbuf_ref as extern "C" fn(*mut c_void));
+    keep!(netif::pbuf_header as extern "C" fn(*mut c_void, i16) -> u8);
+    keep!(netif::driverif_input as extern "C" fn(*mut c_void, *mut c_void));
+    keep!(netif::netifapi_netif_add as extern "C" fn() -> c_int);
+    keep!(netif::netifapi_netif_remove as extern "C" fn() -> c_int);
+    keep!(netif::netif_set_link_up_interface as extern "C" fn(*mut c_void));
+    keep!(netif::netif_set_link_down_interface as extern "C" fn(*mut c_void));
+    keep!(netif::tcpip_callback as extern "C" fn(*mut c_void, *mut c_void) -> c_int);
+
+    keep!(uapi::uapi_systick_get_ms as extern "C" fn() -> u64);
+    keep!(uapi::uapi_tsensor_get_current_temp as extern "C" fn() -> i32);
+    keep!(uapi::uapi_nv_read as extern "C" fn(u32, *mut c_void, u32) -> i32);
+    keep!(uapi::uapi_nv_write as extern "C" fn(u32, *const c_void, u32) -> i32);
+    keep!(uapi::uapi_efuse_read_bit as extern "C" fn(*mut u8, u32, u8) -> u32);
+    keep!(uapi::uapi_efuse_read_buffer as extern "C" fn(*mut u8, u32, u16) -> u32);
+    keep!(uapi::uapi_drv_cipher_trng_get_random_bytes as extern "C" fn(*mut u8, u32) -> u32);
+    keep!(uapi::get_dev_addr as extern "C" fn(*mut u8, u8, u8) -> u32);
+    keep!(uapi::get_tcxo_freq as extern "C" fn() -> u32);
+    keep!(uapi::uapi_wifi_softap_stop as extern "C" fn() -> i32);
+    keep!(uapi::uapi_wifi_sta_stop as extern "C" fn() -> i32);
+}

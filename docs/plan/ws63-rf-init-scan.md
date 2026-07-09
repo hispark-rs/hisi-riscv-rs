@@ -33,6 +33,12 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   `tools/rf-reloc58-diagnose.sh` 对照，原厂 binutils 将该 relocation 解释为
   HiSilicon `R_RISCV_48_LLUI`，并能 final-link；LLVM/upstream `lld` 按
   `R_RISCV_IRELATIVE`/unknown path 处理，不能生成最终 executable。
+- 当前 workaround 保护：`tools/rf-build-full-init-oracle-patch.sh` 可用原厂 linker
+  生成 oracle ELF/map，再把 `R_RISCV_48_LLUI` patch 到 RF archive 后交给
+  stock `rust-lld` final-link；但该路径必须通过
+  `tools/rf-verify-oracle-layout.py` 校验 oracle/final section VMA 完全一致。当前
+  evidence 是 verifier 能识别真实 layout drift 并 fail closed，失败时删除不可信
+  final ELF，禁止进入烧录路径。
 - 当前 evidence：`hisi-fwpkg plan --chip ws63 --image-output` 可为默认
   `wifi_init_smoke` 生成 8.8 KiB image；`.wifi_pkt_ram` 是 `SHT_NOBITS`，未进入
   flash body。
@@ -56,6 +62,10 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 - 先解决 RF1 暴露的 HiSilicon `R_RISCV_48_LLUI` relocation 58：可选路径是
   upstream `lld` 支持该 relocation、构建期使用原厂 linker，或实现受控 post-link /
   object conversion；修复前不能宣称 stock `lld` 可直接生成完整 RF init executable。
+- oracle-patch 路径只作为受控 bring-up lane：固定输入、生成 patch manifest、
+  final-link 后强制校验布局；布局漂移时必须失败并清理 final ELF。下一步优先消除
+  oracle/final layout drift，或改成从 final `rust-lld` layout 解析 relocation 目标值，
+  避免依赖 vendor/final linker section 地址相同这一脆弱前提。
 - 成功输出 `RF2_INIT_OK`；失败输出分类错误：
   ROM symbol fault、custom relocation fault、missing NV/eFuse、RF clock fault、
   IRQ not delivered、memory layout fault、blob panic。
