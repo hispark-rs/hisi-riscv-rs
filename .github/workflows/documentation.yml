@@ -172,12 +172,15 @@ jobs:
     needs: docs
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
+      contents: write
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download docs artifact
         uses: actions/download-artifact@v8
         with:
