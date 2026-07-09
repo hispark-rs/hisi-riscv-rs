@@ -112,10 +112,7 @@ def html_code_block(body: str) -> str:
 def manifest_script(chips: dict[str, Any], versions: dict[str, Any]) -> str:
     payload = json.dumps({"chips": chips, "versions": versions}, ensure_ascii=False)
     payload = payload.replace("</", "<\\/")
-    return (
-        '<div class="hisi-docs-controls" data-hisi-docs-controls></div>\n\n'
-        f'<script type="application/json" data-hisi-docs-manifest>{payload}</script>\n\n'
-    )
+    return f'<script type="application/json" data-hisi-docs-manifest>{payload}</script>\n\n'
 
 
 def render_snippets(content: str, snippets: dict[str, str], chips: dict[str, Any]) -> str:
