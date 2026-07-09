@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
+            window.path_to_searchindex_js = "../searchindex-96ce1842.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -185,7 +185,7 @@
 <h1 id="如何用-probe-rs-调试与读内存"><a class="header" href="#如何用-probe-rs-调试与读内存">如何用 probe-rs 调试与读内存</a></h1>
 <p>烧录之外，<a href="04-flash-probe-rs.html">补丁版 probe-rs fork</a> 还能 attach 上去读内存、读 CSR、复位到指定状态、下硬件断点。本篇是真机诊断的常用招式。</p>
 <blockquote>
-<p>全部命令都需要 fork（<code>--branch add-hisilicon-ws63-bs21</code>）+ 其 <code>HiSilicon_WS63.yaml</code>。下面为简洁省略了 <code>--chip-description-path HiSilicon_WS63.yaml</code>，实跑时按需补上（或用 <code>PROBE_RS_YAML</code>/<code>--chip-description-path</code>）。</p>
+<p>全部命令都需要 fork（<code>--branch add-hisilicon-ws63-bs21-hil-baseline</code>）+ 其 <code>HiSilicon_WS63.yaml</code>。下面为简洁省略了 <code>--chip-description-path HiSilicon_WS63.yaml</code>，实跑时按需补上（或用 <code>PROBE_RS_YAML</code>/<code>--chip-description-path</code>）。</p>
 </blockquote>
 <h2 id="读内存--flash"><a class="header" href="#读内存--flash">读内存 / flash</a></h2>
 <pre><code class="language-bash"># 读 app 镜像头开头 16 个 word（验证 0x300 头烧对没）

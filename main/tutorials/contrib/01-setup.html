@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-ce40200d.js";
+            window.path_to_searchindex_js = "../../searchindex-96ce1842.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -245,7 +245,7 @@ bash scripts/build.sh
 <p>第 3 课要烧到真板，需要两个工具：</p>
 <ul>
 <li><a href="https://github.com/hispark-rs/hisi-fwpkg"><code>hisi-fwpkg</code></a>：把 ELF 打包成可启动镜像（加 <code>0x300</code> 启动头）。</li>
-<li><strong>打过补丁的 probe-rs 分支</strong>（<code>hispark-rs/probe-rs</code>，分支 <code>add-hisilicon-ws63-bs21</code>）：
+<li><strong>打过补丁的 probe-rs 分支</strong>（<code>hispark-rs/probe-rs</code>，分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>）：
 上游 probe-rs 不认识 WS63，必须用这个分支，并配上 <code>HiSilicon_WS63.yaml</code>。</li>
 </ul>
 <p>安装方法（深入说明见 <a href="../../how-to/01-install-toolchain.html">安装官方 Rust 工具链</a> 与
@@ -254,7 +254,7 @@ bash scripts/build.sh
 cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
 # 打过补丁的 probe-rs 分支
-cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools
+cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 </code></pre>
 <p>确认两者就位：</p>
 <pre><code class="language-bash">hisi-fwpkg --help

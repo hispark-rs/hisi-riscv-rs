@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
+            window.path_to_searchindex_js = "../searchindex-96ce1842.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -192,7 +192,7 @@
 <h2 id="前提补丁版-probe-rs-fork"><a class="header" href="#前提补丁版-probe-rs-fork">前提：补丁版 probe-rs fork</a></h2>
 <p>上游 probe-rs 还没有 WS63 target，也没有 <code>ws63-sfc</code> flash 算法。必须装补丁版 fork：</p>
 <pre><code class="language-bash">cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+    --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 </code></pre>
 <p>同时需要该 fork 随附的芯片描述 <code>HiSilicon_WS63.yaml</code>（在 fork 仓库 <code>probe-rs/targets/HiSilicon_WS63.yaml</code>）。烧录时用 <code>--chip-description-path</code> 指向它。</p>
 <h2 id="手动三步"><a class="header" href="#手动三步">手动三步</a></h2>

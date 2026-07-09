@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
+            window.path_to_searchindex_js = "../searchindex-96ce1842.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -261,7 +261,7 @@ hil/hil-smoke.sh
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
 <li>示例 smoke 路径：每个 <code>check</code> 打印 <code>PASS: '&lt;pat&gt;' seen</code> 或 <code>FAIL</code>；末行汇总 <code>HIL SMOKE: PASS</code> / <code>FAIL</code>。</li>
-<li><code>probe-rs run</code> 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21</code> 分支。</li>
+<li><code>probe-rs run</code> 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21-hil-baseline</code> 分支。</li>
 <li><code>embedded-test</code> 没有任何用例输出：先查 <code>PROBE_YAML</code>、<code>hisi-fwpkg patch-hash</code>、semihosting 通道和测试 ELF 是否用 <code>--test hil</code> 构建。</li>
 <li>UART 标记串没出现但板子像在跑：查 <code>UART_BAUD</code>、<code>SETTLE</code>、UART0 接线；<code>spi_loopback</code> 还需要真机短接 MOSI/MISO。</li>
 </ul>

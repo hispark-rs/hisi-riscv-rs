@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ce40200d.js";
+            window.path_to_searchindex_js = "searchindex-96ce1842.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -322,7 +322,7 @@ rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
 <p>上游 probe-rs 不认识 WS63，必须用打过补丁的分支，并配上它自带的
 <code>HiSilicon_WS63.yaml</code> 芯片描述文件：</p>
 <pre><code class="language-bash">cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+    --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 </code></pre>
 <p>确认就位：<code>probe-rs --version</code>。深入说明见
 <a href="#如何用-probe-rs-烧录到真机">用 probe-rs 烧录到真机</a>。</p>
@@ -561,7 +561,7 @@ bash scripts/build.sh
 <p>第 3 课要烧到真板，需要两个工具：</p>
 <ul>
 <li><a href="https://github.com/hispark-rs/hisi-fwpkg"><code>hisi-fwpkg</code></a>：把 ELF 打包成可启动镜像（加 <code>0x300</code> 启动头）。</li>
-<li><strong>打过补丁的 probe-rs 分支</strong>（<code>hispark-rs/probe-rs</code>，分支 <code>add-hisilicon-ws63-bs21</code>）：
+<li><strong>打过补丁的 probe-rs 分支</strong>（<code>hispark-rs/probe-rs</code>，分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>）：
 上游 probe-rs 不认识 WS63，必须用这个分支，并配上 <code>HiSilicon_WS63.yaml</code>。</li>
 </ul>
 <p>安装方法（深入说明见 <a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a> 与
@@ -570,7 +570,7 @@ bash scripts/build.sh
 cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
 # 打过补丁的 probe-rs 分支
-cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools
+cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 </code></pre>
 <p>确认两者就位：</p>
 <pre><code class="language-bash">hisi-fwpkg --help
@@ -1022,7 +1022,7 @@ FWPKG=1 hil/pack.sh blinky         # 额外产出 blinky.fwpkg
 <h2 id="前提补丁版-probe-rs-fork"><a class="header" href="#前提补丁版-probe-rs-fork">前提：补丁版 probe-rs fork</a></h2>
 <p>上游 probe-rs 还没有 WS63 target，也没有 <code>ws63-sfc</code> flash 算法。必须装补丁版 fork：</p>
 <pre><code class="language-bash">cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+    --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
 </code></pre>
 <p>同时需要该 fork 随附的芯片描述 <code>HiSilicon_WS63.yaml</code>（在 fork 仓库 <code>probe-rs/targets/HiSilicon_WS63.yaml</code>）。烧录时用 <code>--chip-description-path</code> 指向它。</p>
 <h2 id="手动三步"><a class="header" href="#手动三步">手动三步</a></h2>
@@ -1287,7 +1287,7 @@ hil/hil-smoke.sh
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
 <li>示例 smoke 路径：每个 <code>check</code> 打印 <code>PASS: '&lt;pat&gt;' seen</code> 或 <code>FAIL</code>；末行汇总 <code>HIL SMOKE: PASS</code> / <code>FAIL</code>。</li>
-<li><code>probe-rs run</code> 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21</code> 分支。</li>
+<li><code>probe-rs run</code> 找不到 chip 或 flash 算法：通常装的是上游 probe-rs，不是 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21-hil-baseline</code> 分支。</li>
 <li><code>embedded-test</code> 没有任何用例输出：先查 <code>PROBE_YAML</code>、<code>hisi-fwpkg patch-hash</code>、semihosting 通道和测试 ELF 是否用 <code>--test hil</code> 构建。</li>
 <li>UART 标记串没出现但板子像在跑：查 <code>UART_BAUD</code>、<code>SETTLE</code>、UART0 接线；<code>spi_loopback</code> 还需要真机短接 MOSI/MISO。</li>
 </ul>
@@ -1301,7 +1301,7 @@ hil/hil-smoke.sh
 <h1 id="如何用-probe-rs-调试与读内存"><a class="header" href="#如何用-probe-rs-调试与读内存">如何用 probe-rs 调试与读内存</a></h1>
 <p>烧录之外，<a href="#如何用-probe-rs-烧录到真机">补丁版 probe-rs fork</a> 还能 attach 上去读内存、读 CSR、复位到指定状态、下硬件断点。本篇是真机诊断的常用招式。</p>
 <blockquote>
-<p>全部命令都需要 fork（<code>--branch add-hisilicon-ws63-bs21</code>）+ 其 <code>HiSilicon_WS63.yaml</code>。下面为简洁省略了 <code>--chip-description-path HiSilicon_WS63.yaml</code>，实跑时按需补上（或用 <code>PROBE_RS_YAML</code>/<code>--chip-description-path</code>）。</p>
+<p>全部命令都需要 fork（<code>--branch add-hisilicon-ws63-bs21-hil-baseline</code>）+ 其 <code>HiSilicon_WS63.yaml</code>。下面为简洁省略了 <code>--chip-description-path HiSilicon_WS63.yaml</code>，实跑时按需补上（或用 <code>PROBE_RS_YAML</code>/<code>--chip-description-path</code>）。</p>
 </blockquote>
 <h2 id="读内存--flash"><a class="header" href="#读内存--flash">读内存 / flash</a></h2>
 <pre><code class="language-bash"># 读 app 镜像头开头 16 个 word（验证 0x300 头烧对没）
@@ -2482,7 +2482,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 <tr><th>变量</th><th>默认</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td><code>PROBE_RS</code></td><td><code>probe-rs</code></td><td>probe-rs 二进制；需要 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21</code> 分支</td></tr>
+<tr><td><code>PROBE_RS</code></td><td><code>probe-rs</code></td><td>probe-rs 二进制；需要 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21-hil-baseline</code> 分支</td></tr>
 <tr><td><code>PROBE_CHIP</code></td><td><code>WS63</code></td><td>probe-rs <code>--chip</code> 值</td></tr>
 <tr><td><code>PROBE_YAML</code></td><td>空</td><td><code>--chip-description-path</code> YAML；需要显式指定时填 <code>HiSilicon_WS63.yaml</code></td></tr>
 <tr><td><code>HISI_FWPKG</code></td><td><code>hisi-fwpkg</code></td><td><code>hisi-fwpkg</code> 二进制名，用于 <code>patch-hash</code></td></tr>
@@ -2672,7 +2672,7 @@ hisi-fwpkg patch-hash blinky
 <pre><code class="language-bash">hisi-fwpkg pack blinky -o blinky.fwpkg --chip ws63 --name app
 </code></pre>
 <h2 id="probe-rs补丁版-fork"><a class="header" href="#probe-rs补丁版-fork"><code>probe-rs</code>（补丁版 fork）</a></h2>
-<p><strong>需补丁版 fork</strong> <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a>（branch <code>add-hisilicon-ws63-bs21</code>）——上游 probe-rs 尚无 WS63 target 与 <code>ws63-sfc</code> flash 算法。需 fork 提供的 <code>HiSilicon_WS63.yaml</code> 芯片描述。</p>
+<p><strong>需补丁版 fork</strong> <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a>（branch <code>add-hisilicon-ws63-bs21-hil-baseline</code>）——上游 probe-rs 尚无 WS63 target 与 <code>ws63-sfc</code> flash 算法。需 fork 提供的 <code>HiSilicon_WS63.yaml</code> 芯片描述。</p>
 <p>本项目用到的子命令与标志：</p>
 <div class="table-wrapper">
 <table>
@@ -2752,7 +2752,7 @@ hisi-fwpkg patch-hash blinky
 <tr><td><code>hisi-riscv-rs</code></td><td>主 monorepo（crates、examples、guides、SVD 均为子模块）</td><td>github.com/hispark-rs/hisi-riscv-rs</td></tr>
 <tr><td><code>hisi-rs-template</code></td><td>cargo-generate 模板（WS63/BS2X 新工程脚手架）</td><td>github.com/hispark-rs/hisi-rs-template</td></tr>
 <tr><td><code>hisi-fwpkg</code></td><td>app 镜像 / fwpkg 打包工具（<code>plan</code>/<code>image</code>/<code>patch-hash</code>/<code>pack</code>）</td><td>github.com/hispark-rs/hisi-fwpkg</td></tr>
-<tr><td><code>probe-rs</code>（fork）</td><td>补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法）</td><td>github.com/hispark-rs/probe-rs（branch <code>add-hisilicon-ws63-bs21</code>）</td></tr>
+<tr><td><code>probe-rs</code>（fork）</td><td>补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法）</td><td>github.com/hispark-rs/probe-rs（branch <code>add-hisilicon-ws63-bs21-hil-baseline</code>）</td></tr>
 <tr><td><code>hisi-riscv-rust-toolchain</code></td><td>官方 Rust nightly 外部 radar（riscv32imfc target / rustup std / Tier-2 readiness）</td><td>github.com/hispark-rs/hisi-riscv-rust-toolchain</td></tr>
 <tr><td><code>hisi-riscv-qemu</code></td><td>QEMU fork（<code>-M ws63/bs21/bs21e/bs22/bs20</code>）</td><td>github.com/hispark-rs/hisi-riscv-qemu</td></tr>
 <tr><td><code>hisiflash</code></td><td>串口/YMODEM 烧录 CLI</td><td>github.com/hispark-rs/hisiflash</td></tr>
@@ -3898,7 +3898,7 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 │ chips/bs2x/guide (BS2X 中文硬件手册，Sphinx)
 │
 │ ws63-qemu (姊妹仓：`-M ws63/bs21/bs22/bs20` QEMU，WS63/BS2X 软件在环验证)
-│ probe-rs fork hispark-rs/add-hisilicon-ws63-bs21（RISC-V-DM + HiSilicon DebugSequence + flash-algorithm）
+│ probe-rs fork hispark-rs/add-hisilicon-ws63-bs21-hil-baseline（RISC-V-DM + HiSilicon DebugSequence + flash-algorithm）
 └──────────────────────────────────────────────────┘
 </code></pre>
 <div class="table-wrapper">
@@ -3928,7 +3928,7 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <h2 id="调试支持"><a class="header" href="#调试支持">调试支持</a></h2>
 <ul>
 <li>
-<p><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="#stable-api-清单与门控状态">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</p>
+<p><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="#stable-api-清单与门控状态">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</p>
 </li>
 <li>
 <p><strong>外设单例 + <code>'d</code> 生命周期</strong>：<code>Peripherals::take()</code>（PAC 单例，critical-section 保护）分发 <code>'d</code> 参数化的 ZST 外设令牌；
