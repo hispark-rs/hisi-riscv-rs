@@ -113,8 +113,8 @@ def manifest_script(chips: dict[str, Any], versions: dict[str, Any]) -> str:
     payload = json.dumps({"chips": chips, "versions": versions}, ensure_ascii=False)
     payload = payload.replace("</", "<\\/")
     return (
-        '<div class="hisi-docs-controls" data-hisi-docs-controls></div>\n'
-        f'<script type="application/json" data-hisi-docs-manifest>{payload}</script>\n'
+        '<div class="hisi-docs-controls" data-hisi-docs-controls></div>\n\n'
+        f'<script type="application/json" data-hisi-docs-manifest>{payload}</script>\n\n'
     )
 
 

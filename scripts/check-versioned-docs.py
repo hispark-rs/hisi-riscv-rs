@@ -12,6 +12,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 VERSIONS_JSON = ROOT / "docs" / "versions.json"
 SEMVER_RE = re.compile(r"^v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
+PRE_BLOCK_RE = re.compile(r"<pre\b.*?</pre>", re.DOTALL | re.IGNORECASE)
+
+
+def strip_code_blocks(html: str) -> str:
+    return PRE_BLOCK_RE.sub("", html)
 
 
 def main() -> int:
@@ -81,6 +86,8 @@ def main() -> int:
             text = html_path.read_text(encoding="utf-8", errors="ignore")
             if "{{#tutorial-snippet" in text or "{{#chip-" in text:
                 errors.append(f"{html_path}: unexpanded docs token")
+            if re.search(r"(?m)^\s*#{1,6}\s+\S", strip_code_blocks(text)):
+                errors.append(f"{html_path}: unrendered Markdown heading")
 
     if errors:
         print("versioned docs errors:", file=sys.stderr)
