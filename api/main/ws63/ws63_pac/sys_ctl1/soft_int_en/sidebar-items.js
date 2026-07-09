@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SoftIntEnSpec"],"type":["R","SoftInt0EnR","SoftInt0EnW","SoftInt1EnR","SoftInt1EnW","SoftInt2EnR","SoftInt2EnW","SoftInt3EnR","SoftInt3EnW","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RptGadcData3Spec"],"type":["R","SingleSampleDoneR"]};

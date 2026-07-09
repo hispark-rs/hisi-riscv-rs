@@ -1,0 +1,21 @@
+{
+  "default": "latest",
+  "latest": "main",
+  "versions": [
+    {
+      "id": "latest",
+      "label": "Latest",
+      "kind": "alias",
+      "target": "main",
+      "book_base": "/hisi-riscv-rs/latest/",
+      "api_base": "/hisi-riscv-rs/api/latest/"
+    },
+    {
+      "id": "main",
+      "label": "main",
+      "kind": "branch",
+      "book_base": "/hisi-riscv-rs/main/",
+      "api_base": "/hisi-riscv-rs/api/main/"
+    }
+  ]
+}

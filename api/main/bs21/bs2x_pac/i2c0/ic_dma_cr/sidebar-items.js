@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IcDmaCrSpec"],"type":["R","RdmaeR","RdmaeW","TdmaeR","TdmaeW","W"]};

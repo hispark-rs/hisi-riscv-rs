@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GotgintSpec"],"type":["R","W"]};

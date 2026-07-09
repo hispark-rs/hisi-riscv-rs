@@ -1,0 +1,37 @@
+.hisi-docs-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0 0 1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--table-border-color);
+  border-radius: 6px;
+  background: var(--quote-bg);
+}
+
+.hisi-docs-control {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.hisi-docs-control select {
+  min-width: 7rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--table-border-color);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.hisi-docs-chip-note {
+  font-size: 0.85rem;
+  color: var(--fg);
+  opacity: 0.8;
+}
+
+.hisi-chip-block[hidden] {
+  display: none !important;
+}

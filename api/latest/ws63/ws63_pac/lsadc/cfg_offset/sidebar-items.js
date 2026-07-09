@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgOffsetSpec"],"type":["OffsetR","OffsetW","R","W"]};

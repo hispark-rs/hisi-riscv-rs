@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PadGpio05CtrlSpec"],"type":["PadGpio05CtrlDs0R","PadGpio05CtrlDs0W","PadGpio05CtrlDs1R","PadGpio05CtrlDs1W","PadGpio05CtrlDs2R","PadGpio05CtrlDs2W","PadGpio05CtrlIeR","PadGpio05CtrlIeW","PadGpio05CtrlPeR","PadGpio05CtrlPeW","PadGpio05CtrlPsR","PadGpio05CtrlPsW","PadGpio05CtrlStR","PadGpio05CtrlStW","R","W"]};

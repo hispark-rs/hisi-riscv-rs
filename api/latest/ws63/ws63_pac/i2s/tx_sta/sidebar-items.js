@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TxStaSpec"],"type":["LeftDepthR","R","RightDepthR","W"]};

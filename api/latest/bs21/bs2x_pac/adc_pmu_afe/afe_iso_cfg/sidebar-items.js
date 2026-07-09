@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AfeIsoCfgSpec"],"type":["R","W"]};

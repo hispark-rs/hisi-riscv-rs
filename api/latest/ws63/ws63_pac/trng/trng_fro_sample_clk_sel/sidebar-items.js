@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TrngFroSampleClkSelSpec"],"type":["FroSampleClkSelR","FroSampleClkSelW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EFUSE_MAX_BYTES"],"enum":["EfuseError"],"struct":["EfuseByteAddress","EfuseDriver","EfuseStatus"]};

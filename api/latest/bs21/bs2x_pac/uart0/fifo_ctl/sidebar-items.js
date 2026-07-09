@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RxEmptyTrig","TxEmptyTrig"],"struct":["FifoCtlSpec"],"type":["FifoEnW","RxEmptyTrigW","RxFifoRstW","TxEmptyTrigW","TxFifoRstW","W"]};

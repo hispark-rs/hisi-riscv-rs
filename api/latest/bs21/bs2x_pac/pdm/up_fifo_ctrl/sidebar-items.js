@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UpFifoCtrlSpec"],"type":["R","UpFifoAemptyThR","UpFifoAemptyThW","UpFifoAfullThR","UpFifoAfullThW","W"]};

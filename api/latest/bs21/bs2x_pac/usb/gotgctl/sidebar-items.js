@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GotgctlSpec"],"type":["AsesvldR","AsesvldW","BsesvldR","BsesvldW","ChirpOnR","ChirpOnW","ConidstsR","ConidstsW","DbnctimeR","DbnctimeW","DevhnpenR","DevhnpenW","HnpreqR","HnpreqW","HstnegscsR","HstnegscsW","HstsethnpenR","HstsethnpenW","R","SesenddetR","SesenddetW","SesreqR","SesreqW","SesreqscsR","SesreqscsW","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GpvndctlSpec"],"type":["DisulpidrvrR","DisulpidrvrW","NewregreqR","NewregreqW","R","RegaddrR","RegaddrW","RegdataR","RegdataW","RegwrR","RegwrW","VctrlR","VctrlW","VstsbsyR","VstsbsyW","VstsdoneR","VstsdoneW","W"]};

@@ -1,0 +1,414 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>03 Safe / Unsafe 政策 - HiSilicon RISC-V Rust 嵌入式开发手册</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="HiSilicon RISC-V 芯片的 Rust 嵌入式生态：HAL、运行时、工具链、QEMU 与硬件在环测试。按 Diátaxis 框架组织。">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../theme/hisi-docs-f8e5e6cc.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex-5b402b7a.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc-9bcc735b.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">HiSilicon RISC-V Rust 嵌入式开发手册</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/explanation/policies/03-safe-unsafe-policy.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <div class="hisi-docs-controls" data-hisi-docs-controls=""></div>
+
+<script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
+# Safe / Unsafe 政策：把信任边界写清楚
+<p>这是本项目 HAL（0.6.0+）的<strong>第三号约定</strong>：<code>unsafe</code> 可以存在，但必须被模块边界、类型不变式、SAFETY 注释和验证流程约束住。对外的 safe API 不能让调用者触发 UB；否则这个 API 不能稳定暴露。</p>
+<p>本篇讲<strong>为什么</strong>要有这条政策、<strong>怎么判断</strong>一段 unsafe 是否被安全封装、以及它<strong>如何接到稳定 / 不稳定 API 门控</strong>。完整调研见 <code>docs/review/safe-unsafe-formal-verification-research-2026-07.md</code>，当前基线见 <code>docs/review/unsafe-audit-2026-07-02.md</code>。</p>
+<h2 id="问题hal-不可能没有-unsafe"><a class="header" href="#问题hal-不可能没有-unsafe">问题：HAL 不可能没有 unsafe</a></h2>
+<p>裸机 HAL 的核心工作就是直接碰硬件：读写 MMIO 寄存器、操作 cache CSR、把 DMA 缓冲区地址交给外设、声明中断向量和启动符号。这些事编译器无法证明安全，所以必然需要 <code>unsafe</code>。</p>
+<p>真正的问题不是“有没有 unsafe”，而是：<strong>safe 调用者能不能通过公共 API 把 unsafe 的前提打破。</strong></p>
+<pre><code class="language-rust">// UNSOUND：safe 调用者可以传越界 idx，触发 UB
+pub fn read_unchecked(arr: &amp;[u32], idx: usize) -&gt; u32 {
+    unsafe { *arr.get_unchecked(idx) }
+}</code></pre>
+<p>这段代码里 <code>unsafe</code> 很短，但封装是坏的。调用者没有写 <code>unsafe</code>，却能触发 UB。对 HAL 来说，对应的坏形态是：<code>pub fn</code> 接收任意寄存器偏移、任意 DMA 长度、任意裸地址、任意通道号，然后未经检查直接进入 <code>unsafe {}</code>。</p>
+<h2 id="标准soundness不是看起来能跑"><a class="header" href="#标准soundness不是看起来能跑">标准：soundness，不是“看起来能跑”</a></h2>
+<p>本仓采用 Rust unsafe code guidelines 的核心标准：</p>
+<blockquote>
+<p>一个 unsafe 抽象是 sound 的，当且仅当 safe 代码无法通过它的公共 API 触发 UB。</p>
+</blockquote>
+<p>这意味着：</p>
+<ul>
+<li>HIL 跑过不等于 sound。HIL 证明“这个硬件路径在这块板上工作”，不能穷尽所有 safe 输入。</li>
+<li>SAFETY 注释不是装饰。它必须写清 unsafe 依赖的前提，以及 safe API 如何强制这些前提成立。</li>
+<li>封装边界是模块。Rustonomicon 的经验规则是：限制 unsafe 影响范围最可靠的方法是 <strong>module boundary + privacy</strong>。</li>
+<li>形式化证明不是默认门禁。Miri/Kani/Verus 可以验证 host-testable 逻辑和关键状态机，但 MMIO、DMA、cache、时序仍要靠 stub、人工审阅和 HIL 组合。</li>
+</ul>
+<h2 id="hal-里的-unsafe-主要来自哪里"><a class="header" href="#hal-里的-unsafe-主要来自哪里">HAL 里的 unsafe 主要来自哪里</a></h2>
+<p>Rust Reference 只允许少数几类操作需要 unsafe；本仓主要命中这些场景：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>unsafe 操作</th><th>HAL 场景</th></tr>
+</thead>
+<tbody>
+<tr><td>裸指针解引用</td><td><code>&amp;*Peripheral::ptr()</code> 取得 MMIO register block</td></tr>
+<tr><td>调 unsafe fn</td><td>PAC <code>bits()</code> 写寄存器、cache maintenance、外设 singleton <code>steal()</code></td></tr>
+<tr><td>inline asm</td><td>cache CSR、低功耗 / 中断相关指令</td></tr>
+<tr><td>static / 全局状态</td><td>DMA 通道 claim、waker/中断状态</td></tr>
+<tr><td>unsafe trait impl</td><td>手写 <code>Send</code> / <code>Sync</code> 承诺</td></tr>
+<tr><td>unsafe 属性 / extern</td><td>启动符号、中断向量、FFI 边界</td></tr>
+</tbody>
+</table>
+</div>
+<p>其中最多的是 MMIO。MMIO 不是普通内存访问：地址必须是这颗芯片真实存在的寄存器，字段值必须是硬件接受的组合，访问顺序还可能有前置时钟、复位、FIFO、DMA handshake 等要求。</p>
+<h2 id="safety-注释分级"><a class="header" href="#safety-注释分级">SAFETY 注释分级</a></h2>
+<p>每个 <code>unsafe {}</code>、<code>unsafe fn</code>、<code>unsafe impl</code> 都要有对应的 <code>// SAFETY:</code> 或 <code># Safety</code> 说明。审计时按四级判定：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>等级</th><th>标准</th><th>处置</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>A</strong></td><td>写清地址有效性、值有效性、前置条件、后置状态</td><td>可接受</td></tr>
+<tr><td><strong>B</strong></td><td>写清地址 / 不变式，前置条件由类型或私有 helper 隐含</td><td>可接受，后续可补强</td></tr>
+<tr><td><strong>C</strong></td><td>只说“这是有效寄存器”之类，缺少前提和不变式</td><td>需要改进；不作为毕业加分项</td></tr>
+<tr><td><strong>D</strong></td><td>没有 SAFETY 注释</td><td>必须修；相关 API 不能凭这个状态毕业为 stable</td></tr>
+</tbody>
+</table>
+</div>
+<p>推荐写法：</p>
+<pre><code class="language-rust">// SAFETY: `spi_dr` is the SSI v151 data register at offset 0x60 from the
+// SPI0 base. `tx` is a valid 8-bit frame because `DataBits` only exposes the
+// byte data path. The SPI controller was configured and enabled by `new_spi0`;
+// this write only pushes one FIFO entry and does not touch control bits.
+unsafe { r.spi_dr().write(|w| w.bits(tx as u32)) }</code></pre>
+<p>不合格写法：</p>
+<pre><code class="language-rust">// SAFETY: register access.
+unsafe { r.spi_dr().write(|w| w.bits(tx)) }</code></pre>
+<p>这句只说明“我知道它是寄存器”，没有说明地址、值、状态机和 safe API 前提。</p>
+<h2 id="封装规则"><a class="header" href="#封装规则">封装规则</a></h2>
+<p>新增或修改 unsafe 代码时，按这些规则判断是否能对外暴露成 safe API：</p>
+<ul>
+<li><strong>字段默认私有。</strong> 只要一个字段参与 unsafe 不变式，就不要让下游 crate 直接写它。</li>
+<li><strong>safe 参数必须先解析。</strong> 来自用户的长度、索引、地址、通道号、频率、位宽，必须先变成校验过的类型或返回 <code>Result</code> / <code>Option</code>，不能直接喂给 unsafe。</li>
+<li><strong>unsafe helper 优先私有。</strong> 如果一个 helper 的调用者必须满足硬件前提，把它做成私有函数，由同模块 safe API 建立前提；不要把负担甩给下游。</li>
+<li><strong>Drop 要先停硬件再释放资源。</strong> DMA / 外设传输 guard 的 <code>Drop</code> 必须 cancel-then-quiesce，避免缓冲区释放后硬件仍在写。</li>
+<li><strong>unsafe impl 要写理由。</strong> <code>unsafe impl Send</code> / <code>Sync</code> 必须说明为什么跨上下文移动不会破坏独占、别名或中断不变式。</li>
+<li><strong>不要用 HIL 掩盖 UB 风险。</strong> 真机通过只能证明一个路径工作；若 safe 输入空间里仍有能触发 UB 的值，封装仍然 unsound。</li>
+</ul>
+<p>0.6.0 的 P0 收敛把这条规则落到公共 safe API 上:会影响 unsafe 前提的裸通道号、外设索引、pad 编号和 eFuse 地址不再直接外露,而是先变成 <code>DmaChannel</code>、<code>DmaTransferSize</code>/<code>DmaSyncMask</code>、<code>GpioPad</code>/<code>UartPad</code>/<code>MuxFunction</code>、<code>GpioBank</code>、<code>TimerChannel</code>、<code>UartPort</code>、<code>UartClock</code>、<code>PwmChannelId</code>、<code>EfuseByteAddress</code> 等类型。eFuse 编程这种不可逆且 soundness/HIL 未闭合的路径保持 <code>unstable</code>,默认稳定面只保留只读 byte API。DMA 虽已有 typed token/owned-transfer 设计,但 cache-line ownership、timeout quiescence 和 async cancellation 不变式尚未闭合,所以公共 <code>dma</code> 模块整体保持 <code>unstable</code>。</p>
+<h2 id="原子与临界区政策"><a class="header" href="#原子与临界区政策">原子与临界区政策</a></h2>
+<p>本系列产品按两个现实目标设计并审计同步代码:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>目标形态</th><th>本仓策略</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>单 hart + 无 A 扩展</strong></td><td>WS63 当前主路径。目标必须声明为无原子,不得发 <code>lr/sc/amo*</code>;需要 RMW/CAS 语义时走 <code>portable-atomic</code> 的 <code>critical-section</code> polyfill。<code>hisi-riscv-rt</code> 提供 <code>critical-section-single-hart</code>:在单 hart 上临时关中断,让 <code>读-改-写</code> 不被 ISR 打断。</td></tr>
+<tr><td><strong>多 hart + 有 A 扩展</strong></td><td>未来或其它产品的常见形态。单变量 flag/计数器可优先用硬件 atomic;跨多个字段的不变式、队列/waker 注册、与中断 enable/ack 绑定的复合状态仍要用 <code>critical-section</code>、专门锁或平台级跨 hart 同步。</td></tr>
+</tbody>
+</table>
+</div>
+<p>其它组合(单 hart + 有 A、多 hart + 无 A)不作为本系列产品的默认设计目标:前者可按“有 A 但仍是单 hart“简化,后者不能靠关当前 hart 中断建立全局互斥,必须另有平台级锁或把共享状态限制到单 hart owner。</p>
+<p>这条政策的关键边界是: <strong><code>critical-section</code> 是短内存元数据保护,不是外设事务锁。</strong> HAL 可以在内部使用 atomic 或 <code>critical_section::with</code>,但公共 API 不应要求上层用户手动关中断或手动进入临界区。</p>
+<p><code>critical_section::with</code> / irq-disabled 区间内只允许做短小、可审计的内存状态更新:</p>
+<ul>
+<li>外设 singleton / DMA channel claim 的 flag;</li>
+<li>引用计数、状态枚举、bitflag;</li>
+<li><code>critical_section::Mutex&lt;Cell&lt;_&gt;&gt;</code> / <code>RefCell&lt;_&gt;</code> 里的小状态;</li>
+<li>async waker slot 注册、<code>IrqSignal</code> 的 fired 标志;</li>
+<li>与中断 ack/enable 配对的最小 bookkeeping。</li>
+</ul>
+<p>这些区间内禁止做任何可能等待进度、调用未知代码或显著拉高中断延迟的事:</p>
+<ul>
+<li>不轮询硬件 ready,不等 FIFO、DMA active、clock lock、reset done;</li>
+<li>不做 SPI/UART/I2C/DMA 传输,不做 bulk copy/cache 大范围维护;</li>
+<li>不 <code>delay</code>、<code>block_on</code>、自旋等待另一个中断;</li>
+<li>不调用用户回调、trait object、闭包或其它未知耗时的函数;</li>
+<li>不持有临界区内借用跨 <code>.await</code>。</li>
+</ul>
+<p>如果一个驱动事务需要保护“我正在使用这个外设“这样的不变式,正确形态是把临界区切成两个短片段:进入时设置 <code>Busy</code>/claim,退出时清除状态并 wake;实际 MMIO 编程、传输、等待硬件完成都在临界区外进行。来自 ISR 的路径也同理:ISR 只 ack / record / wake,用户业务逻辑在普通上下文、task 或 future poll 后运行。HAL 不得在持有 <code>critical-section</code> 或 irq-disabled 状态时调用用户回调;若必须提供 ISR-context callback,必须在 API 文档中明说且不得同时持有内部临界区。</p>
+<h2 id="和稳定--不稳定门控的关系"><a class="header" href="#和稳定--不稳定门控的关系">和稳定 / 不稳定门控的关系</a></h2>
+<p><a href="02-stable-unstable.html">稳定 / 不稳定 API 门控</a> 的规则是“默认只暴露 HIL 真机验证过的 API”。Safe/Unsafe 政策在它下面再加一条负面约束：</p>
+<blockquote>
+<p>有 Tier D SAFETY 注释缺口或确认 safe→unsafe unsound forwarding 的 API，不能毕业为 stable。</p>
+</blockquote>
+<p>也就是说：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>状态</th><th>对 API 稳定性的影响</th></tr>
+</thead>
+<tbody>
+<tr><td>HIL 未覆盖</td><td>保持 <code>unstable</code></td></tr>
+<tr><td>HIL 已覆盖，但 unsafe 封装有确认 soundness 问题</td><td>先修 soundness，不能 stable</td></tr>
+<tr><td>HIL 已覆盖，只有 Tier C 注释</td><td>可继续人工判断；毕业前应补强</td></tr>
+<tr><td>HIL 已覆盖，unsafe 封装 A/B 且无确认 soundness 问题</td><td>满足 safe/unsafe 侧毕业条件</td></tr>
+</tbody>
+</table>
+</div>
+<p>这条规则避免“上板跑过一次”被误解成“所有 safe 输入都安全”。HIL 是硅片行为证据，unsafe 审计是 Rust 抽象边界证据，两者缺一不可。</p>
+<h2 id="验证分层"><a class="header" href="#验证分层">验证分层</a></h2>
+<p>本仓不追求一次性给整个 HAL 做 RustBelt 级别的全 soundness 证明。实际路线是分层、可复现、逐步收敛：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>层</th><th>工具 / 方法</th><th>覆盖什么</th></tr>
+</thead>
+<tbody>
+<tr><td>编译期</td><td>所有权 token、lifetime、typestate、sealed trait</td><td>外设独占、非法配置不可表达</td></tr>
+<tr><td>注释审计</td><td><code>clippy::undocumented_unsafe_blocks</code> + 人工审阅</td><td>每个 unsafe 的前提是否写清</td></tr>
+<tr><td>静态候选</td><td>safe→unsafe forwarding 扫描</td><td>找出需要人工判定的公共 API</td></tr>
+<tr><td>host 测试</td><td>unit / property tests</td><td>纯逻辑边界、newtype 构造、状态机编码</td></tr>
+<tr><td>Miri</td><td>host-testable 路径</td><td>动态 UB / aliasing 候选</td></tr>
+<tr><td>Kani / Verus</td><td>关键纯逻辑函数 harness</td><td>穷尽检查长度、计数、溢出、状态转换</td></tr>
+<tr><td>HIL</td><td>真实 WS63 硅片</td><td>寄存器序列、时钟、DMA、IRQ、cache 的实际行为</td></tr>
+</tbody>
+</table>
+</div>
+<p>AI 辅助验证只能作为候选生成器：可以帮助写审计队列、harness 草稿或规约草稿，但不能替代工具输出和人工审阅。被信任的是 clippy/Miri/Kani/Verus/Lean kernel/HIL 的可复现结果，不是 LLM 的自然语言结论。</p>
+<h2 id="落地流程"><a class="header" href="#落地流程">落地流程</a></h2>
+<p>涉及 unsafe 的 PR 或 release 前，按这个顺序做：</p>
+<ol>
+<li><strong>列清单</strong>：<code>bash .agents/skills/safe-unsafe-verify/verify.sh --audit-only</code>，记录 unsafe 分布和 safe→unsafe 候选。</li>
+<li><strong>补 SAFETY</strong>：先补 Tier D，再补高风险 Tier C。DMA、cache、interrupt、peripheral singleton 优先。</li>
+<li><strong>人工判定候选</strong>：对每个 safe→unsafe forwarding，确认 safe API 是否已经校验了长度、范围、状态和所有权。</li>
+<li><strong>跑 clippy baseline</strong>：<code>bash .agents/skills/safe-unsafe-verify/verify.sh</code>，记录 <code>undocumented_unsafe_blocks</code> 收敛情况。</li>
+<li><strong>补 host 测试 / harness</strong>：优先验证纯逻辑边界，如 DMA beats 上限、timeout tick 计算、typed config 构造器。</li>
+<li><strong>上板验证</strong>：只有涉及硬件行为的结论，必须用 HIL 或明确标成未验证。</li>
+<li><strong>接稳定门控</strong>：有 HIL 且无确认 soundness 缺口，才考虑从 <code>unstable</code> 毕业。</li>
+</ol>
+<p>当前基线（2026-07-02）：<code>crates/hisi-riscv-hal/src</code> 有 486 处 <code>unsafe</code> 命中，<code>clippy::undocumented_unsafe_blocks</code> 仍未形成门禁；Miri 和 Kani 还没有形成门禁。这是<strong>整改起点</strong>，不是已完成状态。</p>
+<h2 id="参考实现方向"><a class="header" href="#参考实现方向">参考实现方向</a></h2>
+<p>优先把这些模块作为 P0 收敛对象：</p>
+<ul>
+<li><code>dma.rs</code>：缓冲区所有权、cache maintenance、channel claim、Drop quiesce，是 unsafe 风险最高的模块。</li>
+<li><code>spi.rs</code> / <code>uart.rs</code>：公共操作 API 多，容易出现 safe 参数进入 MMIO / DMA 路径。</li>
+<li><code>gpio.rs</code> / <code>peripherals.rs</code>：singleton 和 <code>steal()</code> 是资源独占模型的根。</li>
+<li><code>cache.rs</code> / <code>interrupt.rs</code>：inline asm、CSR、全局中断状态需要更强 SAFETY 注释。</li>
+</ul>
+<p>不要把这个政策理解成“所有 unsafe 都要删掉”。正确目标是：<strong>unsafe 短、局部、可审计；safe API 的不变式由类型、privacy 和验证流程共同守住。</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../explanation/policies/02-stable-unstable.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../../explanation/02-boot-flow.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../explanation/policies/02-stable-unstable.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../../explanation/02-boot-flow.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../../mark-09e88c2c.min.js"></script>
+        <script src="../../searcher-09f2665d.js"></script>
+
+        <script src="../../clipboard-1626706a.min.js"></script>
+        <script src="../../highlight-abc7f01d.js"></script>
+        <script src="../../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../theme/hisi-docs-86fac877.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

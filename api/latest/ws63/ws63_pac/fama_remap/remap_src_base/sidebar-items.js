@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RemapSrcBaseSpec"],"type":["R","W"]};

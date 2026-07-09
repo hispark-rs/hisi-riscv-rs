@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Scph","Scpol","Trsm"],"struct":["SpiCtraSpec"],"type":["Dfs32R","Dfs32W","R","ScphR","ScphW","ScpolR","ScpolW","SoeR","SoeW","TrsmR","TrsmW","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecSampleperDataSpec"],"type":["ClkFreqR","ClkFreqW","PeriodR","PeriodW","R","W"]};

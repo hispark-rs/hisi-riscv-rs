@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgClkDiv1Spec"],"type":["AnaDivThR","AnaDivThW","PrechgDivThR","PrechgDivThW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgRamSelSpec"],"type":["R","W"]};

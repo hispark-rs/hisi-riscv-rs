@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TrngTotalFailureTestCkThSpec"],"type":["R","TotalFailureCkHigR","TotalFailureCkHigW","W"]};

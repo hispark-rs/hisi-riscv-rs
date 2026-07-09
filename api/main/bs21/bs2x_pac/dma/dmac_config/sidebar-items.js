@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DmacConfigSpec"],"type":["DmacEnR","DmacEnW","DmacM1R","DmacM1W","DmacM2R","DmacM2W","R","W"]};

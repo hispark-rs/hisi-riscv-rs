@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UartGpRegSpec"],"type":["R","UartGpRegR","UartGpRegW","W"]};

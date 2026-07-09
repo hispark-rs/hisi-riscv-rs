@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgFreg7Spec"],"type":["CfgChopclkDivDlySelR","CfgChopclkDivDlySelW","CfgChopclkDivFreqSelR","CfgChopclkDivFreqSelW","CfgIdacSelPgaR","CfgIdacSelPgaW","CfgIdacSelPreampR","CfgIdacSelPreampW","CfgTopbiasTrimR","CfgTopbiasTrimW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["I2sBclkDivNumSpec"],"type":["BclkDivNumR","BclkDivNumW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecTaskStopSpec"],"type":["R","StopR","StopW","W"]};

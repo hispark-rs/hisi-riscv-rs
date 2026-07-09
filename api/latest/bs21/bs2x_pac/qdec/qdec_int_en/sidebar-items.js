@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecIntEnSpec"],"type":["AccEnR","AccEnW","DblEnR","DblEnW","R","ReportEnR","ReportEnW","SampleEnR","SampleEnW","StoppedR","StoppedW","W"]};

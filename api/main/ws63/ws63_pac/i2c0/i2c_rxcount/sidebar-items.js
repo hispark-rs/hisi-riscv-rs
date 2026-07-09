@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["I2cRxcountSpec"],"type":["R","RxcountR","RxcountW","W"]};

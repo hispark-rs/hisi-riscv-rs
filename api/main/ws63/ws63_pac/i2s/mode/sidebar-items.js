@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ModeSpec"],"type":["ChannelsR","ChannelsW","ClkEdgeR","ClkEdgeW","MasterSlaveR","MasterSlaveW","PcmModeR","PcmModeW","R","W"]};

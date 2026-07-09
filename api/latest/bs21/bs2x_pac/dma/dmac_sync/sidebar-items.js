@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DmacSyncSpec"],"type":["DamcSyncR","DamcSyncW","R","W"]};

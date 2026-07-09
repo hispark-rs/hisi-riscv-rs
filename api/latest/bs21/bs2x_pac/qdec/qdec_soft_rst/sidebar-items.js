@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecSoftRstSpec"],"type":["R","SoftRstR","SoftRstW","W"]};

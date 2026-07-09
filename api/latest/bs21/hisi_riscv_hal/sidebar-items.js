@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["any_peripheral","infallible"],"mod":["delay","dma","gadc","gpio","i2c","interrupt","keyscan","pdm","peripherals","prelude","pwm","qdec","rtc","soc","spi","tcxo","time","timer","trng","uart","ulp_gpio","usb","wdt"]};

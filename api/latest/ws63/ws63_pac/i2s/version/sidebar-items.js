@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["VersionSpec"],"type":["LoopbackModeR","LoopbackModeW","R","VersionR","W"]};

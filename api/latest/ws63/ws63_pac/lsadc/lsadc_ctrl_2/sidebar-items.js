@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["LsadcCtrl2Spec"],"type":["R","RorimR","RorimW","RormisR","RorrisR","RximR","RximW","RxmisR","RxrisR","W"]};

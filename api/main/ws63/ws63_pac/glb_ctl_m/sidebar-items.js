@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["aon_crg_cken_ctl","aon_soft_rst_ctl","bcpu_reset_sts","chip_reset","mcpu_reset_sts","reset_sts_clear"],"struct":["RegisterBlock"],"type":["AonCrgCkenCtl","AonSoftRstCtl","BcpuResetSts","ChipReset","McpuResetSts","ResetStsClear"]};

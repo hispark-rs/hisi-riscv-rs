@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgCicFilterEnSpec"],"type":["CicFilterEnR","CicFilterEnW","R","W"]};
