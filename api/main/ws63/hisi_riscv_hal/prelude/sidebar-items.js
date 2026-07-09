@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Interrupt"],"macro":["block"]};
+window.SIDEBAR_ITEMS = {"enum":["Interrupt"],"macro":[["block",1]]};

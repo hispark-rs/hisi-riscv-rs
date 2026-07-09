@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -253,19 +253,19 @@ cargo clippy --locked --all-features
 cargo doc --locked --no-deps --document-private-items
 
 # hisi-riscv-rt
-cargo +hisi-riscv check --locked --target riscv32imfc-unknown-none-elf
-cargo +hisi-riscv clippy --locked --target riscv32imfc-unknown-none-elf -- -D warnings
-cargo +hisi-riscv doc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
+cargo check -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo doc -Zbuild-std=core,alloc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
 
 # hisi-riscv-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
-cargo check --locked --no-default-features --features chip-ws63,rt,async,embassy
-cargo check --locked --no-default-features --features chip-bs21,rt,unstable
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async,embassy
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-bs21,rt,unstable
 </code></pre>
 <p>HAL release 如果改变 stable API、驱动行为、unsafe 封装或 HIL 证据，继续跑对应专项检查：</p>
 <pre><code class="language-bash"># HAL driver-level embedded-test；详见 how-to/07-run-hil-tests.md
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=../../hil/embedded-test-runner.sh \
-cargo test --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
 </code></pre>
@@ -300,7 +300,7 @@ git push origin main
 <p>父仓 tag 只创建 firmware GitHub Release，不发布 crates.io crate。发布前确认：</p>
 <pre><code class="language-bash">git submodule status --recursive
 git status --short
-cargo build --release
+cargo build -Zbuild-std=core,alloc --release
 cargo fmt --all -- --check
 </code></pre>
 <p>如果 release 包含 HAL stable API 或真机行为变化，按<a href="07-run-hil-tests.html">如何运行 HIL 测试</a>跑对应 HIL；如果只更新文档，也至少跑：</p>

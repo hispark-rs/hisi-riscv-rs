@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -185,7 +185,7 @@
 <h1 id="如何从模板新建一个工程"><a class="header" href="#如何从模板新建一个工程">如何从模板新建一个工程</a></h1>
 <p>要从零起一个 WS63/BS2X 应用，用 <code>cargo generate</code> 从模板仓库 <a href="https://github.com/hispark-rs/hisi-rs-template">hisi-rs-template</a> 生成——它帮你配好工具链、链接脚本、依赖和一份 <code>justfile</code>，开箱即可构建+烧录。</p>
 <blockquote>
-<p>前提：已<a href="01-install-toolchain.html">安装 hisi-riscv 工具链</a>；<code>cargo install cargo-generate</code>。</p>
+<p>前提：已<a href="01-install-toolchain.html">安装官方 Rust 工具链</a>；<code>cargo install cargo-generate</code>。</p>
 </blockquote>
 <h2 id="生成"><a class="header" href="#生成">生成</a></h2>
 <pre><code class="language-bash">cargo generate --git https://github.com/hispark-rs/hisi-rs-template
@@ -211,8 +211,8 @@
 <tr><th>配方</th><th>做什么</th></tr>
 </thead>
 <tbody>
-<tr><td><code>just build</code></td><td><code>cargo build --release</code> 编出 ELF</td></tr>
-<tr><td><code>just run</code></td><td>在 QEMU 里跑（<code>cargo run --release</code>）</td></tr>
+<tr><td><code>just build</code></td><td><code>cargo build -Zbuild-std=core,alloc --release</code> 编出 ELF</td></tr>
+<tr><td><code>just run</code></td><td>在 QEMU 里跑（<code>cargo run -Zbuild-std=core,alloc --release</code>）</td></tr>
 <tr><td><code>just patch</code>（WS63 例外）</td><td>build 后 <code>hisi-fwpkg patch-hash {{elf}}</code>，用于 <code>probe-rs run</code> / embedded-test 这类需要 ELF 元数据的路径</td></tr>
 <tr><td><code>just image</code></td><td>build 后 <code>hisi-fwpkg plan --image-output</code> 生成 <code>*.img</code> + <code>*.plan.json</code></td></tr>
 <tr><td><code>just flash</code></td><td>从 plan 读取 <code>base_addr</code>，用 <code>probe-rs download --binary-format bin --base-address</code> 烧完整 image</td></tr>

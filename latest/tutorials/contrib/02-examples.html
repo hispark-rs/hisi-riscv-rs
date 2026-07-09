@@ -36,10 +36,10 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-9bcc735b.js"></script>
+        <script src="../../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,19 +193,19 @@ semihost_selftest（半主机退出码）。每一步都有可见结果。</p>
 <p>示例都是<strong>根工作区的成员</strong>，所以一律从仓库根目录用 <code>-p &lt;name&gt;</code> 构建，再用同一条
 命令模板运行：</p>
 <div class="hisi-chip-block" data-hisi-chip="ws63">
-<pre><code class="language-bash">cargo build -p &lt;name&gt; --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p &lt;name&gt; --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/&lt;name&gt;</code></pre>
 </div>
 
 <div class="hisi-chip-block" data-hisi-chip="bs21">
-<pre><code class="language-bash">cargo build --manifest-path examples/bs21/Cargo.toml --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --manifest-path examples/bs21/Cargo.toml --release
 qemu-system-riscv32 -M bs21 -nographic -bios none \
     -kernel examples/bs21/target/riscv32imfc-unknown-none-elf/release/bs21_&lt;name&gt;</code></pre>
 </div>
 
 <div class="hisi-chip-block" data-hisi-chip="bs20">
-<pre><code class="language-bash">cargo build --manifest-path examples/bs20/Cargo.toml --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --manifest-path examples/bs20/Cargo.toml --release
 qemu-system-riscv32 -M bs20 -nographic -bios none \
     -kernel examples/bs20/target/riscv32imfc-unknown-none-elf/release/bs20_&lt;name&gt;</code></pre>
 </div>
@@ -218,7 +218,7 @@ qemu-system-riscv32 -M bs20 -nographic -bios none \
 </ul>
 <p>退出 QEMU 始终是：按 <code>Ctrl-A</code>，再按 <code>X</code>。</p>
 <h2 id="第-1-步blinkygpio-翻转无串口"><a class="header" href="#第-1-步blinkygpio-翻转无串口">第 1 步：blinky（GPIO 翻转，无串口）</a></h2>
-<pre><code class="language-bash">cargo build -p blinky --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p blinky --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/blinky
 </code></pre>
@@ -229,7 +229,7 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
 <p>关于构建目标和产物路径的细节，见 <a href="../../how-to/02-build-example.html">构建一个示例</a>。</p>
 </blockquote>
 <h2 id="第-2-步uart_hello串口-banner"><a class="header" href="#第-2-步uart_hello串口-banner">第 2 步：uart_hello（串口 banner）</a></h2>
-<pre><code class="language-bash">cargo build -p uart_hello --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p uart_hello --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
 </code></pre>
@@ -247,7 +247,7 @@ tick 2
 blinky 才是当前确认可观测的真机行为。</p>
 </blockquote>
 <h2 id="第-3-步timer_irq定时器中断"><a class="header" href="#第-3-步timer_irq定时器中断">第 3 步：timer_irq（定时器中断）</a></h2>
-<pre><code class="language-bash">cargo build -p timer_irq --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p timer_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/timer_irq
 </code></pre>
@@ -262,7 +262,7 @@ OK: timer interrupts delivered
 <p>看到 <code>timer irq #</code> 不断递增、最后出现 <code>OK: timer interrupts delivered</code>，
 说明 QEMU 的中断投递闭环正常。</p>
 <h2 id="第-4-步gpio_irqgpio-中断"><a class="header" href="#第-4-步gpio_irqgpio-中断">第 4 步：gpio_irq（GPIO 中断）</a></h2>
-<pre><code class="language-bash">cargo build -p gpio_irq --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p gpio_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/gpio_irq
 </code></pre>
@@ -278,7 +278,7 @@ OK: custom local IRQ (&gt;=32) delivered
 <code>semihost_selftest</code> 跑完后会用半主机的“退出“操作返回退出码：PASS 返回 <code>0</code>，FAIL 返回 <code>1</code>，
 panic 返回 <code>2</code>。这个退出码会变成 <strong>QEMU 进程自己的退出码</strong>，非常适合写进自动化脚本。</p>
 <p>要让半主机生效，必须加上 <code>-semihosting</code>：</p>
-<pre><code class="language-bash">cargo build -p semihost_selftest --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p semihost_selftest --release
 qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
     -kernel target/riscv32imfc-unknown-none-elf/release/semihost_selftest
 </code></pre>

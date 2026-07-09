@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,7 +184,7 @@
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="原理与背景--explanation"><a class="header" href="#原理与背景--explanation">原理与背景 · Explanation</a></h1>
 <p>这一章不是教你“怎么做“，也不是给你查“叫什么“的索引——它讲的是<strong>为什么</strong>：
-为什么栈这样分层、为什么要一条自定义工具链、为什么一个裸 ELF 在硅片上不会启动、
+为什么栈这样分层、为什么要 <code>riscv32imfc</code> 硬浮点无原子 target、为什么一个裸 ELF 在硅片上不会启动、
 为什么驱动级测试用 embedded-test/semihosting、示例级测试仍用 UART 标记串。</p>
 <p>如果你想动手，去 <a href="../tutorials/00-index.html">教程</a> 或 <a href="../how-to/00-index.html">操作指南</a>；
 如果你想查一个确切的地址、字段或 API，去 <a href="../reference/00-index.html">参考</a>。
@@ -211,8 +211,8 @@ HIL 真机验证过的接口,没上板的实验性 surface 关在 <code>unstable
 封进驱动、用 sealed trait 锁住扩展点。<strong>为什么这样分层。</strong></li>
 <li><a href="02-boot-flow.html">启动流程：mask ROM → flashboot → app</a>——从上电到 <code>main()</code> 的整条引导链，
 以及为什么“补 0x300 头部、烧到 app 分区“是必须的，<strong>为什么一个裸 ELF 不会启动</strong>。</li>
-<li><a href="03-hardfloat-toolchain.html">硬浮点工具链</a>——为什么是一条把 <code>riscv32imfc</code> 烤进 builtin 的
-自定义 rustc，<strong>而不是</strong> <code>-Z build-std</code>；hard-float ABI、无原子、code model 的来龙去脉。</li>
+<li><a href="03-hardfloat-toolchain.html">硬浮点工具链</a>——为什么选择 <code>riscv32imfc</code> 硬浮点无原子 target，
+以及当前为什么用官方 nightly + <code>rust-src</code> + <code>-Zbuild-std</code>。</li>
 <li><a href="04-async-embassy.html">async 与 embassy</a>——阻塞驱动、<code>async</code> feature、<code>embassy</code> feature
 三者的关系，以及它<strong>为什么能在一颗没有原子扩展的核上跑起来</strong>。</li>
 <li><a href="05-secure-boot.html">安全启动与签名</a>——为什么开发片把 secure boot <strong>关掉</strong>、这意味着什么、

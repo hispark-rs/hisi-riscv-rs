@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -236,7 +236,7 @@
 <p>典型启用方式：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf --test hil
 </code></pre>
 <h2 id="hil-smokesh-当前检查的-grep-模式"><a class="header" href="#hil-smokesh-当前检查的-grep-模式"><code>hil-smoke.sh</code> 当前检查的 grep 模式</a></h2>

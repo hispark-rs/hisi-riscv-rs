@@ -36,10 +36,10 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-9bcc735b.js"></script>
+        <script src="../../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,7 +201,7 @@
 </blockquote>
 <h2 id="第-1-步把-blinky-烧进真板"><a class="header" href="#第-1-步把-blinky-烧进真板">第 1 步：把 blinky 烧进真板</a></h2>
 <p>从仓库根目录走“编译 → 生成 plan image → 下载 → 复位“四步：</p>
-<pre><code class="language-bash">cargo build -p blinky --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p blinky --release
 
 hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
     --chip ws63 --image-output blinky.img &gt; blinky.plan.json

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,8 +186,8 @@
 <p>这一章是<strong>任务导向的菜谱</strong>：每篇回答一个「如何做某件事」的具体问题，假设你已经掌握了基础（不懂概念请看<a href="../explanation/00-index.html">原理与背景</a>，要查字段/地址/标记串请看<a href="../reference/00-index.html">参考</a>）。每篇都给出可照做的步骤，并尽量覆盖真实环境里的变体、坑和排错。</p>
 <h2 id="构建--build"><a class="header" href="#构建--build">构建 · Build</a></h2>
 <ul>
-<li><a href="01-install-toolchain.html">如何安装 hisi-riscv 工具链</a> —— 下载/链接（或源码构建）自定义硬浮点 rustc 工具链，并验证 <code>riscv32imfc</code> target。</li>
-<li><a href="02-build-example.html">如何构建一个示例</a> —— 从仓库根工作区 <code>cargo build -p &lt;name&gt; --release</code>，ELF 落点，release/debug 与 objcopy 到 bin。</li>
+<li><a href="01-install-toolchain.html">如何安装官方 Rust 工具链</a> —— 安装 pinned nightly、<code>rust-src</code> 与 LLVM tools，并验证 <code>riscv32imfc</code> target。</li>
+<li><a href="02-build-example.html">如何构建一个示例</a> —— 从仓库根工作区 <code>cargo build -Zbuild-std=core,alloc -p &lt;name&gt; --release</code>，ELF 落点，release/debug 与 objcopy 到 bin。</li>
 </ul>
 <h2 id="打包与烧录--flash"><a class="header" href="#打包与烧录--flash">打包与烧录 · Flash</a></h2>
 <ul>

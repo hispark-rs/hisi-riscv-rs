@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -199,13 +199,13 @@ probe-rs 烧录路径见<a href="04-flash-probe-rs.html">用 probe-rs 烧录</a>
 <p>这是默认 stable API 毕业要看的真机测试。命令里的 runner 只作用于这一次 <code>cargo test</code>：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
 </code></pre>
 <p>只构建测试 ELF、不烧板：</p>
-<pre><code class="language-bash">cargo test -p hisi-riscv-hal \
+<pre><code class="language-bash">cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -213,7 +213,7 @@ cargo test -p hisi-riscv-hal \
 <p>传给 <code>embedded-test</code> 的过滤参数放在 <code>--</code> 后面：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- gpio_output_readback
@@ -225,7 +225,7 @@ cargo test -p hisi-riscv-hal \
 <p><code>tests-hil</code> 是独立 workspace member，覆盖 CPU/PAC/critical-section 这类不属于单个 HAL 驱动的冒烟事实：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+cargo test -Zbuild-std=core,alloc -p tests-hil --target riscv32imfc-unknown-none-elf
 </code></pre>
 <p>它不在 <code>default-members</code> 里，普通 <code>cargo build</code> 不会拉 <code>embedded-test</code>。</p>
 <h2 id="跑示例级-uart-smoke"><a class="header" href="#跑示例级-uart-smoke">跑示例级 UART smoke</a></h2>

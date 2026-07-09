@@ -36,10 +36,10 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-9bcc735b.js"></script>
+        <script src="../../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -197,12 +197,12 @@
 <ul>
 <li>一台 Linux 电脑（本路径在 x86_64 Linux 上验证）。</li>
 <li>已安装 <a href="https://rustup.rs"><code>rustup</code></a>、<code>git</code>、<code>curl</code>。</li>
-<li>第 1 课会带你装好其余工具（自定义工具链、<code>cargo-generate</code>、<code>just</code>、烧录器、可选 QEMU）。</li>
+<li>第 1 课会带你装好其余工具（官方 pinned nightly、<code>cargo-generate</code>、<code>just</code>、烧录器、可选 QEMU）。</li>
 <li><strong>开发板可选</strong>：QEMU 不需要硬件；只有要烧真机（第 2 课后半段）时才需要一块 WS63 开发板。</li>
 </ul>
 <h2 id="三节课"><a class="header" href="#三节课">三节课</a></h2>
 <ol>
-<li><a href="01-setup.html">搭建环境（应用开发）</a> —— 装好 <code>hisi-riscv</code> 工具链、<code>cargo-generate</code>、<code>just</code>、<code>hisi-fwpkg</code>、烧录用的 probe-rs 分支，以及可选的 QEMU。</li>
+<li><a href="01-setup.html">搭建环境（应用开发）</a> —— 装好官方 Rust nightly、<code>cargo-generate</code>、<code>just</code>、<code>hisi-fwpkg</code>、烧录用的 probe-rs 分支，以及可选的 QEMU。</li>
 <li><a href="02-first-project.html">从模板创建你的第一个工程</a> —— <code>cargo generate</code> 生成 blinky 工程，<code>just run</code> 在 QEMU 里跑，再 <code>just flash</code> 烧到真板看 LED 闪。</li>
 <li><a href="03-uart.html">改造成一个 UART 程序</a> —— 用 <code>uart_hello</code> 起手，在 QEMU 里看到 <code>Hello from WS63 ...</code>。</li>
 </ol>

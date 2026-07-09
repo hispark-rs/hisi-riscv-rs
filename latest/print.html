@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-9bcc735b.js"></script>
+        <script src="toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -259,12 +259,12 @@
 <ul>
 <li>一台 Linux 电脑（本路径在 x86_64 Linux 上验证）。</li>
 <li>已安装 <a href="https://rustup.rs"><code>rustup</code></a>、<code>git</code>、<code>curl</code>。</li>
-<li>第 1 课会带你装好其余工具（自定义工具链、<code>cargo-generate</code>、<code>just</code>、烧录器、可选 QEMU）。</li>
+<li>第 1 课会带你装好其余工具（官方 pinned nightly、<code>cargo-generate</code>、<code>just</code>、烧录器、可选 QEMU）。</li>
 <li><strong>开发板可选</strong>：QEMU 不需要硬件；只有要烧真机（第 2 课后半段）时才需要一块 WS63 开发板。</li>
 </ul>
 <h2 id="三节课"><a class="header" href="#三节课">三节课</a></h2>
 <ol>
-<li><a href="#搭建环境应用开发">搭建环境（应用开发）</a> —— 装好 <code>hisi-riscv</code> 工具链、<code>cargo-generate</code>、<code>just</code>、<code>hisi-fwpkg</code>、烧录用的 probe-rs 分支，以及可选的 QEMU。</li>
+<li><a href="#搭建环境应用开发">搭建环境（应用开发）</a> —— 装好官方 Rust nightly、<code>cargo-generate</code>、<code>just</code>、<code>hisi-fwpkg</code>、烧录用的 probe-rs 分支，以及可选的 QEMU。</li>
 <li><a href="#从模板创建你的第一个工程">从模板创建你的第一个工程</a> —— <code>cargo generate</code> 生成 blinky 工程，<code>just run</code> 在 QEMU 里跑，再 <code>just flash</code> 烧到真板看 LED 闪。</li>
 <li><a href="#改造成一个-uart-程序">改造成一个 UART 程序</a> —— 用 <code>uart_hello</code> 起手，在 QEMU 里看到 <code>Hello from WS63 ...</code>。</li>
 </ol>
@@ -275,8 +275,8 @@
 <p>本课带你装好开发 WS63 应用所需的全部工具。注意：<strong>你不需要克隆monorepo</strong>——
 所有库依赖都来自 crates.io，工程将在下一课用 <code>cargo generate</code> 生成。</p>
 <blockquote>
-<p>本课只求“把工具装上“。每个工具的深入说明与故障排查（含 <strong>IDE / rust-analyzer
-已知问题</strong>）见 <a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>。</p>
+<p>本课只求“把工具装上“。每个工具的深入说明与故障排查见
+<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>。</p>
 </blockquote>
 <h2 id="第-0-步安装-rustrustup"><a class="header" href="#第-0-步安装-rustrustup">第 0 步：安装 Rust（rustup）</a></h2>
 <p>后面所有步骤都依赖 <code>rustup</code> / <code>cargo</code>。如果你机器上还没有，按 Rust 官方指引装一下
@@ -287,27 +287,25 @@
 <p>官方安装页（含 Windows / 其它方式）：<a href="https://www.rust-lang.org/tools/install">https://www.rust-lang.org/tools/install</a>。
 装完确认：<code>rustup --version</code> 和 <code>cargo --version</code> 都能打印版本即可。</p>
 </blockquote>
-<h2 id="第-1-步安装-hisi-riscv-工具链"><a class="header" href="#第-1-步安装-hisi-riscv-工具链">第 1 步：安装 hisi-riscv 工具链</a></h2>
+<h2 id="第-1-步安装官方-rust-nightly"><a class="header" href="#第-1-步安装官方-rust-nightly">第 1 步：安装官方 Rust nightly</a></h2>
 <p>WS63 应用核是 <code>riscv32imfc-unknown-none-elf</code>（硬件单精度浮点、无原子扩展）。
-这个目标被内建进了一个自定义的 <code>hisi-riscv</code> 工具链——它<strong>不是</strong> rustup 频道，需要手动下载并链接。</p>
-<p>下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），<strong>直接解压进 rustup 的 toolchains 目录</strong>——rustup 会自动识别，无需 <code>link</code>：</p>
-<pre><code class="language-bash">HOST=x86_64-unknown-linux-gnu
-curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-$HOST.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+这个 target 已经进入官方 <code>rustc</code> nightly；当前 rustup 还没有它的预编译
+<code>rust-std</code> 组件，所以需要安装 <code>rust-src</code>，由项目在构建时用
+<code>-Zbuild-std=core,alloc</code> 编出 <code>core</code> / <code>alloc</code>。</p>
+<pre><code class="language-bash">rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 </code></pre>
-<blockquote>
-<p>tarball 顶层是 <code>stage2/</code>，<code>--strip-components=1</code> 把它剥掉，让 <code>bin/lib/libexec</code>
-落到 <code>hisi-riscv/</code> 根下。这样工具链自包含，删掉下载的临时文件也不影响。</p>
-<p>其它主机把 <code>HOST</code> 换成对应三元组即可：<code>aarch64-unknown-linux-gnu</code>、
-<code>aarch64-apple-darwin</code>、<code>x86_64-pc-windows-msvc</code>。</p>
-</blockquote>
-<p>确认链接成功：</p>
-<pre><code class="language-bash">rustup toolchain list | grep hisi-riscv
+<p>确认 target 和 rustup 组件状态：</p>
+<pre><code class="language-bash">rustc +nightly-2026-07-09 --print target-list | grep riscv32imfc
+rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
+    echo "rustup has no prebuilt rust-std yet; use -Zbuild-std=core,alloc"
 </code></pre>
-<p>你应当看到：</p>
-<pre><code class="language-console">hisi-riscv
-</code></pre>
+<p>第一行应能看到 <code>riscv32imfc-unknown-none-elf</code>。第二行现在通常会提示还没有预编译
+<code>rust-std</code>，这是预期状态。</p>
 <h2 id="第-2-步安装-cargo-generate-与-just"><a class="header" href="#第-2-步安装-cargo-generate-与-just">第 2 步：安装 cargo-generate 与 just</a></h2>
 <p>下一课用 <code>cargo generate</code> 从模板生成工程；生成出来的工程用 <code>just</code> 跑各种命令：</p>
 <pre><code class="language-bash">cargo install cargo-generate just
@@ -341,15 +339,16 @@ tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/to
 <pre><code class="language-bash">qemu-system-riscv32 -M help | grep ws63
 </code></pre>
 <h2 id="第-6-步验证工具链"><a class="header" href="#第-6-步验证工具链">第 6 步：验证工具链</a></h2>
-<p><code>hisi-riscv</code> 工具链内建了 WS63 目标，确认它在目标列表里：</p>
-<pre><code class="language-bash">rustc +hisi-riscv --print target-list | grep riscv32imfc
+<p>确认当前工程目录里 <code>rustc</code> 能看到 WS63 目标：</p>
+<pre><code class="language-bash">rustc --print target-list | grep riscv32imfc
 </code></pre>
 <p>你应当看到：</p>
 <pre><code class="language-console">riscv32imfc-unknown-none-elf
 </code></pre>
 <blockquote>
-<p>看到这一行就说明工具链装好了。下一课生成的工程里有 <code>rust-toolchain.toml</code>，
-会自动选用 <code>hisi-riscv</code>，所以在工程目录里直接敲 <code>cargo</code> 即可，无需 <code>+hisi-riscv</code>。</p>
+<p>看到这一行就说明 pinned nightly 生效了。下一课生成的工程里有
+<code>rust-toolchain.toml</code> 和 <code>justfile</code>，会自动选用该 nightly，并在构建 recipe
+中带上 <code>-Zbuild-std=core,alloc</code>。</p>
 </blockquote>
 <p>工具齐了！下一课我们生成你的第一个工程 ——
 <a href="#从模板创建你的第一个工程">从模板创建你的第一个工程</a>。</p>
@@ -503,11 +502,11 @@ tick 2
 <p>本课带你装好全部工具、克隆带子模块的monorepo，并以一次成功的编译收尾。
 请逐步执行，每一步都有可见的结果。</p>
 <blockquote>
-<p>本课只求“把工具跑起来“。每个工具的深入安装与故障排查（含 <strong>IDE / rust-analyzer
-已知问题</strong>）见 <a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>。</p>
+<p>本课只求“把工具跑起来“。每个工具的深入安装与故障排查见
+<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>。</p>
 </blockquote>
 <h2 id="第-0-步安装-rustrustup-1"><a class="header" href="#第-0-步安装-rustrustup-1">第 0 步：安装 Rust（rustup）</a></h2>
-<p>下面的工具链 link、子模块克隆、编译都依赖 <code>rustup</code> / <code>cargo</code>。如果还没装，按 Rust 官方
+<p>下面的工具链安装、子模块克隆、编译都依赖 <code>rustup</code> / <code>cargo</code>。如果还没装，按 Rust 官方
 指引装一下（一条命令、跨平台）：</p>
 <pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 </code></pre>
@@ -515,24 +514,25 @@ tick 2
 <p>官方安装页（含 Windows / 其它方式）：<a href="https://www.rust-lang.org/tools/install">https://www.rust-lang.org/tools/install</a>。
 装完确认：<code>rustup --version</code> 和 <code>cargo --version</code> 都能打印版本即可。</p>
 </blockquote>
-<h2 id="第-1-步安装-hisi-riscv-工具链-1"><a class="header" href="#第-1-步安装-hisi-riscv-工具链-1">第 1 步：安装 hisi-riscv 工具链</a></h2>
+<h2 id="第-1-步安装官方-rust-nightly-1"><a class="header" href="#第-1-步安装官方-rust-nightly-1">第 1 步：安装官方 Rust nightly</a></h2>
 <p>WS63 应用核是 <code>riscv32imfc-unknown-none-elf</code>（硬件单精度浮点、无原子扩展）。
-这个目标被内建进了一个自定义的 <code>hisi-riscv</code> 工具链——它<strong>不是</strong> rustup 频道，需要手动下载并链接。</p>
-<p>下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），<strong>直接解压进 rustup 的 toolchains 目录</strong>——rustup 会自动识别，无需 <code>link</code>：</p>
-<pre><code class="language-bash">curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+这个 target 已经进入官方 <code>rustc</code> nightly；当前 rustup 还没有它的预编译
+<code>rust-std</code> 组件，所以需要安装 <code>rust-src</code>，由仓库的 RISC-V 构建命令使用
+<code>-Zbuild-std=core,alloc</code>。</p>
+<pre><code class="language-bash">rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 </code></pre>
-<blockquote>
-<p>tarball 顶层是 <code>stage2/</code>，<code>--strip-components=1</code> 把它剥掉，让 <code>bin/lib/libexec</code>
-落到 <code>hisi-riscv/</code> 根下；工具链自包含，删掉下载的临时文件也不影响。</p>
-</blockquote>
-<p>确认链接成功：</p>
-<pre><code class="language-bash">rustup toolchain list | grep hisi-riscv
+<p>确认 target 和 rustup 组件状态：</p>
+<pre><code class="language-bash">rustc +nightly-2026-07-09 --print target-list | grep riscv32imfc
+rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
+    echo "rustup has no prebuilt rust-std yet; use -Zbuild-std=core,alloc"
 </code></pre>
-<p>你应当看到：</p>
-<pre><code class="language-console">hisi-riscv
-</code></pre>
+<p>第一行应能看到 <code>riscv32imfc-unknown-none-elf</code>。第二行现在通常会提示还没有预编译
+<code>rust-std</code>，这是预期状态。</p>
 <h2 id="第-2-步克隆仓库带子模块"><a class="header" href="#第-2-步克隆仓库带子模块">第 2 步：克隆仓库（带子模块）</a></h2>
 <p>示例、HAL、PAC、运行时都是子模块，务必带 <code>--recurse-submodules</code> 克隆：</p>
 <pre><code class="language-bash">git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs.git
@@ -541,8 +541,8 @@ cd hisi-riscv-rs
 <blockquote>
 <p>如果你已经克隆但忘了子模块，补一句：<code>git submodule update --init --recursive</code>。</p>
 </blockquote>
-<p>仓库根目录的 <code>rust-toolchain.toml</code> 已经把频道钉成了 <code>hisi-riscv</code>，
-所以在本仓库内执行的所有 <code>cargo</code> 命令都会自动用上刚装好的工具链。</p>
+<p>仓库根目录的 <code>rust-toolchain.toml</code> 已经把频道钉成了验证过的官方 nightly。
+RISC-V 构建命令需要带 <code>-Zbuild-std=core,alloc</code>；教程里的命令片段和 CI 都覆盖这一点。</p>
 <h2 id="第-3-步安装-qemu-模拟器"><a class="header" href="#第-3-步安装-qemu-模拟器">第 3 步：安装 QEMU 模拟器</a></h2>
 <p>第 2、3 课要用 <a href="https://github.com/hispark-rs/hisi-riscv-qemu"><code>hisi-riscv-qemu</code></a>——
 一个带 WS63 机器模型（<code>-M ws63</code>）的 QEMU 分支。在仓库<strong>同级</strong>目录里克隆并构建它：</p>
@@ -564,7 +564,7 @@ bash scripts/build.sh
 <li><strong>打过补丁的 probe-rs 分支</strong>（<code>hispark-rs/probe-rs</code>，分支 <code>add-hisilicon-ws63-bs21</code>）：
 上游 probe-rs 不认识 WS63，必须用这个分支，并配上 <code>HiSilicon_WS63.yaml</code>。</li>
 </ul>
-<p>安装方法（深入说明见 <a href="#如何安装-hisi-riscv-工具链">安装工具链</a> 与
+<p>安装方法（深入说明见 <a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a> 与
 <a href="#如何用-probe-rs-烧录到真机">用 probe-rs 烧录到真机</a>）：</p>
 <pre><code class="language-bash"># hisi-fwpkg
 cargo +stable install hisi-fwpkg-cli --version 0.3.0
@@ -582,7 +582,7 @@ probe-rs --version
 <h2 id="第-5-步验证你的环境"><a class="header" href="#第-5-步验证你的环境">第 5 步：验证你的环境</a></h2>
 <p>回到仓库根目录，编译 blinky 示例——这是检验工具链是否就绪的最快办法：</p>
 <pre><code class="language-bash">cd ../hisi-riscv-rs
-cargo build -p blinky --release
+cargo build -Zbuild-std=core,alloc -p blinky --release
 </code></pre>
 <p>第一次编译会拉取依赖、编译 HAL，需要几分钟。结束时你应当看到类似：</p>
 <pre><code class="language-console">    Finished `release` profile [optimized + debuginfo] target(s) in ...
@@ -608,19 +608,19 @@ semihost_selftest（半主机退出码）。每一步都有可见结果。</p>
 <p>示例都是<strong>根工作区的成员</strong>，所以一律从仓库根目录用 <code>-p &lt;name&gt;</code> 构建，再用同一条
 命令模板运行：</p>
 <div class="hisi-chip-block" data-hisi-chip="ws63">
-<pre><code class="language-bash">cargo build -p &lt;name&gt; --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p &lt;name&gt; --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/&lt;name&gt;</code></pre>
 </div>
 
 <div class="hisi-chip-block" data-hisi-chip="bs21">
-<pre><code class="language-bash">cargo build --manifest-path examples/bs21/Cargo.toml --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --manifest-path examples/bs21/Cargo.toml --release
 qemu-system-riscv32 -M bs21 -nographic -bios none \
     -kernel examples/bs21/target/riscv32imfc-unknown-none-elf/release/bs21_&lt;name&gt;</code></pre>
 </div>
 
 <div class="hisi-chip-block" data-hisi-chip="bs20">
-<pre><code class="language-bash">cargo build --manifest-path examples/bs20/Cargo.toml --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --manifest-path examples/bs20/Cargo.toml --release
 qemu-system-riscv32 -M bs20 -nographic -bios none \
     -kernel examples/bs20/target/riscv32imfc-unknown-none-elf/release/bs20_&lt;name&gt;</code></pre>
 </div>
@@ -633,7 +633,7 @@ qemu-system-riscv32 -M bs20 -nographic -bios none \
 </ul>
 <p>退出 QEMU 始终是：按 <code>Ctrl-A</code>，再按 <code>X</code>。</p>
 <h2 id="第-1-步blinkygpio-翻转无串口"><a class="header" href="#第-1-步blinkygpio-翻转无串口">第 1 步：blinky（GPIO 翻转，无串口）</a></h2>
-<pre><code class="language-bash">cargo build -p blinky --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p blinky --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/blinky
 </code></pre>
@@ -644,7 +644,7 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
 <p>关于构建目标和产物路径的细节，见 <a href="#如何构建一个示例">构建一个示例</a>。</p>
 </blockquote>
 <h2 id="第-2-步uart_hello串口-banner"><a class="header" href="#第-2-步uart_hello串口-banner">第 2 步：uart_hello（串口 banner）</a></h2>
-<pre><code class="language-bash">cargo build -p uart_hello --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p uart_hello --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
 </code></pre>
@@ -662,7 +662,7 @@ tick 2
 blinky 才是当前确认可观测的真机行为。</p>
 </blockquote>
 <h2 id="第-3-步timer_irq定时器中断"><a class="header" href="#第-3-步timer_irq定时器中断">第 3 步：timer_irq（定时器中断）</a></h2>
-<pre><code class="language-bash">cargo build -p timer_irq --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p timer_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/timer_irq
 </code></pre>
@@ -677,7 +677,7 @@ OK: timer interrupts delivered
 <p>看到 <code>timer irq #</code> 不断递增、最后出现 <code>OK: timer interrupts delivered</code>，
 说明 QEMU 的中断投递闭环正常。</p>
 <h2 id="第-4-步gpio_irqgpio-中断"><a class="header" href="#第-4-步gpio_irqgpio-中断">第 4 步：gpio_irq（GPIO 中断）</a></h2>
-<pre><code class="language-bash">cargo build -p gpio_irq --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p gpio_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/gpio_irq
 </code></pre>
@@ -693,7 +693,7 @@ OK: custom local IRQ (&gt;=32) delivered
 <code>semihost_selftest</code> 跑完后会用半主机的“退出“操作返回退出码：PASS 返回 <code>0</code>，FAIL 返回 <code>1</code>，
 panic 返回 <code>2</code>。这个退出码会变成 <strong>QEMU 进程自己的退出码</strong>，非常适合写进自动化脚本。</p>
 <p>要让半主机生效，必须加上 <code>-semihosting</code>：</p>
-<pre><code class="language-bash">cargo build -p semihost_selftest --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p semihost_selftest --release
 qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
     -kernel target/riscv32imfc-unknown-none-elf/release/semihost_selftest
 </code></pre>
@@ -734,7 +734,7 @@ qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
 </blockquote>
 <h2 id="第-1-步把-blinky-烧进真板"><a class="header" href="#第-1-步把-blinky-烧进真板">第 1 步：把 blinky 烧进真板</a></h2>
 <p>从仓库根目录走“编译 → 生成 plan image → 下载 → 复位“四步：</p>
-<pre><code class="language-bash">cargo build -p blinky --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p blinky --release
 
 hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
     --chip ws63 --image-output blinky.img &gt; blinky.plan.json
@@ -804,8 +804,8 @@ grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或
 <p>这一章是<strong>任务导向的菜谱</strong>：每篇回答一个「如何做某件事」的具体问题，假设你已经掌握了基础（不懂概念请看<a href="#原理与背景--explanation">原理与背景</a>，要查字段/地址/标记串请看<a href="#本章导读--reference">参考</a>）。每篇都给出可照做的步骤，并尽量覆盖真实环境里的变体、坑和排错。</p>
 <h2 id="构建--build"><a class="header" href="#构建--build">构建 · Build</a></h2>
 <ul>
-<li><a href="#如何安装-hisi-riscv-工具链">如何安装 hisi-riscv 工具链</a> —— 下载/链接（或源码构建）自定义硬浮点 rustc 工具链，并验证 <code>riscv32imfc</code> target。</li>
-<li><a href="#如何构建一个示例">如何构建一个示例</a> —— 从仓库根工作区 <code>cargo build -p &lt;name&gt; --release</code>，ELF 落点，release/debug 与 objcopy 到 bin。</li>
+<li><a href="#如何安装官方-rust-工具链">如何安装官方 Rust 工具链</a> —— 安装 pinned nightly、<code>rust-src</code> 与 LLVM tools，并验证 <code>riscv32imfc</code> target。</li>
+<li><a href="#如何构建一个示例">如何构建一个示例</a> —— 从仓库根工作区 <code>cargo build -Zbuild-std=core,alloc -p &lt;name&gt; --release</code>，ELF 落点，release/debug 与 objcopy 到 bin。</li>
 </ul>
 <h2 id="打包与烧录--flash"><a class="header" href="#打包与烧录--flash">打包与烧录 · Flash</a></h2>
 <ul>
@@ -826,105 +826,61 @@ grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或
 <li><a href="#如何发布-crate-与父仓-release">如何发布 crate 与父仓 release</a> —— 子仓 crates.io 发布、父仓 firmware release、<code>Cargo.lock</code>/<code>--locked</code> 门禁和 submodule pointer 顺序。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="如何安装-hisi-riscv-工具链"><a class="header" href="#如何安装-hisi-riscv-工具链">如何安装 hisi-riscv 工具链</a></h1>
-<p>WS63 应用核是 <code>RV32IMFC_Zicsr</code>：<strong>硬件单精度浮点（ilp32f）、没有原子（‘a’）扩展</strong>。仓库用一套自定义的 <code>hisi-riscv</code> 工具链来构建——一套 stable rustc（1.96.0），把 target <code>riscv32imfc-unknown-none-elf</code> 作为 <strong>builtin</strong> 烤进去，并随附预编译的 <code>core</code>/<code>alloc</code>，因此<strong>不需要 <code>-Z build-std</code></strong>。它不是可分发的 rustup channel，必须先手动安装并 <code>link</code>。</p>
-<p>工具链的来历、ABI 取舍见<a href="#硬浮点工具链">硬浮点工具链</a>；target 命名细节见<a href="#工具链与编译目标">工具链与编译目标</a>。</p>
-<h2 id="方式一下载预编译-tarball推荐"><a class="header" href="#方式一下载预编译-tarball推荐">方式一：下载预编译 tarball（推荐）</a></h2>
-<p>发布页 <a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases">https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases</a> 为每个 host 提供 tarball（Linux x86_64/aarch64、macOS x86_64/aarch64、Windows x86_64）。挑你 host 对应的那个，<strong>直接解压进 rustup 的 toolchains 目录</strong>：</p>
-<pre><code class="language-bash"># 以 Linux x86_64 为例（换成你 host 对应的文件名）
-curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-
-# 解压进 ~/.rustup/toolchains/hisi-riscv/。tarball 顶层是 stage2/，用 --strip-components=1
-# 把它剥掉，让 bin/lib/libexec 直接落到 hisi-riscv/ 根下。
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+<h1 id="如何安装官方-rust-工具链"><a class="header" href="#如何安装官方-rust-工具链">如何安装官方 Rust 工具链</a></h1>
+<p>WS63 / BS2X 应用核使用 <code>RV32IMFC_Zicsr</code>：<strong>硬件单精度浮点（ilp32f）、没有原子（<code>a</code>）扩展</strong>。当前仓库使用官方 upstream Rust nightly：<code>rustc</code> 已内置 <code>riscv32imfc-unknown-none-elf</code> target。</p>
+<p>注意边界：这个 target 现在能被 <code>rustc --print target-list</code> 看见，但 rustup 还没有提供对应的预编译 <code>rust-std</code> 组件。因此不要写 <code>rustup target add riscv32imfc-unknown-none-elf</code>；现在的正确路径是安装 pinned nightly + <code>rust-src</code>，构建时使用 <code>-Zbuild-std=core,alloc</code>。</p>
+<p>工具链事实见<a href="#工具链与编译目标">工具链与编译目标</a>；硬浮点和上游化背景见<a href="#硬浮点工具链">硬浮点工具链</a>。</p>
+<h2 id="安装-pinned-nightly"><a class="header" href="#安装-pinned-nightly">安装 pinned nightly</a></h2>
+<p>仓库根的 <code>rust-toolchain.toml</code> 已经 pin 住当前验证过的 nightly。你可以让 rustup 按该文件自动安装，也可以显式安装：</p>
+<pre><code class="language-bash">rustup toolchain install nightly-2026-07-09 \
+    --profile minimal \
+    --component rust-src \
+    --component clippy \
+    --component rustfmt \
+    --component llvm-tools-preview
 </code></pre>
-<p>rustup 会自动把 <code>~/.rustup/toolchains/</code> 下的目录识别成工具链，<strong>无需 <code>rustup toolchain link</code></strong>。这样装好的工具链是<strong>自包含</strong>的——不依赖任何外部的 <code>stage2/</code> 目录，删掉下载和解压的临时文件也不影响。</p>
-<blockquote>
-<p>若你自定义过 <code>RUSTUP_HOME</code>，把上面的 <code>~/.rustup</code> 换成它（<code>rustup show home</code> 可查实际路径）。</p>
-</blockquote>
-<h2 id="方式二从源码构建"><a class="header" href="#方式二从源码构建">方式二：从源码构建</a></h2>
-<p>源码与构建配方都在工具链仓库 <a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain">https://github.com/hispark-rs/hisi-riscv-rust-toolchain</a>（它本质是带 WS63 target spec 的 rustc 分支 + 一份 <code>config.toml</code>）。构建很重（需要完整的 rustc bootstrap，几十分钟到数小时、十几 GB 磁盘），照仓库 README 跑 <code>x.py build</code> 即可。构建产物同样是一个 <code>stage2/</code>——把它的内容拷进 <code>~/.rustup/toolchains/hisi-riscv/</code>（<code>cp -a path/to/stage2/. ~/.rustup/toolchains/hisi-riscv/</code>），或用 <code>rustup toolchain link hisi-riscv path/to/stage2</code> 指过去（源码构建时 <code>stage2/</code> 就在本地，link 不拷贝、更省空间）。</p>
-<blockquote>
-<p>大多数人不需要从源码构建——只有你要改 target spec / 编译器本身时才需要。</p>
-</blockquote>
-<h2 id="验证"><a class="header" href="#验证">验证</a></h2>
-<p>确认 target 已 builtin（这是关键——没有它说明链接的工具链不对）：</p>
-<pre><code class="language-bash">rustc +hisi-riscv --print target-list | grep riscv32imfc
-# 期望输出： riscv32imfc-unknown-none-elf
+<p><code>rust-src</code> 用于 <code>-Zbuild-std=core,alloc</code>；<code>llvm-tools-preview</code> 提供 <code>rust-objcopy</code> / <code>rust-size</code> 等固件打包和 size report 工具。</p>
+<h2 id="验证-target"><a class="header" href="#验证-target">验证 target</a></h2>
+<p>确认 <code>rustc</code> 已经认识这个官方 target：</p>
+<pre><code class="language-bash">rustc --print target-list | grep riscv32imfc
 </code></pre>
-<p>确认 <code>core</code> 预编译可用（直接试构建，下一篇<a href="#如何构建一个示例">如何构建一个示例</a>）：</p>
-<pre><code class="language-bash">rustc +hisi-riscv --version          # 应打印 1.96.0 系列版本
+<p>预期能看到：</p>
+<pre><code class="language-text">riscv32imfc-unknown-none-elf
 </code></pre>
-<h2 id="rust-toolchaintoml-会自动选它"><a class="header" href="#rust-toolchaintoml-会自动选它">rust-toolchain.toml 会自动选它</a></h2>
-<p>仓库根的 <code>rust-toolchain.toml</code> 写着：</p>
-<pre><code class="language-toml">[toolchain]
-channel = "hisi-riscv"
+<p>再确认 rustup 组件状态。现在通常没有输出，这是预期状态：</p>
+<pre><code class="language-bash">rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
+    echo "rustup has no prebuilt rust-std yet; use -Zbuild-std=core,alloc"
 </code></pre>
-<p>只要你在仓库目录里跑 <code>cargo</code>，rustup 就会<strong>自动</strong>用 <code>hisi-riscv</code> 工具链，不用每条命令都加 <code>+hisi-riscv</code>。换句话说：<strong>链接好之后，在仓库里普通 <code>cargo build</code> 就走对了。</strong> 默认 target 由 <code>.cargo/config.toml</code> 的 <code>target = "riscv32imfc-unknown-none-elf"</code> 指定。</p>
+<h2 id="构建方式"><a class="header" href="#构建方式">构建方式</a></h2>
+<p>RISC-V 构建命令需要带 build-std：</p>
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release
+cargo check -Zbuild-std=core,alloc --workspace
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+</code></pre>
+<p><code>hisi-rs-template</code> 生成的新项目已经把这个细节封装进 <code>just build</code> / <code>just run</code> / <code>just image</code>，所以应用开发者通常不需要手写 <code>-Zbuild-std=core,alloc</code>。</p>
 <h2 id="排错"><a class="header" href="#排错">排错</a></h2>
 <ul>
-<li><strong><code>error: toolchain 'hisi-riscv' is not installed</code></strong>：<code>~/.rustup/toolchains/hisi-riscv/</code> 不存在或为空（解压时 <code>-C</code> 路径写错、<code>--strip-components</code> 漏了导致多套了一层 <code>stage2/</code>）——重新解压。检查 <code>ls ~/.rustup/toolchains/hisi-riscv/bin/rustc</code> 是否在。</li>
-<li><strong><code>error: target 'riscv32imfc-unknown-none-elf' not found</code> / 触发 build-std</strong>：你用的是普通 stable 而不是 <code>hisi-riscv</code>。检查 <code>rustc +hisi-riscv --print target-list | grep riscv32imfc</code> 是否有输出；在仓库外构建时记得 <code>cargo +hisi-riscv ...</code> 或带上 <code>rust-toolchain.toml</code>。</li>
-<li><strong>下错 host tarball</strong>（如在 aarch64 上用了 x86_64 包）：<code>rustc</code> 跑不起来。按 <code>uname -m</code> 重新挑文件名。</li>
+<li><strong><code>can't find crate for core</code></strong>：命令缺少 <code>-Zbuild-std=core,alloc</code>，或 toolchain 没装 <code>rust-src</code>。先重跑上面的 <code>rustup toolchain install ... --component rust-src</code>。</li>
+<li><strong><code>target may not be installed</code></strong>：不要对这个 target 跑 <code>rustup target add</code>；当前 rustup 还没有预编译 std 组件。确认你在仓库里使用 pinned nightly，并给 RISC-V 命令加 build-std。</li>
+<li><strong><code>the option Z is only accepted on the nightly compiler</code></strong>：当前命令没有使用 <code>rust-toolchain.toml</code> 里的 nightly。检查 <code>rustup show active-toolchain</code>。</li>
+<li><strong>找不到 <code>rust-objcopy</code> / <code>rust-size</code></strong>：安装 <code>llvm-tools-preview</code> 组件，或重跑本页的安装命令。</li>
 </ul>
-<h2 id="ide--rust-analyzer-已知问题"><a class="header" href="#ide--rust-analyzer-已知问题">IDE / rust-analyzer 已知问题</a></h2>
-<p><code>cargo build</code> / <code>cargo check</code> 一切正常，但编辑器里 rust-analyzer 可能冒出<strong>大量误报</strong>。
-这些都不是代码问题，而是自定义工具链 + 嵌入式 target + 多 workspace 的组合给 RA 挖的坑。
-逐条对症即可（命令以 macOS + stable 工具链为例，按你的主机/路径调整）。</p>
-<h3 id="1-海量-unresolved-macro-println--no-method-len-on-u8-n-等"><a class="header" href="#1-海量-unresolved-macro-println--no-method-len-on-u8-n-等">1. 海量 <code>unresolved macro println!</code> / <code>no method len on [u8; N]</code> 等</a></h3>
-<blockquote>
-<p>✅ <strong>已在 <code>v1.96.0-3</code> 修复</strong>。从该版起 tarball 自带实体化的 rust-src,本节只对<strong>钉在
-<code>≤ v1.96.0-2</code></strong> 的旧安装有意义。用 <code>releases/latest</code>(本手册默认)装的不会再遇到。</p>
-</blockquote>
-<p><strong>症状</strong>：连 <code>println!</code>、<code>core::arch::asm!</code> 这种标准库宏，以及 <code>[u8; N]</code>/<code>u32</code> 的原始方法
-（<code>len</code>/<code>iter</code>/<code>wrapping_add</code>）、slice unsize 强转都报错。</p>
-<p><strong>根因</strong>：旧（<code>≤ v1.96.0-2</code>）tarball 里 sysroot 的 rust-src 软链是<strong>悬空的</strong>，指向打包用的
-CI 构建机绝对路径（<code>/Users/runner/work/...</code>）。RA 加载不到 <code>core</code>/<code>std</code> 源码，于是把一切
-基础设施判成“未知“。（上游已修复:<a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1">https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1</a>）</p>
-<p><strong>修复</strong>：升级到 <code>v1.96.0-3</code> 及以上（用 <code>latest</code> 重装即可）。若必须留在旧版，把该软链
-重指向本机已装的某个 <code>rust-src</code>（版本接近即可，RA 容忍小版本差）：</p>
-<pre><code class="language-bash">rustup component add rust-src --toolchain stable
-ln -sfn "$(rustc +stable --print sysroot)/lib/rustlib/src/rust" \
-        "$(rustc +hisi-riscv --print sysroot)/lib/rustlib/src/rust"
-</code></pre>
-<h3 id="2-ra-启动即报-rust-analyzer-is-not-installed-for-toolchain-hisi-riscv"><a class="header" href="#2-ra-启动即报-rust-analyzer-is-not-installed-for-toolchain-hisi-riscv">2. RA 启动即报 <code>'rust-analyzer' is not installed for toolchain 'hisi-riscv'</code></a></h3>
-<p><code>hisi-riscv</code> 是自定义工具链，装不了 rust-analyzer 组件；而 <code>rust-toolchain.toml</code> 把频道钉成
-了它，导致 rustup 的 <code>rust-analyzer</code> 代理被路由过去后报错。</p>
-<p><strong>修复</strong>：让编辑器用<strong>另一个工具链的</strong> RA 二进制（不设 <code>RUSTUP_TOOLCHAIN</code>）——RA 分析时仍会
-按 <code>rust-toolchain.toml</code> 调 <code>hisi-riscv</code> 的 <code>cargo</code>/<code>rustc</code>，嵌入式 target 不受影响。例如指向
-<code>~/.rustup/toolchains/stable-*/bin/rust-analyzer</code>（先 <code>rustup component add rust-analyzer --toolchain stable</code>）。</p>
-<h3 id="3-cannot-find-io_config-in-pac-e0433-等-chip-相关误报"><a class="header" href="#3-cannot-find-io_config-in-pac-e0433-等-chip-相关误报">3. <code>cannot find io_config in pac</code> <code>E0433</code> 等 chip 相关误报</a></h3>
-<p><strong>根因</strong>：HAL 的 <code>chip-ws63</code> / <code>chip-bs21</code> 是<strong>恰选其一</strong>的互斥 feature。若 RA 开了
-<code>cargo.allFeatures</code>（如 LazyVim 的 rust 扩展默认 <code>allFeatures=true</code>），两个 chip 会被同时打开，
-ws63 专属文件被按 bs2x-pac 解析而报错。</p>
-<p><strong>修复</strong>：设 <code>rust-analyzer.cargo.allFeatures = false</code>（这本就是 RA / VS Code 的原生默认值）。</p>
-<h3 id="4-cant-find-crate-for-test-e0463"><a class="header" href="#4-cant-find-crate-for-test-e0463">4. <code>can't find crate for test</code> <code>E0463</code></a></h3>
-<p><strong>根因</strong>：RA 默认 <code>--all-targets</code> 会构建每个 crate 的 test 目标，而裸机 target
-<code>riscv32imfc-unknown-none-elf</code> 没有 <code>test</code> crate（no_std 无测试 harness）。</p>
-<p><strong>修复</strong>：设 <code>rust-analyzer.cargo.allTargets = false</code> 与 <code>rust-analyzer.check.allTargets = false</code>。</p>
-<h3 id="关于第-34-条的工程内配置"><a class="header" href="#关于第-34-条的工程内配置">关于第 3、4 条的工程内配置</a></h3>
-<p>仓库已提交 <code>rust-analyzer.toml</code>（根 + <code>examples/bs20</code> + <code>examples/bs21</code> 各一份），把
-<code>allFeatures</code> / <code>allTargets</code> 都设成 <code>false</code>。<strong>VS Code 等会直接读取它</strong>，开箱即用。</p>
-<blockquote>
-<p>⚠️ 优先级坑：rust-analyzer 里<strong>编辑器 client 配置优先级高于仓库 <code>rust-analyzer.toml</code></strong>。
-若你的编辑器/插件（如 LazyVim）在 client 级强设了 <code>cargo.allFeatures=true</code>，会把仓库 ratoml
-压住——此时需在你<strong>编辑器自己的 RA 配置</strong>里把上面第 3、4 条设回去（client 级覆盖）。</p>
-</blockquote>
+<h2 id="历史说明"><a class="header" href="#历史说明">历史说明</a></h2>
+<p>旧的 <code>hispark-rs/hisi-riscv-rust-toolchain</code> 曾发布自定义 rustc tarball，把该 target 和预编译 <code>core</code>/<code>alloc</code> 一起打包。现在它不再是 happy path；生态主线改用官方 nightly。该仓库后续作为官方工具链外部 radar，跟踪 latest nightly、rustup 组件状态和 Tier-2 readiness。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="如何构建一个示例"><a class="header" href="#如何构建一个示例">如何构建一个示例</a></h1>
 <p>仓库带了一批 WS63 示例（<code>blinky</code>、<code>uart_hello</code>、<code>timer_irq</code>、<code>spi_loopback</code>、<code>i2c_scan</code>、<code>async_delay</code>、<code>embassy_multitask</code>…，完整清单见<a href="#示例目录与验证标记串">示例目录与验证标记串</a>）。本篇讲怎么把它们编出来。</p>
 <blockquote>
-<p>前提：已<a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>。在仓库目录里 <code>rust-toolchain.toml</code> 会自动选它，默认 target 是 <code>riscv32imfc-unknown-none-elf</code>，无需 <code>+hisi-riscv</code> 或 <code>--target</code>。</p>
+<p>前提：已<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>。在仓库目录里 <code>rust-toolchain.toml</code> 会自动选 pinned nightly，默认 target 是 <code>riscv32imfc-unknown-none-elf</code>。当前 rustup 还没有预编译 std 组件，所以 RISC-V 构建命令需要 <code>-Zbuild-std=core,alloc</code>。</p>
 </blockquote>
 <h2 id="从仓库根工作区构建推荐"><a class="header" href="#从仓库根工作区构建推荐">从仓库根工作区构建（推荐）</a></h2>
 <p><strong>在仓库根目录</strong>用 <code>-p &lt;包名&gt;</code> 构建任意示例：</p>
-<pre><code class="language-bash">cargo build -p blinky --release
-cargo build -p uart_hello --release
-cargo build -p spi_loopback --release
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p blinky --release
+cargo build -Zbuild-std=core,alloc -p uart_hello --release
+cargo build -Zbuild-std=core,alloc -p spi_loopback --release
 </code></pre>
 <p>包名就是 crate 名（见根 <code>Cargo.toml</code> 的 <code>members</code>），和它在磁盘上的 <code>examples/ws63/&lt;name&gt;</code> 路径无关。一次构建全部库 + 默认示例：</p>
-<pre><code class="language-bash">cargo build --release        # 构建 default-members（库 + 全部 ws63 示例）
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release        # 构建 default-members（库 + 全部 ws63 示例）
 </code></pre>
 <blockquote>
 <p><strong>坑：别在 <code>examples/ws63/</code> 里构建全部示例。</strong> <code>examples/ws63/</code> 自带一个<strong>嵌套工作区</strong>，但它的 <code>members</code> 只列了 <code>blinky</code> 一个。所以在那个目录里 <code>cargo build -p timer_irq</code> 会失败（不是它的成员）。<strong>从仓库根构建</strong>，根工作区才把全部示例列全。</p>
@@ -945,7 +901,7 @@ cargo build -p spi_loopback --release
 </ul>
 <h2 id="objcopy-成裸-bin"><a class="header" href="#objcopy-成裸-bin">objcopy 成裸 bin</a></h2>
 <p>打包成可启动镜像时 <code>hisi-fwpkg</code> 直接吃 ELF（见<a href="#如何打包成可启动镜像hisi-fwpkg">如何打包镜像</a>），<strong>通常不需要</strong>手动 objcopy。但若某条工具链确实要裸 bin，用工具链自带的 <code>rust-objcopy</code>：</p>
-<pre><code class="language-bash">OBJCOPY="$(rustc +hisi-riscv --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
+<pre><code class="language-bash">OBJCOPY="$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
 "$OBJCOPY" -O binary \
     target/riscv32imfc-unknown-none-elf/release/blinky \
     blinky.bin
@@ -1269,13 +1225,13 @@ probe-rs 烧录路径见<a href="#如何用-probe-rs-烧录到真机">用 probe-
 <p>这是默认 stable API 毕业要看的真机测试。命令里的 runner 只作用于这一次 <code>cargo test</code>：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
 </code></pre>
 <p>只构建测试 ELF、不烧板：</p>
-<pre><code class="language-bash">cargo test -p hisi-riscv-hal \
+<pre><code class="language-bash">cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -1283,7 +1239,7 @@ cargo test -p hisi-riscv-hal \
 <p>传给 <code>embedded-test</code> 的过滤参数放在 <code>--</code> 后面：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- gpio_output_readback
@@ -1295,7 +1251,7 @@ cargo test -p hisi-riscv-hal \
 <p><code>tests-hil</code> 是独立 workspace member，覆盖 CPU/PAC/critical-section 这类不属于单个 HAL 驱动的冒烟事实：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p tests-hil --target riscv32imfc-unknown-none-elf
+cargo test -Zbuild-std=core,alloc -p tests-hil --target riscv32imfc-unknown-none-elf
 </code></pre>
 <p>它不在 <code>default-members</code> 里，普通 <code>cargo build</code> 不会拉 <code>embedded-test</code>。</p>
 <h2 id="跑示例级-uart-smoke"><a class="header" href="#跑示例级-uart-smoke">跑示例级 UART smoke</a></h2>
@@ -1392,7 +1348,7 @@ probe-rs read --chip WS63 b32 0x00100000 64
 <h1 id="如何从模板新建一个工程"><a class="header" href="#如何从模板新建一个工程">如何从模板新建一个工程</a></h1>
 <p>要从零起一个 WS63/BS2X 应用，用 <code>cargo generate</code> 从模板仓库 <a href="https://github.com/hispark-rs/hisi-rs-template">hisi-rs-template</a> 生成——它帮你配好工具链、链接脚本、依赖和一份 <code>justfile</code>，开箱即可构建+烧录。</p>
 <blockquote>
-<p>前提：已<a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>；<code>cargo install cargo-generate</code>。</p>
+<p>前提：已<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>；<code>cargo install cargo-generate</code>。</p>
 </blockquote>
 <h2 id="生成"><a class="header" href="#生成">生成</a></h2>
 <pre><code class="language-bash">cargo generate --git https://github.com/hispark-rs/hisi-rs-template
@@ -1418,8 +1374,8 @@ probe-rs read --chip WS63 b32 0x00100000 64
 <tr><th>配方</th><th>做什么</th></tr>
 </thead>
 <tbody>
-<tr><td><code>just build</code></td><td><code>cargo build --release</code> 编出 ELF</td></tr>
-<tr><td><code>just run</code></td><td>在 QEMU 里跑（<code>cargo run --release</code>）</td></tr>
+<tr><td><code>just build</code></td><td><code>cargo build -Zbuild-std=core,alloc --release</code> 编出 ELF</td></tr>
+<tr><td><code>just run</code></td><td>在 QEMU 里跑（<code>cargo run -Zbuild-std=core,alloc --release</code>）</td></tr>
 <tr><td><code>just patch</code>（WS63 例外）</td><td>build 后 <code>hisi-fwpkg patch-hash {{elf}}</code>，用于 <code>probe-rs run</code> / embedded-test 这类需要 ELF 元数据的路径</td></tr>
 <tr><td><code>just image</code></td><td>build 后 <code>hisi-fwpkg plan --image-output</code> 生成 <code>*.img</code> + <code>*.plan.json</code></td></tr>
 <tr><td><code>just flash</code></td><td>从 plan 读取 <code>base_addr</code>，用 <code>probe-rs download --binary-format bin --base-address</code> 烧完整 image</td></tr>
@@ -1676,19 +1632,19 @@ cargo clippy --locked --all-features
 cargo doc --locked --no-deps --document-private-items
 
 # hisi-riscv-rt
-cargo +hisi-riscv check --locked --target riscv32imfc-unknown-none-elf
-cargo +hisi-riscv clippy --locked --target riscv32imfc-unknown-none-elf -- -D warnings
-cargo +hisi-riscv doc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
+cargo check -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo doc -Zbuild-std=core,alloc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
 
 # hisi-riscv-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
-cargo check --locked --no-default-features --features chip-ws63,rt,async,embassy
-cargo check --locked --no-default-features --features chip-bs21,rt,unstable
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async,embassy
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-bs21,rt,unstable
 </code></pre>
 <p>HAL release 如果改变 stable API、驱动行为、unsafe 封装或 HIL 证据，继续跑对应专项检查：</p>
 <pre><code class="language-bash"># HAL driver-level embedded-test；详见 how-to/07-run-hil-tests.md
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=../../hil/embedded-test-runner.sh \
-cargo test --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
 </code></pre>
@@ -1723,7 +1679,7 @@ git push origin main
 <p>父仓 tag 只创建 firmware GitHub Release，不发布 crates.io crate。发布前确认：</p>
 <pre><code class="language-bash">git submodule status --recursive
 git status --short
-cargo build --release
+cargo build -Zbuild-std=core,alloc --release
 cargo fmt --all -- --check
 </code></pre>
 <p>如果 release 包含 HAL stable API 或真机行为变化，按<a href="#如何运行-hil-测试">如何运行 HIL 测试</a>跑对应 HIL；如果只更新文档，也至少跑：</p>
@@ -1767,7 +1723,7 @@ git push origin vX.Y.Z
 <tr><td><a href="https://hispark-rs.github.io/hisi-riscv-rs/api/">完整 API 文档（rustdoc）↗</a></td><td>hal/pac/rt 的逐项 API；与本手册同站部署在 <code>/api/</code>，CI 自动构建</td></tr>
 <tr><td><a href="#外设清单与覆盖情况">外设清单与覆盖情况</a></td><td>全部 HAL 驱动模块、外设、基地址、示例覆盖、可否裸板自检</td></tr>
 <tr><td><a href="#stable-api-清单与门控状态">Stable API 清单与门控状态</a></td><td><code>hisi-riscv-hal</code> 0.6.0 默认 stable 面和 <code>unstable</code> feature 门后的 API</td></tr>
-<tr><td><a href="#工具链与编译目标">工具链与编译目标</a></td><td><code>hisi-riscv</code> 工具链通道、目标三元组、<code>rust-toolchain.toml</code>、<code>.cargo/config.toml</code></td></tr>
+<tr><td><a href="#工具链与编译目标">工具链与编译目标</a></td><td>官方 pinned nightly、目标三元组、build-std 状态、<code>rust-toolchain.toml</code>、<code>.cargo/config.toml</code></td></tr>
 <tr><td><a href="#应用镜像格式与签名">应用镜像格式与签名</a></td><td>0x300 镜像头字段布局、fwpkg V1 容器、CRC16</td></tr>
 <tr><td><a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a></td><td><code>embedded-test</code> runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源</td></tr>
 <tr><td><a href="#cli-工具速查">CLI 工具速查</a></td><td><code>hisi-fwpkg</code>、补丁版 <code>probe-rs</code>、QEMU、<code>hisiflash</code> 命令与仓库清单</td></tr>
@@ -2027,7 +1983,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <h1 id="hal-api-总览"><a class="header" href="#hal-api-总览">HAL API 总览</a></h1>
 <p><code>hisi-riscv-hal</code> 是手写的安全驱动层，建模自 esp-hal 模式。本页给出公开 API 的结构图。</p>
 <blockquote>
-<p><strong>完整 API 文档（rustdoc）↗</strong> —— 在线:<a data-hisi-api-link="hisi_riscv_hal/index.html" href="/hisi-riscv-rs/api/latest/ws63/hisi_riscv_hal/index.html">hisi-riscv-hal</a>（当前 chip/version 对应的 <code>hisi-riscv-hal</code> / PAC / <code>hisi-riscv-rt</code>，与本手册同站部署，CI 自动构建）;本地:<code>cargo doc -p hisi-riscv-hal --open</code>。本页只是结构图,<strong>逐项 API 以 rustdoc 为准</strong>。</p>
+<p><strong>完整 API 文档（rustdoc）↗</strong> —— 在线:<a data-hisi-api-link="hisi_riscv_hal/index.html" href="/hisi-riscv-rs/api/latest/ws63/hisi_riscv_hal/index.html">hisi-riscv-hal</a>（当前 chip/version 对应的 <code>hisi-riscv-hal</code> / PAC / <code>hisi-riscv-rt</code>，与本手册同站部署，CI 自动构建）;本地:<code>cargo doc -Zbuild-std=core,alloc -p hisi-riscv-hal --open</code>。本页只是结构图,<strong>逐项 API 以 rustdoc 为准</strong>。</p>
 </blockquote>
 <p>事实取自 <a href="https://github.com/hispark-rs/hisi-riscv-hal"><code>crates/hisi-riscv-hal/src/lib.rs</code></a> 及各模块头。</p>
 <p>模块全清单与外设映射见 <a href="#外设清单与覆盖情况">外设清单</a>；稳定/不稳定 API 门控见 <a href="#稳定--不稳定-api-门控">稳定 / 不稳定 API 门控</a>；async/embassy 的原理见 <a href="#async-与-embassy">async 与 embassy</a>。</p>
@@ -2246,8 +2202,7 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="工具链与编译目标"><a class="header" href="#工具链与编译目标">工具链与编译目标</a></h1>
-<p>WS63 用自定义 <code>hisi-riscv</code> 工具链构建。事实取自 <a href="https://github.com/hispark-rs/hisi-riscv-rs"><code>rust-toolchain.toml</code></a>、<a href="https://github.com/hispark-rs/hisi-riscv-rs"><code>.cargo/config.toml</code></a>、<a href="https://github.com/hispark-rs/hisi-riscv-rs"><code>CLAUDE.md</code></a>。</p>
-<p>安装步骤见 <a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>；硬浮点选型原理见 <a href="#硬浮点工具链">硬浮点工具链</a>。</p>
+<p>本页记录当前构建事实。安装步骤见<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>；为什么选择硬浮点 target 见<a href="#硬浮点工具链">硬浮点工具链</a>。</p>
 <h2 id="工具链--目标速查"><a class="header" href="#工具链--目标速查">工具链 / 目标速查</a></h2>
 <div class="table-wrapper">
 <table>
@@ -2255,37 +2210,33 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 <tr><th>项</th><th>值</th></tr>
 </thead>
 <tbody>
-<tr><td>rustup 通道名</td><td><code>hisi-riscv</code></td></tr>
-<tr><td>基础 rustc 版本</td><td>stable 1.96.0</td></tr>
+<tr><td>rustup 通道</td><td><code>nightly-2026-07-09</code></td></tr>
+<tr><td>rustc 版本</td><td><code>1.99.0-nightly</code> 系列</td></tr>
 <tr><td>默认目标三元组</td><td><code>riscv32imfc-unknown-none-elf</code></td></tr>
 <tr><td>ISA</td><td>RV32IMFC_Zicsr</td></tr>
 <tr><td>浮点</td><td>硬件单精度，ABI <code>ilp32f</code></td></tr>
-<tr><td>原子</td><td><strong>无</strong> <code>a</code> 扩展（forced-atomics + no-CAS）</td></tr>
-<tr><td>build-std</td><td><strong>不需要</strong>（目标为 builtin，工具链自带预编译 core/alloc）</td></tr>
-<tr><td>工具链仓库</td><td>github.com/hispark-rs/hisi-riscv-rust-toolchain</td></tr>
-<tr><td>当前发布</td><td>由 <code>releases/latest</code> 跟踪（撰文时 = <code>v1.96.0-3</code>）</td></tr>
+<tr><td>原子</td><td><strong>无</strong> <code>a</code> 扩展</td></tr>
+<tr><td>rustup 预编译 std</td><td>当前没有</td></tr>
+<tr><td>build-std</td><td>当前需要 <code>-Zbuild-std=core,alloc</code></td></tr>
+<tr><td>上游状态</td><td>rustc 已内置 target；rustup 组件与 Tier-2 readiness 由 radar 跟踪</td></tr>
+<tr><td>radar 仓库</td><td>github.com/hispark-rs/hisi-riscv-rust-toolchain</td></tr>
 </tbody>
 </table>
 </div>
-<blockquote>
-<p>目标三元组写法 <code>riscv32imfc</code>（注意是 <code>imfc</code>，含硬浮点 <code>f</code>、不含原子 <code>a</code>）。<code>CLAUDE.md</code> 中出现的 <code>riscv32imafc-unknown-none-elf</code> 是 <code>--target</code> 覆盖示例，并非默认目标。</p>
-</blockquote>
-<h2 id="builtin-目标无需--z-build-std"><a class="header" href="#builtin-目标无需--z-build-std">builtin 目标（无需 <code>-Z build-std</code>）</a></h2>
-<p><code>riscv32imfc-unknown-none-elf</code> 在 <code>hisi-riscv</code> 工具链里被烤进为 <strong>builtin</strong> 目标，工具链随附该目标的预编译 <code>core</code>/<code>alloc</code>，故构建不需要 nightly 的 <code>-Z build-std</code>。工具链是芯片中立的（ws63 + bs2x 都目标 riscv32imfc）。</p>
-<p>无原子的处理：原子 load/store 降为普通 <code>ld</code>/<code>st</code>（单 hart）；RMW 经 <code>portable-atomic</code> 的 <code>critical-section</code> polyfill。不发射 <code>lr.w</code>/<code>sc.w</code>/<code>amo*</code>。</p>
+<p>目标三元组写法是 <code>riscv32imfc</code>：含硬浮点 <code>f</code>，不含原子 <code>a</code>。</p>
 <h2 id="rust-toolchaintoml"><a class="header" href="#rust-toolchaintoml"><code>rust-toolchain.toml</code></a></h2>
 <pre><code class="language-toml">[toolchain]
-channel = "hisi-riscv"
+channel = "nightly-2026-07-09"
+profile = "minimal"
+components = ["rust-src", "clippy", "rustfmt", "llvm-tools-preview"]
 </code></pre>
-<blockquote>
-<p>该工具链不是可分发的 rustup channel，必须先手动安装——解压进 <code>~/.rustup/toolchains/hisi-riscv/</code> 即可，rustup 自动识别（见下“安装“）。</p>
-</blockquote>
+<p>该 nightly 的 <code>rustc --print target-list</code> 已包含 <code>riscv32imfc-unknown-none-elf</code>。但 <code>rustup target list --toolchain nightly-2026-07-09</code> 目前还没有这个 target 的预编译 <code>rust-std</code>，所以不能用 <code>rustup target add riscv32imfc-unknown-none-elf</code> 作为安装步骤。</p>
 <h2 id="cargoconfigtoml"><a class="header" href="#cargoconfigtoml"><code>.cargo/config.toml</code></a></h2>
 <pre><code class="language-toml">[build]
 target = "riscv32imfc-unknown-none-elf"
 
 [target.riscv32imfc-unknown-none-elf]
-runner = "gdb-multiarch"
+runner = ".cargo/run-riscv.sh"
 rustflags = ["-C", "link-arg=--no-relax"]
 </code></pre>
 <div class="table-wrapper">
@@ -2295,23 +2246,22 @@ rustflags = ["-C", "link-arg=--no-relax"]
 </thead>
 <tbody>
 <tr><td><code>[build] target</code></td><td><code>riscv32imfc-unknown-none-elf</code></td><td>默认编译目标</td></tr>
-<tr><td><code>runner</code></td><td><code>gdb-multiarch</code></td><td><code>cargo run</code> 默认 runner（QEMU/真机 runner 经 env 覆盖，见 <a href="#如何用硬件-runner-让-cargo-run-烧真机">硬件 runner</a>）</td></tr>
-<tr><td><code>rustflags</code></td><td><code>-C link-arg=--no-relax</code></td><td>关闭 RISC-V 链接器松弛，匹配厂商 C SDK 流，避免 gp 相对松弛与自定义链接脚本冲突</td></tr>
+<tr><td><code>runner</code></td><td><code>.cargo/run-riscv.sh</code></td><td>默认 QEMU runner；真机 runner 经 env 覆盖，见<a href="#如何用硬件-runner-让-cargo-run-烧真机">硬件 runner</a></td></tr>
+<tr><td><code>rustflags</code></td><td><code>-C link-arg=--no-relax</code></td><td>关闭 RISC-V 链接器松弛，匹配厂商 C SDK 流，避免 gp 相对松弛与链接脚本冲突</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="安装release-url-形态"><a class="header" href="#安装release-url-形态">安装（release URL 形态）</a></h2>
-<p>按主机选 tarball（linux x86_64/aarch64、macOS x86_64/aarch64、windows x86_64）：</p>
-<pre><code class="language-bash">curl -fLO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-# 直接解压进 rustup 的 toolchains 目录（顶层 stage2/ 用 --strip-components=1 剥掉），无需 link
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+<h2 id="risc-v-构建命令"><a class="header" href="#risc-v-构建命令">RISC-V 构建命令</a></h2>
+<p>因为 std 组件尚未由 rustup 分发，RISC-V 命令必须显式构建 <code>core</code> / <code>alloc</code>：</p>
+<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace
+cargo build -Zbuild-std=core,alloc --release
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 </code></pre>
-<p>release URL 形态（推荐用 <code>latest</code>，免随 re-release 改版本）：</p>
-<pre><code class="language-console">https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-&lt;host-triple&gt;.tar.gz
-</code></pre>
-<p><code>latest</code> 永远指向最新 release；要钉某个具体版本，把 <code>latest/download</code> 换成
-<code>download/&lt;tag&gt;</code>（如 <code>download/v1.96.0-3</code>）。<code>&lt;host-triple&gt;</code> 如 <code>x86_64-unknown-linux-gnu</code>、<code>aarch64-unknown-linux-gnu</code>、<code>x86_64-apple-darwin</code>、<code>aarch64-apple-darwin</code>、<code>x86_64-pc-windows-msvc</code>。tarball 顶层是 <code>stage2/</code>，解压进 <code>~/.rustup/toolchains/hisi-riscv/</code> 后 rustup 自动识别（无需 <code>rustup toolchain link</code>）。</p>
+<p>不要把 build-std 写成全局 Cargo 配置。host unit tests 需要在 <code>stable</code> + <code>x86_64-unknown-linux-gnu</code> 上运行；全局 <code>[unstable] build-std</code> 会污染 host 目标。</p>
+<h2 id="原子与-critical-section"><a class="header" href="#原子与-critical-section">原子与 critical-section</a></h2>
+<p>WS63 当前路径是单 hart + 无 A 扩展：目标不得发射 <code>lr/sc/amo*</code>。原子 load/store 降为普通 load/store；RMW/CAS 语义由 <code>portable-atomic</code> 通过 <code>critical-section-single-hart</code> 提供。更完整的同步策略见<a href="#稳定--不稳定-api-门控">稳定 / 不稳定 API 门控</a>中的 critical-section 纪律。</p>
+<h2 id="legacy-custom-toolchain"><a class="header" href="#legacy-custom-toolchain">Legacy custom toolchain</a></h2>
+<p><code>hispark-rs/hisi-riscv-rust-toolchain</code> 曾经发布自定义 rustc tarball。该路径现在仅作为历史兼容说明保留；新文档、CI、template 和 happy path 不再推荐或依赖它。该仓库后续职责是官方 upstream nightly 的外部 CI / radar：检查 latest nightly target-list、rustup std 组件状态、build-std 回归、QEMU/HIL canary，并积累未来 Tier-2 推进证据。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="应用镜像格式与签名"><a class="header" href="#应用镜像格式与签名">应用镜像格式与签名</a></h1>
 <p>WS63 app 镜像（flashboot 从 flash <code>0x230000</code> 加载的对象）的字段布局。镜像 header、hash、body range、erase/write 边界的<strong>事实源是 <code>hisi-fwpkg</code> crate API/schema</strong>；本页只解释这些事实，不再作为另一份可执行规则。原厂 fwpkg 容器行为以 <code>fbb_burntool</code> 的 <code>Common.h</code> / <code>Global.h</code> / <code>DataConvertor.cpp</code> 为对照。</p>
@@ -2542,7 +2492,7 @@ tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolch
 <p>典型启用方式：</p>
 <pre><code class="language-bash">PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf --test hil
 </code></pre>
 <h2 id="hil-smokesh-当前检查的-grep-模式"><a class="header" href="#hil-smokesh-当前检查的-grep-模式"><code>hil-smoke.sh</code> 当前检查的 grep 模式</a></h2>
@@ -2803,7 +2753,7 @@ hisi-fwpkg patch-hash blinky
 <tr><td><code>hisi-rs-template</code></td><td>cargo-generate 模板（WS63/BS2X 新工程脚手架）</td><td>github.com/hispark-rs/hisi-rs-template</td></tr>
 <tr><td><code>hisi-fwpkg</code></td><td>app 镜像 / fwpkg 打包工具（<code>plan</code>/<code>image</code>/<code>patch-hash</code>/<code>pack</code>）</td><td>github.com/hispark-rs/hisi-fwpkg</td></tr>
 <tr><td><code>probe-rs</code>（fork）</td><td>补丁版 probe-rs（WS63/BS21 target + ws63-sfc flash 算法）</td><td>github.com/hispark-rs/probe-rs（branch <code>add-hisilicon-ws63-bs21</code>）</td></tr>
-<tr><td><code>hisi-riscv-rust-toolchain</code></td><td>自定义 rustc（riscv32imfc builtin，硬浮点）</td><td>github.com/hispark-rs/hisi-riscv-rust-toolchain</td></tr>
+<tr><td><code>hisi-riscv-rust-toolchain</code></td><td>官方 Rust nightly 外部 radar（riscv32imfc target / rustup std / Tier-2 readiness）</td><td>github.com/hispark-rs/hisi-riscv-rust-toolchain</td></tr>
 <tr><td><code>hisi-riscv-qemu</code></td><td>QEMU fork（<code>-M ws63/bs21/bs21e/bs22/bs20</code>）</td><td>github.com/hispark-rs/hisi-riscv-qemu</td></tr>
 <tr><td><code>hisiflash</code></td><td>串口/YMODEM 烧录 CLI</td><td>github.com/hispark-rs/hisiflash</td></tr>
 </tbody>
@@ -2812,7 +2762,7 @@ hisi-fwpkg patch-hash blinky
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="已知问题索引"><a class="header" href="#已知问题索引">已知问题索引</a></h1>
 <p>本页汇总当前已知的问题、对应影响与跟踪入口。<strong>列在这里的问题都不影响
-<code>cargo build</code> / <code>cargo check</code></strong>——它们要么是工具链打包/IDE 集成层面的坑,要么是
+<code>cargo build</code> / <code>cargo check</code></strong>——它们要么是工具链/IDE 集成层面的坑,要么是
 等待上游修复的缺陷。遇到对得上的现象,按“修复 / 规避“列处理即可。</p>
 <h2 id="工具链--ide-集成"><a class="header" href="#工具链--ide-集成">工具链 / IDE 集成</a></h2>
 <div class="table-wrapper">
@@ -2821,17 +2771,17 @@ hisi-fwpkg patch-hash blinky
 <tr><th>现象</th><th>根因</th><th>修复 / 规避</th><th>跟踪</th></tr>
 </thead>
 <tbody>
-<tr><td>rust-analyzer 海量误报:<code>unresolved macro println!</code>、<code>no method len on [u8; N]</code>、slice 强转报错</td><td>旧(<code>≤ v1.96.0-2</code>)tarball 的 rust-src 软链悬空(指向 CI 构建机绝对路径),RA 加载不到 <code>core</code>/<code>std</code> 源码</td><td>✅ <strong>已在 <code>v1.96.0-3</code> 修复</strong>;旧版规避见 <a href="#如何安装-hisi-riscv-工具链">安装工具链 · IDE 已知问题</a></td><td><a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain/issues/1">toolchain#1</a>(已修复)</td></tr>
-<tr><td>RA 启动报 <code>'rust-analyzer' is not installed for toolchain 'hisi-riscv'</code></td><td>自定义工具链装不了 RA 组件,而 <code>rust-toolchain.toml</code> 把频道钉成了它</td><td>让编辑器用别的工具链的 RA 二进制,见 <a href="#如何安装-hisi-riscv-工具链">安装工具链 · IDE 已知问题</a></td><td>—</td></tr>
+<tr><td><code>can't find crate for core</code></td><td>RISC-V 命令缺少 <code>-Zbuild-std=core,alloc</code>,或 pinned nightly 没装 <code>rust-src</code></td><td>按<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>安装 <code>rust-src</code>,RISC-V 命令加 build-std</td><td>—</td></tr>
+<tr><td><code>rustup target add riscv32imfc-unknown-none-elf</code> 找不到 target</td><td>rustc 已内置 target,但 rustup 还没有预编译 <code>rust-std</code> 组件</td><td>不用 <code>rustup target add</code>;短期使用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code></td><td><a href="https://github.com/rust-lang/rust/pull/158473">rust#158473</a></td></tr>
 <tr><td><code>cannot find io_config in pac</code> <code>E0433</code> 等 chip 相关误报</td><td>RA 开了 <code>cargo.allFeatures</code>,把互斥的 <code>chip-ws63</code> / <code>chip-bs21</code> 同时打开</td><td>设 <code>rust-analyzer.cargo.allFeatures = false</code>(仓库已提供 <code>rust-analyzer.toml</code>)</td><td>—</td></tr>
 <tr><td><code>can't find crate for test</code> <code>E0463</code></td><td><code>--all-targets</code> 在裸机 target 构建 test 目标,而 no_std 无 <code>test</code> crate</td><td>设 <code>cargo.allTargets = false</code> 与 <code>check.allTargets = false</code>(仓库已提供 <code>rust-analyzer.toml</code>)</td><td>—</td></tr>
 </tbody>
 </table>
 </div>
 <blockquote>
-<p>上表后两项属于“嵌入式 + 自定义工具链下的标准 RA 配置“,不是缺陷,故无独立 issue;
+<p>上表后两项属于“嵌入式 + 多芯片 feature 下的标准 RA 配置“,不是缺陷,故无独立 issue;
 仓库根与 <code>examples/bs2x</code> 已各放一份 <code>rust-analyzer.toml</code>,VS Code 等会直接生效。完整说明与
-client 优先级注意事项见 <a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>。</p>
+client 优先级注意事项见 <a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>。</p>
 </blockquote>
 <h2 id="怎样新增一条"><a class="header" href="#怎样新增一条">怎样新增一条</a></h2>
 <ol>
@@ -2843,7 +2793,7 @@ client 优先级注意事项见 <a href="#如何安装-hisi-riscv-工具链">安
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="原理与背景--explanation"><a class="header" href="#原理与背景--explanation">原理与背景 · Explanation</a></h1>
 <p>这一章不是教你“怎么做“，也不是给你查“叫什么“的索引——它讲的是<strong>为什么</strong>：
-为什么栈这样分层、为什么要一条自定义工具链、为什么一个裸 ELF 在硅片上不会启动、
+为什么栈这样分层、为什么要 <code>riscv32imfc</code> 硬浮点无原子 target、为什么一个裸 ELF 在硅片上不会启动、
 为什么驱动级测试用 embedded-test/semihosting、示例级测试仍用 UART 标记串。</p>
 <p>如果你想动手，去 <a href="#教程--选择你的路径">教程</a> 或 <a href="#操作指南--how-to-guides">操作指南</a>；
 如果你想查一个确切的地址、字段或 API，去 <a href="#本章导读--reference">参考</a>。
@@ -2870,8 +2820,8 @@ HIL 真机验证过的接口,没上板的实验性 surface 关在 <code>unstable
 封进驱动、用 sealed trait 锁住扩展点。<strong>为什么这样分层。</strong></li>
 <li><a href="#启动流程mask-rom--flashboot--app">启动流程：mask ROM → flashboot → app</a>——从上电到 <code>main()</code> 的整条引导链，
 以及为什么“补 0x300 头部、烧到 app 分区“是必须的，<strong>为什么一个裸 ELF 不会启动</strong>。</li>
-<li><a href="#硬浮点工具链">硬浮点工具链</a>——为什么是一条把 <code>riscv32imfc</code> 烤进 builtin 的
-自定义 rustc，<strong>而不是</strong> <code>-Z build-std</code>；hard-float ABI、无原子、code model 的来龙去脉。</li>
+<li><a href="#硬浮点工具链">硬浮点工具链</a>——为什么选择 <code>riscv32imfc</code> 硬浮点无原子 target，
+以及当前为什么用官方 nightly + <code>rust-src</code> + <code>-Zbuild-std</code>。</li>
 <li><a href="#async-与-embassy">async 与 embassy</a>——阻塞驱动、<code>async</code> feature、<code>embassy</code> feature
 三者的关系，以及它<strong>为什么能在一颗没有原子扩展的核上跑起来</strong>。</li>
 <li><a href="#安全启动与签名">安全启动与签名</a>——为什么开发片把 secure boot <strong>关掉</strong>、这意味着什么、
@@ -2967,9 +2917,10 @@ bug 挡在了编译期。代价是 API 略繁（不能用统一的 <code>new()</
 <li><strong><code>#![no_std]</code></strong>：无堆、无 <code>Vec</code>、无 <code>String</code>。需要缓冲就用定长数组。这不是洁癖——
 WS63 是资源受限的裸机环境，引入分配器会带来确定性和体积代价，而嵌入式代码几乎总能用
 定长缓冲解决。</li>
-<li><strong>目标是 <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f，无原子）</strong>，由自定义
-<code>hisi-riscv</code> 工具链提供。为什么是它而不是软浮点、为什么是自定义工具链而不是
-<code>-Z build-std</code>——这件事本身就是一篇 <a href="#硬浮点工具链">硬浮点工具链</a>。</li>
+<li><strong>目标是 <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f，无原子）</strong>，由官方
+Rust nightly 提供 builtin target。当前 rustup 还没有预编译 std 组件，所以 RISC-V
+构建使用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code>。为什么是它而不是软浮点，见
+<a href="#硬浮点工具链">硬浮点工具链</a>。</li>
 <li><strong>无原子怎么办</strong>：这颗核没有 A 扩展，<code>lr/sc/amo</code> 会陷入。所以 RMW 原子全部走
 <code>portable-atomic</code> 的 critical-section polyfill，<code>hisi-riscv-rt</code> 提供
 <code>critical-section-single-hart</code> 实现。这一条让 async/embassy 能在这颗核上跑——
@@ -3421,103 +3372,55 @@ SFC（flash 控制器）必须已经被初始化成可读状态——这正是 f
 <a href="#hil-测试框架">HIL 框架</a>。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="硬浮点工具链"><a class="header" href="#硬浮点工具链">硬浮点工具链</a></h1>
-<p>这一篇解释一个看起来“过度工程“的决定：<strong>为什么 WS63 要用一条自定义的 rustc——把
-<code>riscv32imfc-unknown-none-elf</code> 烤进 builtin 的 <code>hisi-riscv</code> 工具链——而不是用现成的
-stable rustc 加 <code>-Z build-std</code>？</strong> 这背后串着三个互相牵连的约束：硬浮点 ABI、没有原子扩展、
-以及 code model。逐项的安装与版本细节见
-<a href="#工具链与编译目标">工具链与编译目标</a> 和
-<a href="#如何安装-hisi-riscv-工具链">安装 hisi-riscv 工具链</a>；这里只讲<strong>为什么是这条路</strong>。</p>
+<p>这一篇解释为什么本生态使用 <code>riscv32imfc-unknown-none-elf</code>，以及为什么当前构建方式是<strong>官方 Rust nightly + <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code></strong>。</p>
+<p>安装与版本事实见<a href="#工具链与编译目标">工具链与编译目标</a>和<a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a>；这里讲设计原因和历史取舍。</p>
 <h2 id="这颗核到底是什么"><a class="header" href="#这颗核到底是什么">这颗核到底是什么</a></h2>
-<p>WS63 的核是 <strong>RV32IMFC</strong>：</p>
+<p>WS63 / BS2X 应用核是 <strong>RV32IMFC</strong>：</p>
 <ul>
-<li><strong>I</strong>（基础整数）、<strong>M</strong>（乘除）、<strong>C</strong>（压缩指令）——常规；</li>
-<li><strong>F</strong>（单精度浮点）——<strong>有</strong>硬件浮点单元；</li>
-<li><strong>没有 A</strong>（原子扩展）——<code>lr.w/sc.w/amo*</code> 这些指令会<strong>陷入非法指令</strong>。</li>
+<li><strong>I/M/C</strong>：基础整数、乘除、压缩指令；</li>
+<li><strong>F</strong>：有单精度 FPU；</li>
+<li><strong>没有 A</strong>：<code>lr.w</code> / <code>sc.w</code> / <code>amo*</code> 会触发非法指令。</li>
 </ul>
-<p>这两个非常规点（有 F、没有 A）合起来，把“选哪个编译目标“这件事从“随手挑个标准 target“
-变成了一道需要权衡的题。</p>
+<p>这意味着目标必须同时表达两件事：使用硬浮点 ABI，又不能让编译器生成硬件原子指令。</p>
 <h2 id="为什么硬浮点ilp32f-abi"><a class="header" href="#为什么硬浮点ilp32f-abi">为什么硬浮点（ilp32f ABI）</a></h2>
-<p>既然硅片<strong>有</strong> FPU，最自然的选择就是让它用起来——也就是 <strong>ilp32f</strong> ABI：浮点参数走浮点
-寄存器、浮点运算发真正的 <code>f*</code> 指令，而不是软件模拟。软浮点（ilp32）当然也能跑（编译器把
-<code>f32</code> 运算翻成调用 <code>libgcc</code>/<code>compiler-builtins</code> 里的软件例程），但那是在一颗有 FPU 的核上
-<strong>白白浪费硬件</strong>、还更慢更大。</p>
-<p>但硬浮点 ABI 的真正分量不只在性能。<strong>ilp32f 是一条 ABI 边界</strong>——用 ilp32f 编的代码和用
-ilp32 编的代码<strong>不能直接链接</strong>（浮点参数的传递约定不同）。而 WS63 的北极星是连接性，
-连接性意味着最终要和<strong>厂商的闭源 blob</strong> 链接，那些 blob 是用厂商 gcc 按 <strong>ilp32f</strong> 编的。
-所以选 ilp32f 不仅是“用上 FPU“，更是“为了将来能和 vendor blob 在同一个 ABI 上对接“
-——这是阶段 3（blob 链接）的前置条件。这一层动机，使硬浮点从“优化“升级成“必需“。</p>
+<p>硅片有 FPU，所以 Rust 固件应使用 <strong>ilp32f</strong> ABI：浮点参数走浮点寄存器，<code>f32</code> 运算生成真实 FPU 指令。软浮点当然也能跑，但会浪费硬件，并且代码更慢更大。</p>
+<p>更重要的是 ABI 边界。WS63 的连接性目标最终需要和厂商闭源 blob 链接；这些 blob 按厂商 gcc 的 <strong>ilp32f</strong> ABI 产出。Rust 侧如果用 ilp32 软浮点，浮点参数传递约定就不一致，后续 blob 链接会变得不可控。因此硬浮点不是单纯优化，而是长期互操作前提。</p>
 <h2 id="为什么没有原子是个真问题"><a class="header" href="#为什么没有原子是个真问题">为什么没有原子是个真问题</a></h2>
-<p>RV32IMFC 缺 A 扩展，意味着任何会发 <code>lr/sc/amo</code> 的代码在硅片上都会<strong>陷入</strong>。
-而 Rust 的 <code>core::sync::atomic</code> 默认假设有原子指令。历史上一度用过 <code>riscv32imafc</code>
-（带 A）作为权宜——但那会让编译器发原子指令、在真硅片上触发非法指令陷阱，所以<strong>被弃用</strong>。</p>
-<p>正解是两段配合：</p>
-<ol>
-<li><strong>目标本身声明为无原子</strong>——用 forced-atomics + no-CAS 配置，让原子 load/store 降级成
-普通 <code>ld/st</code>（单核下这是安全的），而需要 RMW（compare-and-swap 之类）的操作<strong>不发
-原子指令</strong>；</li>
-<li><strong>RMW 走 polyfill</strong>——<code>portable-atomic</code>（开 <code>critical-section</code> feature）把 CAS
-实现成“关中断 → 读改写 → 开中断“的临界区，<code>hisi-riscv-rt</code> 提供
-<code>critical-section-single-hart</code> 这个单核实现。</li>
-</ol>
-<p>这套机制正是 async/embassy 能在这颗核上跑的地基（见 <a href="#async-与-embassy">async 与 embassy</a>）。
-它和“用不用自定义工具链“正交——但<strong>目标必须被正确声明为无原子</strong>，否则 polyfill 也救不了，
-编译器照样会在别处发出原子指令。</p>
-<h2 id="核心抉择自定义-builtin-target还是--z-build-std"><a class="header" href="#核心抉择自定义-builtin-target还是--z-build-std">核心抉择：自定义 builtin target，还是 <code>-Z build-std</code>？</a></h2>
-<p>到这里问题收敛成：我们需要一个<strong>标准 rustc 里没有的目标</strong>（<code>riscv32imfc</code>，硬浮点、无原子）。
-Rust 提供两条路拿到一个非标准 target，二者是真正的取舍：</p>
-<h3 id="路线-a-z-build-std用现成-stable-rustc--nightly-特性"><a class="header" href="#路线-a-z-build-std用现成-stable-rustc--nightly-特性">路线 A：<code>-Z build-std</code>（用现成 stable rustc + nightly 特性）</a></h3>
-<p>写一个 <code>*.json</code> 自定义 target spec，然后让 cargo 用 <code>-Z build-std</code> <strong>从源码现编 <code>core</code>/<code>alloc</code></strong>。</p>
+<p>如果误用带 <code>A</code> 扩展的 target，例如 <code>riscv32imafc</code>，编译器可以合法发出 <code>lr/sc/amo*</code>。但这些指令在真硅片上不存在，会直接陷入非法指令。</p>
+<p>正确模型是：</p>
 <ul>
-<li><strong>好处</strong>：不用自己造工具链，跟着官方 rustc 走。</li>
-<li><strong>代价</strong>：<code>-Z build-std</code> 是 <strong>nightly-only</strong> 的不稳定特性。整条工具链就被钉死在 nightly
-上——nightly 每天变、偶尔回归，CI 的可重现性变差，用户也得装 nightly + rust-src。
-对一个要给别人用、要长期维护的嵌入式 SDK，“必须 nightly“是个不小的负担。</li>
+<li>target 声明无原子扩展；</li>
+<li>单 hart 下原子 load/store 可降为普通 load/store；</li>
+<li>RMW/CAS 由 <code>portable-atomic</code> 通过 <code>critical-section</code> polyfill 实现；</li>
+<li><code>hisi-riscv-rt</code> 提供当前产品路径所需的 single-hart critical-section 实现。</li>
 </ul>
-<h3 id="路线-b自定义-rustc把-target-烤成-builtin现在走的路"><a class="header" href="#路线-b自定义-rustc把-target-烤成-builtin现在走的路">路线 B：自定义 rustc，把 target 烤成 builtin（现在走的路）</a></h3>
-<p>构建一条 <code>hisi-riscv</code> 工具链：一个 <strong>stable rustc</strong>，但在编译它的时候就把
-<code>riscv32imfc-unknown-none-elf</code> 这个 target spec <strong>编进 rustc 内部成为 builtin</strong>，
-并<strong>预编译好 <code>core</code>/<code>alloc</code></strong> 一起分发。</p>
+<p>所以 <code>riscv32imfc-unknown-none-elf</code> 的价值不是“名字更贴近芯片”这么简单，而是防止整个生态误发 A 扩展指令。</p>
+<h2 id="为什么现在仍需要--zbuild-std"><a class="header" href="#为什么现在仍需要--zbuild-std">为什么现在仍需要 <code>-Zbuild-std</code></a></h2>
+<p><code>rust-lang/rust#158473</code> 已经把 <code>riscv32imfc-unknown-none-elf</code> 加进 upstream rustc，当前 nightly 的 <code>rustc --print target-list</code> 能看到它。这个状态解决了“rustc 不认识 target”的问题。</p>
+<p>但 rustup 还没有为该 target 分发预编译 <code>rust-std</code> 组件。也就是说，<code>rustup target add riscv32imfc-unknown-none-elf</code> 还不是可用安装路径。短期构建必须让 Cargo 从 <code>rust-src</code> 编译 <code>core</code> / <code>alloc</code>：</p>
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release
+</code></pre>
+<p>这就是当前 pinned nightly 的原因：业务仓 pin 一个已验证 nightly 保证可复现；外部 radar 跟踪 latest nightly 的上游状态。</p>
+<h2 id="旧自定义工具链为什么退役"><a class="header" href="#旧自定义工具链为什么退役">旧自定义工具链为什么退役</a></h2>
+<p>旧的 <code>hisi-riscv</code> 自定义 rustc tarball 解决过一个真实问题：当 upstream rustc 还没有这个 target 时，它把 target spec 烤成 builtin，并随工具链分发预编译 <code>core</code> / <code>alloc</code>。这让用户可以在 stable-like 体验下直接 <code>cargo build</code>。</p>
+<p>现在 upstream rustc 已经认识 target，继续依赖自定义 rustc 会带来更大的长期成本：</p>
 <ul>
-<li><strong>好处</strong>：用户拿到的是一条<strong>稳定、自带预编译 core/alloc 的工具链</strong>，<code>.cargo/config.toml</code>
-里设好默认 target 就行，<strong>完全不需要 <code>-Z build-std</code>、不需要 nightly</strong>。
-<code>cargo build</code> 直接出 RV32IMFC ilp32f 固件，可重现、好分发。</li>
-<li><strong>代价</strong>：得自己<strong>维护这条工具链</strong>——跟 rustc 版本、出多平台预编译包、走自己的 CI。
-这是实打实的工程量，也是这套生态接受的那笔账。</li>
+<li>生态仍被私有工具链绑定，难以上游化；</li>
+<li>每次 rustc 版本更新都需要维护自定义构建和多平台 tarball；</li>
+<li>外部项目、CI、template 难以复用标准 Rust 安装路径；</li>
+<li>推动 Tier 2 需要证明官方工具链路径持续可用，而不是继续绕开它。</li>
 </ul>
-<p>权衡的结论很清楚：<strong>用户体验和可重现性 &gt; 维护方自己省事</strong>。对一个嵌入式 SDK，“装好工具链
-就能稳定 <code>cargo build</code>“远比“维护方不用管工具链、但每个用户都得忍 nightly“更值。
-所以选了 B。工具链通过 <code>rust-toolchain.toml</code> pin 住 <code>channel = "hisi-riscv"</code>，
-解压进 <code>~/.rustup/toolchains/hisi-riscv/</code> 后 rustup 即自动识别。</p>
+<p>因此当前策略是：业务仓库使用官方 pinned nightly；<code>hisi-riscv-rust-toolchain</code> 仓库转型为外部 radar，持续检查 latest nightly、rustup std 组件、build-std、QEMU/HIL canary，并积累 Tier-2 readiness 证据。</p>
 <h2 id="code-modelmedlow-还是-medany"><a class="header" href="#code-modelmedlow-还是-medany">code model：medlow 还是 medany</a></h2>
-<p>还有一个容易被忽略、但在裸机上会真出问题的旋钮：<strong>code model</strong>，它决定编译器怎么寻址
-全局符号。</p>
+<p>另一个裸机上会出问题的旋钮是 code model。WS63 的 flash、SRAM、外设分布在较高地址，不能假设所有符号都在低 2 GiB。</p>
 <ul>
-<li><strong>medlow</strong>：假设代码和数据都落在地址空间<strong>低 2 GiB 以内</strong>，用更短的寻址序列。</li>
-<li><strong>medany</strong>：用 PC 相对寻址，可以放在地址空间<strong>任意位置</strong>，序列略长。</li>
+<li><strong>medlow</strong>：假设代码和数据落在低地址，用更短寻址序列；</li>
+<li><strong>medany</strong>：使用 PC 相对寻址，能覆盖更灵活的地址布局。</li>
 </ul>
-<p>WS63 的地址布局把外设、flash、SRAM 散布在很高的地址（比如外设在 <code>0x4400_0000</code> 一带、
-SRAM 更高），全局符号未必落在低 2 GiB。所以这条工具链用 <strong>medany</strong>——这样不管链接脚本把
-段摆到哪个高地址，PC 相对寻址都能正确指到。如果误用 medlow，链接期或运行期会因为
-“地址放不进 medlow 的寻址范围“而出错。这件事和硬浮点、无原子一样，是“WS63 的地址空间
-不像教科书 RISC-V“逼出来的细节。</p>
-<h2 id="一段不算短的历史"><a class="header" href="#一段不算短的历史">一段不算短的历史</a></h2>
-<p>这条路不是一步到位的：</p>
-<ul>
-<li><strong>2026-05-31，阶段 0</strong>：先用 stable rustc 里<strong>已有的 builtin</strong> <code>riscv32imc</code>（软浮点、
-stable、免 build-std）做过渡——目的是先让整条构建/链接跑通，把“无原子 + critical-section“
-这套机制验证出来。</li>
-<li><strong>随后切到硬浮点工具链</strong>：为了和 vendor blob 的 ilp32f ABI 对齐（阶段 3 的前置），
-把目标换成 <code>riscv32imfc</code>，并为此造了 <code>hisi-riscv</code> 工具链。</li>
-</ul>
-<p>理解这段历史有助于读懂仓库里偶尔还能见到 <code>riscv32imc</code> 字样的地方——那是过渡期的遗存，
-现在的<strong>默认与正解是 <code>riscv32imfc</code> + <code>hisi-riscv</code> 工具链</strong>。</p>
+<p>当前 target 需要匹配这类高地址裸机布局，避免链接脚本把段放到高地址后出现寻址范围问题。</p>
 <h2 id="这件事对其他部分的影响"><a class="header" href="#这件事对其他部分的影响">这件事对其他部分的影响</a></h2>
-<p>值得强调的是：<strong>异步/embassy 这块完全不在乎工具链是否上游</strong>。异步只依赖
-<code>portable-atomic</code> + <code>critical-section</code>，与“target 是 builtin 还是 build-std“正交。
-真正被自定义工具链“绑住“的是<strong>上游化</strong>——只要还依赖自定义 rustc，hisi-riscv-hal 就难以
-进 embassy 那种“基于标准 stable target 构建“的 in-tree CI。所以“摆脱自定义工具链“
-（短期改用标准 target + build-std，长期推 target 进 rustc 主线）被列为一条独立的上游化
-工作线，详见 <a href="#异步与-embassy-适配">async 与 embassy 深入文档</a> 里的上游化讨论。</p>
+<p>async / embassy 本身不关心 target 是“自定义工具链”还是“官方 nightly + build-std”；它关心的是无原子模型是否正确，以及 <code>portable-atomic</code> / <code>critical-section</code> 是否可靠。</p>
+<p>真正被工具链路径影响的是上游化：只要生态仍依赖私有 rustc，就很难进入更广泛的 Rust embedded CI。迁移到官方 target 后，剩下的路线更清晰：先用 build-std 维持可用性，再推动 rustup 预编译 std 组件和更高 tier 支持。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="async-与-embassy"><a class="header" href="#async-与-embassy">async 与 embassy</a></h1>
 <p>这一篇是异步故事的<strong>概念总览</strong>——它讲三种用 HAL 的方式（纯阻塞、<code>async</code> feature、
@@ -4056,9 +3959,9 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 <h2 id="构建与目标target"><a class="header" href="#构建与目标target">构建与目标（target）</a></h2>
 <ul>
 <li><strong>默认 target / 工具链</strong>：<strong><code>riscv32imfc-unknown-none-elf</code></strong>（RV32IMFC，硬件单精度浮点 <code>ilp32f</code>，无原子），
-由自定义 <strong><code>hisi-riscv</code></strong> 工具链提供（stable rustc 把该 target 烤成 builtin，故<strong>无需 <code>-Z build-std</code></strong>，
-工具链自带预编译 core/alloc）。<code>rust-toolchain.toml</code> pin <code>channel = "hisi-riscv"</code>；安装见
-<a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain">https://github.com/hispark-rs/hisi-riscv-rust-toolchain</a>（解压进 <code>~/.rustup/toolchains/hisi-riscv/</code>，rustup 自动识别）。
+由官方 upstream Rust nightly 提供 builtin target。<code>rust-toolchain.toml</code> pin
+<code>nightly-2026-07-09</code>；当前 rustup 尚无该 target 的预编译 <code>rust-std</code> 组件，所以 RISC-V
+构建命令显式使用 <code>-Zbuild-std=core,alloc</code>。
 <ul>
 <li>WS63 核<strong>无原子（A）扩展</strong>：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
 RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不发 <code>lr/sc/amo</code></strong>。原默认 <code>riscv32imafc</code>
@@ -4076,11 +3979,11 @@ RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不
 覆盖。</li>
 </ul>
 <p>常用命令：</p>
-<pre><code class="language-bash">cargo build --release          # 构建库 + default-member WS63 示例
-cargo check --workspace        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy --workspace -- -D warnings
-cargo build -p blinky             # 单独构建一个示例
-cargo build -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
+cargo check -Zbuild-std=core,alloc --workspace        # 检查全部（含 blinky/flashboot，不链接）
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
+cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
 <h2 id="已知的全局性问题详见评审台账"><a class="header" href="#已知的全局性问题详见评审台账">已知的全局性问题（详见评审台账）</a></h2>
 <ol>
@@ -4567,7 +4470,7 @@ chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
 <p><strong>embassy 支持 —— 两种正规模型,WS63 走 out-of-tree 那条</strong>。
 embassy 仓库<strong>确实</strong>收录了一批 <strong>in-tree HAL</strong>(<code>embassy-nrf</code>/<code>-stm32</code>/<code>-rp</code>/<code>-nxp</code>/<code>-imxrt</code>/<code>-microchip</code>/<code>-mspm0</code>/<code>-mcxa</code>…,主要是主流 Cortex-M),它们由 embassy 维护者<strong>承诺维护</strong>、与 embassy 内部同步演进。
 但 embassy 同时提供一套<strong>给树外 HAL 用的接缝</strong>(<code>embassy-time-driver</code> + <code>embassy-time-queue-utils</code> + <code>embassy-executor</code> 的 platform 抽象)—— 树外 HAL 只实现这些 trait 即可,<strong>无需进 embassy 仓库</strong>。最大的例子是 <strong>esp-hal</strong>(Espressif 自己维护、在 esp-rs/esp-hal,<strong>不在</strong> embassy 仓库),社区还有 ch32-hal/py32-hal 等几十个。
-<strong>WS63 属于后者(esp-hal 模型)</strong>,原因:① in-tree 要 embassy 维护者<strong>采纳并长期维护</strong>该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 全部基于 <strong>stable rustc 标准 target</strong> 构建,而 WS63 现在依赖自定义 <code>ws63</code> 工具链(无原子 target 烤进 builtin)——这是进 embassy CI 的硬阻塞(见第 3 点);③ hisi-riscv-hal 本就是<strong>独立 HAL</strong>(阻塞 embedded-hal + 可选 embassy),天然适合树外。
+<strong>WS63 属于后者(esp-hal 模型)</strong>,原因:① in-tree 要 embassy 维护者<strong>采纳并长期维护</strong>该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 通常基于标准 Rust 工具链和主线 CI 构建,而 WS63 仍需要 <code>-Zbuild-std</code>、QEMU fork 和板级 HIL 证据来闭环;③ hisi-riscv-hal 本就是<strong>独立 HAL</strong>(阻塞 embedded-hal + 可选 embassy),天然适合树外。
 所以<strong>上游化 = 把带 <code>embassy</code> feature 的 hisi-riscv-hal 发布到 crates.io</strong>(版本结构已就绪),而<strong>不是</strong>塞进 embassy monorepo。想更解耦可拆 <code>embassy-time-ws63</code>,但非必需。</p>
 <ul>
 <li>跟版:盯 <code>embassy-time-driver</code>(现 0.2)/<code>embassy-time-queue-utils</code>(0.3)/<code>embassy-executor</code>(0.10)的 semver;破坏性改动(如 <code>Driver</code> 从 alarm-handle 改成 <code>schedule_wake</code>+queue)集中在 <code>embassy.rs</code> 一个文件。</li>
@@ -4577,10 +4480,10 @@ embassy 仓库<strong>确实</strong>收录了一批 <strong>in-tree HAL</strong
 <p><strong>embassy-executor 已是上游</strong>:我们直接用 <code>platform-riscv32</code>,<strong>零改动</strong>。无 CAS 支持是它已有能力(thumbv6m 同理)。无需上游任何东西。</p>
 </li>
 <li>
-<p><strong>工具链 / target</strong>(最大的“非上游“项):现在依赖自定义 <code>ws63</code> rustc(把 <code>riscv32imfc-unknown-none-elf</code> 无原子 target 烤成 builtin)。两条上游路:</p>
+<p><strong>工具链 / target</strong>: <code>riscv32imfc-unknown-none-elf</code> 已进入 upstream rustc nightly,生态主线已脱离自定义 rustc。剩余两步是:</p>
 <ul>
-<li><strong>短期</strong>:改用 rustc <strong>已有的稳定 target</strong>(如 <code>riscv32imc</code>/<code>riscv32imac</code>)+ <code>-Z build-std</code> + <code>build-std-features</code>,去掉自定义工具链依赖 —— 代价是需要 nightly/<code>-Z</code>。</li>
-<li><strong>长期</strong>:把这个 target spec 提交进 rustc(niche,门槛高),或推动官方加 <code>riscv32imfc-*</code>。</li>
+<li><strong>短期</strong>:业务仓 pin 已验证 nightly,用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code> 构建。</li>
+<li><strong>长期</strong>:推动 rustup 分发该 target 的预编译 <code>rust-std</code>,并用外部 radar 积累 Tier-2 readiness 证据。</li>
 <li>现状对异步<strong>无影响</strong>:异步只依赖 <code>portable-atomic</code>+<code>critical-section</code>,与 target 是否上游正交。</li>
 </ul>
 </li>
@@ -4589,7 +4492,7 @@ embassy 仓库<strong>确实</strong>收录了一批 <strong>in-tree HAL</strong
 </li>
 </ol>
 <blockquote>
-<p>简言之:<strong>异步/embassy 这块本身已经是「按上游约定正确实现」</strong>,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 摆脱自定义 rustc 工具链、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。</p>
+<p>简言之:<strong>异步/embassy 这块本身已经是「按上游约定正确实现」</strong>,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 让官方 target 获得 rustup std 组件/Tier-2 证据、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "main", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "main", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="ws63-examples-架构与评审"><a class="header" href="#ws63-examples-架构与评审">ws63-examples 架构与评审</a></h1>
@@ -4745,7 +4648,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <ul>
 <li>生产层面的结论是<strong>复用 fbb_ws63 原厂 flashboot</strong>（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（<code>README.md:22-26</code>）。本 crate 维持实验/学习定位。</li>
 <li><strong>整改已落地（2026-06-01）</strong>：镜像头布局对齐 <code>secure_verify_boot.h</code>（<code>code_area_len</code>/<code>code_area_hash</code> 偏移修正 + const 尺寸断言）、删除 <code>0x40000024</code> 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、<code>verify_sha256</code>→<code>verify_image_integrity</code> 如实标注“仅完整性非真实性“、<code>read_partition_app_addr</code> 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 <code>--exclude</code>）。<strong>真实 ECC/SM2 验签</strong>仍按冻结项复用原厂、不在本实验件投入。</li>
-<li>阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地）、无原子 ISA + <code>portable-atomic</code> critical-section polyfill（默认 target 现为 ws63 工具链 builtin 的 <code>riscv32imfc-unknown-none-elf</code>，硬浮点；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）、CI/release gating 与发布顺序修复、<code>hisi-riscv-rt</code> MIE 中断宏 typo 与栈顶符号 GC fallback 修复。</li>
+<li>阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地）、无原子 ISA + <code>portable-atomic</code> critical-section polyfill（默认 target 为官方 rustc builtin 的 <code>riscv32imfc-unknown-none-elf</code>，当前用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code> 构建；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）、CI/release gating 与发布顺序修复、<code>hisi-riscv-rt</code> MIE 中断宏 typo 与栈顶符号 GC fallback 修复。</li>
 <li>尚未解决并已排期：示例链接（<code>hisi-riscv-rt</code> 链接脚本不传播到下游 bin）见 <strong>阶段 1</strong>；中断模型（PLIC vs LOCIPRI/LOCIEN）、SPI/I2C/SPI 超时、system reset、GPIO pull、死代码清理见 <strong>阶段 2</strong>；porting 层 + HCC IPC + blob 链接的连接性见 <strong>阶段 3–5</strong>；async 见 <strong>阶段 6</strong>。详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</li>
 </ul>
 <h2 id="注记bs2x-引导加载bs21bs22bs20"><a class="header" href="#注记bs2x-引导加载bs21bs22bs20">注记：BS2X 引导加载（BS21/BS22/BS20）</a></h2>

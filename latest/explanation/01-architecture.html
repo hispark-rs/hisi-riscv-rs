@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -260,9 +260,10 @@ bug 挡在了编译期。代价是 API 略繁（不能用统一的 <code>new()</
 <li><strong><code>#![no_std]</code></strong>：无堆、无 <code>Vec</code>、无 <code>String</code>。需要缓冲就用定长数组。这不是洁癖——
 WS63 是资源受限的裸机环境，引入分配器会带来确定性和体积代价，而嵌入式代码几乎总能用
 定长缓冲解决。</li>
-<li><strong>目标是 <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f，无原子）</strong>，由自定义
-<code>hisi-riscv</code> 工具链提供。为什么是它而不是软浮点、为什么是自定义工具链而不是
-<code>-Z build-std</code>——这件事本身就是一篇 <a href="03-hardfloat-toolchain.html">硬浮点工具链</a>。</li>
+<li><strong>目标是 <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f，无原子）</strong>，由官方
+Rust nightly 提供 builtin target。当前 rustup 还没有预编译 std 组件，所以 RISC-V
+构建使用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code>。为什么是它而不是软浮点，见
+<a href="03-hardfloat-toolchain.html">硬浮点工具链</a>。</li>
 <li><strong>无原子怎么办</strong>：这颗核没有 A 扩展，<code>lr/sc/amo</code> 会陷入。所以 RMW 原子全部走
 <code>portable-atomic</code> 的 critical-section polyfill，<code>hisi-riscv-rt</code> 提供
 <code>critical-section-single-hart</code> 实现。这一条让 async/embassy 能在这颗核上跑——

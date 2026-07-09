@@ -36,10 +36,10 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-9bcc735b.js"></script>
+        <script src="../../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -274,9 +274,9 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 <h2 id="构建与目标target"><a class="header" href="#构建与目标target">构建与目标（target）</a></h2>
 <ul>
 <li><strong>默认 target / 工具链</strong>：<strong><code>riscv32imfc-unknown-none-elf</code></strong>（RV32IMFC，硬件单精度浮点 <code>ilp32f</code>，无原子），
-由自定义 <strong><code>hisi-riscv</code></strong> 工具链提供（stable rustc 把该 target 烤成 builtin，故<strong>无需 <code>-Z build-std</code></strong>，
-工具链自带预编译 core/alloc）。<code>rust-toolchain.toml</code> pin <code>channel = "hisi-riscv"</code>；安装见
-<a href="https://github.com/hispark-rs/hisi-riscv-rust-toolchain">https://github.com/hispark-rs/hisi-riscv-rust-toolchain</a>（解压进 <code>~/.rustup/toolchains/hisi-riscv/</code>，rustup 自动识别）。
+由官方 upstream Rust nightly 提供 builtin target。<code>rust-toolchain.toml</code> pin
+<code>nightly-2026-07-09</code>；当前 rustup 尚无该 target 的预编译 <code>rust-std</code> 组件，所以 RISC-V
+构建命令显式使用 <code>-Zbuild-std=core,alloc</code>。
 <ul>
 <li>WS63 核<strong>无原子（A）扩展</strong>：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
 RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不发 <code>lr/sc/amo</code></strong>。原默认 <code>riscv32imafc</code>
@@ -294,11 +294,11 @@ RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不
 覆盖。</li>
 </ul>
 <p>常用命令：</p>
-<pre><code class="language-bash">cargo build --release          # 构建库 + default-member WS63 示例
-cargo check --workspace        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy --workspace -- -D warnings
-cargo build -p blinky             # 单独构建一个示例
-cargo build -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
+<pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
+cargo check -Zbuild-std=core,alloc --workspace        # 检查全部（含 blinky/flashboot，不链接）
+cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
+cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
 <h2 id="已知的全局性问题详见评审台账"><a class="header" href="#已知的全局性问题详见评审台账">已知的全局性问题（详见评审台账）</a></h2>
 <ol>

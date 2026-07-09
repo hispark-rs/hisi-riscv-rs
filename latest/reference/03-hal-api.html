@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-2ee494b6.js";
+            window.path_to_searchindex_js = "../searchindex-ce40200d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-9bcc735b.js"></script>
+        <script src="../toc-61aafd75.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -185,7 +185,7 @@
 <h1 id="hal-api-总览"><a class="header" href="#hal-api-总览">HAL API 总览</a></h1>
 <p><code>hisi-riscv-hal</code> 是手写的安全驱动层，建模自 esp-hal 模式。本页给出公开 API 的结构图。</p>
 <blockquote>
-<p><strong>完整 API 文档（rustdoc）↗</strong> —— 在线:<a data-hisi-api-link="hisi_riscv_hal/index.html" href="/hisi-riscv-rs/api/latest/ws63/hisi_riscv_hal/index.html">hisi-riscv-hal</a>（当前 chip/version 对应的 <code>hisi-riscv-hal</code> / PAC / <code>hisi-riscv-rt</code>，与本手册同站部署，CI 自动构建）;本地:<code>cargo doc -p hisi-riscv-hal --open</code>。本页只是结构图,<strong>逐项 API 以 rustdoc 为准</strong>。</p>
+<p><strong>完整 API 文档（rustdoc）↗</strong> —— 在线:<a data-hisi-api-link="hisi_riscv_hal/index.html" href="/hisi-riscv-rs/api/latest/ws63/hisi_riscv_hal/index.html">hisi-riscv-hal</a>（当前 chip/version 对应的 <code>hisi-riscv-hal</code> / PAC / <code>hisi-riscv-rt</code>，与本手册同站部署，CI 自动构建）;本地:<code>cargo doc -Zbuild-std=core,alloc -p hisi-riscv-hal --open</code>。本页只是结构图,<strong>逐项 API 以 rustdoc 为准</strong>。</p>
 </blockquote>
 <p>事实取自 <a href="https://github.com/hispark-rs/hisi-riscv-hal"><code>crates/hisi-riscv-hal/src/lib.rs</code></a> 及各模块头。</p>
 <p>模块全清单与外设映射见 <a href="04-peripherals.html">外设清单</a>；稳定/不稳定 API 门控见 <a href="../explanation/policies/02-stable-unstable.html">稳定 / 不稳定 API 门控</a>；async/embassy 的原理见 <a href="../explanation/04-async-embassy.html">async 与 embassy</a>。</p>
