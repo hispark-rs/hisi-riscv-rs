@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
+            window.path_to_searchindex_js = "../../searchindex-5c4eb6d9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -184,7 +184,7 @@
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="hisi-riscv-hal-架构"><a class="header" href="#hisi-riscv-hal-架构">hisi-riscv-hal 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
 <p><strong>2026-06 更新</strong>：HAL 现为<strong>多芯片</strong> —— 使用 <code>chip-ws63</code> / <code>chip-bs21</code> 特性二选一（HAL standalone 无默认芯片）。后者基于 <code>bs2x-pac</code> 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 <code>chip-bs21</code> target 目前需 <code>unstable</code>。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU <code>-M bs21/bs22/bs20</code> 上验证。crate 路径 <code>crates/hisi-riscv-hal</code>。</p>
@@ -224,7 +224,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 <h3 id="类型化配置--能编译就能上板050"><a class="header" href="#类型化配置--能编译就能上板050">类型化配置 — “能编译就能上板”（0.5.0）</a></h3>
 <p>0.5.0 把<strong>配置面</strong>全面收紧为「能写出来的值就是能在硅上跑的值」：不存在能编译却被静默
 clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
-<a href="../policies/01-typed-config.html">类型化配置</a>，验收见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/0.5.0-acceptance.md"><code>docs/review/0.5.0-acceptance.md</code></a>。
+<a href="../policies/01-typed-config.html">类型化配置</a>；当前默认稳定面与真机证据见 <a href="../../reference/10-stable-api.html">Stable API 清单</a>。
 两层结构：</p>
 <ul>
 <li><strong>配置/构造面（HAL 自有，可自由类型化）</strong>：受校验 newtype + 可失败构造子返回
@@ -247,7 +247,7 @@ DMA 提供拥有缓冲区的
 <li><code>peripheral!($name, $pac_ty)</code>（<code>peripherals.rs:10-48</code>）— 为每个外设生成零大小、<code>'d</code> 参数化的 ZST，提供 <code>unsafe steal()</code>、<code>ptr()</code>；raw PAC <code>register_block()</code> 是 <code>unstable</code> + <code>unsafe</code> 的逃生口。</li>
 <li><code>peripherals!(...)</code>（<code>peripherals.rs:50-87</code>）— 生成 <code>Peripherals</code> 结构体，<code>take()</code> 经 PAC 单例校验（<code>peripherals.rs:61-64</code>），<code>unsafe steal()</code> 绕过校验。</li>
 </ul>
-<p>全部 35 个 PAC 外设都有 HAL 封装（<code>peripherals.rs:157-193</code>）。<code>'d</code> 生命周期防止 <code>Peripherals</code> token 被释放后仍持有驱动，是这一层的核心安全不变量（评审优点）。</p>
+<p>全部 35 个 PAC 外设都有 HAL 封装（<code>peripherals.rs:157-193</code>）。<code>'d</code> 生命周期防止 <code>Peripherals</code> token 被释放后仍持有驱动，是这一层的核心安全不变量。</p>
 <h3 id="时钟架构"><a class="header" href="#时钟架构">时钟架构</a></h3>
 <p>两套并存：</p>
 <ol>
@@ -255,7 +255,7 @@ DMA 提供拥有缓冲区的
 <li><strong><code>clock.rs</code> 的 CKEN 参考图</strong> — 旧 <code>ClockControl</code> / <code>PeripheralGuard</code> RAII 时钟门控因零消费者已删除。当前 <code>Peripheral::cken_info()</code> 保存经 SDK/SVD 审计的 <code>(cken 寄存器索引, 位)</code> 映射，PWM 的 9 位连续门控（bits 2:10）特殊处理；无证据的外设返回 <code>None</code>，不虚构 gate bit。</li>
 </ol>
 <h3 id="gpio-三层模型"><a class="header" href="#gpio-三层模型">GPIO 三层模型</a></h3>
-<p>19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 <code>pin / 8</code>、位为 <code>pin % 8</code>（评审确认正确）。两层（0.5.0 删除了遗留的 type-state <code>GpioPin&lt;MODE&gt;</code>，统一到下面这一套）：</p>
+<p>19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 <code>pin / 8</code>、位为 <code>pin % 8</code>。两层（0.5.0 删除了遗留的 type-state <code>GpioPin&lt;MODE&gt;</code>，统一到下面这一套）：</p>
 <ol>
 <li><code>AnyPin&lt;'d&gt;</code> — 类型擦除，经 <code>unsafe steal(pin)</code> 创建。</li>
 <li><code>Input</code> / <code>Output</code> / <code>Flex</code> — 由 <code>AnyPin</code> 经 <code>init_input()</code>/<code>init_output()</code>/<code>init_flex()</code> 派生；<code>degrade()</code> 可安全擦除回 <code>AnyPin</code>，<code>Flex::set_as_input/set_as_output</code> 提供显式方向。</li>
@@ -266,7 +266,7 @@ DMA 提供拥有缓冲区的
 <h3 id="sealed-trait--异步层"><a class="header" href="#sealed-trait--异步层">Sealed trait + 异步层</a></h3>
 <p><code>private.rs</code> 定义 crate 内部 <code>Sealed</code> 超 trait，封印 <code>PeripheralInput</code>、<code>PeripheralOutput</code> 等硬件限定 signal trait。早先空壳的 <code>DriverMode</code>/<code>Blocking</code>/<code>Async</code> mode 标记（associated type 恒等、零消费者）和 vestigial <code>DmaWord</code> <strong>已删除</strong>。</p>
 <p><strong>异步层已实现但分层暴露</strong>（feature <code>async</code>/<code>embassy</code>，详见 <a href="06-async-embassy.html">async-embassy.md</a>）：SPI/I2C 的 blocking-backed <code>embedded-hal-async</code> trait impl 随 <code>async</code> 暴露；<code>asynch::block_on</code> + <code>IrqSignal</code>（中断→waker 桥）、GPIO wait、timer async delay、UART async I/O、LSADC/DMA 自研异步以及 embassy-time <code>Driver</code> 仍需 <code>unstable</code>。全部可在无原子的 WS63 上编译（portable-atomic + critical-section），但默认稳定面只承诺 HIL/soundness 已闭合的子集。</p>
-<h3 id="embedded-hal-trait-选型评审优点"><a class="header" href="#embedded-hal-trait-选型评审优点">embedded-hal trait 选型（评审优点）</a></h3>
+<h3 id="embedded-hal-trait-选型"><a class="header" href="#embedded-hal-trait-选型">embedded-hal trait 选型</a></h3>
 <ul>
 <li>SPI 实现 <code>SpiBus</code> 而非 <code>SpiDevice</code>（<code>spi.rs:135</code>）— HAL 层不持有 CS，符合分层惯例。</li>
 <li>I2C <code>transaction</code> 在操作间发 repeated-START、仅末尾发 STOP（<code>i2c.rs:215-265</code>），符合 embedded-hal 契约。NACK 映射为 <code>NoAcknowledge</code>（<code>i2c.rs:278-280</code>）。</li>
@@ -274,8 +274,6 @@ DMA 提供拥有缓冲区的
 </ul>
 <h3 id="编译期断言safetyrs"><a class="header" href="#编译期断言safetyrs">编译期断言（<code>safety.rs</code>）</a></h3>
 <p><code>safety.rs</code> 保留少量编译期结构检查，用来把 MMIO 地址范围、外设/通道数量等维护假设显式化。它不是 public API 或 stable 证据的事实源；当前稳定面与真机证据仍以 <a href="../../reference/10-stable-api.html">Stable API 清单</a> 为准。</p>
-<h2 id="历史评审"><a class="header" href="#历史评审">历史评审</a></h2>
-<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 
                     </main>
 

@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
+            window.path_to_searchindex_js = "../../searchindex-5c4eb6d9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -185,7 +185,7 @@
 <h1 id="ws63-rs-总体架构"><a class="header" href="#ws63-rs-总体架构">ws63-rs 总体架构</a></h1>
 <blockquote>
 <p>这是 ws63-rs 的 <strong>Rust 代码架构</strong>文档（与硬件手册 <a href="https://github.com/hispark-rs/ws63-guide"><code>ws63-guide</code></a> 互补：手册讲芯片，本文讲代码）。
-历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a> 和 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>；当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>；当前事实状态优先收敛到 reference 页面和 CI/HIL 结果。</p>
 </blockquote>
 <h2 id="这是什么"><a class="header" href="#这是什么">这是什么</a></h2>
 <p>ws63-rs 是面向 HiSilicon <strong>WS63 + BS2X</strong>（BS21/BS20/BS22）RISC-V SoC 族的 Rust 嵌入式生态。WS63 覆盖 Wi-Fi 6 / BLE / SLE/星闪，BS2X 覆盖 BLE/SLE（M1/M2）。
@@ -268,7 +268,7 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 </li>
 </ul>
 <blockquote>
-<p>注意：早先评审里的“零消费者脚手架“（DMA 安全 trait、空的 async marker、RAII 时钟守卫）已处理 ——
+<p>注意：早期设计中的“零消费者脚手架“（DMA 安全 trait、空的 async marker、RAII 时钟守卫）已处理 ——
 空 marker / vestigial DMA marker / RAII 守卫已删；真正的异步层仍按 stable/unstable policy 分层暴露。详见各组件文档。</p>
 </blockquote>
 <h2 id="构建与目标target"><a class="header" href="#构建与目标target">构建与目标（target）</a></h2>

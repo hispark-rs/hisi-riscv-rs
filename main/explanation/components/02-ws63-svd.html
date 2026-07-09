@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
+            window.path_to_searchindex_js = "../../searchindex-5c4eb6d9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -184,7 +184,7 @@
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="ws63-svd-架构"><a class="header" href="#ws63-svd-架构">ws63-svd 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
 <p><code>ws63-svd</code> 是整个 ws63-rs 寄存器抽象链的<strong>上游真值（source of truth）</strong>。它由一份手写的 CMSIS-SVD 描述文件 <code>WS63.svd</code> 加少量 Python 工具构成，负责：</p>
@@ -216,7 +216,7 @@
 <p>建模规模与完整度（实测 2026-06-11）：</p>
 <ul>
 <li><strong>36 个 <code>&lt;peripheral&gt;</code> 元素</strong>（<code>grep -c "&lt;peripheral"</code>），覆盖 SYS_CTL1、IO_CONFIG、GPIO0/1/2、UART0/1/2、I2C0/1、PWM、DMA、SFC_CFG、SPI0/1、I2S、LSADC、TSENSOR、TIMER、WDT、RTC、EFUSE、SYS_CTL0、GLB_CTL_M、SPACC、PKE、KM、TRNG、TCXO、CLDO_CRG、SDMA、ULP_GPIO、RF_WB_CTL、SHARE_MEM_CTL、FAMA_REMAP。</li>
-<li><strong>501 个非派生 <code>&lt;register&gt;</code> 定义</strong>（<code>grep -c "&lt;register&gt;"</code>；评审时为 497，本轮 eFuse/LSADC 修复 +4：eFuse 数据窗口 +1、LSADC 重写 +3；含 <code>derivedFrom</code> 展开后逻辑实例更多）。</li>
+<li><strong>501 个非派生 <code>&lt;register&gt;</code> 定义</strong>（<code>grep -c "&lt;register&gt;"</code>；早期统计为 497，eFuse/LSADC 修复后 +4：eFuse 数据窗口 +1、LSADC 重写 +3；含 <code>derivedFrom</code> 展开后逻辑实例更多）。</li>
 <li><strong>920 个 <code>&lt;field&gt;</code>、44 处 <code>&lt;enumeratedValues&gt;</code>、36 个 <code>&lt;addressBlock&gt;</code>、2 处 <code>&lt;writeConstraint&gt;</code>、190 处 <code>read-only</code> 访问限定</strong>。</li>
 <li><strong>8 处 <code>derivedFrom</code></strong> 复用。</li>
 </ul>
@@ -233,8 +233,6 @@
 <li><code>cargo fmt</code>，随后 build + clippy 作为门禁</li>
 </ol>
 <p>流水线<strong>幂等</strong>：同一 SVD 重跑产出字节一致的 lib.rs。<code>ws63-settings.yaml</code> 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。<code>main.py</code> 仍是 uv 占位入口，实际生成走 <code>regen.sh</code>。主仓 PreToolUse hook 拦截对 <code>crates/pac/ws63-pac/src/lib.rs</code> 的手改，强制走重生成。</p>
-<h2 id="历史评审"><a class="header" href="#历史评审">历史评审</a></h2>
-<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="相关架构"><a class="header" href="#相关架构">相关架构</a></h2>
 <p><strong>BS2X SVD</strong>：<a href="https://github.com/hispark-rs/bs2x-svd"><code>bs2x-svd</code></a> 与 <code>bs2x-pac</code> 是 BS2X 路径的寄存器事实源；WS63 与 BS2X 的 SVD/PAC 分仓维护，避免把两个芯片族的寄存器事实混成一份。</p>
 <p><strong>不属于 SVD 的事实源</strong>：probe-rs 调试支持、镜像格式、Wi-Fi/BT/BLE/SLE 连接性状态分别由 probe-rs / <code>hisi-fwpkg</code> / RF porting 文档和根 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 维护；本页只解释 WS63 SVD 的建模与生成流水线。</p>
