@@ -36,6 +36,8 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 **Docs and CI:** preserve the happy path, stable API reference, and connectivity roadmap. Avoid expanding component documentation unless it prevents drift or directly supports C1-C6.
 
+Low-priority i18n track: integrate `mdbook-i18n-helpers` after the current Chinese handbook, chip selector, version selector, snippet preprocessor, and happy-path CI stay stable. The intended shape is gettext-style extraction/translation around the existing mdBook source, without forking the command snippets or reference facts into per-language copies. Acceptance: `mdbook-xgettext`/`mdbook-gettext` are wired into a documented script or CI check, translated pages reuse the same chip/version metadata and snippet contracts, and untranslated pages degrade back to the canonical Chinese source. This track must not block connectivity milestones C1-C6.
+
 **BSP and board-manager:** deferred. Revisit after real connectivity works and after external boards or user projects create enough pressure for board manifests or board-selection tooling.
 
 ## Historical Context
