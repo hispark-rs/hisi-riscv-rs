@@ -1,6 +1,6 @@
-# ws63-guide 架构与评审
+# ws63-guide 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -18,6 +18,8 @@
 - 不参与 Cargo workspace 构建，不是 crate；它是独立的 Python/Sphinx 项目（`pyproject.toml` 中 `package = false`），有自己的 `uv.lock` 与 `.github/workflows/docs.yml`。
 
 **关键边界判断**：本手册与 `docs/` **互补而非重复**——本手册讲**硬件**（寄存器、电气、协议层硬件块），`docs/` 讲 **Rust 代码架构**（crate 职责、依赖链、设计模式、评审）。两者受众不同、构建链不同，内容零重叠。
+
+当前维护策略是**保留为独特逆向 IP，停止扩张，优先服务连接性北极星**。手册的中断编号表与优先级模型已经用于纠正 HAL 的中断模型；内存图支撑 runtime 链接脚本；RF/ABB 章节继续服务 ROADMAP C1-C5 的 blob 链接与连接性 bring-up。
 
 ## 在依赖链中的位置
 
@@ -49,28 +51,9 @@ flowchart LR
   - **QSPI/SFC**：`source/ch3_qspi/registers.md`（约 21KB）逆向了 SFC 寄存器，配 `images/fig-3-*` 读写时序流程图。
 - **图片资产**：`source/images/` 共 18 张 JPEG（芯片框图、典型应用、SFC 框图与读写流程、RF/ABB 框图、UART 数据格式、I2C 收发时序、危险/提示图标）。
 
-## 评审发现
+## 历史评审
 
-### 优点
-
-- **独特的逆向 IP**：RF/外设/安全寄存器描述、存储器地址映射、中断编号表，对一颗 undocumented 的芯片极具价值，是 PAC/HAL 核对硬件语义的权威中文参照（如中断模型、内存图）。
-- **与代码文档清晰分工**：硬件手册（本组件）与 Rust 架构文档（`docs/`）受众不同、内容零重叠，互补关系明确（见 `ws63-guide/ARCHITECTURE.md:5-7`）。
-- **工程化完善**：`uv.lock` 锁定依赖、`-c source` 配置隔离、HTML/PDF/linkcheck 三类构建、构建后拷贝 Markdown 源供机器读取，自带 CI/CD。
-- **覆盖完整**：9 章 + 附录覆盖系统/QSPI/Wi-Fi&BLE&SLE/安全/外设/JTAG，子目录拆分粒度合理。
-
-### 问题
-
-| 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
-|--------|------|------|-----------------|------|
-| 低 | 方向 | 与 Rust 代码架构文档（`docs/`）零重叠、受众不同；独立 Sphinx 构建链与 workspace 分离，维护面双倍 | `ws63-guide/source/conf.py:30`(`-c source`)、`ws63-guide/pyproject.toml`(独立工程)、`ws63-guide/ARCHITECTURE.md:5-7` | 暂不修（这是互补关系而非缺陷，刻意分离） |
-| 低（方向） | 范围 | 手册应**冻结扩张、聚焦连接性**：当前价值已确立，继续扩章节会分散到连接性里程碑的精力 | `ROADMAP.md:138`(CI/文档/SVD 持续扩张冻结)、`ROADMAP.md:140`(保留 ws63-guide 独特逆向 IP 但停止扩张) | 已排期（ROADMAP "冻结/降优先级"：保留、停止扩张） |
-| 低 | 文档一致性 | README 技术栈列 `sphinx-rtd-theme`，实际 `conf.py` 用 `sphinx_book_theme`，记述过时 | `ws63-guide/README.md:118` vs `ws63-guide/source/conf.py:55` | 暂不修（不影响构建，留作小修；非本轮整改范围） |
-
-说明：本组件无被驳回项，评审要点已对照 fbb_ws63 / esp-hal 与 file:line 验证。手册内容本身（中断模型、内存图、寄存器位）经核实与真实硅片一致，恰好是 HAL 侧若干正确性问题（中断 PLIC 误建模等）的纠偏依据。
-
-## 改进项与排期
-
-本组件**无本轮（阶段 0）整改项**——阶段 0 的构建完整性修复（双 PAC 消除、默认 target ISA 改 `riscv32imc`、flashboot 实验化、CI/release 修复、hisi-riscv-rt MIE 宏 typo）均落在 Rust crate 侧，不涉及本手册。
+本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 注记：BS2X 多芯片手册（BS21/BS22/BS20）
 
@@ -79,7 +62,3 @@ flowchart LR
 - **覆盖范围**：BS2X 系统/复位/时钟/存储映射/中断系统、QSPI、BLE/SLE（无 Wi-Fi MAC，RF 由 PHY 直驱）、安全/外设/JTAG。
 - **与 WS63 的异同**：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。
 - **维护**：两份手册独立演进；冻结扩张、聚焦连接性的方针同样应用于 BS2X 手册。
-
-- **冻结扩张、聚焦连接性**：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上完成 scan/connect/ping）。
-- **作为下游纠偏的事实依据**：手册的中断编号表与优先级模型（`source/ch2_system.md:328-424`）已经用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（`ch2_system.md:162`）支撑链接脚本集成；RF/ABB 章节（`ch4_wifi/`）继续服务于当前 ROADMAP C1-C5 的 blob 链接与连接性。
-- **小修（非阻断）**：将 README 技术栈中的 `sphinx-rtd-theme` 更正为 `sphinx_book_theme`，与 `conf.py:55` 对齐。

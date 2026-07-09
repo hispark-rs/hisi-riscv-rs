@@ -26,7 +26,7 @@ hisi-riscv-hal 在阻塞驱动之上加了**blocking-backed async trait impl**(`
 WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
 
 - hisi-riscv-hal 一直用 `portable-atomic`(开 `critical-section` feature)做 CAS 垫片;`hisi-riscv-rt` 提供 `riscv/critical-section-single-hart` 实现。
-- **embassy-executor 在无 CAS 目标上也能跑**(thumbv6m / riscv32imc 同理):它内部按编译期 cfg 在 `core::sync::atomic` 与 `portable_atomic` 间切换,riscv 平台模块的 `SIGNAL_WORK` 只用 load/store(WS63 支持)。所以**无需改 embassy**。
+- **embassy-executor 在无 CAS 目标上也能跑**（thumbv6m / 无 A 扩展 RISC-V 目标同理）：它内部按编译期 cfg 在 `core::sync::atomic` 与 `portable_atomic` 间切换，riscv 平台模块的 `SIGNAL_WORK` 只用 load/store（WS63 支持）。所以**无需改 embassy**。
 - 一个真实踩过的坑:`target/` 里**陈旧的 host proc-macro 工件**(syn/quote 来自旧 rustc)会让 embassy 宏构建莫名失败 → `cargo clean` 后全量通过。
 
 ## embassy-time `Driver`(`crates/hisi-riscv-hal/src/embassy.rs`, `unstable`)

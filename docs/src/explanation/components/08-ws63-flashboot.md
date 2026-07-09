@@ -1,6 +1,6 @@
-# ws63-flashboot 架构与评审
+# ws63-flashboot 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -49,36 +49,9 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 - **跳转**：清 `mie`、喂狗后将 `addr + 0x300` `transmute` 为 `extern "C" fn() -> !` 并调用（`src/main.rs:159-166`），SAFETY 注释声明 app 入口同 ABI（RV32IMFC ilp32f）。
 - **本轮构建完整性修复（针对该 crate）**：banner 重写为"非安全启动"警告（`src/main.rs:1-22`）、`publish = false`（`Cargo.toml:11`）、移出 `default-members`、删除未用的 `ws63-pac` 依赖、新增 `README.md`。
 
-## 评审发现
+## 历史评审
 
-> 已对照 fbb_ws63 与 esp-hal、按 file:line 验证，0 条被驳回。
-
-### 优点
-
-- SHA256 软件实现正确，常量与填充无误，含已知向量单测（`src/sha256.rs:14-141`、`:148-175`）。
-- `startup.S` 对照原厂 `riscv_init.S`，PMP/FPU/BSS/boot flag 处理到位（`asm/startup.S`）。
-- 关键地址（SFC/UART/WDT/FAMA/efuse 寄存器、`FLASHBOOT_RAM` 语义）与镜像头 magic/版本对照 SDK 一致；整改后镜像头布局对齐 `secure_verify_boot.h`。
-- 镜像头边界校验有较完整的拒绝/接受边界单测（`src/image.rs:52-135`）。
-- 本轮已正确自我定级为实验性：banner、`publish=false`、移出默认构建、README 说明（`src/main.rs:1-22`、`Cargo.toml:11`、`README.md`）。
-
-### 问题
-
-| 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
-|--------|------|------|-----------------|------|
-| 严重 | 安全 | 无真实性验签：只把算出的哈希与**同一份未签名头里的**哈希比对。能写 flash 的攻击者改镜像后重算 SHA256 写回头部即可以 M 态特权跳进任意代码，≠ secure boot（原厂用 efuse 根密钥 ECC-bp256/SM2 签名验签） | `src/main.rs`、`verify_image_integrity()`；对照 vendor `secure_verify_boot.c` | ✅ 已如实标注(2026-06-01)：函数改名 `verify_image_integrity`、文档明确"仅完整性、非真实性"；真实 ECC/SM2 验签属 ROADMAP 冻结项（复用原厂，不在本实验件投入） |
-| 严重 | 正确性 | `ImageHeader`/`CodeInfo` 布局对不上真实 WS63 镜像：`image_length`(+0x114)/`image_hash`(+0x11C) 偏移读错 → 会拒绝真镜像 | `src/sfc.rs`；对照 vendor `secure_verify_boot.h:156-178` | ✅ 已修(2026-06-01)：`sfc.rs` `KeyArea`/`CodeInfo` 按 `image_key_area_t`/`image_code_info_t`(ECC256) 逐字段重排，`code_area_len`@+0x24、`code_area_hash`@+0x28，`const` 断言锁定 0x100/0x200/0x300；评审(layout) ok |
-| 高 | 正确性 | A/B 误用 `0x4000_0024`：该寄存器是 flashboot **自身的备份恢复标志**，并非 app 槽选择器。代码却用它选 app 区 A/B | `src/main.rs`；对照 vendor `main.c:131-135`（`flashboot_need_recovery`） | ✅ 已修(2026-06-01)：删除该误用，改单镜像启动 + 如实注明真实 A/B = upg run-region(magic `0x70746C6C`)+分区表(`@0x200380`)、`0x40000024`=bootloader 自恢复 |
-| 高 | 方向 | 重写原厂安全关键件（验签/启动链）属误导努力。生产应复用原厂 flashboot，本 crate 仅供学习 | `src/main.rs:5-8`、`README.md:22-26` | 暂不修(定级实验性；定位为学习件，整体方向走复用原厂) |
-| 高 | 正确性 | 关键子流程是桩：`boot_clock_adapt()` 为 TODO 空操作；`read_partition_app_addr()` 恒返回 `FLASH_START`；`check_upgrade_mode()` 恒 false | `src/main.rs` | 🟡 部分(2026-06-01)：`read_partition_app_addr()` 改为**如实标注**的桩（注明不解析分区表、真实查表在 `@0x200380` magic `0x4b87a54b`）；`boot_clock_adapt`/`check_upgrade_mode` 仍为桩（实验定位，生产复用原厂） |
-| 中 | 维护性 | 重复造轮子：UART/SFC/SHA256/startup 与 `hisi-riscv-hal`/`hisi-riscv-rt` 重复（因刻意不依赖 PAC/HAL） | `src/uart.rs`、`src/sfc.rs`、`src/sha256.rs`、`asm/startup.S`、`Cargo.toml:17-19` | 暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍) |
-| 中 | 工程化 | 删除未用的 `ws63-pac` 依赖、`publish=false`、移出默认构建、banner 改为实验性警告 | `Cargo.toml:11,17-19`、根 `Cargo.toml` `default-members`、`src/main.rs:1-22` | 本轮已修 |
-
-## 改进项与排期
-
-- 生产层面的结论是**复用 fbb_ws63 原厂 flashboot**（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（`README.md:22-26`）。本 crate 维持实验/学习定位。
-- **整改已落地（2026-06-01）**：镜像头布局对齐 `secure_verify_boot.h`（`code_area_len`/`code_area_hash` 偏移修正 + const 尺寸断言）、删除 `0x40000024` 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、`verify_sha256`→`verify_image_integrity` 如实标注"仅完整性非真实性"、`read_partition_app_addr` 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 `--exclude`）。**真实 ECC/SM2 验签**仍按冻结项复用原厂、不在本实验件投入。
-- 阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 `[patch.crates-io]` 指向本地）、无原子 ISA + `portable-atomic` critical-section polyfill（默认 target 为官方 rustc builtin 的 `riscv32imfc-unknown-none-elf`，当前用 `rust-src` + `-Zbuild-std=core,alloc` 构建；2026-05-31 曾过渡用 stable `riscv32imc`）、CI/release gating 与发布顺序修复、`hisi-riscv-rt` MIE 中断宏 typo 与栈顶符号 GC fallback 修复。
-- 历史整改中的示例链接、中断模型、SPI/I2C 超时、system reset、GPIO pull、死代码清理和 async 底座均已收口；连接性仍按当前 [ROADMAP C1-C5](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 推进。旧阶段编号保存在 [归档 roadmap](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md)。
+本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 注记：BS2X 引导加载（BS21/BS22/BS20）
 

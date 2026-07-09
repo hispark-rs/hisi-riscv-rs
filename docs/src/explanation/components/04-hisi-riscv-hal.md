@@ -1,6 +1,6 @@
-# hisi-riscv-hal 架构与评审
+# hisi-riscv-hal 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 > **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 `chip-bs21` target 目前需 `unstable`。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
 
@@ -103,39 +103,8 @@ DMA 提供拥有缓冲区的
 
 ### 编译期断言（`safety.rs`）
 
-`const_assert!` 宏（`safety.rs:11-20`）校验 MMIO 地址范围、`PERIPHERAL_COUNT == 17`、各类外设/通道计数常量。注意此文件的多数断言为恒真（见评审问题）。
+`safety.rs` 保留少量编译期结构检查，用来把 MMIO 地址范围、外设/通道数量等维护假设显式化。它不是 public API 或 stable 证据的事实源；当前稳定面与真机证据仍以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
 
-## 评审发现
+## 历史评审
 
-### 优点
-
-- **`clock_init.rs` 是全仓标杆**：逐寄存器、逐位对照 fbb_ws63 C SDK 核实，地址与位含义均注明出处（`clock_init.rs:36-74`、`197-253`）。
-- **外设单例 + `'d` 生命周期健全**：宏生成统一、`take()` 经 PAC 单例校验，生命周期防 use-after-drop（`peripherals.rs:10-87`）。
-- **embedded-hal/embedded-io/nb trait 选型正确**：`SpiBus`（非 `SpiDevice`）、I2C repeated-START、ACK→`NoAcknowledge` 均符合各 trait 契约（`spi.rs:135`、`i2c.rs:215-280`）。
-- **GPIO block 映射正确**：`pin/8` 分 block、`pin%8` 取位，与 3 block × 8 位的硬件布局一致（`gpio.rs:86-88`）。
-
-### 问题
-
-> 下表为 **2026-05 评审快照**；其后多数正确性整改项已修（见各行状态），权威进度以 [评审台账](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md) 为准。全部修复在姊妹仓 `ws63-qemu` 软件在环验证。
-
-| 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
-|--------|------|------|-----------------|------|
-| 严重 | 正确性 | 中断子系统曾建在不存在的 PLIC 模型上。WS63 用自定义 CSR（`LOCIPRI`=0xBC0 / `LOCIEN`=0xBE0 / `LOCIPD`=0xBE8） | `interrupt.rs` | ✅ 阶段2已修：重写为 LOCIPRI/LOCIEN/LOCIPD CSR 模型 + 优先级/阈值；ws63-qemu `timer_irq`/`gpio_irq`(IRQ≥32) 端到端验证 |
-| 严重 | 正确性 | SPI `ctra` 写入 `trsm=3`（bits 19:18），该值是 EEPROM-Read 模式；全双工 TX+RX 应为 `0`。注释误写"TX+RX mode"导致 `transfer`/`SpiBus` 全双工语义不成立 | `spi.rs:76` | ✅ 阶段2已修：TRSM 改为全双工模式，`spi_loopback`/`SpiBus` 语义经 QEMU smoke 验证；真机外部回环仍属示例 smoke/台架增量 |
-| 高 | 正确性 | I2C/SPI 多处无超时死循环；错误码定义却从不返回 | `spi.rs`、`i2c.rs` | ✅ 阶段2已修：I2C/SPI 加 bounded 超时并真正返回 `Timeout` 等错误 |
-| 高 | 正确性 | `software_reset` 执行 `ebreak`（非系统复位）；`reset_reason` 恒返回 `PowerOn` | `system.rs` | ✅ 阶段2已修：`software_reset` 置 GLB_CTL_M 复位位，`reset_reason` 解析 SYS_RST_RECORD；ws63-qemu `reset_demo` 往返验证 |
-| 中 | 正确性 | GPIO `InputConfig.pull` 被静默忽略：`init_input` 只设 OEN | `gpio.rs` | ✅ 阶段2已修：`init_input` 经 IO_CONFIG pad 寄存器应用上下拉 + 中断触发模式 |
-| 高 | 正确性 | eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾 | `efuse.rs`、`lsadc.rs` | 🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍作为维护项推进 |
-| 中 | 维护性 | `safety.rs` 多条 `const_assert!` 为恒真断言；模块头措辞夸大 | `safety.rs` | ✅ 阶段2已修：删除恒真断言 + 夸大措辞 |
-| 中 | 架构 | 零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker | `clock.rs`/`dma.rs`/`private.rs` | ✅ 已清：async marker(`Blocking`/`Async`)、vestigial `DmaWord`、RAII 时钟守卫、`DmaEligible`/`DmaChannelFor` 均已删除；真正的异步层按 `async`/`unstable` 分层暴露 |
-| 高 | 维护性 | 测试为恒真式（重抄被测公式再断言），从未上板验证 | `spi.rs`/`i2c.rs`/`clock.rs`/`safety.rs` | ✅ 已破：ws63-qemu `smoke-test.sh` 用真实固件端到端验证；WS63 HAL embedded-test 套件已在真机通过，精确覆盖与 stable 边界见参考页 |
-
-## 改进项与排期
-
-本页保留 2026-05 评审后的整改现状；当前优先级以 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 为准。
-
-- **Bring-up + 链接脚本集成**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `hisi-riscv-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
-- **死代码清理 + 正确性修复**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ SPI `trsm` 全双工模式修复；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 eFuse/LSADC 逐寄存器复核仍在推进。
-- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
-- **连接性支撑**：`ws63-rf-rs` 已承接 RF porting/HCC/netif 数据通路，HAL 的边界是继续提供可组合的底层外设；剩余风险在 blob 链接、pbuf/TX-sink pin 与真机连通。
-- **async 后续**：连接性专属的异步包装待 blob 上板后再做；不恢复旧的空壳 `Blocking`/`Async` 类型状态。
+本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。

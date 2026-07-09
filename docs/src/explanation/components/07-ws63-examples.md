@@ -1,6 +1,6 @@
-# ws63-examples 架构与评审
+# ws63-examples 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -53,27 +53,7 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 
 与参考实现的关系：esp-hal 示例普遍调用 `Delay` / embedded-hal trait；ws63 示例集现已从「单一点灯」扩展为覆盖各外设 + async + RF porting 的一组最小演示。
 
-## 评审发现
+## 历史评审
 
-### 优点
+本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
-- 入口形态正确：`#[entry]` + `#[panic_handler]` 的裸机骨架完整，`blinky` 可作后续示例的模板。
-- 覆盖面已大幅扩展：GPIO / UART / Timer / DMA + 中断 + 复位 + semihosting + 自定义内存 + async/embassy + RF porting 等示例均在参考页登记。
-- 链接已打通且诚实标注：WS63 示例集合纳入 `default-members`，`cargo build` 默认即构建；`ws63-flashboot` 的排除附了原因注释。
-
-### 问题
-
-| 严重度 | 类别 | 问题 | 状态 |
-|--------|------|------|------|
-| 高 | 构建 | （曾）`blinky` 无法链接：lib 依赖的 `cargo:rustc-link-arg` 不传播到下游二进制 | ✅ 已修：`hisi-riscv-rt` 导出 `hisi-riscv-link.x` + 各 `build.rs` 用 `-Thisi-riscv-link.x`，WS63 示例集合已回到 `default-members` |
-| 高 | 方向 | （曾）唯一示例（blinky）+ 手写忙等，无法证明其余驱动可用 | ✅ 大部已破：现有 UART/Timer/GPIO/DMA + async SPI/I2C 等 13 个额外示例 |
-| 中 | 演示覆盖 | `blinky` 曾用 legacy `create_output_pin`，未直接演示 `OutputConfig`/`InputConfig` | ✅ 已修：`blinky` 走现代 `OutputConfig` 输出路径；`gpio_irq` 继续覆盖输入/中断 |
-| 中 | 文档 | 旧构建指引曾指向自定义 JSON target | ✅ 已统一为 builtin `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable `riscv32imc`） |
-| 低 | 依赖 | `blinky/Cargo.toml` 曾多声明 `ws63-pac` 直接依赖，源码未用 | ✅ 已随示例依赖整理清理 |
-| — | 连接性 | 缺真实 Wi-Fi/BLE/SLE 链路示例 | 🔴 待 connectivity milestones C2-C5 上板 HIL |
-
-## 改进项与排期
-
-- **已完成的示例底座**：链接脚本传播已修、示例覆盖面已扩；`blinky` 已切到现代 `OutputConfig` 输出路径并完成真机点灯验证。
-- **连接性示例** 🔴：按当前 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) C2-C5 推进，在 blob 上板 HIL 后新增 Wi-Fi scan/connect/ping 真实链路示例，使示例集覆盖 SoC 核心能力。
-- **async 示例** ✅：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](06-async-embassy.md)）。

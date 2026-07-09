@@ -1,6 +1,6 @@
-# ws63-svd 架构与评审
+# ws63-svd 架构
 
-> 本文是 ws63-rs 架构文档的一部分。完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -64,38 +64,12 @@ UART/GPIO/KM 等外设建模质量较高：字段拆分、枚举值与访问属�
 
 流水线**幂等**：同一 SVD 重跑产出字节一致的 lib.rs。`ws63-settings.yaml` 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。`main.py` 仍是 uv 占位入口，实际生成走 `regen.sh`。主仓 PreToolUse hook 拦截对 `crates/pac/ws63-pac/src/lib.rs` 的手改，强制走重生成。
 
-## 评审发现
+## 历史评审
 
-### 优点
-
-- 建模覆盖广：36 外设 / 497 寄存器，`enumeratedValues`、`derivedFrom`、`writeConstraint`、`addressBlock` 一应俱全，是一份结构完整、可被 svd2rust 直接消费的 1.3 版 SVD。
-- 通过 `derivedFrom` 对同构外设（GPIO/UART/I2C/SPI/SDMA）做了正确复用，降低了维护面。
-- 提供了针对官方 CMSIS XSD 的格式校验脚本，建模本身有质量门可依。
-- UART/GPIO/KM 等关键外设建模到字段+枚举级，下游 HAL 可直接获得类型安全的位域访问。
-
-### 问题
-
-| 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
-| --- | --- | --- | --- | --- |
-| 高 | 维护性 | 手补代码曾被手工补进**已格式化的 PAC 生成代码**，而非回填 SVD 后重生成，clean regen 会丢失或冲突。 | 历史提交 df35d69「add missing KM keyslot registers」；该批字段在 `WS63.svd` KM 外设中存在但生成链曾未联动 | ✅ 已修(2026-05-31)：建立 `regen.sh`、停止手补；重生成时 PAC 反而**恢复**了手补遗漏的 KM keyslot 字段（`flush_hmac_kslot_ind`/`tscipher_ind`/`lock_cmd`/`key_slot_num`） |
-| 中 | 维护性 | 无可复现生成流水线：`main.py` 是 `print(...)` 桩，无 svd2rust 调用；`ws63-settings.yaml` 在 `base_isa: rv32i` 截断；CI 中无 SVD 引用 | `main.py:1-6`；`ws63-settings.yaml`；`.github/workflows/` 无 SVD 引用 | ✅ 已修(2026-05-31)：`regen.sh`+`postprocess.py` 幂等可复现、build+clippy 门禁；CI 接入（“重生成并 diff”）为剩余小项 |
-| 高 | 正确性 | eFuse/LSADC 外设建模错误：eFuse 控制寄存器偏移错位（0x00 段）、`wr_rd` 建成单 bit 而非 16 位魔数、缺 0x800 数据窗口；LSADC 寄存器整块错位（使能/启停/FIFO 寄存器选错） | 评审台账 + 本轮对照 `hal_efuse_v151`/`hal_adc_v154` | ✅ 已修(2026-05-31)：eFuse 控制块移到 base+0x30、16 位魔数、加 0x800 窗口；LSADC 重写为连续 `adc_regs_t`（CTRL_8/9/11、CFG_* @0xDC..0xEC）。偏移已在生成 PAC 中逐一核验 |
-| 中 | 正确性 | 覆盖不全：KM 的 `*_FLUSH_BUSY` 状态寄存器（偏移 0xB10–0xB1C）缺失，KM 偏移从 `0x1B0C` 直接跳到 `0x1B30`，存在转录静默缺口 | `WS63.svd` KM 外设；addressOffset 序列断档；`grep FLUSH_BUSY` 无命中 | 历史整改项遗留：`flush_hmac_kslot_ind` 字段已建模，但 BUSY 查询寄存器本身仍未补；不阻塞当前连接性 C1-C5 |
-| 低 | 文档 | `README.md` 为空文件（0 字节），组件无任何使用/维护说明 | `README.md`（0 bytes） | ✅ 已修：README 已补写（含 `regen.sh` 用法、流水线步骤、校验命令、维护约定） |
-
-> 说明：本组件已从“几乎全部已排期”转为**四项中三项已修**（仅 KM `*_FLUSH_BUSY` 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复；下游 `ws63-pac` 也已随 `regen.sh` 重生成。当前真机证据边界以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
-
-## 改进项与排期
-
-ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-05-31）已落地大部分：
-
-1. ✅ **建立可复现生成流水线**（已完成）：`regen.sh`（svd2rust 0.37.1 + `postprocess.py` 后处理 + cargo fix/fmt）替代 `main.py` 桩，幂等、build+clippy 门禁。**剩余**：把"从 SVD 重生成并 diff"接入 CI；并加 `validate.py` XSD 校验门（脚本已就绪）。
-2. ✅ **以 SVD 为源重生成 PAC**（已完成）：`regen.sh` 即唯一生成路径，手补 lib.rs 被 PreToolUse hook 拦截；重生成恢复了历史手补遗漏的 KM keyslot 字段，消除 SVD↔PAC 漂移。
-3. ✅ **eFuse/LSADC 寄存器修复**（已完成）：对照 `hal_efuse_v151`/`hal_adc_v154` 改 SVD 并重生成（详见上表）。**剩余**：KM `*_FLUSH_BUSY`（0xB10–0xB1C）转录缺口仍待补；其它外设逐个对照 fbb_ws63 `*_reg.h` 核覆盖。
-4. ✅ **补写 README**（已完成）：含 `regen.sh` 用法、五步流水线、校验命令与"勿手改 lib.rs"约定。
-
-旧阶段编号和完整整改历史见 [归档 roadmap](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md)。
+本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 相关架构
 
-**BS2X SVD**: [`bs2x-svd`](https://github.com/hispark-rs/bs2x-svd) 强自前和永久性存搬，两份 SVD 准生政之不同厨特针 PAC。**probe-rs 调试**: hispark-rs fork 各和 RISC-V DM/CoreSight，待板级。**连接**: Wi-Fi 于剖地，BLE 是 blob。主要落点（本轮已完成上述大部分，KM 缺口 + CI 接入为剩余）。详见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+**BS2X SVD**：[`bs2x-svd`](https://github.com/hispark-rs/bs2x-svd) 与 `bs2x-pac` 是 BS2X 路径的寄存器事实源；WS63 与 BS2X 的 SVD/PAC 分仓维护，避免把两个芯片族的寄存器事实混成一份。
+
+**不属于 SVD 的事实源**：probe-rs 调试支持、镜像格式、Wi-Fi/BT/BLE/SLE 连接性状态分别由 probe-rs / `hisi-fwpkg` / RF porting 文档和根 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 维护；本页只解释 WS63 SVD 的建模与生成流水线。

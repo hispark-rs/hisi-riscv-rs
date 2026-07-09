@@ -1,7 +1,7 @@
 # ws63-rs 总体架构
 
 > 这是 ws63-rs 的 **Rust 代码架构**文档（与硬件手册 [`ws63-guide`](https://github.com/hispark-rs/ws63-guide) 互补：手册讲芯片，本文讲代码）。
-> 完整评审台账见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md)，整改排期见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 历史评审快照见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md) 和 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)；当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 这是什么
 
@@ -54,12 +54,11 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `chips/ws63/guide` | submodule | WS63 中文硬件手册（Sphinx） | [ws63-guide.md](10-ws63-guide.md) |
 | `chips/bs2x/guide` | submodule | BS2X 中文硬件手册（Sphinx） | — |
 
-## 核心设计模式
 ## 调试支持
 
 - **probe-rs**：fork [`hispark-rs/probe-rs`](https://github.com/hispark-rs/probe-rs) 分支 `add-hisilicon-ws63-bs21-hil-baseline`，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 [Stable API 清单](../../reference/10-stable-api.md)。用法：`probe-rs run --chip ws63 <bin>` 进行实时调试与 on-silicon 烧录。
 
-
+## 核心设计模式
 
 - **外设单例 + `'d` 生命周期**：`Peripherals::take()`（PAC 单例，critical-section 保护）分发 `'d` 参数化的 ZST 外设令牌；
   驱动经构造器消费令牌，借生命周期防 use-after-drop。
@@ -84,7 +83,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
   - WS63 核**无原子（A）扩展**：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
     RMW 走 `portable-atomic` 的 critical-section polyfill，**不发 `lr/sc/amo`**。原默认 `riscv32imafc`
     会发原子指令、在硅片上触发非法指令陷阱，已弃用。
-  - 历史：2026-05-31 阶段 0 曾先用 builtin `riscv32imc`（软浮点、stable、免 build-std）做过渡；
+  - 历史：2026-05-31 曾先用 builtin `riscv32imc`（软浮点、stable、免 build-std）做过渡；
     随后切到 `ws63` 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为后续 vendor blob 链接做准备）。
 - **单一 PAC 实例**：根 `Cargo.toml` 用 `[patch.crates-io]` 把 `ws63-pac` 的 registry 依赖重定向到本地 submodule，
   保证全仓库只链接一个 PAC（否则 `DEVICE_PERIPHERALS` 单例静态重复、类型不兼容）。
@@ -104,7 +103,7 @@ cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```
 
-## 已知的全局性问题（详见评审台账）
+## 当前风险边界
 
 1. **连接性状态**：
    - **WS63 Wi-Fi**（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。
@@ -115,7 +114,6 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
    [HIL 测试框架](../07-hil-framework.md) 和 [示例目录与验证标记串](../../reference/02-examples.md) 分轨推进。
 4. **正确性修复状态**：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
 
-## 参考资料
 ## 多芯片支持细节
 
 - **PAC 组织**：`crates/pac/ws63-pac` 和 `crates/pac/bs2x-pac` 各自独立（SVD 源→svd2rust 生成），root `Cargo.toml` 经 `[patch.crates-io]` 统一链接到本地实例（保证单一 PAC 版本）。
@@ -123,7 +121,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 - **示例组织**：WS63 示例遵循原 submodule 路径 `examples/ws63/`；BS2X 示例为 in-tree 独立工作区 `examples/bs21/` 和 `examples/bs20/`（避免 submodule 膨胀）。
 - **QEMU 支持**：ws63-qemu 已支持 `-M ws63`（8 GB 地址空间）、`-M bs21`（不同时钟/外设）、`-M bs22`/`-M bs20`（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。
 
-
+## 参考资料
 
 - **fbb_ws63**（`/root/fbb_ws63`）：官方 C SDK，寄存器/外设行为的真值来源。
 - **esp-hal**（`/root/esp-hal`）：成熟 Rust HAL 参照（esp-radio/esp-rtos/embassy/众多示例）——WS63 的连接性轨迹可对标。
