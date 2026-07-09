@@ -33,9 +33,9 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
 | --- | --- |
 | `just build` | `cargo build --release` 编出 ELF |
 | `just run` | 在 QEMU 里跑（`cargo run --release`） |
-| `just patch`（WS63） | build 后 `hisi-fwpkg patch-hash {{elf}}` 补 body 的 SHA-256（0x300 头已由 `boot-header` feature 在链接期嵌进 ELF，无需 `image` 步骤） |
-| `just image`（BS2X） | build 后 `hisi-fwpkg image` 补 0x300 头 → `*.img`（BS2X 暂无链接期 boot-header，仍走 image 路径） |
-| `just flash` | WS63：patch 后 `probe-rs download` 直接烧裸 ELF 再 `reset`；BS2X：image 后 `probe-rs download` 把 `*.img` 烧进 app 分区再 `reset` |
+| `just patch`（WS63 例外） | build 后 `hisi-fwpkg patch-hash {{elf}}`，用于 `probe-rs run` / embedded-test 这类需要 ELF 元数据的路径 |
+| `just image` | build 后 `hisi-fwpkg plan --image-output` 生成 `*.img` + `*.plan.json` |
+| `just flash` | 从 plan 读取 `base_addr`，用 `probe-rs download --binary-format bin --base-address` 烧完整 image |
 | `just fwpkg` | `hisi-fwpkg pack` 产 `*.fwpkg`（hisiflash/厂商路径） |
 | `just clean` | `cargo clean` + 删 img/fwpkg |
 
@@ -47,23 +47,23 @@ just CHIP_DESC=~/probe-rs/HiSilicon_WS63.yaml flash
 
 ## 第一次构建 + 烧录
 
-WS63（route 2，链接期已带 0x300 头）：
-
-```bash
-cd my-app
-just build          # 编出 release ELF（boot-header feature 已把 0x300 头嵌进 ELF）
-just patch          # hisi-fwpkg patch-hash 补 body 的 SHA-256
-just flash          # probe-rs download 直接烧裸 ELF 并复位（需 probe-rs fork + yaml）
-```
-
-> `just flash` 依次做了这些事：先 `just patch`（`hisi-fwpkg patch-hash {{elf}}` 把 body 的 SHA-256 填进链接期已嵌好的 0x300 头），再 `probe-rs download --chip WS63 ... {{elf}}` 把这份裸 ELF **直接**烧到芯片（无中间 `.img`），最后 `probe-rs reset` 复位运行。
-
-BS2X（route 1，build 后才补 0x300 头打成 `.img`）：
+WS63：
 
 ```bash
 cd my-app
 just build          # 编出 release ELF
-just image          # hisi-fwpkg image 补 0x300 头 → *.img
+just image          # hisi-fwpkg plan 生成完整 image + plan
+just flash          # probe-rs 按 plan.base_addr 烧裸 bin image
+```
+
+> `just flash` 依次做了这些事：先 `hisi-fwpkg plan --image-output`，再从 `*.plan.json` 读取 `base_addr`，最后 `probe-rs download --binary-format bin --base-address ... *.img` 写入完整 image。
+
+BS2X：
+
+```bash
+cd my-app
+just build          # 编出 release ELF
+just image          # hisi-fwpkg plan 生成完整 image + plan
 just flash          # probe-rs download 把 *.img 烧进 app 分区并复位
 ```
 

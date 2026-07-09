@@ -8,16 +8,16 @@ ws63-qemu 已把固件「跑得足够真」做软件在环验证；这一层是�
 > ✅ **HAL 驱动级 HIL**：`hisi-riscv-hal/tests/hil.rs` 已在真实 WS63 硅片上通过；
 > 精确用例数与 stable API 边界见 `docs/src/reference/10-stable-api.md`。
 
-打包/补哈希用 [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)；烧录有两条已记录的路径：
+镜像计划/打包/补哈希用 [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)；烧录有两条已记录的路径：
 **probe-rs download/run**（验证主路径，需补丁版 fork）与 **hisiflash YMODEM**（厂商路径）。QEMU 端调试见
 `ws63-qemu/scripts/debug.sh`。
 
-WS63 现在有两种可启动产物路径，别混在一起：
+WS63 现在有两类 runner 路径，别混在一起：
 
-- **route 2（推荐，cargo-run / embedded-test 路径）**：`hisi-riscv-rt` 的 `boot-header` feature 在链接期把
-  0x300 header 烤进 ELF；链接后只需 `hisi-fwpkg patch-hash <elf>`，再直接 `probe-rs download/run <elf>`。
-- **route 1（`hil/flash.sh` 示例 smoke 兼容路径）**：`hil/pack.sh` 调 `hisi-fwpkg image` 产出
-  `*.img`，再 `probe-rs download --binary-format bin --base-address ... <img>`。
+- **smoke/download 路径（推荐）**：`hisi-fwpkg plan` 生成 `.img` + `.plan.json`，probe-rs 只用
+  `download --binary-format bin --base-address <plan.base_addr> <img>` 写完整 image。
+- **embedded-test / probe-rs run 例外路径**：测试 runner 需要 ELF 符号、测试元数据和半主机信息，
+  所以仍先 `hisi-fwpkg patch-hash <elf>`，再 `probe-rs run <elf>`。
 
 > **多芯片支持**：本文针对 WS63 HIL。BS21/BS2X（BLE/SLE，无 Wi-Fi）也有 QEMU 镜像 + 链接脚本，但真机支持仍待验证（见 `chips/bs2x/guide`）。
 
@@ -27,15 +27,16 @@ WS63 现在有两种可启动产物路径，别混在一起：
 # 1. 用 hisi-riscv 工具链（riscv32imfc，硬浮点）构建——已是默认 target
 cargo build -p blinky --release
 
-# 2. WS63 route 2：ELF 已含 0x300 boot header，只需补真实 body SHA-256
-hisi-fwpkg patch-hash target/riscv32imfc-unknown-none-elf/release/blinky
+# 2. 生成完整 flash image + plan
+hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
+    --chip ws63 --image-output blinky.img > blinky.plan.json
 
-# 3a. 烧录【验证主路径】：补丁版 probe-rs fork，把 ELF 写进 XIP flash 的 app 分区并复位
+# 3a. 烧录【验证主路径】：probe-rs 只烧裸 bin image
+BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
 probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \
-    target/riscv32imfc-unknown-none-elf/release/blinky
-probe-rs reset --chip WS63 --chip-description-path HiSilicon_WS63.yaml
+    --binary-format bin --base-address "$BASE_ADDR" blinky.img
 
-# 3b. 示例 smoke 也可走 hil/flash.sh：它内部产出 .img 后 download/reset
+# 3b. 示例 smoke 可走 hil/flash.sh：它内部执行同样的 plan + download
 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/flash.sh blinky
 
 # 3c. 或【厂商路径】：打成 .fwpkg，再用 hisiflash 走 YMODEM 烧录
@@ -49,21 +50,21 @@ hisiflash flash target/.../blinky.fwpkg
 （app 分区 = WS63 flash `0x230000`，故入口 = `0x230300`）。app 分区开头必须是 0x300 字节的
 HiSilicon **image header**，缺了它复位后 PC 落在程序之前的 header 区（或 SRAM 残留），不会进你的程序。
 
-[`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg) 补上这层。三种相关操作：
-- `patch-hash` —— WS63 route 2：ELF 已含 link-time 0x300 header；该命令只把真实 body SHA-256 填回头部。
-- `image` —— route 1：ELF/bin → 裸 image（0x300 header + body，含 body 的 SHA-256）。BS2X 仍主要走这条；
-  `hil/flash.sh` 的示例 smoke 兼容路径也会用它产 `.img`。
+[`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg) 补上这层。四种相关操作：
+- `plan` —— 镜像语义事实源：输出 base address、body range、hash、write chunks，并可写出完整 `.img`。
+- `image` —— 兼容子命令：只产 `.img`；新脚本优先用 `plan --image-output`。
+- `patch-hash` —— ELF 例外路径：只给 `probe-rs run` / embedded-test 这种需要 ELF 元数据的路径使用。
 - `pack` —— 把 image 再包进单分区 fwpkg（V1 容器 + CRC），供厂商 hisiflash 烧录。
 
 ```bash
 cargo install hisi-fwpkg-cli            # 或 cargo install --path <hisi-fwpkg>/crates/hisi-fwpkg-cli
 
-CHIP=ws63 hil/pack.sh blinky            # -> blinky.img（route 1 / hil-smoke 兼容路径用）
+CHIP=ws63 hil/pack.sh blinky            # -> blinky.img + blinky.plan.json
 FWPKG=1   hil/pack.sh blinky            # 额外产出 blinky.fwpkg（hisiflash 路径用）
 ```
 
-`pack.sh` 自动识别 ELF vs raw bin；`CHIP` 决定 app 分区地址（ws63=0x230000、bs21=0x90000），
-`APP_ADDR=` 可覆盖。默认只产出 `.img`；`FWPKG=1` 额外产出 `.fwpkg`。
+`pack.sh` 自动识别 ELF vs raw bin；`CHIP` 传给 `hisi-fwpkg plan`，`APP_ADDR=` 可覆盖 app 分区地址。
+默认产出 `.img` 和 `.plan.json`；`FWPKG=1` 额外产出 `.fwpkg`。
 
 ## 烧录路径 A：probe-rs download（验证主路径）
 
@@ -72,7 +73,7 @@ FWPKG=1   hil/pack.sh blinky            # 额外产出 blinky.fwpkg（hisiflash 
 （branch `add-hisilicon-ws63-bs21`）——**上游 probe-rs 还没有 WS63 target 与 `ws63-sfc` flash 算法**，
 用 mainline probe-rs 烧不了；同时需要该 fork 提供的 `HiSilicon_WS63.yaml` 芯片描述。
 
-`hil/flash.sh`（默认 `METHOD=probe-rs`）会先用 `pack.sh` 产出 `.img`，再执行：
+`hil/flash.sh`（默认 `METHOD=probe-rs`）会先用 `pack.sh` 产出 `.img` 和 `.plan.json`，再执行：
 
 ```bash
 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/flash.sh blinky
@@ -83,7 +84,7 @@ probe-rs reset    --chip WS63 --chip-description-path HiSilicon_WS63.yaml
 ```
 
 环境变量：`PROBE_RS_YAML`（必填，fork 的芯片描述）、`CHIP`（默认 WS63）、`BASE_ADDRESS`
-（默认 0x00230000 / bs21 0x00090000）、`PROBE_RS`（二进制名）。
+（可选覆盖，传给 `hisi-fwpkg plan`）、`PROBE_RS`（二进制名）。
 
 ## 烧录路径 B：hisiflash YMODEM（厂商路径）
 
@@ -213,7 +214,7 @@ RUST_GDB=gdb-multiarch rustup run ws63 rust-gdb \
 
 `rust-gdb` 会自动加载 ws63 工具链的 Rust 美化打印器；JTAG/SWD 引脚见 ws63-guide ch7。
 
-> 状态：**Rust → flash → 启动**主流程（构建 → `hisi-fwpkg patch-hash` → `probe-rs download` → `reset`）
+> 状态：**Rust → flash → 启动**主流程（构建 → `hisi-fwpkg plan` → `probe-rs download --binary-format bin` → reset）
 > 已于 2026-06-14 真机验证（blinky 启动 + 翻转 GPIO0）；HAL 驱动级 embedded-test HIL 已在真机通过，
 > 精确覆盖见 `docs/src/reference/10-stable-api.md`。示例 smoke 与连接性 HIL 继续按板逐项推进；无板时仅可做构建 + 打包（不触碰硬件）。
 

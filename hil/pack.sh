@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# Pack a ws63-rs program (ELF or .bin) into a WS63 app **image** (+ optional
-# **fwpkg**) so flashboot can actually load it. A bare ELF/bin at the app
-# partition does NOT boot — flashboot expects a 0x300-byte HiSilicon image
-# header in front of the code and jumps unconditionally to app_partition + 0x300
-# (app partition = 0x230000 → entry 0x230300 on WS63). This script adds that
-# header (and optionally wraps it in a fwpkg) using the `hisi-fwpkg` tool.
+# Pack a ws63-rs program (ELF or .bin) into the canonical app flash image
+# (+ optional fwpkg). Image/header/hash/body range semantics come from the
+# `hisi-fwpkg plan` library path; this script is only a runner wrapper.
 #
 # *** Hardware-validated 2026-06-14 on real WS63 silicon (blinky boots + blinks GPIO0). ***
 #
-# By default this emits the raw .img — that is the artifact the VALIDATED
-# probe-rs-download path flashes (see below). Pass FWPKG=1 to also build the
-# single-partition .fwpkg for the vendor hisiflash/YMODEM path.
+# By default this emits the raw .img plus a .plan.json sidecar — that is the
+# artifact the probe-rs-download path flashes (see below). Pass FWPKG=1 to also
+# build the single-partition .fwpkg for the vendor hisiflash/YMODEM path.
 #
 # Usage:
 #   hil/pack.sh <program.elf | program.bin | example-name> [output.img]
@@ -70,10 +67,11 @@ IMG="${2:-$(dirname "$INPUT")/$BASE.img}"
 ADDR_ARGS=()
 [ -n "${APP_ADDR:-}" ] && ADDR_ARGS=(--app-addr "$APP_ADDR")
 
-# Primary artifact: the raw 0x300-header image. This is what the validated
-# probe-rs-download path flashes to the app partition.
-echo "==> image $INPUT -> $IMG"
-"$HISI_FWPKG" image "$INPUT" -o "$IMG"
+# Primary artifact: the complete flash image and its canonical plan. This is
+# what the probe-rs-download path flashes to the app partition as a plain bin.
+PLAN="${IMG%.img}.plan.json"
+echo "==> plan $INPUT -> $IMG (+ $PLAN)"
+"$HISI_FWPKG" plan "$INPUT" --chip "$CHIP" "${ADDR_ARGS[@]}" --image-output "$IMG" > "$PLAN"
 
 if [ -n "${FWPKG:-}" ]; then
     OUT="${IMG%.img}.fwpkg"
@@ -81,11 +79,15 @@ if [ -n "${FWPKG:-}" ]; then
     "$HISI_FWPKG" pack "$INPUT" -o "$OUT" --chip "$CHIP" "${ADDR_ARGS[@]}" --name "$BASE"
 fi
 
-# Default app-partition base address (WS63=0x230000, BS21=0x90000); APP_ADDR overrides.
-case "$CHIP" in bs21) DEF_ADDR=0x00090000 ;; *) DEF_ADDR=0x00230000 ;; esac
-BASE_ADDR="${APP_ADDR:-$DEF_ADDR}"
+BASE_ADDR="$(python3 - "$PLAN" <<'PY'
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    print(f"0x{json.load(f)['base_addr']:08X}")
+PY
+)"
 
 echo "==> done: $IMG"
+echo "    plan: $PLAN"
 echo
 echo "    FLASH (A) probe-rs — VALIDATED 2026-06-14, needs the hispark-rs/probe-rs FORK"
 echo "             branch add-hisilicon-ws63-bs21 + its HiSilicon_WS63.yaml (WS63 target +"

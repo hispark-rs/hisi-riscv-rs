@@ -2,7 +2,7 @@
 # Cargo *runner* that flashes a freshly-built ELF to a real WS63 board and boots
 # it — turning `cargo run` into "flash to hardware".
 #
-# Flow: patch-hash → probe-rs download → JLink hardware nRST → UART capture.
+# Flow: hisi-fwpkg plan image → probe-rs bin download → JLink hardware nRST → UART capture.
 # probe-rs `reset` (SC_SYS_RES) does not clean the SFC; only hardware nRST
 # (POR) brings the SFC back to a state the boot ROM can initialise.
 #
@@ -39,11 +39,20 @@ command -v "$PROBE_RS" >/dev/null 2>&1 || {
 yaml_args=()
 [ -n "${PROBE_YAML:-}" ] && yaml_args=(--chip-description-path "$PROBE_YAML")
 
-echo "run-hw: filling body SHA-256 in place: $(basename "$ELF") (0x300 header already baked in)"
-"$HISI_FWPKG" patch-hash "$ELF"
+IMAGE="${ELF}.hisi.img"
+PLAN="${ELF}.hisi-plan.json"
+echo "run-hw: planning complete flash image: $(basename "$ELF") -> $(basename "$IMAGE")"
+"$HISI_FWPKG" plan "$ELF" --chip ws63 --image-output "$IMAGE" > "$PLAN"
+BASE_ADDRESS="$(python3 - "$PLAN" <<'PY'
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    print(f"0x{json.load(f)['base_addr']:08X}")
+PY
+)"
 
-echo "run-hw: downloading the patched ELF to flash via probe-rs"
-"$PROBE_RS" download --chip "$PROBE_CHIP" "${yaml_args[@]}" "$ELF"
+echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS"
+"$PROBE_RS" download --chip "$PROBE_CHIP" "${yaml_args[@]}" \
+    --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"
 
 if [ -n "${PORT:-}" ]; then
     echo "run-hw: nRST + capturing $PORT @ ${UART_BAUD} for ${MONITOR}s"

@@ -35,12 +35,11 @@ WS63 用一个 efuse 位 **`SEC_VERIFY_ENABLE`** 控制是否启用安全启动�
   所以根本不存在某个"假签名"能让任意 body 启动；需要的是 **0x300 头 + 真实 body SHA-256**。
   镜像头的**结构**当然也要正确（0x300 字节、KeyArea + CodeInfo、body 的 SHA-256 字段位置对——见
   [启动流程](02-boot-flow.md)），只是**签名的内容**无所谓。
-- 整条开发流因此非常顺：WS63 走 **route 2**——靠 hisi-riscv-rt 的 `boot-header` feature 在
-  **link 时**把 0x300 头烤进 ELF，再用 `hisi-fwpkg patch-hash <elf>` 补上**真实的 body SHA-256**
-  （这一步**不可省**：secure-off 仍校验 hash，只跳过 ECC 签名），然后直接
-  `probe-rs download <elf>` / `probe-rs run <elf>` → reset，就启动了。没有中间 `.img`、
-  也没有 `hisi-fwpkg image` 这一步。不需要任何私钥、不需要厂商签名工具。
-  （BS21/BS2X 暂无 link-time 头，仍走 **route 1**：`hisi-fwpkg image -o app.img <elf>` 后烧 `.img`。）
+- 整条开发流因此非常顺：`hisi-fwpkg plan` 从 ELF/headered ELF/raw image 生成**真实的 body SHA-256**
+  和完整 flash image，然后 probe-rs 只用
+  `download --binary-format bin --base-address <plan.base_addr> <image>` 写入。不需要任何私钥、不需要厂商签名工具。
+  WS63 仍可在 **link 时**把 0x300 头烤进 ELF；普通 smoke/download 仍推荐经 `plan` 展开成完整 image。
+  `hisi-fwpkg patch-hash <elf>` 只保留给 `probe-rs run` / embedded-test 这种需要 ELF 符号和测试元数据的路径。
 
 这是一个**有意的、便利的开发态选择**：开发片关掉验签，让 Rust 固件能自由迭代烧录，
 不被"每次都得找厂商签名"卡住。

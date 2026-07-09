@@ -10,7 +10,7 @@
 ## 打包与烧录 · Flash
 
 - [如何打包成可启动镜像（hisi-fwpkg）](03-package-image.md) —— `image`（裸 0x300 镜像）vs `pack`（fwpkg），0x300 header 是干嘛的。
-- [如何用 probe-rs 烧录到真机](04-flash-probe-rs.md) —— 验证主路径：`image` → `probe-rs download` → `probe-rs reset`，补丁版 fork + yaml + 各芯片基址 + 排错。
+- [如何用 probe-rs 烧录到真机](04-flash-probe-rs.md) —— 验证主路径：`hisi-fwpkg plan` → `probe-rs download --binary-format bin`，补丁版 fork + yaml + 排错。
 - [如何用 hisiflash 烧录到真机](05-flash-hisiflash.md) —— 厂商 YMODEM 路径：`pack` → `.fwpkg` → `hisiflash flash`，何时用它。
 - [如何用硬件 runner 让 `cargo run` 烧真机](06-hardware-runner.md) —— 用 `hil/cargo-run-hw.sh` 把 `cargo run` 从 QEMU 改成烧真机；全部环境变量。
 

@@ -71,6 +71,9 @@ jobs:
       - name: Check HIL smoke marker references
         run: python3 .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
 
+      - name: Check image-format truth-source drift
+        run: python3 scripts/check-image-format-truth.py
+
   # ── Build API docs ────────────────────────────────────────────
   docs:
     name: Build API Documentation

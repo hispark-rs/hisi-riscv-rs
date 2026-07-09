@@ -15,8 +15,8 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 | `hil/embedded-test-runner.sh` | `hisi-riscv-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
-| `hil/flash.sh` | 示例/固件烧录封装 | probe-rs download/reset 或 hisiflash |
-| `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | probe-rs download/reset，可选 UART stream |
+| `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
+| `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | hisi-fwpkg plan + probe-rs bin download，可选 UART stream |
 
 ## 串口约定
 
@@ -77,7 +77,7 @@ cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
 | `WS63_RS` | 脚本父目录 | 共享 | ws63-rs 检出根 |
 | `CHIP` | `WS63` | probe-rs | probe-rs `--chip` 目标 |
 | `PROBE_RS_YAML` | 必填 | probe-rs | fork 的芯片描述 YAML（`HiSilicon_WS63.yaml`） |
-| `BASE_ADDRESS` | `0x00230000`（ws63）/ `0x00090000`（bs21） | probe-rs | route 1 `.img` 的 app 分区 flash 地址 |
+| `BASE_ADDRESS` | 未设 | probe-rs | 可选 app 分区覆盖值；未设则读取 `hisi-fwpkg plan` 的 `base_addr` |
 | `PROBE_RS` | `probe-rs` | probe-rs | probe-rs 二进制名 |
 | `PORT` | 自动探测 | hisiflash | 串口（导出为 `HISIFLASH_PORT`） |
 | `BAUD` | hisiflash 默认 921600 | hisiflash | 烧录波特（`HISIFLASH_BAUD`） |
@@ -105,12 +105,12 @@ cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
 | `HISI_FWPKG` | `hisi-fwpkg` | hisi-fwpkg 二进制名 |
 | `WS63_RS` | 脚本父目录 | ws63-rs 检出根 |
 
-默认 app 分区地址：ws63 `0x00230000`、bs21 `0x00090000`。
+默认 app 分区地址由 `hisi-fwpkg plan` 决定：ws63 `0x00230000`、bs21 `0x00090000`。
 
 ### `cargo-run-hw.sh`（cargo runner）
 
-Cargo 以 `<runner> <built-elf>` 调用，脚本对 ELF 执行 `hisi-fwpkg patch-hash`，再用 probe-rs
-download/reset；设了 `PORT` 时会流式读取 UART0。
+Cargo 以 `<runner> <built-elf>` 调用，脚本执行 `hisi-fwpkg plan --image-output`，再用 probe-rs
+`download --binary-format bin --base-address <plan.base_addr>` 写入；设了 `PORT` 时会流式读取 UART0。
 
 | 变量 | 默认 | 说明 |
 |------|------|------|

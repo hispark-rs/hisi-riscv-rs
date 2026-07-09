@@ -15,6 +15,11 @@
 #      drives each test in turn over semihosting (SYS_GET_CMDLINE / SYS_EXIT),
 #      reporting libtest-compatible results back to `cargo test`.
 #
+# Unlike smoke/download runners, this path intentionally still hands an ELF to
+# `probe-rs run`: embedded-test needs ELF metadata and semihosting symbols.
+# Splitting it into `hisi-fwpkg plan` + `probe-rs download --binary-format bin`
+# is tracked as a separate compatibility experiment.
+#
 # Enable it for the test invocation only (does NOT touch the QEMU `cargo run`
 # default in .cargo/config.toml):
 #   CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \

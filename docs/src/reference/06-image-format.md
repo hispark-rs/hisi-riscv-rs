@@ -1,6 +1,8 @@
 # 应用镜像格式与签名
 
-WS63 app 镜像（flashboot 从 flash `0x230000` 加载的对象）的字段布局。事实逐字段取自 [`hisi-fwpkg/crates/hisi-fwpkg/src/image.rs`](https://github.com/hispark-rs/hisi-fwpkg) 与 [`src/fwpkg.rs`](https://github.com/hispark-rs/hisi-fwpkg)。所有多字节字段为**小端**。
+WS63 app 镜像（flashboot 从 flash `0x230000` 加载的对象）的字段布局。镜像 header、hash、body range、erase/write 边界的**事实源是 `hisi-fwpkg` crate API/schema**；本页只解释这些事实，不再作为另一份可执行规则。原厂 fwpkg 容器行为以 `fbb_burntool` 的 `Common.h` / `Global.h` / `DataConvertor.cpp` 为对照。
+
+所有多字节字段为**小端**。
 
 构建命令见 [打包成可启动镜像](../how-to/03-package-image.md)；安全启动原理见 [安全启动与签名](../explanation/05-secure-boot.md)。
 
@@ -141,7 +143,7 @@ WS63 app 镜像（flashboot 从 flash `0x230000` 加载的对象）的字段布�
 | `Normal` | `1` | ssb / flashboot / nv / params / app … |
 | `KvNv` | `2` | Key-Value NV |
 | `Efuse` | `3` | eFuse 配置 |
-| `Other(v)` | `v` | 其它原始类型码 |
+| `Unknown(v)` | `v` | 其它原始类型码 |
 
 ### CRC
 

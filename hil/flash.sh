@@ -25,7 +25,7 @@
 # Env (probe-rs path):
 #   CHIP          probe-rs --chip target (default WS63).
 #   PROBE_RS_YAML chip-description YAML from the fork (REQUIRED — HiSilicon_WS63.yaml).
-#   BASE_ADDRESS  app-partition flash address (default 0x00230000 ws63 / 0x00090000 bs21).
+#   BASE_ADDRESS  optional app-partition override; otherwise read from hisi-fwpkg plan.
 #   PROBE_RS      the probe-rs binary (default `probe-rs` in PATH).
 # Env (hisiflash path):
 #   PORT          serial port (exported as HISIFLASH_PORT). Auto-detected if unset.
@@ -49,13 +49,10 @@ ROOT_TARGET_DIR="$WS63_RS/target/riscv32imfc-unknown-none-elf/release"
 
 ARG="${1:?usage: flash.sh <program.elf|program.bin|example-name> [port]}"
 
-case "$CHIP_KIND" in bs21) DEF_ADDR=0x00090000 ;; *) DEF_ADDR=0x00230000 ;; esac
-
 if [ "$METHOD" = "probe-rs" ]; then
-    # VALIDATED path: build the 0x300-header image, then probe-rs download + reset.
+    # VALIDATED path: build the canonical image, then probe-rs bin download + reset.
     PROBE_RS="${PROBE_RS:-probe-rs}"
     CHIP="${CHIP:-WS63}"
-    BASE_ADDRESS="${BASE_ADDRESS:-$DEF_ADDR}"
     command -v "$PROBE_RS" >/dev/null 2>&1 || {
         echo "ERROR: '$PROBE_RS' not found — install the PATCHED fork" >&2
         echo "       github.com/hispark-rs/probe-rs (branch add-hisilicon-ws63-bs21);" >&2
@@ -67,9 +64,20 @@ if [ "$METHOD" = "probe-rs" ]; then
     # Produce the bootable .img (0x300 header || body) via pack.sh.
     mkdir -p "$ROOT_TARGET_DIR"
     IMG="$ROOT_TARGET_DIR/$(basename "${ARG%.*}").img"
-    CHIP="$CHIP_KIND" "$HERE/hil/pack.sh" "$ARG" "$IMG" >&2
+    if [ -n "${BASE_ADDRESS:-}" ]; then
+        CHIP="$CHIP_KIND" APP_ADDR="$BASE_ADDRESS" "$HERE/hil/pack.sh" "$ARG" "$IMG" >&2
+    else
+        CHIP="$CHIP_KIND" "$HERE/hil/pack.sh" "$ARG" "$IMG" >&2
+    fi
+    PLAN="${IMG%.img}.plan.json"
+    BASE_ADDRESS="$(python3 - "$PLAN" <<'PY'
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    print(f"0x{json.load(f)['base_addr']:08X}")
+PY
+)"
 
-    echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS (yaml=$PROBE_RS_YAML)"
+    echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS (plan=$PLAN, yaml=$PROBE_RS_YAML)"
     "$PROBE_RS" download --chip "$CHIP" --chip-description-path "$PROBE_RS_YAML" \
         --binary-format bin --base-address "$BASE_ADDRESS" "$IMG"
     echo "==> probe-rs reset"
