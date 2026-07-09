@@ -83,6 +83,9 @@ jobs:
       - name: Assemble versioned handbook
         run: python3 scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${GITHUB_REF_NAME}" --book docs/book --out site
 
+      - name: Refresh shared docs theme assets
+        run: python3 scripts/sync-doc-theme-assets.py --book docs/book --site site
+
       - name: Build versioned API documentation
         run: scripts/build-rustdoc-site.sh --version "${GITHUB_REF_NAME}" --out site
         env:
