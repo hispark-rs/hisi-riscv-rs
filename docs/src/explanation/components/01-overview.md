@@ -85,7 +85,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
     RMW 走 `portable-atomic` 的 critical-section polyfill，**不发 `lr/sc/amo`**。原默认 `riscv32imafc`
     会发原子指令、在硅片上触发非法指令陷阱，已弃用。
   - 历史：2026-05-31 阶段 0 曾先用 builtin `riscv32imc`（软浮点、stable、免 build-std）做过渡；
-    随后切到 `ws63` 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为阶段 3 链接做准备）。
+    随后切到 `ws63` 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为后续 vendor blob 链接做准备）。
 - **单一 PAC 实例**：根 `Cargo.toml` 用 `[patch.crates-io]` 把 `ws63-pac` 的 registry 依赖重定向到本地 submodule，
   保证全仓库只链接一个 PAC（否则 `DEVICE_PERIPHERALS` 单例静态重复、类型不兼容）。
 - **default-members = 库 + WS63 示例集合**。根 `Cargo.toml` 的 `default-members` 是构建事实源；当前示例清单与状态见
@@ -107,13 +107,13 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 ## 已知的全局性问题（详见评审台账）
 
 1. **连接性状态**：
-   - **WS63 Wi-Fi**（ROADMAP 阶段 3-5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测（阶段 4），符号闭合已达成；真机连通待 HIL（阶段 5）。
+   - **WS63 Wi-Fi**（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。
    - **BS2X BLE/SLE**（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 `hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md`。
-2. ~~示例无法链接~~ **（已修，阶段 1）**；~~多芯片支持~~ **（已实现）**：hisi-riscv-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
+2. ~~示例无法链接~~ **（已修）**；~~多芯片支持~~ **（已实现）**：hisi-riscv-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
 3. **硬件在环（HIL）进度**：HAL 驱动级 WS63 embedded-test 证据基线见
    [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 仍按
    [HIL 测试框架](../07-hil-framework.md) 和 [示例目录与验证标记串](../../reference/02-examples.md) 分轨推进。
-4. **正确性修复状态**：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等核心问题已修（ROADMAP 阶段 2）；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；上板验证仍待硬件（时钟精度、外设时序）。
+4. **正确性修复状态**：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
 
 ## 参考资料
 ## 多芯片支持细节

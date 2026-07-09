@@ -78,8 +78,8 @@ flowchart LR
 
 - **覆盖范围**：BS2X 系统/复位/时钟/存储映射/中断系统、QSPI、BLE/SLE（无 Wi-Fi MAC，RF 由 PHY 直驱）、安全/外设/JTAG。
 - **与 WS63 的异同**：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。
-- **维护**：两份手册独立演进；冻结扩张的方针同样应用于 BS2X 手册（ROADMAP "冻结/降优先级"）。
+- **维护**：两份手册独立演进；冻结扩张、聚焦连接性的方针同样应用于 BS2X 手册。
 
-- **冻结扩张、聚焦连接性**（ROADMAP "冻结/降优先级"）：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上连上 AP 并 ping 通）。
-- **作为下游纠偏的事实依据**：手册的中断编号表与优先级模型（`source/ch2_system.md:328-424`）应在 **ROADMAP 阶段 2** 用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（`ch2_system.md:162`）服务于 **阶段 1** 的链接脚本集成；RF/ABB 章节（`ch4_wifi/`）服务于 **阶段 3–5** 的 blob 链接与连接性。
+- **冻结扩张、聚焦连接性**：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上完成 scan/connect/ping）。
+- **作为下游纠偏的事实依据**：手册的中断编号表与优先级模型（`source/ch2_system.md:328-424`）已经用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（`ch2_system.md:162`）支撑链接脚本集成；RF/ABB 章节（`ch4_wifi/`）继续服务于当前 ROADMAP C1-C5 的 blob 链接与连接性。
 - **小修（非阻断）**：将 README 技术栈中的 `sphinx-rtd-theme` 更正为 `sphinx_book_theme`，与 `conf.py:55` 对齐。

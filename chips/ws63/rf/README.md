@@ -14,7 +14,10 @@ implementations.
 
 ## ⚠️ Status: symbol closure for Wi-Fi init ACHIEVED; runtime + data path implemented; runnable image is HIL
 
-**Project context:** ws63-rs is in **phase 7 (HAL polishing & release)** with **phase 1 preparation** (real board bring-up framework) underway (see [ROADMAP.md](../../../ROADMAP.md) §Current focus). This crate is **phase 4** (porting layer + HCC IPC); phases 4–5 (real Wi-Fi link) await hardware-in-the-loop validation.
+**Project context:** ws63-rs is now focused on the connectivity milestones in
+[`ROADMAP.md`](../../../ROADMAP.md). This crate owns the RF runtime half of C1-C5:
+turning the implemented porting/runtime seams into a real WS63 Wi-Fi image,
+then proving init, scan, connect, and ping on hardware.
 
 This crate makes the porting contract **compile, link, and actually run** — the
 runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
@@ -76,7 +79,8 @@ scheduler + FRW worker thread are now **implemented**, see the status table):
   smoltcp TX sink to the blob's transmit symbol (on hardware).
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
-See the workspace [`ROADMAP.md`](../../../ROADMAP.md) phase 4 for the staged plan.
+See the workspace [`ROADMAP.md`](../../../ROADMAP.md) connectivity milestones for
+the staged plan.
 
 ## Validate
 

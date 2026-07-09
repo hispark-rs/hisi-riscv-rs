@@ -15,7 +15,7 @@
 - **`hisi-riscv-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
 - **{{#chip-field pac_crate}}** —— svd2rust 生成的寄存器访问层。
 - **`hisi-riscv-rt`** —— 启动汇编、链接脚本、中断向量。
-- **`hisi-riscv` 工具链** —— 内置 `riscv32imfc-unknown-none-elf`（硬浮点、无原子）目标的定制 stable rustc。
+- **官方 Rust nightly 工具链** —— 使用 upstream `riscv32imfc-unknown-none-elf`（硬浮点、无原子）目标，当前经 `rust-src` + `-Zbuild-std=core,alloc` 构建。
 - **`hisi-fwpkg`** —— 把 ELF 打包成可被 flashboot 加载的应用镜像（0x300 头）。
 - **patched `probe-rs`** —— 支持当前芯片调试/烧录路径（目标名 {{#chip-field probe_chip}}）。
 - **`hisi-riscv-qemu`** —— 跑得动 vendor C SDK 与 Rust 固件的 QEMU 模型。

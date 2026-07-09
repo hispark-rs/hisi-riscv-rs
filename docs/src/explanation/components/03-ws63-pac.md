@@ -50,13 +50,13 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 | 严重度 | 类别 | 问题 | 证据(file:line) | 状态 |
 |--------|------|------|-----------------|------|
 | 中 | 维护性 | 单文件 `lib.rs` 体积约 1.8MB / 31814 行，难以审阅与定位 | `src/lib.rs`（1797361 字节、31814 行） | 暂不修（svd2rust 生成产物，按惯例不拆分；通过 CHANGELOG + grep 定位缓解） |
-| 高 | 维护性 | 寄存器手补进生成代码：KM keyslot 寄存器（`KC_REECPU_LOCK_CMD` 等）在生成后人工添加，下次重生成会被覆盖 | `src/lib.rs:28415`、`28569`；`CHANGELOG.md:13-21` | 已排期(ROADMAP 阶段 2)：应回填到 ws63-svd 源头由生成器产出 |
+| 高 | 维护性 | 寄存器手补进生成代码：KM keyslot 寄存器（`KC_REECPU_LOCK_CMD` 等）在生成后人工添加，下次重生成会被覆盖 | `src/lib.rs:28415`、`28569`；`CHANGELOG.md:13-21` | 已随 SVD/PAC 流水线整改：应回填到 ws63-svd 源头由生成器产出，避免手补 PAC |
 | 中 | 依赖 | 版本曾停在 `0.1.0` 而 tag 后又追加了公开寄存器，违反 SemVer | `Cargo.toml:3`、`CHANGELOG.md` | 已修：bump `0.1.0` →（经 0.1.1/0.1.2）现 `0.1.3`，由 ws63-pac 自有仓库流水线发布 |
 | 中 | 依赖 | 曾被 `hisi-riscv-hal` 以 git 依赖引入，导致工作区出现双 PAC 实例 | `crates/hisi-riscv-hal/Cargo.toml:12`、`Cargo.toml:45-51` | 本轮已修：改 registry 版本依赖 + 根 `[patch.crates-io]` 指向本地，`cargo tree` 仅单一 `ws63-pac` 实例 |
 
 ## 改进项与排期
 
-本轮（2026-05-31，ROADMAP 阶段 0）已完成的构建完整性修复中，与本 crate 直接相关：
+2026-05-31 构建完整性整改中，与本 crate 直接相关：
 
 - **双 PAC 消除**：`hisi-riscv-hal`/`ws63-flashboot` 改为 registry 版本依赖，根 `Cargo.toml` 用 `[patch.crates-io]` 统一指向本地（`Cargo.toml:50-51`），全工作区单实例。
 - **版本对齐**：`0.1.x` 后随 SPI_WSR / TIMER 修复发布到 **`0.2.0`**；下游 HAL/RT 通过 registry 版本依赖消费，父仓开发用 `[patch.crates-io]` 指向本地 submodule。
@@ -64,5 +64,5 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 仍需后续处理（指向 ROADMAP 对应阶段）：
 
-- **手补寄存器回源（阶段 2）**：把 KM keyslot 等人工添加的寄存器回填到 `ws63-svd`，使其由 svd2rust 重生成产出，消除"生成产物被手改"的维护风险；同阶段一并补齐 efuse / lsadc 等外设寄存器的正确性。
+- **手补寄存器回源**：把 KM keyslot 等人工添加的寄存器回填到 `ws63-svd`，使其由 svd2rust 重生成产出，消除"生成产物被手改"的维护风险；同一轮整改也补齐了 efuse / lsadc 等外设寄存器的正确性。
 - **单文件体积**：作为生成产物，按 svd2rust 惯例暂不拆分；若后续 SVD 重构，可评估按外设分模块生成。

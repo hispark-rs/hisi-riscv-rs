@@ -13,7 +13,7 @@ runnable **without hardware** on the sister project
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** Everything here is aimed at eventually bringing
-> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (ROADMAP phase 4/5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); full analysis in [`ROADMAP.md`](ROADMAP.md). Full QEMU bring-up done for both chips; the WS63 HAL driver-level HIL evidence is tracked in [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md), while example smoke and connectivity HIL continue separately. See [`ROADMAP.md`](ROADMAP.md) for the staged plan and [`docs/`](docs/) for the architecture (Chinese).
+> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (connectivity milestones C1-C5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); current priorities are in [`ROADMAP.md`](ROADMAP.md), and the historical feasibility/remediation ledger is archived under [`docs/archive/`](docs/archive/). Full QEMU bring-up done for both chips; the WS63 HAL driver-level HIL evidence is tracked in [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md), while example smoke and connectivity HIL continue separately. See [`docs/`](docs/) for the architecture (Chinese).
 
 ## Crates
 
@@ -126,7 +126,7 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 in-tree WS63 machine (`-M ws63`) that models the CPU + xlinx custom ISA, memory
 map, interrupt controller, and all 35 SVD peripherals. It runs ws63-rs firmware
 (and real vendor C-SDK firmware) and is the software-in-the-loop stand-in for
-ROADMAP phase 1 "hardware bring-up":
+the current roadmap's baseline/HIL support track:
 
 ```bash
 # in a sibling checkout of hisi-riscv-qemu
@@ -160,7 +160,7 @@ Release** — it does not publish the library crates.
 - [`CLAUDE.md`](CLAUDE.md) — build commands, architecture, design decisions.
 - [`docs/src/explanation/components/01-overview.md`](docs/src/explanation/components/01-overview.md) — the whole picture (Chinese), with per-component docs alongside.
 - [`docs/review/`](docs/review/) — the architecture review ledger.
-- [`ROADMAP.md`](ROADMAP.md) — remediation plan and the path to connectivity (incl. the BS2X BLE radio-interface feasibility analysis).
+- [`ROADMAP.md`](ROADMAP.md) — current connectivity-first roadmap; historical remediation details live in [`docs/archive/`](docs/archive/).
 - **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21-hil-baseline`) is in use for WS63 HIL; connectivity bring-up remains open.
 
 ## License

@@ -80,10 +80,10 @@ UART/GPIO/KM 等外设建模质量较高：字段拆分、枚举值与访问属�
 | 高 | 维护性 | 手补代码曾被手工补进**已格式化的 PAC 生成代码**，而非回填 SVD 后重生成，clean regen 会丢失或冲突。 | 历史提交 df35d69「add missing KM keyslot registers」；该批字段在 `WS63.svd` KM 外设中存在但生成链曾未联动 | ✅ 已修(2026-05-31)：建立 `regen.sh`、停止手补；重生成时 PAC 反而**恢复**了手补遗漏的 KM keyslot 字段（`flush_hmac_kslot_ind`/`tscipher_ind`/`lock_cmd`/`key_slot_num`） |
 | 中 | 维护性 | 无可复现生成流水线：`main.py` 是 `print(...)` 桩，无 svd2rust 调用；`ws63-settings.yaml` 在 `base_isa: rv32i` 截断；CI 中无 SVD 引用 | `main.py:1-6`；`ws63-settings.yaml`；`.github/workflows/` 无 SVD 引用 | ✅ 已修(2026-05-31)：`regen.sh`+`postprocess.py` 幂等可复现、build+clippy 门禁；CI 接入（“重生成并 diff”）为剩余小项 |
 | 高 | 正确性 | eFuse/LSADC 外设建模错误：eFuse 控制寄存器偏移错位（0x00 段）、`wr_rd` 建成单 bit 而非 16 位魔数、缺 0x800 数据窗口；LSADC 寄存器整块错位（使能/启停/FIFO 寄存器选错） | 评审台账 + 本轮对照 `hal_efuse_v151`/`hal_adc_v154` | ✅ 已修(2026-05-31)：eFuse 控制块移到 base+0x30、16 位魔数、加 0x800 窗口；LSADC 重写为连续 `adc_regs_t`（CTRL_8/9/11、CFG_* @0xDC..0xEC）。偏移已在生成 PAC 中逐一核验 |
-| 中 | 正确性 | 覆盖不全：KM 的 `*_FLUSH_BUSY` 状态寄存器（偏移 0xB10–0xB1C）缺失，KM 偏移从 `0x1B0C` 直接跳到 `0x1B30`，存在转录静默缺口 | `WS63.svd` KM 外设；addressOffset 序列断档；`grep FLUSH_BUSY` 无命中 | 已排期(ROADMAP 阶段 2)：`flush_hmac_kslot_ind` 字段已建模，但 BUSY 查询寄存器本身仍未补 |
+| 中 | 正确性 | 覆盖不全：KM 的 `*_FLUSH_BUSY` 状态寄存器（偏移 0xB10–0xB1C）缺失，KM 偏移从 `0x1B0C` 直接跳到 `0x1B30`，存在转录静默缺口 | `WS63.svd` KM 外设；addressOffset 序列断档；`grep FLUSH_BUSY` 无命中 | 历史整改项遗留：`flush_hmac_kslot_ind` 字段已建模，但 BUSY 查询寄存器本身仍未补；不阻塞当前连接性 C1-C5 |
 | 低 | 文档 | `README.md` 为空文件（0 字节），组件无任何使用/维护说明 | `README.md`（0 bytes） | ✅ 已修：README 已补写（含 `regen.sh` 用法、流水线步骤、校验命令、维护约定） |
 
-> 说明：本组件已从“几乎全部已排期”转为**四项中三项已修**（仅 KM `*_FLUSH_BUSY` 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复，eFuse/LSADC 驱动**仍未上板验证**（验证归 ROADMAP 阶段 1 门禁）。下游 `ws63-pac` 也已随 `regen.sh` 重生成。
+> 说明：本组件已从“几乎全部已排期”转为**四项中三项已修**（仅 KM `*_FLUSH_BUSY` 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复；下游 `ws63-pac` 也已随 `regen.sh` 重生成。当前真机证据边界以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
 
 ## 改进项与排期
 
@@ -94,7 +94,7 @@ ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-0
 3. ✅ **eFuse/LSADC 寄存器修复**（已完成）：对照 `hal_efuse_v151`/`hal_adc_v154` 改 SVD 并重生成（详见上表）。**剩余**：KM `*_FLUSH_BUSY`（0xB10–0xB1C）转录缺口仍待补；其它外设逐个对照 fbb_ws63 `*_reg.h` 核覆盖。
 4. ✅ **补写 README**（已完成）：含 `regen.sh` 用法、五步流水线、校验命令与"勿手改 lib.rs"约定。
 
-阶段编号参考：阶段 0 为构建完整性修复（2026-05-31 已完成）；阶段 1 为硬件在环 bring-up 与链接脚本集成；阶段 2 为本组件
+旧阶段编号和完整整改历史见 [归档 roadmap](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md)。
 
 ## 相关架构
 

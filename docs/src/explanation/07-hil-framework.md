@@ -90,8 +90,8 @@ QEMU↔硅片的分歧高度集中在固定几类：
   不等同于 HAL 驱动级 HIL。当前示例状态见 [示例目录与验证标记串](../reference/02-examples.md)。
 - **blinky：已在真硅片上确认。** 完整的 Rust -> flash -> 启动主流程于 2026-06-14 在真 WS63 硅片上跑通，
   blinky 上电启动并翻转 GPIO0。
-- **连接性（阶段 4/5）：** WS63 Wi-Fi 的 porting + 链接 + netif->smoltcp 已在 QEMU 软件在环自测、符号闭合达成；
-  真机连通仍待 HIL。BS2X 的 BLE/SLE 在 radio 层已论证不可行，走 HCI 边界。
+- **连接性（ROADMAP C1-C5）：** WS63 Wi-Fi 的 porting + 链接 + netif->smoltcp 已在 QEMU 软件在环自测、符号闭合达成；
+  真机 init/scan/connect/ping 仍待 HIL。BS2X 的 BLE/SLE 在 radio 层已论证不可行，走 HCI 边界。
 
 不夸大、不假装：HAL 默认公开面的证据线已经比 2026-06 清楚很多，但示例级 smoke、连接性和需外部台架的
 外设场景仍要继续补。HIL 文档的职责是解释为什么这样测；当前事实状态应收敛到 reference 页。

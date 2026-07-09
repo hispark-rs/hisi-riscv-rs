@@ -37,7 +37,7 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 
 每个示例的 `Cargo.toml` 直接依赖其所需 crate（典型为 `hisi-riscv-hal` + `hisi-riscv-rt`；async 示例再加 `embassy-*`；RF 示例加 `ws63-rf-rs`）。0.6.0 起，演示 DMA、interrupt/waker async、embassy 或 software reset 的示例会显式启用 `unstable`，避免让默认稳定 API 暗示这些实验面已毕业。
 
-链接脚本传播问题已修：`hisi-riscv-rt` 经 `cargo:rustc-link-search` 导出 `hisi-riscv-link.x`（`hisi-riscv-rt/build.rs`），各二进制以自己的 `build.rs` 用 `-Thisi-riscv-link.x` 引入。因此当前 WS63 default-member 示例均可链接，默认 `cargo build` 即构建（仅 `ws63-flashboot` 仍单独排除——它是实验性、非 secure boot，见其 README）。注：`blinky/Cargo.toml` 历史上多声明了一条 `ws63-pac` 直接依赖而源码未用（死代码，排期阶段 2 清理）。
+链接脚本传播问题已修：`hisi-riscv-rt` 经 `cargo:rustc-link-search` 导出 `hisi-riscv-link.x`（`hisi-riscv-rt/build.rs`），各二进制以自己的 `build.rs` 用 `-Thisi-riscv-link.x` 引入。因此当前 WS63 default-member 示例均可链接，默认 `cargo build` 即构建（仅 `ws63-flashboot` 仍单独排除——它是实验性、非 secure boot，见其 README）。注：`blinky/Cargo.toml` 历史上多声明了一条 `ws63-pac` 直接依赖而源码未用，该问题已随示例依赖整理清理。
 
 ## 关键设计
 
@@ -69,12 +69,11 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 | 高 | 方向 | （曾）唯一示例（blinky）+ 手写忙等，无法证明其余驱动可用 | ✅ 大部已破：现有 UART/Timer/GPIO/DMA + async SPI/I2C 等 13 个额外示例 |
 | 中 | 演示覆盖 | `blinky` 曾用 legacy `create_output_pin`，未直接演示 `OutputConfig`/`InputConfig` | ✅ 已修：`blinky` 走现代 `OutputConfig` 输出路径；`gpio_irq` 继续覆盖输入/中断 |
 | 中 | 文档 | 旧构建指引曾指向自定义 JSON target | ✅ 已统一为 builtin `riscv32imfc-unknown-none-elf`（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable `riscv32imc`） |
-| 低 | 依赖 | `blinky/Cargo.toml` 多声明 `ws63-pac` 直接依赖，源码未用 | 🟡 排期阶段 2 死代码清理 |
-| — | 连接性 | 缺真实 Wi-Fi/BLE/SLE 链路示例 | 🔴 待 blob 上板 HIL（阶段 5） |
+| 低 | 依赖 | `blinky/Cargo.toml` 曾多声明 `ws63-pac` 直接依赖，源码未用 | ✅ 已随示例依赖整理清理 |
+| — | 连接性 | 缺真实 Wi-Fi/BLE/SLE 链路示例 | 🔴 待 connectivity milestones C2-C5 上板 HIL |
 
 ## 改进项与排期
 
-- **ROADMAP 阶段 1（已大部完成）**：链接脚本传播已修、示例覆盖面已扩；`blinky` 已切到现代 `OutputConfig` 输出路径并完成真机点灯验证。
-- **ROADMAP 阶段 2（死代码清理）**：清理 `blinky` 冗余的 `ws63-pac` 直接依赖等。
-- **ROADMAP 阶段 5（连接性示例）** 🔴：在 blob 上板（HIL）后新增 Wi-Fi/BLE/SLE 真实链路示例，使示例集真正覆盖 SoC 核心能力。
-- **ROADMAP 阶段 6（async）** ✅ 已完成：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 四个异步示例已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](06-async-embassy.md)）。
+- **已完成的示例底座**：链接脚本传播已修、示例覆盖面已扩；`blinky` 已切到现代 `OutputConfig` 输出路径并完成真机点灯验证。
+- **连接性示例** 🔴：按当前 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) C2-C5 推进，在 blob 上板 HIL 后新增 Wi-Fi scan/connect/ping 真实链路示例，使示例集覆盖 SoC 核心能力。
+- **async 示例** ✅：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](06-async-embassy.md)）。
