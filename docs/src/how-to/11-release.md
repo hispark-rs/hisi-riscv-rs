@@ -22,6 +22,26 @@ PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 po
 
 依赖方的 `Cargo.lock` 会解析到已发布的 crates.io 版本，所以先发布上游，等 crates.io index 可见后再发布下游。
 
+### 父仓版本是 ecosystem release train
+
+父仓 `hisi-riscv-rs` 的版本不是某一个 crate 的复制品，而是一轮生态发布列车：
+它记录这一刻能一起工作的子模块指针、文档、模板、工具链、镜像/烧录脚本、HIL
+入口和 firmware assets。
+
+当父仓 tag 与某个主 crate 同号时，含义是“这一轮 release train 以该 crate
+为 anchor”，不是说父仓自动跟随这个 crate 的所有版本。例如：
+
+- `hisi-riscv-rs v0.6.0-alpha.2` 的 anchor 是
+  `hisi-riscv-hal 0.6.0-alpha.2`。
+- `hisi-riscv-rs v0.6.0` 的 anchor 可以是 HAL stable API `0.6.0`。
+- 未来如果 runtime 做大改，父仓 `v0.7.0-alpha.1` 可以 anchor 到
+  RT/HAL 的组合，而不是单独跟 HAL。
+
+打父仓 tag 前，必须在父仓 `CHANGELOG.md` 明确写出本轮 anchor。父仓 tag 还会
+控制版本化手册和 API 文档：`/vX.Y.Z/`、`/latest/`、
+`/api/vX.Y.Z/<chip>/...`。只发布子仓 crate 不会移动父仓文档版本；只有当这轮
+生态快照也要对外成为文档/firmware release 时，才打父仓 tag。
+
 ## 1. 发布前硬规则
 
 这些规则不满足就不要打 tag：

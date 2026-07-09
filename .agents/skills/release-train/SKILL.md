@@ -10,6 +10,22 @@ the repo from the git remote). User-invoked because it pushes tags and triggers 
 Full repository procedure and ownership rules live in
 `docs/src/how-to/11-release.md`.
 
+## Parent Release Train Anchor
+
+For the parent repository `hisi-riscv-rs`, a `v*` tag is an ecosystem release
+train snapshot, not a crates.io package release. When the parent tag shares a
+version with a main crate, that crate is the release train anchor and the parent
+`CHANGELOG.md` must say so explicitly.
+
+Current rule/example:
+
+- `hisi-riscv-rs v0.6.0-alpha.2` anchor: `hisi-riscv-hal 0.6.0-alpha.2`.
+
+Only cut a parent tag when the docs, submodule pointers, template contracts,
+toolchain policy, image tooling, and firmware assets should become a versioned
+ecosystem snapshot. A crate-only crates.io release does not by itself require a
+parent tag.
+
 ## Preflight
 
 For every independently published Rust crate in this ecosystem

@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [2026-07-09] — official nightly migration · docs happy path · HAL alpha
 
+Release train anchor: `hisi-riscv-hal 0.6.0-alpha.2`. The parent repository
+version for this train represents the ecosystem snapshot around that HAL
+pre-release: submodule pointers, docs, template contracts, toolchain policy,
+image tooling, and HIL/smoke workflows that make the HAL release usable together.
+
 ### Added
 
 - **Official Rust toolchain path** — the ecosystem now builds on upstream
