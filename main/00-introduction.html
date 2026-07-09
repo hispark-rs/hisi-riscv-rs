@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fefe7e61.js";
+            window.path_to_searchindex_js = "searchindex-754828d5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -186,6 +186,13 @@
 <p>这是 <strong>HiSilicon RISC-V</strong> 芯片的 Rust 嵌入式生态开发手册。当前选择的芯片是
 <strong><span data-hisi-chip-field="display_name">WS63</span></strong>；它的文档状态是 <span data-hisi-chip-field="status">stable</span>，HIL 状态是
 <span data-hisi-chip-field="hil">verified</span>。</p>
+<blockquote>
+<p><strong>文档状态提示</strong>：本生态仍在持续迭代，手册、模板和脚本可能短暂漂移。遇到不一致时，请优先以当前
+<a href="https://github.com/hispark-rs/hisi-riscv-rs/actions">GitHub Actions</a>、版本化
+rustdoc、HIL/教程契约脚本的最新通过结果为准；也欢迎在
+<a href="https://github.com/hispark-rs/hisi-riscv-rs/issues">hispark-rs/hisi-riscv-rs issues</a>
+报告文档中过时、缺失或无法复现的内容。</p>
+</blockquote>
 <p>整套生态包含：</p>
 <ul>
 <li><strong><code>hisi-riscv-hal</code></strong> —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 <code>embedded-hal 1.0</code>，可选 <code>async</code> / <code>embassy</code>。</li>
