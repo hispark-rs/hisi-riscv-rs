@@ -29,7 +29,7 @@
 | 中 | 正确性 | 覆盖不全：KM 的 `*_FLUSH_BUSY` 状态寄存器（偏移 0xB10–0xB1C）缺失，KM 偏移从 `0x1B0C` 直接跳到 `0x1B30`，存在转录静默缺口 | `WS63.svd` KM 外设；addressOffset 序列断档；`grep FLUSH_BUSY` 无命中 | 历史整改项遗留：`flush_hmac_kslot_ind` 字段已建模，但 BUSY 查询寄存器本身仍未补；不阻塞当前连接性 C1-C5 |
 | 低 | 文档 | `README.md` 为空文件（0 字节），组件无任何使用/维护说明 | `README.md`（0 bytes） | ✅ 已修：README 已补写（含 `regen.sh` 用法、流水线步骤、校验命令、维护约定） |
 
-> 说明：本组件已从“几乎全部已排期”转为**四项中三项已修**（仅 KM `*_FLUSH_BUSY` 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复；下游 `ws63-pac` 也已随 `regen.sh` 重生成。当前真机证据边界以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
+> 说明：本组件已从“几乎全部已排期”转为**四项中三项已修**（仅 KM `*_FLUSH_BUSY` 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复；下游 `ws63-pac` 也已随 `regen.sh` 重生成。当前真机证据边界以 [Stable API 清单](../src/reference/10-stable-api.md) 为准。
 
 ## 改进项与排期
 
@@ -110,9 +110,9 @@ ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-0
 
 本页保留 2026-05 评审后的整改现状；当前优先级以 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 为准。
 
-- **Bring-up + 链接脚本集成**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `hisi-riscv-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
+- **Bring-up + 链接脚本集成**：✅ 链接脚本集成已打通（`hisi-riscv-rt` 经 `cargo:rustc-link-search` + `hisi-riscv-link.x`，示例正常链接）；✅ 恒真式测试已由 **ws63-qemu 软件在环**和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 [Stable API 清单](../src/reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 继续分轨推进。
 - **死代码清理 + 正确性修复**：✅ 中断子系统已重写到 `LOCIPRI`/`LOCIEN`/`LOCIPD` CSR 模型；✅ I2C/SPI 超时并返回错误；✅ SPI `trsm` 全双工模式修复；✅ `software_reset`/`reset_reason`；✅ GPIO pull + 中断触发；✅ `safety.rs` 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 eFuse/LSADC 逐寄存器复核仍在推进。
-- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
+- **新增（超出原评审）**：✅ **异步 HAL**（`async`/`embassy` feature，见 [async-embassy.md](../src/explanation/components/06-async-embassy.md)）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 `unstable`。
 - **连接性支撑**：`ws63-rf-rs` 已承接 RF porting/HCC/netif 数据通路，HAL 的边界是继续提供可组合的底层外设；剩余风险在 blob 链接、pbuf/TX-sink pin 与真机连通。
 - **async 后续**：连接性专属的异步包装待 blob 上板后再做；不恢复旧的空壳 `Blocking`/`Async` 类型状态。
 
@@ -143,7 +143,7 @@ ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-0
 
 - **已完成的示例底座**：链接脚本传播已修、示例覆盖面已扩；`blinky` 已切到现代 `OutputConfig` 输出路径并完成真机点灯验证。
 - **连接性示例** 🔴：按当前 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) C2-C5 推进，在 blob 上板 HIL 后新增 Wi-Fi scan/connect/ping 真实链路示例，使示例集覆盖 SoC 核心能力。
-- **async 示例** ✅：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](06-async-embassy.md)）。
+- **async 示例** ✅：`async_delay` / `async_bus` / `embassy_multitask` / `embassy_async_io` 已落地（依赖 HAL 的 `async`/`embassy` 支持，见 [async-embassy.md](../src/explanation/components/06-async-embassy.md)）。
 
 ## ws63-flashboot
 
@@ -208,7 +208,7 @@ ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-0
 - **Baseline 已完成**：消除双 PAC；默认 target = builtin **`riscv32imfc`**（硬浮点 ilp32f，blob 所需）+ critical-section polyfill。工具链、HAL/RT、HIL、QEMU、image plan 前置已清。
 - **C1 RF runtime image** 🟡：`chips/ws63/rf/build.rs` + 链接搜索把 `lib/*.a` 喂给链接器；**Wi-Fi-init 符号闭合达成**（残留 2）。下一步是补真实 `.wifi_pkt_ram` NOLOAD，并把可烧录镜像带到真机。
 - **C2-C5 真机连接性** 🔴：`osal_adapt_*`(33) + `oal`/`log`/`uapi` + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥均已在 ws63-qemu 自测；剩余是把 pbuf 布局/TX sink pin 到真实 blob，并在真实硅片上依次证明 Wi-Fi init、scan、connect、ping。
-- **连接性专属 async** deferred：hisi-riscv-hal 的通用 `async`/`embassy`（见 [async-embassy.md](06-async-embassy.md)）已实现并验证；连接性专属的异步包装待 blob 上板后再做。
+- **连接性专属 async** deferred：hisi-riscv-hal 的通用 `async`/`embassy`（见 [async-embassy.md](../src/explanation/components/06-async-embassy.md)）已实现并验证；连接性专属的异步包装待 blob 上板后再做。
 
 详见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
