@@ -552,7 +552,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-riscv-hal"
-version = "0.6.0-alpha.1"
+version = "0.6.0-alpha.2"
 dependencies = [
  "bs2x-pac",
  "cfg-if",

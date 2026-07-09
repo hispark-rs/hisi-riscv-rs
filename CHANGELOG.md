@@ -6,7 +6,121 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Fixed (silicon bring-up)
+---
+
+## [2026-07-09] — official nightly migration · docs happy path · HAL alpha
+
+### Added
+
+- **Official Rust toolchain path** — the ecosystem now builds on upstream
+  `nightly-2026-07-09` with the built-in `riscv32imfc-unknown-none-elf` target and
+  `-Zbuild-std=core,alloc`. The old custom `hisi-riscv` tarball path is no longer
+  the happy path; `hisi-riscv-rust-toolchain` is repurposed as an upstream nightly
+  radar for target/Tier-2 readiness.
+- **Executable tutorial contracts** — `scripts/tutorial-contracts.sh` is now the
+  single source for tutorial command snippets. mdBook snippets, docs drift checks,
+  template generation smoke, example builds, and `hisi-fwpkg plan --image-output`
+  all use the same contract.
+- **Chip/version-aware documentation** — the mdBook handbook has chip/version
+  selectors and chip-aware snippets backed by shared metadata. Rustdoc publishing
+  is arranged by chip/version (`/api/<version>/<chip>/...`) so docs link to the
+  correct feature-specific API surface.
+- **`hisi-rs-template` submodule** — app templates are versioned and tested with
+  the parent happy path, using crates.io dependencies in generated projects and
+  the parent workspace only as a development override.
+
+### Changed
+
+- **HAL `0.6.0-alpha.1` published** — first 0.6 stabilization pre-release with
+  stable/unstable gating, typed-config tightening, register-access cleanup, and
+  expanded HIL evidence. The stable surface is now scoped to HIL-proven WS63 APIs;
+  BS2X and unproven helpers require `unstable`.
+- **HAL `0.6.0-alpha.2` published** — small cleanup release on top of alpha.1:
+  rustdoc private-link cleanup plus warning-free default stable builds.
+- **Register truth source tightened** — `ws63-pac 0.2.1` and `bs2x-pac 0.1.2`
+  regenerate from audited SVDs; HAL register access is routed through PAC fields
+  rather than raw MMIO where the SVD can express the register semantics.
+- **Probe-rs branch references** now point to the HIL baseline branch
+  `add-hisilicon-ws63-bs21-hil-baseline`, the fork carrying the current WS63 target
+  YAML and flash algorithm baseline.
+
+### Fixed
+
+- **Image semantics drift** — smoke/download paths now route through
+  `hisi-fwpkg plan --image-output`; probe-rs uses generic
+  `download --binary-format bin --base-address <plan.base_addr>` and no longer
+  owns HiSilicon header/hash/body-range rules.
+- **Docs deployment** — versioned mdBook/rustdoc publishing and selector layout
+  fixes keep `/main/`, `/latest/`, released versions, and chip API links coherent.
+- **Flash algorithm handoff** — the WS63 flash algorithm now resets the SPI-NOR
+  state after programming and restores status registers in the form flashboot
+  expects; probe-rs target YAML is synced to that algorithm blob.
+
+## [2026-07-05] — runtime adapter architecture
+
+### Changed
+
+- **`hisi-riscv-rt 0.5.0` / `0.5.1`** — runtime split into CPU-generic core plus
+  chip adapters. WS63 owns its startup/linker/cache/PMP/boot-header resources;
+  BS2X has its own adapter and default `memory.x`; Hi3322 is documented as a future
+  porting target rather than guessed into WS63 startup.
+- **Canonical linker script** is now `hisi-riscv-link.x`; the deprecated
+  `ws63-link.x` alias was removed after consumers migrated.
+- **PAC-owned interrupt symbols** — WS63 and BS2X interrupt symbol generation comes
+  from the corresponding PAC `rt` feature instead of in-tree runtime copies.
+- **Runtime stable/unstable gates** mirror HAL policy: WS63 adapter is stable,
+  BS2X and experimental startup paths require `unstable`.
+
+### Added
+
+- **Experimental `riscv-rt-start-experiment` path** — delegates `.data`/`.bss`/FPU
+  setup to `riscv-rt::_start`, while the WS63 adapter handles trap dispatch,
+  cache/PMP relocation, and boot header. Verified on real WS63 with `uart_hello`.
+- **Hi3322 runtime porting spec** — documents TES/TEE reset/vector facts from the
+  vendor tree and records where `riscv-rt` can be reused versus where a custom
+  reset/vector path may be required.
+
+## [2026-06-30] — crates.io: hisi-riscv-hal 0.5.1
+
+### Added
+
+- **Peripheral-paced DMA for SPI** — typed DMA channel tokens, mem-to-peripheral /
+  peripheral-to-mem transfers, `Spi::with_dma`, `SpiDma::write_dma`, and
+  full-duplex `transfer_dma`, with SPI0 loopback HIL coverage on real WS63 silicon.
+- **`UartDma` ergonomic API** — register sequence and ownership model added, with
+  data-correctness deferred behind the UART1 board/pad routing issue.
+
+### Fixed
+
+- **DMA quiescence on timeout/drop** — `Transfer::wait` and `Drop` now halt, wait
+  for `active` to drain, and disable the channel before returning buffers, avoiding
+  a latent use-after-free if a channel wedges.
+
+## [2026-06-16] — crates.io: hisi-riscv-hal 0.5.0 · hisi-riscv-rt 0.4.0
+
+### Changed
+
+- **Typed-config pass across HAL drivers** — writable config values are now values
+  silicon can actually run: typed SPI frequency/data bits, I2C speeds, UART baud,
+  I2S role configs, WDT timeouts, timer durations, LSADC counts, and SFC data sizes.
+- **Drop-to-disable semantics** — watchdog, PWM, and GPIO output handles return
+  hardware to safe states on drop, with explicit escape hatches for intentionally
+  armed/running/latching peripherals.
+- **HAL chip feature de-default** — standalone HAL builds require an explicit chip
+  feature; the parent workspace still builds through example feature unification.
+- **RT direct-mode interrupt routing** — `hisi-riscv-rt 0.4.0` dispatches custom
+  IRQs through PAC `device.x`-named weak symbols, allowing driver-owned handlers
+  without app-side `mcause` shims.
+
+### Added
+
+- **Expanded HIL coverage** — timer latch, GPIO/IRQ routing, DMA, I2C, PWM, WDT,
+  TSENSOR/TRNG/eFuse and other driver tests ran on real WS63 silicon during the
+  0.5 stabilization pass.
+
+## [2026-06-15] — crates.io: ws63-pac 0.2.0 · hisi-riscv-rt 0.2.2 · hisi-riscv-hal 0.4.0
+
+### Fixed
 
 - **TIMER** + **M_DMA** now pass end-to-end on real WS63 silicon (the last two
   `#[ignore]`'d HIL tests). TIMER `current_value()` does the `cnt_req`/`cnt_lock`
@@ -19,14 +133,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   UartClock::Boot, .. }` backed by `soc::chip::uart_boot_clock_hz()`. Two real driver
   bugs (`wdt` saturate-before-narrow, `sfc` floor-before-mask) found + fixed by new
   property tests.
-
-### Added
-
-- **HAL HIL default driver suite expanded to 25 self-contained WS63 tests, all
-  passing on silicon** via `probe-rs run` + `embedded-test`. New coverage: UART
-  boot-clock divider and TX flush, I2C invalid 7-bit address rejection, PWM
-  `SetDutyCycle` out-of-range error, TCXO 64-bit counter, TRNG byte fill path, and
-  WDT counter/feed liveness.
 - **HIL suite grown to 12 driver tests, all passing on silicon** — added
   `efuse_read_byte0_ok` (eFuse read path), `trng_produces_entropy` (real TRNG
   entropy), and `tsensor_reads_in_range` (on-die temperature), all
