@@ -100,6 +100,7 @@ run_template_case() {
             --define "starter=$starter" \
             --define "app_partition_addr=$app_addr" \
             --vcs none \
+            --no-workspace \
             --silent
         cd "$project"
         cargo check
@@ -118,4 +119,3 @@ run_template_case ws63 uart_hello hp-ws63-uart-hello hp_ws63_uart_hello 0x002300
 run_template_case bs21 blinky hp-bs21-blinky hp_bs21_blinky 0x00090000 noimage
 
 echo "happy-path: no-hardware smoke passed"
-
