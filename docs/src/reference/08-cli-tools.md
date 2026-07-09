@@ -9,7 +9,7 @@
 把编译产物（ELF、带 header 的 ELF、裸 bin 或 fwpkg）解释成 HiSilicon app 镜像 / fwpkg。镜像格式事实源在 `hisi-fwpkg`；probe-rs/hisiflash 只消费它产出的 plan/image/package。
 
 ```bash
-cargo install hisi-fwpkg-cli
+cargo +stable install hisi-fwpkg-cli --version 0.3.0
 ```
 
 ### `hisi-fwpkg plan`

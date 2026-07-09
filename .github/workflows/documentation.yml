@@ -8,6 +8,7 @@ on:
       - '.agents/skills/**'
       - '.github/workflows/documentation.yml'
       - '.github/workflows/hil.yml'
+      - 'scripts/**'
       - 'AGENTS.md'
       - 'CLAUDE.md'
       - 'README.md'
@@ -17,6 +18,8 @@ on:
       - 'crates/hisi-riscv-hal/tests/**'
       - 'crates/hisi-riscv-hal/Cargo.toml'
       - 'crates/hisi-riscv-rt'
+      - 'crates/hisi-rs-template'
+      - 'crates/hisi-rs-template/**'
       - 'crates/pac/ws63-pac'
       - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
@@ -31,6 +34,7 @@ on:
       - '.agents/skills/**'
       - '.github/workflows/documentation.yml'
       - '.github/workflows/hil.yml'
+      - 'scripts/**'
       - 'AGENTS.md'
       - 'CLAUDE.md'
       - 'README.md'
@@ -40,6 +44,8 @@ on:
       - 'crates/hisi-riscv-hal/tests/**'
       - 'crates/hisi-riscv-hal/Cargo.toml'
       - 'crates/hisi-riscv-rt'
+      - 'crates/hisi-rs-template'
+      - 'crates/hisi-rs-template/**'
       - 'crates/pac/ws63-pac'
       - 'crates/pac/ws63-pac/src/**'
       - 'docs/**'
@@ -73,6 +79,29 @@ jobs:
 
       - name: Check image-format truth-source drift
         run: python3 scripts/check-image-format-truth.py
+
+      - name: Check happy-path documentation drift
+        run: python3 scripts/check-happy-path-docs.py
+
+  # ── Executable happy path (no hardware) ───────────────────────
+  happy-path:
+    name: Happy Path Smoke (no hardware)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Install hisi-riscv toolchain
+        run: bash .github/scripts/install-toolchain.sh
+
+      - name: Install happy-path tools
+        run: |
+          cargo +stable install cargo-generate just
+          cargo +stable install hisi-fwpkg-cli --version 0.3.0
+
+      - name: Run happy-path smoke
+        run: scripts/happy-path-smoke.sh --no-hardware
 
   # ── Build API docs ────────────────────────────────────────────
   docs:

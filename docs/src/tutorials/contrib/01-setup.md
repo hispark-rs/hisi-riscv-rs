@@ -95,7 +95,7 @@ bash scripts/build.sh
 
 ```bash
 # hisi-fwpkg
-cargo install --git https://github.com/hispark-rs/hisi-fwpkg
+cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
 # 打过补丁的 probe-rs 分支
 cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools

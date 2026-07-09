@@ -63,7 +63,7 @@ cargo install cargo-generate just
 烧到真板时，flashboot 期望一个带 `0x300` 启动头的应用镜像，`hisi-fwpkg` 负责打包：
 
 ```bash
-cargo install --git https://github.com/hispark-rs/hisi-fwpkg
+cargo +stable install hisi-fwpkg-cli --version 0.3.0
 ```
 
 > 也可以克隆 [github.com/hispark-rs/hisi-fwpkg](https://github.com/hispark-rs/hisi-fwpkg)
