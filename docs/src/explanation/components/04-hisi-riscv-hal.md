@@ -1,6 +1,6 @@
 # hisi-riscv-hal 架构
 
-> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 > **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 `chip-bs21` target 目前需 `unstable`。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
 
@@ -42,7 +42,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 
 0.5.0 把**配置面**全面收紧为「能写出来的值就是能在硅上跑的值」：不存在能编译却被静默
 clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
-[类型化配置](../policies/01-typed-config.md)，验收见 [`docs/review/0.5.0-acceptance.md`](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/0.5.0-acceptance.md)。
+[类型化配置](../policies/01-typed-config.md)；当前默认稳定面与真机证据见 [Stable API 清单](../../reference/10-stable-api.md)。
 两层结构：
 
 - **配置/构造面（HAL 自有，可自由类型化）**：受校验 newtype + 可失败构造子返回
@@ -67,7 +67,7 @@ DMA 提供拥有缓冲区的
 - `peripheral!($name, $pac_ty)`（`peripherals.rs:10-48`）— 为每个外设生成零大小、`'d` 参数化的 ZST，提供 `unsafe steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)`（`peripherals.rs:50-87`）— 生成 `Peripherals` 结构体，`take()` 经 PAC 单例校验（`peripherals.rs:61-64`），`unsafe steal()` 绕过校验。
 
-全部 35 个 PAC 外设都有 HAL 封装（`peripherals.rs:157-193`）。`'d` 生命周期防止 `Peripherals` token 被释放后仍持有驱动，是这一层的核心安全不变量（评审优点）。
+全部 35 个 PAC 外设都有 HAL 封装（`peripherals.rs:157-193`）。`'d` 生命周期防止 `Peripherals` token 被释放后仍持有驱动，是这一层的核心安全不变量。
 
 ### 时钟架构
 
@@ -78,7 +78,7 @@ DMA 提供拥有缓冲区的
 
 ### GPIO 三层模型
 
-19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 `pin / 8`、位为 `pin % 8`（评审确认正确）。两层（0.5.0 删除了遗留的 type-state `GpioPin<MODE>`，统一到下面这一套）：
+19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 `pin / 8`、位为 `pin % 8`。两层（0.5.0 删除了遗留的 type-state `GpioPin<MODE>`，统一到下面这一套）：
 
 1. `AnyPin<'d>` — 类型擦除，经 `unsafe steal(pin)` 创建。
 2. `Input` / `Output` / `Flex` — 由 `AnyPin` 经 `init_input()`/`init_output()`/`init_flex()` 派生；`degrade()` 可安全擦除回 `AnyPin`，`Flex::set_as_input/set_as_output` 提供显式方向。
@@ -95,7 +95,7 @@ DMA 提供拥有缓冲区的
 
 **异步层已实现但分层暴露**（feature `async`/`embassy`，详见 [async-embassy.md](06-async-embassy.md)）：SPI/I2C 的 blocking-backed `embedded-hal-async` trait impl 随 `async` 暴露；`asynch::block_on` + `IrqSignal`（中断→waker 桥）、GPIO wait、timer async delay、UART async I/O、LSADC/DMA 自研异步以及 embassy-time `Driver` 仍需 `unstable`。全部可在无原子的 WS63 上编译（portable-atomic + critical-section），但默认稳定面只承诺 HIL/soundness 已闭合的子集。
 
-### embedded-hal trait 选型（评审优点）
+### embedded-hal trait 选型
 
 - SPI 实现 `SpiBus` 而非 `SpiDevice`（`spi.rs:135`）— HAL 层不持有 CS，符合分层惯例。
 - I2C `transaction` 在操作间发 repeated-START、仅末尾发 STOP（`i2c.rs:215-265`），符合 embedded-hal 契约。NACK 映射为 `NoAcknowledge`（`i2c.rs:278-280`）。
@@ -104,7 +104,3 @@ DMA 提供拥有缓冲区的
 ### 编译期断言（`safety.rs`）
 
 `safety.rs` 保留少量编译期结构检查，用来把 MMIO 地址范围、外设/通道数量等维护假设显式化。它不是 public API 或 stable 证据的事实源；当前稳定面与真机证据仍以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
-
-## 历史评审
-
-本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。

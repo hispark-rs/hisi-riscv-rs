@@ -1,6 +1,6 @@
 # ws63-svd 架构
 
-> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -42,7 +42,7 @@ ws63-svd 处于链条最上游：`WS63.svd` 经 svd2rust 生成 `ws63-pac` 的 `
 建模规模与完整度（实测 2026-06-11）：
 
 - **36 个 `<peripheral>` 元素**（`grep -c "<peripheral"`），覆盖 SYS_CTL1、IO_CONFIG、GPIO0/1/2、UART0/1/2、I2C0/1、PWM、DMA、SFC_CFG、SPI0/1、I2S、LSADC、TSENSOR、TIMER、WDT、RTC、EFUSE、SYS_CTL0、GLB_CTL_M、SPACC、PKE、KM、TRNG、TCXO、CLDO_CRG、SDMA、ULP_GPIO、RF_WB_CTL、SHARE_MEM_CTL、FAMA_REMAP。
-- **501 个非派生 `<register>` 定义**（`grep -c "<register>"`；评审时为 497，本轮 eFuse/LSADC 修复 +4：eFuse 数据窗口 +1、LSADC 重写 +3；含 `derivedFrom` 展开后逻辑实例更多）。
+- **501 个非派生 `<register>` 定义**（`grep -c "<register>"`；早期统计为 497，eFuse/LSADC 修复后 +4：eFuse 数据窗口 +1、LSADC 重写 +3；含 `derivedFrom` 展开后逻辑实例更多）。
 - **920 个 `<field>`、44 处 `<enumeratedValues>`、36 个 `<addressBlock>`、2 处 `<writeConstraint>`、190 处 `read-only` 访问限定**。
 - **8 处 `derivedFrom`** 复用。
 
@@ -63,10 +63,6 @@ UART/GPIO/KM 等外设建模质量较高：字段拆分、枚举值与访问属�
 5. `cargo fmt`，随后 build + clippy 作为门禁
 
 流水线**幂等**：同一 SVD 重跑产出字节一致的 lib.rs。`ws63-settings.yaml` 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。`main.py` 仍是 uv 占位入口，实际生成走 `regen.sh`。主仓 PreToolUse hook 拦截对 `crates/pac/ws63-pac/src/lib.rs` 的手改，强制走重生成。
-
-## 历史评审
-
-本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 相关架构
 

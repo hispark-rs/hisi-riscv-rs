@@ -1,6 +1,6 @@
 # ws63-pac 架构
 
-> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 > **2026-06 更新**：PAC crate 现归并在 `crates/pac/ws63-pac`（内嵌生成源 `ws63-svd`）。其 BS2X 同胞 `crates/pac/bs2x-pac`（由 `bs2x-svd` 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。
 
@@ -35,7 +35,3 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 - **中断模型**：`ExternalInterrupt` 枚举用 `#[riscv::pac_enum(unsafe ExternalInterruptNumber)]` 标注（`src/lib.rs:902-904`），中断号从 26 起（`TIMER_INT0 = 26`，`src/lib.rs:906`）。`rt` feature 下 `build.rs` 把 `device.x` 写入 `OUT_DIR` 并加入 link-search（`build.rs:8-18`），向量表用 `PROVIDE(... = DefaultHandler)` 提供弱默认（`device.x:1-30`）。
 - **feature 设计**：`default = ["critical-section"]`，外加 `rt`（`Cargo.toml:16-18`）。`take()` 仅在 `critical-section` 下编译（`src/lib.rs:31758`），符合 svd2rust 约定。
 - **ISA 协同**：`rt` feature 下 `build.rs` 导出 `RISCV_RT_BASE_ISA=rv32i`（`build.rs:16`）；当前默认目标是官方 `riscv32imfc-unknown-none-elf`，无 A 扩展，产物不得发射 `lr/sc/amo`。
-
-## 历史评审
-
-本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。

@@ -1,7 +1,7 @@
 # ws63-rs 总体架构
 
 > 这是 ws63-rs 的 **Rust 代码架构**文档（与硬件手册 [`ws63-guide`](https://github.com/hispark-rs/ws63-guide) 互补：手册讲芯片，本文讲代码）。
-> 历史评审快照见 [架构评审 2026-05](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md) 和 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)；当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)；当前事实状态优先收敛到 reference 页面和 CI/HIL 结果。
 
 ## 这是什么
 
@@ -71,7 +71,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
   blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait、timer/UART/DMA/LSADC async
   以及 embassy-time `Driver` 仍需 `unstable`，直到 lost-wake/cancellation/HIL 闭合。
 
-> 注意：早先评审里的"零消费者脚手架"（DMA 安全 trait、空的 async marker、RAII 时钟守卫）已处理 ——
+> 注意：早期设计中的"零消费者脚手架"（DMA 安全 trait、空的 async marker、RAII 时钟守卫）已处理 ——
 > 空 marker / vestigial DMA marker / RAII 守卫已删；真正的异步层仍按 stable/unstable policy 分层暴露。详见各组件文档。
 
 ## 构建与目标（target）

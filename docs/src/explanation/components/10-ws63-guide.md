@@ -1,6 +1,6 @@
 # ws63-guide 架构
 
-> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -14,10 +14,10 @@
 
 **不负责：**
 
-- 不描述 Rust 代码架构。代码侧的设计与评审由 `docs/`（本架构文档体系）承担。
+- 不描述 Rust 代码架构。代码侧的设计、依赖链与维护约定由 `docs/`（本架构文档体系）承担。
 - 不参与 Cargo workspace 构建，不是 crate；它是独立的 Python/Sphinx 项目（`pyproject.toml` 中 `package = false`），有自己的 `uv.lock` 与 `.github/workflows/docs.yml`。
 
-**关键边界判断**：本手册与 `docs/` **互补而非重复**——本手册讲**硬件**（寄存器、电气、协议层硬件块），`docs/` 讲 **Rust 代码架构**（crate 职责、依赖链、设计模式、评审）。两者受众不同、构建链不同，内容零重叠。
+**关键边界判断**：本手册与 `docs/` **互补而非重复**——本手册讲**硬件**（寄存器、电气、协议层硬件块），`docs/` 讲 **Rust 代码架构**（crate 职责、依赖链、设计模式、维护约定）。两者受众不同、构建链不同，内容零重叠。
 
 当前维护策略是**保留为独特逆向 IP，停止扩张，优先服务连接性北极星**。手册的中断编号表与优先级模型已经用于纠正 HAL 的中断模型；内存图支撑 runtime 链接脚本；RF/ABB 章节继续服务 ROADMAP C1-C5 的 blob 链接与连接性 bring-up。
 
@@ -50,10 +50,6 @@ flowchart LR
   - **安全子系统寄存器**：`source/ch5_security.md` 描述对称（AES/SM4，ECB/CBC/CTR/CCM/GCM 等模式）、HASH（SHA1/SHA2/SM3）、PBKDF2、非对称、RNG 模块。
   - **QSPI/SFC**：`source/ch3_qspi/registers.md`（约 21KB）逆向了 SFC 寄存器，配 `images/fig-3-*` 读写时序流程图。
 - **图片资产**：`source/images/` 共 18 张 JPEG（芯片框图、典型应用、SFC 框图与读写流程、RF/ABB 框图、UART 数据格式、I2C 收发时序、危险/提示图标）。
-
-## 历史评审
-
-本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 注记：BS2X 多芯片手册（BS21/BS22/BS20）
 

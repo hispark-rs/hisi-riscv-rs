@@ -1,6 +1,6 @@
 # ws63-flashboot 架构
 
-> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
+> 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
 ## 职责与边界
 
@@ -40,7 +40,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 ## 关键设计
 
-- **裸 MMIO 而非 PAC**：所有外设地址硬编码为 `*mut u32`/`*const u32` 常量（`src/main.rs:40-48`，`src/sfc.rs:9-27`，`src/uart.rs:8-15`），刻意不引入 `ws63-pac`，避免双份 PAC 链接冲突（`Cargo.toml:17-19`）。代价是与 HAL 重复造 UART/SFC/SHA256/startup（见评审）。
+- **裸 MMIO 而非 PAC**：所有外设地址硬编码为 `*mut u32`/`*const u32` 常量（`src/main.rs:40-48`，`src/sfc.rs:9-27`，`src/uart.rs:8-15`），刻意不引入 `ws63-pac`，避免双份 PAC 链接冲突（`Cargo.toml:17-19`）。代价是与 HAL 重复造 UART/SFC/SHA256/startup。
 - **汇编启动对照原厂**：`asm/startup.S` 注释声明基于 fbb_ws63 `flashboot_ws63/startup/riscv_init.S`，做 PMP 清零、清自定义 CSR `0x7d9`、从 `a0` 保存 boot flag 到 `__flash_boot_flag`、`mtvec` 向量模式（+1）、开 FPU（`mstatus.FS=0b11`）、清 BSS、`tail flashboot_main`。
 - **单镜像启动（2026-06-01 整改）**：删除了对 `0x4000_0024` 的 A/B 误用。该寄存器是 flashboot **自身**的备份恢复标志（`0x5A5A5A5A` ⇒ 从备份分区恢复 bootloader；vendor `main.c:131-135` `flashboot_need_recovery`），**不是** app 槽选择器。真实 app A/B 由 upg run-region 配置（`PARTITION_FOTA_DATA` 末尾 magic `0x70746C6C`、`run_region` 0=A/1=B）+ 分区表（`@0x200380`）决定 —— 本实验 loader 不解析这些，仅启动单一 app 镜像，A/B/恢复/FOTA 交给原厂 flashboot（`src/main.rs:110-131`）。
 - **镜像头数据结构（整改：对齐 secure_verify_boot.h）**：`ImageHeader = KeyArea(0x100) + CodeInfo(0x200) = 0x300`，按 vendor `image_key_area_t`/`image_code_info_t`（ECC256/SM2 构建）逐字段重排（`src/sfc.rs`）。`CodeInfo` 的关键字段现在正确：`code_area_len` 在 +0x24（旧代码错读 `mask_version_ext`@+0x14 当长度）、`code_area_hash` 在 +0x28（旧代码错读 +0x1C）。`const` 断言锁定 `size_of` = 0x100/0x200/0x300。
@@ -48,10 +48,6 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 - **SFC**：`sfc_init()` 配置四线快读（rd_ins=0xEB Quad I/O，`src/sfc.rs:99-104`）；`sfc_read_data()` 以 16 字（64 字节）为硬件上限分块、轮询 `SFC_INT_STATUS` 完成位（`src/sfc.rs:137-171`）。
 - **跳转**：清 `mie`、喂狗后将 `addr + 0x300` `transmute` 为 `extern "C" fn() -> !` 并调用（`src/main.rs:159-166`），SAFETY 注释声明 app 入口同 ABI（RV32IMFC ilp32f）。
 - **本轮构建完整性修复（针对该 crate）**：banner 重写为"非安全启动"警告（`src/main.rs:1-22`）、`publish = false`（`Cargo.toml:11`）、移出 `default-members`、删除未用的 `ws63-pac` 依赖、新增 `README.md`。
-
-## 历史评审
-
-本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 [组件评审快照](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md)，当前优先级以根目录 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md) 和对应 reference 页面为准。
 
 ## 注记：BS2X 引导加载（BS21/BS22/BS20）
 
