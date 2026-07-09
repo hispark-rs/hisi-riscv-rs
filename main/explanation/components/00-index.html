@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -184,7 +184,7 @@
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="组件深入文档"><a class="header" href="#组件深入文档">组件深入文档</a></h1>
 <p>这一节是组件/平台深入文档的索引。它们是每个组件的<strong>权威实现说明</strong>——讲这一个组件
-内部到底怎么实现、设计上踩过哪些坑、架构评审发现了什么。和上一层的概念章节分工明确：</p>
+内部到底怎么实现、职责边界在哪里、为什么采用当前设计。和上一层的概念章节分工明确：</p>
 <ul>
 <li><a href="../00-index.html">概念章节</a>（架构 / 启动 / 工具链 / async / 安全启动 / QEMU / HIL）讲
 <strong>“为什么、各组件怎么串成一个整体”</strong>；</li>
@@ -194,7 +194,7 @@
 <h2 id="从这里开始"><a class="header" href="#从这里开始">从这里开始</a></h2>
 <ul>
 <li><a href="01-overview.html">总体架构 overview.md</a>——整个栈的全景：依赖链、核心设计模式、构建与目标、
-多芯片支持、已知的全局性问题。<strong>想先看一篇就看这篇。</strong></li>
+多芯片支持、当前风险边界。<strong>想先看一篇就看这篇。</strong></li>
 </ul>
 <h2 id="核心库栈依赖链自下而上"><a class="header" href="#核心库栈依赖链自下而上">核心库栈（依赖链自下而上）</a></h2>
 <ul>
@@ -211,7 +211,7 @@ linker contract、chip adapter、critical-section 实现。</li>
 <ul>
 <li><a href="07-ws63-examples.html">ws63-examples.md</a>——示例集合（blinky/uart/timer/gpio/dma/async/
 embassy/连接性等）的组织与验证方式。</li>
-<li><a href="08-ws63-flashboot.html">ws63-flashboot.md</a>——实验性 Rust 二级引导的架构与评审
+<li><a href="08-ws63-flashboot.html">ws63-flashboot.md</a>——实验性 Rust 二级引导的架构
 （概念上的引导链见 <a href="../02-boot-flow.html">启动流程</a>）。</li>
 <li><a href="09-ws63-rf.html">ws63-RF.md</a>——WS63 闭源 Wi-Fi/BT/BLE/SLE blob 与 Rust porting 层。</li>
 </ul>

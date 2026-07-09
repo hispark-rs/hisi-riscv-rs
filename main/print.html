@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -2897,9 +2897,9 @@ PAC 把它机械地翻成 Rust 类型，HAL 在 PAC 之上用人手写出安全�
 示例跟着用户需求走。把它们拆开，任何一层换代都不会逼着另外两层跟着改。
 这种分层也对应仓库和 release 边界：越底层的组件越应该能被别人单独复用，而不是把我们的 HAL
 或 examples 变成唯一选择。这个取舍见<a href="#仓库与发布模型把底座做成可复用的积木">仓库与发布模型</a>。
-逐层的实现细节见各自的深入文档：<a href="#ws63-svd-架构与评审">ws63-svd</a>、
-<a href="#ws63-pac-架构与评审">ws63-pac</a>、<a href="#hisi-riscv-hal-架构与评审">hisi-riscv-hal</a>、
-<a href="#hisi-riscv-rt-架构">hisi-riscv-rt</a>、<a href="#ws63-examples-架构与评审">ws63-examples</a>。</p>
+逐层的实现细节见各自的深入文档：<a href="#ws63-svd-架构">ws63-svd</a>、
+<a href="#ws63-pac-架构">ws63-pac</a>、<a href="#hisi-riscv-hal-架构">hisi-riscv-hal</a>、
+<a href="#hisi-riscv-rt-架构">hisi-riscv-rt</a>、<a href="#ws63-examples-架构">ws63-examples</a>。</p>
 <h3 id="为什么-pac-必须只有一份"><a class="header" href="#为什么-pac-必须只有一份">为什么 PAC 必须只有一份</a></h3>
 <p>有一个容易被忽视、却会在链接期炸掉的约束：<strong>全仓库只能链接一个 PAC 实例</strong>。
 PAC 里的 <code>Peripherals::take()</code> 依赖一个 <code>DEVICE_PERIPHERALS</code> 单例静态——如果链接进两份
@@ -2965,7 +2965,7 @@ Rust nightly 提供 builtin target。当前 rustup 还没有预编译 std 组件
 <p>而这套栈服务的<strong>北极星是连接性</strong>（WS63 的 Wi-Fi / BLE / SLE）。分层之所以值得，
 是因为连接性那一层（RF blob 的 porting）最复杂、最容易把下面搅乱——清晰的分层正是
 为了在引入那层巨大复杂度时，下面的 PAC/HAL/rt <strong>不被污染</strong>。连接性的可行性与现状见
-<a href="#ws63-rf-架构与评审">ws63-RF 深入文档</a> 与 <a href="#hil-测试框架">HIL 框架</a>。</p>
+<a href="#ws63-rf-架构">ws63-RF 深入文档</a> 与 <a href="#hil-测试框架">HIL 框架</a>。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="hal-政策约定"><a class="header" href="#hal-政策约定">HAL 政策约定</a></h1>
 <p>这一组文档收束 hisi-riscv-hal 的三条 API / 安全政策。它们不是单个驱动的实现说明，而是<strong>判断一个接口能不能默认暴露、一个配置值能不能接受、一段 <code>unsafe</code> 能不能被 safe API 包起来</strong>的共同准则。</p>
@@ -3337,7 +3337,7 @@ loaderboot/flashboot 解决“flash 里的东西怎么被搬起来跑、镜像�
 还有一块 <strong>app ROM @ 0x109000</strong>——厂商固化的运行时支持例程（C SDK 的某些底层函数会调到它）。
 对纯 Rust 的裸机应用来说，app ROM 基本不在路径上；但理解连接性（RF blob）时它很关键，
 因为厂商协议栈会跳进这些 ROM 地址——这正是 blob 难以脱离真硅片的原因之一
-（见 <a href="#ws63-rf-架构与评审">ws63-RF 深入文档</a>）。</p>
+（见 <a href="#ws63-rf-架构">ws63-RF 深入文档</a>）。</p>
 <h2 id="②③-loaderboot-与-flashboot把镜像搬起来跳进去"><a class="header" href="#②③-loaderboot-与-flashboot把镜像搬起来跳进去">②③ loaderboot 与 flashboot：把镜像搬起来、跳进去</a></h2>
 <p>loaderboot 是一级引导，flashboot 是二级引导。对“跑一个 Rust 应用“这件事，
 <strong>最关键的是 flashboot 的最后一跳</strong>：</p>
@@ -3352,7 +3352,7 @@ loaderboot/flashboot 解决“flash 里的东西怎么被搬起来跑、镜像�
 时钟从 TCXO 切到 PLL、SFC 四线读初始化、镜像头边界校验 + 软件 SHA-256 完整性校验，
 最后 <code>transmute</code> 到 <code>addr + 0x300</code> 跳进去。它<strong>有意不依赖 PAC/HAL</strong>（裸 MMIO），
 以免链接进第二份 PAC。生产上不该用它——生产应复用原厂 flashboot，
-它有真实签名验签、A/B 槽、FOTA、解压。详见 <a href="#ws63-flashboot-架构与评审">flashboot 深入文档</a>。</p>
+它有真实签名验签、A/B 槽、FOTA、解压。详见 <a href="#ws63-flashboot-架构">flashboot 深入文档</a>。</p>
 <h2 id="为什么-0x300-头部必须存在以及为什么裸-elf-不会启动"><a class="header" href="#为什么-0x300-头部必须存在以及为什么裸-elf-不会启动">为什么 0x300 头部必须存在——以及为什么裸 ELF 不会启动</a></h2>
 <p>把上面两件事拼起来，答案就清楚了：</p>
 <ul>
@@ -3582,7 +3582,7 @@ WS63 仍可在 <strong>link 时</strong>把 0x300 头烤进 ELF；普通 smoke/d
 回不去了。从那以后，只有用对应私钥签过的镜像才能在它上面跑。</li>
 </ul>
 <p>这也是为什么仓库里那个实验性 Rust flashboot <strong>只做完整性校验、明确标注“非真实性验签“</strong>
-（见 <a href="#ws63-flashboot-架构与评审">flashboot 深入文档</a>）：它对着同一份未签名的头里的哈希
+（见 <a href="#ws63-flashboot-架构">flashboot 深入文档</a>）：它对着同一份未签名的头里的哈希
 比对——这在关掉 secure boot 的开发片上够用，但<strong>绝不是</strong> secure boot，文档里如实写明了
 这一点，不假装安全。</p>
 <h2 id="真正签名需要什么"><a class="header" href="#真正签名需要什么">真正签名需要什么</a></h2>
@@ -3857,7 +3857,7 @@ blinky 上电启动并翻转 GPIO0。</li>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="组件深入文档-1"><a class="header" href="#组件深入文档-1">组件深入文档</a></h1>
 <p>这一节是组件/平台深入文档的索引。它们是每个组件的<strong>权威实现说明</strong>——讲这一个组件
-内部到底怎么实现、设计上踩过哪些坑、架构评审发现了什么。和上一层的概念章节分工明确：</p>
+内部到底怎么实现、职责边界在哪里、为什么采用当前设计。和上一层的概念章节分工明确：</p>
 <ul>
 <li><a href="#原理与背景--explanation">概念章节</a>（架构 / 启动 / 工具链 / async / 安全启动 / QEMU / HIL）讲
 <strong>“为什么、各组件怎么串成一个整体”</strong>；</li>
@@ -3867,13 +3867,13 @@ blinky 上电启动并翻转 GPIO0。</li>
 <h2 id="从这里开始"><a class="header" href="#从这里开始">从这里开始</a></h2>
 <ul>
 <li><a href="#ws63-rs-总体架构">总体架构 overview.md</a>——整个栈的全景：依赖链、核心设计模式、构建与目标、
-多芯片支持、已知的全局性问题。<strong>想先看一篇就看这篇。</strong></li>
+多芯片支持、当前风险边界。<strong>想先看一篇就看这篇。</strong></li>
 </ul>
 <h2 id="核心库栈依赖链自下而上"><a class="header" href="#核心库栈依赖链自下而上">核心库栈（依赖链自下而上）</a></h2>
 <ul>
-<li><a href="#ws63-svd-架构与评审">ws63-svd.md</a>——SVD 真值（CMSIS-SVD XML）+ 生成工具，整条链的最底层真值来源。</li>
-<li><a href="#ws63-pac-架构与评审">ws63-pac.md</a>——svd2rust 生成的裸寄存器访问层（含 BS2X 的 bs2x-pac）。</li>
-<li><a href="#hisi-riscv-hal-架构与评审">hisi-riscv-hal.md</a>——手写的安全驱动层，多芯片、可选 async/embassy。</li>
+<li><a href="#ws63-svd-架构">ws63-svd.md</a>——SVD 真值（CMSIS-SVD XML）+ 生成工具，整条链的最底层真值来源。</li>
+<li><a href="#ws63-pac-架构">ws63-pac.md</a>——svd2rust 生成的裸寄存器访问层（含 BS2X 的 bs2x-pac）。</li>
+<li><a href="#hisi-riscv-hal-架构">hisi-riscv-hal.md</a>——手写的安全驱动层，多芯片、可选 async/embassy。</li>
 <li><a href="#hisi-riscv-rt-架构">hisi-riscv-rt.md</a>——运行时：<code>riscv-rt</code> facade、启动汇编、
 linker contract、chip adapter、critical-section 实现。</li>
 <li><a href="#异步与-embassy-适配">async-embassy.md</a>——HAL 异步层的实现细节：<code>block_on</code>/<code>IrqSignal</code>、
@@ -3882,15 +3882,15 @@ linker contract、chip adapter、critical-section 实现。</li>
 </ul>
 <h2 id="应用与芯片支持"><a class="header" href="#应用与芯片支持">应用与芯片支持</a></h2>
 <ul>
-<li><a href="#ws63-examples-架构与评审">ws63-examples.md</a>——示例集合（blinky/uart/timer/gpio/dma/async/
+<li><a href="#ws63-examples-架构">ws63-examples.md</a>——示例集合（blinky/uart/timer/gpio/dma/async/
 embassy/连接性等）的组织与验证方式。</li>
-<li><a href="#ws63-flashboot-架构与评审">ws63-flashboot.md</a>——实验性 Rust 二级引导的架构与评审
+<li><a href="#ws63-flashboot-架构">ws63-flashboot.md</a>——实验性 Rust 二级引导的架构
 （概念上的引导链见 <a href="#启动流程mask-rom--flashboot--app">启动流程</a>）。</li>
-<li><a href="#ws63-rf-架构与评审">ws63-RF.md</a>——WS63 闭源 Wi-Fi/BT/BLE/SLE blob 与 Rust porting 层。</li>
+<li><a href="#ws63-rf-架构">ws63-RF.md</a>——WS63 闭源 Wi-Fi/BT/BLE/SLE blob 与 Rust porting 层。</li>
 </ul>
 <h2 id="硬件手册"><a class="header" href="#硬件手册">硬件手册</a></h2>
 <ul>
-<li><a href="#ws63-guide-架构与评审">ws63-guide.md</a>——WS63 中文硬件手册（Sphinx）的说明（讲芯片，与讲代码的
+<li><a href="#ws63-guide-架构">ws63-guide.md</a>——WS63 中文硬件手册（Sphinx）的说明（讲芯片，与讲代码的
 <a href="#ws63-rs-总体架构">overview.md</a> 互补）。</li>
 <li><a href="#hi3322-runtime-移植预研">hi3322-runtime-porting.md</a>——Hi3322 runtime 移植预研：TES/TEE
 reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</li>
@@ -3899,7 +3899,7 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <h1 id="ws63-rs-总体架构"><a class="header" href="#ws63-rs-总体架构">ws63-rs 总体架构</a></h1>
 <blockquote>
 <p>这是 ws63-rs 的 <strong>Rust 代码架构</strong>文档（与硬件手册 <a href="https://github.com/hispark-rs/ws63-guide"><code>ws63-guide</code></a> 互补：手册讲芯片，本文讲代码）。
-完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a> 和 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>；当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="这是什么"><a class="header" href="#这是什么">这是什么</a></h2>
 <p>ws63-rs 是面向 HiSilicon <strong>WS63 + BS2X</strong>（BS21/BS20/BS22）RISC-V SoC 族的 Rust 嵌入式生态。WS63 覆盖 Wi-Fi 6 / BLE / SLE/星闪，BS2X 覆盖 BLE/SLE（M1/M2）。
@@ -3936,29 +3936,29 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <tr><th>组件</th><th>类型</th><th>角色</th><th>架构文档</th></tr>
 </thead>
 <tbody>
-<tr><td><code>crates/pac/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构与评审">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构与评审">ws63-svd.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构与评审">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构与评审">ws63-svd.md</a></td></tr>
-<tr><td><code>crates/hisi-riscv-hal</code></td><td>submodule</td><td>多芯片 HAL（standalone 需显式选 <code>chip-ws63</code>；实验性 <code>chip-bs21</code> 需 <code>unstable</code>）+ 可选 <code>async</code>/<code>embassy</code></td><td><a href="#hisi-riscv-hal-架构与评审">hisi-riscv-hal.md</a></td></tr>
+<tr><td><code>crates/pac/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/pac/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/pac/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/pac/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/hisi-riscv-hal</code></td><td>submodule</td><td>多芯片 HAL（standalone 需显式选 <code>chip-ws63</code>；实验性 <code>chip-bs21</code> 需 <code>unstable</code>）+ 可选 <code>async</code>/<code>embassy</code></td><td><a href="#hisi-riscv-hal-架构">hisi-riscv-hal.md</a></td></tr>
 <tr><td><code>crates/hisi-riscv-rt</code></td><td>submodule</td><td>运行时：启动、中断向量、链接脚本、critical-section</td><td><a href="#hisi-riscv-rt-架构">hisi-riscv-rt.md</a></td></tr>
-<tr><td><code>examples/ws63/*</code></td><td>in-tree 独立工作区</td><td>WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…）</td><td><a href="#ws63-examples-架构与评审">ws63-examples.md</a></td></tr>
-<tr><td><code>examples/bs21/*</code></td><td>in-tree 独立工作区</td><td>BS2X/BS21 示例；成员清单见参考页</td><td><a href="#ws63-examples-架构与评审">ws63-examples.md</a></td></tr>
-<tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="#ws63-examples-架构与评审">ws63-examples.md</a></td></tr>
-<tr><td><code>chips/ws63/flashboot</code></td><td>in-tree</td><td><strong>实验性</strong>二级引导（非安全启动）</td><td><a href="#ws63-flashboot-架构与评审">ws63-flashboot.md</a></td></tr>
+<tr><td><code>examples/ws63/*</code></td><td>in-tree 独立工作区</td><td>WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…）</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
+<tr><td><code>examples/bs21/*</code></td><td>in-tree 独立工作区</td><td>BS2X/BS21 示例；成员清单见参考页</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
+<tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
+<tr><td><code>chips/ws63/flashboot</code></td><td>in-tree</td><td><strong>实验性</strong>二级引导（非安全启动）</td><td><a href="#ws63-flashboot-架构">ws63-flashboot.md</a></td></tr>
 <tr><td><code>chips/ws63/rf/</code></td><td>in-tree</td><td>WS63 Wi-Fi porting 层 <code>ws63-rf-rs</code></td><td>—</td></tr>
-<tr><td><code>chips/ws63/rf/ws63-RF</code></td><td>submodule（嵌套）</td><td>WS63 闭源协议栈 blob + porting 接口</td><td><a href="#ws63-rf-架构与评审">ws63-RF.md</a></td></tr>
-<tr><td><code>chips/ws63/guide</code></td><td>submodule</td><td>WS63 中文硬件手册（Sphinx）</td><td><a href="#ws63-guide-架构与评审">ws63-guide.md</a></td></tr>
+<tr><td><code>chips/ws63/rf/ws63-RF</code></td><td>submodule（嵌套）</td><td>WS63 闭源协议栈 blob + porting 接口</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
+<tr><td><code>chips/ws63/guide</code></td><td>submodule</td><td>WS63 中文硬件手册（Sphinx）</td><td><a href="#ws63-guide-架构">ws63-guide.md</a></td></tr>
 <tr><td><code>chips/bs2x/guide</code></td><td>submodule</td><td>BS2X 中文硬件手册（Sphinx）</td><td>—</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="核心设计模式"><a class="header" href="#核心设计模式">核心设计模式</a></h2>
 <h2 id="调试支持"><a class="header" href="#调试支持">调试支持</a></h2>
 <ul>
-<li>
-<p><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="#stable-api-清单与门控状态">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</p>
-</li>
+<li><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="#stable-api-清单与门控状态">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</li>
+</ul>
+<h2 id="核心设计模式"><a class="header" href="#核心设计模式">核心设计模式</a></h2>
+<ul>
 <li>
 <p><strong>外设单例 + <code>'d</code> 生命周期</strong>：<code>Peripherals::take()</code>（PAC 单例，critical-section 保护）分发 <code>'d</code> 参数化的 ZST 外设令牌；
 驱动经构造器消费令牌，借生命周期防 use-after-drop。</p>
@@ -3995,7 +3995,7 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 <li>WS63 核<strong>无原子（A）扩展</strong>：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
 RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不发 <code>lr/sc/amo</code></strong>。原默认 <code>riscv32imafc</code>
 会发原子指令、在硅片上触发非法指令陷阱，已弃用。</li>
-<li>历史：2026-05-31 阶段 0 曾先用 builtin <code>riscv32imc</code>（软浮点、stable、免 build-std）做过渡；
+<li>历史：2026-05-31 曾先用 builtin <code>riscv32imc</code>（软浮点、stable、免 build-std）做过渡；
 随后切到 <code>ws63</code> 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为后续 vendor blob 链接做准备）。</li>
 </ul>
 </li>
@@ -4014,7 +4014,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
-<h2 id="已知的全局性问题详见评审台账"><a class="header" href="#已知的全局性问题详见评审台账">已知的全局性问题（详见评审台账）</a></h2>
+<h2 id="当前风险边界"><a class="header" href="#当前风险边界">当前风险边界</a></h2>
 <ol>
 <li><strong>连接性状态</strong>：
 <ul>
@@ -4028,32 +4028,22 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <a href="#hil-测试框架">HIL 测试框架</a> 和 <a href="#示例目录与验证标记串">示例目录与验证标记串</a> 分轨推进。</li>
 <li><strong>正确性修复状态</strong>：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 <a href="#stable-api-清单与门控状态">Stable API 清单</a> 为准。</li>
 </ol>
-<h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>
 <ul>
-<li>
-<p><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</p>
-</li>
-<li>
-<p><strong>HAL 多芯片</strong>：<code>hisi-riscv-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</p>
-</li>
-<li>
-<p><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</p>
-</li>
-<li>
-<p><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</p>
-</li>
-<li>
-<p><strong>fbb_ws63</strong>（<code>/root/fbb_ws63</code>）：官方 C SDK，寄存器/外设行为的真值来源。</p>
-</li>
-<li>
-<p><strong>esp-hal</strong>（<code>/root/esp-hal</code>）：成熟 Rust HAL 参照（esp-radio/esp-rtos/embassy/众多示例）——WS63 的连接性轨迹可对标。</p>
-</li>
+<li><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
+<li><strong>HAL 多芯片</strong>：<code>hisi-riscv-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</li>
+<li><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</li>
+<li><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</li>
+</ul>
+<h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
+<ul>
+<li><strong>fbb_ws63</strong>（<code>/root/fbb_ws63</code>）：官方 C SDK，寄存器/外设行为的真值来源。</li>
+<li><strong>esp-hal</strong>（<code>/root/esp-hal</code>）：成熟 Rust HAL 参照（esp-radio/esp-rtos/embassy/众多示例）——WS63 的连接性轨迹可对标。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-svd-架构与评审"><a class="header" href="#ws63-svd-架构与评审">ws63-svd 架构与评审</a></h1>
+<h1 id="ws63-svd-架构"><a class="header" href="#ws63-svd-架构">ws63-svd 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
 <p><code>ws63-svd</code> 是整个 ws63-rs 寄存器抽象链的<strong>上游真值（source of truth）</strong>。它由一份手写的 CMSIS-SVD 描述文件 <code>WS63.svd</code> 加少量 Python 工具构成，负责：</p>
@@ -4102,47 +4092,15 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <li><code>cargo fmt</code>，随后 build + clippy 作为门禁</li>
 </ol>
 <p>流水线<strong>幂等</strong>：同一 SVD 重跑产出字节一致的 lib.rs。<code>ws63-settings.yaml</code> 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。<code>main.py</code> 仍是 uv 占位入口，实际生成走 <code>regen.sh</code>。主仓 PreToolUse hook 拦截对 <code>crates/pac/ws63-pac/src/lib.rs</code> 的手改，强制走重生成。</p>
-<h2 id="评审发现"><a class="header" href="#评审发现">评审发现</a></h2>
-<h3 id="优点"><a class="header" href="#优点">优点</a></h3>
-<ul>
-<li>建模覆盖广：36 外设 / 497 寄存器，<code>enumeratedValues</code>、<code>derivedFrom</code>、<code>writeConstraint</code>、<code>addressBlock</code> 一应俱全，是一份结构完整、可被 svd2rust 直接消费的 1.3 版 SVD。</li>
-<li>通过 <code>derivedFrom</code> 对同构外设（GPIO/UART/I2C/SPI/SDMA）做了正确复用，降低了维护面。</li>
-<li>提供了针对官方 CMSIS XSD 的格式校验脚本，建模本身有质量门可依。</li>
-<li>UART/GPIO/KM 等关键外设建模到字段+枚举级，下游 HAL 可直接获得类型安全的位域访问。</li>
-</ul>
-<h3 id="问题"><a class="header" href="#问题">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>高</td><td>维护性</td><td>手补代码曾被手工补进<strong>已格式化的 PAC 生成代码</strong>，而非回填 SVD 后重生成，clean regen 会丢失或冲突。</td><td>历史提交 df35d69「add missing KM keyslot registers」；该批字段在 <code>WS63.svd</code> KM 外设中存在但生成链曾未联动</td><td>✅ 已修(2026-05-31)：建立 <code>regen.sh</code>、停止手补；重生成时 PAC 反而<strong>恢复</strong>了手补遗漏的 KM keyslot 字段（<code>flush_hmac_kslot_ind</code>/<code>tscipher_ind</code>/<code>lock_cmd</code>/<code>key_slot_num</code>）</td></tr>
-<tr><td>中</td><td>维护性</td><td>无可复现生成流水线：<code>main.py</code> 是 <code>print(...)</code> 桩，无 svd2rust 调用；<code>ws63-settings.yaml</code> 在 <code>base_isa: rv32i</code> 截断；CI 中无 SVD 引用</td><td><code>main.py:1-6</code>；<code>ws63-settings.yaml</code>；<code>.github/workflows/</code> 无 SVD 引用</td><td>✅ 已修(2026-05-31)：<code>regen.sh</code>+<code>postprocess.py</code> 幂等可复现、build+clippy 门禁；CI 接入（“重生成并 diff”）为剩余小项</td></tr>
-<tr><td>高</td><td>正确性</td><td>eFuse/LSADC 外设建模错误：eFuse 控制寄存器偏移错位（0x00 段）、<code>wr_rd</code> 建成单 bit 而非 16 位魔数、缺 0x800 数据窗口；LSADC 寄存器整块错位（使能/启停/FIFO 寄存器选错）</td><td>评审台账 + 本轮对照 <code>hal_efuse_v151</code>/<code>hal_adc_v154</code></td><td>✅ 已修(2026-05-31)：eFuse 控制块移到 base+0x30、16 位魔数、加 0x800 窗口；LSADC 重写为连续 <code>adc_regs_t</code>（CTRL_8/9/11、CFG_* @0xDC..0xEC）。偏移已在生成 PAC 中逐一核验</td></tr>
-<tr><td>中</td><td>正确性</td><td>覆盖不全：KM 的 <code>*_FLUSH_BUSY</code> 状态寄存器（偏移 0xB10–0xB1C）缺失，KM 偏移从 <code>0x1B0C</code> 直接跳到 <code>0x1B30</code>，存在转录静默缺口</td><td><code>WS63.svd</code> KM 外设；addressOffset 序列断档；<code>grep FLUSH_BUSY</code> 无命中</td><td>历史整改项遗留：<code>flush_hmac_kslot_ind</code> 字段已建模，但 BUSY 查询寄存器本身仍未补；不阻塞当前连接性 C1-C5</td></tr>
-<tr><td>低</td><td>文档</td><td><code>README.md</code> 为空文件（0 字节），组件无任何使用/维护说明</td><td><code>README.md</code>（0 bytes）</td><td>✅ 已修：README 已补写（含 <code>regen.sh</code> 用法、流水线步骤、校验命令、维护约定）</td></tr>
-</tbody>
-</table>
-</div>
-<blockquote>
-<p>说明：本组件已从“几乎全部已排期”转为<strong>四项中三项已修</strong>（仅 KM <code>*_FLUSH_BUSY</code> 转录缺口待补）。这些都是静态对照 fbb_ws63 C SDK 的修复；下游 <code>ws63-pac</code> 也已随 <code>regen.sh</code> 重生成。当前真机证据边界以 <a href="#stable-api-清单与门控状态">Stable API 清单</a> 为准。</p>
-</blockquote>
-<h2 id="改进项与排期"><a class="header" href="#改进项与排期">改进项与排期</a></h2>
-<p>ws63-svd 的整改核心是把 SVD 重新确立为唯一真值。本轮（2026-05-31）已落地大部分：</p>
-<ol>
-<li>✅ <strong>建立可复现生成流水线</strong>（已完成）：<code>regen.sh</code>（svd2rust 0.37.1 + <code>postprocess.py</code> 后处理 + cargo fix/fmt）替代 <code>main.py</code> 桩，幂等、build+clippy 门禁。<strong>剩余</strong>：把“从 SVD 重生成并 diff“接入 CI；并加 <code>validate.py</code> XSD 校验门（脚本已就绪）。</li>
-<li>✅ <strong>以 SVD 为源重生成 PAC</strong>（已完成）：<code>regen.sh</code> 即唯一生成路径，手补 lib.rs 被 PreToolUse hook 拦截；重生成恢复了历史手补遗漏的 KM keyslot 字段，消除 SVD↔PAC 漂移。</li>
-<li>✅ <strong>eFuse/LSADC 寄存器修复</strong>（已完成）：对照 <code>hal_efuse_v151</code>/<code>hal_adc_v154</code> 改 SVD 并重生成（详见上表）。<strong>剩余</strong>：KM <code>*_FLUSH_BUSY</code>（0xB10–0xB1C）转录缺口仍待补；其它外设逐个对照 fbb_ws63 <code>*_reg.h</code> 核覆盖。</li>
-<li>✅ <strong>补写 README</strong>（已完成）：含 <code>regen.sh</code> 用法、五步流水线、校验命令与“勿手改 lib.rs“约定。</li>
-</ol>
-<p>旧阶段编号和完整整改历史见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md">归档 roadmap</a>。</p>
+<h2 id="历史评审"><a class="header" href="#历史评审">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="相关架构"><a class="header" href="#相关架构">相关架构</a></h2>
-<p><strong>BS2X SVD</strong>: <a href="https://github.com/hispark-rs/bs2x-svd"><code>bs2x-svd</code></a> 强自前和永久性存搬，两份 SVD 准生政之不同厨特针 PAC。<strong>probe-rs 调试</strong>: hispark-rs fork 各和 RISC-V DM/CoreSight，待板级。<strong>连接</strong>: Wi-Fi 于剖地，BLE 是 blob。主要落点（本轮已完成上述大部分，KM 缺口 + CI 接入为剩余）。详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p><strong>BS2X SVD</strong>：<a href="https://github.com/hispark-rs/bs2x-svd"><code>bs2x-svd</code></a> 与 <code>bs2x-pac</code> 是 BS2X 路径的寄存器事实源；WS63 与 BS2X 的 SVD/PAC 分仓维护，避免把两个芯片族的寄存器事实混成一份。</p>
+<p><strong>不属于 SVD 的事实源</strong>：probe-rs 调试支持、镜像格式、Wi-Fi/BT/BLE/SLE 连接性状态分别由 probe-rs / <code>hisi-fwpkg</code> / RF porting 文档和根 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 维护；本页只解释 WS63 SVD 的建模与生成流水线。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-pac-架构与评审"><a class="header" href="#ws63-pac-架构与评审">ws63-pac 架构与评审</a></h1>
+<h1 id="ws63-pac-架构"><a class="header" href="#ws63-pac-架构">ws63-pac 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
 <p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/pac/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/pac/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
@@ -4173,46 +4131,14 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 <li><strong>35 外设覆盖</strong>：从 <code>sys_ctl1</code>、三路 <code>gpio0/1/2</code>、三路 <code>uart0/1/2</code>、双 <code>i2c</code>、双 <code>spi</code>、<code>dma</code>/<code>sdma</code>，到安全引擎 <code>spacc</code>/<code>pke</code>/<code>km</code>/<code>trng</code> 与时钟复位 <code>cldo_crg</code> 等全部映射（<code>src/lib.rs:31685-31754</code>）。</li>
 <li><strong>中断模型</strong>：<code>ExternalInterrupt</code> 枚举用 <code>#[riscv::pac_enum(unsafe ExternalInterruptNumber)]</code> 标注（<code>src/lib.rs:902-904</code>），中断号从 26 起（<code>TIMER_INT0 = 26</code>，<code>src/lib.rs:906</code>）。<code>rt</code> feature 下 <code>build.rs</code> 把 <code>device.x</code> 写入 <code>OUT_DIR</code> 并加入 link-search（<code>build.rs:8-18</code>），向量表用 <code>PROVIDE(... = DefaultHandler)</code> 提供弱默认（<code>device.x:1-30</code>）。</li>
 <li><strong>feature 设计</strong>：<code>default = ["critical-section"]</code>，外加 <code>rt</code>（<code>Cargo.toml:16-18</code>）。<code>take()</code> 仅在 <code>critical-section</code> 下编译（<code>src/lib.rs:31758</code>），符合 svd2rust 约定。</li>
-<li><strong>ISA 协同</strong>：<code>rt</code> feature 下 <code>build.rs</code> 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>），与本轮 ISA 修复（默认 target 切到 <code>riscv32imc</code>、产物零原子指令）一致。</li>
+<li><strong>ISA 协同</strong>：<code>rt</code> feature 下 <code>build.rs</code> 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>）；当前默认目标是官方 <code>riscv32imfc-unknown-none-elf</code>，无 A 扩展，产物不得发射 <code>lr/sc/amo</code>。</li>
 </ul>
-<h2 id="评审发现-1"><a class="header" href="#评审发现-1">评审发现</a></h2>
-<h3 id="优点-1"><a class="header" href="#优点-1">优点</a></h3>
-<ul>
-<li>svd2rust <strong>0.37.1</strong> 现代 const-fn 访问器，generic 层零开销（<code>src/lib.rs:14-51</code>）。</li>
-<li>编译快（约 6s 过编译），单文件无复杂构建依赖。</li>
-<li>工程化完备：<code>device.x</code> 中断向量、<code>critical-section</code>/<code>rt</code> feature（<code>Cargo.toml:16-18</code>）、crates.io 元数据齐全（<code>Cargo.toml:1-9</code>）。</li>
-<li>单例语义正确：<code>take()</code>/<code>steal()</code> 配合 <code>DEVICE_PERIPHERALS</code> 标志在临界区内做一次性保护（<code>src/lib.rs:31760-31775</code>）。</li>
-</ul>
-<h3 id="问题-1"><a class="header" href="#问题-1">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>中</td><td>维护性</td><td>单文件 <code>lib.rs</code> 体积约 1.8MB / 31814 行，难以审阅与定位</td><td><code>src/lib.rs</code>（1797361 字节、31814 行）</td><td>暂不修（svd2rust 生成产物，按惯例不拆分；通过 CHANGELOG + grep 定位缓解）</td></tr>
-<tr><td>高</td><td>维护性</td><td>寄存器手补进生成代码：KM keyslot 寄存器（<code>KC_REECPU_LOCK_CMD</code> 等）在生成后人工添加，下次重生成会被覆盖</td><td><code>src/lib.rs:28415</code>、<code>28569</code>；<code>CHANGELOG.md:13-21</code></td><td>已随 SVD/PAC 流水线整改：应回填到 ws63-svd 源头由生成器产出，避免手补 PAC</td></tr>
-<tr><td>中</td><td>依赖</td><td>版本曾停在 <code>0.1.0</code> 而 tag 后又追加了公开寄存器，违反 SemVer</td><td><code>Cargo.toml:3</code>、<code>CHANGELOG.md</code></td><td>已修：bump <code>0.1.0</code> →（经 0.1.1/0.1.2）现 <code>0.1.3</code>，由 ws63-pac 自有仓库流水线发布</td></tr>
-<tr><td>中</td><td>依赖</td><td>曾被 <code>hisi-riscv-hal</code> 以 git 依赖引入，导致工作区出现双 PAC 实例</td><td><code>crates/hisi-riscv-hal/Cargo.toml:12</code>、<code>Cargo.toml:45-51</code></td><td>本轮已修：改 registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地，<code>cargo tree</code> 仅单一 <code>ws63-pac</code> 实例</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期-1"><a class="header" href="#改进项与排期-1">改进项与排期</a></h2>
-<p>2026-05-31 构建完整性整改中，与本 crate 直接相关：</p>
-<ul>
-<li><strong>双 PAC 消除</strong>：<code>hisi-riscv-hal</code>/<code>ws63-flashboot</code> 改为 registry 版本依赖，根 <code>Cargo.toml</code> 用 <code>[patch.crates-io]</code> 统一指向本地（<code>Cargo.toml:50-51</code>），全工作区单实例。</li>
-<li><strong>版本对齐</strong>：<code>0.1.x</code> 后随 SPI_WSR / TIMER 修复发布到 <strong><code>0.2.0</code></strong>；下游 HAL/RT 通过 registry 版本依赖消费，父仓开发用 <code>[patch.crates-io]</code> 指向本地 submodule。</li>
-<li><strong>ISA 协同</strong>：<code>rt</code> feature 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>），配合默认 target = builtin、无原子的 <strong><code>riscv32imfc-unknown-none-elf</code></strong>（硬件单精度浮点 ilp32f，原子由 portable-atomic critical-section polyfill 提供）。</li>
-</ul>
-<p>仍需后续处理（指向 ROADMAP 对应阶段）：</p>
-<ul>
-<li><strong>手补寄存器回源</strong>：把 KM keyslot 等人工添加的寄存器回填到 <code>ws63-svd</code>，使其由 svd2rust 重生成产出，消除“生成产物被手改“的维护风险；同一轮整改也补齐了 efuse / lsadc 等外设寄存器的正确性。</li>
-<li><strong>单文件体积</strong>：作为生成产物，按 svd2rust 惯例暂不拆分；若后续 SVD 重构，可评估按外设分模块生成。</li>
-</ul>
+<h2 id="历史评审-1"><a class="header" href="#历史评审-1">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="hisi-riscv-hal-架构与评审"><a class="header" href="#hisi-riscv-hal-架构与评审">hisi-riscv-hal 架构与评审</a></h1>
+<h1 id="hisi-riscv-hal-架构"><a class="header" href="#hisi-riscv-hal-架构">hisi-riscv-hal 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
 <p><strong>2026-06 更新</strong>：HAL 现为<strong>多芯片</strong> —— 使用 <code>chip-ws63</code> / <code>chip-bs21</code> 特性二选一（HAL standalone 无默认芯片）。后者基于 <code>bs2x-pac</code> 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 <code>chip-bs21</code> target 目前需 <code>unstable</code>。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU <code>-M bs21/bs22/bs20</code> 上验证。crate 路径 <code>crates/hisi-riscv-hal</code>。</p>
@@ -4301,46 +4227,9 @@ DMA 提供拥有缓冲区的
 <li>UART 同时实现 embedded-io <code>Read</code>/<code>Write</code> 与 embedded-hal-nb serial（<code>uart.rs:172-293</code>）。</li>
 </ul>
 <h3 id="编译期断言safetyrs"><a class="header" href="#编译期断言safetyrs">编译期断言（<code>safety.rs</code>）</a></h3>
-<p><code>const_assert!</code> 宏（<code>safety.rs:11-20</code>）校验 MMIO 地址范围、<code>PERIPHERAL_COUNT == 17</code>、各类外设/通道计数常量。注意此文件的多数断言为恒真（见评审问题）。</p>
-<h2 id="评审发现-2"><a class="header" href="#评审发现-2">评审发现</a></h2>
-<h3 id="优点-2"><a class="header" href="#优点-2">优点</a></h3>
-<ul>
-<li><strong><code>clock_init.rs</code> 是全仓标杆</strong>：逐寄存器、逐位对照 fbb_ws63 C SDK 核实，地址与位含义均注明出处（<code>clock_init.rs:36-74</code>、<code>197-253</code>）。</li>
-<li><strong>外设单例 + <code>'d</code> 生命周期健全</strong>：宏生成统一、<code>take()</code> 经 PAC 单例校验，生命周期防 use-after-drop（<code>peripherals.rs:10-87</code>）。</li>
-<li><strong>embedded-hal/embedded-io/nb trait 选型正确</strong>：<code>SpiBus</code>（非 <code>SpiDevice</code>）、I2C repeated-START、ACK→<code>NoAcknowledge</code> 均符合各 trait 契约（<code>spi.rs:135</code>、<code>i2c.rs:215-280</code>）。</li>
-<li><strong>GPIO block 映射正确</strong>：<code>pin/8</code> 分 block、<code>pin%8</code> 取位，与 3 block × 8 位的硬件布局一致（<code>gpio.rs:86-88</code>）。</li>
-</ul>
-<h3 id="问题-2"><a class="header" href="#问题-2">问题</a></h3>
-<blockquote>
-<p>下表为 <strong>2026-05 评审快照</strong>；其后多数正确性整改项已修（见各行状态），权威进度以 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">评审台账</a> 为准。全部修复在姊妹仓 <code>ws63-qemu</code> 软件在环验证。</p>
-</blockquote>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>严重</td><td>正确性</td><td>中断子系统曾建在不存在的 PLIC 模型上。WS63 用自定义 CSR（<code>LOCIPRI</code>=0xBC0 / <code>LOCIEN</code>=0xBE0 / <code>LOCIPD</code>=0xBE8）</td><td><code>interrupt.rs</code></td><td>✅ 阶段2已修：重写为 LOCIPRI/LOCIEN/LOCIPD CSR 模型 + 优先级/阈值；ws63-qemu <code>timer_irq</code>/<code>gpio_irq</code>(IRQ≥32) 端到端验证</td></tr>
-<tr><td>严重</td><td>正确性</td><td>SPI <code>ctra</code> 写入 <code>trsm=3</code>（bits 19:18），该值是 EEPROM-Read 模式；全双工 TX+RX 应为 <code>0</code>。注释误写“TX+RX mode“导致 <code>transfer</code>/<code>SpiBus</code> 全双工语义不成立</td><td><code>spi.rs:76</code></td><td>✅ 阶段2已修：TRSM 改为全双工模式，<code>spi_loopback</code>/<code>SpiBus</code> 语义经 QEMU smoke 验证；真机外部回环仍属示例 smoke/台架增量</td></tr>
-<tr><td>高</td><td>正确性</td><td>I2C/SPI 多处无超时死循环；错误码定义却从不返回</td><td><code>spi.rs</code>、<code>i2c.rs</code></td><td>✅ 阶段2已修：I2C/SPI 加 bounded 超时并真正返回 <code>Timeout</code> 等错误</td></tr>
-<tr><td>高</td><td>正确性</td><td><code>software_reset</code> 执行 <code>ebreak</code>（非系统复位）；<code>reset_reason</code> 恒返回 <code>PowerOn</code></td><td><code>system.rs</code></td><td>✅ 阶段2已修：<code>software_reset</code> 置 GLB_CTL_M 复位位，<code>reset_reason</code> 解析 SYS_RST_RECORD；ws63-qemu <code>reset_demo</code> 往返验证</td></tr>
-<tr><td>中</td><td>正确性</td><td>GPIO <code>InputConfig.pull</code> 被静默忽略：<code>init_input</code> 只设 OEN</td><td><code>gpio.rs</code></td><td>✅ 阶段2已修：<code>init_input</code> 经 IO_CONFIG pad 寄存器应用上下拉 + 中断触发模式</td></tr>
-<tr><td>高</td><td>正确性</td><td>eFuse / LSADC 寄存器布局为猜测，与 SDK 矛盾</td><td><code>efuse.rs</code>、<code>lsadc.rs</code></td><td>🟡 已对照 fbb_ws63 + ws63-qemu(eFuse 写=按位或、LSADC 转换 IRQ72) 验证读写序列；逐寄存器复核仍作为维护项推进</td></tr>
-<tr><td>中</td><td>维护性</td><td><code>safety.rs</code> 多条 <code>const_assert!</code> 为恒真断言；模块头措辞夸大</td><td><code>safety.rs</code></td><td>✅ 阶段2已修：删除恒真断言 + 夸大措辞</td></tr>
-<tr><td>中</td><td>架构</td><td>零消费者死代码：RAII 时钟守卫、DMA 安全 trait、async marker</td><td><code>clock.rs</code>/<code>dma.rs</code>/<code>private.rs</code></td><td>✅ 已清：async marker(<code>Blocking</code>/<code>Async</code>)、vestigial <code>DmaWord</code>、RAII 时钟守卫、<code>DmaEligible</code>/<code>DmaChannelFor</code> 均已删除；真正的异步层按 <code>async</code>/<code>unstable</code> 分层暴露</td></tr>
-<tr><td>高</td><td>维护性</td><td>测试为恒真式（重抄被测公式再断言），从未上板验证</td><td><code>spi.rs</code>/<code>i2c.rs</code>/<code>clock.rs</code>/<code>safety.rs</code></td><td>✅ 已破：ws63-qemu <code>smoke-test.sh</code> 用真实固件端到端验证；WS63 HAL embedded-test 套件已在真机通过，精确覆盖与 stable 边界见参考页</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期-2"><a class="header" href="#改进项与排期-2">改进项与排期</a></h2>
-<p>本页保留 2026-05 评审后的整改现状；当前优先级以 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 为准。</p>
-<ul>
-<li><strong>Bring-up + 链接脚本集成</strong>：✅ 链接脚本集成已打通（<code>hisi-riscv-rt</code> 经 <code>cargo:rustc-link-search</code> + <code>hisi-riscv-link.x</code>，示例正常链接）；✅ 恒真式测试已由 <strong>ws63-qemu 软件在环</strong>和真机 HAL embedded-test HIL 大幅替代。精确 HIL 覆盖见 <a href="#stable-api-清单与门控状态">Stable API 清单</a>；示例级 smoke 与连接性 HIL 继续分轨推进。</li>
-<li><strong>死代码清理 + 正确性修复</strong>：✅ 中断子系统已重写到 <code>LOCIPRI</code>/<code>LOCIEN</code>/<code>LOCIPD</code> CSR 模型；✅ I2C/SPI 超时并返回错误；✅ SPI <code>trsm</code> 全双工模式修复；✅ <code>software_reset</code>/<code>reset_reason</code>；✅ GPIO pull + 中断触发；✅ <code>safety.rs</code> 恒真断言 + 夸大措辞已删；✅ async marker / RAII 时钟守卫 / vestigial DMA marker 死代码已删。🟡 eFuse/LSADC 逐寄存器复核仍在推进。</li>
-<li><strong>新增（超出原评审）</strong>：✅ <strong>异步 HAL</strong>（<code>async</code>/<code>embassy</code> feature，见 <a href="#异步与-embassy-适配">async-embassy.md</a>）已实现；0.6.0 起按 HIL/soundness 证据分层，SPI/I2C blocking-backed async 默认可用，interrupt/waker async 与 embassy 需 <code>unstable</code>。</li>
-<li><strong>连接性支撑</strong>：<code>ws63-rf-rs</code> 已承接 RF porting/HCC/netif 数据通路，HAL 的边界是继续提供可组合的底层外设；剩余风险在 blob 链接、pbuf/TX-sink pin 与真机连通。</li>
-<li><strong>async 后续</strong>：连接性专属的异步包装待 blob 上板后再做；不恢复旧的空壳 <code>Blocking</code>/<code>Async</code> 类型状态。</li>
-</ul>
+<p><code>safety.rs</code> 保留少量编译期结构检查，用来把 MMIO 地址范围、外设/通道数量等维护假设显式化。它不是 public API 或 stable 证据的事实源；当前稳定面与真机证据仍以 <a href="#stable-api-清单与门控状态">Stable API 清单</a> 为准。</p>
+<h2 id="历史评审-2"><a class="header" href="#历史评审-2">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="hisi-riscv-rt-架构"><a class="header" href="#hisi-riscv-rt-架构">hisi-riscv-rt 架构</a></h1>
 <p><code>hisi-riscv-rt</code> 是最终 firmware bin 进入 Rust <code>main()</code> 前经过的 runtime crate。它现在的外部 Interface 有意保持很薄：复用 <code>riscv-rt</code> 的 <code>#[entry]</code> / <code>#[pre_init]</code>，重导出当前 PAC 的 interrupt enum，并为单 hart / 无 A 扩展产品路径注册全局 critical-section 实现。</p>
@@ -4455,7 +4344,7 @@ chip-bs21 = ["dep:bs2x-pac", "bs2x-pac/rt"] # requires unstable
 <p>WS63 是 <code>riscv32imfc</code>(<strong>无 A 扩展</strong>,<code>lr.w/sc.w</code> 会陷入)。</p>
 <ul>
 <li>hisi-riscv-hal 一直用 <code>portable-atomic</code>(开 <code>critical-section</code> feature)做 CAS 垫片;<code>hisi-riscv-rt</code> 提供 <code>riscv/critical-section-single-hart</code> 实现。</li>
-<li><strong>embassy-executor 在无 CAS 目标上也能跑</strong>(thumbv6m / riscv32imc 同理):它内部按编译期 cfg 在 <code>core::sync::atomic</code> 与 <code>portable_atomic</code> 间切换,riscv 平台模块的 <code>SIGNAL_WORK</code> 只用 load/store(WS63 支持)。所以<strong>无需改 embassy</strong>。</li>
+<li><strong>embassy-executor 在无 CAS 目标上也能跑</strong>（thumbv6m / 无 A 扩展 RISC-V 目标同理）：它内部按编译期 cfg 在 <code>core::sync::atomic</code> 与 <code>portable_atomic</code> 间切换，riscv 平台模块的 <code>SIGNAL_WORK</code> 只用 load/store（WS63 支持）。所以<strong>无需改 embassy</strong>。</li>
 <li>一个真实踩过的坑:<code>target/</code> 里<strong>陈旧的 host proc-macro 工件</strong>(syn/quote 来自旧 rustc)会让 embassy 宏构建莫名失败 → <code>cargo clean</code> 后全量通过。</li>
 </ul>
 <h2 id="embassy-time-drivercrateshisi-riscv-halsrcembassyrs-unstable"><a class="header" href="#embassy-time-drivercrateshisi-riscv-halsrcembassyrs-unstable">embassy-time <code>Driver</code>(<code>crates/hisi-riscv-hal/src/embassy.rs</code>, <code>unstable</code>)</a></h2>
@@ -4524,9 +4413,9 @@ embassy 仓库<strong>确实</strong>收录了一批 <strong>in-tree HAL</strong
 <p>简言之:<strong>异步/embassy 这块本身已经是「按上游约定正确实现」</strong>,真正的上游化工作量在 ① 把 hisi-riscv-hal(含 embassy feature)发版到 crates.io、② 让官方 target 获得 rustup std 组件/Tier-2 证据、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-examples-架构与评审"><a class="header" href="#ws63-examples-架构与评审">ws63-examples 架构与评审</a></h1>
+<h1 id="ws63-examples-架构"><a class="header" href="#ws63-examples-架构">ws63-examples 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-3"><a class="header" href="#职责与边界-3">职责与边界</a></h2>
 <p><code>ws63-examples</code> 是面向最终用户的<strong>应用示例集合</strong>，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 <code>hisi-riscv-rt</code>（启动）+ <code>hisi-riscv-hal</code>（驱动，支持 <code>chip-ws63</code>/实验性 <code>chip-bs21</code> + <code>unstable</code> 特性）+ PAC（<code>ws63-pac</code> 或 <code>bs2x-pac</code>，见 <code>crates/pac/</code>）+ 连接性场景下的 <code>ws63-rf-rs</code>（RF porting），组合成可烧录的裸机固件。</p>
@@ -4568,39 +4457,12 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 <li><strong>RF porting</strong>：<code>rf_port_demo</code> 经 <code>ws63-rf-rs</code> 行使 porting 函数，并把 vendor ROM-data blob 链入镜像（<code>g_dmac_alg_main</code> / <code>g_mac_res_etc</code> 在 rf-rs 解析）。</li>
 </ul>
 <p>与参考实现的关系：esp-hal 示例普遍调用 <code>Delay</code> / embedded-hal trait；ws63 示例集现已从「单一点灯」扩展为覆盖各外设 + async + RF porting 的一组最小演示。</p>
-<h2 id="评审发现-3"><a class="header" href="#评审发现-3">评审发现</a></h2>
-<h3 id="优点-3"><a class="header" href="#优点-3">优点</a></h3>
-<ul>
-<li>入口形态正确：<code>#[entry]</code> + <code>#[panic_handler]</code> 的裸机骨架完整，<code>blinky</code> 可作后续示例的模板。</li>
-<li>覆盖面已大幅扩展：GPIO / UART / Timer / DMA + 中断 + 复位 + semihosting + 自定义内存 + async/embassy + RF porting 等示例均在参考页登记。</li>
-<li>链接已打通且诚实标注：WS63 示例集合纳入 <code>default-members</code>，<code>cargo build</code> 默认即构建；<code>ws63-flashboot</code> 的排除附了原因注释。</li>
-</ul>
-<h3 id="问题-3"><a class="header" href="#问题-3">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>高</td><td>构建</td><td>（曾）<code>blinky</code> 无法链接：lib 依赖的 <code>cargo:rustc-link-arg</code> 不传播到下游二进制</td><td>✅ 已修：<code>hisi-riscv-rt</code> 导出 <code>hisi-riscv-link.x</code> + 各 <code>build.rs</code> 用 <code>-Thisi-riscv-link.x</code>，WS63 示例集合已回到 <code>default-members</code></td></tr>
-<tr><td>高</td><td>方向</td><td>（曾）唯一示例（blinky）+ 手写忙等，无法证明其余驱动可用</td><td>✅ 大部已破：现有 UART/Timer/GPIO/DMA + async SPI/I2C 等 13 个额外示例</td></tr>
-<tr><td>中</td><td>演示覆盖</td><td><code>blinky</code> 曾用 legacy <code>create_output_pin</code>，未直接演示 <code>OutputConfig</code>/<code>InputConfig</code></td><td>✅ 已修：<code>blinky</code> 走现代 <code>OutputConfig</code> 输出路径；<code>gpio_irq</code> 继续覆盖输入/中断</td></tr>
-<tr><td>中</td><td>文档</td><td>旧构建指引曾指向自定义 JSON target</td><td>✅ 已统一为 builtin <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）</td></tr>
-<tr><td>低</td><td>依赖</td><td><code>blinky/Cargo.toml</code> 曾多声明 <code>ws63-pac</code> 直接依赖，源码未用</td><td>✅ 已随示例依赖整理清理</td></tr>
-<tr><td>—</td><td>连接性</td><td>缺真实 Wi-Fi/BLE/SLE 链路示例</td><td>🔴 待 connectivity milestones C2-C5 上板 HIL</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期-3"><a class="header" href="#改进项与排期-3">改进项与排期</a></h2>
-<ul>
-<li><strong>已完成的示例底座</strong>：链接脚本传播已修、示例覆盖面已扩；<code>blinky</code> 已切到现代 <code>OutputConfig</code> 输出路径并完成真机点灯验证。</li>
-<li><strong>连接性示例</strong> 🔴：按当前 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> C2-C5 推进，在 blob 上板 HIL 后新增 Wi-Fi scan/connect/ping 真实链路示例，使示例集覆盖 SoC 核心能力。</li>
-<li><strong>async 示例</strong> ✅：<code>async_delay</code> / <code>async_bus</code> / <code>embassy_multitask</code> / <code>embassy_async_io</code> 已落地（依赖 HAL 的 <code>async</code>/<code>embassy</code> 支持，见 <a href="#异步与-embassy-适配">async-embassy.md</a>）。</li>
-</ul>
+<h2 id="历史评审-3"><a class="header" href="#历史评审-3">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-flashboot-架构与评审"><a class="header" href="#ws63-flashboot-架构与评审">ws63-flashboot 架构与评审</a></h1>
+<h1 id="ws63-flashboot-架构"><a class="header" href="#ws63-flashboot-架构">ws63-flashboot 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-4"><a class="header" href="#职责与边界-4">职责与边界</a></h2>
 <p><code>ws63-flashboot</code> 是一个<strong>实验性 / 学习用途</strong>的 Rust 二级引导（second-stage bootloader），对标 fbb_ws63 原厂 <code>flashboot_ws63/startup/main.c</code>。它本轮（2026-05-31）已被明确标注为<strong>实验性、非安全启动、不可用于生产</strong>（<code>src/main.rs:1-22</code>、<code>README.md:3</code>、<code>Cargo.toml:5</code>）。当前专为 <strong>WS63 设计</strong>；BS2X 系列（BS21/BS22/BS20）的引导加载另行开发（见下），复用原厂 flashboot 是生产推荐。</p>
@@ -4643,42 +4505,8 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <li><strong>跳转</strong>：清 <code>mie</code>、喂狗后将 <code>addr + 0x300</code> <code>transmute</code> 为 <code>extern "C" fn() -&gt; !</code> 并调用（<code>src/main.rs:159-166</code>），SAFETY 注释声明 app 入口同 ABI（RV32IMFC ilp32f）。</li>
 <li><strong>本轮构建完整性修复（针对该 crate）</strong>：banner 重写为“非安全启动“警告（<code>src/main.rs:1-22</code>）、<code>publish = false</code>（<code>Cargo.toml:11</code>）、移出 <code>default-members</code>、删除未用的 <code>ws63-pac</code> 依赖、新增 <code>README.md</code>。</li>
 </ul>
-<h2 id="评审发现-4"><a class="header" href="#评审发现-4">评审发现</a></h2>
-<blockquote>
-<p>已对照 fbb_ws63 与 esp-hal、按 file:line 验证，0 条被驳回。</p>
-</blockquote>
-<h3 id="优点-4"><a class="header" href="#优点-4">优点</a></h3>
-<ul>
-<li>SHA256 软件实现正确，常量与填充无误，含已知向量单测（<code>src/sha256.rs:14-141</code>、<code>:148-175</code>）。</li>
-<li><code>startup.S</code> 对照原厂 <code>riscv_init.S</code>，PMP/FPU/BSS/boot flag 处理到位（<code>asm/startup.S</code>）。</li>
-<li>关键地址（SFC/UART/WDT/FAMA/efuse 寄存器、<code>FLASHBOOT_RAM</code> 语义）与镜像头 magic/版本对照 SDK 一致；整改后镜像头布局对齐 <code>secure_verify_boot.h</code>。</li>
-<li>镜像头边界校验有较完整的拒绝/接受边界单测（<code>src/image.rs:52-135</code>）。</li>
-<li>本轮已正确自我定级为实验性：banner、<code>publish=false</code>、移出默认构建、README 说明（<code>src/main.rs:1-22</code>、<code>Cargo.toml:11</code>、<code>README.md</code>）。</li>
-</ul>
-<h3 id="问题-4"><a class="header" href="#问题-4">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>严重</td><td>安全</td><td>无真实性验签：只把算出的哈希与<strong>同一份未签名头里的</strong>哈希比对。能写 flash 的攻击者改镜像后重算 SHA256 写回头部即可以 M 态特权跳进任意代码，≠ secure boot（原厂用 efuse 根密钥 ECC-bp256/SM2 签名验签）</td><td><code>src/main.rs</code>、<code>verify_image_integrity()</code>；对照 vendor <code>secure_verify_boot.c</code></td><td>✅ 已如实标注(2026-06-01)：函数改名 <code>verify_image_integrity</code>、文档明确“仅完整性、非真实性“；真实 ECC/SM2 验签属 ROADMAP 冻结项（复用原厂，不在本实验件投入）</td></tr>
-<tr><td>严重</td><td>正确性</td><td><code>ImageHeader</code>/<code>CodeInfo</code> 布局对不上真实 WS63 镜像：<code>image_length</code>(+0x114)/<code>image_hash</code>(+0x11C) 偏移读错 → 会拒绝真镜像</td><td><code>src/sfc.rs</code>；对照 vendor <code>secure_verify_boot.h:156-178</code></td><td>✅ 已修(2026-06-01)：<code>sfc.rs</code> <code>KeyArea</code>/<code>CodeInfo</code> 按 <code>image_key_area_t</code>/<code>image_code_info_t</code>(ECC256) 逐字段重排，<code>code_area_len</code>@+0x24、<code>code_area_hash</code>@+0x28，<code>const</code> 断言锁定 0x100/0x200/0x300；评审(layout) ok</td></tr>
-<tr><td>高</td><td>正确性</td><td>A/B 误用 <code>0x4000_0024</code>：该寄存器是 flashboot <strong>自身的备份恢复标志</strong>，并非 app 槽选择器。代码却用它选 app 区 A/B</td><td><code>src/main.rs</code>；对照 vendor <code>main.c:131-135</code>（<code>flashboot_need_recovery</code>）</td><td>✅ 已修(2026-06-01)：删除该误用，改单镜像启动 + 如实注明真实 A/B = upg run-region(magic <code>0x70746C6C</code>)+分区表(<code>@0x200380</code>)、<code>0x40000024</code>=bootloader 自恢复</td></tr>
-<tr><td>高</td><td>方向</td><td>重写原厂安全关键件（验签/启动链）属误导努力。生产应复用原厂 flashboot，本 crate 仅供学习</td><td><code>src/main.rs:5-8</code>、<code>README.md:22-26</code></td><td>暂不修(定级实验性；定位为学习件，整体方向走复用原厂)</td></tr>
-<tr><td>高</td><td>正确性</td><td>关键子流程是桩：<code>boot_clock_adapt()</code> 为 TODO 空操作；<code>read_partition_app_addr()</code> 恒返回 <code>FLASH_START</code>；<code>check_upgrade_mode()</code> 恒 false</td><td><code>src/main.rs</code></td><td>🟡 部分(2026-06-01)：<code>read_partition_app_addr()</code> 改为<strong>如实标注</strong>的桩（注明不解析分区表、真实查表在 <code>@0x200380</code> magic <code>0x4b87a54b</code>）；<code>boot_clock_adapt</code>/<code>check_upgrade_mode</code> 仍为桩（实验定位，生产复用原厂）</td></tr>
-<tr><td>中</td><td>维护性</td><td>重复造轮子：UART/SFC/SHA256/startup 与 <code>hisi-riscv-hal</code>/<code>hisi-riscv-rt</code> 重复（因刻意不依赖 PAC/HAL）</td><td><code>src/uart.rs</code>、<code>src/sfc.rs</code>、<code>src/sha256.rs</code>、<code>asm/startup.S</code>、<code>Cargo.toml:17-19</code></td><td>暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍)</td></tr>
-<tr><td>中</td><td>工程化</td><td>删除未用的 <code>ws63-pac</code> 依赖、<code>publish=false</code>、移出默认构建、banner 改为实验性警告</td><td><code>Cargo.toml:11,17-19</code>、根 <code>Cargo.toml</code> <code>default-members</code>、<code>src/main.rs:1-22</code></td><td>本轮已修</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期-4"><a class="header" href="#改进项与排期-4">改进项与排期</a></h2>
-<ul>
-<li>生产层面的结论是<strong>复用 fbb_ws63 原厂 flashboot</strong>（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（<code>README.md:22-26</code>）。本 crate 维持实验/学习定位。</li>
-<li><strong>整改已落地（2026-06-01）</strong>：镜像头布局对齐 <code>secure_verify_boot.h</code>（<code>code_area_len</code>/<code>code_area_hash</code> 偏移修正 + const 尺寸断言）、删除 <code>0x40000024</code> 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、<code>verify_sha256</code>→<code>verify_image_integrity</code> 如实标注“仅完整性非真实性“、<code>read_partition_app_addr</code> 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 <code>--exclude</code>）。<strong>真实 ECC/SM2 验签</strong>仍按冻结项复用原厂、不在本实验件投入。</li>
-<li>阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地）、无原子 ISA + <code>portable-atomic</code> critical-section polyfill（默认 target 为官方 rustc builtin 的 <code>riscv32imfc-unknown-none-elf</code>，当前用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code> 构建；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）、CI/release gating 与发布顺序修复、<code>hisi-riscv-rt</code> MIE 中断宏 typo 与栈顶符号 GC fallback 修复。</li>
-<li>历史整改中的示例链接、中断模型、SPI/I2C 超时、system reset、GPIO pull、死代码清理和 async 底座均已收口；连接性仍按当前 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP C1-C5</a> 推进。旧阶段编号保存在 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md">归档 roadmap</a>。</li>
-</ul>
+<h2 id="历史评审-4"><a class="header" href="#历史评审-4">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="注记bs2x-引导加载bs21bs22bs20"><a class="header" href="#注记bs2x-引导加载bs21bs22bs20">注记：BS2X 引导加载（BS21/BS22/BS20）</a></h2>
 <p>WS63-flashboot 当前<strong>专为 WS63 SoC 实现</strong>。BS2X 系列（BS21/BS22/BS20）作为独立芯片系列，有自己的：</p>
 <ul>
@@ -4688,9 +4516,9 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 </ul>
 <p>QEMU 验证侧，<code>-M bs21/bs22/bs20</code> 已支持硬件仿真；vendor 的 LiteOS 栈由 hisi-riscv-qemu 虚拟；BS2X 真机引导加载与连接性由 BS2X 团队后续跟进（见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>）。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-rf-架构与评审"><a class="header" href="#ws63-rf-架构与评审">ws63-RF 架构与评审</a></h1>
+<h1 id="ws63-rf-架构"><a class="header" href="#ws63-rf-架构">ws63-RF 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-5"><a class="header" href="#职责与边界-5">职责与边界</a></h2>
 <p><code>ws63-RF</code> 是 ws63-rs monorepo 的一个 git 子模块（<code>.gitmodules:10-12</code>，URL 指向独立仓库 <code>ws63-RF.git</code>），定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的载体</strong>。它负责两件事：</p>
@@ -4766,38 +4594,8 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <p><code>port_hcc.h:8-22</code>：HCC 是 host（HMAC/BLE host）与 device（DMAC/BT controller）之间的传输抽象，是 HiSilicon 跨产品线的通用模型。<strong>两种拓扑要分清</strong>：(a) WS63 作为模组接在外部主控 MCU 后面时，host=外部 MCU、device=WS63，走 SDIO/SPI bus driver——这才是「两颗 CPU」；(b) WS63 独立运行（ws63-rs 的场景），HMAC 与 DMAC 都在这一颗应用核上，HCC 退化为片内软件层间 + 到 Wi-Fi MAC 硬件的消息通路，<strong>没有第二颗核</strong>。<code>port_wlan.h</code> 的 <code>oal_ring_ctrl</code>（<code>port_wlan.h:78-84</code>，带 <code>read_idx_addr</code>/<code>write_idx_addr</code>/<code>ring_depth</code>）是该 HCC 传输的无锁环形缓冲控制块。</p>
 <h3 id="与参考实现的关系"><a class="header" href="#与参考实现的关系">与参考实现的关系</a></h3>
 <p>porting 层的语义对标 vendor SDK <code>fbb_ws63/src/drivers/chips/ws63/porting/</code>（README “References” 明确指向）。这与本仓库其余部分对标 esp-hal 的取向不同——RF 连接性不重写协议栈，而是复用 blob + 移植 OS/IPC 抽象，这一战略判断是正确的（数千行 MAC/BLE 状态机用 Rust 重写既无必要也不现实）。</p>
-<h2 id="评审发现-5"><a class="header" href="#评审发现-5">评审发现</a></h2>
-<h3 id="优点-5"><a class="header" href="#优点-5">优点</a></h3>
-<ul>
-<li><strong>战略方向正确</strong>：复用经过现场验证的闭源协议栈、只移植 ~70 个 OS/IPC 抽象函数，而非用 Rust 重写 Wi-Fi MAC / BLE host，是务实且正确的判断。</li>
-<li><strong>依赖面识别准确</strong>：README 准确指出“硬件寄存器访问自包含于 blob，外部符号都是 OS 抽象 / IPC / 缓冲管理“，并准确量化为约 70 个 porting 函数。（注：README 同时把 HMAC/DMAC 描述为「ACORE/DCORE 双核」——此点不准确，WS63 单核，见「在依赖链中的位置」；但「依赖面 = OS/IPC/缓冲抽象」这一核心判断方向正确。）</li>
-<li><strong>接口文档化完整</strong>：8 个 <code>port_*.h</code> 每个函数都有 doc 注释、返回语义与移植难度评级，<code>port_linker.h</code> 给出了内存布局与区段符号清单，为后续移植提供了清晰契约。</li>
-<li><strong>文档与代码一致</strong>：README 的库目录表、依赖计数表与磁盘实际 <code>.a</code> 大小、头文件函数数逐项吻合，无夸大。</li>
-</ul>
-<h3 id="问题-5"><a class="header" href="#问题-5">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>严重</td><td>方向</td><td>（曾）纯 blob + C 头，无 Rust/链接配置，连接性 0%</td><td>—</td><td>✅ 已修：in-tree crate <strong><code>ws63-rf-rs</code></strong> 提供完整 Rust porting + <code>build.rs</code> + 链接搜索；blob 经它链入镜像（<code>wifi_blob_link</code>/<code>rf_port_demo</code> 在 ws63-qemu 验证）</td></tr>
-<tr><td>高</td><td>方向</td><td>（曾）porting 层完全未实现：<code>osal</code>/<code>oal</code>/<code>log</code>/HCC 无一行实现</td><td><code>chips/ws63/rf/src/*</code></td><td>✅ 已实现：<code>osal_adapt_*</code>(33 符号) + <code>oal</code>/<code>log</code>/<code>uapi</code> + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥；<code>frw_hcc_selftest</code>/<code>sched_selftest</code>/<code>netif_smoltcp_selftest</code> 自测通过</td></tr>
-<tr><td>高</td><td>链接</td><td>（曾）blob 数千未定义符号无一被满足</td><td><code>mac-link-residual.sh</code></td><td>✅ <strong>Wi-Fi-init 符号闭合达成</strong>：whole-archive 0 重复符号；<code>--gc-sections</code> rooted at <code>uapi_wifi_init</code> 残留仅 <strong>2</strong> 个（<code>__wifi_pkt_ram_begin__/end__</code> defsym）。早先“~3126/~96 missing“是 whole-archive 上界，被 off-path BT/alt-OS 代码主导（可达路径 0 BT 符号）</td></tr>
-<tr><td>高</td><td>工具链</td><td>链接 blob 需 ilp32f rv32imfc 目标</td><td><code>.cargo/config.toml</code></td><td>✅ 已就位：默认 target <strong>就是</strong> builtin 的 <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f），原子由 portable-atomic critical-section 垫片提供（之前文档误写 imc）</td></tr>
-<tr><td>中</td><td>集成</td><td><code>port_linker.h</code> 的 <code>extern</code> 符号与 hisi-riscv-rt 链接脚本的衔接</td><td><code>hisi-riscv-rt</code>/<code>ws63-rf-rs</code></td><td>🟡 hisi-riscv-rt 提供 <code>__wifi_pkt_ram_*</code> 的 scaffold <code>--defsym</code>；真机前需把 netif pbuf 布局 pin 到 WiFi 构建的 <code>lwipopts.h</code>、TX sink 指向 blob 真实发送符号（见 ws63-rf-rs README）</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期-5"><a class="header" href="#改进项与排期-5">改进项与排期</a></h2>
-<p>本组件是 ws63-rs 通往“可用产品“的最大缺口。多数前置已完成，现状如下：</p>
-<ul>
-<li><strong>Baseline 已完成</strong>：消除双 PAC；默认 target = builtin <strong><code>riscv32imfc</code></strong>（硬浮点 ilp32f，blob 所需）+ critical-section polyfill。工具链、HAL/RT、HIL、QEMU、image plan 前置已清。</li>
-<li><strong>C1 RF runtime image</strong> 🟡：<code>chips/ws63/rf/build.rs</code> + 链接搜索把 <code>lib/*.a</code> 喂给链接器；<strong>Wi-Fi-init 符号闭合达成</strong>（残留 2）。下一步是补真实 <code>.wifi_pkt_ram</code> NOLOAD，并把可烧录镜像带到真机。</li>
-<li><strong>C2-C5 真机连接性</strong> 🔴：<code>osal_adapt_*</code>(33) + <code>oal</code>/<code>log</code>/<code>uapi</code> + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥均已在 ws63-qemu 自测；剩余是把 pbuf 布局/TX sink pin 到真实 blob，并在真实硅片上依次证明 Wi-Fi init、scan、connect、ping。</li>
-<li><strong>连接性专属 async</strong> deferred：hisi-riscv-hal 的通用 <code>async</code>/<code>embassy</code>（见 <a href="#异步与-embassy-适配">async-embassy.md</a>）已实现并验证；连接性专属的异步包装待 blob 上板后再做。</li>
-</ul>
-<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<h2 id="历史评审-5"><a class="header" href="#历史评审-5">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
 <p>WS63-RF 中的 blob + porting 层当前<strong>专为 WS63 设计</strong>（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有<strong>独立的 blob</strong> (<code>bs2x-pac</code> + <code>chips/bs2x/</code> 目录结构)。</p>
 <ul>
@@ -4807,9 +4605,9 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 </ul>
 <p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP C1-C5</a>（WS63 北极星）与 <a href="#ws63-rs-总体架构">overview.md</a>。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-guide-架构与评审"><a class="header" href="#ws63-guide-架构与评审">ws63-guide 架构与评审</a></h1>
+<h1 id="ws63-guide-架构"><a class="header" href="#ws63-guide-架构">ws63-guide 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-6"><a class="header" href="#职责与边界-6">职责与边界</a></h2>
 <p><code>ws63-guide</code> 是 WS63 系列 SoC（Wi-Fi 6 / BLE / SLE 星闪 Combo 芯片）的<strong>中文硬件手册</strong>，使用 Sphinx + MyST 构建，逆向自 vendor（HiSilicon）文档。它以子模块形式挂在 ws63-rs monorepo 下（<code>chips/ws63/guide/</code>）。同时，BS2X 系列（BS21/BS22/BS20）有<strong>独立的 <code>chips/bs2x/guide</code> 手册</strong>，采用相同 Sphinx 工程化。</p>
@@ -4825,6 +4623,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <li>不参与 Cargo workspace 构建，不是 crate；它是独立的 Python/Sphinx 项目（<code>pyproject.toml</code> 中 <code>package = false</code>），有自己的 <code>uv.lock</code> 与 <code>.github/workflows/docs.yml</code>。</li>
 </ul>
 <p><strong>关键边界判断</strong>：本手册与 <code>docs/</code> <strong>互补而非重复</strong>——本手册讲<strong>硬件</strong>（寄存器、电气、协议层硬件块），<code>docs/</code> 讲 <strong>Rust 代码架构</strong>（crate 职责、依赖链、设计模式、评审）。两者受众不同、构建链不同，内容零重叠。</p>
+<p>当前维护策略是<strong>保留为独特逆向 IP，停止扩张，优先服务连接性北极星</strong>。手册的中断编号表与优先级模型已经用于纠正 HAL 的中断模型；内存图支撑 runtime 链接脚本；RF/ABB 章节继续服务 ROADMAP C1-C5 的 blob 链接与连接性 bring-up。</p>
 <h2 id="在依赖链中的位置-6"><a class="header" href="#在依赖链中的位置-6">在依赖链中的位置</a></h2>
 <p>ws63-guide 不在 Rust crate 编译依赖链（SVD → PAC → HAL → examples，rt 提供启动）之内，而是横向的<strong>知识来源</strong>：</p>
 <pre><code class="language-mermaid">flowchart LR
@@ -4853,51 +4652,14 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 </li>
 <li><strong>图片资产</strong>：<code>source/images/</code> 共 18 张 JPEG（芯片框图、典型应用、SFC 框图与读写流程、RF/ABB 框图、UART 数据格式、I2C 收发时序、危险/提示图标）。</li>
 </ul>
-<h2 id="评审发现-6"><a class="header" href="#评审发现-6">评审发现</a></h2>
-<h3 id="优点-6"><a class="header" href="#优点-6">优点</a></h3>
-<ul>
-<li><strong>独特的逆向 IP</strong>：RF/外设/安全寄存器描述、存储器地址映射、中断编号表，对一颗 undocumented 的芯片极具价值，是 PAC/HAL 核对硬件语义的权威中文参照（如中断模型、内存图）。</li>
-<li><strong>与代码文档清晰分工</strong>：硬件手册（本组件）与 Rust 架构文档（<code>docs/</code>）受众不同、内容零重叠，互补关系明确（见 <code>ws63-guide/ARCHITECTURE.md:5-7</code>）。</li>
-<li><strong>工程化完善</strong>：<code>uv.lock</code> 锁定依赖、<code>-c source</code> 配置隔离、HTML/PDF/linkcheck 三类构建、构建后拷贝 Markdown 源供机器读取，自带 CI/CD。</li>
-<li><strong>覆盖完整</strong>：9 章 + 附录覆盖系统/QSPI/Wi-Fi&amp;BLE&amp;SLE/安全/外设/JTAG，子目录拆分粒度合理。</li>
-</ul>
-<h3 id="问题-6"><a class="header" href="#问题-6">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>低</td><td>方向</td><td>与 Rust 代码架构文档（<code>docs/</code>）零重叠、受众不同；独立 Sphinx 构建链与 workspace 分离，维护面双倍</td><td><code>ws63-guide/source/conf.py:30</code>(<code>-c source</code>)、<code>ws63-guide/pyproject.toml</code>(独立工程)、<code>ws63-guide/ARCHITECTURE.md:5-7</code></td><td>暂不修（这是互补关系而非缺陷，刻意分离）</td></tr>
-<tr><td>低（方向）</td><td>范围</td><td>手册应<strong>冻结扩张、聚焦连接性</strong>：当前价值已确立，继续扩章节会分散到连接性里程碑的精力</td><td><code>ROADMAP.md:138</code>(CI/文档/SVD 持续扩张冻结)、<code>ROADMAP.md:140</code>(保留 ws63-guide 独特逆向 IP 但停止扩张)</td><td>已排期（ROADMAP “冻结/降优先级”：保留、停止扩张）</td></tr>
-<tr><td>低</td><td>文档一致性</td><td>README 技术栈列 <code>sphinx-rtd-theme</code>，实际 <code>conf.py</code> 用 <code>sphinx_book_theme</code>，记述过时</td><td><code>ws63-guide/README.md:118</code> vs <code>ws63-guide/source/conf.py:55</code></td><td>暂不修（不影响构建，留作小修；非本轮整改范围）</td></tr>
-</tbody>
-</table>
-</div>
-<p>说明：本组件无被驳回项，评审要点已对照 fbb_ws63 / esp-hal 与 file:line 验证。手册内容本身（中断模型、内存图、寄存器位）经核实与真实硅片一致，恰好是 HAL 侧若干正确性问题（中断 PLIC 误建模等）的纠偏依据。</p>
-<h2 id="改进项与排期-6"><a class="header" href="#改进项与排期-6">改进项与排期</a></h2>
-<p>本组件<strong>无本轮（阶段 0）整改项</strong>——阶段 0 的构建完整性修复（双 PAC 消除、默认 target ISA 改 <code>riscv32imc</code>、flashboot 实验化、CI/release 修复、hisi-riscv-rt MIE 宏 typo）均落在 Rust crate 侧，不涉及本手册。</p>
+<h2 id="历史评审-6"><a class="header" href="#历史评审-6">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="注记bs2x-多芯片手册bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片手册bs21bs22bs20">注记：BS2X 多芯片手册（BS21/BS22/BS20）</a></h2>
 <p>本手册专门<strong>为 WS63 编写</strong>。BS2X 系列（BS21/BS22/BS20，不同内核配置与外设集）有<strong>独立的硬件手册</strong> (<code>chips/bs2x/guide/source/</code>)，独立 Sphinx 工程、相同的逆向工艺与工程化标准：</p>
 <ul>
-<li>
-<p><strong>覆盖范围</strong>：BS2X 系统/复位/时钟/存储映射/中断系统、QSPI、BLE/SLE（无 Wi-Fi MAC，RF 由 PHY 直驱）、安全/外设/JTAG。</p>
-</li>
-<li>
-<p><strong>与 WS63 的异同</strong>：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。</p>
-</li>
-<li>
-<p><strong>维护</strong>：两份手册独立演进；冻结扩张、聚焦连接性的方针同样应用于 BS2X 手册。</p>
-</li>
-<li>
-<p><strong>冻结扩张、聚焦连接性</strong>：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上完成 scan/connect/ping）。</p>
-</li>
-<li>
-<p><strong>作为下游纠偏的事实依据</strong>：手册的中断编号表与优先级模型（<code>source/ch2_system.md:328-424</code>）已经用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（<code>ch2_system.md:162</code>）支撑链接脚本集成；RF/ABB 章节（<code>ch4_wifi/</code>）继续服务于当前 ROADMAP C1-C5 的 blob 链接与连接性。</p>
-</li>
-<li>
-<p><strong>小修（非阻断）</strong>：将 README 技术栈中的 <code>sphinx-rtd-theme</code> 更正为 <code>sphinx_book_theme</code>，与 <code>conf.py:55</code> 对齐。</p>
-</li>
+<li><strong>覆盖范围</strong>：BS2X 系统/复位/时钟/存储映射/中断系统、QSPI、BLE/SLE（无 Wi-Fi MAC，RF 由 PHY 直驱）、安全/外设/JTAG。</li>
+<li><strong>与 WS63 的异同</strong>：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。</li>
+<li><strong>维护</strong>：两份手册独立演进；冻结扩张、聚焦连接性的方针同样应用于 BS2X 手册。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="hi3322-runtime-移植预研"><a class="header" href="#hi3322-runtime-移植预研">Hi3322 runtime 移植预研</a></h1>

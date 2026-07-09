@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -182,9 +182,9 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-pac-架构与评审"><a class="header" href="#ws63-pac-架构与评审">ws63-pac 架构与评审</a></h1>
+<h1 id="ws63-pac-架构"><a class="header" href="#ws63-pac-架构">ws63-pac 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
 <p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/pac/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/pac/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
@@ -215,42 +215,10 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 <li><strong>35 外设覆盖</strong>：从 <code>sys_ctl1</code>、三路 <code>gpio0/1/2</code>、三路 <code>uart0/1/2</code>、双 <code>i2c</code>、双 <code>spi</code>、<code>dma</code>/<code>sdma</code>，到安全引擎 <code>spacc</code>/<code>pke</code>/<code>km</code>/<code>trng</code> 与时钟复位 <code>cldo_crg</code> 等全部映射（<code>src/lib.rs:31685-31754</code>）。</li>
 <li><strong>中断模型</strong>：<code>ExternalInterrupt</code> 枚举用 <code>#[riscv::pac_enum(unsafe ExternalInterruptNumber)]</code> 标注（<code>src/lib.rs:902-904</code>），中断号从 26 起（<code>TIMER_INT0 = 26</code>，<code>src/lib.rs:906</code>）。<code>rt</code> feature 下 <code>build.rs</code> 把 <code>device.x</code> 写入 <code>OUT_DIR</code> 并加入 link-search（<code>build.rs:8-18</code>），向量表用 <code>PROVIDE(... = DefaultHandler)</code> 提供弱默认（<code>device.x:1-30</code>）。</li>
 <li><strong>feature 设计</strong>：<code>default = ["critical-section"]</code>，外加 <code>rt</code>（<code>Cargo.toml:16-18</code>）。<code>take()</code> 仅在 <code>critical-section</code> 下编译（<code>src/lib.rs:31758</code>），符合 svd2rust 约定。</li>
-<li><strong>ISA 协同</strong>：<code>rt</code> feature 下 <code>build.rs</code> 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>），与本轮 ISA 修复（默认 target 切到 <code>riscv32imc</code>、产物零原子指令）一致。</li>
+<li><strong>ISA 协同</strong>：<code>rt</code> feature 下 <code>build.rs</code> 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>）；当前默认目标是官方 <code>riscv32imfc-unknown-none-elf</code>，无 A 扩展，产物不得发射 <code>lr/sc/amo</code>。</li>
 </ul>
-<h2 id="评审发现"><a class="header" href="#评审发现">评审发现</a></h2>
-<h3 id="优点"><a class="header" href="#优点">优点</a></h3>
-<ul>
-<li>svd2rust <strong>0.37.1</strong> 现代 const-fn 访问器，generic 层零开销（<code>src/lib.rs:14-51</code>）。</li>
-<li>编译快（约 6s 过编译），单文件无复杂构建依赖。</li>
-<li>工程化完备：<code>device.x</code> 中断向量、<code>critical-section</code>/<code>rt</code> feature（<code>Cargo.toml:16-18</code>）、crates.io 元数据齐全（<code>Cargo.toml:1-9</code>）。</li>
-<li>单例语义正确：<code>take()</code>/<code>steal()</code> 配合 <code>DEVICE_PERIPHERALS</code> 标志在临界区内做一次性保护（<code>src/lib.rs:31760-31775</code>）。</li>
-</ul>
-<h3 id="问题"><a class="header" href="#问题">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>中</td><td>维护性</td><td>单文件 <code>lib.rs</code> 体积约 1.8MB / 31814 行，难以审阅与定位</td><td><code>src/lib.rs</code>（1797361 字节、31814 行）</td><td>暂不修（svd2rust 生成产物，按惯例不拆分；通过 CHANGELOG + grep 定位缓解）</td></tr>
-<tr><td>高</td><td>维护性</td><td>寄存器手补进生成代码：KM keyslot 寄存器（<code>KC_REECPU_LOCK_CMD</code> 等）在生成后人工添加，下次重生成会被覆盖</td><td><code>src/lib.rs:28415</code>、<code>28569</code>；<code>CHANGELOG.md:13-21</code></td><td>已随 SVD/PAC 流水线整改：应回填到 ws63-svd 源头由生成器产出，避免手补 PAC</td></tr>
-<tr><td>中</td><td>依赖</td><td>版本曾停在 <code>0.1.0</code> 而 tag 后又追加了公开寄存器，违反 SemVer</td><td><code>Cargo.toml:3</code>、<code>CHANGELOG.md</code></td><td>已修：bump <code>0.1.0</code> →（经 0.1.1/0.1.2）现 <code>0.1.3</code>，由 ws63-pac 自有仓库流水线发布</td></tr>
-<tr><td>中</td><td>依赖</td><td>曾被 <code>hisi-riscv-hal</code> 以 git 依赖引入，导致工作区出现双 PAC 实例</td><td><code>crates/hisi-riscv-hal/Cargo.toml:12</code>、<code>Cargo.toml:45-51</code></td><td>本轮已修：改 registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地，<code>cargo tree</code> 仅单一 <code>ws63-pac</code> 实例</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期"><a class="header" href="#改进项与排期">改进项与排期</a></h2>
-<p>2026-05-31 构建完整性整改中，与本 crate 直接相关：</p>
-<ul>
-<li><strong>双 PAC 消除</strong>：<code>hisi-riscv-hal</code>/<code>ws63-flashboot</code> 改为 registry 版本依赖，根 <code>Cargo.toml</code> 用 <code>[patch.crates-io]</code> 统一指向本地（<code>Cargo.toml:50-51</code>），全工作区单实例。</li>
-<li><strong>版本对齐</strong>：<code>0.1.x</code> 后随 SPI_WSR / TIMER 修复发布到 <strong><code>0.2.0</code></strong>；下游 HAL/RT 通过 registry 版本依赖消费，父仓开发用 <code>[patch.crates-io]</code> 指向本地 submodule。</li>
-<li><strong>ISA 协同</strong>：<code>rt</code> feature 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>），配合默认 target = builtin、无原子的 <strong><code>riscv32imfc-unknown-none-elf</code></strong>（硬件单精度浮点 ilp32f，原子由 portable-atomic critical-section polyfill 提供）。</li>
-</ul>
-<p>仍需后续处理（指向 ROADMAP 对应阶段）：</p>
-<ul>
-<li><strong>手补寄存器回源</strong>：把 KM keyslot 等人工添加的寄存器回填到 <code>ws63-svd</code>，使其由 svd2rust 重生成产出，消除“生成产物被手改“的维护风险；同一轮整改也补齐了 efuse / lsadc 等外设寄存器的正确性。</li>
-<li><strong>单文件体积</strong>：作为生成产物，按 svd2rust 惯例暂不拆分；若后续 SVD 重构，可评估按外设分模块生成。</li>
-</ul>
+<h2 id="历史评审"><a class="header" href="#历史评审">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 
                     </main>
 

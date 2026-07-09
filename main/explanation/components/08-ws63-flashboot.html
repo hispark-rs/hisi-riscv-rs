@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -182,9 +182,9 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="ws63-flashboot-架构与评审"><a class="header" href="#ws63-flashboot-架构与评审">ws63-flashboot 架构与评审</a></h1>
+<h1 id="ws63-flashboot-架构"><a class="header" href="#ws63-flashboot-架构">ws63-flashboot 架构</a></h1>
 <blockquote>
-<p>本文是 ws63-rs 架构文档的一部分。完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
 <p><code>ws63-flashboot</code> 是一个<strong>实验性 / 学习用途</strong>的 Rust 二级引导（second-stage bootloader），对标 fbb_ws63 原厂 <code>flashboot_ws63/startup/main.c</code>。它本轮（2026-05-31）已被明确标注为<strong>实验性、非安全启动、不可用于生产</strong>（<code>src/main.rs:1-22</code>、<code>README.md:3</code>、<code>Cargo.toml:5</code>）。当前专为 <strong>WS63 设计</strong>；BS2X 系列（BS21/BS22/BS20）的引导加载另行开发（见下），复用原厂 flashboot 是生产推荐。</p>
@@ -227,42 +227,8 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <li><strong>跳转</strong>：清 <code>mie</code>、喂狗后将 <code>addr + 0x300</code> <code>transmute</code> 为 <code>extern "C" fn() -&gt; !</code> 并调用（<code>src/main.rs:159-166</code>），SAFETY 注释声明 app 入口同 ABI（RV32IMFC ilp32f）。</li>
 <li><strong>本轮构建完整性修复（针对该 crate）</strong>：banner 重写为“非安全启动“警告（<code>src/main.rs:1-22</code>）、<code>publish = false</code>（<code>Cargo.toml:11</code>）、移出 <code>default-members</code>、删除未用的 <code>ws63-pac</code> 依赖、新增 <code>README.md</code>。</li>
 </ul>
-<h2 id="评审发现"><a class="header" href="#评审发现">评审发现</a></h2>
-<blockquote>
-<p>已对照 fbb_ws63 与 esp-hal、按 file:line 验证，0 条被驳回。</p>
-</blockquote>
-<h3 id="优点"><a class="header" href="#优点">优点</a></h3>
-<ul>
-<li>SHA256 软件实现正确，常量与填充无误，含已知向量单测（<code>src/sha256.rs:14-141</code>、<code>:148-175</code>）。</li>
-<li><code>startup.S</code> 对照原厂 <code>riscv_init.S</code>，PMP/FPU/BSS/boot flag 处理到位（<code>asm/startup.S</code>）。</li>
-<li>关键地址（SFC/UART/WDT/FAMA/efuse 寄存器、<code>FLASHBOOT_RAM</code> 语义）与镜像头 magic/版本对照 SDK 一致；整改后镜像头布局对齐 <code>secure_verify_boot.h</code>。</li>
-<li>镜像头边界校验有较完整的拒绝/接受边界单测（<code>src/image.rs:52-135</code>）。</li>
-<li>本轮已正确自我定级为实验性：banner、<code>publish=false</code>、移出默认构建、README 说明（<code>src/main.rs:1-22</code>、<code>Cargo.toml:11</code>、<code>README.md</code>）。</li>
-</ul>
-<h3 id="问题"><a class="header" href="#问题">问题</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>严重度</th><th>类别</th><th>问题</th><th>证据(file:line)</th><th>状态</th></tr>
-</thead>
-<tbody>
-<tr><td>严重</td><td>安全</td><td>无真实性验签：只把算出的哈希与<strong>同一份未签名头里的</strong>哈希比对。能写 flash 的攻击者改镜像后重算 SHA256 写回头部即可以 M 态特权跳进任意代码，≠ secure boot（原厂用 efuse 根密钥 ECC-bp256/SM2 签名验签）</td><td><code>src/main.rs</code>、<code>verify_image_integrity()</code>；对照 vendor <code>secure_verify_boot.c</code></td><td>✅ 已如实标注(2026-06-01)：函数改名 <code>verify_image_integrity</code>、文档明确“仅完整性、非真实性“；真实 ECC/SM2 验签属 ROADMAP 冻结项（复用原厂，不在本实验件投入）</td></tr>
-<tr><td>严重</td><td>正确性</td><td><code>ImageHeader</code>/<code>CodeInfo</code> 布局对不上真实 WS63 镜像：<code>image_length</code>(+0x114)/<code>image_hash</code>(+0x11C) 偏移读错 → 会拒绝真镜像</td><td><code>src/sfc.rs</code>；对照 vendor <code>secure_verify_boot.h:156-178</code></td><td>✅ 已修(2026-06-01)：<code>sfc.rs</code> <code>KeyArea</code>/<code>CodeInfo</code> 按 <code>image_key_area_t</code>/<code>image_code_info_t</code>(ECC256) 逐字段重排，<code>code_area_len</code>@+0x24、<code>code_area_hash</code>@+0x28，<code>const</code> 断言锁定 0x100/0x200/0x300；评审(layout) ok</td></tr>
-<tr><td>高</td><td>正确性</td><td>A/B 误用 <code>0x4000_0024</code>：该寄存器是 flashboot <strong>自身的备份恢复标志</strong>，并非 app 槽选择器。代码却用它选 app 区 A/B</td><td><code>src/main.rs</code>；对照 vendor <code>main.c:131-135</code>（<code>flashboot_need_recovery</code>）</td><td>✅ 已修(2026-06-01)：删除该误用，改单镜像启动 + 如实注明真实 A/B = upg run-region(magic <code>0x70746C6C</code>)+分区表(<code>@0x200380</code>)、<code>0x40000024</code>=bootloader 自恢复</td></tr>
-<tr><td>高</td><td>方向</td><td>重写原厂安全关键件（验签/启动链）属误导努力。生产应复用原厂 flashboot，本 crate 仅供学习</td><td><code>src/main.rs:5-8</code>、<code>README.md:22-26</code></td><td>暂不修(定级实验性；定位为学习件，整体方向走复用原厂)</td></tr>
-<tr><td>高</td><td>正确性</td><td>关键子流程是桩：<code>boot_clock_adapt()</code> 为 TODO 空操作；<code>read_partition_app_addr()</code> 恒返回 <code>FLASH_START</code>；<code>check_upgrade_mode()</code> 恒 false</td><td><code>src/main.rs</code></td><td>🟡 部分(2026-06-01)：<code>read_partition_app_addr()</code> 改为<strong>如实标注</strong>的桩（注明不解析分区表、真实查表在 <code>@0x200380</code> magic <code>0x4b87a54b</code>）；<code>boot_clock_adapt</code>/<code>check_upgrade_mode</code> 仍为桩（实验定位，生产复用原厂）</td></tr>
-<tr><td>中</td><td>维护性</td><td>重复造轮子：UART/SFC/SHA256/startup 与 <code>hisi-riscv-hal</code>/<code>hisi-riscv-rt</code> 重复（因刻意不依赖 PAC/HAL）</td><td><code>src/uart.rs</code>、<code>src/sfc.rs</code>、<code>src/sha256.rs</code>、<code>asm/startup.S</code>、<code>Cargo.toml:17-19</code></td><td>暂不修(为保持独立、规避双份 PAC 链接冲突的有意取舍)</td></tr>
-<tr><td>中</td><td>工程化</td><td>删除未用的 <code>ws63-pac</code> 依赖、<code>publish=false</code>、移出默认构建、banner 改为实验性警告</td><td><code>Cargo.toml:11,17-19</code>、根 <code>Cargo.toml</code> <code>default-members</code>、<code>src/main.rs:1-22</code></td><td>本轮已修</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="改进项与排期"><a class="header" href="#改进项与排期">改进项与排期</a></h2>
-<ul>
-<li>生产层面的结论是<strong>复用 fbb_ws63 原厂 flashboot</strong>（已做签名验签 / A/B / 升级 / 解压 / flash 加密），Rust 应用以 app 镜像形式由原厂 flashboot 加载（<code>README.md:22-26</code>）。本 crate 维持实验/学习定位。</li>
-<li><strong>整改已落地（2026-06-01）</strong>：镜像头布局对齐 <code>secure_verify_boot.h</code>（<code>code_area_len</code>/<code>code_area_hash</code> 偏移修正 + const 尺寸断言）、删除 <code>0x40000024</code> 的 A/B 误用改单镜像启动并如实注明真实 A/B 机制、<code>verify_sha256</code>→<code>verify_image_integrity</code> 如实标注“仅完整性非真实性“、<code>read_partition_app_addr</code> 桩如实标注。flashboot 现已纳入 CI clippy 门禁（不再 <code>--exclude</code>）。<strong>真实 ECC/SM2 验签</strong>仍按冻结项复用原厂、不在本实验件投入。</li>
-<li>阶段 0 的构建完整性修复已落地：双份 PAC 消除（registry 版本依赖 + 根 <code>[patch.crates-io]</code> 指向本地）、无原子 ISA + <code>portable-atomic</code> critical-section polyfill（默认 target 为官方 rustc builtin 的 <code>riscv32imfc-unknown-none-elf</code>，当前用 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code> 构建；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）、CI/release gating 与发布顺序修复、<code>hisi-riscv-rt</code> MIE 中断宏 typo 与栈顶符号 GC fallback 修复。</li>
-<li>历史整改中的示例链接、中断模型、SPI/I2C 超时、system reset、GPIO pull、死代码清理和 async 底座均已收口；连接性仍按当前 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP C1-C5</a> 推进。旧阶段编号保存在 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/archive/roadmap-2026-05-2026-07-remediation.md">归档 roadmap</a>。</li>
-</ul>
+<h2 id="历史评审"><a class="header" href="#历史评审">历史评审</a></h2>
+<p>本文只保留当前架构解释。2026-05 的逐项评审快照已归档到 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>，当前优先级以根目录 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 和对应 reference 页面为准。</p>
 <h2 id="注记bs2x-引导加载bs21bs22bs20"><a class="header" href="#注记bs2x-引导加载bs21bs22bs20">注记：BS2X 引导加载（BS21/BS22/BS20）</a></h2>
 <p>WS63-flashboot 当前<strong>专为 WS63 SoC 实现</strong>。BS2X 系列（BS21/BS22/BS20）作为独立芯片系列，有自己的：</p>
 <ul>

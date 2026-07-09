@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -203,7 +203,7 @@
 <p>WS63 是 <code>riscv32imfc</code>(<strong>无 A 扩展</strong>,<code>lr.w/sc.w</code> 会陷入)。</p>
 <ul>
 <li>hisi-riscv-hal 一直用 <code>portable-atomic</code>(开 <code>critical-section</code> feature)做 CAS 垫片;<code>hisi-riscv-rt</code> 提供 <code>riscv/critical-section-single-hart</code> 实现。</li>
-<li><strong>embassy-executor 在无 CAS 目标上也能跑</strong>(thumbv6m / riscv32imc 同理):它内部按编译期 cfg 在 <code>core::sync::atomic</code> 与 <code>portable_atomic</code> 间切换,riscv 平台模块的 <code>SIGNAL_WORK</code> 只用 load/store(WS63 支持)。所以<strong>无需改 embassy</strong>。</li>
+<li><strong>embassy-executor 在无 CAS 目标上也能跑</strong>（thumbv6m / 无 A 扩展 RISC-V 目标同理）：它内部按编译期 cfg 在 <code>core::sync::atomic</code> 与 <code>portable_atomic</code> 间切换，riscv 平台模块的 <code>SIGNAL_WORK</code> 只用 load/store（WS63 支持）。所以<strong>无需改 embassy</strong>。</li>
 <li>一个真实踩过的坑:<code>target/</code> 里<strong>陈旧的 host proc-macro 工件</strong>(syn/quote 来自旧 rustc)会让 embassy 宏构建莫名失败 → <code>cargo clean</code> 后全量通过。</li>
 </ul>
 <h2 id="embassy-time-drivercrateshisi-riscv-halsrcembassyrs-unstable"><a class="header" href="#embassy-time-drivercrateshisi-riscv-halsrcembassyrs-unstable">embassy-time <code>Driver</code>(<code>crates/hisi-riscv-hal/src/embassy.rs</code>, <code>unstable</code>)</a></h2>

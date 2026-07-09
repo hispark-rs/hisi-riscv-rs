@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
+            window.path_to_searchindex_js = "../../searchindex-7a9b4d6c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -185,7 +185,7 @@
 <h1 id="ws63-rs-总体架构"><a class="header" href="#ws63-rs-总体架构">ws63-rs 总体架构</a></h1>
 <blockquote>
 <p>这是 ws63-rs 的 <strong>Rust 代码架构</strong>文档（与硬件手册 <a href="https://github.com/hispark-rs/ws63-guide"><code>ws63-guide</code></a> 互补：手册讲芯片，本文讲代码）。
-完整评审台账见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a>，整改排期见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+历史评审快照见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/architecture-review-2026-05.md">架构评审 2026-05</a> 和 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/review/component-review-snapshots-2026-05.md">组件评审快照</a>；当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="这是什么"><a class="header" href="#这是什么">这是什么</a></h2>
 <p>ws63-rs 是面向 HiSilicon <strong>WS63 + BS2X</strong>（BS21/BS20/BS22）RISC-V SoC 族的 Rust 嵌入式生态。WS63 覆盖 Wi-Fi 6 / BLE / SLE/星闪，BS2X 覆盖 BLE/SLE（M1/M2）。
@@ -239,12 +239,12 @@
 </tbody>
 </table>
 </div>
-<h2 id="核心设计模式"><a class="header" href="#核心设计模式">核心设计模式</a></h2>
 <h2 id="调试支持"><a class="header" href="#调试支持">调试支持</a></h2>
 <ul>
-<li>
-<p><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="../../reference/10-stable-api.html">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</p>
-</li>
+<li><strong>probe-rs</strong>：fork <a href="https://github.com/hispark-rs/probe-rs"><code>hispark-rs/probe-rs</code></a> 分支 <code>add-hisilicon-ws63-bs21-hil-baseline</code>，实现 RISC-V Debug Module + HiSilicon 厂商 DebugSequence（mem-AP DTM）+ flash-algorithm crate。已用于 WS63 真机 HIL；证据基线见 <a href="../../reference/10-stable-api.html">Stable API 清单</a>。用法：<code>probe-rs run --chip ws63 &lt;bin&gt;</code> 进行实时调试与 on-silicon 烧录。</li>
+</ul>
+<h2 id="核心设计模式"><a class="header" href="#核心设计模式">核心设计模式</a></h2>
+<ul>
 <li>
 <p><strong>外设单例 + <code>'d</code> 生命周期</strong>：<code>Peripherals::take()</code>（PAC 单例，critical-section 保护）分发 <code>'d</code> 参数化的 ZST 外设令牌；
 驱动经构造器消费令牌，借生命周期防 use-after-drop。</p>
@@ -281,7 +281,7 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 <li>WS63 核<strong>无原子（A）扩展</strong>：该 target 用 forced-atomics + no-CAS，原子 load/store 降为 ld/st、
 RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不发 <code>lr/sc/amo</code></strong>。原默认 <code>riscv32imafc</code>
 会发原子指令、在硅片上触发非法指令陷阱，已弃用。</li>
-<li>历史：2026-05-31 阶段 0 曾先用 builtin <code>riscv32imc</code>（软浮点、stable、免 build-std）做过渡；
+<li>历史：2026-05-31 曾先用 builtin <code>riscv32imc</code>（软浮点、stable、免 build-std）做过渡；
 随后切到 <code>ws63</code> 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为后续 vendor blob 链接做准备）。</li>
 </ul>
 </li>
@@ -300,7 +300,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
-<h2 id="已知的全局性问题详见评审台账"><a class="header" href="#已知的全局性问题详见评审台账">已知的全局性问题（详见评审台账）</a></h2>
+<h2 id="当前风险边界"><a class="header" href="#当前风险边界">当前风险边界</a></h2>
 <ol>
 <li><strong>连接性状态</strong>：
 <ul>
@@ -314,27 +314,17 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <a href="../07-hil-framework.html">HIL 测试框架</a> 和 <a href="../../reference/02-examples.html">示例目录与验证标记串</a> 分轨推进。</li>
 <li><strong>正确性修复状态</strong>：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 <a href="../../reference/10-stable-api.html">Stable API 清单</a> 为准。</li>
 </ol>
-<h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>
 <ul>
-<li>
-<p><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</p>
-</li>
-<li>
-<p><strong>HAL 多芯片</strong>：<code>hisi-riscv-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</p>
-</li>
-<li>
-<p><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</p>
-</li>
-<li>
-<p><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</p>
-</li>
-<li>
-<p><strong>fbb_ws63</strong>（<code>/root/fbb_ws63</code>）：官方 C SDK，寄存器/外设行为的真值来源。</p>
-</li>
-<li>
-<p><strong>esp-hal</strong>（<code>/root/esp-hal</code>）：成熟 Rust HAL 参照（esp-radio/esp-rtos/embassy/众多示例）——WS63 的连接性轨迹可对标。</p>
-</li>
+<li><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
+<li><strong>HAL 多芯片</strong>：<code>hisi-riscv-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</li>
+<li><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</li>
+<li><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</li>
+</ul>
+<h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
+<ul>
+<li><strong>fbb_ws63</strong>（<code>/root/fbb_ws63</code>）：官方 C SDK，寄存器/外设行为的真值来源。</li>
+<li><strong>esp-hal</strong>（<code>/root/esp-hal</code>）：成熟 Rust HAL 参照（esp-radio/esp-rtos/embassy/众多示例）——WS63 的连接性轨迹可对标。</li>
 </ul>
 
                     </main>
