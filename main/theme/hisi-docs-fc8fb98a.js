@@ -105,14 +105,41 @@
     window.location.href = `${base}/${page}?chip=${encodeURIComponent(chip)}`;
   }
 
+  function controlRoots() {
+    const existing = Array.from(document.querySelectorAll("[data-hisi-docs-controls]"));
+    if (existing.length > 0) {
+      return existing;
+    }
+
+    const rightButtons = document.querySelector("#mdbook-menu-bar .right-buttons");
+    const root = document.createElement("div");
+    root.className = "hisi-docs-controls hisi-docs-toolbar";
+    root.setAttribute("data-hisi-docs-controls", "");
+    if (rightButtons) {
+      rightButtons.prepend(root);
+      return [root];
+    }
+
+    const main = document.querySelector("#mdbook-content main");
+    if (main) {
+      root.className = "hisi-docs-controls";
+      main.prepend(root);
+      return [root];
+    }
+    return [];
+  }
+
   function renderControls() {
-    document.querySelectorAll("[data-hisi-docs-controls]").forEach((root) => {
+    controlRoots().forEach((root) => {
       root.innerHTML = "";
 
       const chipLabel = document.createElement("label");
       chipLabel.className = "hisi-docs-control";
-      chipLabel.textContent = "Chip";
+      const chipText = document.createElement("span");
+      chipText.className = "hisi-docs-label";
+      chipText.textContent = "Chip";
       const chipSelect = document.createElement("select");
+      chipSelect.setAttribute("aria-label", "Chip");
       selectable.forEach((chip) => {
         const option = document.createElement("option");
         option.value = chip;
@@ -124,12 +151,15 @@
         localStorage.setItem("hisi-docs-chip", chipSelect.value);
         applyChip(chipSelect.value);
       });
-      chipLabel.appendChild(chipSelect);
+      chipLabel.append(chipText, chipSelect);
 
       const versionLabel = document.createElement("label");
       versionLabel.className = "hisi-docs-control";
-      versionLabel.textContent = "Version";
+      const versionText = document.createElement("span");
+      versionText.className = "hisi-docs-label";
+      versionText.textContent = "Version";
       const versionSelect = document.createElement("select");
+      versionSelect.setAttribute("aria-label", "Version");
       versionList.forEach((version) => {
         const option = document.createElement("option");
         option.value = version.id;
@@ -138,7 +168,7 @@
       });
       versionSelect.value = currentVersion();
       versionSelect.addEventListener("change", () => switchVersion(versionSelect.value));
-      versionLabel.appendChild(versionSelect);
+      versionLabel.append(versionText, versionSelect);
 
       const note = document.createElement("span");
       note.className = "hisi-docs-chip-note";
