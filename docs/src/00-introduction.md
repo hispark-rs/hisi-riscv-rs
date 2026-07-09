@@ -4,6 +4,12 @@
 **{{#chip-field display_name}}**；它的文档状态是 {{#chip-field status}}，HIL 状态是
 {{#chip-field hil}}。
 
+> **文档状态提示**：本生态仍在持续迭代，手册、模板和脚本可能短暂漂移。遇到不一致时，请优先以当前
+> [GitHub Actions](https://github.com/hispark-rs/hisi-riscv-rs/actions)、版本化
+> rustdoc、HIL/教程契约脚本的最新通过结果为准；也欢迎在
+> [hispark-rs/hisi-riscv-rs issues](https://github.com/hispark-rs/hisi-riscv-rs/issues)
+> 报告文档中过时、缺失或无法复现的内容。
+
 整套生态包含：
 
 - **`hisi-riscv-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
