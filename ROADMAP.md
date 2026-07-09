@@ -14,6 +14,8 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 **Not a near-term target:** BSP/board-manager, BS2X BLE/SLE real-board connectivity, Hi3322 runtime implementation, DMA stable graduation, and embassy stable graduation. These are deferred until they serve the connectivity path or have hardware evidence.
 
+**Current plans live in:** [HAL 0.6.0 release plan](docs/plan/hal-0.6.0-release.md) and [WS63 RF init+scan plan](docs/plan/ws63-rf-init-scan.md).
+
 **Current facts live in:** [Stable API 清单](docs/src/reference/10-stable-api.md), [`ws63-rf-rs` README](chips/ws63/rf/README.md), [ws63-RF 组件文档](docs/src/explanation/components/09-ws63-rf.md), and the archived [2026-05 to 2026-07 remediation roadmap](docs/archive/roadmap-2026-05-2026-07-remediation.md).
 
 ## Connectivity Milestones
@@ -31,6 +33,10 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 ## Maintenance Tracks
 
 **HAL 0.6.0 stabilization:** fix stable API blockers only. Keep the default stable surface scoped to HIL-proven WS63 APIs. DMA, embassy, BS2X, and unproven helper surfaces stay behind `unstable` until their invariants and HIL evidence are closed.
+
+The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](docs/plan/hal-0.6.0-release.md). RF/Connectivity may drive HAL bug fixes, but does not block HAL 0.6.0 unless it exposes a bug in an already-stable HAL API.
+
+The detailed RF execution plan is tracked in [docs/plan/ws63-rf-init-scan.md](docs/plan/ws63-rf-init-scan.md). The first RF MVP is real-silicon Wi-Fi init + scan; connect/ping remain later connectivity milestones.
 
 **Probe, fwpkg, and toolchain:** make only the changes required to keep connectivity work reproducible. `hisi-fwpkg` remains the image-format fact source; probe-rs should stay a generic transport/debug path and avoid HiSilicon image-format parsing.
 
