@@ -11,9 +11,7 @@
 后面所有步骤都依赖 `rustup` / `cargo`。如果你机器上还没有，按 Rust 官方指引装一下
 （一条命令、跨平台）：
 
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+{{#tutorial-snippet app_setup_rustup}}
 
 > 官方安装页（含 Windows / 其它方式）：<https://www.rust-lang.org/tools/install>。
 > 装完确认：`rustup --version` 和 `cargo --version` 都能打印版本即可。
@@ -25,12 +23,7 @@ WS63 应用核是 `riscv32imfc-unknown-none-elf`（硬件单精度浮点、无�
 
 下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），**直接解压进 rustup 的 toolchains 目录**——rustup 会自动识别，无需 `link`：
 
-```bash
-HOST=x86_64-unknown-linux-gnu
-curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-$HOST.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
-```
+{{#tutorial-snippet app_setup_toolchain}}
 
 > tarball 顶层是 `stage2/`，`--strip-components=1` 把它剥掉，让 `bin/lib/libexec`
 > 落到 `hisi-riscv/` 根下。这样工具链自包含，删掉下载的临时文件也不影响。
@@ -40,9 +33,7 @@ tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/to
 
 确认链接成功：
 
-```bash
-rustup toolchain list | grep hisi-riscv
-```
+{{#tutorial-snippet app_setup_check_toolchain}}
 
 你应当看到：
 
@@ -54,17 +45,13 @@ hisi-riscv
 
 下一课用 `cargo generate` 从模板生成工程；生成出来的工程用 `just` 跑各种命令：
 
-```bash
-cargo install cargo-generate just
-```
+{{#tutorial-snippet install_cargo_generate_just}}
 
 ## 第 3 步：安装打包工具 hisi-fwpkg（烧真机用）
 
 烧到真板时，flashboot 期望一个带 `0x300` 启动头的应用镜像，`hisi-fwpkg` 负责打包：
 
-```bash
-cargo +stable install hisi-fwpkg-cli --version 0.3.0
-```
+{{#tutorial-snippet install_hisi_fwpkg}}
 
 > 也可以克隆 [github.com/hispark-rs/hisi-fwpkg](https://github.com/hispark-rs/hisi-fwpkg)
 > 自行构建。确认就位：`hisi-fwpkg --help`。
@@ -74,10 +61,7 @@ cargo +stable install hisi-fwpkg-cli --version 0.3.0
 上游 probe-rs 不认识 WS63，必须用打过补丁的分支，并配上它自带的
 `HiSilicon_WS63.yaml` 芯片描述文件：
 
-```bash
-cargo install --git https://github.com/hispark-rs/probe-rs \
-    --branch add-hisilicon-ws63-bs21 probe-rs-tools
-```
+{{#tutorial-snippet install_probe_rs}}
 
 确认就位：`probe-rs --version`。深入说明见
 [用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)。
@@ -89,24 +73,17 @@ cargo install --git https://github.com/hispark-rs/probe-rs \
 想用 `just run` 在模拟器里跑，需要 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu)——
 一个带 `-M ws63` 机器模型的 QEMU 分支。克隆并构建，把它的 `qemu-system-riscv32` 放进 `PATH`：
 
-```bash
-git clone https://github.com/hispark-rs/hisi-riscv-qemu && cd hisi-riscv-qemu
-./scripts/build.sh
-```
+{{#tutorial-snippet app_setup_qemu}}
 
 确认 `ws63` 机器可用：
 
-```bash
-qemu-system-riscv32 -M help | grep ws63
-```
+{{#tutorial-snippet app_setup_check_qemu}}
 
 ## 第 6 步：验证工具链
 
 `hisi-riscv` 工具链内建了 WS63 目标，确认它在目标列表里：
 
-```bash
-rustc +hisi-riscv --print target-list | grep riscv32imfc
-```
+{{#tutorial-snippet app_setup_check_target}}
 
 你应当看到：
 

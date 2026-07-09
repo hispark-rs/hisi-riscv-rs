@@ -5,6 +5,9 @@ authors = ["hispark-rs"]
 language = "zh"
 src = "src"
 
+[preprocessor.tutorial-snippets]
+command = "python3 ../scripts/mdbook-tutorial-snippets.py"
+
 [output.html]
 default-theme = "rust"
 preferred-dark-theme = "navy"

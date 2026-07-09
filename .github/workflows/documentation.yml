@@ -83,6 +83,9 @@ jobs:
       - name: Check happy-path documentation drift
         run: python3 scripts/check-happy-path-docs.py
 
+      - name: Check tutorial snippet contracts
+        run: python3 scripts/check-tutorial-snippets.py
+
   # ── Executable happy path (no hardware) ───────────────────────
   happy-path:
     name: Happy Path Smoke (no hardware)
@@ -100,8 +103,8 @@ jobs:
           cargo +stable install cargo-generate just
           cargo +stable install hisi-fwpkg-cli --version 0.3.0
 
-      - name: Run happy-path smoke
-        run: scripts/happy-path-smoke.sh --no-hardware
+      - name: Run tutorial contracts
+        run: scripts/tutorial-contracts.sh --no-hardware
 
   # ── Build API docs ────────────────────────────────────────────
   docs:

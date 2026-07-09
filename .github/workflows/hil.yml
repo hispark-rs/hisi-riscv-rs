@@ -27,7 +27,7 @@ on:
         options: [ws63]
         default: ws63
       example:
-        description: Single example (blank = full smoke suite)
+        description: Single example (blank = tutorial HIL smoke suite via hil/hil-smoke.sh)
         type: string
         default: ""
   # schedule:
@@ -61,7 +61,12 @@ jobs:
           ADDRESS: ${{ vars.HIL_ADDRESS }}
         run: bash .agents/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
 
-      - name: HIL smoke
+      - name: Check tutorial HIL contract
+        run: |
+          test -x hil/hil-smoke.sh
+          python3 scripts/check-tutorial-snippets.py
+
+      - name: Tutorial HIL smoke / single example
         env:
           METHOD: hisiflash
           PORT: ${{ vars.HIL_PORT }}

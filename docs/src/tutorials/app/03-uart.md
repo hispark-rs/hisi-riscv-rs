@@ -10,9 +10,7 @@
 
 再跑一次 `cargo generate`，这次 **Starter app** 选 `uart_hello`：
 
-```bash
-cargo generate --git https://github.com/hispark-rs/hisi-rs-template
-```
+{{#tutorial-snippet app_uart_generate}}
 
 - 项目名：比如 `my-uart`。
 - **Target chip**：`ws63`（默认）。
@@ -21,15 +19,11 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 
 进入工程目录：
 
-```bash
-cd my-uart
-```
+{{#tutorial-snippet app_uart_cd}}
 
 ## 第 2 步：在 QEMU 里运行
 
-```bash
-just run
-```
+{{#tutorial-snippet app_uart_run}}
 
 `-nographic` 会把 UART0 接到你的终端。
 

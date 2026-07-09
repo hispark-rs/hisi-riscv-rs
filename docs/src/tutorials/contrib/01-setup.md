@@ -11,9 +11,7 @@
 下面的工具链 link、子模块克隆、编译都依赖 `rustup` / `cargo`。如果还没装，按 Rust 官方
 指引装一下（一条命令、跨平台）：
 
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+{{#tutorial-snippet contrib_setup_rustup}}
 
 > 官方安装页（含 Windows / 其它方式）：<https://www.rust-lang.org/tools/install>。
 > 装完确认：`rustup --version` 和 `cargo --version` 都能打印版本即可。
@@ -25,20 +23,14 @@ WS63 应用核是 `riscv32imfc-unknown-none-elf`（硬件单精度浮点、无�
 
 下载与你主机匹配的压缩包（这里以 x86_64 Linux 为例），**直接解压进 rustup 的 toolchains 目录**——rustup 会自动识别，无需 `link`：
 
-```bash
-curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
-mkdir -p ~/.rustup/toolchains/hisi-riscv
-tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
-```
+{{#tutorial-snippet contrib_setup_toolchain}}
 
 > tarball 顶层是 `stage2/`，`--strip-components=1` 把它剥掉，让 `bin/lib/libexec`
 > 落到 `hisi-riscv/` 根下；工具链自包含，删掉下载的临时文件也不影响。
 
 确认链接成功：
 
-```bash
-rustup toolchain list | grep hisi-riscv
-```
+{{#tutorial-snippet contrib_setup_check_toolchain}}
 
 你应当看到：
 
@@ -50,10 +42,7 @@ hisi-riscv
 
 示例、HAL、PAC、运行时都是子模块，务必带 `--recurse-submodules` 克隆：
 
-```bash
-git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs.git
-cd hisi-riscv-rs
-```
+{{#tutorial-snippet contrib_clone_repo}}
 
 > 如果你已经克隆但忘了子模块，补一句：`git submodule update --init --recursive`。
 
@@ -65,18 +54,11 @@ cd hisi-riscv-rs
 第 2、3 课要用 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu)——
 一个带 WS63 机器模型（`-M ws63`）的 QEMU 分支。在仓库**同级**目录里克隆并构建它：
 
-```bash
-cd ..
-git clone https://github.com/hispark-rs/hisi-riscv-qemu.git
-cd hisi-riscv-qemu
-bash scripts/build.sh
-```
+{{#tutorial-snippet contrib_setup_qemu}}
 
 构建完成后，确认 `qemu-system-riscv32` 可用并支持 `ws63` 机器：
 
-```bash
-./build/qemu-system-riscv32 -M help | grep ws63
-```
+{{#tutorial-snippet contrib_setup_check_qemu}}
 
 你应当看到 `ws63` 出现在机器列表中。把这个二进制加入 `PATH`，
 或记下它的路径——第 2 课会用到。详细步骤见
@@ -93,20 +75,11 @@ bash scripts/build.sh
 安装方法（深入说明见 [安装工具链](../../how-to/01-install-toolchain.md) 与
 [用 probe-rs 烧录到真机](../../how-to/04-flash-probe-rs.md)）：
 
-```bash
-# hisi-fwpkg
-cargo +stable install hisi-fwpkg-cli --version 0.3.0
-
-# 打过补丁的 probe-rs 分支
-cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools
-```
+{{#tutorial-snippet contrib_install_flash_tools}}
 
 确认两者就位：
 
-```bash
-hisi-fwpkg --help
-probe-rs --version
-```
+{{#tutorial-snippet contrib_check_flash_tools}}
 
 > 第 2 课只用 QEMU，可以暂时跳过本步；等到第 3 课要烧真机时再装也行。
 
@@ -114,10 +87,7 @@ probe-rs --version
 
 回到仓库根目录，编译 blinky 示例——这是检验工具链是否就绪的最快办法：
 
-```bash
-cd ../hisi-riscv-rs
-cargo build -p blinky --release
-```
+{{#tutorial-snippet contrib_build_blinky}}
 
 第一次编译会拉取依赖、编译 HAL，需要几分钟。结束时你应当看到类似：
 
@@ -127,9 +97,7 @@ cargo build -p blinky --release
 
 产物在这里：
 
-```bash
-ls target/riscv32imfc-unknown-none-elf/release/blinky
-```
+{{#tutorial-snippet contrib_ls_blinky}}
 
 看到这个文件，就说明工具链、目标、仓库都配好了。
 

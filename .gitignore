@@ -11,3 +11,6 @@
 
 # mdBook generated output
 docs/book/
+
+# Python cache
+__pycache__/

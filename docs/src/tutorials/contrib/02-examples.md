@@ -10,11 +10,7 @@ semihost_selftest（半主机退出码）。每一步都有可见结果。
 示例都是**根工作区的成员**，所以一律从仓库根目录用 `-p <name>` 构建，再用同一条
 命令模板运行：
 
-```bash
-cargo build -p <name> --release
-qemu-system-riscv32 -M ws63 -nographic -bios none \
-    -kernel target/riscv32imfc-unknown-none-elf/release/<name>
-```
+{{#tutorial-snippet contrib_example_template}}
 
 - `-M ws63`：WS63 机器模型。
 - `-nographic`：无图形界面，把 UART0 接到当前终端。
@@ -25,11 +21,7 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
 
 ## 第 1 步：blinky（GPIO 翻转，无串口）
 
-```bash
-cargo build -p blinky --release
-qemu-system-riscv32 -M ws63 -nographic -bios none \
-    -kernel target/riscv32imfc-unknown-none-elf/release/blinky
-```
+{{#tutorial-snippet contrib_run_blinky}}
 
 blinky 把 **GPIO0** 配成推挽输出，死循环里拉高、延时、拉低、延时。它**没有串口输出**，
 所以控制台不会打印东西——这是预期的：程序在安静地翻转引脚（机器 trace 里能看到 GPIO0
@@ -39,11 +31,7 @@ blinky 把 **GPIO0** 配成推挽输出，死循环里拉高、延时、拉低�
 
 ## 第 2 步：uart_hello（串口 banner）
 
-```bash
-cargo build -p uart_hello --release
-qemu-system-riscv32 -M ws63 -nographic -bios none \
-    -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
-```
+{{#tutorial-snippet contrib_run_uart_hello}}
 
 `uart_hello` 为 QEMU 设计：它故意不初始化时钟，只碰 UART0 寄存器（`0x4401_0000`）。
 控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：
@@ -62,11 +50,7 @@ tick 2
 
 ## 第 3 步：timer_irq（定时器中断）
 
-```bash
-cargo build -p timer_irq --release
-qemu-system-riscv32 -M ws63 -nographic -bios none \
-    -kernel target/riscv32imfc-unknown-none-elf/release/timer_irq
-```
+{{#tutorial-snippet contrib_run_timer_irq}}
 
 `TIMER_0` 周期性触发 IRQ 26，处理函数每次累加计数并打印。你应当看到：
 
@@ -84,11 +68,7 @@ OK: timer interrupts delivered
 
 ## 第 4 步：gpio_irq（GPIO 中断）
 
-```bash
-cargo build -p gpio_irq --release
-qemu-system-riscv32 -M ws63 -nographic -bios none \
-    -kernel target/riscv32imfc-unknown-none-elf/release/gpio_irq
-```
+{{#tutorial-snippet contrib_run_gpio_irq}}
 
 这个示例把 GPIO0 的边沿映射到一个自定义本地 IRQ（≥32）。你应当看到：
 
@@ -108,11 +88,7 @@ panic 返回 `2`。这个退出码会变成 **QEMU 进程自己的退出码**，
 
 要让半主机生效，必须加上 `-semihosting`：
 
-```bash
-cargo build -p semihost_selftest --release
-qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
-    -kernel target/riscv32imfc-unknown-none-elf/release/semihost_selftest
-```
+{{#tutorial-snippet contrib_run_semihost_selftest}}
 
 控制台会打印（通过半主机控制台）：
 
@@ -122,9 +98,7 @@ semihost_selftest: PASS
 
 随后 QEMU 自行退出。检查它的退出码：
 
-```bash
-echo $?
-```
+{{#tutorial-snippet contrib_semihost_exit_code}}
 
 你应当看到：
 

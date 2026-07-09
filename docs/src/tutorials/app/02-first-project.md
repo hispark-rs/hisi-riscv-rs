@@ -10,9 +10,7 @@
 
 用 `cargo generate` 拉取模板并回答几个提示：
 
-```bash
-cargo generate --git https://github.com/hispark-rs/hisi-rs-template
-```
+{{#tutorial-snippet app_first_generate}}
 
 按提示回答（默认值就是我们要的）：
 
@@ -23,9 +21,7 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 
 生成完成后进入工程目录：
 
-```bash
-cd my-blinky
-```
+{{#tutorial-snippet app_first_cd}}
 
 这个工程是**自包含的**：它的依赖（`hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-pac`）
 都来自 crates.io，它自带 `rust-toolchain.toml`（钉死 `hisi-riscv` 工具链）、
@@ -36,9 +32,7 @@ cd my-blinky
 
 先用 QEMU 确认程序能正常启动：
 
-```bash
-just run
-```
+{{#tutorial-snippet app_first_run}}
 
 这会 `cargo build --release` 再用 `-M ws63` 启动 QEMU。blinky 只翻转 GPIO0、
 没有串口输出，所以控制台**不会**打印东西——这是预期的：程序正在安静地循环翻转引脚
@@ -50,9 +44,7 @@ just run
 
 插上 WS63 开发板，一条命令完成"编译 → 打包 → 下载 → 复位"：
 
-```bash
-just flash
-```
+{{#tutorial-snippet app_first_flash}}
 
 `just flash` 依次做了这些事：
 
@@ -76,9 +68,7 @@ just flash
 
 想在烧录的同时顺便看 UART0 的启动日志，可以用：
 
-```bash
-just run-hw PORT=/dev/ttyUSB0
-```
+{{#tutorial-snippet app_first_run_hw}}
 
 它会先 `flash`，再把 UART0（CH340 串口，`/dev/ttyUSB0` @ 115200 8N1）接到终端。
 

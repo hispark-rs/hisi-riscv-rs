@@ -1,0 +1,331 @@
+#!/usr/bin/env bash
+# Executable source of truth for docs/src/tutorials/** command snippets.
+#
+# The mdBook preprocessor renders blocks marked with:
+#   # docs:start <snippet-id>
+#   # docs:end
+#
+# Keep tutorial commands here, then let CI execute the same workflow with
+# --no-hardware. Hardware-only snippets are documented here but not executed by
+# GitHub-hosted CI.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+NO_HARDWARE=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --no-hardware) NO_HARDWARE=1 ;;
+        *)
+            echo "usage: $0 [--no-hardware]" >&2
+            exit 2
+            ;;
+    esac
+done
+
+if [ "$NO_HARDWARE" -ne 1 ]; then
+    echo "tutorial-contracts: only --no-hardware is supported here; use HIL for board runs" >&2
+    exit 2
+fi
+
+HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
+TMPDIR="${TMPDIR:-/tmp}"
+WORK="$(mktemp -d "$TMPDIR/hisi-tutorial-contracts.XXXXXX")"
+trap 'rm -rf "$WORK"' EXIT
+
+need() {
+    command -v "$1" >/dev/null 2>&1 || {
+        echo "tutorial-contracts: missing required command: $1" >&2
+        exit 127
+    }
+}
+
+need cargo
+need cargo-generate
+need just
+need python3
+need "$HISI_FWPKG"
+
+: <<'DOCS_SNIPPETS'
+# docs:start app_setup_rustup
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# docs:end
+
+# docs:start app_setup_toolchain
+HOST=x86_64-unknown-linux-gnu
+curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-$HOST.tar.gz
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-$HOST.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+# docs:end
+
+# docs:start app_setup_check_toolchain
+rustup toolchain list | grep hisi-riscv
+# docs:end
+
+# docs:start install_cargo_generate_just
+cargo install cargo-generate just
+# docs:end
+
+# docs:start install_hisi_fwpkg
+cargo +stable install hisi-fwpkg-cli --version 0.3.0
+# docs:end
+
+# docs:start install_probe_rs
+cargo install --git https://github.com/hispark-rs/probe-rs \
+    --branch add-hisilicon-ws63-bs21 probe-rs-tools
+# docs:end
+
+# docs:start app_setup_qemu
+git clone https://github.com/hispark-rs/hisi-riscv-qemu && cd hisi-riscv-qemu
+./scripts/build.sh
+# docs:end
+
+# docs:start app_setup_check_qemu
+qemu-system-riscv32 -M help | grep ws63
+# docs:end
+
+# docs:start app_setup_check_target
+rustc +hisi-riscv --print target-list | grep riscv32imfc
+# docs:end
+
+# docs:start app_first_generate
+cargo generate --git https://github.com/hispark-rs/hisi-rs-template
+# docs:end
+
+# docs:start app_first_cd
+cd my-blinky
+# docs:end
+
+# docs:start app_first_run
+just run
+# docs:end
+
+# docs:start app_first_flash
+just flash
+# docs:end
+
+# docs:start app_first_run_hw
+just run-hw PORT=/dev/ttyUSB0
+# docs:end
+
+# docs:start app_uart_generate
+cargo generate --git https://github.com/hispark-rs/hisi-rs-template
+# docs:end
+
+# docs:start app_uart_cd
+cd my-uart
+# docs:end
+
+# docs:start app_uart_run
+just run
+# docs:end
+
+# docs:start contrib_setup_rustup
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# docs:end
+
+# docs:start contrib_setup_toolchain
+curl -LO https://github.com/hispark-rs/hisi-riscv-rust-toolchain/releases/latest/download/hisi-riscv-rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz
+mkdir -p ~/.rustup/toolchains/hisi-riscv
+tar xzf hisi-riscv-rust-1.96.0-*.tar.gz --strip-components=1 -C ~/.rustup/toolchains/hisi-riscv
+# docs:end
+
+# docs:start contrib_setup_check_toolchain
+rustup toolchain list | grep hisi-riscv
+# docs:end
+
+# docs:start contrib_clone_repo
+git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs.git
+cd hisi-riscv-rs
+# docs:end
+
+# docs:start contrib_setup_qemu
+cd ..
+git clone https://github.com/hispark-rs/hisi-riscv-qemu.git
+cd hisi-riscv-qemu
+bash scripts/build.sh
+# docs:end
+
+# docs:start contrib_setup_check_qemu
+./build/qemu-system-riscv32 -M help | grep ws63
+# docs:end
+
+# docs:start contrib_install_flash_tools
+# hisi-fwpkg
+cargo +stable install hisi-fwpkg-cli --version 0.3.0
+
+# 打过补丁的 probe-rs 分支
+cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21 probe-rs-tools
+# docs:end
+
+# docs:start contrib_check_flash_tools
+hisi-fwpkg --help
+probe-rs --version
+# docs:end
+
+# docs:start contrib_build_blinky
+cd ../hisi-riscv-rs
+cargo build -p blinky --release
+# docs:end
+
+# docs:start contrib_ls_blinky
+ls target/riscv32imfc-unknown-none-elf/release/blinky
+# docs:end
+
+# docs:start contrib_example_template
+cargo build -p <name> --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/<name>
+# docs:end
+
+# docs:start contrib_run_blinky
+cargo build -p blinky --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/blinky
+# docs:end
+
+# docs:start contrib_run_uart_hello
+cargo build -p uart_hello --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
+# docs:end
+
+# docs:start contrib_run_timer_irq
+cargo build -p timer_irq --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/timer_irq
+# docs:end
+
+# docs:start contrib_run_gpio_irq
+cargo build -p gpio_irq --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/gpio_irq
+# docs:end
+
+# docs:start contrib_run_semihost_selftest
+cargo build -p semihost_selftest --release
+qemu-system-riscv32 -M ws63 -nographic -bios none -semihosting \
+    -kernel target/riscv32imfc-unknown-none-elf/release/semihost_selftest
+# docs:end
+
+# docs:start contrib_semihost_exit_code
+echo $?
+# docs:end
+
+# docs:start hil_flash_blinky
+cargo build -p blinky --release
+
+hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
+    --chip ws63 --image-output blinky.img > blinky.plan.json
+
+BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
+probe-rs download --chip WS63 \
+    --chip-description-path HiSilicon_WS63.yaml \
+    --binary-format bin --base-address "$BASE_ADDR" blinky.img
+
+probe-rs reset
+# docs:end
+
+# docs:start hil_uart_monitor
+stty -F /dev/ttyUSB0 115200 raw -echo
+cat /dev/ttyUSB0
+# docs:end
+
+# docs:start hil_smoke
+PORT=/dev/ttyUSB0 hil/hil-smoke.sh
+# docs:end
+DOCS_SNIPPETS
+
+echo "tutorial-contracts: checking hisi-riscv target"
+rustc --print target-list | grep -qx 'riscv32imfc-unknown-none-elf'
+
+echo "tutorial-contracts: checking submodules"
+git -C "$ROOT" submodule status --recursive >/dev/null
+
+echo "tutorial-contracts: building tutorial examples"
+(
+    cd "$ROOT"
+    cargo build -p blinky --release
+    cargo build -p uart_hello --release
+    cargo build -p timer_irq --release
+    cargo build -p gpio_irq --release
+    cargo build -p semihost_selftest --release
+)
+
+ELF="$ROOT/target/riscv32imfc-unknown-none-elf/release/uart_hello"
+IMG="$WORK/uart_hello.img"
+PLAN="$WORK/uart_hello.plan.json"
+
+echo "tutorial-contracts: planning tutorial image"
+"$HISI_FWPKG" plan "$ELF" --chip ws63 --image-output "$IMG" > "$PLAN"
+python3 - "$PLAN" "$IMG" <<'PY'
+import json
+import os
+import sys
+
+plan_path, image_path = sys.argv[1], sys.argv[2]
+with open(plan_path, "r", encoding="utf-8") as f:
+    plan = json.load(f)
+
+required = [
+    "base_addr",
+    "image_len",
+    "body_range",
+    "code_area_len",
+    "code_area_hash",
+    "erase_range",
+    "write_chunks",
+]
+missing = [key for key in required if key not in plan]
+if missing:
+    raise SystemExit(f"missing plan keys: {missing}")
+if plan["base_addr"] != 0x230000:
+    raise SystemExit(f"unexpected WS63 base_addr: {plan['base_addr']:#x}")
+if plan["image_len"] != os.path.getsize(image_path):
+    raise SystemExit("plan image_len does not match image file size")
+if not plan["write_chunks"]:
+    raise SystemExit("write_chunks must not be empty")
+PY
+
+run_template_case() {
+    local chip="$1"
+    local starter="$2"
+    local project="$3"
+    local crate="$4"
+    local app_addr="$5"
+    local build_image="$6"
+
+    echo "tutorial-contracts: generating template ${chip}/${starter}"
+    (
+        cd "$WORK"
+        cargo generate --path "$ROOT/crates/hisi-rs-template" \
+            --name "$project" \
+            --define "chip=$chip" \
+            --define "starter=$starter" \
+            --define "app_partition_addr=$app_addr" \
+            --vcs none \
+            --no-workspace \
+            --silent
+        cd "$project"
+        cargo check
+        cargo build --release
+        just --list >/dev/null
+        if [ "$build_image" = "image" ]; then
+            just image
+            test -s "${crate}.img"
+            test -s "${crate}.plan.json"
+        fi
+    )
+}
+
+run_template_case ws63 blinky hp-ws63-blinky hp_ws63_blinky 0x00230000 image
+run_template_case ws63 uart_hello hp-ws63-uart-hello hp_ws63_uart_hello 0x00230000 image
+run_template_case bs21 blinky hp-bs21-blinky hp_bs21_blinky 0x00090000 noimage
+
+if command -v qemu-system-riscv32 >/dev/null 2>&1; then
+    echo "tutorial-contracts: qemu-system-riscv32 found; tutorial QEMU marker checks remain optional"
+else
+    echo "tutorial-contracts: qemu-system-riscv32 not found; skipped optional QEMU marker checks"
+fi
+
+echo "tutorial-contracts: no-hardware tutorial contracts passed"

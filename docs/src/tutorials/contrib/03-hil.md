@@ -19,19 +19,7 @@
 
 从仓库根目录走"编译 → 生成 plan image → 下载 → 复位"四步：
 
-```bash
-cargo build -p blinky --release
-
-hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
-    --chip ws63 --image-output blinky.img > blinky.plan.json
-
-BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
-probe-rs download --chip WS63 \
-    --chip-description-path HiSilicon_WS63.yaml \
-    --binary-format bin --base-address "$BASE_ADDR" blinky.img
-
-probe-rs reset
-```
+{{#tutorial-snippet hil_flash_blinky}}
 
 > `hisi-fwpkg plan` 负责生成 0x300 header、body SHA-256、base address 和完整 image。
 > flashboot 复位后跳进 `app + 0x300`。安全启动关闭时，flashboot
@@ -53,10 +41,7 @@ probe-rs reset
 打开一个串口监视器，盯住 UART0，就能在烧录/复位时看到 flashboot 的启动日志，
 确认芯片确实重启并跳进了你的应用：
 
-```bash
-stty -F /dev/ttyUSB0 115200 raw -echo
-cat /dev/ttyUSB0
-```
+{{#tutorial-snippet hil_uart_monitor}}
 
 再做一次 `probe-rs reset`，监视器里就会滚出 flashboot 的启动信息。
 看完按 `Ctrl-C` 退出 `cat`。
@@ -75,9 +60,7 @@ cat /dev/ttyUSB0
 
 示例级 smoke 大致这样工作（概念示意，**本课不要求你真的运行**）：
 
-```bash
-PORT=/dev/ttyUSB0 hil/hil-smoke.sh
-```
+{{#tutorial-snippet hil_smoke}}
 
 脚本会逐个检查 UART smoke 子集：用 `hil/flash.sh` 烧录 → 读几秒 UART → 用 `grep` 检查预期模式，
 比如 `uart_hello` 应出现 `Hello from WS63`、`timer_irq` 应出现 `timer irq #`。
