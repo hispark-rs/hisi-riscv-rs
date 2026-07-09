@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-754828d5.js";
+            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -213,7 +213,7 @@ hisi-riscv-rt      (启动汇编 / 链接脚本 / 中断向量) ──#[entry] +
 ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──┘
 </code></pre>
 <p>每个示例的 <code>Cargo.toml</code> 直接依赖其所需 crate（典型为 <code>hisi-riscv-hal</code> + <code>hisi-riscv-rt</code>；async 示例再加 <code>embassy-*</code>；RF 示例加 <code>ws63-rf-rs</code>）。0.6.0 起，演示 DMA、interrupt/waker async、embassy 或 software reset 的示例会显式启用 <code>unstable</code>，避免让默认稳定 API 暗示这些实验面已毕业。</p>
-<p>链接脚本传播问题已修：<code>hisi-riscv-rt</code> 经 <code>cargo:rustc-link-search</code> 导出 <code>hisi-riscv-link.x</code>（<code>hisi-riscv-rt/build.rs</code>），各二进制以自己的 <code>build.rs</code> 用 <code>-Thisi-riscv-link.x</code> 引入。因此当前 WS63 default-member 示例均可链接，默认 <code>cargo build</code> 即构建（仅 <code>ws63-flashboot</code> 仍单独排除——它是实验性、非 secure boot，见其 README）。注：<code>blinky/Cargo.toml</code> 历史上多声明了一条 <code>ws63-pac</code> 直接依赖而源码未用（死代码，排期阶段 2 清理）。</p>
+<p>链接脚本传播问题已修：<code>hisi-riscv-rt</code> 经 <code>cargo:rustc-link-search</code> 导出 <code>hisi-riscv-link.x</code>（<code>hisi-riscv-rt/build.rs</code>），各二进制以自己的 <code>build.rs</code> 用 <code>-Thisi-riscv-link.x</code> 引入。因此当前 WS63 default-member 示例均可链接，默认 <code>cargo build</code> 即构建（仅 <code>ws63-flashboot</code> 仍单独排除——它是实验性、非 secure boot，见其 README）。注：<code>blinky/Cargo.toml</code> 历史上多声明了一条 <code>ws63-pac</code> 直接依赖而源码未用，该问题已随示例依赖整理清理。</p>
 <h2 id="关键设计"><a class="header" href="#关键设计">关键设计</a></h2>
 <p>以 <code>blinky</code> 为最小模板说明裸机入口形态，其余示例在此之上各增量演示一个子系统：</p>
 <ul>
@@ -244,17 +244,16 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 <tr><td>高</td><td>方向</td><td>（曾）唯一示例（blinky）+ 手写忙等，无法证明其余驱动可用</td><td>✅ 大部已破：现有 UART/Timer/GPIO/DMA + async SPI/I2C 等 13 个额外示例</td></tr>
 <tr><td>中</td><td>演示覆盖</td><td><code>blinky</code> 曾用 legacy <code>create_output_pin</code>，未直接演示 <code>OutputConfig</code>/<code>InputConfig</code></td><td>✅ 已修：<code>blinky</code> 走现代 <code>OutputConfig</code> 输出路径；<code>gpio_irq</code> 继续覆盖输入/中断</td></tr>
 <tr><td>中</td><td>文档</td><td>旧构建指引曾指向自定义 JSON target</td><td>✅ 已统一为 builtin <code>riscv32imfc-unknown-none-elf</code>（硬浮点 ilp32f、无原子；2026-05-31 曾过渡用 stable <code>riscv32imc</code>）</td></tr>
-<tr><td>低</td><td>依赖</td><td><code>blinky/Cargo.toml</code> 多声明 <code>ws63-pac</code> 直接依赖，源码未用</td><td>🟡 排期阶段 2 死代码清理</td></tr>
-<tr><td>—</td><td>连接性</td><td>缺真实 Wi-Fi/BLE/SLE 链路示例</td><td>🔴 待 blob 上板 HIL（阶段 5）</td></tr>
+<tr><td>低</td><td>依赖</td><td><code>blinky/Cargo.toml</code> 曾多声明 <code>ws63-pac</code> 直接依赖，源码未用</td><td>✅ 已随示例依赖整理清理</td></tr>
+<tr><td>—</td><td>连接性</td><td>缺真实 Wi-Fi/BLE/SLE 链路示例</td><td>🔴 待 connectivity milestones C2-C5 上板 HIL</td></tr>
 </tbody>
 </table>
 </div>
 <h2 id="改进项与排期"><a class="header" href="#改进项与排期">改进项与排期</a></h2>
 <ul>
-<li><strong>ROADMAP 阶段 1（已大部完成）</strong>：链接脚本传播已修、示例覆盖面已扩；<code>blinky</code> 已切到现代 <code>OutputConfig</code> 输出路径并完成真机点灯验证。</li>
-<li><strong>ROADMAP 阶段 2（死代码清理）</strong>：清理 <code>blinky</code> 冗余的 <code>ws63-pac</code> 直接依赖等。</li>
-<li><strong>ROADMAP 阶段 5（连接性示例）</strong> 🔴：在 blob 上板（HIL）后新增 Wi-Fi/BLE/SLE 真实链路示例，使示例集真正覆盖 SoC 核心能力。</li>
-<li><strong>ROADMAP 阶段 6（async）</strong> ✅ 已完成：<code>async_delay</code> / <code>async_bus</code> / <code>embassy_multitask</code> / <code>embassy_async_io</code> 四个异步示例已落地（依赖 HAL 的 <code>async</code>/<code>embassy</code> 支持，见 <a href="06-async-embassy.html">async-embassy.md</a>）。</li>
+<li><strong>已完成的示例底座</strong>：链接脚本传播已修、示例覆盖面已扩；<code>blinky</code> 已切到现代 <code>OutputConfig</code> 输出路径并完成真机点灯验证。</li>
+<li><strong>连接性示例</strong> 🔴：按当前 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> C2-C5 推进，在 blob 上板 HIL 后新增 Wi-Fi scan/connect/ping 真实链路示例，使示例集覆盖 SoC 核心能力。</li>
+<li><strong>async 示例</strong> ✅：<code>async_delay</code> / <code>async_bus</code> / <code>embassy_multitask</code> / <code>embassy_async_io</code> 已落地（依赖 HAL 的 <code>async</code>/<code>embassy</code> 支持，见 <a href="06-async-embassy.html">async-embassy.md</a>）。</li>
 </ul>
 
                     </main>

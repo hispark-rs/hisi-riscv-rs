@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-754828d5.js";
+            window.path_to_searchindex_js = "searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -198,7 +198,7 @@ rustdoc、HIL/教程契约脚本的最新通过结果为准；也欢迎在
 <li><strong><code>hisi-riscv-hal</code></strong> —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 <code>embedded-hal 1.0</code>，可选 <code>async</code> / <code>embassy</code>。</li>
 <li><strong><span data-hisi-chip-field="pac_crate">ws63-pac</span></strong> —— svd2rust 生成的寄存器访问层。</li>
 <li><strong><code>hisi-riscv-rt</code></strong> —— 启动汇编、链接脚本、中断向量。</li>
-<li><strong><code>hisi-riscv</code> 工具链</strong> —— 内置 <code>riscv32imfc-unknown-none-elf</code>（硬浮点、无原子）目标的定制 stable rustc。</li>
+<li><strong>官方 Rust nightly 工具链</strong> —— 使用 upstream <code>riscv32imfc-unknown-none-elf</code>（硬浮点、无原子）目标，当前经 <code>rust-src</code> + <code>-Zbuild-std=core,alloc</code> 构建。</li>
 <li><strong><code>hisi-fwpkg</code></strong> —— 把 ELF 打包成可被 flashboot 加载的应用镜像（0x300 头）。</li>
 <li><strong>patched <code>probe-rs</code></strong> —— 支持当前芯片调试/烧录路径（目标名 <span data-hisi-chip-field="probe_chip">WS63</span>）。</li>
 <li><strong><code>hisi-riscv-qemu</code></strong> —— 跑得动 vendor C SDK 与 Rust 固件的 QEMU 模型。</li>

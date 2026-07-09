@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-754828d5.js";
+            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -262,13 +262,13 @@
 <p><strong>与 WS63 的异同</strong>：共享大部分 IP（I2C/SPI/UART/DMA/GPIO/ADC 等），但核心 (RISC-V 配置)、RF (BLE/SLE PHY)、部分外设（如音频链路）有差异。</p>
 </li>
 <li>
-<p><strong>维护</strong>：两份手册独立演进；冻结扩张的方针同样应用于 BS2X 手册（ROADMAP “冻结/降优先级”）。</p>
+<p><strong>维护</strong>：两份手册独立演进；冻结扩张、聚焦连接性的方针同样应用于 BS2X 手册。</p>
 </li>
 <li>
-<p><strong>冻结扩张、聚焦连接性</strong>（ROADMAP “冻结/降优先级”）：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上连上 AP 并 ping 通）。</p>
+<p><strong>冻结扩张、聚焦连接性</strong>：手册保留为独特逆向 IP，停止新增章节，把精力投向连接性北极星（在真实 EVB 上完成 scan/connect/ping）。</p>
 </li>
 <li>
-<p><strong>作为下游纠偏的事实依据</strong>：手册的中断编号表与优先级模型（<code>source/ch2_system.md:328-424</code>）应在 <strong>ROADMAP 阶段 2</strong> 用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（<code>ch2_system.md:162</code>）服务于 <strong>阶段 1</strong> 的链接脚本集成；RF/ABB 章节（<code>ch4_wifi/</code>）服务于 <strong>阶段 3–5</strong> 的 blob 链接与连接性。</p>
+<p><strong>作为下游纠偏的事实依据</strong>：手册的中断编号表与优先级模型（<code>source/ch2_system.md:328-424</code>）已经用于修正 HAL 的中断子系统建模错误（PLIC → LOCIPRI/LOCIEN）；内存图（<code>ch2_system.md:162</code>）支撑链接脚本集成；RF/ABB 章节（<code>ch4_wifi/</code>）继续服务于当前 ROADMAP C1-C5 的 blob 链接与连接性。</p>
 </li>
 <li>
 <p><strong>小修（非阻断）</strong>：将 README 技术栈中的 <code>sphinx-rtd-theme</code> 更正为 <code>sphinx_book_theme</code>，与 <code>conf.py:55</code> 对齐。</p>

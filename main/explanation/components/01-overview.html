@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-754828d5.js";
+            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -282,7 +282,7 @@ blocking-backed async trait impl；中断 + waker 驱动的 helpers、GPIO wait�
 RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不发 <code>lr/sc/amo</code></strong>。原默认 <code>riscv32imafc</code>
 会发原子指令、在硅片上触发非法指令陷阱，已弃用。</li>
 <li>历史：2026-05-31 阶段 0 曾先用 builtin <code>riscv32imc</code>（软浮点、stable、免 build-std）做过渡；
-随后切到 <code>ws63</code> 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为阶段 3 链接做准备）。</li>
+随后切到 <code>ws63</code> 硬浮点工具链（与 ilp32f vendor blob ABI 一致，为后续 vendor blob 链接做准备）。</li>
 </ul>
 </li>
 <li><strong>单一 PAC 实例</strong>：根 <code>Cargo.toml</code> 用 <code>[patch.crates-io]</code> 把 <code>ws63-pac</code> 的 registry 依赖重定向到本地 submodule，
@@ -304,15 +304,15 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <ol>
 <li><strong>连接性状态</strong>：
 <ul>
-<li><strong>WS63 Wi-Fi</strong>（ROADMAP 阶段 3-5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测（阶段 4），符号闭合已达成；真机连通待 HIL（阶段 5）。</li>
+<li><strong>WS63 Wi-Fi</strong>（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。</li>
 <li><strong>BS2X BLE/SLE</strong>（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 <code>hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md</code>。</li>
 </ul>
 </li>
-<li><del>示例无法链接</del> <strong>（已修，阶段 1）</strong>；<del>多芯片支持</del> <strong>（已实现）</strong>：hisi-riscv-hal 用 <code>chip-ws63</code>/<code>chip-bs21</code> feature 区分，二选一；<code>chip-bs21</code> 因缺 BS2X 真机 HIL 需 <code>unstable</code>；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。</li>
+<li><del>示例无法链接</del> <strong>（已修）</strong>；<del>多芯片支持</del> <strong>（已实现）</strong>：hisi-riscv-hal 用 <code>chip-ws63</code>/<code>chip-bs21</code> feature 区分，二选一；<code>chip-bs21</code> 因缺 BS2X 真机 HIL 需 <code>unstable</code>；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。</li>
 <li><strong>硬件在环（HIL）进度</strong>：HAL 驱动级 WS63 embedded-test 证据基线见
 <a href="../../reference/10-stable-api.html">Stable API 清单</a>；示例级 smoke 与连接性 HIL 仍按
 <a href="../07-hil-framework.html">HIL 测试框架</a> 和 <a href="../../reference/02-examples.html">示例目录与验证标记串</a> 分轨推进。</li>
-<li><strong>正确性修复状态</strong>：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等核心问题已修（ROADMAP 阶段 2）；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；上板验证仍待硬件（时钟精度、外设时序）。</li>
+<li><strong>正确性修复状态</strong>：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 <a href="../../reference/10-stable-api.html">Stable API 清单</a> 为准。</li>
 </ol>
 <h2 id="参考资料"><a class="header" href="#参考资料">参考资料</a></h2>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>

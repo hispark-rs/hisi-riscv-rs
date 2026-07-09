@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-754828d5.js";
+            window.path_to_searchindex_js = "../searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -257,8 +257,8 @@ HAL API 的细粒度证据源。</p>
 不等同于 HAL 驱动级 HIL。当前示例状态见 <a href="../reference/02-examples.html">示例目录与验证标记串</a>。</li>
 <li><strong>blinky：已在真硅片上确认。</strong> 完整的 Rust -&gt; flash -&gt; 启动主流程于 2026-06-14 在真 WS63 硅片上跑通，
 blinky 上电启动并翻转 GPIO0。</li>
-<li><strong>连接性（阶段 4/5）：</strong> WS63 Wi-Fi 的 porting + 链接 + netif-&gt;smoltcp 已在 QEMU 软件在环自测、符号闭合达成；
-真机连通仍待 HIL。BS2X 的 BLE/SLE 在 radio 层已论证不可行，走 HCI 边界。</li>
+<li><strong>连接性（ROADMAP C1-C5）：</strong> WS63 Wi-Fi 的 porting + 链接 + netif-&gt;smoltcp 已在 QEMU 软件在环自测、符号闭合达成；
+真机 init/scan/connect/ping 仍待 HIL。BS2X 的 BLE/SLE 在 radio 层已论证不可行，走 HCI 边界。</li>
 </ul>
 <p>不夸大、不假装：HAL 默认公开面的证据线已经比 2026-06 清楚很多，但示例级 smoke、连接性和需外部台架的
 外设场景仍要继续补。HIL 文档的职责是解释为什么这样测；当前事实状态应收敛到 reference 页。</p>

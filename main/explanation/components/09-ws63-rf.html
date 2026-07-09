@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-754828d5.js";
+            window.path_to_searchindex_js = "../../searchindex-f9530fb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -286,11 +286,10 @@
 <h2 id="改进项与排期"><a class="header" href="#改进项与排期">改进项与排期</a></h2>
 <p>本组件是 ws63-rs 通往“可用产品“的最大缺口。多数前置已完成，现状如下：</p>
 <ul>
-<li><strong>阶段 0（已完成）</strong>：消除双 PAC；默认 target = builtin <strong><code>riscv32imfc</code></strong>（硬浮点 ilp32f，blob 所需）+ critical-section polyfill。工具链前置已清。</li>
-<li><strong>阶段 3（链接 blob 尖刺）</strong> ✅ 已完成：<code>chips/ws63/rf/build.rs</code> + 链接搜索把 <code>lib/*.a</code> 喂给链接器；hisi-riscv-rt 提供 <code>__wifi_pkt_ram_*</code> defsym；<strong>Wi-Fi-init 符号闭合达成</strong>（残留 2）。<code>wifi_blob_link</code>/<code>rf_port_demo</code> 验证。</li>
-<li><strong>阶段 4（porting + HCC）</strong> ✅ 大部已实现：<code>osal_adapt_*</code>(33) + <code>oal</code>/<code>log</code>/<code>uapi</code> + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥，均在 ws63-qemu 自测。剩余是把 pbuf 布局/TX sink pin 到真实 blob + 真机执行。</li>
-<li><strong>阶段 5（连接性示例）</strong> 🔴 待真机：ROM 地址 + 厂商自定义重定位只在硅片上成立，故是 HIL（硬件在环）；QEMU 无法跑真 Wi-Fi 链路。</li>
-<li><strong>阶段 6（async）</strong> ✅ 通用异步已就绪：hisi-riscv-hal 的 <code>async</code>/<code>embassy</code>（见 <a href="06-async-embassy.html">async-embassy.md</a>）已实现并验证；连接性专属的异步包装待 blob 上板后再做。</li>
+<li><strong>Baseline 已完成</strong>：消除双 PAC；默认 target = builtin <strong><code>riscv32imfc</code></strong>（硬浮点 ilp32f，blob 所需）+ critical-section polyfill。工具链、HAL/RT、HIL、QEMU、image plan 前置已清。</li>
+<li><strong>C1 RF runtime image</strong> 🟡：<code>chips/ws63/rf/build.rs</code> + 链接搜索把 <code>lib/*.a</code> 喂给链接器；<strong>Wi-Fi-init 符号闭合达成</strong>（残留 2）。下一步是补真实 <code>.wifi_pkt_ram</code> NOLOAD，并把可烧录镜像带到真机。</li>
+<li><strong>C2-C5 真机连接性</strong> 🔴：<code>osal_adapt_*</code>(33) + <code>oal</code>/<code>log</code>/<code>uapi</code> + 协作调度器 + FRW 工作线程 + HCC 传输 + 软件计时器 + netif→smoltcp 桥均已在 ws63-qemu 自测；剩余是把 pbuf 布局/TX sink pin 到真实 blob，并在真实硅片上依次证明 Wi-Fi init、scan、connect、ping。</li>
+<li><strong>连接性专属 async</strong> deferred：hisi-riscv-hal 的通用 <code>async</code>/<code>embassy</code>（见 <a href="06-async-embassy.html">async-embassy.md</a>）已实现并验证；连接性专属的异步包装待 blob 上板后再做。</li>
 </ul>
 <p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 <h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
@@ -300,7 +299,7 @@
 <li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
 <li><strong>hisi-riscv-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
 </ul>
-<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP 阶段 3-5</a>（WS63 北极星）与 <a href="01-overview.html">overview.md</a>。</p>
+<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP C1-C5</a>（WS63 北极星）与 <a href="01-overview.html">overview.md</a>。</p>
 
                     </main>
 
