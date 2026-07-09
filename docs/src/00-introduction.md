@@ -1,15 +1,17 @@
 # 引言
 
-这是 **HiSilicon WS63**（Hi3863，RISC-V RV32IMFC，Wi-Fi 6 + SLE/SparkLink + BLE）的 Rust 嵌入式生态开发手册。
+这是 **HiSilicon RISC-V** 芯片的 Rust 嵌入式生态开发手册。当前选择的芯片是
+**{{#chip-field display_name}}**；它的文档状态是 {{#chip-field status}}，HIL 状态是
+{{#chip-field hil}}。
 
 整套生态包含：
 
 - **`hisi-riscv-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
-- **`ws63-pac`** —— svd2rust 生成的寄存器访问层。
+- **{{#chip-field pac_crate}}** —— svd2rust 生成的寄存器访问层。
 - **`hisi-riscv-rt`** —— 启动汇编、链接脚本、中断向量。
 - **`hisi-riscv` 工具链** —— 内置 `riscv32imfc-unknown-none-elf`（硬浮点、无原子）目标的定制 stable rustc。
 - **`hisi-fwpkg`** —— 把 ELF 打包成可被 flashboot 加载的应用镜像（0x300 头）。
-- **patched `probe-rs`** —— 支持 WS63 的 J-Link/SWD 烧录与调试。
+- **patched `probe-rs`** —— 支持当前芯片调试/烧录路径（目标名 {{#chip-field probe_chip}}）。
 - **`hisi-riscv-qemu`** —— 跑得动 vendor C SDK 与 Rust 固件的 QEMU 模型。
 - **HIL 测试框架** —— 在真实芯片上构建→烧录→运行→断言 UART 标记串。
 
@@ -26,13 +28,13 @@
 
 如果你是第一次接触，先到[教程导读](tutorials/00-index.md)选择适合你的路径——本手册的教程分两条：
 
-- **应用开发者**：用 `cargo generate` 从[模板](https://github.com/hispark-rs/hisi-rs-template)脚手架出**你自己的 WS63 应用**（依赖来自 crates.io，无需克隆本仓库）。见[应用开发者路径](tutorials/app/00-index.md)。
+- **应用开发者**：用 `cargo generate` 从[模板](https://github.com/hispark-rs/hisi-rs-template)脚手架出**你自己的 {{#chip-field display_name}} 应用**（依赖来自 crates.io，无需克隆本仓库）。见[应用开发者路径](tutorials/app/00-index.md)。
 - **生态贡献者**：克隆本 monorepo（含子模块），构建/运行完整示例集、改 HAL/PAC/运行时、跑完整 HIL。见[生态贡献者路径](tutorials/contrib/00-index.md)。
 
 ## 仓库
 
 - 在线手册：<https://hispark-rs.github.io/hisi-riscv-rs/>（本书）
-- API 文档（rustdoc）：<https://hispark-rs.github.io/hisi-riscv-rs/api/>（hisi-riscv-hal / ws63-pac / hisi-riscv-rt）
+- API 文档（rustdoc）：{{#api-link hisi_riscv_hal/index.html|hisi-riscv-hal}}（按当前 chip/version 切换）
 - 主仓库：<https://github.com/hispark-rs/hisi-riscv-rs>
 - 工程模板：<https://github.com/hispark-rs/hisi-rs-template>（`cargo generate`）
 - 其它仓库见 [CLI 工具速查](reference/08-cli-tools.md) 与各[组件文档](explanation/components/00-index.md)。

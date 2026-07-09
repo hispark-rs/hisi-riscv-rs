@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
-"""Validate tutorial snippets and prevent copied tutorial command blocks."""
+"""Validate tutorial snippets and chip-aware docs tokens."""
 
 from __future__ import annotations
 
 from pathlib import Path
 import re
 import sys
+import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACTS = ROOT / "scripts" / "tutorial-contracts.sh"
+CHIPS_TOML = ROOT / "docs" / "chips.toml"
 TUTORIALS = ROOT / "docs" / "src" / "tutorials"
 TOKEN_RE = re.compile(r"\{\{#tutorial-snippet\s+([A-Za-z0-9_.-]+)\s*\}\}")
+CHIP_FIELD_RE = re.compile(r"\{\{#chip-field\s+([A-Za-z0-9_.-]+)\s*\}\}")
+CHIP_IF_RE = re.compile(r"\{\{#chip-if\s+([A-Za-z0-9_.-]+)\s*\}\}")
+API_LINK_RE = re.compile(r"\{\{#api-link\s+([^|}]+)\|([^}]+)\}\}")
 
 
 def parse_snippets() -> tuple[dict[str, list[str]], list[str]]:
@@ -53,8 +58,15 @@ def iter_tutorials() -> list[Path]:
     return sorted(path for path in TUTORIALS.rglob("*.md") if path.is_file())
 
 
+def load_chips() -> dict[str, object]:
+    return tomllib.loads(CHIPS_TOML.read_text(encoding="utf-8"))
+
+
 def main() -> int:
     snippets, errors = parse_snippets()
+    chips_doc = load_chips()
+    chips = chips_doc.get("chips", {})
+    selectable = set(chips_doc.get("selectable", []))
     used: set[str] = set()
 
     for path in iter_tutorials():
@@ -69,10 +81,29 @@ def main() -> int:
             for match in TOKEN_RE.finditer(line):
                 snippet_id = match.group(1)
                 used.add(snippet_id)
-                if snippet_id not in snippets:
+                has_variants = any(key.startswith(f"{snippet_id}.") for key in snippets)
+                if snippet_id not in snippets and not has_variants:
                     errors.append(f"{rel}:{lineno}: unknown tutorial snippet id: {snippet_id}")
+            for match in CHIP_FIELD_RE.finditer(line):
+                field = match.group(1)
+                for chip, data in chips.items():
+                    if chip in selectable and field not in data:
+                        errors.append(f"{rel}:{lineno}: chip field {field!r} missing for {chip}")
+            for match in CHIP_IF_RE.finditer(line):
+                chip = match.group(1)
+                if chip not in chips:
+                    errors.append(f"{rel}:{lineno}: unknown chip in chip-if: {chip}")
+            for match in API_LINK_RE.finditer(line):
+                path_part = match.group(1).strip()
+                if not path_part:
+                    errors.append(f"{rel}:{lineno}: empty api-link path")
 
-    unused = sorted(set(snippets) - used)
+    unused = []
+    for snippet_id in snippets:
+        base = snippet_id.rsplit(".", 1)[0] if snippet_id.rsplit(".", 1)[-1] in selectable else snippet_id
+        if base not in used and snippet_id not in used:
+            unused.append(snippet_id)
+    unused = sorted(unused)
     if unused:
         errors.append("unused tutorial snippet ids: " + ", ".join(unused))
 

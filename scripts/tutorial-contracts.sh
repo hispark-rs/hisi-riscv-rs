@@ -12,16 +12,31 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NO_HARDWARE=0
+CHIPS=()
 
-for arg in "$@"; do
+while [ "$#" -gt 0 ]; do
+    arg="$1"
     case "$arg" in
         --no-hardware) NO_HARDWARE=1 ;;
+        --chip)
+            [ "$#" -ge 2 ] || { echo "tutorial-contracts: --chip needs a value" >&2; exit 2; }
+            CHIPS+=("$2")
+            shift
+            ;;
+        --chip=*)
+            CHIPS+=("${arg#--chip=}")
+            ;;
         *)
-            echo "usage: $0 [--no-hardware]" >&2
+            echo "usage: $0 [--no-hardware] [--chip ws63|bs21|bs20]" >&2
             exit 2
             ;;
     esac
+    shift
 done
+
+if [ "${#CHIPS[@]}" -eq 0 ]; then
+    CHIPS=(ws63 bs21 bs20)
+fi
 
 if [ "$NO_HARDWARE" -ne 1 ]; then
     echo "tutorial-contracts: only --no-hardware is supported here; use HIL for board runs" >&2
@@ -178,6 +193,24 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/<name>
 # docs:end
 
+# docs:start contrib_example_template.ws63
+cargo build -p <name> --release
+qemu-system-riscv32 -M ws63 -nographic -bios none \
+    -kernel target/riscv32imfc-unknown-none-elf/release/<name>
+# docs:end
+
+# docs:start contrib_example_template.bs21
+cargo build --manifest-path examples/bs21/Cargo.toml --release
+qemu-system-riscv32 -M bs21 -nographic -bios none \
+    -kernel examples/bs21/target/riscv32imfc-unknown-none-elf/release/bs21_<name>
+# docs:end
+
+# docs:start contrib_example_template.bs20
+cargo build --manifest-path examples/bs20/Cargo.toml --release
+qemu-system-riscv32 -M bs20 -nographic -bios none \
+    -kernel examples/bs20/target/riscv32imfc-unknown-none-elf/release/bs20_<name>
+# docs:end
+
 # docs:start contrib_run_blinky
 cargo build -p blinky --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
@@ -318,9 +351,24 @@ run_template_case() {
     )
 }
 
-run_template_case ws63 blinky hp-ws63-blinky hp_ws63_blinky 0x00230000 image
-run_template_case ws63 uart_hello hp-ws63-uart-hello hp_ws63_uart_hello 0x00230000 image
-run_template_case bs21 blinky hp-bs21-blinky hp_bs21_blinky 0x00090000 noimage
+for chip in "${CHIPS[@]}"; do
+    case "$chip" in
+        ws63)
+            run_template_case ws63 blinky hp-ws63-blinky hp_ws63_blinky 0x00230000 image
+            run_template_case ws63 uart_hello hp-ws63-uart-hello hp_ws63_uart_hello 0x00230000 image
+            ;;
+        bs21)
+            run_template_case bs21 blinky hp-bs21-blinky hp_bs21_blinky 0x00090000 noimage
+            ;;
+        bs20)
+            run_template_case bs20 blinky hp-bs20-blinky hp_bs20_blinky 0x00090000 noimage
+            ;;
+        *)
+            echo "tutorial-contracts: unknown chip '$chip'" >&2
+            exit 2
+            ;;
+    esac
+done
 
 if command -v qemu-system-riscv32 >/dev/null 2>&1; then
     echo "tutorial-contracts: qemu-system-riscv32 found; tutorial QEMU marker checks remain optional"
