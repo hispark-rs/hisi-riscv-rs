@@ -6,20 +6,46 @@
     return;
   }
 
-  let manifest;
+  let embeddedManifest;
   try {
-    manifest = JSON.parse(manifestNode.textContent || "{}");
+    embeddedManifest = JSON.parse(manifestNode.textContent || "{}");
   } catch (_err) {
     return;
   }
 
-  const chips = manifest.chips || {};
-  const versions = manifest.versions || {};
-  const chipMap = chips.chips || {};
-  const selectable = chips.selectable || Object.keys(chipMap);
-  const defaultChip = chips.default || selectable[0] || "ws63";
-  const versionList = versions.versions || [];
-  const defaultVersion = versions.default || "latest";
+  let chips = embeddedManifest.chips || {};
+  let versions = embeddedManifest.versions || {};
+  let chipMap = chips.chips || {};
+  let selectable = chips.selectable || Object.keys(chipMap);
+  let defaultChip = chips.default || selectable[0] || "ws63";
+  let versionList = versions.versions || [];
+  let defaultVersion = versions.default || "latest";
+
+  function docsRoot() {
+    const segments = window.location.pathname.split("/").filter(Boolean);
+    const repoIndex = segments.indexOf("hisi-riscv-rs");
+    if (repoIndex >= 0) {
+      return `/${segments.slice(0, repoIndex + 1).join("/")}/`;
+    }
+    return "/";
+  }
+
+  async function loadRuntimeManifest() {
+    try {
+      const response = await fetch(`${docsRoot()}versions.json`, { cache: "no-cache" });
+      if (!response.ok) {
+        return;
+      }
+      const runtimeVersions = await response.json();
+      if (runtimeVersions && Array.isArray(runtimeVersions.versions)) {
+        versions = runtimeVersions;
+        versionList = versions.versions || versionList;
+        defaultVersion = versions.default || defaultVersion;
+      }
+    } catch (_err) {
+      // Local file:// and offline builds fall back to the embedded mdBook manifest.
+    }
+  }
 
   function paramsChip() {
     const params = new URLSearchParams(window.location.search);
@@ -178,6 +204,8 @@
     });
   }
 
-  renderControls();
-  applyChip(currentChip());
+  loadRuntimeManifest().finally(() => {
+    renderControls();
+    applyChip(currentChip());
+  });
 })();
