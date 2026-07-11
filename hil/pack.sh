@@ -75,8 +75,11 @@ echo "==> plan $INPUT -> $IMG (+ $PLAN)"
 
 if [ -n "${FWPKG:-}" ]; then
     OUT="${IMG%.img}.fwpkg"
-    echo "==> pack $INPUT -> $OUT  (chip=$CHIP${APP_ADDR:+, app_addr=$APP_ADDR})"
-    "$HISI_FWPKG" pack "$INPUT" -o "$OUT" --chip "$CHIP" "${ADDR_ARGS[@]}" --name "$BASE"
+    echo "==> pack canonical image $IMG -> $OUT  (chip=$CHIP${APP_ADDR:+, app_addr=$APP_ADDR})"
+    # Keep one image-semantics path: `plan` expands ELF PT_LOAD segments and
+    # patches the verified body; `pack` only wraps those exact bytes as a
+    # partition. Re-planning the ELF here can drift from the emitted plan.
+    "$HISI_FWPKG" pack "$IMG" -o "$OUT" --chip "$CHIP" "${ADDR_ARGS[@]}" --name "$BASE"
 fi
 
 BASE_ADDR="$(python3 - "$PLAN" <<'PY'
