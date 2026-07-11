@@ -95,6 +95,14 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   替换测试 sink，RX `driverif_input` 进入有界 L2 queue，先以 ARP round-trip 验收。
 - **RF5B Open-AP connect**：增加 typed station config 和 deferred connection events；
   受控实验室 open AP 只用于数据面证明，不作为生产安全承诺。
+- 当前 RF5B evidence：`OpenNetwork::from_scan` 只能从真实 scan result 构造，
+  `Wifi::connect_open` 直接使用 SDK `ext_associate_params_stru` ABI；vendor event 6/7
+  只复制连接/断开状态，用户逻辑在普通任务上下文轮询。2026-07-12 真机扫描并关联
+  无密码测试 AP `HUAWEI-HLJ_Guest`，UART 输出
+  `RF5B_CONNECT_OK freq=0x0000096c`（2412 MHz）。这证明 802.11 open-system
+  auth/association 已闭合，但不替代尚未完成的 RF5A Rust-visible TX/RX 与 RF5C ping。
+- 原厂 app 变体的 `libwpa_supplicant.a` 已作为可选 archive 收入 `ws63-RF`，用于后续
+  WPA2/WPA3；开放网络路径默认不链接它，不能据此宣称受保护网络已经可用。
 - **RF5C Ping**：静态 IPv4 先行、DHCP 后补；ICMP 必须经过 Rust-visible L2 path。
   UART、ELF layout、patch manifest、image plan 和资源占用形成后续拆分的 A0 baseline。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
@@ -126,6 +134,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 - Link/image:
   - `readelf` 验证 `.wifi_pkt_ram` 是 `NOBITS/NOLOAD`，地址 `0x00A00000`，大小 `0xC000`。
   - `hisi-fwpkg plan --image-output` 生成完整 image，hash/body range 正确。
+  - `hil/pack.sh` 只把上述 canonical `.img` 封装成 app-only FWPKG，不再从 ELF
+    重复推导另一份 partition image。
 - HIL:
   - `wifi_init_smoke --features full-init` 必须输出 `RF2_INIT_OK`，随后输出
     `RF3_SCAN_OK count=N` 或分类错误。
