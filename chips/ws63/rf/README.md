@@ -12,7 +12,7 @@ implementations.
 > language-neutral so the blobs can be ported to *any* runtime. This crate is
 > the ws63-rs runtime's implementation of `ws63-RF`'s C contract.
 
-## ⚠️ Status: symbol closure for Wi-Fi init ACHIEVED; runtime + data path implemented; runnable image is HIL
+## Status: Wi-Fi init + scan verified on silicon; connect + ping next
 
 **Project context:** ws63-rs is now focused on the connectivity milestones in
 [`ROADMAP.md`](../../../ROADMAP.md). This crate owns the RF runtime half of C1-C5:
@@ -23,10 +23,10 @@ This crate makes the porting contract **compile, link, and actually run** — th
 runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
 timers, netif→smoltcp) are implemented and self-tested standalone on `ws63-qemu`
 (`rf_port_demo`, plus the crate's `sched_selftest` / `frw_hcc_selftest` /
-`netif_smoltcp_selftest`). It is **not yet a working Wi-Fi stack**: a real link
-is hardware-in-the-loop (the ROM symbols are real-silicon addresses and the
-HiSilicon blobs carry custom relocations stock `lld` cannot resolve — see
-below). The honest picture:
+`netif_smoltcp_selftest`). The guarded full-init image now boots on a real WS63,
+initializes `wlan0`, and returns real STA scan results. The remaining boundary is
+the bidirectional L2 data path, association, and IP connectivity; real RF behavior
+remains hardware-in-the-loop because the ROM symbols are silicon addresses.
 
 ### Implemented for real (usable today)
 
@@ -48,8 +48,7 @@ below). The honest picture:
 
 | Area | Symbols | Needs |
 |------|---------|-------|
-| Per-line IRQ | `osal_irq_request/free/enable/disable` | trap-delivery wiring for the WLAN/MAC line |
-| WLAN rings / RF clk | `wlan_*`, `oal_ring_*` | descriptor rings + vendor RF HAL (on-silicon) |
+| WLAN TX/RX | `driverif_input`, blob transmit adapter | RX is observed during scan; real TX and bounded L2 queue are RF5A |
 | eFuse / TRNG / tsensor | `uapi_efuse_*`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
 | NV read | `uapi_nv_read` | read-only parser for the official WS63 ACPU KV partition; validates page headers, key state, bounds, and CRC |
 
@@ -75,17 +74,16 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **The runnable RF image HIL path.** `hisi-riscv-rt` owns `.wifi_pkt_ram`, heap,
-  preserved, and radar boundaries. `tools/rf-build-full-init-lld-layout-patch.sh`
-  uses a stock-`rust-lld` layout pass, patches only manifested vendor custom
-  relocations, then verifies the final section layout before producing the ELF.
-  Current bring-up is validating the PMP/shared-memory/NV platform setup on silicon.
+- **The post-scan data path.** The guarded RF image and its PMP/shared-memory/NV
+  platform setup are verified on silicon through init and active scan. RF5 now
+  closes TX/RX, open-AP association, and ICMP ping before the component split.
 - Generating checks for the remaining optional pbuf fields from the WiFi build's
   headers, and connecting the smoltcp TX sink to the blob's transmit symbol.
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
-See the workspace [`ROADMAP.md`](../../../ROADMAP.md) connectivity milestones for
-the staged plan.
+See the workspace [`ROADMAP.md`](../../../ROADMAP.md) and
+[`docs/plan/hisi-connectivity-stack.md`](../../../docs/plan/hisi-connectivity-stack.md)
+for the staged plan.
 
 ## Validate
 

@@ -14,7 +14,7 @@
 //! It does **not** put any Rust into `ws63-RF` (that delivery stays
 //! language-neutral so it can be ported to any runtime).
 //!
-//! ## Status — symbol closure ACHIEVED for Wi-Fi init; runnable image is HIL
+//! ## Status — Wi-Fi init + active scan verified on real WS63
 //!
 //! Implemented for real (usable today):
 //! - **Memory** — `osal_kmalloc`/`osal_kfree` over a real heap ([`alloc`]);
@@ -41,11 +41,10 @@
 //!   mask-ROM BSS addresses from `ws63_acore_rom.lds`; Rust must not shadow
 //!   these fixed objects with guessed storage.
 //!
-//! Scaffolds (defined, documented, need hardware / the real blob):
-//! - **netif pbuf layout** ([`netif`]) — `pbuf_*` use the default lwip layout;
-//!   the offsets MUST be reconciled with the WiFi build's `lwipopts.h` before a
-//!   real frame flows (mismatch corrupts silently). The smoltcp TX sink must be
-//!   pointed at the blob's real frame-transmit symbol on hardware.
+//! Remaining post-scan work:
+//! - **netif pbuf/TX contract** ([`netif`]) — the verified 80-byte zero-copy
+//!   reserve supports scan RX, while the remaining build-specific offsets need
+//!   generated assertions and the TX sink needs the blob transmit adapter.
 //! - **eFuse/TRNG** ([`uapi`]) — scaffold values; a HW run needs real ones.
 //!   NV reads already use the read-only ACPU flash KV parser with page/key/CRC
 //!   validation; encrypted records are deliberately rejected.
@@ -70,9 +69,9 @@
 //! two-pass build keeps `rust-lld` as the layout owner, patches those relocations,
 //! and fails if the final section layout differs. The runtime + data-path
 //! plumbing (scheduler, OSAL, FRW/HCC, timers, netif→smoltcp) is implemented and
-//! self-tested standalone; what remains is hardware bring-up: pin the pbuf
-//! layout to the blob's `lwipopts.h`, point the TX sink at the blob's transmit,
-//! and run on silicon. See `README.md` and `ROADMAP.md`.
+//! self-tested standalone. Real silicon now reaches `RF2_INIT_OK` and
+//! `RF3_SCAN_OK`; what remains is TX/RX closure, association and IP connectivity.
+//! See `README.md`, `ROADMAP.md`, and `docs/plan/hisi-connectivity-stack.md`.
 //!
 //! [`ws63-RF`]: https://github.com/hispark-rs/ws63-RF
 
