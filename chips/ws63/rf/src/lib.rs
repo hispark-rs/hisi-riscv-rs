@@ -329,7 +329,6 @@ pub fn force_link_contract() {
     keep!(netif::netif_set_link_down_interface as extern "C" fn(*mut c_void));
     keep!(netif::tcpip_callback as extern "C" fn(*mut c_void, *mut c_void) -> c_int);
 
-    keep!(uapi::uapi_systick_get_ms as extern "C" fn() -> u64);
     keep!(uapi::uapi_tsensor_get_current_temp as extern "C" fn(*mut i8) -> u32);
     keep!(uapi::uapi_nv_read as extern "C" fn(u16, u16, *mut u16, *mut u8) -> u32);
     keep!(uapi::uapi_nv_write as extern "C" fn(u16, *const u8, u16) -> u32);

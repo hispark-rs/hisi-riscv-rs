@@ -4,7 +4,7 @@
 //! callbacks fire synchronously when [`local_timer_timeout_proc`] is called,
 //! which the crate-local FRW self-test worker does on every iteration (parking only
 //! until the nearest deadline via `next_delay_ms`). Deadlines are tracked in
-//! milliseconds against the monotonic `mcycle`-derived clock
+//! milliseconds against the mask-ROM systick clock
 //! ([`osal_get_jiffies`](crate::osal_ext::osal_get_jiffies)).
 //!
 //! The OSAL adaptation timers (`osal_adapt_timer_init/mod/destroy`) register an

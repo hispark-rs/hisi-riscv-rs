@@ -176,7 +176,7 @@ pub fn timer_selftest() -> [u32; 3] {
     timer::osal_adapt_timer_init(&mut t, func, 0, 2);
     timer::osal_adapt_timer_mod(&mut t, 2);
 
-    // Drive the timer service; mcycle (the time base) advances as we spin.
+    // Drive the timer service; the ROM systick time base advances as we spin.
     let mut guard: u32 = 0;
     while TIMER_FIRED.load(Ordering::Relaxed) == 0 && guard < 50_000_000 {
         timer::local_timer_timeout_proc();

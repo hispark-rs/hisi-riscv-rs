@@ -3,7 +3,8 @@
 //! Implemented for real: interrupt lock/restore (the core critical-section
 //! primitive, via `mstatus.MIE`), per-line WLAN interrupt registration through
 //! the HAL/runtime dispatch table, `osal_udelay` (approximate busy-wait), and
-//! `osal_flush_cache` (a data `fence`).
+//! `osal_flush_cache` (a data `fence`). Delay/time semantics delegate to the
+//! original mask-ROM TCXO/systick drivers.
 //!
 //! `osal_kmalloc`/`osal_kfree` live in [`crate::alloc`].
 
@@ -13,11 +14,6 @@ use core::cell::Cell;
 use core::ffi::{c_char, c_int, c_ulong, c_void};
 use critical_section::Mutex;
 use hisi_riscv_hal::interrupt::{self, Interrupt, Priority};
-
-/// Approximate CPU cycles per microsecond for [`osal_udelay`]. The WS63 app
-/// core runs at a few hundred MHz; this is intentionally rough (the busy-wait
-/// is not calibrated and QEMU is not cycle-accurate).
-const CYCLES_PER_US: u64 = 240;
 
 // ── Interrupt lock / restore (REAL) ─────────────────────────────────────────
 
@@ -50,17 +46,12 @@ pub extern "C" fn osal_irq_restore(state: c_ulong) {
     let _ = state;
 }
 
-// ── Delay (REAL, approximate) ───────────────────────────────────────────────
+// ── Delay ──────────────────────────────────────────────────────────────────
 
-/// Busy-wait roughly `usec` microseconds. Uncalibrated (see `CYCLES_PER_US`).
+/// Busy-wait for `usec` using the original mask-ROM TCXO driver.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_udelay(usec: u32) {
-    let iters = (usec as u64).saturating_mul(CYCLES_PER_US);
-    let mut i = 0u64;
-    while i < iters {
-        core::hint::spin_loop();
-        i += 1;
-    }
+    crate::uapi::delay_us(usec);
 }
 
 // ── Cache (REAL-ish) ────────────────────────────────────────────────────────

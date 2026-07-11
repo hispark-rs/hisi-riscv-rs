@@ -163,32 +163,10 @@ pub extern "C" fn osal_strtol(cp: *const c_char, endp: *mut *mut c_char, base: c
 
 // ── Time ────────────────────────────────────────────────────────────────────
 
-const CYCLES_PER_MS: u64 = 240_000;
-const CYCLES_PER_US: u64 = 240;
-
-fn mcycle() -> u64 {
-    #[cfg(target_arch = "riscv32")]
-    {
-        loop {
-            let (hi1, lo, hi2): (u32, u32, u32);
-            unsafe {
-                core::arch::asm!("csrr {0}, mcycleh", out(reg) hi1, options(nomem, nostack));
-                core::arch::asm!("csrr {0}, mcycle",  out(reg) lo,  options(nomem, nostack));
-                core::arch::asm!("csrr {0}, mcycleh", out(reg) hi2, options(nomem, nostack));
-            }
-            if hi1 == hi2 {
-                return ((hi1 as u64) << 32) | lo as u64;
-            }
-        }
-    }
-    #[cfg(not(target_arch = "riscv32"))]
-    0
-}
-
-/// Monotonic tick count; 1 jiffy == 1 ms here.
+/// Monotonic tick count; 1 jiffy is one mask-ROM systick millisecond.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_get_jiffies() -> u64 {
-    mcycle() / CYCLES_PER_MS
+    crate::uapi::monotonic_ms()
 }
 /// Convert jiffies to milliseconds (1:1 here).
 #[unsafe(no_mangle)]
@@ -202,13 +180,13 @@ pub struct OsalTimeval {
     tv_sec: c_long,
     tv_usec: c_long,
 }
-/// Fill `tv` with time since boot (from `mcycle`; approximate).
+/// Fill `tv` with time since boot from the mask-ROM TCXO counter.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_gettimeofday(tv: *mut OsalTimeval) {
     if tv.is_null() {
         return;
     }
-    let us = mcycle() / CYCLES_PER_US;
+    let us = crate::uapi::monotonic_us();
     // SAFETY: tv is a valid out-parameter.
     unsafe {
         (*tv).tv_sec = (us / 1_000_000) as c_long;

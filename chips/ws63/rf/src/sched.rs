@@ -25,8 +25,6 @@ use critical_section::Mutex;
 const MAX_TASKS: usize = 16;
 /// Minimum task stack (bytes), 16-byte aligned.
 const MIN_STACK: usize = 4096;
-/// Rough cycles/ms for sleep deadlines (uncalibrated; see `crate::osal`).
-const CYCLES_PER_MS: u64 = 240_000;
 /// Sentinel "no task" index for intrusive list links.
 const NIL: usize = usize::MAX;
 
@@ -143,7 +141,7 @@ struct Tcb {
     entry: Option<TaskFn>,
     arg: usize,   // task argument (*mut c_void stored as usize so Tcb is Send)
     next: usize,  // intrusive link: ready queue OR one wait queue
-    wake_at: u64, // mcycle deadline when Sleeping
+    wake_at: u64, // mask-ROM systick millisecond deadline
     waiting_sem: usize,
     sem_granted: bool,
 }
@@ -231,23 +229,8 @@ impl Sched {
 
 static SCHED: Mutex<RefCell<Sched>> = Mutex::new(RefCell::new(Sched::new()));
 
-fn now_cycles() -> u64 {
-    #[cfg(target_arch = "riscv32")]
-    {
-        loop {
-            let (hi1, lo, hi2): (u32, u32, u32);
-            unsafe {
-                core::arch::asm!("csrr {0}, mcycleh", out(reg) hi1, options(nomem, nostack));
-                core::arch::asm!("csrr {0}, mcycle",  out(reg) lo,  options(nomem, nostack));
-                core::arch::asm!("csrr {0}, mcycleh", out(reg) hi2, options(nomem, nostack));
-            }
-            if hi1 == hi2 {
-                return ((hi1 as u64) << 32) | lo as u64;
-            }
-        }
-    }
-    #[cfg(not(target_arch = "riscv32"))]
-    0
+fn now_ms() -> u64 {
+    crate::uapi::monotonic_ms()
 }
 
 /// First-run trampoline: a freshly switched-to task lands here (its `ctx.ra`),
@@ -333,7 +316,7 @@ fn switch_away(prev: usize) {
     loop {
         let next = critical_section::with(|cs| {
             let s = &mut *SCHED.borrow_ref_mut(cs);
-            s.wake_sleepers(now_cycles());
+            s.wake_sleepers(now_ms());
             s.ready_pop()
         });
         if next == NIL {
@@ -386,7 +369,7 @@ pub fn sleep_ms(ms: u32) {
         let s = &mut *SCHED.borrow_ref_mut(cs);
         let cur = s.current;
         s.tasks[cur].state = State::Sleeping;
-        s.tasks[cur].wake_at = now_cycles() + ms as u64 * CYCLES_PER_MS;
+        s.tasks[cur].wake_at = now_ms().saturating_add(ms as u64);
         cur
     });
     switch_away(prev);
@@ -519,13 +502,13 @@ impl Semaphore {
     ///
     /// The waiter is linked into the semaphore queue so [`up`](Self::up) can
     /// hand the grant directly to it. The scheduler removes it from that queue
-    /// if the `mcycle` deadline wins first.
+    /// if the mask-ROM systick deadline wins first.
     pub fn down_timeout(&self, timeout_ms: u32) -> bool {
         if timeout_ms == u32::MAX {
             self.down();
             return true;
         }
-        let deadline = now_cycles().saturating_add(timeout_ms as u64 * CYCLES_PER_MS);
+        let deadline = now_ms().saturating_add(timeout_ms as u64);
         let current = critical_section::with(|cs| {
             let s = &mut *SCHED.borrow_ref_mut(cs);
             // SAFETY: exclusive under the critical section.

@@ -112,6 +112,8 @@ pub enum Error {
     RegisterEvents(c_int),
     /// The vendor refused to open the station netdev.
     OpenStation(c_int),
+    /// The mask-ROM TCXO driver failed to initialize.
+    Timebase(u32),
     /// A scan is already in progress.
     Busy,
     /// The vendor scan ioctl failed.
@@ -156,6 +158,10 @@ impl<'d> Wifi<'d> {
             // SAFETY: the one-shot claim above guarantees this runs once,
             // before the vendor stack can access its dedicated RAM windows.
             unsafe { crate::prepare_vendor_memory() };
+            let timebase = crate::uapi::initialize_rom_timebases();
+            if timebase != 0 {
+                return Err(Error::Timebase(timebase));
+            }
             crate::uapi::enable_efuse_reads();
 
             // SAFETY: the RF build links the matching WS63 vendor archives and
@@ -269,7 +275,7 @@ impl<'d> Wifi<'d> {
                 return Err(Error::StartScan(result));
             }
 
-            let started_at = crate::uapi::uapi_systick_get_ms();
+            let started_at = crate::uapi::monotonic_ms();
             loop {
                 let (done, status, count) = critical_section::with(|cs| {
                     let state = SCAN_STATE.borrow(cs);
@@ -289,8 +295,7 @@ impl<'d> Wifi<'d> {
                     }
                     return Ok(copy_len);
                 }
-                if crate::uapi::uapi_systick_get_ms().wrapping_sub(started_at) >= timeout_ms as u64
-                {
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
                     finish_scan();
                     return Err(Error::Timeout);
                 }

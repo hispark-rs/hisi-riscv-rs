@@ -1,6 +1,7 @@
 //! UAPI platform services (ws63-RF `port_uapi.h`).
 //!
-//! `uapi_systick_get_ms` is real (reads the RISC-V `mcycle` counter).
+//! Timekeeping delegates to the WS63 mask-ROM systick/TCXO drivers using the
+//! vendor platform ROM-data initializer linked at its fixed DTCM ABI.
 //! `uapi_nv_read` is backed by the official WS63 ACPU KV partition and validates
 //! its page/key metadata and CRC. `uapi_tsensor_get_current_temp` remains a fixed
 //! conservative value until the HAL sensor path is wired into the RF adapter.
@@ -19,9 +20,6 @@ pub(crate) fn enable_efuse_reads() {
     EFUSE_READY.store(true, Ordering::Release);
 }
 
-/// Same rough cycles/µs as [`crate::osal`]; `mcycle / (CYCLES_PER_US*1000)` ≈ ms.
-const CYCLES_PER_MS: u64 = 240 * 1000;
-
 fn trace_nv(key: u16, max_len: u16, actual_len: u16, result: u32) {
     #[cfg(feature = "rf-init-diag")]
     crate::rf_init_diag::trace_nv(key, max_len, actual_len, result);
@@ -29,10 +27,61 @@ fn trace_nv(key: u16, max_len: u16, actual_len: u16, result: u32) {
     let _ = (key, max_len, actual_len, result);
 }
 
-/// Milliseconds since boot, from the `mcycle` CSR (approximate — uncalibrated).
-#[unsafe(no_mangle)]
-pub extern "C" fn uapi_systick_get_ms() -> u64 {
-    read_mcycle() / CYCLES_PER_MS
+#[cfg(target_arch = "riscv32")]
+unsafe extern "C" {
+    #[link_name = "uapi_systick_get_ms"]
+    fn rom_systick_get_ms() -> u64;
+    #[link_name = "uapi_tcxo_get_us"]
+    fn rom_tcxo_get_us() -> u64;
+    #[link_name = "uapi_tcxo_delay_us"]
+    fn rom_tcxo_delay_us(usec: u32) -> u32;
+    fn uapi_systick_init();
+    fn uapi_tcxo_init() -> u32;
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn initialize_rom_timebases() -> u32 {
+    unsafe {
+        // SAFETY: these are the same mask-ROM initialization calls used by the
+        // vendor `hw_init`. hisi-riscv-rt has already copied the original
+        // platform ROM-data initializer, including both HAL function tables and
+        // the 32 kHz / 24 MHz conversion values, to their fixed DTCM ABI slots.
+        uapi_systick_init();
+        uapi_tcxo_init()
+    }
+}
+
+/// Monotonic milliseconds from the mask-ROM 32 kHz systick implementation.
+pub(crate) fn monotonic_ms() -> u64 {
+    #[cfg(target_arch = "riscv32")]
+    unsafe {
+        // SAFETY: initialized once by `Wifi::initialize`; the ROM function only
+        // reads its registered WS63 systick controller.
+        rom_systick_get_ms()
+    }
+    #[cfg(not(target_arch = "riscv32"))]
+    0
+}
+
+/// Monotonic microseconds from the mask-ROM TCXO implementation.
+pub(crate) fn monotonic_us() -> u64 {
+    #[cfg(target_arch = "riscv32")]
+    unsafe {
+        // SAFETY: same initialized ROM timebase contract as `monotonic_ms`.
+        rom_tcxo_get_us()
+    }
+    #[cfg(not(target_arch = "riscv32"))]
+    0
+}
+
+pub(crate) fn delay_us(usec: u32) {
+    #[cfg(target_arch = "riscv32")]
+    unsafe {
+        // SAFETY: same initialized ROM TCXO contract as `monotonic_us`.
+        let _ = rom_tcxo_delay_us(usec);
+    }
+    #[cfg(not(target_arch = "riscv32"))]
+    let _ = usec;
 }
 
 #[cfg(target_arch = "riscv32")]
