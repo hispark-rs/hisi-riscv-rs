@@ -82,17 +82,29 @@ pub extern "C" fn osal_kfree(ptr: *mut c_void) {
     if ptr.is_null() {
         return;
     }
+
+    free_owned(ptr);
+}
+
+fn free_owned(ptr: *mut c_void) {
     let caller = caller_address();
 
     // A C ABI caller can hand us a foreign, interior, or already-freed pointer.
     // Validate the ownership header before constructing a Layout; passing a
     // fabricated layout into linked_list_allocator would corrupt the heap.
     unsafe {
-        let base = (ptr as *mut u8).sub(HDR);
+        let heap_start = (&raw mut __heap_start__) as usize;
+        let heap_end = (&raw mut __heap_end__) as usize;
+        let user = ptr as usize;
+        if user < heap_start.saturating_add(HDR) || user > heap_end || !user.is_multiple_of(HDR) {
+            trace_bad_free(user, 0, 0, caller);
+            return;
+        }
+
+        let base = user.wrapping_sub(HDR) as *mut u8;
         let header = base as *mut AllocationHeader;
         let total = (*header).total as usize;
         let magic = (*header).magic;
-        let heap_end = (&raw mut __heap_end__) as usize;
         let valid = magic == ALLOC_MAGIC
             && total >= HDR
             && total <= heap_end.saturating_sub(base as usize)
