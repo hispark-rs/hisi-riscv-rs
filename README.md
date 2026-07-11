@@ -124,7 +124,9 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 
 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) is a QEMU fork with an
 in-tree WS63 machine (`-M ws63`) that models the CPU + xlinx custom ISA, memory
-map, interrupt controller, and all 35 SVD peripherals. It runs ws63-rs firmware
+map, interrupt controller, and the established 35-peripheral SVD model. The PAC
+now also exposes `BT_EM_CTL`; QEMU parity for that newly modeled register block
+is still pending. It runs ws63-rs firmware
 (and real vendor C-SDK firmware) and is the software-in-the-loop stand-in for
 the current roadmap's baseline/HIL support track:
 

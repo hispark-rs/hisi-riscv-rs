@@ -8,7 +8,7 @@
 
 `ws63-pac` 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 `svd2rust` 从 SVD 描述生成。它的职责非常聚焦：
 
-- **负责**：为芯片上的 35 个外设提供 `RegisterBlock` 结构体与类型安全的寄存器读/写/改访问器；提供 `Peripherals` 单例（`take()` / `steal()`）；提供外部中断枚举 `ExternalInterrupt`；在 `rt` feature 下提供中断向量表 `device.x`。
+- **负责**：为芯片上的 36 个外设/寄存器块提供 `RegisterBlock` 结构体与类型安全的寄存器读/写/改访问器；提供 `Peripherals` 单例（`take()` / `steal()`）；提供外部中断枚举 `ExternalInterrupt`；在 `rt` feature 下提供中断向量表 `device.x`。
 - **不负责**：任何驱动逻辑、时钟门控策略、引脚复用、外设初始化时序。这些全部上移到 `hisi-riscv-hal`。PAC 只暴露"裸寄存器 + 地址映射"，是 `unsafe` 寄存器写入的最底层封装边界。
 
 crate 元数据齐全（`Cargo.toml:1-9`）：`license = "MIT"`、`repository`、`keywords`、`categories`，具备发布到 crates.io 的条件。
@@ -30,8 +30,8 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 ## 关键设计
 
 - **svd2rust 0.37.1 现代访问器**：generic 层用 `Periph<RB, const A: usize>` 把外设基址作为 const 泛型参数编码（`src/lib.rs:14-20`），`ptr()` 是 `const fn`（`src/lib.rs:23-25`），`Deref` 直接解到寄存器块（`src/lib.rs:45-51`）。这是新版 svd2rust 的 const-fn 访问器风格，零运行时开销。
-- **Peripherals 单例**：`static mut DEVICE_PERIPHERALS: bool`（`src/lib.rs:31681`）作为一次性标志；`take()` 在 `critical-section` 内检查并返回 `Option<Self>`（`src/lib.rs:31760-31767`），`steal()` 为 `unsafe` 无检查版本（`src/lib.rs:31774-31813`）。`Peripherals` 结构体逐字段持有 35 个外设的 ZST 句柄（`src/lib.rs:31684-31755`）。
-- **35 外设覆盖**：从 `sys_ctl1`、三路 `gpio0/1/2`、三路 `uart0/1/2`、双 `i2c`、双 `spi`、`dma`/`sdma`，到安全引擎 `spacc`/`pke`/`km`/`trng` 与时钟复位 `cldo_crg` 等全部映射（`src/lib.rs:31685-31754`）。
+- **Peripherals 单例**：`static mut DEVICE_PERIPHERALS: bool` 作为一次性标志；`take()` 在 `critical-section` 内检查并返回 `Option<Self>`，`steal()` 为 `unsafe` 无检查版本。`Peripherals` 结构体逐字段持有 36 个外设/寄存器块的 ZST 句柄。
+- **36 个块覆盖**：从 `sys_ctl1`、三路 `gpio0/1/2`、三路 `uart0/1/2`、双 `i2c`、双 `spi`、`dma`/`sdma`，到安全引擎 `spacc`/`pke`/`km`/`trng`、共享 RAM `share_mem_ctl`/`bt_em_ctl` 与时钟复位 `cldo_crg` 等全部映射。
 - **中断模型**：`ExternalInterrupt` 枚举用 `#[riscv::pac_enum(unsafe ExternalInterruptNumber)]` 标注（`src/lib.rs:902-904`），中断号从 26 起（`TIMER_INT0 = 26`，`src/lib.rs:906`）。`rt` feature 下 `build.rs` 把 `device.x` 写入 `OUT_DIR` 并加入 link-search（`build.rs:8-18`），向量表用 `PROVIDE(... = DefaultHandler)` 提供弱默认（`device.x:1-30`）。
 - **feature 设计**：`default = ["critical-section"]`，外加 `rt`（`Cargo.toml:16-18`）。`take()` 仅在 `critical-section` 下编译（`src/lib.rs:31758`），符合 svd2rust 约定。
 - **ISA 协同**：`rt` feature 下 `build.rs` 导出 `RISCV_RT_BASE_ISA=rv32i`（`build.rs:16`）；当前默认目标是官方 `riscv32imfc-unknown-none-elf`，无 A 扩展，产物不得发射 `lr/sc/amo`。

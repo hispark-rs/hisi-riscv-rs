@@ -29,10 +29,11 @@ hisi-riscv-qemu 正是这么做的：加 `hw/riscv/ws63.c`，只构建 `riscv32-
 - **xlinx 自定义 ISA**：HiSilicon riscv31 的一批私有指令。这是为了能跑**厂商 gcc 编的
   C SDK 固件**——有了它，Rust 固件（标准 RV32IMFC）和厂商 C SDK 固件可以**对照交叉验证**
   内存映射、启动、外设时序。
-- **全部 35 个 SVD 外设**：不是"catch-all 黑洞"，而是逐个建模。其中很多是**行为完整**的——
+- **既有 35 个 SVD 外设模型**：不是"catch-all 黑洞"，而是逐个建模。其中很多是**行为完整**的——
   DMA 真的搬内存、Timer/RTC/WDT 真的计时和触发中断、I2C/SPI/I2S 真的回环 FIFO、
   LSADC 真的出采样、EFUSE 真的走 OTP 按位或、GPIO 是真实信号网（bank 内回环 + 跨 bank
-  板级连线 + 可外部驱动）。少数配置类寄存器（晶振/RF/PHY 相关）是读回影子。
+  板级连线 + 可外部驱动）。少数配置类寄存器（晶振/RF/PHY 相关）是读回影子。PAC 新增的
+  `BT_EM_CTL` 寄存器块尚待补齐 QEMU parity，因此当前不能宣称 PAC 的全部 36 个寄存器块都已建模。
 - **时钟树**：时钟门控生效（清门会冻结定时器、置位恢复）、源路由（TCXO/PLL 选择）建模为状态。
 - **中断**：两类都端到端投递——IRQ 26–31 走标准 `mie`，IRQ ≥32 走 HiSilicon 自定义
   `LOCIxx` CSR（经 target/riscv 补丁实现），并强制 `LOCIPRI` 优先级 + `PRITHD` 阈值。

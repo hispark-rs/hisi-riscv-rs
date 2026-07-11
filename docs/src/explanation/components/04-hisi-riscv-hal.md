@@ -9,7 +9,7 @@
 `hisi-riscv-hal` 是 WS63 SoC 的硬件抽象层（HAL），在 `ws63-pac` 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。
 
 - **负责**：
-  - 为 35 个 PAC 外设提供生命周期化的安全单例封装（`peripherals.rs`），并在其上实现 35 个外设驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、以及 KM/PKE/SPACC 等加密外设）。
+  - 为 36 个 PAC 外设/寄存器块提供生命周期化的安全单例封装（`peripherals.rs`），并在其上实现按功能聚合的驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、KM/PKE/SPACC、shared memory 等）。
   - 时钟架构：`clock.rs` 的 `Peripheral`/`cken_info()` 审计图、引导期时钟树初始化（`clock_init.rs`，实验面）。
   - GPIO 三层驱动模型、DMA 双控制器抽象、sealed trait 体系（`private.rs`）。
   - embedded-hal 1.0 / embedded-hal-nb 1.0 / embedded-io 0.6 / nb 的 trait 实现。
@@ -67,7 +67,7 @@ DMA 提供拥有缓冲区的
 - `peripheral!($name, $pac_ty)`（`peripherals.rs:10-48`）— 为每个外设生成零大小、`'d` 参数化的 ZST，提供 `unsafe steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)`（`peripherals.rs:50-87`）— 生成 `Peripherals` 结构体，`take()` 经 PAC 单例校验（`peripherals.rs:61-64`），`unsafe steal()` 绕过校验。
 
-全部 35 个 PAC 外设都有 HAL 封装（`peripherals.rs:157-193`）。`'d` 生命周期防止 `Peripherals` token 被释放后仍持有驱动，是这一层的核心安全不变量。
+全部 36 个 PAC 块都有 HAL ownership token；其中未经 HIL 的行为面（如 `shared_memory`）仍受 `unstable` 门控。`'d` 生命周期防止 `Peripherals` token 被释放后仍持有驱动，是这一层的核心安全不变量。
 
 ### 时钟架构
 

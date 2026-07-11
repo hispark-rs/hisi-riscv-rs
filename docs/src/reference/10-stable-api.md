@@ -42,6 +42,6 @@
 - **默认面先收窄的子面**：GPIO IRQ (`InterruptTrigger`、per-pin enable/clear/pending/trigger)、`Uart::new_uart2`、`Spi::new_spi1`、`I2c::new_i2c1`、timer one-shot/periodic wrappers、WDT IRQ 方法、PWM polarity/start/pulse-count/`into_running`、I2S slave role/config、eFuse status、TRNG `done/read/fill_words`、TSENSOR `disable/clear_status`。这些不是“永远不稳定”，只是当前没有足够真机证据或所有权约束。
 - **不可逆 / 未闭合 soundness 的路径**：`EfuseDriver::set_clock_period`/`read_buffer`/`write_byte`（默认稳定面只保留自动 clock period + 单字节只读路径）、`System::software_reset*`、`Instant::now`/`elapsed`、`interrupt::free`、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。
 - **embassy**：无端到端 HIL（`timer_int0_named_routing` 还专门 `not(feature="embassy")` 排除它）。
-- **WS63 未测试驱动**：`clock_init`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。
+- **WS63 未测试驱动**：`clock_init`/`shared_memory`/`km`/`pke`/`safety`/`sfc`/`spacc`/`ulp_gpio`/`rtc`-WS63（`hil-rtc` 是 opt-in 且这块板没晶振从没跑过）/`delay`。`shared_memory` 当前只服务 RF bring-up，尚未作为通用 HAL 能力毕业。
 - **整个 BS2X target**（无 BS2X 板）：`chip-bs21` 需要 `unstable`；这覆盖共享驱动、`gadc`/`keyscan`/`pdm`/`qdec`/`usb`/`i2c`-v151/`rtc`-v150/`trng`-v1 等 BS2X-only 模块；`hisi-riscv-rt` 的 BS2X compatibility adapter 也同样要求 `unstable`。
 - **prelude 的 unstable re-export**：`Delay`、`InterruptTrigger`、`OneShotTimer`/`PeriodicTimer`、`Dma0`/`DmaDriver`/`Sdma0`、`RtcDriver`、`SfcDriver`、`UlpGpioPin`。

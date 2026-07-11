@@ -14,7 +14,7 @@
 ws63-svd (XML 真值)
    │ svd2rust 生成
    ▼
-ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，35 个外设的 RegisterBlock）
+ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，36 个外设/寄存器块）
    │
    ▼
 hisi-riscv-hal  ── 手写的安全驱动（35 个源文件 + 可选 async/embassy）
