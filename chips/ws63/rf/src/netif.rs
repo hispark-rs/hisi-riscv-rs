@@ -30,10 +30,13 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use core::ffi::{c_int, c_void};
-use portable_atomic::{AtomicU32, Ordering};
+use portable_atomic::{AtomicU32, AtomicUsize, Ordering};
 
 /// Frames handed up by [`driverif_input`] and dropped (until smoltcp is wired).
 static RX_DROPPED: AtomicU32 = AtomicU32::new(0);
+/// Single STA netif registered by the vendor WAL. Scan bring-up has no TCP/IP
+/// stack yet, but WAL still expects lwIP to preserve this opaque identity.
+static REGISTERED_NETIF: AtomicUsize = AtomicUsize::new(0);
 
 /// Number of RX frames dropped at the netif seam so far (diagnostic).
 pub fn rx_dropped() -> u32 {
@@ -163,18 +166,105 @@ pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
     pbuf_free(p);
 }
 
-// ── Interface management / tcpip thread (accepted no-ops) ───────────────────
-// ABI-safe stubs: the caller passes args in a0.. and cleans up; these read none
-// and report success so init proceeds. A real netif/tcpip layer is future work.
+// ── Interface management / tcpip thread ─────────────────────────────────────
+// Scan only needs one opaque STA netif identity. These functions preserve that
+// control-plane contract without claiming that an IP data plane exists.
 
-/// `netifapi_netif_add` — register an interface. STUB: OK.
+/// `netifapi_netif_add` — register the vendor-created STA interface.
 #[unsafe(no_mangle)]
-pub extern "C" fn netifapi_netif_add() -> c_int {
+pub extern "C" fn netifapi_netif_add(
+    netif: *mut c_void,
+    _ipaddr: *const u32,
+    _netmask: *const u32,
+    _gateway: *const u32,
+) -> c_int {
+    REGISTERED_NETIF.store(netif as usize, Ordering::Release);
     0
 }
-/// `netifapi_netif_remove` — deregister an interface. STUB: OK.
+
+/// `netifapi_netif_remove` — deregister the STA interface.
 #[unsafe(no_mangle)]
-pub extern "C" fn netifapi_netif_remove() -> c_int {
+pub extern "C" fn netifapi_netif_remove(netif: *mut c_void) -> c_int {
+    let _ =
+        REGISTERED_NETIF.compare_exchange(netif as usize, 0, Ordering::AcqRel, Ordering::Acquire);
+    0
+}
+
+/// `netifapi_netif_find_by_name` — return the sole registered STA netif.
+///
+/// The scan milestone supports exactly one interface, so name disambiguation
+/// is intentionally deferred until the data-plane netif implementation.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_find_by_name(_name: *const u8) -> *mut c_void {
+    REGISTERED_NETIF.load(Ordering::Acquire) as *mut c_void
+}
+
+/// `netifapi_netif_get_addr` — scan has no IPv4 configuration; report zeros.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_get_addr(
+    netif: *mut c_void,
+    ipaddr: *mut u32,
+    netmask: *mut u32,
+    gateway: *mut u32,
+) -> c_int {
+    if netif.is_null() {
+        return -6; // lwIP ERR_VAL
+    }
+    for output in [ipaddr, netmask, gateway] {
+        if !output.is_null() {
+            // SAFETY: lwIP supplies writable `ip4_addr_t` outputs.
+            unsafe { output.write(0) };
+        }
+    }
+    0
+}
+
+/// Register a lwIP extended-status callback. The scan-only adapter has no
+/// tcpip thread to dispatch it, so retain no callback and report success.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_add_ext_callback(
+    _callback: *mut c_void,
+    _function: *mut c_void,
+) -> c_int {
+    0
+}
+
+/// Disable IPv6 autoconfiguration for the opaque scan netif.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_set_ip6_autoconfig_disabled(_netif: *mut c_void) -> c_int {
+    0
+}
+
+/// Accept creation of a link-local address for the opaque scan netif.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_add_ip6_linklocal_address(
+    _netif: *mut c_void,
+    _from_mac_48bit: u8,
+) -> c_int {
+    0
+}
+
+/// Mark the opaque scan netif administratively up.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_set_up(_netif: *mut c_void) -> c_int {
+    0
+}
+
+/// Mark the opaque scan netif administratively down.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_set_down(_netif: *mut c_void) -> c_int {
+    0
+}
+
+/// Mark the opaque scan netif's link up.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_set_link_up(_netif: *mut c_void) -> c_int {
+    0
+}
+
+/// Select the opaque scan netif as the default route.
+#[unsafe(no_mangle)]
+pub extern "C" fn netifapi_netif_set_default(_netif: *mut c_void) -> c_int {
     0
 }
 /// `netif_set_link_up_interface` — link-up callback. STUB.

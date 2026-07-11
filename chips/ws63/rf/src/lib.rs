@@ -127,6 +127,7 @@ mod pmp;
 mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
+pub mod wifi;
 
 pub use pmp::prepare_vendor_memory;
 
@@ -209,7 +210,17 @@ pub fn force_link_contract() {
     keep!(log::log_event_print4 as extern "C" fn() -> c_int);
     keep!(log::osal_printk as extern "C" fn(*const c_char) -> c_int);
     keep!(
-        log::snprintf_s as extern "C" fn(*mut c_char, usize, usize, *const c_char, c_uint) -> c_int
+        log::snprintf_s
+            as extern "C" fn(
+                *mut c_char,
+                usize,
+                usize,
+                *const c_char,
+                c_uint,
+                c_uint,
+                c_uint,
+                c_uint,
+            ) -> c_int
     );
     keep!(log::memset_s as extern "C" fn(*mut c_void, usize, c_int, usize) -> c_int);
     keep!(log::memcpy_s as extern "C" fn(*mut c_void, usize, *const c_void, usize) -> c_int);
@@ -282,8 +293,27 @@ pub fn force_link_contract() {
     keep!(netif::pbuf_ref as extern "C" fn(*mut c_void));
     keep!(netif::pbuf_header as extern "C" fn(*mut c_void, i16) -> u8);
     keep!(netif::driverif_input as extern "C" fn(*mut c_void, *mut c_void));
-    keep!(netif::netifapi_netif_add as extern "C" fn() -> c_int);
-    keep!(netif::netifapi_netif_remove as extern "C" fn() -> c_int);
+    keep!(
+        netif::netifapi_netif_add
+            as extern "C" fn(*mut c_void, *const u32, *const u32, *const u32) -> c_int
+    );
+    keep!(netif::netifapi_netif_remove as extern "C" fn(*mut c_void) -> c_int);
+    keep!(netif::netifapi_netif_find_by_name as extern "C" fn(*const u8) -> *mut c_void);
+    keep!(
+        netif::netifapi_netif_get_addr
+            as extern "C" fn(*mut c_void, *mut u32, *mut u32, *mut u32) -> c_int
+    );
+    keep!(
+        netif::netifapi_netif_add_ext_callback as extern "C" fn(*mut c_void, *mut c_void) -> c_int
+    );
+    keep!(netif::netifapi_set_ip6_autoconfig_disabled as extern "C" fn(*mut c_void) -> c_int);
+    keep!(
+        netif::netifapi_netif_add_ip6_linklocal_address as extern "C" fn(*mut c_void, u8) -> c_int
+    );
+    keep!(netif::netifapi_netif_set_up as extern "C" fn(*mut c_void) -> c_int);
+    keep!(netif::netifapi_netif_set_down as extern "C" fn(*mut c_void) -> c_int);
+    keep!(netif::netifapi_netif_set_link_up as extern "C" fn(*mut c_void) -> c_int);
+    keep!(netif::netifapi_netif_set_default as extern "C" fn(*mut c_void) -> c_int);
     keep!(netif::netif_set_link_up_interface as extern "C" fn(*mut c_void));
     keep!(netif::netif_set_link_down_interface as extern "C" fn(*mut c_void));
     keep!(netif::tcpip_callback as extern "C" fn(*mut c_void, *mut c_void) -> c_int);

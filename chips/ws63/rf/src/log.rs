@@ -6,7 +6,7 @@
 //! dereference it. We emit compact hex diagnostics to the installed sink.
 //!
 //! `osal_printk` / `snprintf_s` still use C strings. The `snprintf_s` adapter
-//! implements the single-argument `%u` form used to create vendor netdev names.
+//! implements the bounded conversion subset used by the vendor control path.
 //!
 //! `memset_s` / `memcpy_s` are NOT variadic and ARE used for real memory moves
 //! by the blobs, so they are implemented faithfully (securec semantics:
@@ -153,18 +153,22 @@ pub extern "C" fn osal_printk(fmt: *const c_char) -> c_int {
 
 /// Bounded `snprintf_s` subset used by the vendor Wi-Fi objects.
 ///
-/// The prebuilt objects currently require one unsigned argument for interface
-/// names such as `Featureid%u`. The fifth C ABI argument is therefore modeled
-/// explicitly; unsupported conversion specifiers are copied literally instead
-/// of consuming an argument. Returns bytes written (excluding NUL), or `-1`
-/// after clearing the destination when the result would be truncated.
+/// The RV32 ABI passes the first four variadic words in `a4..a7`; model those
+/// words explicitly so `%s%u` netdev names and simple diagnostic strings retain
+/// their C calling convention without requiring Rust variadic definitions.
+/// Unsupported conversion specifiers are copied literally without consuming
+/// an argument. Returns bytes written (excluding NUL), or `-1` after clearing
+/// the destination when the result would be truncated.
 #[unsafe(no_mangle)]
 pub extern "C" fn snprintf_s(
     buf: *mut c_char,
     size: usize,
     count: usize,
     fmt: *const c_char,
-    arg: c_uint,
+    arg0: c_uint,
+    arg1: c_uint,
+    arg2: c_uint,
+    arg3: c_uint,
 ) -> c_int {
     if buf.is_null() || size == 0 {
         return -1;
@@ -172,26 +176,76 @@ pub extern "C" fn snprintf_s(
     let src = cstr_bytes(fmt);
     let limit = core::cmp::min(size - 1, count);
     let output = buf.cast::<u8>();
+    let arguments = [arg0, arg1, arg2, arg3];
+    let mut argument_index = 0;
     let mut input_index = 0;
     let mut output_index = 0;
 
+    let write_bytes = |bytes: &[u8], output_index: &mut usize| -> bool {
+        if *output_index + bytes.len() > limit {
+            return false;
+        }
+        for &byte in bytes {
+            // SAFETY: the bounds check above keeps every write below size.
+            unsafe { output.add(*output_index).write(byte) };
+            *output_index += 1;
+        }
+        true
+    };
+
     while input_index < src.len() {
-        if src[input_index] == b'%' && src.get(input_index + 1) == Some(&b'u') {
+        let conversion = if src[input_index] == b'%' {
+            src.get(input_index + 1).copied()
+        } else {
+            None
+        };
+        if matches!(conversion, Some(b's' | b'u' | b'd' | b'x')) && argument_index < arguments.len()
+        {
+            let specifier = conversion.unwrap_or_default();
+            let argument = arguments[argument_index];
+            argument_index += 1;
+            if specifier == b's' {
+                let bytes = cstr_bytes(argument as usize as *const c_char);
+                if !write_bytes(bytes, &mut output_index) {
+                    // SAFETY: `size > 0`, so the first destination byte exists.
+                    unsafe { output.write(0) };
+                    return -1;
+                }
+                input_index += 2;
+                continue;
+            }
+
             let mut digits = [0_u8; 10];
-            let mut value = arg;
+            let negative = specifier == b'd' && (argument as i32) < 0;
+            let mut value = if negative {
+                (argument as i32).unsigned_abs()
+            } else {
+                argument
+            };
+            let radix = if specifier == b'x' { 16 } else { 10 };
             let mut digits_len = 0;
             loop {
-                digits[digits_len] = b'0' + (value % 10) as u8;
+                let digit = (value % radix) as u8;
+                digits[digits_len] = if digit < 10 {
+                    b'0' + digit
+                } else {
+                    b'a' + digit - 10
+                };
                 digits_len += 1;
-                value /= 10;
+                value /= radix;
                 if value == 0 {
                     break;
                 }
             }
-            if output_index + digits_len > limit {
+            if output_index + digits_len + usize::from(negative) > limit {
                 // SAFETY: `size > 0`, so the first destination byte exists.
                 unsafe { output.write(0) };
                 return -1;
+            }
+            if negative {
+                // SAFETY: included in the bounds check above.
+                unsafe { output.add(output_index).write(b'-') };
+                output_index += 1;
             }
             for digit in digits[..digits_len].iter().rev() {
                 // SAFETY: the bounds check above keeps every write below size.
@@ -238,6 +292,9 @@ mod snprintf_tests {
             output.len(),
             c"Featureid%u".as_ptr(),
             0,
+            0,
+            0,
+            0,
         );
         let bytes = output.map(|byte| byte as u8);
         assert_eq!(result, 10);
@@ -254,6 +311,9 @@ mod snprintf_tests {
                 output.len(),
                 c"Featureid%u".as_ptr(),
                 12,
+                0,
+                0,
+                0,
             ),
             -1
         );
