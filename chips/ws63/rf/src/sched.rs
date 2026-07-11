@@ -23,8 +23,14 @@ use critical_section::Mutex;
 
 /// Max concurrent tasks (slot table; the WiFi stack uses only a few).
 const MAX_TASKS: usize = 16;
-/// Minimum task stack (bytes), 16-byte aligned.
-const MIN_STACK: usize = 4096;
+/// Minimum task stack used by the vendor LiteOS application (bytes).
+///
+/// `osal_kthread_create()` raises every requested stack to
+/// `LOSCFG_BASE_CORE_TSK_DEFAULT_STACK_SIZE`; the WS63 app configuration used
+/// to build these Wi-Fi archives sets that value to 24 KiB. The FRW APIs still
+/// request `0x1000`/`0x1400`, so treating the request as the final allocation
+/// silently under-sizes their deep scan/RX call paths.
+const MIN_STACK: usize = 24 * 1024;
 /// Sentinel "no task" index for intrusive list links.
 const NIL: usize = usize::MAX;
 
@@ -36,6 +42,9 @@ struct Ctx {
     sp: usize,      // 4
     s: [usize; 12], // 8..56  (s0..s11)
     fs: [u32; 12],  // 56..104 (fs0..fs11, FLEN=32)
+    tp: usize,      // 104
+    mstatus: u32,   // 108
+    fcsr: u32,      // 112
 }
 impl Ctx {
     const fn zero() -> Self {
@@ -44,6 +53,9 @@ impl Ctx {
             sp: 0,
             s: [0; 12],
             fs: [0; 12],
+            tp: 0,
+            mstatus: 0,
+            fcsr: 0,
         }
     }
 }
@@ -86,6 +98,11 @@ unsafe extern "C" fn context_switch(old: *mut Ctx, new: *const Ctx) {
         "fsw fs9, 92(a0)",
         "fsw fs10,96(a0)",
         "fsw fs11,100(a0)",
+        "sw  tp, 104(a0)",
+        "csrr t0, mstatus",
+        "sw  t0, 108(a0)",
+        "frcsr t0",
+        "sw  t0, 112(a0)",
         // restore *new (a1) -> current
         "lw  ra,  0(a1)",
         "lw  sp,  4(a1)",
@@ -113,6 +130,13 @@ unsafe extern "C" fn context_switch(old: *mut Ctx, new: *const Ctx) {
         "flw fs9, 92(a1)",
         "flw fs10,96(a1)",
         "flw fs11,100(a1)",
+        "lw  tp, 104(a1)",
+        "lw  t0, 112(a1)",
+        "fscsr t0",
+        // Restore mstatus last: setting MIE before the remaining context is
+        // live would allow an interrupt to observe a half-restored task.
+        "lw  t0, 108(a1)",
+        "csrw mstatus, t0",
         "ret",
     )
 }
@@ -290,6 +314,18 @@ pub fn spawn(entry: TaskFn, arg: *mut c_void, stack_size: usize) -> Option<usize
         };
         let t = &mut s.tasks[i];
         t.ctx = Ctx::zero();
+        #[cfg(target_arch = "riscv32")]
+        unsafe {
+            core::arch::asm!(
+                "mv {tp}, tp",
+                "csrr {mstatus}, mstatus",
+                "frcsr {fcsr}",
+                tp = out(reg) t.ctx.tp,
+                mstatus = out(reg) t.ctx.mstatus,
+                fcsr = out(reg) t.ctx.fcsr,
+                options(nomem, nostack),
+            );
+        }
         // Cast through a fn pointer (not a direct fn-item->int cast).
         let tramp: extern "C" fn() -> ! = trampoline;
         t.ctx.ra = tramp as usize;
