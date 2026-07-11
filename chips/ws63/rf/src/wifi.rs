@@ -287,6 +287,9 @@ impl<'d> Wifi<'d> {
                 return Err(Error::OpenStation(open));
             }
 
+            #[cfg(feature = "net")]
+            crate::netif_smoltcp::set_tx_sink(crate::netif::vendor_tx_sink);
+
             Ok(Self {
                 ifname,
                 _efuse: efuse,

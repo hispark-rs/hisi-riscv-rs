@@ -384,18 +384,68 @@ pub extern "C" fn uapi_drv_cipher_trng_get_random_bytes(randnum: *mut u8, size: 
     crate::OSAL_OK as u32
 }
 
-/// Device address (e.g. station MAC). SCAFFOLD: a fixed locally-administered MAC
-/// `02:00:00:00:00:01` (`type`/`len` ignored). A real device reads it from
-/// eFuse/NV. Returns `OSAL_OK`.
+const NV_ID_SYSTEM_FACTORY_MAC: u16 = 0x0005;
+static mut WIFI_BASE_MAC: [u8; 6] = [0; 6];
+static WIFI_BASE_MAC_READY: portable_atomic::AtomicBool = portable_atomic::AtomicBool::new(false);
+
+fn valid_unicast_mac(mac: &[u8; 6]) -> bool {
+    mac[0] & 1 == 0 && *mac != [0; 6] && *mac != [0xff; 6]
+}
+
+fn wifi_base_mac() -> [u8; 6] {
+    critical_section::with(|_| {
+        if !WIFI_BASE_MAC_READY.load(Ordering::Relaxed) {
+            let mut mac = [0; 6];
+            let mut actual = 0_u16;
+            if uapi_nv_read(
+                NV_ID_SYSTEM_FACTORY_MAC,
+                mac.len() as u16,
+                &mut actual,
+                mac.as_mut_ptr(),
+            ) != crate::OSAL_OK as u32
+                || actual != mac.len() as u16
+                || !valid_unicast_mac(&mac)
+            {
+                let _ = uapi_drv_cipher_trng_get_random_bytes(mac.as_mut_ptr(), mac.len() as u32);
+                mac[0] = (mac[0] & 0xfc) | 0x02;
+                mac[1] = 0x00;
+                mac[2] = 0x73;
+            }
+            // SAFETY: all accesses are serialized by the single-hart critical
+            // section and readiness is published only after the full copy.
+            unsafe { core::ptr::write(&raw mut WIFI_BASE_MAC, mac) };
+            WIFI_BASE_MAC_READY.store(true, Ordering::Relaxed);
+        }
+        // SAFETY: initialized before READY and read under the same lock.
+        unsafe { core::ptr::read(&raw const WIFI_BASE_MAC) }
+    })
+}
+
+/// Device address following the WS63 SDK's base-MAC and interface derivation
+/// rules. The base Wi-Fi MAC comes from factory KV key `0x0005`; an ephemeral
+/// locally-administered unicast address is used only when factory data is
+/// unavailable or invalid.
 #[unsafe(no_mangle)]
-pub extern "C" fn get_dev_addr(pc_addr: *mut u8, addr_len: u8, _type: u8) -> u32 {
-    if pc_addr.is_null() || addr_len == 0 {
+pub extern "C" fn get_dev_addr(pc_addr: *mut u8, addr_len: u8, interface_type: u8) -> u32 {
+    if pc_addr.is_null() || addr_len != 6 {
         return crate::OSAL_NOK as u32;
     }
-    const MAC: [u8; 6] = [0x02, 0x00, 0x00, 0x00, 0x00, 0x01];
-    let n = (addr_len as usize).min(MAC.len());
+    let mut mac = wifi_base_mac();
+    let derive = match interface_type {
+        2 => 0_u16,      // station
+        3 => 2_u16,      // AP
+        7..=10 => 3_u16, // mesh / P2P
+        _ => return crate::OSAL_NOK as u32,
+    };
+    let mut carry = derive;
+    for byte in mac.iter_mut().rev() {
+        carry += *byte as u16;
+        *byte = carry as u8;
+        carry >>= 8;
+    }
+    mac[0] &= 0xfe;
     // SAFETY: caller guarantees `addr_len` bytes.
-    unsafe { core::ptr::copy_nonoverlapping(MAC.as_ptr(), pc_addr, n) };
+    unsafe { core::ptr::copy_nonoverlapping(mac.as_ptr(), pc_addr, mac.len()) };
     crate::OSAL_OK as u32
 }
 

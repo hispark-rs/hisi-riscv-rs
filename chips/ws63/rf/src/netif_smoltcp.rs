@@ -86,6 +86,18 @@ fn rx_pop(into: &mut [u8; MTU]) -> Option<usize> {
     })
 }
 
+/// Copy and remove the oldest frame received from the vendor data path.
+/// Internal bring-up hook used by packet-level HIL checks.
+#[doc(hidden)]
+pub fn take_received(out: &mut [u8]) -> Option<usize> {
+    let mut frame = [0; MTU];
+    rx_pop(&mut frame).map(|length| {
+        let copied = length.min(out.len());
+        out[..copied].copy_from_slice(&frame[..copied]);
+        copied
+    })
+}
+
 fn tx_emit(frame: &[u8]) {
     let sink = with_bridge(|b| {
         let n = frame.len().min(MTU);

@@ -7,32 +7,37 @@
 //! `netifapi_*` calls. The north-star plan replaces C lwip with **smoltcp**, so
 //! these are the integration points where Rust takes over.
 //!
-//! ## STATUS: seam only — NOT a working data path
+//! ## STATUS
 //!
-//! - `pbuf_*` allocate/manage a buffer the blob fills, but see the layout
-//!   warning below.
-//! - `driverif_input` currently **drops** received frames (counts them); wiring
-//!   them into smoltcp is the next step.
+//! - `pbuf_*` use the exact WS63 app layout verified by
+//!   `tools/check-pbuf-layout.sh` against the SDK headers.
+//! - `driverif_input` queues bounded frames when `net` is enabled.
+//! - [`transmit`] calls the vendor-installed `netif.drv_send` callback.
 //! - `netifapi_*` / `tcpip_callback` are accepted no-ops (no TCP/IP thread yet).
 //!
 //! ## pbuf layout boundary
 //!
-//! `struct pbuf` (lwip `pbuf.h`) is heavily `#if`-configured (`LWIP_RIPPLE`,
-//! `MEM_MALLOC_DMA_ALIGN`, `LWIP_USE_L2_METRICS`, zero-copy, `LWIP_PBUF_
-//! CUSTOM_DATA`, …). The blob accesses `payload`/`len`/`tot_len`/`next` at the
-//! offsets *it* was compiled with. The `Pbuf` struct below uses the **default**
-//! layout plus the WS63 `PBUF_ZERO_COPY_RESERVE=80` contract. The fields used
-//! by the vendor closure and this reserve have been reconciled against the
-//! original `lwipopts_default.h`; additional optional lwIP fields remain out of
-//! scope until the Rust data plane needs them.
+//! `struct pbuf` and `struct netif` are heavily `#if`-configured. The constants
+//! below are for the delivered WS63 `ws63-liteos-app` archives and are checked
+//! with the original cross compiler and headers, rather than inferred from
+//! upstream lwIP defaults.
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use core::ffi::{c_int, c_void};
 use portable_atomic::{AtomicU32, AtomicUsize, Ordering};
 
+const NETIF_DRV_SEND_OFFSET: usize = 244;
+const NETIF_HWADDR_OFFSET: usize = 268;
+const NETIF_HWADDR_LEN_OFFSET: usize = 274;
+const PBUF_TYPE_RAM: u8 = 0x80;
+const NETIF_NO_INDEX: u8 = 0;
+const PBUF_ZERO_COPY_TAILROOM: usize = 4;
+
 /// Frames handed up by [`driverif_input`] and dropped (until smoltcp is wired).
 static RX_DROPPED: AtomicU32 = AtomicU32::new(0);
+static RX_RECEIVED: AtomicU32 = AtomicU32::new(0);
+static TX_FAILED: AtomicU32 = AtomicU32::new(0);
 /// Single STA netif registered by the vendor WAL. Scan bring-up has no TCP/IP
 /// stack yet, but WAL still expects lwIP to preserve this opaque identity.
 static REGISTERED_NETIF: AtomicUsize = AtomicUsize::new(0);
@@ -42,7 +47,61 @@ pub fn rx_dropped() -> u32 {
     RX_DROPPED.load(Ordering::Relaxed)
 }
 
-/// Default-layout lwip `struct pbuf` (see the module-level layout caveat).
+/// Number of valid Ethernet frames handed up by the vendor driver.
+pub fn rx_received() -> u32 {
+    RX_RECEIVED.load(Ordering::Relaxed)
+}
+
+/// Frames that could not be handed to the vendor TX callback.
+pub fn tx_failed() -> u32 {
+    TX_FAILED.load(Ordering::Relaxed)
+}
+
+/// Read-only snapshot of the vendor-created lwIP interface.
+///
+/// This is a bring-up aid for checking the Rust ABI offsets against the exact
+/// SDK object at runtime. No function pointer is invoked while collecting it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NetifDiagnostics {
+    /// Address passed by the vendor WAL to `netifapi_netif_add`.
+    pub address: usize,
+    /// Raw `netif.drv_send` function address.
+    pub driver_send: usize,
+    /// Raw `netif.hwaddr_len` value.
+    pub hardware_address_len: u8,
+    /// Raw six-byte `netif.hwaddr` storage.
+    pub hardware_address: [u8; 6],
+}
+
+/// Snapshot the registered vendor interface without calling into it.
+pub fn diagnostics() -> Option<NetifDiagnostics> {
+    let netif = REGISTERED_NETIF.load(Ordering::Acquire) as *const u8;
+    if netif.is_null() {
+        return None;
+    }
+    let mut hardware_address = [0; 6];
+    // SAFETY: the interface remains vendor-owned for the firmware lifetime;
+    // these offsets are checked by the SDK compiler oracle.
+    let (driver_send, hardware_address_len) = unsafe {
+        core::ptr::copy_nonoverlapping(
+            netif.add(NETIF_HWADDR_OFFSET),
+            hardware_address.as_mut_ptr(),
+            hardware_address.len(),
+        );
+        (
+            core::ptr::read_unaligned(netif.add(NETIF_DRV_SEND_OFFSET).cast::<usize>()),
+            netif.add(NETIF_HWADDR_LEN_OFFSET).read(),
+        )
+    };
+    Some(NetifDiagnostics {
+        address: netif as usize,
+        driver_send,
+        hardware_address_len,
+        hardware_address,
+    })
+}
+
+/// WS63 app-build lwIP `struct pbuf`.
 #[repr(C)]
 struct Pbuf {
     next: *mut Pbuf,
@@ -50,14 +109,31 @@ struct Pbuf {
     tot_len: u16,
     len: u16,
     list: *mut Pbuf,
+    malloc_len: u16,
     type_internal: u8,
-    _pad: u8,
+    _type_pad: u8,
     flags: u16,
-    ref_count: u32,
+    _flags_pad: u16,
+    ref_count: i32,
+    if_idx: u8,
+    priority: u8,
+    _tail_pad: [u8; 2],
     // packet bytes follow this header in the same allocation
 }
 
 const PBUF_HDR: usize = core::mem::size_of::<Pbuf>();
+#[cfg(target_arch = "riscv32")]
+const _: () = {
+    assert!(PBUF_HDR == 32);
+    assert!(core::mem::offset_of!(Pbuf, payload) == 4);
+    assert!(core::mem::offset_of!(Pbuf, len) == 10);
+    assert!(core::mem::offset_of!(Pbuf, malloc_len) == 16);
+    assert!(core::mem::offset_of!(Pbuf, type_internal) == 18);
+    assert!(core::mem::offset_of!(Pbuf, flags) == 20);
+    assert!(core::mem::offset_of!(Pbuf, ref_count) == 24);
+    assert!(core::mem::offset_of!(Pbuf, if_idx) == 28);
+    assert!(core::mem::offset_of!(Pbuf, priority) == 29);
+};
 // The WS63 LiteOS lwIP configuration sets PBUF_ZERO_COPY_RESERVE to 80.
 // `oal_pbuf_netbuf_alloc` exposes this area as the netbuf's HCC/FRW/MAC
 // headroom by setting `data = pbuf->payload - 0x50`.
@@ -67,7 +143,7 @@ const PBUF_ZERO_COPY_RESERVE: usize = 80;
 /// the WS63 zero-copy headroom between its header and payload.
 #[unsafe(no_mangle)]
 pub extern "C" fn pbuf_alloc(_layer: c_int, length: u16, _type: c_int) -> *mut c_void {
-    let total = PBUF_HDR + PBUF_ZERO_COPY_RESERVE + length as usize;
+    let total = PBUF_HDR + PBUF_ZERO_COPY_RESERVE + length as usize + PBUF_ZERO_COPY_TAILROOM;
     let raw = crate::alloc::osal_kmalloc(total) as *mut Pbuf;
     if raw.is_null() {
         return core::ptr::null_mut();
@@ -79,10 +155,15 @@ pub extern "C" fn pbuf_alloc(_layer: c_int, length: u16, _type: c_int) -> *mut c
         (*raw).tot_len = length;
         (*raw).len = length;
         (*raw).list = core::ptr::null_mut();
-        (*raw).type_internal = 0;
-        (*raw)._pad = 0;
+        (*raw).malloc_len = total as u16;
+        (*raw).type_internal = PBUF_TYPE_RAM;
+        (*raw)._type_pad = 0;
         (*raw).flags = 0;
+        (*raw)._flags_pad = 0;
         (*raw).ref_count = 1;
+        (*raw).if_idx = NETIF_NO_INDEX;
+        (*raw).priority = 0;
+        (*raw)._tail_pad = [0; 2];
     }
     raw as *mut c_void
 }
@@ -95,13 +176,21 @@ pub extern "C" fn pbuf_free(p: *mut c_void) -> u8 {
     if p.is_null() {
         return 0;
     }
-    // SAFETY: `p` came from pbuf_alloc. Single-hart cooperative: no atomic RMW
-    // race within the critical section the blob holds.
-    unsafe {
-        if (*p).ref_count > 1 {
-            (*p).ref_count -= 1;
-            return 0;
+    let free = critical_section::with(|_| {
+        // SAFETY: `p` came from pbuf_alloc and the short critical section
+        // serializes task/IRQ reference-count updates on this single hart.
+        unsafe {
+            if (*p).ref_count > 1 {
+                (*p).ref_count -= 1;
+                false
+            } else {
+                (*p).ref_count = 0;
+                true
+            }
         }
+    });
+    if !free {
+        return 0;
     }
     crate::alloc::osal_kfree(p as *mut c_void);
     1
@@ -112,8 +201,10 @@ pub extern "C" fn pbuf_free(p: *mut c_void) -> u8 {
 pub extern "C" fn pbuf_ref(p: *mut c_void) {
     let p = p as *mut Pbuf;
     if !p.is_null() {
-        // SAFETY: valid pbuf.
-        unsafe { (*p).ref_count += 1 };
+        critical_section::with(|_| {
+            // SAFETY: valid pbuf; this short update is serialized with free.
+            unsafe { (*p).ref_count += 1 };
+        });
     }
 }
 
@@ -128,17 +219,90 @@ pub extern "C" fn pbuf_header(p: *mut c_void, header_size: i16) -> u8 {
     }
     // SAFETY: valid pbuf from pbuf_alloc.
     unsafe {
+        let old_len = (*p).len as isize;
+        let new_len = old_len + header_size as isize;
+        let new_tot_len = (*p).tot_len as isize + header_size as isize;
         let new_payload = ((*p).payload as isize) - header_size as isize;
         let base = (p as *mut u8).add(PBUF_HDR) as isize;
-        // Must stay within [header end, header end + tot_len].
-        if new_payload < base {
+        let end = p as isize + (*p).malloc_len as isize;
+        if new_len < 0
+            || new_len > u16::MAX as isize
+            || new_tot_len < 0
+            || new_tot_len > u16::MAX as isize
+            || new_payload < base
+            || new_payload + new_len > end
+        {
             return 1;
         }
         (*p).payload = new_payload as *mut c_void;
-        (*p).len = (*p).len.wrapping_add(header_size as u16);
-        (*p).tot_len = (*p).tot_len.wrapping_add(header_size as u16);
+        (*p).len = new_len as u16;
+        (*p).tot_len = new_tot_len as u16;
     }
     0
+}
+
+/// Failure to hand a frame to the vendor data path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TxError {
+    /// The vendor station netif has not been registered yet.
+    NoInterface,
+    /// The registered netif has no driver send callback.
+    NoDriver,
+    /// The frame is empty or exceeds the pbuf length contract.
+    InvalidLength,
+    /// Packet allocation failed.
+    NoMemory,
+}
+
+/// Send one complete Ethernet frame through the vendor-installed station
+/// `netif.drv_send` callback.
+pub fn transmit(frame: &[u8]) -> Result<(), TxError> {
+    if frame.is_empty() || frame.len() > u16::MAX as usize {
+        return Err(TxError::InvalidLength);
+    }
+    let netif = REGISTERED_NETIF.load(Ordering::Acquire) as *mut u8;
+    if netif.is_null() {
+        return Err(TxError::NoInterface);
+    }
+    type DriverSend = unsafe extern "C" fn(*mut c_void, *mut c_void);
+    // SAFETY: the offset is verified against the exact SDK config by
+    // `tools/check-pbuf-layout.sh`; the registered object remains vendor-owned.
+    let send = unsafe {
+        core::ptr::read_unaligned(
+            netif
+                .add(NETIF_DRV_SEND_OFFSET)
+                .cast::<Option<DriverSend>>(),
+        )
+    }
+    .ok_or(TxError::NoDriver)?;
+
+    let pbuf = pbuf_alloc(0, frame.len() as u16, 0) as *mut Pbuf;
+    if pbuf.is_null() {
+        return Err(TxError::NoMemory);
+    }
+    // SAFETY: pbuf_alloc created a writable payload of exactly frame.len().
+    unsafe {
+        core::ptr::copy_nonoverlapping(frame.as_ptr(), (*pbuf).payload.cast(), frame.len());
+        send(netif.cast(), pbuf.cast());
+    }
+    // `drv_send` takes its own asynchronous reference. Match lwIP's caller
+    // ownership by releasing the reference created by pbuf_alloc.
+    pbuf_free(pbuf.cast());
+    Ok(())
+}
+
+#[cfg(feature = "net")]
+pub(crate) fn vendor_tx_sink(frame: &[u8]) {
+    if transmit(frame).is_err() {
+        TX_FAILED.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+/// MAC address installed on the sole vendor station netif.
+pub fn hardware_address() -> Option<[u8; 6]> {
+    diagnostics().and_then(|snapshot| {
+        (snapshot.hardware_address_len == 6).then_some(snapshot.hardware_address)
+    })
 }
 
 /// `driverif_input(netif, p)` — RX entry from the MAC driver. With feature `net`
@@ -157,6 +321,7 @@ pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
             if !payload.is_null() && len > 0 && len <= crate::netif_smoltcp::MTU {
                 let bytes = unsafe { core::slice::from_raw_parts(payload as *const u8, len) };
                 crate::netif_smoltcp::rx_push(bytes);
+                RX_RECEIVED.fetch_add(1, Ordering::Relaxed);
             } else {
                 RX_DROPPED.fetch_add(1, Ordering::Relaxed);
             }
