@@ -240,8 +240,19 @@ pub fn force_link_contract() {
     keep!(osal::osal_irq_restore as extern "C" fn(c_ulong));
     keep!(osal::osal_udelay as extern "C" fn(u32));
     keep!(osal::osal_flush_cache as extern "C" fn(*mut c_void, usize));
+    keep!(
+        osal::osal_irq_request
+            as extern "C" fn(
+                u32,
+                Option<unsafe extern "C" fn(u32, *mut c_void)>,
+                Option<unsafe extern "C" fn(u32, *mut c_void)>,
+                *const c_char,
+                *mut c_void,
+            ) -> c_int
+    );
     keep!(osal::osal_irq_enable as extern "C" fn(u32) -> c_int);
     keep!(osal::osal_irq_disable as extern "C" fn(u32) -> c_int);
+    keep!(osal::osal_irq_clear as extern "C" fn(u32) -> c_int);
     keep!(osal::osal_msleep as extern "C" fn(u32));
     keep!(osal::osal_get_current_pid as extern "C" fn() -> c_int);
     keep!(osal::osal_get_current_tid as extern "C" fn() -> c_int);
