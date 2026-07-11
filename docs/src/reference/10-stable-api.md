@@ -8,6 +8,9 @@
 `features = ["chip-ws63", "rt"]` 面向用户公开的子集；凡需额外台架、opt-in feature、或 soundness 不变量尚未闭合的入口，
 即使代码存在，也放在 UNSTABLE。
 
+**增量证据（2026-07-12）：** `tests::i2c0_nack_is_reported_after_done` 在 WS63 真机通过，验证 v150
+控制器按 `DONE` 完成后报告 `ACK_ERR`；当前新增用例尚待 M2 默认套件全量重跑后并入新的总数基线。
+
 ## STABLE（默认暴露）
 
 | 稳定面 | HIL / 证据边界 | 不包含 |
@@ -15,7 +18,7 @@
 | GPIO `Input` / `Output` / `Flex`、`GpioBank` | 真机 GPIO 输出/输入基本路径覆盖 | GPIO IRQ、等待边沿 |
 | UART0/1 blocking、`BaudRate`、`UartClock`、`UartPort`、sealed `UartInstance` | 真机 UART0/1 blocking 配置与收发路径覆盖 | UART2、async I/O、DMA |
 | SPI0 blocking、blocking-backed `async` `SpiBus` trait impl | 真机 SPI0 配置/传输路径覆盖；外部 loopback 台架仍按需单独跑 | SPI1、DMA、interrupt/waker async |
-| WS63 I2C0 blocking、blocking-backed `async` `I2c` trait impl | 真机 I2C0 配置、7-bit 地址拒绝与无从机扫描行为覆盖 | I2C1、需真实从机的业务事务承诺 |
+| WS63 I2C0 blocking、blocking-backed `async` `I2c` trait impl | 真机 I2C0 配置、7-bit 地址拒绝，以及 `DONE` 后 NACK 报告路径覆盖 | I2C1、需真实从机的业务事务承诺 |
 | Timer raw configure/enable/current/interrupt paths、`TimerChannel` | 真机 raw timer 与中断路径覆盖 | one-shot/periodic wrapper、async delay |
 | TCXO | 真机计数器读取与推进覆盖 | — |
 | PWM Ch0 config/enable/disable、`PwmPeriod`、`Duty`、fallible duty writes | 真机确认 WS63 `pwm_freq_h` 高半不 latch，因此稳定面只承诺 Ch0 register-latch 事实 | Ch1..Ch7、真实波形 HIL、polarity/start/pulse-count、`into_running` |

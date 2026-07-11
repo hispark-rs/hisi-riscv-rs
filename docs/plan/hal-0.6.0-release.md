@@ -18,8 +18,9 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 
 ### M0 -- Blocking Bug Closure
 
-- 修复 `#16`：WS63 I2C completion 轮询必须对齐 SDK `int_done` 语义，而不是把
-  `int_tx` / `int_rx` 当作事务完成信号。
+- [x] 修复 `#16`：WS63 I2C completion 轮询已对齐 SDK `int_done` 语义，不再把
+  `int_tx` / `int_rx` 当作事务完成信号。`tests::i2c0_nack_is_reported_after_done`
+  于 2026-07-12 在 WS63 真机通过，保留地址路径返回 `Err(Ack)` 而非 `Timeout`。
 - 复核 `#17` 的边界：0.6.0 只稳定当前已经 HIL 的 eFuse / LSADC 子集，不要求完整
   eFuse write 或 LSADC analog/data path 毕业。
 - 若 `#17` 标题继续误导，将其改为 post-0.6 full feature validation，并在 issue 中说明
@@ -79,8 +80,8 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 - Experimental consumer：加 `unstable` 后可继续使用实验面，但文档明确 minor 版本可能破坏。
 - BS2X consumer：`chip-bs21,rt` without `unstable` 必须失败；`chip-bs21,rt,unstable`
   必须构建通过，但没有 stable/HIL 承诺。
-- Hardware evidence：默认 HAL embedded-test suite 在真实 WS63 通过；`#16` I2C 修复必须有
-  HIL 或 register-level HIL 证明。
+- Hardware evidence：默认 HAL embedded-test suite 在真实 WS63 通过；`#16` 已由
+  `tests::i2c0_nack_is_reported_after_done` 定向 HIL 证明。M2 仍须跑完整默认套件。
 - Docs evidence：stable API reference、HAL changelog、release guide、parent happy path
   不能互相矛盾，且不能暗示 DMA/embassy/BS2X/RF connectivity 已经 stable。
 

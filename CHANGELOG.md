@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Align the WS63 I2C HAL with the vendor v150 non-FIFO polling sequence and add
+  silicon evidence for `DONE` followed by `ACK_ERR`; configure the documented
+  EVB I2C pads in the `i2c_scan` example.
+- Make `hisi-fwpkg patch-hash` hash linker-aligned trailing bytes as erased
+  flash, matching the canonical FlashPlan and restoring embedded-test images
+  whose verified body ends on a padded boundary.
+
 ---
 
 ## [2026-07-09] — official nightly migration · docs happy path · HAL alpha
