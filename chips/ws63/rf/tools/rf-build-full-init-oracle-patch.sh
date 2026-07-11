@@ -19,7 +19,7 @@ RF_DIR="$ROOT/chips/ws63/rf/ws63-RF"
 
 SDK="${FBB_WS63_SDK:-$HOME/Documents/hispark/fbb_ws63/src}"
 VENDOR_BIN="$SDK/tools/bin/compiler/riscv/cc_riscv32_musl_105/cc_riscv32_musl_fp/bin"
-VENDOR_LD="$VENDOR_BIN/riscv32-linux-musl-ld"
+VENDOR_LD="${WS63_RF_VENDOR_LD:-$VENDOR_BIN/riscv32-linux-musl-ld}"
 
 if [ ! -x "$VENDOR_LD" ]; then
   echo "ERROR: vendor linker not found: $VENDOR_LD" >&2

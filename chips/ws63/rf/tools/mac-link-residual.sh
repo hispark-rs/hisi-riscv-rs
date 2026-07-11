@@ -22,9 +22,9 @@
 #
 # Pure tooling: no hardware, no C compiler. Requires the official pinned Rust
 # nightly used by the repo (for rust-lld + rv32imfc compiler_builtins) and a
-# built ws63-rf-rs rlib. This proves the relocatable symbol closure only; the
-# final executable link still needs support for HiSilicon R_RISCV_48_LLUI
-# relocation 58 (see rf-reloc58-diagnose.sh).
+# built ws63-rf-rs rlib. This proves the relocatable symbol closure only; use
+# rf-build-full-init-lld-layout-patch.sh for the guarded final-image lane that
+# resolves R_RISCV_48_LLUI while keeping rust-lld's layout authoritative.
 set -u
 
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/

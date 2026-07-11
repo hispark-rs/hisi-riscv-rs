@@ -28,6 +28,7 @@ AR_MAGIC = b"!<arch>\n"
 AR_HDR_SIZE = 60
 R_RISCV_NONE = 0
 R_RISCV_48_LLUI = 58
+R_RISCV_LLUI_BRANCH = 59
 R_RISCV_LLUI_REP = 61
 SHT_RELA = 4
 SHT_SYMTAB = 2
@@ -283,10 +284,10 @@ def patch_object(
             r_offset = u32(obj, ent + 0)
             r_info = u32(obj, ent + 4)
             r_type = r_info & 0xFF
-            if r_type == R_RISCV_LLUI_REP:
-                # HiSilicon binutils uses this marker on `l.li` instructions
-                # whose imm32 is already encoded in the object. Upstream lld
-                # decodes numeric type 61 as R_RISCV_SET_ULEB128 and errors.
+            if r_type in (R_RISCV_LLUI_BRANCH, R_RISCV_LLUI_REP):
+                # HiSilicon binutils uses these markers on already-encoded
+                # custom instructions. Upstream lld assigns different meanings
+                # to these numeric values and corrupts the instruction bytes.
                 put_u32(obj, ent + 4, (r_info & ~0xFF) | R_RISCV_NONE)
                 lli_rep_relocs += 1
                 continue

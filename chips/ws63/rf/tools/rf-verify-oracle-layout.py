@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -69,10 +70,64 @@ def parse_map(path: Path) -> dict[tuple[str, str, str], int]:
     return entries
 
 
+SELF_CALL = b"\x97\x00\x00\x00\xe7\x80\x00\x00"
+
+
+def find_self_call_offsets(data: bytes) -> list[int]:
+    """Find `auipc ra, 0; jalr ra, 0(ra)` placeholders."""
+    offsets: list[int] = []
+    start = 0
+    while (offset := data.find(SELF_CALL, start)) >= 0:
+        offsets.append(offset)
+        start = offset + 2
+    return offsets
+
+
+def executable_self_calls(path: Path) -> list[tuple[str, int]]:
+    """Return self-call VMAs from executable sections of an ELF32 LE image."""
+    elf = path.read_bytes()
+    if len(elf) < 52 or elf[:4] != b"\x7fELF" or elf[4:6] != b"\x01\x01":
+        raise ValueError(f"{path} is not an ELF32 little-endian image")
+
+    shoff = struct.unpack_from("<I", elf, 32)[0]
+    shentsize, shnum, shstrndx = struct.unpack_from("<HHH", elf, 46)
+    if shentsize < 40 or shstrndx >= shnum:
+        raise ValueError(f"{path} has an invalid section table")
+
+    sections: list[tuple[int, int, int, int, int]] = []
+    for index in range(shnum):
+        offset = shoff + index * shentsize
+        if offset + 40 > len(elf):
+            raise ValueError(f"{path} has a truncated section table")
+        name, _kind, flags, addr, file_offset, size = struct.unpack_from(
+            "<IIIIII", elf, offset
+        )
+        sections.append((name, flags, addr, file_offset, size))
+
+    _, _, _, strings_offset, strings_size = sections[shstrndx]
+    strings = elf[strings_offset : strings_offset + strings_size]
+
+    def section_name(offset: int) -> str:
+        end = strings.find(b"\0", offset)
+        if end < 0:
+            end = len(strings)
+        return strings[offset:end].decode("utf-8", errors="replace")
+
+    found: list[tuple[str, int]] = []
+    for name_offset, flags, addr, file_offset, size in sections:
+        if flags & 0x4 == 0 or size == 0:  # SHF_EXECINSTR
+            continue
+        body = elf[file_offset : file_offset + size]
+        for offset in find_self_call_offsets(body):
+            found.append((section_name(name_offset), addr + offset))
+    return found
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--final-map", required=True, type=Path)
+    parser.add_argument("--final-elf", required=True, type=Path)
     args = parser.parse_args()
 
     final_entries = parse_map(args.final_map)
@@ -111,7 +166,22 @@ def main() -> int:
         print("ERROR: no patched relocation sections were verified", file=sys.stderr)
         return 1
 
+    try:
+        self_calls = executable_self_calls(args.final_elf)
+    except ValueError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+    if self_calls:
+        for section, address in self_calls:
+            print(
+                "ERROR: unresolved weak call encoded as self-call at "
+                f"{section}+0x{address:08x}",
+                file=sys.stderr,
+            )
+        return 1
+
     print(f"verified oracle/final RF layout sections: {checked}")
+    print("verified executable sections contain no unresolved self-call placeholders")
     return 0
 
 
