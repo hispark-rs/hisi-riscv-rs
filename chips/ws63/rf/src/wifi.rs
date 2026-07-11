@@ -6,6 +6,7 @@
 //! ioctl, and copy bounded scan events into Rust values.
 
 use core::ffi::c_int;
+use hisi_riscv_hal::peripherals::Efuse;
 
 #[cfg(target_arch = "riscv32")]
 use core::cell::{Cell, UnsafeCell};
@@ -124,19 +125,21 @@ pub enum Error {
 }
 
 /// Exclusive handle to the vendor-owned WS63 Wi-Fi runtime.
-pub struct Wifi {
+pub struct Wifi<'d> {
     ifname: [u8; IFNAME_CAPACITY],
+    _efuse: Efuse<'d>,
 }
 
-impl Wifi {
+impl<'d> Wifi<'d> {
     /// Initialize the ROM/blob runtime and create its station network device.
     ///
     /// This is a one-shot operation. Once the vendor runtime has started, a
     /// partial failure cannot be rolled back safely, so later calls return
     /// [`Error::AlreadyInitialized`].
-    pub fn initialize() -> Result<Self, Error> {
+    pub fn initialize(efuse: Efuse<'d>) -> Result<Self, Error> {
         #[cfg(not(target_arch = "riscv32"))]
         {
+            let _ = efuse;
             Err(Error::UnsupportedTarget)
         }
 
@@ -153,6 +156,7 @@ impl Wifi {
             // SAFETY: the one-shot claim above guarantees this runs once,
             // before the vendor stack can access its dedicated RAM windows.
             unsafe { crate::prepare_vendor_memory() };
+            crate::uapi::enable_efuse_reads();
 
             // SAFETY: the RF build links the matching WS63 vendor archives and
             // ROM symbol table; the Rust OSAL contract has been installed.
@@ -202,7 +206,10 @@ impl Wifi {
                 return Err(Error::OpenStation(open));
             }
 
-            Ok(Self { ifname })
+            Ok(Self {
+                ifname,
+                _efuse: efuse,
+            })
         }
     }
 

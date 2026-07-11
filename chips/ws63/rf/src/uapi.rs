@@ -10,6 +10,14 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use core::ffi::c_void;
+use portable_atomic::{AtomicBool, Ordering};
+
+static EFUSE_READY: AtomicBool = AtomicBool::new(false);
+
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn enable_efuse_reads() {
+    EFUSE_READY.store(true, Ordering::Release);
+}
 
 /// Same rough cycles/µs as [`crate::osal`]; `mcycle / (CYCLES_PER_US*1000)` ≈ ms.
 const CYCLES_PER_MS: u64 = 240 * 1000;
@@ -253,26 +261,50 @@ mod nv_tests {
     }
 }
 
-// These feed RF calibration, the MAC address and crypto seeding. They are
-// SCAFFOLD values good enough to LINK and to bring the stack up under emulation;
-// a hardware run must source real eFuse/TRNG via hisi-riscv-hal (RF2/RF3).
+// These feed RF calibration, the MAC address and crypto seeding. eFuse reads
+// use the HAL while the `Wifi` handle owns its unique peripheral token. TRNG and
+// device-address policy remain separate follow-up work.
 
-/// One eFuse bit. STUB: always 0.
+/// Read one eFuse bit through the HAL-owned WS63 controller.
 #[unsafe(no_mangle)]
-pub extern "C" fn uapi_efuse_read_bit(value: *mut u8, _byte: u32, _bit: u8) -> u32 {
-    if !value.is_null() {
-        // SAFETY: valid out-parameter.
-        unsafe { *value = 0 };
+pub extern "C" fn uapi_efuse_read_bit(value: *mut u8, byte: u32, bit: u8) -> u32 {
+    if value.is_null() || bit >= 8 || !EFUSE_READY.load(Ordering::Acquire) {
+        return crate::OSAL_NOK as u32;
     }
+    let Some(address) = u16::try_from(byte)
+        .ok()
+        .and_then(hisi_riscv_hal::efuse::EfuseByteAddress::from_byte)
+    else {
+        return crate::OSAL_NOK as u32;
+    };
+    // SAFETY: `Wifi` keeps the unique eFuse token alive after enabling reads;
+    // the HAL serializes the complete read transaction.
+    let byte = unsafe { hisi_riscv_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
+    // SAFETY: the SDK ABI defines `value` as a writable one-byte output.
+    unsafe { value.write((byte >> bit) & 1) };
     crate::OSAL_OK as u32
 }
 
-/// A run of eFuse bytes. STUB: zero-filled.
+/// Read consecutive eFuse bytes through the HAL-owned WS63 controller.
 #[unsafe(no_mangle)]
-pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, _byte: u32, length: u16) -> u32 {
-    if !buffer.is_null() {
-        // SAFETY: caller guarantees `length` bytes.
-        unsafe { core::ptr::write_bytes(buffer, 0, length as usize) };
+pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, byte: u32, length: u16) -> u32 {
+    if (buffer.is_null() && length != 0) || !EFUSE_READY.load(Ordering::Acquire) {
+        return crate::OSAL_NOK as u32;
+    }
+    let Some(start) = u16::try_from(byte).ok() else {
+        return crate::OSAL_NOK as u32;
+    };
+    for offset in 0..length {
+        let Some(address) = start
+            .checked_add(offset)
+            .and_then(hisi_riscv_hal::efuse::EfuseByteAddress::from_byte)
+        else {
+            return crate::OSAL_NOK as u32;
+        };
+        // SAFETY: `Wifi` holds the unique eFuse token and HAL serializes reads.
+        let value = unsafe { hisi_riscv_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
+        // SAFETY: the SDK ABI guarantees a writable `length`-byte buffer.
+        unsafe { buffer.add(offset as usize).write(value) };
     }
     crate::OSAL_OK as u32
 }
