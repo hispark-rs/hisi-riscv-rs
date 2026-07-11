@@ -111,10 +111,11 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   WPA2/WPA3；开放网络路径默认不链接它，不能据此宣称受保护网络已经可用。
 - **RF5C Ping**：静态 IPv4 先行、DHCP 后补；ICMP 必须经过 Rust-visible L2 path。
   UART、ELF layout、patch manifest、image plan 和资源占用形成后续拆分的 A0 baseline。
-- 当前 RF5C evidence：ROM TX completion 所需 `__ashldi3` callback bridge 已补齐，ICMP
-  Echo Request 能完成 vendor TX；测试访客网络对 gateway 与 `1.1.1.1` 均未返回 Echo，
-  当前 marker 为 `RF5C_PING_TIMEOUT`。在受控可回 ICMP peer 上得到 Echo Reply 之前，
-  RF5C 仍未完成，不能冻结 A0 baseline。
+- 当前 RF5C evidence：2026-07-12 真机通过。修复 ICMP frame buffer 只有 42 bytes、
+  但 IPv4 `total_length` 声明 60 bytes 的长度不一致后，`HUAWEI-HLJ_Guest` 路径依次输出
+  `RF5B_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK` 和 `RF5C_PING_OK rx=0x00000004`。
+  Echo Request/Reply 均经过 Rust-visible L2 path；A0 证据冻结在
+  [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 
@@ -152,8 +153,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   - RF HIL 不进入普通 PR gate，放 self-hosted/manual workflow；每个 RF milestone 合并前必须留 UART log 证据。
   - RF5A HIL 依次要求 `RF5B_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK`，并禁止
     `RFDBG_EXCEPTION` / `RFDBG_FRW_QUEUE_BOUNDARY`。
-  - RF5C 只有出现 `RF5C_PING_OK` 才通过；`RF5C_PING_TIMEOUT` 只表示 request TX
-    已运行，不是 connectivity pass。
+  - RF5C 只有出现 `RF5C_PING_OK` 才通过；该 marker 已于 2026-07-12 在 WS63 真机获得。
+    `RF5C_PING_TIMEOUT` 仍只表示 request TX 已运行，不是 connectivity pass。
 
 ## Assumptions
 

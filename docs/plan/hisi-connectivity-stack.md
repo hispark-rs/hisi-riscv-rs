@@ -132,11 +132,20 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 
 - 第一轮使用静态 IPv4、gateway 和受控 peer，随后补 DHCP；ICMP 必须经过 Rust-visible
   L2 device，而不是 vendor lwIP 隐藏路径。
-- HIL 固定 `RF5_PING_OK replies=N`，保存 UART log、ELF section/layout report、ROM
+- HIL 固定 `RF5C_PING_OK rx=N`，保存 UART log、ELF section/layout report、ROM
   patch manifest、image plan 和资源占用，作为迁移前 A0 baseline。
-- 当前 ICMP request 已越过 ROM TX completion（含 `__ashldi3` callback bridge），但
-  `HUAWEI-HLJ_Guest` 未返回 gateway/公网 Echo Reply；RF5C 保持进行中，待受控 ICMP
-  peer 或确认该访客网络策略后再冻结 baseline。
+- 2026-07-12 已完成：修复 ICMP frame 实际长度与 IPv4 `total_length` 不一致后，
+  `HUAWEI-HLJ_Guest` 上的 DHCP、gateway ARP 和 `1.1.1.1` Echo Reply 均通过
+  Rust-visible L2 path；UART 输出 `RF5C_PING_OK rx=0x00000004`。迁移前 A0 已冻结在
+  [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
+
+### A0 -- Baseline Freeze
+
+- [x] 固定 init/scan/connect/DHCP/ARP/ping UART marker。
+- [x] 固定最终 ELF、rust-lld map、relocation manifest、ROM patch report、canonical image
+  和 FlashPlan 的 SHA-256 与资源摘要。
+- [x] 保留 `.wifi_pkt_ram` NOBITS、ROM symbol、patch count 与 image body/erase range 证据。
+- A1-A4 的每个迁移阶段必须复现该 baseline；不能用仅构建或 QEMU 结果替代 RF 真机证据。
 
 ### H0 -- Rename `hisi-riscv-hal` To `hisi-hal`
 

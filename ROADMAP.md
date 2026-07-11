@@ -8,9 +8,9 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 ## Current State
 
-**Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0-alpha.2` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and the `ws63-rf-rs` porting runtime.
+**Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0-alpha.2` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and WS63 Wi-Fi init/scan/open-AP connect/DHCP/ARP/ping through the Rust-visible L2 path.
 
-**Active focus:** complete the real WS63 Wi-Fi data path after the proven init/scan milestone: TX/RX closure, controlled open-AP association, then ICMP ping. The full-stack crate extraction and BLE/SLE work starts only after that ping baseline is frozen.
+**Active focus:** preserve the frozen C5/A0 connectivity baseline while completing HAL 0.6.0 stabilization and starting C6 ownership decomposition. Every extraction must reproduce the same scan/connect/ping markers and link/image evidence.
 
 **Not a near-term target:** BSP/board-manager, BS2X BLE/SLE real-board connectivity, Hi3322 runtime implementation, DMA stable graduation, and embassy stable graduation. These are deferred until they serve the connectivity path or have hardware evidence.
 
@@ -23,11 +23,11 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 | Milestone | Goal | Acceptance |
 | --- | --- | --- |
 | C0 Baseline locked | Keep the current toolchain, HAL alpha, RT, fwpkg, probe-rs baseline, QEMU smoke, and WS63 HIL path usable while connectivity work proceeds. | `uart_hello`/HIL smoke and docs happy path continue to pass; no widening of stable HAL surface without named HIL evidence. |
-| C1 RF runtime image | Link `ws63-rf-rs` plus the real Wi-Fi blob set into a flashable WS63 image. Add the real `.wifi_pkt_ram` NOLOAD region instead of ad hoc symbol scaffolding. | Image builds, packages through `hisi-fwpkg`, boots far enough to print RF bring-up markers, and QEMU RF selftests remain green. |
-| C2 Wi-Fi init on silicon | Call the minimal `wifi_init` path on a real board. Make failures distinguishable as ROM symbol, relocation, NV/eFuse, RF clock, IRQ, or memory-layout faults. | UART/HIL captures a deterministic `wifi_init` pass/fail marker with structured reason codes. |
-| C3 Scan | Enable STA scan and return AP results or a precise RF/NV failure. | Add a `wifi_scan` example and HIL marker; scan either prints at least one AP in a controlled environment or reports a known categorized failure. |
-| C4 Connect | Associate to a controlled open or WPA2 test AP. | Connection state transitions and failure codes are observable over UART/HIL. |
-| C5 Ping | Complete an IP round trip over the Rust-visible network path, using smoltcp or the vendor netif boundary chosen by the bring-up evidence. | Connectivity HIL can reproduce ICMP echo success on real WS63 silicon. |
+| C1 RF runtime image (done) | Link `ws63-rf-rs` plus the real Wi-Fi blob set into a flashable WS63 image. Add the real `.wifi_pkt_ram` NOLOAD region instead of ad hoc symbol scaffolding. | Image builds, packages through `hisi-fwpkg`, boots far enough to print RF bring-up markers, and QEMU RF selftests remain green. |
+| C2 Wi-Fi init on silicon (done) | Call the minimal `wifi_init` path on a real board. Make failures distinguishable as ROM symbol, relocation, NV/eFuse, RF clock, IRQ, or memory-layout faults. | UART/HIL captures a deterministic `wifi_init` pass/fail marker with structured reason codes. |
+| C3 Scan (done) | Enable STA scan and return AP results or a precise RF/NV failure. | Add a `wifi_scan` example and HIL marker; scan either prints at least one AP in a controlled environment or reports a known categorized failure. |
+| C4 Connect (done) | Associate to a controlled open or WPA2 test AP. | Connection state transitions and failure codes are observable over UART/HIL. |
+| C5 Ping (done) | Complete an IP round trip over the Rust-visible network path, using smoltcp or the vendor netif boundary chosen by the bring-up evidence. | Connectivity HIL reproduced ICMP Echo to `1.1.1.1` on real WS63 silicon; see the [A0 baseline](docs/plan/evidence/ws63-rf-a0-2026-07-12.md). |
 | C6 Architecture baseline | Rename `hisi-riscv-hal` to `hisi-hal`, then split ROM, blob sys, allocator, storage/NVS, RTOS-driver, RTOS, and high-level RF ownership without regressing C5. | HAL rename checks show no API drift; frozen scan/connect/ping markers and link/image reports pass through the new dependency graph. |
 | C7 BLE | Bring up the vendor BLE host through the shared RTOS/storage/runtime contracts. | Advertising, scanning, and GATT client/server have bounded-event APIs and real-board evidence. |
 | C8 SLE and coexistence | Bring up SLE, then validate concurrent Wi-Fi plus BLE/SLE operation. | Two-board SLE data exchange passes; `coex` remains hidden until concurrent HIL passes. |
