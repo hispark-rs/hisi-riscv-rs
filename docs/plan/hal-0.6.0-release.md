@@ -21,10 +21,9 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 - [x] 修复 `#16`：WS63 I2C completion 轮询已对齐 SDK `int_done` 语义，不再把
   `int_tx` / `int_rx` 当作事务完成信号。`tests::i2c0_nack_is_reported_after_done`
   于 2026-07-12 在 WS63 真机通过，保留地址路径返回 `Err(Ack)` 而非 `Timeout`。
-- 复核 `#17` 的边界：0.6.0 只稳定当前已经 HIL 的 eFuse / LSADC 子集，不要求完整
-  eFuse write 或 LSADC analog/data path 毕业。
-- 若 `#17` 标题继续误导，将其改为 post-0.6 full feature validation，并在 issue 中说明
-  0.6.0 的 stable 边界。
+- [x] 复核 `#17` 的边界：0.6.0 只稳定当前已经 HIL 的 eFuse / LSADC 子集，不要求完整
+  eFuse write 或 LSADC analog/data path 毕业。Issue 已改名为 post-0.6 full feature
+  validation，并留言记录 stable 边界；任务保持 open，但不再误作 0.6.0 blocker。
 
 ### M1 -- Stable API Freeze
 
