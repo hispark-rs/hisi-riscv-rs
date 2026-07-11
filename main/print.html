@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-920cc449.js";
+            window.path_to_searchindex_js = "searchindex-61473eb0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -2184,11 +2184,11 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 <p>本页是 <code>hisi-riscv-hal</code> 0.6.0 当前默认公开面的<strong>唯一事实源</strong>。判定规则与门控机制见
 <a href="#稳定--不稳定-api-门控">稳定 / 不稳定 API 门控政策</a>；历史评审文件只记录当时状态，
 不作为当前 API 清单。</p>
-<p><strong>证据基线（2026-07-04）：</strong> WS63 真机 <code>tests/hil.rs</code> embedded-test 套件 26/26 通过。下面的 STABLE 表只列默认
+<p><strong>证据基线（2026-07-12）：</strong> WS63 真机 <code>tests/hil.rs</code> embedded-test 默认套件 30/30 通过。下面的 STABLE 表只列默认
 <code>features = ["chip-ws63", "rt"]</code> 面向用户公开的子集；凡需额外台架、opt-in feature、或 soundness 不变量尚未闭合的入口，
-即使代码存在，也放在 UNSTABLE。</p>
-<p><strong>增量证据（2026-07-12）：</strong> <code>tests::i2c0_nack_is_reported_after_done</code> 在 WS63 真机通过，验证 v150
-控制器按 <code>DONE</code> 完成后报告 <code>ACK_ERR</code>；当前新增用例尚待 M2 默认套件全量重跑后并入新的总数基线。</p>
+即使代码存在，也放在 UNSTABLE。
+本轮包含 <code>tests::i2c0_nack_is_reported_after_done</code>，验证 v150 控制器按 <code>DONE</code> 完成后报告
+<code>ACK_ERR</code>；UART divisor 测试也在启用 divisor-latch alias 后通过。</p>
 <h2 id="stable默认暴露"><a class="header" href="#stable默认暴露">STABLE（默认暴露）</a></h2>
 <div class="table-wrapper">
 <table>
