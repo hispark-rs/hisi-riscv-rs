@@ -70,27 +70,6 @@ pub unsafe extern "C" fn fe_rf_dev_set_ops_ext(cfg: u8) {
     unsafe { __ws63_vendor_fe_rf_dev_set_ops_ext(cfg) };
 }
 
-/// Terminal target for a mask-ROM callback that the Rust port has not supplied.
-///
-/// Every fixed-address veneer must contain a valid jump even while the port is
-/// incomplete. Reaching this function turns a jump-to-zero exception into an
-/// explicit UART marker that identifies the missing-contract class.
-#[cfg(target_arch = "riscv32")]
-#[unsafe(no_mangle)]
-pub extern "C" fn __ws63_missing_rom_callback() -> ! {
-    let caller: u32;
-    // SAFETY: reads the incoming return-address register without touching memory.
-    unsafe {
-        core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
-    }
-    diag_emit(b"RFDBG_MISSING_ROM_CALLBACK ra=0x");
-    diag_emit(&hex8(caller));
-    diag_emit(b"\r\n");
-    loop {
-        core::hint::spin_loop();
-    }
-}
-
 fn trace_stage(name: &[u8], result: u32) {
     diag_emit(b"RFDBG_STAGE ");
     diag_emit(name);

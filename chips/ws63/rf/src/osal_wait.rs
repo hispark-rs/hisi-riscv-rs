@@ -66,30 +66,10 @@ pub extern "C" fn osal_wait_destroy(wait: *mut OsalWait) {
 /// Wake a waiter so it re-evaluates its condition.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_wait_wakeup(wait: *mut OsalWait) {
-    #[cfg(all(feature = "rf-init-diag", target_arch = "riscv32"))]
-    let caller = {
-        let value: usize;
-        // SAFETY: reads the incoming return-address register without touching memory.
-        unsafe {
-            core::arch::asm!("mv {value}, ra", value = out(reg) value, options(nomem, nostack));
-        }
-        value
-    };
-    #[cfg(all(feature = "rf-init-diag", not(target_arch = "riscv32")))]
-    let caller = 0usize;
     let s = sem_of(wait);
     if s.is_null() {
         return;
     }
-    #[cfg(feature = "rf-init-diag")]
-    crate::rf_init_diag::trace_wait(
-        b"wake",
-        crate::sched::current_id(),
-        wait as usize,
-        0,
-        0,
-        caller,
-    );
     // SAFETY: `s` points at a live Semaphore inside the wait object.
     unsafe { (*s).up() };
 }

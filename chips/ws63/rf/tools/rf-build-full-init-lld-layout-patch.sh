@@ -17,9 +17,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 RF_DIR="$ROOT/chips/ws63/rf/ws63-RF"
 ROM_SYMBOLS="$RF_DIR/rom/ws63_acore_rom.lds"
+ROM_PATCHES="$RF_DIR/rom/ws63_acore_wifi_patches.txt"
 LLVM_NM="$(find "$(rustc --print sysroot)" -name llvm-nm -type f | head -1)"
 LLVM_OBJCOPY="$(find "$(rustc --print sysroot)" -name llvm-objcopy -type f | head -1)"
 LLVM_AR="$(find "$(rustc --print sysroot)" -name llvm-ar -type f | head -1)"
+HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
+
+command -v "$HISI_FWPKG" >/dev/null 2>&1 || {
+  echo "ERROR: '$HISI_FWPKG' is required to seal the post-link ELF hash" >&2
+  exit 1
+}
 
 NEUTRAL_DIR="${WS63_RF_NEUTRAL_OUT:-${TMPDIR:-/tmp}/ws63-rf-neutral-libs}"
 PATCHED_DIR="${WS63_RF_PATCH_OUT:-${TMPDIR:-/tmp}/ws63-rf-lld-layout-patched-libs}"
@@ -134,7 +141,9 @@ prepare_rf_diag_sources() {
   for archive in "${LIBS[@]}"; do
     cp "$archive" "$DIAG_SOURCE_DIR/$(basename "$archive")"
   done
-  rename_rf_diag_symbol "$DIAG_SOURCE_DIR"
+  case ",$FEATURES," in
+    *,rf-init-diag,*) rename_rf_diag_symbol "$DIAG_SOURCE_DIR" ;;
+  esac
 }
 
 DIAG_LIBS=()
@@ -197,6 +206,21 @@ if ! python3 "$SCRIPT_DIR/rf-verify-oracle-layout.py" \
   exit 1
 fi
 
+echo
+echo "== generate mask-ROM patch table from final ELF =="
+python3 "$SCRIPT_DIR/rf-generate-rom-patch.py" \
+  --elf "$LAYOUT_ELF" \
+  --llvm-nm "$LLVM_NM" \
+  --rom-symbols "$ROM_SYMBOLS" \
+  --patch-list "$ROM_PATCHES" \
+  --expected-count 37 \
+  --report "${WS63_RF_ROM_PATCH_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-rom-patches.json}"
+
+# The ROM patch table is generated after the final link, so it changes bytes in
+# the verified flash body. Seal the boot header only after every post-link
+# transform; otherwise flashboot correctly rejects the image with `VE`.
+"$HISI_FWPKG" patch-hash "$LAYOUT_ELF"
+
 verify_rom_symbol() {
   local symbol="$1"
   local expected actual
@@ -218,4 +242,5 @@ echo "patched RF libs: $PATCHED_DIR"
 echo "layout map: $LAYOUT_MAP"
 echo "final map: $FINAL_MAP"
 echo "patch manifest: $MANIFEST"
+echo "ROM patch report: ${WS63_RF_ROM_PATCH_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-rom-patches.json}"
 echo "firmware ELF: $ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"

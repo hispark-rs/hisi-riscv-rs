@@ -131,6 +131,20 @@ pub mod wifi;
 
 pub use pmp::prepare_vendor_memory;
 
+/// Terminal target for a mask-ROM callback not supplied by the current port.
+///
+/// This is part of the callback-table safety contract, not optional tracing:
+/// every fixed-address veneer must point at executable code even in a minimal
+/// full-init build.
+#[cfg(target_arch = "riscv32")]
+#[unsafe(no_mangle)]
+pub extern "C" fn __ws63_missing_rom_callback() -> ! {
+    log_emit(b"RFDBG_MISSING_ROM_CALLBACK\r\n");
+    loop {
+        core::hint::spin_loop();
+    }
+}
+
 // The task scheduler / runtime is an INTERNAL implementation detail: the vendor
 // blob reaches it only through the `osal_*` C-ABI symbols (in `osal`), never as
 // a Rust API. So `sched` is private (not part of this crate's public surface).
@@ -239,7 +253,7 @@ pub fn force_link_contract() {
     keep!(osal::osal_irq_lock as extern "C" fn() -> c_ulong);
     keep!(osal::osal_irq_restore as extern "C" fn(c_ulong));
     keep!(osal::osal_udelay as extern "C" fn(u32));
-    keep!(osal::osal_flush_cache as extern "C" fn(*mut c_void, usize));
+    keep!(osal::osal_flush_cache as extern "C" fn());
     keep!(
         osal::osal_irq_request
             as extern "C" fn(

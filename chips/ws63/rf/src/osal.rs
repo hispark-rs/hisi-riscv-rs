@@ -3,7 +3,7 @@
 //! Implemented for real: interrupt lock/restore (the core critical-section
 //! primitive, via `mstatus.MIE`), per-line WLAN interrupt registration through
 //! the HAL/runtime dispatch table, `osal_udelay` (approximate busy-wait), and
-//! `osal_flush_cache` (a data `fence`). Delay/time semantics delegate to the
+//! `osal_flush_cache` (the vendor whole-D-cache operation). Delay/time semantics delegate to the
 //! original mask-ROM TCXO/systick drivers.
 //!
 //! `osal_kmalloc`/`osal_kfree` live in [`crate::alloc`].
@@ -14,6 +14,9 @@ use core::cell::Cell;
 use core::ffi::{c_char, c_int, c_ulong, c_void};
 use critical_section::Mutex;
 use hisi_riscv_hal::interrupt::{self, Interrupt, Priority};
+
+#[cfg(feature = "rf-queue-guard")]
+static mut FRW_QUEUE_GUARD_ARMED: bool = false;
 
 // ── Interrupt lock / restore (REAL) ─────────────────────────────────────────
 
@@ -28,6 +31,8 @@ pub extern "C" fn osal_irq_lock() -> c_ulong {
         unsafe {
             core::arch::asm!("csrrci {0}, mstatus, 0x8", out(reg) prev, options(nomem, nostack))
         };
+        #[cfg(feature = "rf-queue-guard")]
+        check_frw_queue_at_lock_boundary(b"lock");
         (prev & 0x8) as c_ulong
     }
     #[cfg(not(target_arch = "riscv32"))]
@@ -37,6 +42,8 @@ pub extern "C" fn osal_irq_lock() -> c_ulong {
 /// Restore the interrupt-enable state returned by [`osal_irq_lock`].
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_irq_restore(state: c_ulong) {
+    #[cfg(feature = "rf-queue-guard")]
+    check_frw_queue_at_lock_boundary(b"restore");
     #[cfg(target_arch = "riscv32")]
     if state & 0x8 != 0 {
         // SAFETY: re-set mstatus.MIE only if it was set before the lock.
@@ -44,6 +51,13 @@ pub extern "C" fn osal_irq_restore(state: c_ulong) {
     }
     #[cfg(not(target_arch = "riscv32"))]
     let _ = state;
+}
+
+/// Arm the bring-up-only integrity guard for the mask-ROM FRW queue.
+#[cfg(feature = "rf-queue-guard")]
+#[doc(hidden)]
+pub fn arm_frw_queue_guard() {
+    unsafe { FRW_QUEUE_GUARD_ARMED = true };
 }
 
 // ── Delay ──────────────────────────────────────────────────────────────────
@@ -56,15 +70,17 @@ pub extern "C" fn osal_udelay(usec: u32) {
 
 // ── Cache (REAL-ish) ────────────────────────────────────────────────────────
 
-/// Data-side `fence`. WS63 is single-core with no MMU and QEMU models no cache,
-/// so a memory fence is sufficient ordering for the scaffold.
+/// Flush the complete D-cache as required by the vendor OSAL ABI.
+///
+/// `hal_dscr.c.obj` calls this as a no-argument function. Vendor LiteOS delegates
+/// to `ArchDCacheFlush()`: a whole-cache clean+invalidate followed by a fence.
+/// Keep the CSR details in the HAL rather than duplicating them in this shim.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_flush_cache(_addr: *mut c_void, _size: usize) {
-    #[cfg(target_arch = "riscv32")]
-    // SAFETY: plain memory fence, no operands.
-    unsafe {
-        core::arch::asm!("fence", options(nostack))
-    };
+pub extern "C" fn osal_flush_cache() {
+    // SAFETY: the vendor calls this before descriptors become visible to WLMAC.
+    // The RF runtime is single-hart and does not concurrently transfer cache
+    // ownership from another execution context.
+    unsafe { hisi_riscv_hal::cache::flush_all() };
 }
 
 // ── Per-line IRQ management ─────────────────────────────────────────────────
@@ -215,11 +231,101 @@ fn dispatch_irq(irq: u32) {
         });
         slot
     });
+    #[cfg(feature = "rf-queue-guard")]
+    let queue_before = frw_queue_tail();
     if let Some(handler) = slot.handler {
         unsafe { handler(irq, slot.arg as *mut c_void) };
     }
+    #[cfg(feature = "rf-queue-guard")]
+    {
+        let queue_after = frw_queue_tail();
+        if !frw_queue_link_valid(queue_before) || !frw_queue_link_valid(queue_after) {
+            log_frw_queue_corruption(irq, queue_before, queue_after);
+            loop {
+                core::hint::spin_loop();
+            }
+        }
+    }
     if let Some(interrupt) = radio_interrupt(irq) {
         interrupt::clear_pending(interrupt);
+    }
+}
+
+#[cfg(feature = "rf-queue-guard")]
+fn frw_queue_tail() -> u32 {
+    // `g_dmac_frw_ctrl.que[0].list.prev`, owned and initialized by mask ROM.
+    unsafe { core::ptr::read_volatile(0x0018_0fa8 as *const u32) }
+}
+
+#[cfg(feature = "rf-queue-guard")]
+fn frw_queue_link_valid(link: u32) -> bool {
+    link == 0x0018_0fa4 || (0x00a0_c000..0x00a8_0000).contains(&link) && link.is_multiple_of(8)
+}
+
+#[cfg(feature = "rf-queue-guard")]
+fn log_frw_queue_corruption(irq: u32, before: u32, after: u32) {
+    fn emit_hex(value: u32) {
+        let mut hex = [0u8; 8];
+        for (index, byte) in hex.iter_mut().enumerate() {
+            let nibble = ((value >> ((7 - index) * 4)) & 0xf) as u8;
+            *byte = if nibble < 10 {
+                b'0' + nibble
+            } else {
+                b'a' + nibble - 10
+            };
+        }
+        crate::log_emit(&hex);
+    }
+
+    crate::log_emit(b"RFDBG_FRW_QUEUE_CORRUPT irq=0x");
+    emit_hex(irq);
+    crate::log_emit(b" before=0x");
+    emit_hex(before);
+    crate::log_emit(b" after=0x");
+    emit_hex(after);
+    crate::log_emit(b"\r\n");
+}
+
+#[cfg(feature = "rf-queue-guard")]
+#[inline(never)]
+fn check_frw_queue_at_lock_boundary(phase: &[u8]) {
+    if !unsafe { FRW_QUEUE_GUARD_ARMED } {
+        return;
+    }
+    let tail = frw_queue_tail();
+    if frw_queue_link_valid(tail) {
+        return;
+    }
+    let caller: u32;
+    unsafe {
+        core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
+    }
+    crate::log_emit(b"RFDBG_FRW_QUEUE_BOUNDARY phase=");
+    crate::log_emit(phase);
+    crate::log_emit(b" caller=0x");
+    let mut hex = [0u8; 8];
+    for (index, byte) in hex.iter_mut().enumerate() {
+        let nibble = ((caller >> ((7 - index) * 4)) & 0xf) as u8;
+        *byte = if nibble < 10 {
+            b'0' + nibble
+        } else {
+            b'a' + nibble - 10
+        };
+    }
+    crate::log_emit(&hex);
+    crate::log_emit(b" tail=0x");
+    for (index, byte) in hex.iter_mut().enumerate() {
+        let nibble = ((tail >> ((7 - index) * 4)) & 0xf) as u8;
+        *byte = if nibble < 10 {
+            b'0' + nibble
+        } else {
+            b'a' + nibble - 10
+        };
+    }
+    crate::log_emit(&hex);
+    crate::log_emit(b"\r\n");
+    loop {
+        core::hint::spin_loop();
     }
 }
 

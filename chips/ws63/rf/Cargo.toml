@@ -28,7 +28,9 @@ net = ["dep:smoltcp"]
 # Internal on-silicon bring-up instrumentation for the guarded full-init image.
 # Not a public radio API and not enabled by normal consumers.
 rf-init-diag = []
-
+# Bring-up-only guard for the mask-ROM FRW queue. It observes the ROM-owned
+# list around IRQ dispatch without replacing or mutating that implementation.
+rf-queue-guard = []
 # For the internal firmware examples only (runtime entry + linker scripts).
 # Keep this off host unit-test builds: riscv-rt's startup assembly is not valid
 # for the macOS/Linux host assembler.
