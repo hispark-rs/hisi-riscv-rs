@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgRamCkenSpec"],"type":["R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["CfgRamCkenSpec"],"type":["R","ShareRamCkenR","ShareRamCkenW","W"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgRamSelSpec"],"type":["R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["CfgRamSelSpec"],"type":["R","Ram10SelR","Ram10SelW","Ram11SelR","Ram11SelW","Ram12SelR","Ram12SelW","Ram5SelR","Ram5SelW","Ram6SelR","Ram6SelW","Ram7SelR","Ram7SelW","Ram8SelR","Ram8SelW","Ram9SelR","Ram9SelW","W"]};
