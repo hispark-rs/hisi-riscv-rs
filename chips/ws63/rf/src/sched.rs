@@ -54,6 +54,7 @@ impl Ctx {
 /// `*old`, restore `*new`, return into the new task. Caller-saved regs are
 /// spilled by the compiler around this normal call, so only callee-saved
 /// (ra, sp, s0-s11, fs0-fs11) need saving.
+#[cfg(target_arch = "riscv32")]
 #[unsafe(naked)]
 unsafe extern "C" fn context_switch(old: *mut Ctx, new: *const Ctx) {
     core::arch::naked_asm!(
@@ -118,6 +119,11 @@ unsafe extern "C" fn context_switch(old: *mut Ctx, new: *const Ctx) {
     )
 }
 
+#[cfg(not(target_arch = "riscv32"))]
+unsafe extern "C" fn context_switch(_old: *mut Ctx, _new: *const Ctx) {
+    unreachable!("WS63 context switching is only available on riscv32");
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
     Free,
@@ -138,6 +144,8 @@ struct Tcb {
     arg: usize,   // task argument (*mut c_void stored as usize so Tcb is Send)
     next: usize,  // intrusive link: ready queue OR one wait queue
     wake_at: u64, // mcycle deadline when Sleeping
+    waiting_sem: usize,
+    sem_granted: bool,
 }
 impl Tcb {
     const fn empty() -> Self {
@@ -149,6 +157,8 @@ impl Tcb {
             arg: 0,
             next: NIL,
             wake_at: 0,
+            waiting_sem: 0,
+            sem_granted: false,
         }
     }
 }
@@ -196,6 +206,21 @@ impl Sched {
             if self.tasks[i].state == State::Sleeping && now >= self.tasks[i].wake_at {
                 self.tasks[i].state = State::Ready;
                 self.ready_push(i);
+            } else if self.tasks[i].state == State::Blocked
+                && self.tasks[i].waiting_sem != 0
+                && now >= self.tasks[i].wake_at
+            {
+                let sem = self.tasks[i].waiting_sem as *const Semaphore;
+                // SAFETY: a timed waiter keeps the semaphore alive for the
+                // duration of the call, and all queue mutation is serialized by
+                // the scheduler critical section.
+                let sem_state = unsafe { &mut *(*sem).inner.get() };
+                remove_waiter(self, sem_state, i);
+                self.tasks[i].waiting_sem = 0;
+                self.tasks[i].sem_granted = false;
+                self.tasks[i].wake_at = 0;
+                self.tasks[i].state = State::Ready;
+                self.ready_push(i);
             }
         }
     }
@@ -228,11 +253,19 @@ fn now_cycles() -> u64 {
 /// First-run trampoline: a freshly switched-to task lands here (its `ctx.ra`),
 /// runs its entry, then exits. Reads its own entry/arg from the current TCB.
 extern "C" fn trampoline() -> ! {
-    let (entry, arg) = critical_section::with(|cs| {
+    let (_slot, entry, arg, _stack) = critical_section::with(|cs| {
         let s = SCHED.borrow_ref(cs);
         let t = &s.tasks[s.current];
-        (t.entry, t.arg)
+        (s.current, t.entry, t.arg, t.stack)
     });
+    #[cfg(feature = "rf-init-diag")]
+    crate::rf_init_diag::trace_task(
+        b"enter",
+        _slot,
+        entry.map_or(0, |f| f as usize),
+        arg,
+        _stack,
+    );
     if let Some(f) = entry {
         f(arg as *mut c_void);
     }
@@ -263,7 +296,7 @@ pub fn spawn(entry: TaskFn, arg: *mut c_void, stack_size: usize) -> Option<usize
     }
     // 16-byte aligned stack top.
     let top = (stack as usize + size) & !0xf;
-    critical_section::with(|cs| {
+    let slot = critical_section::with(|cs| {
         let s = &mut *SCHED.borrow_ref_mut(cs);
         let i = match s.alloc_slot() {
             Some(i) => i,
@@ -285,7 +318,12 @@ pub fn spawn(entry: TaskFn, arg: *mut c_void, stack_size: usize) -> Option<usize
         t.wake_at = 0;
         s.ready_push(i);
         Some(i)
-    })
+    });
+    #[cfg(feature = "rf-init-diag")]
+    if let Some(slot) = slot {
+        crate::rf_init_diag::trace_task(b"spawn", slot, entry as usize, arg as usize, size);
+    }
+    slot
 }
 
 /// Switch away from `prev` to the next ready task, busy-idling (waking sleepers)
@@ -393,6 +431,38 @@ struct SemState {
     wait_head: usize,
     wait_tail: usize,
 }
+
+fn enqueue_waiter(sched: &mut Sched, state: &mut SemState, task: usize) {
+    sched.tasks[task].next = NIL;
+    if state.wait_tail == NIL {
+        state.wait_head = task;
+    } else {
+        sched.tasks[state.wait_tail].next = task;
+    }
+    state.wait_tail = task;
+}
+
+fn remove_waiter(sched: &mut Sched, state: &mut SemState, task: usize) {
+    let mut previous = NIL;
+    let mut current = state.wait_head;
+    while current != NIL {
+        if current == task {
+            let next = sched.tasks[current].next;
+            if previous == NIL {
+                state.wait_head = next;
+            } else {
+                sched.tasks[previous].next = next;
+            }
+            if state.wait_tail == current {
+                state.wait_tail = previous;
+            }
+            sched.tasks[current].next = NIL;
+            return;
+        }
+        previous = current;
+        current = sched.tasks[current].next;
+    }
+}
 // SAFETY: `inner` is only accessed inside `critical_section::with` on a single
 // hart, which serialises every access.
 unsafe impl Sync for Semaphore {}
@@ -425,13 +495,10 @@ impl Semaphore {
             } else {
                 let cur = s.current;
                 s.tasks[cur].state = State::Blocked;
-                s.tasks[cur].next = NIL;
-                if st.wait_tail == NIL {
-                    st.wait_head = cur;
-                } else {
-                    s.tasks[st.wait_tail].next = cur;
-                }
-                st.wait_tail = cur;
+                s.tasks[cur].wake_at = 0;
+                s.tasks[cur].waiting_sem = self as *const Self as usize;
+                s.tasks[cur].sem_granted = false;
+                enqueue_waiter(s, st, cur);
                 true
             }
         });
@@ -439,6 +506,10 @@ impl Semaphore {
             // Parked on this sem's wait queue; `up` will move us back to Ready
             // (== the grant). When we resume here, we already hold the count.
             switch_away(current_id());
+            critical_section::with(|cs| {
+                let s = &mut *SCHED.borrow_ref_mut(cs);
+                s.tasks[s.current].sem_granted = false;
+            });
         }
     }
 
@@ -446,39 +517,47 @@ impl Semaphore {
     /// `false` if the deadline passed first. `u32::MAX` (wait-forever) blocks
     /// like [`down`](Semaphore::down).
     ///
-    /// Cooperative sleep-poll: re-checks `try_down`, then parks for 1 ms so the
-    /// `up`-ing task (and the rest of the system) runs, until granted or expired.
-    /// `mcycle` (the time base) advances in real time regardless, so the deadline
-    /// is honoured even while parked.
+    /// The waiter is linked into the semaphore queue so [`up`](Self::up) can
+    /// hand the grant directly to it. The scheduler removes it from that queue
+    /// if the `mcycle` deadline wins first.
     pub fn down_timeout(&self, timeout_ms: u32) -> bool {
         if timeout_ms == u32::MAX {
             self.down();
             return true;
         }
-        let deadline = now_cycles() + timeout_ms as u64 * CYCLES_PER_MS;
-        loop {
-            if self.try_down() {
-                return true;
-            }
-            if now_cycles() >= deadline {
-                return false;
-            }
-            sleep_ms(1);
-        }
-    }
-
-    /// Try to acquire without blocking. Returns true on success.
-    pub fn try_down(&self) -> bool {
-        critical_section::with(|_cs| {
+        let deadline = now_cycles().saturating_add(timeout_ms as u64 * CYCLES_PER_MS);
+        let current = critical_section::with(|cs| {
+            let s = &mut *SCHED.borrow_ref_mut(cs);
             // SAFETY: exclusive under the critical section.
             let st = unsafe { &mut *self.inner.get() };
             if st.count > 0 {
                 st.count -= 1;
-                true
-            } else {
-                false
+                return None;
             }
-        })
+            if timeout_ms == 0 {
+                return Some(NIL);
+            }
+            let cur = s.current;
+            s.tasks[cur].state = State::Blocked;
+            s.tasks[cur].wake_at = deadline;
+            s.tasks[cur].waiting_sem = self as *const Self as usize;
+            s.tasks[cur].sem_granted = false;
+            enqueue_waiter(s, st, cur);
+            Some(cur)
+        });
+        match current {
+            None => true,
+            Some(NIL) => false,
+            Some(current) => {
+                switch_away(current);
+                critical_section::with(|cs| {
+                    let s = &mut *SCHED.borrow_ref_mut(cs);
+                    let granted = s.tasks[s.current].sem_granted;
+                    s.tasks[s.current].sem_granted = false;
+                    granted
+                })
+            }
+        }
     }
 
     /// Release (V). Wakes one waiter if any, else increments the count.
@@ -494,6 +573,9 @@ impl Semaphore {
                     st.wait_tail = NIL;
                 }
                 s.tasks[w].next = NIL;
+                s.tasks[w].wake_at = 0;
+                s.tasks[w].waiting_sem = 0;
+                s.tasks[w].sem_granted = true;
                 s.tasks[w].state = State::Ready;
                 s.ready_push(w);
             } else {
