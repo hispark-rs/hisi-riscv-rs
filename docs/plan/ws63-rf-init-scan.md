@@ -2,8 +2,9 @@
 
 ## Summary
 
-WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**。不把 RF 阻塞
-`hisi-riscv-hal 0.6.0`，也不在第一阶段做 WPA2、supplicant、connect 或 ping。
+WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**；该目标现已
+通过 HIL。下一步 RF5 沿当前实现完成 TX/RX、open-AP connect 和 ping，之后再按
+[Connectivity 全栈重构计划](hisi-connectivity-stack.md) 拆分独立组件。
 
 RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通用硬件能力默认先进
 `unstable`。RF 专用 glue、blob ABI、NV item id、porting contract 保持在 `ws63-rf-rs`。
@@ -88,14 +89,16 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   `RF3_SCAN_OK count=0x20` 和真实 AP 的 SSID/frequency/RSSI；WLMAC IRQ 也在扫描期间
   到达。输出仍限制为固定容量，避免无界日志。
 
-### RF5 -- Post-Scan Preparation For Ping
+### RF5 -- Data Path, Connect And Ping
 
-- 只在 scan 成功后进入，不阻塞 init+scan MVP。
-- 为 pbuf 其余可选字段增加从 vendor headers 生成的 offset/size build-time check；
-  已验证的 80-byte zero-copy reserve 继续作为硬契约。
-- 找到真实 TX symbol，将 `netif_smoltcp` TX sink 从测试 sink 替换为 blob transmit adapter。
-- RX path 从 blob callback/IRQ 输入 `driverif_input`。
-- 开放 AP connect/ping 另立 milestone，不和 scan MVP 混在一个 PR/issue 里。
+- **RF5A TX/RX closure**：从 vendor headers 生成 pbuf layout checks；真实 TX symbol
+  替换测试 sink，RX `driverif_input` 进入有界 L2 queue，先以 ARP round-trip 验收。
+- **RF5B Open-AP connect**：增加 typed station config 和 deferred connection events；
+  受控实验室 open AP 只用于数据面证明，不作为生产安全承诺。
+- **RF5C Ping**：静态 IPv4 先行、DHCP 后补；ICMP 必须经过 Rust-visible L2 path。
+  UART、ELF layout、patch manifest、image plan 和资源占用形成后续拆分的 A0 baseline。
+- RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
+  [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 
 ## Issue Mapping
 
@@ -132,7 +135,7 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
-- 第一阶段只做 init + scan；WPA2、supplicant、connect、ping 推迟。
+- Init + scan MVP 已完成；当前优先级是 RF5A-C 的 TX/RX、connect、ping。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。

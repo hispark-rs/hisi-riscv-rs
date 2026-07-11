@@ -6,6 +6,11 @@
 默认 stable API、HIL 证据、safe/unsafe 边界、CI/release/docs 全部闭合；WS63 RF / Wi-Fi
 init / scan / connect / ping 属于下游 connectivity track，不阻塞 HAL 0.6.0。
 
+`0.6.0` 也是 `hisi-riscv-hal` 名称下最后一个主 release。正式版发布后，后续
+重命名为 `hisi-hal` 的 H0 迁移按
+[Connectivity 全栈计划](hisi-connectivity-stack.md) 单独执行；重命名不得反向扩大
+本计划的 release gate，也不得夹带 API 重构。
+
 RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果只是需要新增能力，默认先进
 `unstable`，等 HIL 与 soundness 证据闭合后再毕业。
 

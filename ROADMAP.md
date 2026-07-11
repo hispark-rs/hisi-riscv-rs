@@ -10,11 +10,11 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 **Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0-alpha.2` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and the `ws63-rf-rs` porting runtime.
 
-**Active focus:** turn the RF porting runtime into a real WS63 Wi-Fi image on hardware. The immediate work is real blob execution, `.wifi_pkt_ram`, pbuf/TX sink alignment, Wi-Fi init, and scan.
+**Active focus:** complete the real WS63 Wi-Fi data path after the proven init/scan milestone: TX/RX closure, controlled open-AP association, then ICMP ping. The full-stack crate extraction and BLE/SLE work starts only after that ping baseline is frozen.
 
 **Not a near-term target:** BSP/board-manager, BS2X BLE/SLE real-board connectivity, Hi3322 runtime implementation, DMA stable graduation, and embassy stable graduation. These are deferred until they serve the connectivity path or have hardware evidence.
 
-**Current plans live in:** [HAL 0.6.0 release plan](docs/plan/hal-0.6.0-release.md) and [WS63 RF init+scan plan](docs/plan/ws63-rf-init-scan.md).
+**Current plans live in:** [HAL 0.6.0 release plan](docs/plan/hal-0.6.0-release.md), [WS63 RF init+scan/RF5 plan](docs/plan/ws63-rf-init-scan.md), and the [HiSilicon Connectivity full-stack plan](docs/plan/hisi-connectivity-stack.md).
 
 **Current facts live in:** [Stable API 清单](docs/src/reference/10-stable-api.md), [`ws63-rf-rs` README](chips/ws63/rf/README.md), [ws63-RF 组件文档](docs/src/explanation/components/09-ws63-rf.md), and the archived [2026-05 to 2026-07 remediation roadmap](docs/archive/roadmap-2026-05-2026-07-remediation.md).
 
@@ -28,7 +28,10 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 | C3 Scan | Enable STA scan and return AP results or a precise RF/NV failure. | Add a `wifi_scan` example and HIL marker; scan either prints at least one AP in a controlled environment or reports a known categorized failure. |
 | C4 Connect | Associate to a controlled open or WPA2 test AP. | Connection state transitions and failure codes are observable over UART/HIL. |
 | C5 Ping | Complete an IP round trip over the Rust-visible network path, using smoltcp or the vendor netif boundary chosen by the bring-up evidence. | Connectivity HIL can reproduce ICMP echo success on real WS63 silicon. |
-| C6 Connectivity release | Turn the demo into a repeatable release artifact. | Release notes, known issues, docs, examples, and HIL instructions are aligned; higher-level APIs can be considered after this point. |
+| C6 Architecture baseline | Rename `hisi-riscv-hal` to `hisi-hal`, then split ROM, blob sys, allocator, storage/NVS, RTOS-driver, RTOS, and high-level RF ownership without regressing C5. | HAL rename checks show no API drift; frozen scan/connect/ping markers and link/image reports pass through the new dependency graph. |
+| C7 BLE | Bring up the vendor BLE host through the shared RTOS/storage/runtime contracts. | Advertising, scanning, and GATT client/server have bounded-event APIs and real-board evidence. |
+| C8 SLE and coexistence | Bring up SLE, then validate concurrent Wi-Fi plus BLE/SLE operation. | Two-board SLE data exchange passes; `coex` remains hidden until concurrent HIL passes. |
+| C9 Connectivity release | Turn the full stack into repeatable release units. | Compatibility/resource matrices, release notes, known issues, examples, docs, and HIL evidence are aligned. |
 
 ## Maintenance Tracks
 
@@ -36,7 +39,7 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](docs/plan/hal-0.6.0-release.md). RF/Connectivity may drive HAL bug fixes, but does not block HAL 0.6.0 unless it exposes a bug in an already-stable HAL API.
 
-The detailed RF execution plan is tracked in [docs/plan/ws63-rf-init-scan.md](docs/plan/ws63-rf-init-scan.md). The first RF MVP is real-silicon Wi-Fi init + scan; connect/ping remain later connectivity milestones.
+Init/scan evidence and RF5 are tracked in [docs/plan/ws63-rf-init-scan.md](docs/plan/ws63-rf-init-scan.md). The post-ping component architecture, RTOS/NVS split, BLE/SLE and coexistence sequence are tracked in [docs/plan/hisi-connectivity-stack.md](docs/plan/hisi-connectivity-stack.md).
 
 **Probe, fwpkg, and toolchain:** make only the changes required to keep connectivity work reproducible. `hisi-fwpkg` remains the image-format fact source; probe-rs should stay a generic transport/debug path and avoid HiSilicon image-format parsing.
 
