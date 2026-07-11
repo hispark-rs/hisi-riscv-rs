@@ -406,10 +406,25 @@ fn wifi_base_mac() -> [u8; 6] {
                 || actual != mac.len() as u16
                 || !valid_unicast_mac(&mac)
             {
-                let _ = uapi_drv_cipher_trng_get_random_bytes(mac.as_mut_ptr(), mac.len() as u32);
-                mac[0] = (mac[0] & 0xfc) | 0x02;
-                mac[1] = 0x00;
-                mac[2] = 0x73;
+                let mut found = false;
+                // SDK efuse items 12..9: 48-bit MAC slots at bit
+                // 1728, 1680, 1632 and 1584, newest slot first.
+                for byte_offset in [216_u32, 210, 204, 198] {
+                    if uapi_efuse_read_buffer(mac.as_mut_ptr(), byte_offset, mac.len() as u16)
+                        == crate::OSAL_OK as u32
+                        && valid_unicast_mac(&mac)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    let _ =
+                        uapi_drv_cipher_trng_get_random_bytes(mac.as_mut_ptr(), mac.len() as u32);
+                    mac[0] = (mac[0] & 0xfc) | 0x02;
+                    mac[1] = 0x00;
+                    mac[2] = 0x73;
+                }
             }
             // SAFETY: all accesses are serialized by the single-hart critical
             // section and readiness is published only after the full copy.
