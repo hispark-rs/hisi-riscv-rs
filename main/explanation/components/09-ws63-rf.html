@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-fea3a59f.js";
+            window.path_to_searchindex_js = "../../searchindex-1f4e4372.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -199,7 +199,7 @@
 <li>不实现 porting 层本身——<code>port_*.h</code> 只是接口声明，实现由下游 in-tree crate <strong><code>ws63-rf-rs</code></strong> 填充，<strong>现已实现</strong>（见下）。</li>
 <li>不提供链接脚本——<code>port_linker.h</code> 仅以 <code>extern</code> 声明 blob 期望的链接符号，实际的 <code>SECTIONS</code> / 内存区段需调用方在 linker script 中给出。</li>
 </ul>
-<p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥），且 <strong>Wi-Fi-init 的 relocatable 符号闭合已达成</strong>（whole-archive 0 重复符号，<code>--gc-sections</code> rooted at <code>uapi_wifi_init</code> 残留仅 2 个 firmware linker 符号）。<code>hisi-riscv-rt</code> 现在提供真实 <code>.wifi_pkt_ram (NOLOAD)</code>，剩余硬阻塞是完整 init closure 进入 final executable 时的 HiSilicon <code>R_RISCV_48_LLUI</code> relocation 58：原厂 linker 可处理，stock <code>rust-lld</code> 目前不能处理。</p>
+<p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥）。完整 init closure 现在由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验 section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已通过 <code>wifi_init</code>，并由主动扫描返回 32 个 AP；当前边界是尚未完成关联与 IP 连通性。</p>
 <h2 id="在依赖链中的位置"><a class="header" href="#在依赖链中的位置">在依赖链中的位置</a></h2>
 <p>ws63-RF（blob）经 in-tree crate <strong><code>ws63-rf-rs</code></strong> 接入主链 —— rf-rs 实现 porting 契约、把 blob 链进镜像：</p>
 <pre><code class="language-mermaid">graph TD

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fea3a59f.js";
+            window.path_to_searchindex_js = "../searchindex-1f4e4372.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -227,7 +227,7 @@
 <li><strong>默认面先收窄的子面</strong>：GPIO IRQ (<code>InterruptTrigger</code>、per-pin enable/clear/pending/trigger)、<code>Uart::new_uart2</code>、<code>Spi::new_spi1</code>、<code>I2c::new_i2c1</code>、timer one-shot/periodic wrappers、WDT IRQ 方法、PWM polarity/start/pulse-count/<code>into_running</code>、I2S slave role/config、eFuse status、TRNG <code>done/read/fill_words</code>、TSENSOR <code>disable/clear_status</code>。这些不是“永远不稳定”，只是当前没有足够真机证据或所有权约束。</li>
 <li><strong>不可逆 / 未闭合 soundness 的路径</strong>：<code>EfuseDriver::set_clock_period</code>/<code>read_buffer</code>/<code>write_byte</code>（默认稳定面只保留自动 clock period + 单字节只读路径）、<code>System::software_reset*</code>、<code>Instant::now</code>/<code>elapsed</code>、<code>interrupt::free</code>、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。</li>
 <li><strong>embassy</strong>：无端到端 HIL（<code>timer_int0_named_routing</code> 还专门 <code>not(feature="embassy")</code> 排除它）。</li>
-<li><strong>WS63 未测试驱动</strong>：<code>clock_init</code>/<code>km</code>/<code>pke</code>/<code>safety</code>/<code>sfc</code>/<code>spacc</code>/<code>ulp_gpio</code>/<code>rtc</code>-WS63（<code>hil-rtc</code> 是 opt-in 且这块板没晶振从没跑过）/<code>delay</code>。</li>
+<li><strong>WS63 未测试驱动</strong>：<code>clock_init</code>/<code>shared_memory</code>/<code>km</code>/<code>pke</code>/<code>safety</code>/<code>sfc</code>/<code>spacc</code>/<code>ulp_gpio</code>/<code>rtc</code>-WS63（<code>hil-rtc</code> 是 opt-in 且这块板没晶振从没跑过）/<code>delay</code>。<code>shared_memory</code> 当前只服务 RF bring-up，尚未作为通用 HAL 能力毕业。</li>
 <li><strong>整个 BS2X target</strong>（无 BS2X 板）：<code>chip-bs21</code> 需要 <code>unstable</code>；这覆盖共享驱动、<code>gadc</code>/<code>keyscan</code>/<code>pdm</code>/<code>qdec</code>/<code>usb</code>/<code>i2c</code>-v151/<code>rtc</code>-v150/<code>trng</code>-v1 等 BS2X-only 模块；<code>hisi-riscv-rt</code> 的 BS2X compatibility adapter 也同样要求 <code>unstable</code>。</li>
 <li><strong>prelude 的 unstable re-export</strong>：<code>Delay</code>、<code>InterruptTrigger</code>、<code>OneShotTimer</code>/<code>PeriodicTimer</code>、<code>Dma0</code>/<code>DmaDriver</code>/<code>Sdma0</code>、<code>RtcDriver</code>、<code>SfcDriver</code>、<code>UlpGpioPin</code>。</li>
 </ul>

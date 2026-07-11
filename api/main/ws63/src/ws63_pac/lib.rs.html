@@ -33294,147 +33294,415 @@
 <a href=#33294 id=33294 data-nosnippet>33294</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>EmGtModeSpec {}
 <a href=#33295 id=33295 data-nosnippet>33295</a>    }
 <a href=#33296 id=33296 data-nosnippet>33296</a>}
-<a href=#33297 id=33297 data-nosnippet>33297</a><span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
-<a href=#33298 id=33298 data-nosnippet>33298</a></span><span class="kw">static </span><span class="kw-2">mut </span>DEVICE_PERIPHERALS: bool = <span class="bool-val">false</span>;
-<a href=#33299 id=33299 data-nosnippet>33299</a><span class="attr">#[doc = <span class="string">r" All the peripherals."</span>]
-<a href=#33300 id=33300 data-nosnippet>33300</a>#[allow(non_snake_case)]
-<a href=#33301 id=33301 data-nosnippet>33301</a></span><span class="kw">pub struct </span>Peripherals {
-<a href=#33302 id=33302 data-nosnippet>33302</a>    <span class="attr">#[doc = <span class="string">"SYS_CTL1"</span>]
-<a href=#33303 id=33303 data-nosnippet>33303</a>    </span><span class="kw">pub </span>sys_ctl1: SysCtl1,
-<a href=#33304 id=33304 data-nosnippet>33304</a>    <span class="attr">#[doc = <span class="string">"IO_CONFIG"</span>]
-<a href=#33305 id=33305 data-nosnippet>33305</a>    </span><span class="kw">pub </span>io_config: IoConfig,
-<a href=#33306 id=33306 data-nosnippet>33306</a>    <span class="attr">#[doc = <span class="string">"GPIO0"</span>]
-<a href=#33307 id=33307 data-nosnippet>33307</a>    </span><span class="kw">pub </span>gpio0: Gpio0,
-<a href=#33308 id=33308 data-nosnippet>33308</a>    <span class="attr">#[doc = <span class="string">"GPIO1"</span>]
-<a href=#33309 id=33309 data-nosnippet>33309</a>    </span><span class="kw">pub </span>gpio1: Gpio1,
-<a href=#33310 id=33310 data-nosnippet>33310</a>    <span class="attr">#[doc = <span class="string">"GPIO2"</span>]
-<a href=#33311 id=33311 data-nosnippet>33311</a>    </span><span class="kw">pub </span>gpio2: Gpio2,
-<a href=#33312 id=33312 data-nosnippet>33312</a>    <span class="attr">#[doc = <span class="string">"UART0"</span>]
-<a href=#33313 id=33313 data-nosnippet>33313</a>    </span><span class="kw">pub </span>uart0: Uart0,
-<a href=#33314 id=33314 data-nosnippet>33314</a>    <span class="attr">#[doc = <span class="string">"UART1"</span>]
-<a href=#33315 id=33315 data-nosnippet>33315</a>    </span><span class="kw">pub </span>uart1: Uart1,
-<a href=#33316 id=33316 data-nosnippet>33316</a>    <span class="attr">#[doc = <span class="string">"UART2"</span>]
-<a href=#33317 id=33317 data-nosnippet>33317</a>    </span><span class="kw">pub </span>uart2: Uart2,
-<a href=#33318 id=33318 data-nosnippet>33318</a>    <span class="attr">#[doc = <span class="string">"I2C0"</span>]
-<a href=#33319 id=33319 data-nosnippet>33319</a>    </span><span class="kw">pub </span>i2c0: I2c0,
-<a href=#33320 id=33320 data-nosnippet>33320</a>    <span class="attr">#[doc = <span class="string">"I2C1"</span>]
-<a href=#33321 id=33321 data-nosnippet>33321</a>    </span><span class="kw">pub </span>i2c1: I2c1,
-<a href=#33322 id=33322 data-nosnippet>33322</a>    <span class="attr">#[doc = <span class="string">"PWM"</span>]
-<a href=#33323 id=33323 data-nosnippet>33323</a>    </span><span class="kw">pub </span>pwm: Pwm,
-<a href=#33324 id=33324 data-nosnippet>33324</a>    <span class="attr">#[doc = <span class="string">"DMA"</span>]
-<a href=#33325 id=33325 data-nosnippet>33325</a>    </span><span class="kw">pub </span>dma: Dma,
-<a href=#33326 id=33326 data-nosnippet>33326</a>    <span class="attr">#[doc = <span class="string">"SFC_CFG"</span>]
-<a href=#33327 id=33327 data-nosnippet>33327</a>    </span><span class="kw">pub </span>sfc_cfg: SfcCfg,
-<a href=#33328 id=33328 data-nosnippet>33328</a>    <span class="attr">#[doc = <span class="string">"SPI0"</span>]
-<a href=#33329 id=33329 data-nosnippet>33329</a>    </span><span class="kw">pub </span>spi0: Spi0,
-<a href=#33330 id=33330 data-nosnippet>33330</a>    <span class="attr">#[doc = <span class="string">"SPI1"</span>]
-<a href=#33331 id=33331 data-nosnippet>33331</a>    </span><span class="kw">pub </span>spi1: Spi1,
-<a href=#33332 id=33332 data-nosnippet>33332</a>    <span class="attr">#[doc = <span class="string">"I2S"</span>]
-<a href=#33333 id=33333 data-nosnippet>33333</a>    </span><span class="kw">pub </span>i2s: I2s,
-<a href=#33334 id=33334 data-nosnippet>33334</a>    <span class="attr">#[doc = <span class="string">"LSADC"</span>]
-<a href=#33335 id=33335 data-nosnippet>33335</a>    </span><span class="kw">pub </span>lsadc: Lsadc,
-<a href=#33336 id=33336 data-nosnippet>33336</a>    <span class="attr">#[doc = <span class="string">"TSENSOR"</span>]
-<a href=#33337 id=33337 data-nosnippet>33337</a>    </span><span class="kw">pub </span>tsensor: Tsensor,
-<a href=#33338 id=33338 data-nosnippet>33338</a>    <span class="attr">#[doc = <span class="string">"TIMER"</span>]
-<a href=#33339 id=33339 data-nosnippet>33339</a>    </span><span class="kw">pub </span>timer: Timer,
-<a href=#33340 id=33340 data-nosnippet>33340</a>    <span class="attr">#[doc = <span class="string">"WDT"</span>]
-<a href=#33341 id=33341 data-nosnippet>33341</a>    </span><span class="kw">pub </span>wdt: Wdt,
-<a href=#33342 id=33342 data-nosnippet>33342</a>    <span class="attr">#[doc = <span class="string">"RTC"</span>]
-<a href=#33343 id=33343 data-nosnippet>33343</a>    </span><span class="kw">pub </span>rtc: Rtc,
-<a href=#33344 id=33344 data-nosnippet>33344</a>    <span class="attr">#[doc = <span class="string">"EFUSE"</span>]
-<a href=#33345 id=33345 data-nosnippet>33345</a>    </span><span class="kw">pub </span>efuse: Efuse,
-<a href=#33346 id=33346 data-nosnippet>33346</a>    <span class="attr">#[doc = <span class="string">"SYS_CTL0"</span>]
-<a href=#33347 id=33347 data-nosnippet>33347</a>    </span><span class="kw">pub </span>sys_ctl0: SysCtl0,
-<a href=#33348 id=33348 data-nosnippet>33348</a>    <span class="attr">#[doc = <span class="string">"CMU"</span>]
-<a href=#33349 id=33349 data-nosnippet>33349</a>    </span><span class="kw">pub </span>cmu: Cmu,
-<a href=#33350 id=33350 data-nosnippet>33350</a>    <span class="attr">#[doc = <span class="string">"GLB_CTL_M"</span>]
-<a href=#33351 id=33351 data-nosnippet>33351</a>    </span><span class="kw">pub </span>glb_ctl_m: GlbCtlM,
-<a href=#33352 id=33352 data-nosnippet>33352</a>    <span class="attr">#[doc = <span class="string">"SPACC"</span>]
-<a href=#33353 id=33353 data-nosnippet>33353</a>    </span><span class="kw">pub </span>spacc: Spacc,
-<a href=#33354 id=33354 data-nosnippet>33354</a>    <span class="attr">#[doc = <span class="string">"PKE"</span>]
-<a href=#33355 id=33355 data-nosnippet>33355</a>    </span><span class="kw">pub </span>pke: Pke,
-<a href=#33356 id=33356 data-nosnippet>33356</a>    <span class="attr">#[doc = <span class="string">"KM"</span>]
-<a href=#33357 id=33357 data-nosnippet>33357</a>    </span><span class="kw">pub </span>km: Km,
-<a href=#33358 id=33358 data-nosnippet>33358</a>    <span class="attr">#[doc = <span class="string">"TRNG"</span>]
-<a href=#33359 id=33359 data-nosnippet>33359</a>    </span><span class="kw">pub </span>trng: Trng,
-<a href=#33360 id=33360 data-nosnippet>33360</a>    <span class="attr">#[doc = <span class="string">"TCXO"</span>]
-<a href=#33361 id=33361 data-nosnippet>33361</a>    </span><span class="kw">pub </span>tcxo: Tcxo,
-<a href=#33362 id=33362 data-nosnippet>33362</a>    <span class="attr">#[doc = <span class="string">"CLDO_CRG"</span>]
-<a href=#33363 id=33363 data-nosnippet>33363</a>    </span><span class="kw">pub </span>cldo_crg: CldoCrg,
-<a href=#33364 id=33364 data-nosnippet>33364</a>    <span class="attr">#[doc = <span class="string">"SDMA"</span>]
-<a href=#33365 id=33365 data-nosnippet>33365</a>    </span><span class="kw">pub </span>sdma: Sdma,
-<a href=#33366 id=33366 data-nosnippet>33366</a>    <span class="attr">#[doc = <span class="string">"ULP_GPIO"</span>]
-<a href=#33367 id=33367 data-nosnippet>33367</a>    </span><span class="kw">pub </span>ulp_gpio: UlpGpio,
-<a href=#33368 id=33368 data-nosnippet>33368</a>    <span class="attr">#[doc = <span class="string">"RF_WB_CTL"</span>]
-<a href=#33369 id=33369 data-nosnippet>33369</a>    </span><span class="kw">pub </span>rf_wb_ctl: RfWbCtl,
-<a href=#33370 id=33370 data-nosnippet>33370</a>    <span class="attr">#[doc = <span class="string">"SHARE_MEM_CTL"</span>]
-<a href=#33371 id=33371 data-nosnippet>33371</a>    </span><span class="kw">pub </span>share_mem_ctl: ShareMemCtl,
-<a href=#33372 id=33372 data-nosnippet>33372</a>    <span class="attr">#[doc = <span class="string">"FAMA_REMAP"</span>]
-<a href=#33373 id=33373 data-nosnippet>33373</a>    </span><span class="kw">pub </span>fama_remap: FamaRemap,
-<a href=#33374 id=33374 data-nosnippet>33374</a>    <span class="attr">#[doc = <span class="string">"BT_EM_CTL"</span>]
-<a href=#33375 id=33375 data-nosnippet>33375</a>    </span><span class="kw">pub </span>bt_em_ctl: BtEmCtl,
-<a href=#33376 id=33376 data-nosnippet>33376</a>}
-<a href=#33377 id=33377 data-nosnippet>33377</a><span class="kw">impl </span>Peripherals {
-<a href=#33378 id=33378 data-nosnippet>33378</a>    <span class="attr">#[doc = <span class="string">r" Returns all the peripherals *once*."</span>]
-<a href=#33379 id=33379 data-nosnippet>33379</a>    #[cfg(feature = <span class="string">"critical-section"</span>)]
-<a href=#33380 id=33380 data-nosnippet>33380</a>    #[inline]
-<a href=#33381 id=33381 data-nosnippet>33381</a>    </span><span class="kw">pub fn </span>take() -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#33382 id=33382 data-nosnippet>33382</a>        critical_section::with(|<span class="kw">_</span>| {
-<a href=#33383 id=33383 data-nosnippet>33383</a>            <span class="kw">if unsafe </span>{ DEVICE_PERIPHERALS } {
-<a href=#33384 id=33384 data-nosnippet>33384</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#33385 id=33385 data-nosnippet>33385</a>            }
-<a href=#33386 id=33386 data-nosnippet>33386</a>            <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ Peripherals::steal() })
-<a href=#33387 id=33387 data-nosnippet>33387</a>        })
-<a href=#33388 id=33388 data-nosnippet>33388</a>    }
-<a href=#33389 id=33389 data-nosnippet>33389</a>    <span class="attr">#[doc = <span class="string">r" Unchecked version of `Peripherals::take`."</span>]
-<a href=#33390 id=33390 data-nosnippet>33390</a>    #[doc = <span class="string">r""</span>]
-<a href=#33391 id=33391 data-nosnippet>33391</a>    #[doc = <span class="string">r" # Safety"</span>]
-<a href=#33392 id=33392 data-nosnippet>33392</a>    #[doc = <span class="string">r""</span>]
-<a href=#33393 id=33393 data-nosnippet>33393</a>    #[doc = <span class="string">r" Each of the returned peripherals must be used at most once."</span>]
-<a href=#33394 id=33394 data-nosnippet>33394</a>    #[inline]
-<a href=#33395 id=33395 data-nosnippet>33395</a>    </span><span class="kw">pub unsafe fn </span>steal() -&gt; <span class="self">Self </span>{
-<a href=#33396 id=33396 data-nosnippet>33396</a>        <span class="kw">unsafe </span>{
-<a href=#33397 id=33397 data-nosnippet>33397</a>            DEVICE_PERIPHERALS = <span class="bool-val">true</span>;
-<a href=#33398 id=33398 data-nosnippet>33398</a>            Peripherals {
-<a href=#33399 id=33399 data-nosnippet>33399</a>                sys_ctl1: SysCtl1::steal(),
-<a href=#33400 id=33400 data-nosnippet>33400</a>                io_config: IoConfig::steal(),
-<a href=#33401 id=33401 data-nosnippet>33401</a>                gpio0: Gpio0::steal(),
-<a href=#33402 id=33402 data-nosnippet>33402</a>                gpio1: Gpio1::steal(),
-<a href=#33403 id=33403 data-nosnippet>33403</a>                gpio2: Gpio2::steal(),
-<a href=#33404 id=33404 data-nosnippet>33404</a>                uart0: Uart0::steal(),
-<a href=#33405 id=33405 data-nosnippet>33405</a>                uart1: Uart1::steal(),
-<a href=#33406 id=33406 data-nosnippet>33406</a>                uart2: Uart2::steal(),
-<a href=#33407 id=33407 data-nosnippet>33407</a>                i2c0: I2c0::steal(),
-<a href=#33408 id=33408 data-nosnippet>33408</a>                i2c1: I2c1::steal(),
-<a href=#33409 id=33409 data-nosnippet>33409</a>                pwm: Pwm::steal(),
-<a href=#33410 id=33410 data-nosnippet>33410</a>                dma: Dma::steal(),
-<a href=#33411 id=33411 data-nosnippet>33411</a>                sfc_cfg: SfcCfg::steal(),
-<a href=#33412 id=33412 data-nosnippet>33412</a>                spi0: Spi0::steal(),
-<a href=#33413 id=33413 data-nosnippet>33413</a>                spi1: Spi1::steal(),
-<a href=#33414 id=33414 data-nosnippet>33414</a>                i2s: I2s::steal(),
-<a href=#33415 id=33415 data-nosnippet>33415</a>                lsadc: Lsadc::steal(),
-<a href=#33416 id=33416 data-nosnippet>33416</a>                tsensor: Tsensor::steal(),
-<a href=#33417 id=33417 data-nosnippet>33417</a>                timer: Timer::steal(),
-<a href=#33418 id=33418 data-nosnippet>33418</a>                wdt: Wdt::steal(),
-<a href=#33419 id=33419 data-nosnippet>33419</a>                rtc: Rtc::steal(),
-<a href=#33420 id=33420 data-nosnippet>33420</a>                efuse: Efuse::steal(),
-<a href=#33421 id=33421 data-nosnippet>33421</a>                sys_ctl0: SysCtl0::steal(),
-<a href=#33422 id=33422 data-nosnippet>33422</a>                cmu: Cmu::steal(),
-<a href=#33423 id=33423 data-nosnippet>33423</a>                glb_ctl_m: GlbCtlM::steal(),
-<a href=#33424 id=33424 data-nosnippet>33424</a>                spacc: Spacc::steal(),
-<a href=#33425 id=33425 data-nosnippet>33425</a>                pke: Pke::steal(),
-<a href=#33426 id=33426 data-nosnippet>33426</a>                km: Km::steal(),
-<a href=#33427 id=33427 data-nosnippet>33427</a>                trng: Trng::steal(),
-<a href=#33428 id=33428 data-nosnippet>33428</a>                tcxo: Tcxo::steal(),
-<a href=#33429 id=33429 data-nosnippet>33429</a>                cldo_crg: CldoCrg::steal(),
-<a href=#33430 id=33430 data-nosnippet>33430</a>                sdma: Sdma::steal(),
-<a href=#33431 id=33431 data-nosnippet>33431</a>                ulp_gpio: UlpGpio::steal(),
-<a href=#33432 id=33432 data-nosnippet>33432</a>                rf_wb_ctl: RfWbCtl::steal(),
-<a href=#33433 id=33433 data-nosnippet>33433</a>                share_mem_ctl: ShareMemCtl::steal(),
-<a href=#33434 id=33434 data-nosnippet>33434</a>                fama_remap: FamaRemap::steal(),
-<a href=#33435 id=33435 data-nosnippet>33435</a>                bt_em_ctl: BtEmCtl::steal(),
-<a href=#33436 id=33436 data-nosnippet>33436</a>            }
-<a href=#33437 id=33437 data-nosnippet>33437</a>        }
-<a href=#33438 id=33438 data-nosnippet>33438</a>    }
-<a href=#33439 id=33439 data-nosnippet>33439</a>}
+<a href=#33297 id=33297 data-nosnippet>33297</a><span class="attr">#[doc = <span class="string">"RISC-V instruction patch controller used to redirect mask-ROM entry points to application-provided fixes"</span>]
+<a href=#33298 id=33298 data-nosnippet>33298</a></span><span class="kw">pub type </span>RiscvPatch = <span class="kw">crate</span>::Periph&lt;riscv_patch::RegisterBlock, <span class="number">0xe000_0000</span>&gt;;
+<a href=#33299 id=33299 data-nosnippet>33299</a><span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>RiscvPatch {
+<a href=#33300 id=33300 data-nosnippet>33300</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#33301 id=33301 data-nosnippet>33301</a>        f.debug_struct(<span class="string">"RiscvPatch"</span>).finish()
+<a href=#33302 id=33302 data-nosnippet>33302</a>    }
+<a href=#33303 id=33303 data-nosnippet>33303</a>}
+<a href=#33304 id=33304 data-nosnippet>33304</a><span class="attr">#[doc = <span class="string">"RISC-V instruction patch controller used to redirect mask-ROM entry points to application-provided fixes"</span>]
+<a href=#33305 id=33305 data-nosnippet>33305</a></span><span class="kw">pub mod </span>riscv_patch {
+<a href=#33306 id=33306 data-nosnippet>33306</a>    <span class="attr">#[repr(C)]
+<a href=#33307 id=33307 data-nosnippet>33307</a>    #[doc = <span class="string">"Register block"</span>]
+<a href=#33308 id=33308 data-nosnippet>33308</a>    </span><span class="kw">pub struct </span>RegisterBlock {
+<a href=#33309 id=33309 data-nosnippet>33309</a>        flpctrl: Flpctrl,
+<a href=#33310 id=33310 data-nosnippet>33310</a>        flprmp: Flprmp,
+<a href=#33311 id=33311 data-nosnippet>33311</a>        flplacmp0: Flplacmp0,
+<a href=#33312 id=33312 data-nosnippet>33312</a>        flplacmp1: Flplacmp1,
+<a href=#33313 id=33313 data-nosnippet>33313</a>        flpiacmp: [Flpiacmp; <span class="number">192</span>],
+<a href=#33314 id=33314 data-nosnippet>33314</a>    }
+<a href=#33315 id=33315 data-nosnippet>33315</a>    <span class="kw">impl </span>RegisterBlock {
+<a href=#33316 id=33316 data-nosnippet>33316</a>        <span class="attr">#[doc = <span class="string">"0x00 - Instruction patch controller configuration"</span>]
+<a href=#33317 id=33317 data-nosnippet>33317</a>        #[inline(always)]
+<a href=#33318 id=33318 data-nosnippet>33318</a>        </span><span class="kw">pub const fn </span>flpctrl(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Flpctrl {
+<a href=#33319 id=33319 data-nosnippet>33319</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.flpctrl
+<a href=#33320 id=33320 data-nosnippet>33320</a>        }
+<a href=#33321 id=33321 data-nosnippet>33321</a>        <span class="attr">#[doc = <span class="string">"0x04 - Base address of the instruction remap table"</span>]
+<a href=#33322 id=33322 data-nosnippet>33322</a>        #[inline(always)]
+<a href=#33323 id=33323 data-nosnippet>33323</a>        </span><span class="kw">pub const fn </span>flprmp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Flprmp {
+<a href=#33324 id=33324 data-nosnippet>33324</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.flprmp
+<a href=#33325 id=33325 data-nosnippet>33325</a>        }
+<a href=#33326 id=33326 data-nosnippet>33326</a>        <span class="attr">#[doc = <span class="string">"0x08 - Optional load-address comparison register 0"</span>]
+<a href=#33327 id=33327 data-nosnippet>33327</a>        #[inline(always)]
+<a href=#33328 id=33328 data-nosnippet>33328</a>        </span><span class="kw">pub const fn </span>flplacmp0(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Flplacmp0 {
+<a href=#33329 id=33329 data-nosnippet>33329</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.flplacmp0
+<a href=#33330 id=33330 data-nosnippet>33330</a>        }
+<a href=#33331 id=33331 data-nosnippet>33331</a>        <span class="attr">#[doc = <span class="string">"0x0c - Optional load-address comparison register 1"</span>]
+<a href=#33332 id=33332 data-nosnippet>33332</a>        #[inline(always)]
+<a href=#33333 id=33333 data-nosnippet>33333</a>        </span><span class="kw">pub const fn </span>flplacmp1(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Flplacmp1 {
+<a href=#33334 id=33334 data-nosnippet>33334</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.flplacmp1
+<a href=#33335 id=33335 data-nosnippet>33335</a>        }
+<a href=#33336 id=33336 data-nosnippet>33336</a>        <span class="attr">#[doc = <span class="string">"0x10..0x310 - Instruction-address comparison register %s; bit 0 enables the entry and bits 31:1 hold the halfword-aligned mask-ROM address"</span>]
+<a href=#33337 id=33337 data-nosnippet>33337</a>        #[inline(always)]
+<a href=#33338 id=33338 data-nosnippet>33338</a>        </span><span class="kw">pub const fn </span>flpiacmp(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; <span class="kw-2">&amp;</span>Flpiacmp {
+<a href=#33339 id=33339 data-nosnippet>33339</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.flpiacmp[n]
+<a href=#33340 id=33340 data-nosnippet>33340</a>        }
+<a href=#33341 id=33341 data-nosnippet>33341</a>        <span class="attr">#[doc = <span class="string">"Iterator for array of:"</span>]
+<a href=#33342 id=33342 data-nosnippet>33342</a>        #[doc = <span class="string">"0x10..0x310 - Instruction-address comparison register %s; bit 0 enables the entry and bits 31:1 hold the halfword-aligned mask-ROM address"</span>]
+<a href=#33343 id=33343 data-nosnippet>33343</a>        #[inline(always)]
+<a href=#33344 id=33344 data-nosnippet>33344</a>        </span><span class="kw">pub fn </span>flpiacmp_iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>Flpiacmp&gt; {
+<a href=#33345 id=33345 data-nosnippet>33345</a>            <span class="self">self</span>.flpiacmp.iter()
+<a href=#33346 id=33346 data-nosnippet>33346</a>        }
+<a href=#33347 id=33347 data-nosnippet>33347</a>    }
+<a href=#33348 id=33348 data-nosnippet>33348</a>    <span class="attr">#[doc = <span class="string">"FLPCTRL (rw) register accessor: Instruction patch controller configuration\n\nYou can [`read`](crate::Reg::read) this register and get [`flpctrl::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flpctrl::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).\n\nFor information about available fields see [`mod@flpctrl`] module"</span>]
+<a href=#33349 id=33349 data-nosnippet>33349</a>    #[doc(alias = <span class="string">"FLPCTRL"</span>)]
+<a href=#33350 id=33350 data-nosnippet>33350</a>    </span><span class="kw">pub type </span>Flpctrl = <span class="kw">crate</span>::Reg&lt;flpctrl::FlpctrlSpec&gt;;
+<a href=#33351 id=33351 data-nosnippet>33351</a>    <span class="attr">#[doc = <span class="string">"Instruction patch controller configuration"</span>]
+<a href=#33352 id=33352 data-nosnippet>33352</a>    </span><span class="kw">pub mod </span>flpctrl {
+<a href=#33353 id=33353 data-nosnippet>33353</a>        <span class="attr">#[doc = <span class="string">"Register `FLPCTRL` reader"</span>]
+<a href=#33354 id=33354 data-nosnippet>33354</a>        </span><span class="kw">pub type </span>R = <span class="kw">crate</span>::R&lt;FlpctrlSpec&gt;;
+<a href=#33355 id=33355 data-nosnippet>33355</a>        <span class="attr">#[doc = <span class="string">"Register `FLPCTRL` writer"</span>]
+<a href=#33356 id=33356 data-nosnippet>33356</a>        </span><span class="kw">pub type </span>W = <span class="kw">crate</span>::W&lt;FlpctrlSpec&gt;;
+<a href=#33357 id=33357 data-nosnippet>33357</a>        <span class="attr">#[doc = <span class="string">"Field `enable` reader - Enable instruction patch matching"</span>]
+<a href=#33358 id=33358 data-nosnippet>33358</a>        </span><span class="kw">pub type </span>EnableR = <span class="kw">crate</span>::BitReader;
+<a href=#33359 id=33359 data-nosnippet>33359</a>        <span class="attr">#[doc = <span class="string">"Field `enable` writer - Enable instruction patch matching"</span>]
+<a href=#33360 id=33360 data-nosnippet>33360</a>        </span><span class="kw">pub type </span>EnableW&lt;<span class="lifetime">'a</span>, REG&gt; = <span class="kw">crate</span>::BitWriter&lt;<span class="lifetime">'a</span>, REG&gt;;
+<a href=#33361 id=33361 data-nosnippet>33361</a>        <span class="attr">#[doc = <span class="string">"Field `write_protect` reader - Protect the comparison registers from writes"</span>]
+<a href=#33362 id=33362 data-nosnippet>33362</a>        </span><span class="kw">pub type </span>WriteProtectR = <span class="kw">crate</span>::BitReader;
+<a href=#33363 id=33363 data-nosnippet>33363</a>        <span class="attr">#[doc = <span class="string">"Field `write_protect` writer - Protect the comparison registers from writes"</span>]
+<a href=#33364 id=33364 data-nosnippet>33364</a>        </span><span class="kw">pub type </span>WriteProtectW&lt;<span class="lifetime">'a</span>, REG&gt; = <span class="kw">crate</span>::BitWriter&lt;<span class="lifetime">'a</span>, REG&gt;;
+<a href=#33365 id=33365 data-nosnippet>33365</a>        <span class="attr">#[doc = <span class="string">"Field `outside_1m` reader - Select long-jump remap entries whose destinations may be outside the source 1 MiB region"</span>]
+<a href=#33366 id=33366 data-nosnippet>33366</a>        </span><span class="kw">pub type </span>Outside1mR = <span class="kw">crate</span>::BitReader;
+<a href=#33367 id=33367 data-nosnippet>33367</a>        <span class="attr">#[doc = <span class="string">"Field `outside_1m` writer - Select long-jump remap entries whose destinations may be outside the source 1 MiB region"</span>]
+<a href=#33368 id=33368 data-nosnippet>33368</a>        </span><span class="kw">pub type </span>Outside1mW&lt;<span class="lifetime">'a</span>, REG&gt; = <span class="kw">crate</span>::BitWriter&lt;<span class="lifetime">'a</span>, REG&gt;;
+<a href=#33369 id=33369 data-nosnippet>33369</a>        <span class="attr">#[doc = <span class="string">"Field `load_compare0_enable` reader - Enable load-address comparison register 0"</span>]
+<a href=#33370 id=33370 data-nosnippet>33370</a>        </span><span class="kw">pub type </span>LoadCompare0EnableR = <span class="kw">crate</span>::BitReader;
+<a href=#33371 id=33371 data-nosnippet>33371</a>        <span class="attr">#[doc = <span class="string">"Field `load_compare0_enable` writer - Enable load-address comparison register 0"</span>]
+<a href=#33372 id=33372 data-nosnippet>33372</a>        </span><span class="kw">pub type </span>LoadCompare0EnableW&lt;<span class="lifetime">'a</span>, REG&gt; = <span class="kw">crate</span>::BitWriter&lt;<span class="lifetime">'a</span>, REG&gt;;
+<a href=#33373 id=33373 data-nosnippet>33373</a>        <span class="attr">#[doc = <span class="string">"Field `load_compare1_enable` reader - Enable load-address comparison register 1"</span>]
+<a href=#33374 id=33374 data-nosnippet>33374</a>        </span><span class="kw">pub type </span>LoadCompare1EnableR = <span class="kw">crate</span>::BitReader;
+<a href=#33375 id=33375 data-nosnippet>33375</a>        <span class="attr">#[doc = <span class="string">"Field `load_compare1_enable` writer - Enable load-address comparison register 1"</span>]
+<a href=#33376 id=33376 data-nosnippet>33376</a>        </span><span class="kw">pub type </span>LoadCompare1EnableW&lt;<span class="lifetime">'a</span>, REG&gt; = <span class="kw">crate</span>::BitWriter&lt;<span class="lifetime">'a</span>, REG&gt;;
+<a href=#33377 id=33377 data-nosnippet>33377</a>        <span class="kw">impl </span>R {
+<a href=#33378 id=33378 data-nosnippet>33378</a>            <span class="attr">#[doc = <span class="string">"Bit 0 - Enable instruction patch matching"</span>]
+<a href=#33379 id=33379 data-nosnippet>33379</a>            #[inline(always)]
+<a href=#33380 id=33380 data-nosnippet>33380</a>            </span><span class="kw">pub fn </span>enable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EnableR {
+<a href=#33381 id=33381 data-nosnippet>33381</a>                EnableR::new((<span class="self">self</span>.bits &amp; <span class="number">1</span>) != <span class="number">0</span>)
+<a href=#33382 id=33382 data-nosnippet>33382</a>            }
+<a href=#33383 id=33383 data-nosnippet>33383</a>            <span class="attr">#[doc = <span class="string">"Bit 1 - Protect the comparison registers from writes"</span>]
+<a href=#33384 id=33384 data-nosnippet>33384</a>            #[inline(always)]
+<a href=#33385 id=33385 data-nosnippet>33385</a>            </span><span class="kw">pub fn </span>write_protect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; WriteProtectR {
+<a href=#33386 id=33386 data-nosnippet>33386</a>                WriteProtectR::new(((<span class="self">self</span>.bits &gt;&gt; <span class="number">1</span>) &amp; <span class="number">1</span>) != <span class="number">0</span>)
+<a href=#33387 id=33387 data-nosnippet>33387</a>            }
+<a href=#33388 id=33388 data-nosnippet>33388</a>            <span class="attr">#[doc = <span class="string">"Bit 2 - Select long-jump remap entries whose destinations may be outside the source 1 MiB region"</span>]
+<a href=#33389 id=33389 data-nosnippet>33389</a>            #[inline(always)]
+<a href=#33390 id=33390 data-nosnippet>33390</a>            </span><span class="kw">pub fn </span>outside_1m(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Outside1mR {
+<a href=#33391 id=33391 data-nosnippet>33391</a>                Outside1mR::new(((<span class="self">self</span>.bits &gt;&gt; <span class="number">2</span>) &amp; <span class="number">1</span>) != <span class="number">0</span>)
+<a href=#33392 id=33392 data-nosnippet>33392</a>            }
+<a href=#33393 id=33393 data-nosnippet>33393</a>            <span class="attr">#[doc = <span class="string">"Bit 3 - Enable load-address comparison register 0"</span>]
+<a href=#33394 id=33394 data-nosnippet>33394</a>            #[inline(always)]
+<a href=#33395 id=33395 data-nosnippet>33395</a>            </span><span class="kw">pub fn </span>load_compare0_enable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LoadCompare0EnableR {
+<a href=#33396 id=33396 data-nosnippet>33396</a>                LoadCompare0EnableR::new(((<span class="self">self</span>.bits &gt;&gt; <span class="number">3</span>) &amp; <span class="number">1</span>) != <span class="number">0</span>)
+<a href=#33397 id=33397 data-nosnippet>33397</a>            }
+<a href=#33398 id=33398 data-nosnippet>33398</a>            <span class="attr">#[doc = <span class="string">"Bit 4 - Enable load-address comparison register 1"</span>]
+<a href=#33399 id=33399 data-nosnippet>33399</a>            #[inline(always)]
+<a href=#33400 id=33400 data-nosnippet>33400</a>            </span><span class="kw">pub fn </span>load_compare1_enable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LoadCompare1EnableR {
+<a href=#33401 id=33401 data-nosnippet>33401</a>                LoadCompare1EnableR::new(((<span class="self">self</span>.bits &gt;&gt; <span class="number">4</span>) &amp; <span class="number">1</span>) != <span class="number">0</span>)
+<a href=#33402 id=33402 data-nosnippet>33402</a>            }
+<a href=#33403 id=33403 data-nosnippet>33403</a>        }
+<a href=#33404 id=33404 data-nosnippet>33404</a>        <span class="kw">impl </span>W {
+<a href=#33405 id=33405 data-nosnippet>33405</a>            <span class="attr">#[doc = <span class="string">"Bit 0 - Enable instruction patch matching"</span>]
+<a href=#33406 id=33406 data-nosnippet>33406</a>            #[inline(always)]
+<a href=#33407 id=33407 data-nosnippet>33407</a>            </span><span class="kw">pub fn </span>enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; EnableW&lt;<span class="lifetime">'_</span>, FlpctrlSpec&gt; {
+<a href=#33408 id=33408 data-nosnippet>33408</a>                EnableW::new(<span class="self">self</span>, <span class="number">0</span>)
+<a href=#33409 id=33409 data-nosnippet>33409</a>            }
+<a href=#33410 id=33410 data-nosnippet>33410</a>            <span class="attr">#[doc = <span class="string">"Bit 1 - Protect the comparison registers from writes"</span>]
+<a href=#33411 id=33411 data-nosnippet>33411</a>            #[inline(always)]
+<a href=#33412 id=33412 data-nosnippet>33412</a>            </span><span class="kw">pub fn </span>write_protect(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; WriteProtectW&lt;<span class="lifetime">'_</span>, FlpctrlSpec&gt; {
+<a href=#33413 id=33413 data-nosnippet>33413</a>                WriteProtectW::new(<span class="self">self</span>, <span class="number">1</span>)
+<a href=#33414 id=33414 data-nosnippet>33414</a>            }
+<a href=#33415 id=33415 data-nosnippet>33415</a>            <span class="attr">#[doc = <span class="string">"Bit 2 - Select long-jump remap entries whose destinations may be outside the source 1 MiB region"</span>]
+<a href=#33416 id=33416 data-nosnippet>33416</a>            #[inline(always)]
+<a href=#33417 id=33417 data-nosnippet>33417</a>            </span><span class="kw">pub fn </span>outside_1m(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Outside1mW&lt;<span class="lifetime">'_</span>, FlpctrlSpec&gt; {
+<a href=#33418 id=33418 data-nosnippet>33418</a>                Outside1mW::new(<span class="self">self</span>, <span class="number">2</span>)
+<a href=#33419 id=33419 data-nosnippet>33419</a>            }
+<a href=#33420 id=33420 data-nosnippet>33420</a>            <span class="attr">#[doc = <span class="string">"Bit 3 - Enable load-address comparison register 0"</span>]
+<a href=#33421 id=33421 data-nosnippet>33421</a>            #[inline(always)]
+<a href=#33422 id=33422 data-nosnippet>33422</a>            </span><span class="kw">pub fn </span>load_compare0_enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; LoadCompare0EnableW&lt;<span class="lifetime">'_</span>, FlpctrlSpec&gt; {
+<a href=#33423 id=33423 data-nosnippet>33423</a>                LoadCompare0EnableW::new(<span class="self">self</span>, <span class="number">3</span>)
+<a href=#33424 id=33424 data-nosnippet>33424</a>            }
+<a href=#33425 id=33425 data-nosnippet>33425</a>            <span class="attr">#[doc = <span class="string">"Bit 4 - Enable load-address comparison register 1"</span>]
+<a href=#33426 id=33426 data-nosnippet>33426</a>            #[inline(always)]
+<a href=#33427 id=33427 data-nosnippet>33427</a>            </span><span class="kw">pub fn </span>load_compare1_enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; LoadCompare1EnableW&lt;<span class="lifetime">'_</span>, FlpctrlSpec&gt; {
+<a href=#33428 id=33428 data-nosnippet>33428</a>                LoadCompare1EnableW::new(<span class="self">self</span>, <span class="number">4</span>)
+<a href=#33429 id=33429 data-nosnippet>33429</a>            }
+<a href=#33430 id=33430 data-nosnippet>33430</a>        }
+<a href=#33431 id=33431 data-nosnippet>33431</a>        <span class="attr">#[doc = <span class="string">"Instruction patch controller configuration\n\nYou can [`read`](crate::Reg::read) this register and get [`flpctrl::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flpctrl::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."</span>]
+<a href=#33432 id=33432 data-nosnippet>33432</a>        </span><span class="kw">pub struct </span>FlpctrlSpec;
+<a href=#33433 id=33433 data-nosnippet>33433</a>        <span class="kw">impl </span><span class="kw">crate</span>::RegisterSpec <span class="kw">for </span>FlpctrlSpec {
+<a href=#33434 id=33434 data-nosnippet>33434</a>            <span class="kw">type </span>Ux = u32;
+<a href=#33435 id=33435 data-nosnippet>33435</a>        }
+<a href=#33436 id=33436 data-nosnippet>33436</a>        <span class="attr">#[doc = <span class="string">"`read()` method returns [`flpctrl::R`](R) reader structure"</span>]
+<a href=#33437 id=33437 data-nosnippet>33437</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Readable <span class="kw">for </span>FlpctrlSpec {}
+<a href=#33438 id=33438 data-nosnippet>33438</a>        <span class="attr">#[doc = <span class="string">"`write(|w| ..)` method takes [`flpctrl::W`](W) writer structure"</span>]
+<a href=#33439 id=33439 data-nosnippet>33439</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Writable <span class="kw">for </span>FlpctrlSpec {
+<a href=#33440 id=33440 data-nosnippet>33440</a>            <span class="kw">type </span>Safety = <span class="kw">crate</span>::Unsafe;
+<a href=#33441 id=33441 data-nosnippet>33441</a>        }
+<a href=#33442 id=33442 data-nosnippet>33442</a>        <span class="attr">#[doc = <span class="string">"`reset()` method sets FLPCTRL to value 0"</span>]
+<a href=#33443 id=33443 data-nosnippet>33443</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>FlpctrlSpec {}
+<a href=#33444 id=33444 data-nosnippet>33444</a>    }
+<a href=#33445 id=33445 data-nosnippet>33445</a>    <span class="attr">#[doc = <span class="string">"FLPRMP (rw) register accessor: Base address of the instruction remap table\n\nYou can [`read`](crate::Reg::read) this register and get [`flprmp::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flprmp::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).\n\nFor information about available fields see [`mod@flprmp`] module"</span>]
+<a href=#33446 id=33446 data-nosnippet>33446</a>    #[doc(alias = <span class="string">"FLPRMP"</span>)]
+<a href=#33447 id=33447 data-nosnippet>33447</a>    </span><span class="kw">pub type </span>Flprmp = <span class="kw">crate</span>::Reg&lt;flprmp::FlprmpSpec&gt;;
+<a href=#33448 id=33448 data-nosnippet>33448</a>    <span class="attr">#[doc = <span class="string">"Base address of the instruction remap table"</span>]
+<a href=#33449 id=33449 data-nosnippet>33449</a>    </span><span class="kw">pub mod </span>flprmp {
+<a href=#33450 id=33450 data-nosnippet>33450</a>        <span class="attr">#[doc = <span class="string">"Register `FLPRMP` reader"</span>]
+<a href=#33451 id=33451 data-nosnippet>33451</a>        </span><span class="kw">pub type </span>R = <span class="kw">crate</span>::R&lt;FlprmpSpec&gt;;
+<a href=#33452 id=33452 data-nosnippet>33452</a>        <span class="attr">#[doc = <span class="string">"Register `FLPRMP` writer"</span>]
+<a href=#33453 id=33453 data-nosnippet>33453</a>        </span><span class="kw">pub type </span>W = <span class="kw">crate</span>::W&lt;FlprmpSpec&gt;;
+<a href=#33454 id=33454 data-nosnippet>33454</a>        <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>R {
+<a href=#33455 id=33455 data-nosnippet>33455</a>            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#33456 id=33456 data-nosnippet>33456</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.bits())
+<a href=#33457 id=33457 data-nosnippet>33457</a>            }
+<a href=#33458 id=33458 data-nosnippet>33458</a>        }
+<a href=#33459 id=33459 data-nosnippet>33459</a>        <span class="kw">impl </span>W {}
+<a href=#33460 id=33460 data-nosnippet>33460</a>        <span class="attr">#[doc = <span class="string">"Base address of the instruction remap table\n\nYou can [`read`](crate::Reg::read) this register and get [`flprmp::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flprmp::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."</span>]
+<a href=#33461 id=33461 data-nosnippet>33461</a>        </span><span class="kw">pub struct </span>FlprmpSpec;
+<a href=#33462 id=33462 data-nosnippet>33462</a>        <span class="kw">impl </span><span class="kw">crate</span>::RegisterSpec <span class="kw">for </span>FlprmpSpec {
+<a href=#33463 id=33463 data-nosnippet>33463</a>            <span class="kw">type </span>Ux = u32;
+<a href=#33464 id=33464 data-nosnippet>33464</a>        }
+<a href=#33465 id=33465 data-nosnippet>33465</a>        <span class="attr">#[doc = <span class="string">"`read()` method returns [`flprmp::R`](R) reader structure"</span>]
+<a href=#33466 id=33466 data-nosnippet>33466</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Readable <span class="kw">for </span>FlprmpSpec {}
+<a href=#33467 id=33467 data-nosnippet>33467</a>        <span class="attr">#[doc = <span class="string">"`write(|w| ..)` method takes [`flprmp::W`](W) writer structure"</span>]
+<a href=#33468 id=33468 data-nosnippet>33468</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Writable <span class="kw">for </span>FlprmpSpec {
+<a href=#33469 id=33469 data-nosnippet>33469</a>            <span class="kw">type </span>Safety = <span class="kw">crate</span>::Unsafe;
+<a href=#33470 id=33470 data-nosnippet>33470</a>        }
+<a href=#33471 id=33471 data-nosnippet>33471</a>        <span class="attr">#[doc = <span class="string">"`reset()` method sets FLPRMP to value 0"</span>]
+<a href=#33472 id=33472 data-nosnippet>33472</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>FlprmpSpec {}
+<a href=#33473 id=33473 data-nosnippet>33473</a>    }
+<a href=#33474 id=33474 data-nosnippet>33474</a>    <span class="attr">#[doc = <span class="string">"FLPLACMP0 (rw) register accessor: Optional load-address comparison register 0\n\nYou can [`read`](crate::Reg::read) this register and get [`flplacmp0::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flplacmp0::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).\n\nFor information about available fields see [`mod@flplacmp0`] module"</span>]
+<a href=#33475 id=33475 data-nosnippet>33475</a>    #[doc(alias = <span class="string">"FLPLACMP0"</span>)]
+<a href=#33476 id=33476 data-nosnippet>33476</a>    </span><span class="kw">pub type </span>Flplacmp0 = <span class="kw">crate</span>::Reg&lt;flplacmp0::Flplacmp0Spec&gt;;
+<a href=#33477 id=33477 data-nosnippet>33477</a>    <span class="attr">#[doc = <span class="string">"Optional load-address comparison register 0"</span>]
+<a href=#33478 id=33478 data-nosnippet>33478</a>    </span><span class="kw">pub mod </span>flplacmp0 {
+<a href=#33479 id=33479 data-nosnippet>33479</a>        <span class="attr">#[doc = <span class="string">"Register `FLPLACMP0` reader"</span>]
+<a href=#33480 id=33480 data-nosnippet>33480</a>        </span><span class="kw">pub type </span>R = <span class="kw">crate</span>::R&lt;Flplacmp0Spec&gt;;
+<a href=#33481 id=33481 data-nosnippet>33481</a>        <span class="attr">#[doc = <span class="string">"Register `FLPLACMP0` writer"</span>]
+<a href=#33482 id=33482 data-nosnippet>33482</a>        </span><span class="kw">pub type </span>W = <span class="kw">crate</span>::W&lt;Flplacmp0Spec&gt;;
+<a href=#33483 id=33483 data-nosnippet>33483</a>        <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>R {
+<a href=#33484 id=33484 data-nosnippet>33484</a>            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#33485 id=33485 data-nosnippet>33485</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.bits())
+<a href=#33486 id=33486 data-nosnippet>33486</a>            }
+<a href=#33487 id=33487 data-nosnippet>33487</a>        }
+<a href=#33488 id=33488 data-nosnippet>33488</a>        <span class="kw">impl </span>W {}
+<a href=#33489 id=33489 data-nosnippet>33489</a>        <span class="attr">#[doc = <span class="string">"Optional load-address comparison register 0\n\nYou can [`read`](crate::Reg::read) this register and get [`flplacmp0::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flplacmp0::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."</span>]
+<a href=#33490 id=33490 data-nosnippet>33490</a>        </span><span class="kw">pub struct </span>Flplacmp0Spec;
+<a href=#33491 id=33491 data-nosnippet>33491</a>        <span class="kw">impl </span><span class="kw">crate</span>::RegisterSpec <span class="kw">for </span>Flplacmp0Spec {
+<a href=#33492 id=33492 data-nosnippet>33492</a>            <span class="kw">type </span>Ux = u32;
+<a href=#33493 id=33493 data-nosnippet>33493</a>        }
+<a href=#33494 id=33494 data-nosnippet>33494</a>        <span class="attr">#[doc = <span class="string">"`read()` method returns [`flplacmp0::R`](R) reader structure"</span>]
+<a href=#33495 id=33495 data-nosnippet>33495</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Readable <span class="kw">for </span>Flplacmp0Spec {}
+<a href=#33496 id=33496 data-nosnippet>33496</a>        <span class="attr">#[doc = <span class="string">"`write(|w| ..)` method takes [`flplacmp0::W`](W) writer structure"</span>]
+<a href=#33497 id=33497 data-nosnippet>33497</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Writable <span class="kw">for </span>Flplacmp0Spec {
+<a href=#33498 id=33498 data-nosnippet>33498</a>            <span class="kw">type </span>Safety = <span class="kw">crate</span>::Unsafe;
+<a href=#33499 id=33499 data-nosnippet>33499</a>        }
+<a href=#33500 id=33500 data-nosnippet>33500</a>        <span class="attr">#[doc = <span class="string">"`reset()` method sets FLPLACMP0 to value 0"</span>]
+<a href=#33501 id=33501 data-nosnippet>33501</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>Flplacmp0Spec {}
+<a href=#33502 id=33502 data-nosnippet>33502</a>    }
+<a href=#33503 id=33503 data-nosnippet>33503</a>    <span class="attr">#[doc = <span class="string">"FLPLACMP1 (rw) register accessor: Optional load-address comparison register 1\n\nYou can [`read`](crate::Reg::read) this register and get [`flplacmp1::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flplacmp1::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).\n\nFor information about available fields see [`mod@flplacmp1`] module"</span>]
+<a href=#33504 id=33504 data-nosnippet>33504</a>    #[doc(alias = <span class="string">"FLPLACMP1"</span>)]
+<a href=#33505 id=33505 data-nosnippet>33505</a>    </span><span class="kw">pub type </span>Flplacmp1 = <span class="kw">crate</span>::Reg&lt;flplacmp1::Flplacmp1Spec&gt;;
+<a href=#33506 id=33506 data-nosnippet>33506</a>    <span class="attr">#[doc = <span class="string">"Optional load-address comparison register 1"</span>]
+<a href=#33507 id=33507 data-nosnippet>33507</a>    </span><span class="kw">pub mod </span>flplacmp1 {
+<a href=#33508 id=33508 data-nosnippet>33508</a>        <span class="attr">#[doc = <span class="string">"Register `FLPLACMP1` reader"</span>]
+<a href=#33509 id=33509 data-nosnippet>33509</a>        </span><span class="kw">pub type </span>R = <span class="kw">crate</span>::R&lt;Flplacmp1Spec&gt;;
+<a href=#33510 id=33510 data-nosnippet>33510</a>        <span class="attr">#[doc = <span class="string">"Register `FLPLACMP1` writer"</span>]
+<a href=#33511 id=33511 data-nosnippet>33511</a>        </span><span class="kw">pub type </span>W = <span class="kw">crate</span>::W&lt;Flplacmp1Spec&gt;;
+<a href=#33512 id=33512 data-nosnippet>33512</a>        <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>R {
+<a href=#33513 id=33513 data-nosnippet>33513</a>            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#33514 id=33514 data-nosnippet>33514</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.bits())
+<a href=#33515 id=33515 data-nosnippet>33515</a>            }
+<a href=#33516 id=33516 data-nosnippet>33516</a>        }
+<a href=#33517 id=33517 data-nosnippet>33517</a>        <span class="kw">impl </span>W {}
+<a href=#33518 id=33518 data-nosnippet>33518</a>        <span class="attr">#[doc = <span class="string">"Optional load-address comparison register 1\n\nYou can [`read`](crate::Reg::read) this register and get [`flplacmp1::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flplacmp1::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."</span>]
+<a href=#33519 id=33519 data-nosnippet>33519</a>        </span><span class="kw">pub struct </span>Flplacmp1Spec;
+<a href=#33520 id=33520 data-nosnippet>33520</a>        <span class="kw">impl </span><span class="kw">crate</span>::RegisterSpec <span class="kw">for </span>Flplacmp1Spec {
+<a href=#33521 id=33521 data-nosnippet>33521</a>            <span class="kw">type </span>Ux = u32;
+<a href=#33522 id=33522 data-nosnippet>33522</a>        }
+<a href=#33523 id=33523 data-nosnippet>33523</a>        <span class="attr">#[doc = <span class="string">"`read()` method returns [`flplacmp1::R`](R) reader structure"</span>]
+<a href=#33524 id=33524 data-nosnippet>33524</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Readable <span class="kw">for </span>Flplacmp1Spec {}
+<a href=#33525 id=33525 data-nosnippet>33525</a>        <span class="attr">#[doc = <span class="string">"`write(|w| ..)` method takes [`flplacmp1::W`](W) writer structure"</span>]
+<a href=#33526 id=33526 data-nosnippet>33526</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Writable <span class="kw">for </span>Flplacmp1Spec {
+<a href=#33527 id=33527 data-nosnippet>33527</a>            <span class="kw">type </span>Safety = <span class="kw">crate</span>::Unsafe;
+<a href=#33528 id=33528 data-nosnippet>33528</a>        }
+<a href=#33529 id=33529 data-nosnippet>33529</a>        <span class="attr">#[doc = <span class="string">"`reset()` method sets FLPLACMP1 to value 0"</span>]
+<a href=#33530 id=33530 data-nosnippet>33530</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>Flplacmp1Spec {}
+<a href=#33531 id=33531 data-nosnippet>33531</a>    }
+<a href=#33532 id=33532 data-nosnippet>33532</a>    <span class="attr">#[doc = <span class="string">"FLPIACMP (rw) register accessor: Instruction-address comparison register %s; bit 0 enables the entry and bits 31:1 hold the halfword-aligned mask-ROM address\n\nYou can [`read`](crate::Reg::read) this register and get [`flpiacmp::R`]. You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flpiacmp::W`]. You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api).\n\nFor information about available fields see [`mod@flpiacmp`] module"</span>]
+<a href=#33533 id=33533 data-nosnippet>33533</a>    #[doc(alias = <span class="string">"FLPIACMP"</span>)]
+<a href=#33534 id=33534 data-nosnippet>33534</a>    </span><span class="kw">pub type </span>Flpiacmp = <span class="kw">crate</span>::Reg&lt;flpiacmp::FlpiacmpSpec&gt;;
+<a href=#33535 id=33535 data-nosnippet>33535</a>    <span class="attr">#[doc = <span class="string">"Instruction-address comparison register %s; bit 0 enables the entry and bits 31:1 hold the halfword-aligned mask-ROM address"</span>]
+<a href=#33536 id=33536 data-nosnippet>33536</a>    </span><span class="kw">pub mod </span>flpiacmp {
+<a href=#33537 id=33537 data-nosnippet>33537</a>        <span class="attr">#[doc = <span class="string">"Register `FLPIACMP[%s]` reader"</span>]
+<a href=#33538 id=33538 data-nosnippet>33538</a>        </span><span class="kw">pub type </span>R = <span class="kw">crate</span>::R&lt;FlpiacmpSpec&gt;;
+<a href=#33539 id=33539 data-nosnippet>33539</a>        <span class="attr">#[doc = <span class="string">"Register `FLPIACMP[%s]` writer"</span>]
+<a href=#33540 id=33540 data-nosnippet>33540</a>        </span><span class="kw">pub type </span>W = <span class="kw">crate</span>::W&lt;FlpiacmpSpec&gt;;
+<a href=#33541 id=33541 data-nosnippet>33541</a>        <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>R {
+<a href=#33542 id=33542 data-nosnippet>33542</a>            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#33543 id=33543 data-nosnippet>33543</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.bits())
+<a href=#33544 id=33544 data-nosnippet>33544</a>            }
+<a href=#33545 id=33545 data-nosnippet>33545</a>        }
+<a href=#33546 id=33546 data-nosnippet>33546</a>        <span class="kw">impl </span>W {}
+<a href=#33547 id=33547 data-nosnippet>33547</a>        <span class="attr">#[doc = <span class="string">"Instruction-address comparison register %s; bit 0 enables the entry and bits 31:1 hold the halfword-aligned mask-ROM address\n\nYou can [`read`](crate::Reg::read) this register and get [`flpiacmp::R`](R). You can [`reset`](crate::Reg::reset), [`write`](crate::Reg::write), [`write_with_zero`](crate::Reg::write_with_zero) this register using [`flpiacmp::W`](W). You can also [`modify`](crate::Reg::modify) this register. See [API](https://docs.rs/svd2rust/#read--modify--write-api)."</span>]
+<a href=#33548 id=33548 data-nosnippet>33548</a>        </span><span class="kw">pub struct </span>FlpiacmpSpec;
+<a href=#33549 id=33549 data-nosnippet>33549</a>        <span class="kw">impl </span><span class="kw">crate</span>::RegisterSpec <span class="kw">for </span>FlpiacmpSpec {
+<a href=#33550 id=33550 data-nosnippet>33550</a>            <span class="kw">type </span>Ux = u32;
+<a href=#33551 id=33551 data-nosnippet>33551</a>        }
+<a href=#33552 id=33552 data-nosnippet>33552</a>        <span class="attr">#[doc = <span class="string">"`read()` method returns [`flpiacmp::R`](R) reader structure"</span>]
+<a href=#33553 id=33553 data-nosnippet>33553</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Readable <span class="kw">for </span>FlpiacmpSpec {}
+<a href=#33554 id=33554 data-nosnippet>33554</a>        <span class="attr">#[doc = <span class="string">"`write(|w| ..)` method takes [`flpiacmp::W`](W) writer structure"</span>]
+<a href=#33555 id=33555 data-nosnippet>33555</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Writable <span class="kw">for </span>FlpiacmpSpec {
+<a href=#33556 id=33556 data-nosnippet>33556</a>            <span class="kw">type </span>Safety = <span class="kw">crate</span>::Unsafe;
+<a href=#33557 id=33557 data-nosnippet>33557</a>        }
+<a href=#33558 id=33558 data-nosnippet>33558</a>        <span class="attr">#[doc = <span class="string">"`reset()` method sets FLPIACMP[%s] to value 0"</span>]
+<a href=#33559 id=33559 data-nosnippet>33559</a>        </span><span class="kw">impl </span><span class="kw">crate</span>::Resettable <span class="kw">for </span>FlpiacmpSpec {}
+<a href=#33560 id=33560 data-nosnippet>33560</a>    }
+<a href=#33561 id=33561 data-nosnippet>33561</a>}
+<a href=#33562 id=33562 data-nosnippet>33562</a><span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
+<a href=#33563 id=33563 data-nosnippet>33563</a></span><span class="kw">static </span><span class="kw-2">mut </span>DEVICE_PERIPHERALS: bool = <span class="bool-val">false</span>;
+<a href=#33564 id=33564 data-nosnippet>33564</a><span class="attr">#[doc = <span class="string">r" All the peripherals."</span>]
+<a href=#33565 id=33565 data-nosnippet>33565</a>#[allow(non_snake_case)]
+<a href=#33566 id=33566 data-nosnippet>33566</a></span><span class="kw">pub struct </span>Peripherals {
+<a href=#33567 id=33567 data-nosnippet>33567</a>    <span class="attr">#[doc = <span class="string">"SYS_CTL1"</span>]
+<a href=#33568 id=33568 data-nosnippet>33568</a>    </span><span class="kw">pub </span>sys_ctl1: SysCtl1,
+<a href=#33569 id=33569 data-nosnippet>33569</a>    <span class="attr">#[doc = <span class="string">"IO_CONFIG"</span>]
+<a href=#33570 id=33570 data-nosnippet>33570</a>    </span><span class="kw">pub </span>io_config: IoConfig,
+<a href=#33571 id=33571 data-nosnippet>33571</a>    <span class="attr">#[doc = <span class="string">"GPIO0"</span>]
+<a href=#33572 id=33572 data-nosnippet>33572</a>    </span><span class="kw">pub </span>gpio0: Gpio0,
+<a href=#33573 id=33573 data-nosnippet>33573</a>    <span class="attr">#[doc = <span class="string">"GPIO1"</span>]
+<a href=#33574 id=33574 data-nosnippet>33574</a>    </span><span class="kw">pub </span>gpio1: Gpio1,
+<a href=#33575 id=33575 data-nosnippet>33575</a>    <span class="attr">#[doc = <span class="string">"GPIO2"</span>]
+<a href=#33576 id=33576 data-nosnippet>33576</a>    </span><span class="kw">pub </span>gpio2: Gpio2,
+<a href=#33577 id=33577 data-nosnippet>33577</a>    <span class="attr">#[doc = <span class="string">"UART0"</span>]
+<a href=#33578 id=33578 data-nosnippet>33578</a>    </span><span class="kw">pub </span>uart0: Uart0,
+<a href=#33579 id=33579 data-nosnippet>33579</a>    <span class="attr">#[doc = <span class="string">"UART1"</span>]
+<a href=#33580 id=33580 data-nosnippet>33580</a>    </span><span class="kw">pub </span>uart1: Uart1,
+<a href=#33581 id=33581 data-nosnippet>33581</a>    <span class="attr">#[doc = <span class="string">"UART2"</span>]
+<a href=#33582 id=33582 data-nosnippet>33582</a>    </span><span class="kw">pub </span>uart2: Uart2,
+<a href=#33583 id=33583 data-nosnippet>33583</a>    <span class="attr">#[doc = <span class="string">"I2C0"</span>]
+<a href=#33584 id=33584 data-nosnippet>33584</a>    </span><span class="kw">pub </span>i2c0: I2c0,
+<a href=#33585 id=33585 data-nosnippet>33585</a>    <span class="attr">#[doc = <span class="string">"I2C1"</span>]
+<a href=#33586 id=33586 data-nosnippet>33586</a>    </span><span class="kw">pub </span>i2c1: I2c1,
+<a href=#33587 id=33587 data-nosnippet>33587</a>    <span class="attr">#[doc = <span class="string">"PWM"</span>]
+<a href=#33588 id=33588 data-nosnippet>33588</a>    </span><span class="kw">pub </span>pwm: Pwm,
+<a href=#33589 id=33589 data-nosnippet>33589</a>    <span class="attr">#[doc = <span class="string">"DMA"</span>]
+<a href=#33590 id=33590 data-nosnippet>33590</a>    </span><span class="kw">pub </span>dma: Dma,
+<a href=#33591 id=33591 data-nosnippet>33591</a>    <span class="attr">#[doc = <span class="string">"SFC_CFG"</span>]
+<a href=#33592 id=33592 data-nosnippet>33592</a>    </span><span class="kw">pub </span>sfc_cfg: SfcCfg,
+<a href=#33593 id=33593 data-nosnippet>33593</a>    <span class="attr">#[doc = <span class="string">"SPI0"</span>]
+<a href=#33594 id=33594 data-nosnippet>33594</a>    </span><span class="kw">pub </span>spi0: Spi0,
+<a href=#33595 id=33595 data-nosnippet>33595</a>    <span class="attr">#[doc = <span class="string">"SPI1"</span>]
+<a href=#33596 id=33596 data-nosnippet>33596</a>    </span><span class="kw">pub </span>spi1: Spi1,
+<a href=#33597 id=33597 data-nosnippet>33597</a>    <span class="attr">#[doc = <span class="string">"I2S"</span>]
+<a href=#33598 id=33598 data-nosnippet>33598</a>    </span><span class="kw">pub </span>i2s: I2s,
+<a href=#33599 id=33599 data-nosnippet>33599</a>    <span class="attr">#[doc = <span class="string">"LSADC"</span>]
+<a href=#33600 id=33600 data-nosnippet>33600</a>    </span><span class="kw">pub </span>lsadc: Lsadc,
+<a href=#33601 id=33601 data-nosnippet>33601</a>    <span class="attr">#[doc = <span class="string">"TSENSOR"</span>]
+<a href=#33602 id=33602 data-nosnippet>33602</a>    </span><span class="kw">pub </span>tsensor: Tsensor,
+<a href=#33603 id=33603 data-nosnippet>33603</a>    <span class="attr">#[doc = <span class="string">"TIMER"</span>]
+<a href=#33604 id=33604 data-nosnippet>33604</a>    </span><span class="kw">pub </span>timer: Timer,
+<a href=#33605 id=33605 data-nosnippet>33605</a>    <span class="attr">#[doc = <span class="string">"WDT"</span>]
+<a href=#33606 id=33606 data-nosnippet>33606</a>    </span><span class="kw">pub </span>wdt: Wdt,
+<a href=#33607 id=33607 data-nosnippet>33607</a>    <span class="attr">#[doc = <span class="string">"RTC"</span>]
+<a href=#33608 id=33608 data-nosnippet>33608</a>    </span><span class="kw">pub </span>rtc: Rtc,
+<a href=#33609 id=33609 data-nosnippet>33609</a>    <span class="attr">#[doc = <span class="string">"EFUSE"</span>]
+<a href=#33610 id=33610 data-nosnippet>33610</a>    </span><span class="kw">pub </span>efuse: Efuse,
+<a href=#33611 id=33611 data-nosnippet>33611</a>    <span class="attr">#[doc = <span class="string">"SYS_CTL0"</span>]
+<a href=#33612 id=33612 data-nosnippet>33612</a>    </span><span class="kw">pub </span>sys_ctl0: SysCtl0,
+<a href=#33613 id=33613 data-nosnippet>33613</a>    <span class="attr">#[doc = <span class="string">"CMU"</span>]
+<a href=#33614 id=33614 data-nosnippet>33614</a>    </span><span class="kw">pub </span>cmu: Cmu,
+<a href=#33615 id=33615 data-nosnippet>33615</a>    <span class="attr">#[doc = <span class="string">"GLB_CTL_M"</span>]
+<a href=#33616 id=33616 data-nosnippet>33616</a>    </span><span class="kw">pub </span>glb_ctl_m: GlbCtlM,
+<a href=#33617 id=33617 data-nosnippet>33617</a>    <span class="attr">#[doc = <span class="string">"SPACC"</span>]
+<a href=#33618 id=33618 data-nosnippet>33618</a>    </span><span class="kw">pub </span>spacc: Spacc,
+<a href=#33619 id=33619 data-nosnippet>33619</a>    <span class="attr">#[doc = <span class="string">"PKE"</span>]
+<a href=#33620 id=33620 data-nosnippet>33620</a>    </span><span class="kw">pub </span>pke: Pke,
+<a href=#33621 id=33621 data-nosnippet>33621</a>    <span class="attr">#[doc = <span class="string">"KM"</span>]
+<a href=#33622 id=33622 data-nosnippet>33622</a>    </span><span class="kw">pub </span>km: Km,
+<a href=#33623 id=33623 data-nosnippet>33623</a>    <span class="attr">#[doc = <span class="string">"TRNG"</span>]
+<a href=#33624 id=33624 data-nosnippet>33624</a>    </span><span class="kw">pub </span>trng: Trng,
+<a href=#33625 id=33625 data-nosnippet>33625</a>    <span class="attr">#[doc = <span class="string">"TCXO"</span>]
+<a href=#33626 id=33626 data-nosnippet>33626</a>    </span><span class="kw">pub </span>tcxo: Tcxo,
+<a href=#33627 id=33627 data-nosnippet>33627</a>    <span class="attr">#[doc = <span class="string">"CLDO_CRG"</span>]
+<a href=#33628 id=33628 data-nosnippet>33628</a>    </span><span class="kw">pub </span>cldo_crg: CldoCrg,
+<a href=#33629 id=33629 data-nosnippet>33629</a>    <span class="attr">#[doc = <span class="string">"SDMA"</span>]
+<a href=#33630 id=33630 data-nosnippet>33630</a>    </span><span class="kw">pub </span>sdma: Sdma,
+<a href=#33631 id=33631 data-nosnippet>33631</a>    <span class="attr">#[doc = <span class="string">"ULP_GPIO"</span>]
+<a href=#33632 id=33632 data-nosnippet>33632</a>    </span><span class="kw">pub </span>ulp_gpio: UlpGpio,
+<a href=#33633 id=33633 data-nosnippet>33633</a>    <span class="attr">#[doc = <span class="string">"RF_WB_CTL"</span>]
+<a href=#33634 id=33634 data-nosnippet>33634</a>    </span><span class="kw">pub </span>rf_wb_ctl: RfWbCtl,
+<a href=#33635 id=33635 data-nosnippet>33635</a>    <span class="attr">#[doc = <span class="string">"SHARE_MEM_CTL"</span>]
+<a href=#33636 id=33636 data-nosnippet>33636</a>    </span><span class="kw">pub </span>share_mem_ctl: ShareMemCtl,
+<a href=#33637 id=33637 data-nosnippet>33637</a>    <span class="attr">#[doc = <span class="string">"FAMA_REMAP"</span>]
+<a href=#33638 id=33638 data-nosnippet>33638</a>    </span><span class="kw">pub </span>fama_remap: FamaRemap,
+<a href=#33639 id=33639 data-nosnippet>33639</a>    <span class="attr">#[doc = <span class="string">"BT_EM_CTL"</span>]
+<a href=#33640 id=33640 data-nosnippet>33640</a>    </span><span class="kw">pub </span>bt_em_ctl: BtEmCtl,
+<a href=#33641 id=33641 data-nosnippet>33641</a>    <span class="attr">#[doc = <span class="string">"RISCV_PATCH"</span>]
+<a href=#33642 id=33642 data-nosnippet>33642</a>    </span><span class="kw">pub </span>riscv_patch: RiscvPatch,
+<a href=#33643 id=33643 data-nosnippet>33643</a>}
+<a href=#33644 id=33644 data-nosnippet>33644</a><span class="kw">impl </span>Peripherals {
+<a href=#33645 id=33645 data-nosnippet>33645</a>    <span class="attr">#[doc = <span class="string">r" Returns all the peripherals *once*."</span>]
+<a href=#33646 id=33646 data-nosnippet>33646</a>    #[cfg(feature = <span class="string">"critical-section"</span>)]
+<a href=#33647 id=33647 data-nosnippet>33647</a>    #[inline]
+<a href=#33648 id=33648 data-nosnippet>33648</a>    </span><span class="kw">pub fn </span>take() -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#33649 id=33649 data-nosnippet>33649</a>        critical_section::with(|<span class="kw">_</span>| {
+<a href=#33650 id=33650 data-nosnippet>33650</a>            <span class="kw">if unsafe </span>{ DEVICE_PERIPHERALS } {
+<a href=#33651 id=33651 data-nosnippet>33651</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#33652 id=33652 data-nosnippet>33652</a>            }
+<a href=#33653 id=33653 data-nosnippet>33653</a>            <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ Peripherals::steal() })
+<a href=#33654 id=33654 data-nosnippet>33654</a>        })
+<a href=#33655 id=33655 data-nosnippet>33655</a>    }
+<a href=#33656 id=33656 data-nosnippet>33656</a>    <span class="attr">#[doc = <span class="string">r" Unchecked version of `Peripherals::take`."</span>]
+<a href=#33657 id=33657 data-nosnippet>33657</a>    #[doc = <span class="string">r""</span>]
+<a href=#33658 id=33658 data-nosnippet>33658</a>    #[doc = <span class="string">r" # Safety"</span>]
+<a href=#33659 id=33659 data-nosnippet>33659</a>    #[doc = <span class="string">r""</span>]
+<a href=#33660 id=33660 data-nosnippet>33660</a>    #[doc = <span class="string">r" Each of the returned peripherals must be used at most once."</span>]
+<a href=#33661 id=33661 data-nosnippet>33661</a>    #[inline]
+<a href=#33662 id=33662 data-nosnippet>33662</a>    </span><span class="kw">pub unsafe fn </span>steal() -&gt; <span class="self">Self </span>{
+<a href=#33663 id=33663 data-nosnippet>33663</a>        <span class="kw">unsafe </span>{
+<a href=#33664 id=33664 data-nosnippet>33664</a>            DEVICE_PERIPHERALS = <span class="bool-val">true</span>;
+<a href=#33665 id=33665 data-nosnippet>33665</a>            Peripherals {
+<a href=#33666 id=33666 data-nosnippet>33666</a>                sys_ctl1: SysCtl1::steal(),
+<a href=#33667 id=33667 data-nosnippet>33667</a>                io_config: IoConfig::steal(),
+<a href=#33668 id=33668 data-nosnippet>33668</a>                gpio0: Gpio0::steal(),
+<a href=#33669 id=33669 data-nosnippet>33669</a>                gpio1: Gpio1::steal(),
+<a href=#33670 id=33670 data-nosnippet>33670</a>                gpio2: Gpio2::steal(),
+<a href=#33671 id=33671 data-nosnippet>33671</a>                uart0: Uart0::steal(),
+<a href=#33672 id=33672 data-nosnippet>33672</a>                uart1: Uart1::steal(),
+<a href=#33673 id=33673 data-nosnippet>33673</a>                uart2: Uart2::steal(),
+<a href=#33674 id=33674 data-nosnippet>33674</a>                i2c0: I2c0::steal(),
+<a href=#33675 id=33675 data-nosnippet>33675</a>                i2c1: I2c1::steal(),
+<a href=#33676 id=33676 data-nosnippet>33676</a>                pwm: Pwm::steal(),
+<a href=#33677 id=33677 data-nosnippet>33677</a>                dma: Dma::steal(),
+<a href=#33678 id=33678 data-nosnippet>33678</a>                sfc_cfg: SfcCfg::steal(),
+<a href=#33679 id=33679 data-nosnippet>33679</a>                spi0: Spi0::steal(),
+<a href=#33680 id=33680 data-nosnippet>33680</a>                spi1: Spi1::steal(),
+<a href=#33681 id=33681 data-nosnippet>33681</a>                i2s: I2s::steal(),
+<a href=#33682 id=33682 data-nosnippet>33682</a>                lsadc: Lsadc::steal(),
+<a href=#33683 id=33683 data-nosnippet>33683</a>                tsensor: Tsensor::steal(),
+<a href=#33684 id=33684 data-nosnippet>33684</a>                timer: Timer::steal(),
+<a href=#33685 id=33685 data-nosnippet>33685</a>                wdt: Wdt::steal(),
+<a href=#33686 id=33686 data-nosnippet>33686</a>                rtc: Rtc::steal(),
+<a href=#33687 id=33687 data-nosnippet>33687</a>                efuse: Efuse::steal(),
+<a href=#33688 id=33688 data-nosnippet>33688</a>                sys_ctl0: SysCtl0::steal(),
+<a href=#33689 id=33689 data-nosnippet>33689</a>                cmu: Cmu::steal(),
+<a href=#33690 id=33690 data-nosnippet>33690</a>                glb_ctl_m: GlbCtlM::steal(),
+<a href=#33691 id=33691 data-nosnippet>33691</a>                spacc: Spacc::steal(),
+<a href=#33692 id=33692 data-nosnippet>33692</a>                pke: Pke::steal(),
+<a href=#33693 id=33693 data-nosnippet>33693</a>                km: Km::steal(),
+<a href=#33694 id=33694 data-nosnippet>33694</a>                trng: Trng::steal(),
+<a href=#33695 id=33695 data-nosnippet>33695</a>                tcxo: Tcxo::steal(),
+<a href=#33696 id=33696 data-nosnippet>33696</a>                cldo_crg: CldoCrg::steal(),
+<a href=#33697 id=33697 data-nosnippet>33697</a>                sdma: Sdma::steal(),
+<a href=#33698 id=33698 data-nosnippet>33698</a>                ulp_gpio: UlpGpio::steal(),
+<a href=#33699 id=33699 data-nosnippet>33699</a>                rf_wb_ctl: RfWbCtl::steal(),
+<a href=#33700 id=33700 data-nosnippet>33700</a>                share_mem_ctl: ShareMemCtl::steal(),
+<a href=#33701 id=33701 data-nosnippet>33701</a>                fama_remap: FamaRemap::steal(),
+<a href=#33702 id=33702 data-nosnippet>33702</a>                bt_em_ctl: BtEmCtl::steal(),
+<a href=#33703 id=33703 data-nosnippet>33703</a>                riscv_patch: RiscvPatch::steal(),
+<a href=#33704 id=33704 data-nosnippet>33704</a>            }
+<a href=#33705 id=33705 data-nosnippet>33705</a>        }
+<a href=#33706 id=33706 data-nosnippet>33706</a>    }
+<a href=#33707 id=33707 data-nosnippet>33707</a>}
 </code></pre></div></section></main></body></html>

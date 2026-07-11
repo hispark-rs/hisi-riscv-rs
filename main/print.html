@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fea3a59f.js";
+            window.path_to_searchindex_js = "searchindex-1f4e4372.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -2172,8 +2172,8 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 </tbody>
 </table>
 </div>
-<h2 id="peripherals-实例ws63chip-ws6335-个"><a class="header" href="#peripherals-实例ws63chip-ws6335-个"><code>Peripherals</code> 实例（WS63，<code>chip-ws63</code>，35 个）</a></h2>
-<p><code>SYS_CTL0</code>、<code>SYS_CTL1</code>、<code>GLB_CTL_M</code>、<code>CLDO_CRG</code>、<code>IO_CONFIG</code>、<code>GPIO0</code>、<code>GPIO1</code>、<code>GPIO2</code>、<code>ULP_GPIO</code>、<code>UART0</code>、<code>UART1</code>、<code>UART2</code>、<code>I2C0</code>、<code>I2C1</code>、<code>SPI0</code>、<code>SPI1</code>、<code>PWM</code>、<code>I2S</code>、<code>LSADC</code>、<code>DMA</code>、<code>SDMA</code>、<code>SFC_CFG</code>、<code>TIMER</code>、<code>WDT</code>、<code>RTC</code>、<code>TCXO</code>、<code>TSENSOR</code>、<code>EFUSE</code>、<code>SPACC</code>、<code>PKE</code>、<code>KM</code>、<code>TRNG</code>、<code>RF_WB_CTL</code>、<code>SHARE_MEM_CTL</code>、<code>FAMA_REMAP</code>。</p>
+<h2 id="peripherals-实例ws63chip-ws6336-个"><a class="header" href="#peripherals-实例ws63chip-ws6336-个"><code>Peripherals</code> 实例（WS63，<code>chip-ws63</code>，36 个）</a></h2>
+<p><code>SYS_CTL0</code>、<code>SYS_CTL1</code>、<code>GLB_CTL_M</code>、<code>CLDO_CRG</code>、<code>IO_CONFIG</code>、<code>GPIO0</code>、<code>GPIO1</code>、<code>GPIO2</code>、<code>ULP_GPIO</code>、<code>UART0</code>、<code>UART1</code>、<code>UART2</code>、<code>I2C0</code>、<code>I2C1</code>、<code>SPI0</code>、<code>SPI1</code>、<code>PWM</code>、<code>I2S</code>、<code>LSADC</code>、<code>DMA</code>、<code>SDMA</code>、<code>SFC_CFG</code>、<code>TIMER</code>、<code>WDT</code>、<code>RTC</code>、<code>TCXO</code>、<code>TSENSOR</code>、<code>EFUSE</code>、<code>SPACC</code>、<code>PKE</code>、<code>KM</code>、<code>TRNG</code>、<code>RF_WB_CTL</code>、<code>SHARE_MEM_CTL</code>、<code>BT_EM_CTL</code>、<code>FAMA_REMAP</code>。</p>
 <h2 id="peripherals-实例bs21chip-bs2128-个"><a class="header" href="#peripherals-实例bs21chip-bs2128-个"><code>Peripherals</code> 实例（BS21，<code>chip-bs21</code>，28 个）</a></h2>
 <p><code>GLB_CTL_M</code>、<code>GPIO0</code>–<code>GPIO4</code>、<code>ULP_GPIO</code>、<code>UART0</code>–<code>UART2</code>、<code>I2C0</code>/<code>I2C1</code>、<code>SPI0</code>–<code>SPI2</code>、<code>PWM</code>、<code>DMA</code>、<code>SDMA</code>、<code>TIMER</code>、<code>WDT</code>、<code>RTC</code>、<code>TCXO</code>、<code>TRNG</code>、<code>GADC</code>、<code>KEYSCAN</code>、<code>QDEC</code>、<code>PDM</code>、<code>USB</code>。</p>
 <blockquote>
@@ -2225,7 +2225,7 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 <li><strong>默认面先收窄的子面</strong>：GPIO IRQ (<code>InterruptTrigger</code>、per-pin enable/clear/pending/trigger)、<code>Uart::new_uart2</code>、<code>Spi::new_spi1</code>、<code>I2c::new_i2c1</code>、timer one-shot/periodic wrappers、WDT IRQ 方法、PWM polarity/start/pulse-count/<code>into_running</code>、I2S slave role/config、eFuse status、TRNG <code>done/read/fill_words</code>、TSENSOR <code>disable/clear_status</code>。这些不是“永远不稳定”，只是当前没有足够真机证据或所有权约束。</li>
 <li><strong>不可逆 / 未闭合 soundness 的路径</strong>：<code>EfuseDriver::set_clock_period</code>/<code>read_buffer</code>/<code>write_byte</code>（默认稳定面只保留自动 clock period + 单字节只读路径）、<code>System::software_reset*</code>、<code>Instant::now</code>/<code>elapsed</code>、<code>interrupt::free</code>、interrupt priority/threshold setter/getter、SFC pad config、I2S data/FIFO/IRQ 方法、LSADC analog/conversion/filter/calibration/data-path 方法、TSENSOR mode/threshold/interrupt/auto-refresh/calibration/blocking-read 方法、TRNG manual clock/divider/status knob。</li>
 <li><strong>embassy</strong>：无端到端 HIL（<code>timer_int0_named_routing</code> 还专门 <code>not(feature="embassy")</code> 排除它）。</li>
-<li><strong>WS63 未测试驱动</strong>：<code>clock_init</code>/<code>km</code>/<code>pke</code>/<code>safety</code>/<code>sfc</code>/<code>spacc</code>/<code>ulp_gpio</code>/<code>rtc</code>-WS63（<code>hil-rtc</code> 是 opt-in 且这块板没晶振从没跑过）/<code>delay</code>。</li>
+<li><strong>WS63 未测试驱动</strong>：<code>clock_init</code>/<code>shared_memory</code>/<code>km</code>/<code>pke</code>/<code>safety</code>/<code>sfc</code>/<code>spacc</code>/<code>ulp_gpio</code>/<code>rtc</code>-WS63（<code>hil-rtc</code> 是 opt-in 且这块板没晶振从没跑过）/<code>delay</code>。<code>shared_memory</code> 当前只服务 RF bring-up，尚未作为通用 HAL 能力毕业。</li>
 <li><strong>整个 BS2X target</strong>（无 BS2X 板）：<code>chip-bs21</code> 需要 <code>unstable</code>；这覆盖共享驱动、<code>gadc</code>/<code>keyscan</code>/<code>pdm</code>/<code>qdec</code>/<code>usb</code>/<code>i2c</code>-v151/<code>rtc</code>-v150/<code>trng</code>-v1 等 BS2X-only 模块；<code>hisi-riscv-rt</code> 的 BS2X compatibility adapter 也同样要求 <code>unstable</code>。</li>
 <li><strong>prelude 的 unstable re-export</strong>：<code>Delay</code>、<code>InterruptTrigger</code>、<code>OneShotTimer</code>/<code>PeriodicTimer</code>、<code>Dma0</code>/<code>DmaDriver</code>/<code>Sdma0</code>、<code>RtcDriver</code>、<code>SfcDriver</code>、<code>UlpGpioPin</code>。</li>
 </ul>
@@ -2879,7 +2879,7 @@ HIL 真机验证过的接口,没上板的实验性 surface 关在 <code>unstable
 <pre><code class="language-console">ws63-svd (XML 真值)
    │ svd2rust 生成
    ▼
-ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，35 个外设的 RegisterBlock）
+ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，36 个外设/寄存器块）
    │
    ▼
 hisi-riscv-hal  ── 手写的安全驱动（35 个源文件 + 可选 async/embassy）
@@ -3633,10 +3633,11 @@ hisi-riscv-qemu 正是这么做的：加 <code>hw/riscv/ws63.c</code>，只构�
 <li><strong>xlinx 自定义 ISA</strong>：HiSilicon riscv31 的一批私有指令。这是为了能跑<strong>厂商 gcc 编的
 C SDK 固件</strong>——有了它，Rust 固件（标准 RV32IMFC）和厂商 C SDK 固件可以<strong>对照交叉验证</strong>
 内存映射、启动、外设时序。</li>
-<li><strong>全部 35 个 SVD 外设</strong>：不是“catch-all 黑洞“，而是逐个建模。其中很多是<strong>行为完整</strong>的——
+<li><strong>既有 35 个 SVD 外设模型</strong>：不是“catch-all 黑洞“，而是逐个建模。其中很多是<strong>行为完整</strong>的——
 DMA 真的搬内存、Timer/RTC/WDT 真的计时和触发中断、I2C/SPI/I2S 真的回环 FIFO、
 LSADC 真的出采样、EFUSE 真的走 OTP 按位或、GPIO 是真实信号网（bank 内回环 + 跨 bank
-板级连线 + 可外部驱动）。少数配置类寄存器（晶振/RF/PHY 相关）是读回影子。</li>
+板级连线 + 可外部驱动）。少数配置类寄存器（晶振/RF/PHY 相关）是读回影子。PAC 新增的
+<code>BT_EM_CTL</code> 寄存器块尚待补齐 QEMU parity，因此当前不能宣称 PAC 的全部 36 个寄存器块都已建模。</li>
 <li><strong>时钟树</strong>：时钟门控生效（清门会冻结定时器、置位恢复）、源路由（TCXO/PLL 选择）建模为状态。</li>
 <li><strong>中断</strong>：两类都端到端投递——IRQ 26–31 走标准 <code>mie</code>，IRQ ≥32 走 HiSilicon 自定义
 <code>LOCIxx</code> CSR（经 target/riscv 补丁实现），并强制 <code>LOCIPRI</code> 优先级 + <code>PRITHD</code> 阈值。</li>
@@ -4106,7 +4107,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <h2 id="职责与边界-1"><a class="header" href="#职责与边界-1">职责与边界</a></h2>
 <p><code>ws63-pac</code> 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 <code>svd2rust</code> 从 SVD 描述生成。它的职责非常聚焦：</p>
 <ul>
-<li><strong>负责</strong>：为芯片上的 35 个外设提供 <code>RegisterBlock</code> 结构体与类型安全的寄存器读/写/改访问器；提供 <code>Peripherals</code> 单例（<code>take()</code> / <code>steal()</code>）；提供外部中断枚举 <code>ExternalInterrupt</code>；在 <code>rt</code> feature 下提供中断向量表 <code>device.x</code>。</li>
+<li><strong>负责</strong>：为芯片上的 36 个外设/寄存器块提供 <code>RegisterBlock</code> 结构体与类型安全的寄存器读/写/改访问器；提供 <code>Peripherals</code> 单例（<code>take()</code> / <code>steal()</code>）；提供外部中断枚举 <code>ExternalInterrupt</code>；在 <code>rt</code> feature 下提供中断向量表 <code>device.x</code>。</li>
 <li><strong>不负责</strong>：任何驱动逻辑、时钟门控策略、引脚复用、外设初始化时序。这些全部上移到 <code>hisi-riscv-hal</code>。PAC 只暴露“裸寄存器 + 地址映射“，是 <code>unsafe</code> 寄存器写入的最底层封装边界。</li>
 </ul>
 <p>crate 元数据齐全（<code>Cargo.toml:1-9</code>）：<code>license = "MIT"</code>、<code>repository</code>、<code>keywords</code>、<code>categories</code>，具备发布到 crates.io 的条件。</p>
@@ -4125,8 +4126,8 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 <h2 id="关键设计-1"><a class="header" href="#关键设计-1">关键设计</a></h2>
 <ul>
 <li><strong>svd2rust 0.37.1 现代访问器</strong>：generic 层用 <code>Periph&lt;RB, const A: usize&gt;</code> 把外设基址作为 const 泛型参数编码（<code>src/lib.rs:14-20</code>），<code>ptr()</code> 是 <code>const fn</code>（<code>src/lib.rs:23-25</code>），<code>Deref</code> 直接解到寄存器块（<code>src/lib.rs:45-51</code>）。这是新版 svd2rust 的 const-fn 访问器风格，零运行时开销。</li>
-<li><strong>Peripherals 单例</strong>：<code>static mut DEVICE_PERIPHERALS: bool</code>（<code>src/lib.rs:31681</code>）作为一次性标志；<code>take()</code> 在 <code>critical-section</code> 内检查并返回 <code>Option&lt;Self&gt;</code>（<code>src/lib.rs:31760-31767</code>），<code>steal()</code> 为 <code>unsafe</code> 无检查版本（<code>src/lib.rs:31774-31813</code>）。<code>Peripherals</code> 结构体逐字段持有 35 个外设的 ZST 句柄（<code>src/lib.rs:31684-31755</code>）。</li>
-<li><strong>35 外设覆盖</strong>：从 <code>sys_ctl1</code>、三路 <code>gpio0/1/2</code>、三路 <code>uart0/1/2</code>、双 <code>i2c</code>、双 <code>spi</code>、<code>dma</code>/<code>sdma</code>，到安全引擎 <code>spacc</code>/<code>pke</code>/<code>km</code>/<code>trng</code> 与时钟复位 <code>cldo_crg</code> 等全部映射（<code>src/lib.rs:31685-31754</code>）。</li>
+<li><strong>Peripherals 单例</strong>：<code>static mut DEVICE_PERIPHERALS: bool</code> 作为一次性标志；<code>take()</code> 在 <code>critical-section</code> 内检查并返回 <code>Option&lt;Self&gt;</code>，<code>steal()</code> 为 <code>unsafe</code> 无检查版本。<code>Peripherals</code> 结构体逐字段持有 36 个外设/寄存器块的 ZST 句柄。</li>
+<li><strong>36 个块覆盖</strong>：从 <code>sys_ctl1</code>、三路 <code>gpio0/1/2</code>、三路 <code>uart0/1/2</code>、双 <code>i2c</code>、双 <code>spi</code>、<code>dma</code>/<code>sdma</code>，到安全引擎 <code>spacc</code>/<code>pke</code>/<code>km</code>/<code>trng</code>、共享 RAM <code>share_mem_ctl</code>/<code>bt_em_ctl</code> 与时钟复位 <code>cldo_crg</code> 等全部映射。</li>
 <li><strong>中断模型</strong>：<code>ExternalInterrupt</code> 枚举用 <code>#[riscv::pac_enum(unsafe ExternalInterruptNumber)]</code> 标注（<code>src/lib.rs:902-904</code>），中断号从 26 起（<code>TIMER_INT0 = 26</code>，<code>src/lib.rs:906</code>）。<code>rt</code> feature 下 <code>build.rs</code> 把 <code>device.x</code> 写入 <code>OUT_DIR</code> 并加入 link-search（<code>build.rs:8-18</code>），向量表用 <code>PROVIDE(... = DefaultHandler)</code> 提供弱默认（<code>device.x:1-30</code>）。</li>
 <li><strong>feature 设计</strong>：<code>default = ["critical-section"]</code>，外加 <code>rt</code>（<code>Cargo.toml:16-18</code>）。<code>take()</code> 仅在 <code>critical-section</code> 下编译（<code>src/lib.rs:31758</code>），符合 svd2rust 约定。</li>
 <li><strong>ISA 协同</strong>：<code>rt</code> feature 下 <code>build.rs</code> 导出 <code>RISCV_RT_BASE_ISA=rv32i</code>（<code>build.rs:16</code>）；当前默认目标是官方 <code>riscv32imfc-unknown-none-elf</code>，无 A 扩展，产物不得发射 <code>lr/sc/amo</code>。</li>
@@ -4144,7 +4145,7 @@ ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
 <ul>
 <li><strong>负责</strong>：
 <ul>
-<li>为 35 个 PAC 外设提供生命周期化的安全单例封装（<code>peripherals.rs</code>），并在其上实现 35 个外设驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、以及 KM/PKE/SPACC 等加密外设）。</li>
+<li>为 36 个 PAC 外设/寄存器块提供生命周期化的安全单例封装（<code>peripherals.rs</code>），并在其上实现按功能聚合的驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、KM/PKE/SPACC、shared memory 等）。</li>
 <li>时钟架构：<code>clock.rs</code> 的 <code>Peripheral</code>/<code>cken_info()</code> 审计图、引导期时钟树初始化（<code>clock_init.rs</code>，实验面）。</li>
 <li>GPIO 三层驱动模型、DMA 双控制器抽象、sealed trait 体系（<code>private.rs</code>）。</li>
 <li>embedded-hal 1.0 / embedded-hal-nb 1.0 / embedded-io 0.6 / nb 的 trait 实现。</li>
@@ -4197,7 +4198,7 @@ DMA 提供拥有缓冲区的
 <li><code>peripheral!($name, $pac_ty)</code>（<code>peripherals.rs:10-48</code>）— 为每个外设生成零大小、<code>'d</code> 参数化的 ZST，提供 <code>unsafe steal()</code>、<code>ptr()</code>；raw PAC <code>register_block()</code> 是 <code>unstable</code> + <code>unsafe</code> 的逃生口。</li>
 <li><code>peripherals!(...)</code>（<code>peripherals.rs:50-87</code>）— 生成 <code>Peripherals</code> 结构体，<code>take()</code> 经 PAC 单例校验（<code>peripherals.rs:61-64</code>），<code>unsafe steal()</code> 绕过校验。</li>
 </ul>
-<p>全部 35 个 PAC 外设都有 HAL 封装（<code>peripherals.rs:157-193</code>）。<code>'d</code> 生命周期防止 <code>Peripherals</code> token 被释放后仍持有驱动，是这一层的核心安全不变量。</p>
+<p>全部 36 个 PAC 块都有 HAL ownership token；其中未经 HIL 的行为面（如 <code>shared_memory</code>）仍受 <code>unstable</code> 门控。<code>'d</code> 生命周期防止 <code>Peripherals</code> token 被释放后仍持有驱动，是这一层的核心安全不变量。</p>
 <h3 id="时钟架构"><a class="header" href="#时钟架构">时钟架构</a></h3>
 <p>两套并存：</p>
 <ol>
@@ -4523,7 +4524,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <li>不实现 porting 层本身——<code>port_*.h</code> 只是接口声明，实现由下游 in-tree crate <strong><code>ws63-rf-rs</code></strong> 填充，<strong>现已实现</strong>（见下）。</li>
 <li>不提供链接脚本——<code>port_linker.h</code> 仅以 <code>extern</code> 声明 blob 期望的链接符号，实际的 <code>SECTIONS</code> / 内存区段需调用方在 linker script 中给出。</li>
 </ul>
-<p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥），且 <strong>Wi-Fi-init 的 relocatable 符号闭合已达成</strong>（whole-archive 0 重复符号，<code>--gc-sections</code> rooted at <code>uapi_wifi_init</code> 残留仅 2 个 firmware linker 符号）。<code>hisi-riscv-rt</code> 现在提供真实 <code>.wifi_pkt_ram (NOLOAD)</code>，剩余硬阻塞是完整 init closure 进入 final executable 时的 HiSilicon <code>R_RISCV_48_LLUI</code> relocation 58：原厂 linker 可处理，stock <code>rust-lld</code> 目前不能处理。</p>
+<p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥）。完整 init closure 现在由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验 section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已通过 <code>wifi_init</code>，并由主动扫描返回 32 个 AP；当前边界是尚未完成关联与 IP 连通性。</p>
 <h2 id="在依赖链中的位置-5"><a class="header" href="#在依赖链中的位置-5">在依赖链中的位置</a></h2>
 <p>ws63-RF（blob）经 in-tree crate <strong><code>ws63-rf-rs</code></strong> 接入主链 —— rf-rs 实现 porting 契约、把 blob 链进镜像：</p>
 <pre><code class="language-mermaid">graph TD
