@@ -34,7 +34,10 @@ fn main() {
     // For this crate's own examples (e.g. sched_selftest): link via hisi-riscv-rt's
     // scripts. `rustc-link-arg` applies only to THIS package's bins/examples/
     // tests, not to downstream consumers (they set their own).
-    println!("cargo:rustc-link-arg=-Thisi-riscv-link.x");
+    let target = std::env::var("TARGET").expect("TARGET");
+    if target.starts_with("riscv32") {
+        println!("cargo:rustc-link-arg=-Thisi-riscv-link.x");
+    }
 
     println!("cargo:rerun-if-changed=build.rs");
 }

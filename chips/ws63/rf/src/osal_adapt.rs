@@ -116,7 +116,7 @@ pub extern "C" fn osal_adapt_get_jiffies() -> u64 {
 
 type KthreadHandler = Option<extern "C" fn(*mut c_void) -> *mut c_void>;
 
-/// Spawn a task; returns an opaque `osal_task*` handle (slot+1) or NULL.
+/// Spawn a task; returns the canonical C-compatible `osal_task*` handle.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_kthread_create(
     thread: KthreadHandler,
@@ -124,13 +124,7 @@ pub extern "C" fn osal_adapt_kthread_create(
     _name: *const c_char,
     stack_size: c_uint,
 ) -> *mut c_void {
-    match thread {
-        Some(f) => match crate::sched::spawn(f, data, stack_size as usize) {
-            Some(slot) => (slot + 1) as *mut c_void,
-            None => core::ptr::null_mut(),
-        },
-        None => core::ptr::null_mut(),
-    }
+    crate::osal::osal_kthread_create(thread, data, _name, stack_size as usize)
 }
 /// Destroy a task (no-op — see `osal_kthread_destroy`).
 #[unsafe(no_mangle)]

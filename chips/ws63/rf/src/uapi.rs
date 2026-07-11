@@ -1,10 +1,9 @@
 //! UAPI platform services (ws63-RF `port_uapi.h`).
 //!
 //! `uapi_systick_get_ms` is real (reads the RISC-V `mcycle` counter).
-//! `uapi_tsensor_get_current_temp` returns a fixed safe value and `uapi_nv_read`
-//! is a stub — both need hisi-riscv-hal tsensor / a flash-NV backing (RF2/RF3): the
-//! real `uapi_nv_read` returns calibrated RF parameters + the MAC address from
-//! flash/eFuse, without which the RF front-end cannot be calibrated.
+//! `uapi_nv_read` is backed by the official WS63 ACPU KV partition and validates
+//! its page/key metadata and CRC. `uapi_tsensor_get_current_temp` remains a fixed
+//! conservative value until the HAL sensor path is wired into the RF adapter.
 
 // C-ABI entry points: the blob passes valid pointers; the safety contract is
 // the C signature, not a Rust `unsafe` marker.
@@ -14,6 +13,13 @@ use core::ffi::c_void;
 
 /// Same rough cycles/µs as [`crate::osal`]; `mcycle / (CYCLES_PER_US*1000)` ≈ ms.
 const CYCLES_PER_MS: u64 = 240 * 1000;
+
+fn trace_nv(key: u16, max_len: u16, actual_len: u16, result: u32) {
+    #[cfg(feature = "rf-init-diag")]
+    crate::rf_init_diag::trace_nv(key, max_len, actual_len, result);
+    #[cfg(not(feature = "rf-init-diag"))]
+    let _ = (key, max_len, actual_len, result);
+}
 
 /// Milliseconds since boot, from the `mcycle` CSR (approximate — uncalibrated).
 #[unsafe(no_mangle)]
@@ -43,28 +49,210 @@ fn read_mcycle() -> u64 {
     0
 }
 
-/// Current chip temperature in °C. SCAFFOLD: fixed 25 °C (thermal-protection
-/// algorithms read this; a real reading needs the hisi-riscv-hal tsensor — RF2/RF3).
+/// Current chip temperature in °C.
+///
+/// SCAFFOLD: writes a conservative 25 °C. The pointer/result ABI matches the
+/// vendor SDK; a real reading still needs the hisi-riscv-hal tsensor (RF2/RF3).
 #[unsafe(no_mangle)]
-pub extern "C" fn uapi_tsensor_get_current_temp() -> i32 {
-    25
+pub extern "C" fn uapi_tsensor_get_current_temp(temp: *mut i8) -> u32 {
+    if temp.is_null() {
+        return crate::OSAL_NOK as u32;
+    }
+    // SAFETY: the SDK ABI defines `temp` as a writable one-byte out-parameter.
+    unsafe { *temp = 25 };
+    crate::OSAL_OK as u32
 }
 
-/// Read an item from non-volatile storage. STUB: returns failure (no NV
-/// backing). The blob uses this for calibrated RF params / MAC address; until a
-/// flash-NV source is wired (RF2/RF3) the RF front-end stays uncalibrated.
+/// Read a plaintext item from the official WS63 ACPU KV partition.
+///
+/// Encrypted records are rejected until the device crypto-key path is wired.
 #[unsafe(no_mangle)]
-pub extern "C" fn uapi_nv_read(_id: u32, _buf: *mut c_void, _len: u32) -> i32 {
-    crate::OSAL_NOK
+pub extern "C" fn uapi_nv_read(
+    _key: u16,
+    _max_len: u16,
+    actual_len: *mut u16,
+    _value: *mut u8,
+) -> u32 {
+    if !actual_len.is_null() {
+        // SAFETY: the SDK ABI defines this as a writable out-parameter.
+        unsafe { *actual_len = 0 };
+    }
+
+    #[cfg(target_arch = "riscv32")]
+    unsafe {
+        unsafe extern "C" {
+            static __nv_storage_start: u8;
+            static __nv_storage_length: u8;
+        }
+
+        let storage_len = &raw const __nv_storage_length as usize;
+        let storage = core::slice::from_raw_parts(&raw const __nv_storage_start, storage_len);
+        if let Some(data) = find_nv_value(storage, _key) {
+            if !actual_len.is_null() {
+                *actual_len = data.len() as u16;
+            }
+            if _value.is_null() || data.len() > _max_len as usize {
+                trace_nv(_key, _max_len, data.len() as u16, crate::OSAL_NOK as u32);
+                return crate::OSAL_NOK as u32;
+            }
+            core::ptr::copy_nonoverlapping(data.as_ptr(), _value, data.len());
+            trace_nv(_key, _max_len, data.len() as u16, crate::OSAL_OK as u32);
+            return crate::OSAL_OK as u32;
+        }
+    }
+
+    trace_nv(_key, _max_len, 0, crate::OSAL_NOK as u32);
+    crate::OSAL_NOK as u32
 }
 
-/// Write an item to non-volatile storage. STUB: accepted, not persisted.
+/// Write an item to non-volatile storage. STUB: returns failure because no
+/// persistent backing has been wired yet.
 #[unsafe(no_mangle)]
-pub extern "C" fn uapi_nv_write(_id: u32, _buf: *const c_void, _len: u32) -> i32 {
-    crate::OSAL_OK
+pub extern "C" fn uapi_nv_write(_key: u16, _value: *const u8, _len: u16) -> u32 {
+    crate::OSAL_NOK as u32
+}
+
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_PAGE_SIZE: usize = 0x1000;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_PAGE_HEADER_SIZE: usize = 16;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_KEY_HEADER_SIZE: usize = 16;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_KEY_CRC_SIZE: usize = 4;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_STORE_ID_ACPU: u16 = 0x254d;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_KEY_MAGIC: u8 = 0xa9;
+#[cfg(any(target_arch = "riscv32", test))]
+const NV_KEY_VALID: u8 = 0xff;
+
+#[cfg(any(target_arch = "riscv32", test))]
+fn find_nv_value(storage: &[u8], wanted_key: u16) -> Option<&[u8]> {
+    let page_count = storage.len() / NV_PAGE_SIZE;
+    for page_index in 0..page_count {
+        let start = page_index * NV_PAGE_SIZE;
+        let page = &storage[start..start + NV_PAGE_SIZE];
+        let details = u32::from_le_bytes(page[0..4].try_into().ok()?);
+        let inverted_details = u32::from_le_bytes(page[4..8].try_into().ok()?);
+        let sequence = u32::from_le_bytes(page[8..12].try_into().ok()?);
+        let inverted_sequence = u32::from_le_bytes(page[12..16].try_into().ok()?);
+        if details as u16 != NV_STORE_ID_ACPU
+            || inverted_details != !details
+            || inverted_sequence != !sequence
+        {
+            continue;
+        }
+
+        let mut offset = NV_PAGE_HEADER_SIZE;
+        while offset + NV_KEY_HEADER_SIZE + NV_KEY_CRC_SIZE <= page.len() {
+            let header = &page[offset..offset + NV_KEY_HEADER_SIZE];
+            if header[0] == 0xff {
+                break;
+            }
+            if header[0] != NV_KEY_MAGIC {
+                offset += 4;
+                continue;
+            }
+
+            let length = u16::from_le_bytes([header[2], header[3]]) as usize;
+            let key = u16::from_le_bytes([header[6], header[7]]);
+            let encrypted_key = u16::from_le_bytes([header[8], header[9]]);
+            let padded_len = (length + 3) & !3;
+            let record_len = NV_KEY_HEADER_SIZE + padded_len + NV_KEY_CRC_SIZE;
+            if record_len < NV_KEY_HEADER_SIZE || offset + record_len > page.len() {
+                break;
+            }
+
+            let crc_input_end = offset + NV_KEY_HEADER_SIZE + padded_len;
+            let stored_crc = &page[crc_input_end..crc_input_end + NV_KEY_CRC_SIZE];
+            let crc = crc32(&page[offset..crc_input_end]);
+            let crc_matches = stored_crc == crc.to_be_bytes();
+            if header[1] == NV_KEY_VALID && encrypted_key == 0 && key == wanted_key && crc_matches {
+                let data_start = offset + NV_KEY_HEADER_SIZE;
+                return Some(&page[data_start..data_start + length]);
+            }
+            offset += record_len;
+        }
+    }
+    None
+}
+
+#[cfg(any(target_arch = "riscv32", test))]
+fn crc32(bytes: &[u8]) -> u32 {
+    let mut crc = 0xffff_ffff_u32;
+    for &byte in bytes {
+        crc ^= byte as u32;
+        for _ in 0..8 {
+            crc = (crc >> 1) ^ (0xedb8_8320 & 0_u32.wrapping_sub(crc & 1));
+        }
+    }
+    !crc
 }
 
 // ── eFuse / TRNG / device identity ───────────────────────────────────────────
+#[cfg(test)]
+mod nv_tests {
+    use super::{
+        NV_KEY_HEADER_SIZE, NV_PAGE_HEADER_SIZE, NV_PAGE_SIZE, crc32, find_nv_value,
+        uapi_tsensor_get_current_temp,
+    };
+
+    fn page_with_key() -> [u8; NV_PAGE_SIZE] {
+        let mut page = [0xff; NV_PAGE_SIZE];
+        let details = 0x0001_254d_u32;
+        page[0..4].copy_from_slice(&details.to_le_bytes());
+        page[4..8].copy_from_slice(&(!details).to_le_bytes());
+        page[8..12].copy_from_slice(&0_u32.to_le_bytes());
+        page[12..16].copy_from_slice(&u32::MAX.to_le_bytes());
+
+        let offset = NV_PAGE_HEADER_SIZE;
+        page[offset] = 0xa9;
+        page[offset + 1] = 0xff;
+        page[offset + 2..offset + 4].copy_from_slice(&3_u16.to_le_bytes());
+        page[offset + 4] = 0xff;
+        page[offset + 5] = 0xff;
+        page[offset + 6..offset + 8].copy_from_slice(&0x2003_u16.to_le_bytes());
+        page[offset + 8..offset + 10].copy_from_slice(&0_u16.to_le_bytes());
+        page[offset + 10..offset + 12].copy_from_slice(&u16::MAX.to_le_bytes());
+        page[offset + 12..offset + 16].copy_from_slice(&u32::MAX.to_le_bytes());
+
+        let data = offset + NV_KEY_HEADER_SIZE;
+        page[data..data + 4].copy_from_slice(&[1, 2, 3, 0]);
+        let crc = crc32(&page[offset..data + 4]);
+        page[data + 4..data + 8].copy_from_slice(&crc.to_be_bytes());
+        page
+    }
+
+    #[test]
+    fn finds_crc_valid_plaintext_key() {
+        let page = page_with_key();
+        assert_eq!(find_nv_value(&page, 0x2003), Some(&[1, 2, 3][..]));
+    }
+
+    #[test]
+    fn rejects_corrupt_crc() {
+        let mut page = page_with_key();
+        page[NV_PAGE_HEADER_SIZE + NV_KEY_HEADER_SIZE] ^= 1;
+        assert_eq!(find_nv_value(&page, 0x2003), None);
+    }
+
+    #[test]
+    fn rejects_corrupt_page_header() {
+        let mut page = page_with_key();
+        page[4] ^= 1;
+        assert_eq!(find_nv_value(&page, 0x2003), None);
+    }
+
+    #[test]
+    fn tsensor_contract_writes_output_and_returns_status() {
+        let mut temp = 0_i8;
+        assert_eq!(uapi_tsensor_get_current_temp(&mut temp), 0);
+        assert_eq!(temp, 25);
+        assert_ne!(uapi_tsensor_get_current_temp(core::ptr::null_mut()), 0);
+    }
+}
+
 // These feed RF calibration, the MAC address and crypto seeding. They are
 // SCAFFOLD values good enough to LINK and to bring the stack up under emulation;
 // a hardware run must source real eFuse/TRNG via hisi-riscv-hal (RF2/RF3).

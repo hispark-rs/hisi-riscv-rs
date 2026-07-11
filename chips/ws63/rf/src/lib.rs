@@ -46,7 +46,9 @@
 //!   the offsets MUST be reconciled with the WiFi build's `lwipopts.h` before a
 //!   real frame flows (mismatch corrupts silently). The smoltcp TX sink must be
 //!   pointed at the blob's real frame-transmit symbol on hardware.
-//! - **eFuse/TRNG/NV** ([`uapi`]) — scaffold values; a HW run needs real ones.
+//! - **eFuse/TRNG** ([`uapi`]) — scaffold values; a HW run needs real ones.
+//!   NV reads already use the read-only ACPU flash KV parser with page/key/CRC
+//!   validation; encrypted records are deliberately rejected.
 //!
 //! **What "symbol closure" means here.** The vendor blobs
 //! (`libwifi_driver_{hmac,dmac,tcm}.a`, `libbg_common.a`, `libwifi_alg_*.a`,
@@ -64,8 +66,9 @@
 //! **Why a runnable Wi-Fi image is still hardware-in-the-loop:** (1) the ROM
 //! symbols are **real-silicon addresses** (an emulator without a populated mask
 //! ROM cannot execute them); (2) the HiSilicon-toolchain blobs carry **custom
-//! relocations** stock `lld` cannot resolve to absolute addresses (the residual
-//! probe uses a relocatable link, which defers them). The runtime + data-path
+//! relocations** that stock `lld` does not recognize directly. The guarded
+//! two-pass build keeps `rust-lld` as the layout owner, patches those relocations,
+//! and fails if the final section layout differs. The runtime + data-path
 //! plumbing (scheduler, OSAL, FRW/HCC, timers, netif→smoltcp) is implemented and
 //! self-tested standalone; what remains is hardware bring-up: pin the pbuf
 //! layout to the blob's `lwipopts.h`, point the TX sink at the blob's transmit,
@@ -76,10 +79,31 @@
 #![no_std]
 #![allow(non_upper_case_globals)] // contract symbols must match the C names exactly
 
+#[cfg(all(test, not(target_arch = "riscv32")))]
+mod host_test_support {
+    struct HostCriticalSection;
+
+    critical_section::set_impl!(HostCriticalSection);
+
+    unsafe impl critical_section::Impl for HostCriticalSection {
+        unsafe fn acquire() -> critical_section::RawRestoreState {}
+
+        unsafe fn release(_: critical_section::RawRestoreState) {}
+    }
+
+    // Host parser tests do not allocate, but the full RF crate still contains
+    // the firmware allocator and therefore needs its linker symbols resolved.
+    #[unsafe(no_mangle)]
+    static mut __heap_start__: u8 = 0;
+    #[unsafe(no_mangle)]
+    static mut __heap_end__: u8 = 0;
+}
+
 use core::cell::Cell;
 use critical_section::Mutex;
 
 pub mod alloc;
+mod compiler_rt;
 pub mod error;
 pub mod frw;
 pub mod hcc;
@@ -98,8 +122,13 @@ pub mod osal_ext;
 pub mod osal_queue;
 pub mod osal_sync;
 pub mod osal_wait;
+mod pmp;
+#[cfg(feature = "rf-init-diag")]
+mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
+
+pub use pmp::prepare_vendor_memory;
 
 // The task scheduler / runtime is an INTERNAL implementation detail: the vendor
 // blob reaches it only through the `osal_*` C-ABI symbols (in `osal`), never as
@@ -138,11 +167,10 @@ pub fn set_log_sink(sink: LogSink) {
 
 /// Emit `bytes` to the installed log sink, if any. Used by [`log`].
 pub(crate) fn log_emit(bytes: &[u8]) {
-    critical_section::with(|cs| {
-        if let Some(sink) = LOG_SINK.borrow(cs).get() {
-            sink(bytes);
-        }
-    });
+    let sink = critical_section::with(|cs| LOG_SINK.borrow(cs).get());
+    if let Some(sink) = sink {
+        sink(bytes);
+    }
 }
 
 /// Force the C porting contract objects into the final link.
@@ -166,18 +194,23 @@ pub fn force_link_contract() {
     keep!(alloc::osal_kmalloc as extern "C" fn(usize) -> *mut c_void);
     keep!(alloc::osal_kfree as extern "C" fn(*mut c_void));
 
-    keep!(log::log_event_wifi_print0 as extern "C" fn(*const c_char) -> c_int);
-    keep!(log::log_event_wifi_print1 as extern "C" fn(*const c_char) -> c_int);
-    keep!(log::log_event_wifi_print2 as extern "C" fn(*const c_char) -> c_int);
-    keep!(log::log_event_wifi_print3 as extern "C" fn(*const c_char) -> c_int);
-    keep!(log::log_event_wifi_print4 as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::log_event_wifi_print0 as extern "C" fn(c_uint) -> c_int);
+    keep!(log::log_event_wifi_print1 as extern "C" fn(c_uint, c_uint) -> c_int);
+    keep!(log::log_event_wifi_print2 as extern "C" fn(c_uint, c_uint, c_uint) -> c_int);
+    keep!(log::log_event_wifi_print3 as extern "C" fn(c_uint, c_uint, c_uint, c_uint) -> c_int);
+    keep!(
+        log::log_event_wifi_print4
+            as extern "C" fn(c_uint, c_uint, c_uint, c_uint, c_uint) -> c_int
+    );
     keep!(log::log_event_print0 as extern "C" fn() -> c_int);
     keep!(log::log_event_print1 as extern "C" fn() -> c_int);
     keep!(log::log_event_print2 as extern "C" fn() -> c_int);
     keep!(log::log_event_print3 as extern "C" fn() -> c_int);
     keep!(log::log_event_print4 as extern "C" fn() -> c_int);
     keep!(log::osal_printk as extern "C" fn(*const c_char) -> c_int);
-    keep!(log::snprintf_s as extern "C" fn(*mut c_char, usize, *const c_char) -> c_int);
+    keep!(
+        log::snprintf_s as extern "C" fn(*mut c_char, usize, usize, *const c_char, c_uint) -> c_int
+    );
     keep!(log::memset_s as extern "C" fn(*mut c_void, usize, c_int, usize) -> c_int);
     keep!(log::memcpy_s as extern "C" fn(*mut c_void, usize, *const c_void, usize) -> c_int);
 
@@ -201,11 +234,29 @@ pub fn force_link_contract() {
     keep!(osal::osal_msleep as extern "C" fn(u32));
     keep!(osal::osal_get_current_pid as extern "C" fn() -> c_int);
     keep!(osal::osal_get_current_tid as extern "C" fn() -> c_int);
+    keep!(
+        osal::osal_kthread_create
+            as extern "C" fn(
+                Option<extern "C" fn(*mut c_void) -> *mut c_void>,
+                *mut c_void,
+                *const c_char,
+                usize,
+            ) -> *mut c_void
+    );
 
     keep!(osal_adapt::osal_adapt_atomic_set as extern "C" fn(*mut osal_sync::OsalAtomic, c_int));
     keep!(osal_adapt::osal_adapt_get_jiffies as extern "C" fn() -> u64);
     keep!(osal_adapt::osal_adapt_irq_lock as extern "C" fn() -> c_uint);
     keep!(osal_adapt::osal_adapt_irq_restore as extern "C" fn(c_uint));
+    keep!(
+        osal_adapt::osal_adapt_kthread_create
+            as extern "C" fn(
+                Option<extern "C" fn(*mut c_void) -> *mut c_void>,
+                *mut c_void,
+                *const c_char,
+                c_uint,
+            ) -> *mut c_void
+    );
 
     keep!(osal_ext::osal_vmalloc as extern "C" fn(c_ulong) -> *mut c_void);
     keep!(osal_ext::osal_vfree as extern "C" fn(*mut c_void));
@@ -238,9 +289,9 @@ pub fn force_link_contract() {
     keep!(netif::tcpip_callback as extern "C" fn(*mut c_void, *mut c_void) -> c_int);
 
     keep!(uapi::uapi_systick_get_ms as extern "C" fn() -> u64);
-    keep!(uapi::uapi_tsensor_get_current_temp as extern "C" fn() -> i32);
-    keep!(uapi::uapi_nv_read as extern "C" fn(u32, *mut c_void, u32) -> i32);
-    keep!(uapi::uapi_nv_write as extern "C" fn(u32, *const c_void, u32) -> i32);
+    keep!(uapi::uapi_tsensor_get_current_temp as extern "C" fn(*mut i8) -> u32);
+    keep!(uapi::uapi_nv_read as extern "C" fn(u16, u16, *mut u16, *mut u8) -> u32);
+    keep!(uapi::uapi_nv_write as extern "C" fn(u16, *const u8, u16) -> u32);
     keep!(uapi::uapi_efuse_read_bit as extern "C" fn(*mut u8, u32, u8) -> u32);
     keep!(uapi::uapi_efuse_read_buffer as extern "C" fn(*mut u8, u32, u16) -> u32);
     keep!(uapi::uapi_drv_cipher_trng_get_random_bytes as extern "C" fn(*mut u8, u32) -> u32);

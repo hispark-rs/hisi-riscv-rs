@@ -109,42 +109,62 @@ pub extern "C" fn osal_irq_set_priority(_irq: core::ffi::c_uint, _priority: u16)
 
 type KthreadFunc = Option<extern "C" fn(*mut c_void) -> *mut c_void>;
 
-/// Spawn a kernel thread on the cooperative scheduler. The handle encodes the
-/// task slot (`slot + 1`, so non-null). Returns NULL on failure.
+/// The vendor OSAL handle ABI (`osal_task { void *task; }`).
+#[repr(C)]
+struct OsalTask {
+    task: *mut c_void,
+}
+
+/// Spawn a kernel thread on the cooperative scheduler.
+///
+/// The returned pointer addresses a real [`OsalTask`], matching the C SDK. The
+/// Wi-Fi FRW code dereferences its first word to obtain the task id; returning
+/// an integer disguised as a pointer here is therefore not a valid opaque
+/// handle implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_create(
     func: KthreadFunc,
     arg: *mut c_void,
-    stack_size: usize,
-    _priority: c_int,
     _name: *const c_char,
+    stack_size: usize,
 ) -> *mut c_void {
-    match func {
-        Some(f) => match crate::sched::spawn(f, arg, stack_size) {
-            Some(slot) => (slot + 1) as *mut c_void,
-            None => core::ptr::null_mut(),
-        },
-        None => core::ptr::null_mut(),
+    let Some(f) = func else {
+        return core::ptr::null_mut();
+    };
+    let handle = crate::alloc::osal_kmalloc(core::mem::size_of::<OsalTask>()) as *mut OsalTask;
+    if handle.is_null() {
+        return core::ptr::null_mut();
+    }
+    match crate::sched::spawn(f, arg, stack_size) {
+        Some(slot) => {
+            // SAFETY: `handle` owns an allocation large and aligned enough for
+            // `OsalTask`; the allocation remains live for the long-lived Wi-Fi
+            // worker task.
+            unsafe {
+                handle.write(OsalTask {
+                    task: slot as *mut c_void,
+                });
+            }
+            handle.cast()
+        }
+        None => {
+            crate::alloc::osal_kfree(handle.cast());
+            core::ptr::null_mut()
+        }
     }
 }
 /// Destroy a thread. NO-OP for now: cleanly killing an arbitrary task (freeing
 /// the stack it may be running on) needs deferred reclamation — TODO. The WiFi
 /// worker threads are long-lived, so this is acceptable for the scaffold.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_destroy(_thread: *mut c_void) -> c_int {
-    OSAL_OK
-}
+pub extern "C" fn osal_kthread_destroy(_thread: *mut c_void, _stop_flag: u32) {}
 /// Prevent preemption. The scheduler is cooperative (no time-slicing yet), so a
 /// task already runs to its next yield/block — this is a no-op.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_lock(_thread: *mut c_void) -> c_int {
-    OSAL_OK
-}
+pub extern "C" fn osal_kthread_lock() {}
 /// Re-allow preemption (see [`osal_kthread_lock`]).
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_unlock(_thread: *mut c_void) -> c_int {
-    OSAL_OK
-}
+pub extern "C" fn osal_kthread_unlock() {}
 /// Set thread priority. NO-OP: the cooperative scheduler is round-robin (no
 /// priorities yet) — TODO when preemption lands.
 #[unsafe(no_mangle)]

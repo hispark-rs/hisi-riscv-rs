@@ -10,7 +10,7 @@ publish = false
 name = "ws63_rf_rs"
 
 [dependencies]
-hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", features = ["chip-ws63"] }
+hisi-riscv-hal = { path = "../../../crates/hisi-riscv-hal", features = ["chip-ws63", "unstable"] }
 critical-section = "1"
 linked_list_allocator = { version = "0.10", default-features = false }
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
@@ -25,9 +25,14 @@ smoltcp = { version = "0.13", default-features = false, features = [
 
 [features]
 net = ["dep:smoltcp"]
+# Internal on-silicon bring-up instrumentation for the guarded full-init image.
+# Not a public radio API and not enabled by normal consumers.
+rf-init-diag = []
 
-# For the internal `sched_selftest` example only (runtime entry + linker scripts).
-[dev-dependencies]
+# For the internal firmware examples only (runtime entry + linker scripts).
+# Keep this off host unit-test builds: riscv-rt's startup assembly is not valid
+# for the macOS/Linux host assembler.
+[target.'cfg(target_arch = "riscv32")'.dev-dependencies]
 hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt" }
 
 [[example]]

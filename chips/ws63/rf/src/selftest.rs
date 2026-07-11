@@ -97,7 +97,7 @@ extern "C" fn frw_mock_handler(msg: *mut crate::frw::FrwMsg) {
         FRW_CHECK.fetch_xor(dlen, Ordering::Relaxed);
         FRW_RECV.fetch_add(1, Ordering::Relaxed);
     }
-    crate::frw::frw_free_msg_node(msg as *mut crate::frw::FrwMsgNode);
+    crate::frw::local_free_msg_node(msg as *mut crate::frw::FrwMsgNode);
 }
 
 /// Exercise the FRW/HCC data path end to end (no blob): register a handler,
@@ -108,12 +108,12 @@ extern "C" fn frw_mock_handler(msg: *mut crate::frw::FrwMsg) {
 pub fn frw_hcc_selftest() -> [u32; 4] {
     use crate::frw::FrwMsg;
     sched::init();
-    crate::hcc::hcc_wifi_msg_register(Some(frw_mock_handler));
+    crate::hcc::register_local(Some(frw_mock_handler));
     crate::frw::start_worker();
 
     let mut expect: u32 = 0;
     for i in 0..FRW_N {
-        let node = crate::frw::frw_fetch_msg_node();
+        let node = crate::frw::local_fetch_msg_node();
         if node.is_null() {
             break;
         }
@@ -124,7 +124,7 @@ pub fn frw_hcc_selftest() -> [u32; 4] {
         }
         expect ^= dlen;
         FRW_SENT.fetch_add(1, Ordering::Relaxed);
-        crate::hcc::hcc_wifi_msg_send(node as *mut FrwMsg);
+        crate::hcc::send_local(node as *mut FrwMsg);
         sched::yield_now(); // let the worker drain
     }
 
@@ -154,7 +154,7 @@ extern "C" fn timer_cb(_data: core::ffi::c_ulong) {
 }
 
 /// Exercise the software-timer service deterministically (no scheduler needed):
-/// arm a one-shot 2 ms timer, drive `frw_dmac_timer_timeout_proc` until it
+/// arm a one-shot 2 ms timer, drive the local timer service until it
 /// fires, confirm it does NOT re-fire on its own, then re-arm and confirm it
 /// fires again. Returns `[after_oneshot, after_rearm, ok]`; a pass is `[1,2,1]`.
 /// Internal hook.
@@ -162,7 +162,7 @@ extern "C" fn timer_cb(_data: core::ffi::c_ulong) {
 pub fn timer_selftest() -> [u32; 3] {
     use crate::timer::{self, OsalTimer};
     TIMER_FIRED.store(0, Ordering::Relaxed);
-    timer::frw_dmac_timer_init();
+    timer::local_timer_init();
 
     let mut t = OsalTimer {
         timer: core::ptr::null_mut(),
@@ -179,21 +179,21 @@ pub fn timer_selftest() -> [u32; 3] {
     // Drive the timer service; mcycle (the time base) advances as we spin.
     let mut guard: u32 = 0;
     while TIMER_FIRED.load(Ordering::Relaxed) == 0 && guard < 50_000_000 {
-        timer::frw_dmac_timer_timeout_proc();
+        timer::local_timer_timeout_proc();
         guard += 1;
     }
     let after_oneshot = TIMER_FIRED.load(Ordering::Relaxed);
 
     // A one-shot must NOT re-fire without re-arming.
     for _ in 0..10_000 {
-        timer::frw_dmac_timer_timeout_proc();
+        timer::local_timer_timeout_proc();
     }
 
     // Re-arm; it must fire again.
     timer::osal_adapt_timer_mod(&mut t, 2);
     guard = 0;
     while TIMER_FIRED.load(Ordering::Relaxed) < 2 && guard < 50_000_000 {
-        timer::frw_dmac_timer_timeout_proc();
+        timer::local_timer_timeout_proc();
         guard += 1;
     }
     let after_rearm = TIMER_FIRED.load(Ordering::Relaxed);

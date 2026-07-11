@@ -7,14 +7,16 @@
 //! `frw_send_msg_to_device`, `frw_event_process_all_event_etc`, …); this module
 //! supplies the **runtime half** the blob calls out to:
 //!
-//! - `frw_fetch_msg_node` / `frw_free_msg_node` — a pool of [`FrwMsgNode`]s
-//!   (the C `frw_msg_node`, 40 bytes; its `frw_msg` is at offset 0 so a node
+//! - an internal message-node pool for the standalone FRW/HCC self-test
+//!   (the device C `frw_msg_node`, 40 bytes; its `frw_msg` is at offset 0 so a node
 //!   pointer is a valid `frw_msg *`).
-//! - [`frw_task_thread`] — the WiFi worker, spawned on the `sched` runtime. It
-//!   blocks in [`frw_thread_get_wait`] until a message is posted (by
-//!   [`hcc_wifi_msg_send`](crate::hcc::hcc_wifi_msg_send)), drains the FIFO and
+//! - [`local_task_thread`] — the self-test worker, spawned on the `sched` runtime.
+//!   It blocks until a message is posted by the local HCC self-test transport, drains the FIFO and
 //!   dispatches each message to the registered device handler + DMAC hook.
-//! - `frw_dmac_msg_hook_register` / `_unregister` — the per-message DMAC tap.
+//!
+//! Per-message DMAC hooks remain owned by the mask-ROM
+//! `frw_dmac_msg_hook_register(msg_id, callback)` table. This port must not
+//! override that symbol with the single-handler HCC seam.
 //!
 //! Validated standalone (no blob) by `frw_hcc_selftest`: a producer posts N
 //! messages through HCC, the worker delivers them to a mock handler in order.
@@ -50,7 +52,11 @@ struct OsalListHead {
     prev: *mut OsalListHead,
 }
 
-/// Mirrors C `frw_msg_node` (40 bytes); `msg` is at offset 0.
+/// Mirrors the device C `frw_msg_node` (40 bytes); `msg` is at offset 0.
+///
+/// This is only used by the Rust-owned standalone self-test pool. The vendor
+/// host path allocates its distinct 44-byte node (with `wait_q` at `0x28`)
+/// itself, while the ROM owns the production device node pool.
 #[repr(C)]
 pub struct FrwMsgNode {
     /// The message (offset 0 — a `*mut FrwMsgNode` is a valid `frw_msg *`).
@@ -64,6 +70,9 @@ pub struct FrwMsgNode {
     seq: u16,
     wait_fail: c_int, // osal_atomic { volatile int counter }
 }
+
+#[cfg(target_pointer_width = "32")]
+const _: () = assert!(core::mem::size_of::<FrwMsgNode>() == 40);
 
 impl FrwMsgNode {
     const fn zeroed() -> Self {
@@ -94,7 +103,7 @@ impl FrwMsgNode {
 /// `void (*)(struct frw_msg *)` — the DMAC message hook / device handler.
 pub type MsgHandler = extern "C" fn(*mut FrwMsg);
 
-const POOL_LEN: usize = 24; // C SDK pool_idx is 4 bits; 24 nodes is ample
+const POOL_LEN: usize = 16; // device pool_idx is four bits
 const FIFO_LEN: usize = 32; // posted-but-not-yet-dispatched messages
 
 /// All FRW runtime state, touched only inside a critical section (single hart).
@@ -104,7 +113,6 @@ struct FrwState {
     fifo: [*mut FrwMsgNode; FIFO_LEN],
     fifo_head: usize,
     fifo_count: usize,
-    dmac_hook: Option<MsgHandler>,
     device_handler: Option<MsgHandler>,
     running: bool,
     dispatched: u32,
@@ -120,7 +128,6 @@ static FRW: FrwCell = FrwCell(UnsafeCell::new(FrwState {
     fifo: [core::ptr::null_mut(); FIFO_LEN],
     fifo_head: 0,
     fifo_count: 0,
-    dmac_hook: None,
     device_handler: None,
     running: false,
     dispatched: 0,
@@ -141,14 +148,13 @@ fn with_state<R>(f: impl FnOnce(&mut FrwState) -> R) -> R {
 
 /// Allocate a zeroed message node from the pool (NULL if exhausted). The
 /// returned pointer is also a valid `frw_msg *` (the `msg` field is at offset 0).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_fetch_msg_node() -> *mut FrwMsgNode {
+pub(crate) fn local_fetch_msg_node() -> *mut FrwMsgNode {
     with_state(|s| {
         for i in 0..POOL_LEN {
             if !s.pool_used[i] {
                 s.pool_used[i] = true;
                 s.pool[i] = FrwMsgNode::zeroed();
-                s.pool[i].bits = 0x08 | (i as u8 & 0x0f) << 4; // pool_used + pool_idx
+                s.pool[i].bits = 0x08 | (i as u8 & 0x0f) << 4;
                 return core::ptr::addr_of_mut!(s.pool[i]);
             }
         }
@@ -157,8 +163,7 @@ pub extern "C" fn frw_fetch_msg_node() -> *mut FrwMsgNode {
 }
 
 /// Return a node to the pool.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_free_msg_node(msg: *mut FrwMsgNode) {
+pub(crate) fn local_free_msg_node(msg: *mut FrwMsgNode) {
     if msg.is_null() {
         return;
     }
@@ -216,17 +221,9 @@ fn fifo_pop() -> *mut FrwMsgNode {
     })
 }
 
-/// Block until the framework has work or is shutting down (`OSAL_OK`).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_thread_get_wait() -> c_int {
-    EVENT.down();
-    OSAL_OK
-}
-
 /// The WiFi worker thread. Drains posted messages and dispatches each to the
 /// registered device handler then the DMAC hook, until the framework stops.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_task_thread(_arg: *mut c_void) -> *mut c_void {
+extern "C" fn local_task_thread(_arg: *mut c_void) -> *mut c_void {
     with_state(|s| s.running = true);
     loop {
         // Park until a message is posted OR the nearest timer is due (so timers
@@ -236,20 +233,17 @@ pub extern "C" fn frw_task_thread(_arg: *mut c_void) -> *mut c_void {
             break;
         }
         // Fire any expired software timers (cooperative, from this thread).
-        crate::timer::frw_dmac_timer_timeout_proc();
+        crate::timer::local_timer_timeout_proc();
         loop {
             let node = fifo_pop();
             if node.is_null() {
                 break;
             }
-            let (dev, hook) = with_state(|s| (s.device_handler, s.dmac_hook));
+            let dev = with_state(|s| s.device_handler);
             // `msg` is at offset 0 of the node, so the node pointer is the msg
             // pointer (no deref needed).
             let msg = node as *mut FrwMsg;
             if let Some(h) = dev {
-                h(msg);
-            }
-            if let Some(h) = hook {
                 h(msg);
             }
             with_state(|s| s.dispatched = s.dispatched.wrapping_add(1));
@@ -258,10 +252,9 @@ pub extern "C" fn frw_task_thread(_arg: *mut c_void) -> *mut c_void {
     core::ptr::null_mut()
 }
 
-/// Spawn [`frw_task_thread`] on the scheduler. Internal entry for the runtime /
-/// self-test (the blob spawns it via `osal_kthread_create`).
+/// Spawn [`local_task_thread`] for the standalone Rust self-test.
 pub(crate) fn start_worker() -> Option<usize> {
-    sched::spawn(frw_task_thread, core::ptr::null_mut(), 0)
+    sched::spawn(local_task_thread, core::ptr::null_mut(), 0)
 }
 
 /// Stop the worker (wakes it so it can exit). Internal.
@@ -275,44 +268,5 @@ pub(crate) fn dispatched() -> u32 {
     with_state(|s| s.dispatched)
 }
 
-// ── Hooks ────────────────────────────────────────────────────────────────────
-
-/// Register the per-message DMAC hook.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_msg_hook_register(hook: Option<MsgHandler>) -> c_int {
-    with_state(|s| s.dmac_hook = hook);
-    OSAL_OK
-}
-
-/// Unregister the DMAC hook.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_msg_hook_unregister(_hook: Option<MsgHandler>) -> c_int {
-    with_state(|s| s.dmac_hook = None);
-    OSAL_OK
-}
-
-// ── Remaining FRW porting hooks (lifecycle / config) ────────────────────────
-
-/// Configure DMAC receive processing. STUB: accepted.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_rcv_cfg(_cfg: *mut c_void) -> c_int {
-    OSAL_OK
-}
-/// Post a received WiFi netbuf up the stack. STUB (netif/smoltcp seam).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_rx_wifi_post_netbuf(_netbuf: *mut c_void) -> c_int {
-    OSAL_NOK
-}
-/// Register ROM callbacks. STUB: accepted.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_rom_cb_register(_cb: *mut c_void) -> c_int {
-    OSAL_OK
-}
-/// Tear down the HCC service. STUB.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_hcc_service_deinit() -> c_int {
-    OSAL_OK
-}
-
-// Software timers (`frw_dmac_timer_*`, `frw_timer_timeout_proc_event`) are now
-// real — see [`crate::timer`]; the worker loop above drives them.
+// The local software-timer model is selftest-only. Production device FRW timer
+// entry points stay owned by mask ROM and are not exported from this crate.

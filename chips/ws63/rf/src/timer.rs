@@ -1,8 +1,8 @@
 //! Software timer service — cooperative, driven by the FRW worker loop.
 //!
 //! The WS63 WiFi driver uses millisecond software timers with **no tick ISR**:
-//! callbacks fire synchronously when [`frw_dmac_timer_timeout_proc`] is called,
-//! which [`crate::frw::frw_task_thread`] does on every iteration (parking only
+//! callbacks fire synchronously when [`local_timer_timeout_proc`] is called,
+//! which the crate-local FRW self-test worker does on every iteration (parking only
 //! until the nearest deadline via `next_delay_ms`). Deadlines are tracked in
 //! milliseconds against the monotonic `mcycle`-derived clock
 //! ([`osal_get_jiffies`](crate::osal_ext::osal_get_jiffies)).
@@ -10,11 +10,14 @@
 //! The OSAL adaptation timers (`osal_adapt_timer_init/mod/destroy`) register an
 //! `osal_timer { void *timer; void (*handler)(unsigned long); unsigned long
 //! data; unsigned int interval; }`; `handler(data)` fires when the interval
-//! elapses. (`frw_dmac_create_timer` etc. are mask-ROM symbols, not ours.)
+//! elapses. Production `frw_dmac_timer_*` entry points are mask-ROM symbols;
+//! these local helpers exist only for the standalone Rust self-tests.
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use crate::{OSAL_NOK, OSAL_OK};
+#[cfg(target_arch = "riscv32")]
+use core::cell::Cell;
 use core::cell::UnsafeCell;
 use core::ffi::{c_int, c_uint, c_ulong, c_void};
 use critical_section as cs;
@@ -56,6 +59,8 @@ struct Timers(UnsafeCell<[Slot; MAX_TIMERS]>);
 // SAFETY: only accessed inside `cs::with` on a single hart.
 unsafe impl Sync for Timers {}
 static TIMERS: Timers = Timers(UnsafeCell::new([EMPTY; MAX_TIMERS]));
+#[cfg(target_arch = "riscv32")]
+static TIMER_WORKER_STARTED: cs::Mutex<Cell<bool>> = cs::Mutex::new(Cell::new(false));
 
 fn now_ms() -> u64 {
     crate::osal_ext::osal_get_jiffies()
@@ -79,10 +84,86 @@ fn alloc_slot() -> Option<usize> {
     })
 }
 
+#[cfg(target_arch = "riscv32")]
+extern "C" fn timer_worker(_arg: *mut c_void) -> *mut c_void {
+    loop {
+        crate::sched::sleep_ms(1);
+        local_timer_timeout_proc();
+    }
+}
+
+fn ensure_timer_worker() -> bool {
+    #[cfg(not(target_arch = "riscv32"))]
+    return true;
+
+    #[cfg(target_arch = "riscv32")]
+    {
+        let should_start = cs::with(|token| {
+            let started = TIMER_WORKER_STARTED.borrow(token);
+            if started.get() {
+                false
+            } else {
+                started.set(true);
+                true
+            }
+        });
+        if !should_start {
+            return true;
+        }
+        if crate::sched::spawn(timer_worker, core::ptr::null_mut(), 4096).is_some() {
+            true
+        } else {
+            cs::with(|token| TIMER_WORKER_STARTED.borrow(token).set(false));
+            false
+        }
+    }
+}
+
 // ── OSAL adaptation timers ───────────────────────────────────────────────────
 
-/// Register a timer: stores `handler`/`data`/`interval` in `*timer` and reserves
-/// a service slot (the timer does not run until [`osal_adapt_timer_mod`]).
+/// Register a fully populated OSAL timer and reserve a service slot. The timer
+/// does not run until [`osal_timer_mod`].
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_timer_init(timer: *mut OsalTimer) -> c_int {
+    if timer.is_null() {
+        return OSAL_NOK;
+    }
+    #[cfg(feature = "rf-init-diag")]
+    unsafe {
+        crate::rf_init_diag::trace_timer(
+            b"init",
+            timer as usize,
+            (*timer).handler.map_or(0, |handler| handler as usize),
+            (*timer).data as usize,
+            (*timer).interval,
+        );
+    }
+    // SAFETY: caller supplied an `osal_timer` matching the C layout.
+    if unsafe { (*timer).handler.is_none() || !(*timer).timer.is_null() || (*timer).interval == 0 }
+    {
+        return OSAL_NOK;
+    }
+    if !ensure_timer_worker() {
+        return OSAL_NOK;
+    }
+    let slot = match alloc_slot() {
+        Some(i) => i,
+        None => return OSAL_NOK,
+    };
+    // SAFETY: caller-provided, validated `osal_timer`.
+    unsafe {
+        (*timer).timer = (slot + 1) as *mut c_void;
+    }
+    with_slots(|s| {
+        s[slot].timer = timer as usize;
+        // SAFETY: the timer remains caller-owned for the registered lifetime.
+        s[slot].interval = unsafe { (*timer).interval as u64 };
+    });
+    OSAL_OK
+}
+
+/// Adapt-layer constructor used by vendor code that passes timer fields as
+/// separate arguments before entering the canonical OSAL API.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_timer_init(
     timer: *mut OsalTimer,
@@ -90,31 +171,19 @@ pub extern "C" fn osal_adapt_timer_init(
     data: c_ulong,
     interval: c_uint,
 ) -> c_int {
-    if timer.is_null() {
+    if timer.is_null() || func.is_null() {
         return OSAL_NOK;
     }
-    let slot = match alloc_slot() {
-        Some(i) => i,
-        None => return OSAL_NOK,
-    };
-    // SAFETY: caller-provided osal_timer; func is a `void (*)(unsigned long)`.
+    // SAFETY: `func` is the C `void (*)(unsigned long)` supplied by the blob.
     unsafe {
-        (*timer).handler = if func.is_null() {
-            None
-        } else {
-            Some(core::mem::transmute::<*mut c_void, extern "C" fn(c_ulong)>(
-                func,
-            ))
-        };
+        (*timer).timer = core::ptr::null_mut();
+        (*timer).handler = Some(core::mem::transmute::<*mut c_void, extern "C" fn(c_ulong)>(
+            func,
+        ));
         (*timer).data = data;
         (*timer).interval = interval;
-        (*timer).timer = (slot + 1) as *mut c_void;
     }
-    with_slots(|s| {
-        s[slot].timer = timer as usize;
-        s[slot].interval = interval as u64;
-    });
-    OSAL_OK
+    osal_timer_init(timer)
 }
 
 fn slot_of(timer: *mut OsalTimer) -> Option<usize> {
@@ -132,7 +201,10 @@ fn slot_of(timer: *mut OsalTimer) -> Option<usize> {
 
 /// (Re)arm a timer: it fires once after `interval` ms from now.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_timer_mod(timer: *mut OsalTimer, interval: c_uint) -> c_int {
+pub extern "C" fn osal_timer_mod(timer: *mut OsalTimer, interval: c_uint) -> c_int {
+    if interval == 0 {
+        return OSAL_NOK;
+    }
     let slot = match slot_of(timer) {
         Some(i) => i,
         None => return OSAL_NOK,
@@ -152,9 +224,29 @@ pub extern "C" fn osal_adapt_timer_mod(timer: *mut OsalTimer, interval: c_uint) 
     })
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_adapt_timer_mod(timer: *mut OsalTimer, interval: c_uint) -> c_int {
+    osal_timer_mod(timer, interval)
+}
+
+/// Stop a timer. Returns `1` when an active timer was stopped and `0` when it
+/// was already inactive, matching the LiteOS OSAL contract.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_timer_stop(timer: *mut OsalTimer) -> c_int {
+    let slot = match slot_of(timer) {
+        Some(i) => i,
+        None => return OSAL_NOK,
+    };
+    with_slots(|s| {
+        let was_active = s[slot].active;
+        s[slot].active = false;
+        i32::from(was_active)
+    })
+}
+
 /// Destroy a timer (frees its slot).
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_timer_destroy(timer: *mut OsalTimer) -> c_int {
+pub extern "C" fn osal_timer_destroy(timer: *mut OsalTimer) -> c_int {
     let slot = match slot_of(timer) {
         Some(i) => i,
         None => return OSAL_OK,
@@ -165,18 +257,22 @@ pub extern "C" fn osal_adapt_timer_destroy(timer: *mut OsalTimer) -> c_int {
     OSAL_OK
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_adapt_timer_destroy(timer: *mut OsalTimer) -> c_int {
+    osal_timer_destroy(timer)
+}
+
 // ── FRW timer driver (called from the worker loop) ──────────────────────────
 
 /// Initialise the timer subsystem (clears all slots).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_init() -> c_int {
+pub(crate) fn local_timer_init() -> c_int {
     with_slots(|s| *s = [EMPTY; MAX_TIMERS]);
     OSAL_OK
 }
 
 /// Shut down the timer subsystem.
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_exit() -> c_int {
+#[allow(dead_code)]
+pub(crate) fn local_timer_exit() -> c_int {
     with_slots(|s| *s = [EMPTY; MAX_TIMERS]);
     OSAL_OK
 }
@@ -184,8 +280,7 @@ pub extern "C" fn frw_dmac_timer_exit() -> c_int {
 /// Fire every timer whose deadline has passed. THE driver — call each worker
 /// iteration. One-shot timers deactivate after firing; periodic ones re-arm.
 /// Callbacks run OUTSIDE the critical section (they may touch timers / yield).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_dmac_timer_timeout_proc() {
+pub(crate) fn local_timer_timeout_proc() {
     let now = now_ms();
     // Collect due timers under the lock, then fire them unlocked.
     let mut due: [(usize, u64); MAX_TIMERS] = [(usize::MAX, 0); MAX_TIMERS];
@@ -212,14 +307,24 @@ pub extern "C" fn frw_dmac_timer_timeout_proc() {
         // SAFETY: the slot held a live osal_timer pointer.
         let (handler, data) = unsafe { ((*t).handler, (*t).data) };
         if let Some(f) = handler {
+            #[cfg(feature = "rf-init-diag")]
+            unsafe {
+                crate::rf_init_diag::trace_timer(
+                    b"fire",
+                    t as usize,
+                    f as usize,
+                    data as usize,
+                    (*t).interval,
+                );
+            }
             f(data);
         }
     }
 }
 
 /// Generic per-timer event dispatch hook (the real dispatcher is mask-ROM).
-#[unsafe(no_mangle)]
-pub extern "C" fn frw_timer_timeout_proc_event(_arg: c_ulong) {}
+#[allow(dead_code)]
+pub(crate) fn local_timer_timeout_proc_event(_arg: c_ulong) {}
 
 // ── Worker integration ───────────────────────────────────────────────────────
 

@@ -4,9 +4,10 @@
 //! declared in `ws63-rf-rs/ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
 //! NOTE: the current blob delivery exports the lower-level `uapi_wifi_init`
 //! symbol from `libwifi_driver_hmac.a`, while the public header still declares
-//! `wifi_init`. A safe Rust API over that layer is deferred until the final
-//! executable link can handle the vendor relocation 58 objects; this module only
-//! provides the error mapping the future binding will use.
+//! `wifi_init`. The guarded two-pass RF build can now produce the full init
+//! image; a safe Rust API remains deferred until the on-silicon init contract
+//! and its error classes are known. This module provides the error mapping that
+//! binding will use.
 
 /// Vendor `errcode_t` (0 = success).
 pub type Errcode = u32;
