@@ -49,7 +49,8 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
   - `cargo doc --locked --no-deps --document-private-items --no-default-features --features chip-ws63,rt,async,embassy` with `RUSTDOCFLAGS=-D warnings`
 - BS2X negative gate：`chip-bs21,rt` without `unstable` 必须失败并包含实验性提示。
 - HIL gate：
-  - 跑默认 WS63 HAL embedded-test suite：`chip-ws63,rt`。
+  - [x] 跑默认 WS63 HAL embedded-test suite：`chip-ws63,rt`；2026-07-12 真机
+    30/30 通过。
   - 跑一组 `unstable` smoke HIL，至少证明当前已有 unstable HIL 未回归。
   - `hil-loopback`、`hil-rtc`、示例级 `hil-smoke.sh` 不作为 crates.io 0.6.0 blocker。
 

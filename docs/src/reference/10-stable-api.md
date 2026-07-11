@@ -4,12 +4,11 @@
 [稳定 / 不稳定 API 门控政策](../explanation/policies/02-stable-unstable.md)；历史评审文件只记录当时状态，
 不作为当前 API 清单。
 
-**证据基线（2026-07-04）：** WS63 真机 `tests/hil.rs` embedded-test 套件 26/26 通过。下面的 STABLE 表只列默认
+**证据基线（2026-07-12）：** WS63 真机 `tests/hil.rs` embedded-test 默认套件 30/30 通过。下面的 STABLE 表只列默认
 `features = ["chip-ws63", "rt"]` 面向用户公开的子集；凡需额外台架、opt-in feature、或 soundness 不变量尚未闭合的入口，
 即使代码存在，也放在 UNSTABLE。
-
-**增量证据（2026-07-12）：** `tests::i2c0_nack_is_reported_after_done` 在 WS63 真机通过，验证 v150
-控制器按 `DONE` 完成后报告 `ACK_ERR`；当前新增用例尚待 M2 默认套件全量重跑后并入新的总数基线。
+本轮包含 `tests::i2c0_nack_is_reported_after_done`，验证 v150 控制器按 `DONE` 完成后报告
+`ACK_ERR`；UART divisor 测试也在启用 divisor-latch alias 后通过。
 
 ## STABLE（默认暴露）
 
