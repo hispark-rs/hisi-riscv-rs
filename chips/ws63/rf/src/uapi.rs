@@ -203,8 +203,9 @@ fn crc32(bytes: &[u8]) -> u32 {
 mod nv_tests {
     use super::{
         NV_KEY_HEADER_SIZE, NV_PAGE_HEADER_SIZE, NV_PAGE_SIZE, crc32, find_nv_value,
-        uapi_tsensor_get_current_temp,
+        tcxo_vendor_id, uapi_tsensor_get_current_temp,
     };
+    use hisi_riscv_hal::clock_init::TcxoFreq;
 
     fn page_with_key() -> [u8; NV_PAGE_SIZE] {
         let mut page = [0xff; NV_PAGE_SIZE];
@@ -258,6 +259,12 @@ mod nv_tests {
         assert_eq!(uapi_tsensor_get_current_temp(&mut temp), 0);
         assert_eq!(temp, 25);
         assert_ne!(uapi_tsensor_get_current_temp(core::ptr::null_mut()), 0);
+    }
+
+    #[test]
+    fn tcxo_contract_uses_vendor_enum_not_hertz() {
+        assert_eq!(tcxo_vendor_id(TcxoFreq::MHz40), 0);
+        assert_eq!(tcxo_vendor_id(TcxoFreq::MHz24), 1);
     }
 }
 
@@ -343,11 +350,31 @@ pub extern "C" fn get_dev_addr(pc_addr: *mut u8, addr_len: u8, _type: u8) -> u32
     crate::OSAL_OK as u32
 }
 
-/// TCXO reference frequency in Hz. SCAFFOLD: 24 MHz (the WS63 nominal; matches
-/// the ws63-qemu clock model).
+const CLK40M_TCXO: u32 = 0;
+const CLK24M_TCXO: u32 = 1;
+
+const fn tcxo_vendor_id(freq: hisi_riscv_hal::clock_init::TcxoFreq) -> u32 {
+    match freq {
+        hisi_riscv_hal::clock_init::TcxoFreq::MHz40 => CLK40M_TCXO,
+        hisi_riscv_hal::clock_init::TcxoFreq::MHz24 => CLK24M_TCXO,
+    }
+}
+
+/// Return the SDK's TCXO selector (`0` = 40 MHz, `1` = 24 MHz).
+///
+/// This ABI deliberately does not return Hertz. The ROM/blob code compares the
+/// result with `CLK40M_TCXO`/`CLK24M_TCXO`; returning `24_000_000` would select
+/// neither valid clock path. The hardware strap is decoded by the HAL so this
+/// adapter remains a conversion at the vendor boundary, not a second raw-MMIO
+/// implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn get_tcxo_freq() -> u32 {
-    24_000_000
+    #[cfg(target_arch = "riscv32")]
+    let freq = hisi_riscv_hal::clock_init::TcxoFreq::detect();
+    #[cfg(not(target_arch = "riscv32"))]
+    let freq = hisi_riscv_hal::clock_init::TcxoFreq::MHz40;
+
+    tcxo_vendor_id(freq)
 }
 
 // ── AT command console (not wired — the runtime owns the console) ────────────
