@@ -117,6 +117,9 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 - 找到真实 transmit symbol，把 `netif_smoltcp` 测试 sink 替换为 blob adapter；
   `driverif_input` 把 RX frame 送入有界队列，并定义满队列 drop counter。
 - HIL 先通过 ARP request/reply，证明双向 Ethernet frame 数据面。
+- 2026-07-12 已完成：原厂 lwIP 配置/DWARF 驱动的 pbuf/netif ABI 检查、DHCP lease、
+  gateway ARP reply 均在真机通过。MTU-sized smoltcp token 曾令 8 KiB 主栈下溢并覆盖
+  FRW queue；现改为静态单占用 scratch，并以 token-size host test 防回归。
 
 ### RF5B -- Open AP Connect
 
@@ -131,6 +134,9 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
   L2 device，而不是 vendor lwIP 隐藏路径。
 - HIL 固定 `RF5_PING_OK replies=N`，保存 UART log、ELF section/layout report、ROM
   patch manifest、image plan 和资源占用，作为迁移前 A0 baseline。
+- 当前 ICMP request 已越过 ROM TX completion（含 `__ashldi3` callback bridge），但
+  `HUAWEI-HLJ_Guest` 未返回 gateway/公网 Echo Reply；RF5C 保持进行中，待受控 ICMP
+  peer 或确认该访客网络策略后再冻结 baseline。
 
 ### H0 -- Rename `hisi-riscv-hal` To `hisi-hal`
 

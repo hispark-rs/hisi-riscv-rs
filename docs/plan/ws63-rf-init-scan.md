@@ -93,6 +93,12 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 
 - **RF5A TX/RX closure**：从 vendor headers 生成 pbuf layout checks；真实 TX symbol
   替换测试 sink，RX `driverif_input` 进入有界 L2 queue，先以 ARP round-trip 验收。
+- 当前 RF5A evidence：以原厂 `lwip/lwipopts_default.h`（`NO_SYS=0`）和 delivered
+  archive DWARF 为 oracle，确认 `pbuf=32 bytes`、`netif.drv_send@244`、80-byte
+  headroom、4-byte tailroom 和 RX `ETH_PAD_SIZE=2`。smoltcp token 的 MTU scratch
+  已移到静态单占用缓冲，`dhcp_probe` 栈帧从超过主栈的规模降到 1136 bytes；真机
+  获得 `192.168.155.2/24`、router `192.168.155.1`，随后 ARP request/reply 通过
+  Rust-visible L2 path，UART 输出 `RF5A_DHCP_OK`、`RF5A_ARP_OK`。
 - **RF5B Open-AP connect**：增加 typed station config 和 deferred connection events；
   受控实验室 open AP 只用于数据面证明，不作为生产安全承诺。
 - 当前 RF5B evidence：`OpenNetwork::from_scan` 只能从真实 scan result 构造，
@@ -105,6 +111,10 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   WPA2/WPA3；开放网络路径默认不链接它，不能据此宣称受保护网络已经可用。
 - **RF5C Ping**：静态 IPv4 先行、DHCP 后补；ICMP 必须经过 Rust-visible L2 path。
   UART、ELF layout、patch manifest、image plan 和资源占用形成后续拆分的 A0 baseline。
+- 当前 RF5C evidence：ROM TX completion 所需 `__ashldi3` callback bridge 已补齐，ICMP
+  Echo Request 能完成 vendor TX；测试访客网络对 gateway 与 `1.1.1.1` 均未返回 Echo，
+  当前 marker 为 `RF5C_PING_TIMEOUT`。在受控可回 ICMP peer 上得到 Echo Reply 之前，
+  RF5C 仍未完成，不能冻结 A0 baseline。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 
@@ -140,6 +150,10 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   - `wifi_init_smoke --features full-init` 必须输出 `RF2_INIT_OK`，随后输出
     `RF3_SCAN_OK count=N` 或分类错误。
   - RF HIL 不进入普通 PR gate，放 self-hosted/manual workflow；每个 RF milestone 合并前必须留 UART log 证据。
+  - RF5A HIL 依次要求 `RF5B_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK`，并禁止
+    `RFDBG_EXCEPTION` / `RFDBG_FRW_QUEUE_BOUNDARY`。
+  - RF5C 只有出现 `RF5C_PING_OK` 才通过；`RF5C_PING_TIMEOUT` 只表示 request TX
+    已运行，不是 connectivity pass。
 
 ## Assumptions
 
