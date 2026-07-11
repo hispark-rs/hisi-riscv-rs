@@ -32,25 +32,26 @@ below). The honest picture:
 
 | Area | Symbols | Notes |
 |------|---------|-------|
-| Memory | `osal_kmalloc`/`osal_kfree`, `malloc`/`free`/`memalign`, `oal_mem_*` | real first-fit heap over a static pool; zero-initialised, 8-aligned |
+| Memory | `osal_kmalloc`/`osal_kfree`, `malloc`/`free`/`memalign`, `oal_mem_*` | real first-fit heap over the linker-owned SRAM remainder; zero-initialised, 8-aligned |
 | Scheduler | `osal_kthread_*`, `osal_sem_*`, `osal_mutex_*`, `osal_wait_*`, queues + event groups | real cooperative scheduler with **timed** blocking (`*_timeout` deadlines); validated by `sched_selftest` |
 | Sync / IRQ | `osal_irq_lock`/`restore`, spinlocks, atomics, `ArchIntLock`/`Restore` | real, via `mstatus.MIE` |
 | Timers | `osal_adapt_timer_*`, `frw_dmac_timer_*` | real ms software-timer service, fired from the FRW worker loop |
 | FRW / HCC data path | `frw_*`, `hcc_*` | real message-node pool + WiFi worker thread (on the scheduler) + host↔device FIFO; validated by `frw_hcc_selftest` |
 | netif → smoltcp | `netif` / `netif_smoltcp` (feature `net`) | real `smoltcp::phy::Device` behind the netif seam; `driverif_input` feeds RX, `TxToken` calls the TX sink; validated by `netif_smoltcp_selftest` (ARP round-trip) |
+| WS63 pbuf headroom | `pbuf_*` (`netif`) | vendor `PBUF_ZERO_COPY_RESERVE=80` layout; validated by real-silicon STA scan and RX frame copies |
 | Logging / securec | `osal_printk`, `log_event_wifi_print{0,1,2,4}`, `memset_s`/`memcpy_s` | log routed to a settable [`set_log_sink`]; `%` specifiers not expanded (raw fmt) |
 | Time leaves | `uapi_systick_get_ms`, `osal_udelay` | `mcycle`-based / busy-wait (approximate, uncalibrated) |
 | Adaptation shim | full `osal_adapt_*` (33) | forwards to the OSAL / event / irq / kthread / wait impls |
-| ROM globals | `g_dmac_alg_main`, `g_mac_res_etc` | referenced by `libwifi_rom_data.a`, defined by **no** vendor lib → provided here |
+| ROM state | `g_dmac_alg_main`, `g_mac_res_etc` | fixed mask-ROM BSS objects at `0x180b2c` / `0x1823f8`, resolved from `ws63_acore_rom.lds`; Rust does not redefine them |
 
 ### Scaffolds (defined + documented; need hardware or the real blob)
 
 | Area | Symbols | Needs |
 |------|---------|-------|
-| netif pbuf layout | `pbuf_*` (`netif`) | offsets reconciled with the WiFi build's `lwipopts.h`; the smoltcp TX sink pointed at the blob's real transmit symbol (mismatch corrupts silently) |
 | Per-line IRQ | `osal_irq_request/free/enable/disable` | trap-delivery wiring for the WLAN/MAC line |
 | WLAN rings / RF clk | `wlan_*`, `oal_ring_*` | descriptor rings + vendor RF HAL (on-silicon) |
-| eFuse / TRNG / NV / tsensor | `uapi_nv_read`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
+| eFuse / TRNG / tsensor | `uapi_efuse_*`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
+| NV read | `uapi_nv_read` | read-only parser for the official WS63 ACPU KV partition; validates page headers, key state, bounds, and CRC |
 
 ### What a full Wi-Fi link still needs (NOT radio reverse-engineering)
 
@@ -68,19 +69,19 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
   `libwpa_supplicant.a` — all present in the C SDK (`LIB_EXTRACT.md` lists paths).
 - **~40 are the runtime's job — and ~all are what THIS crate implements**: the
   `osal_*`/`oal_*`/`log_*`/`uapi_*` porting contract + compiler-rt builtins +
-  `g_dmac_alg_main`/`g_mac_res_etc` + the `__wifi_pkt_ram_*` linker symbols.
+  compiler-rt leaves + the `__wifi_pkt_ram_*` linker symbols. ROM-owned state
+  such as `g_dmac_alg_main`/`g_mac_res_etc` resolves from the ROM symbol table.
 
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **The runnable RF image path** that links the full init closure into an
-  application image. `hisi-riscv-rt` now owns the real `.wifi_pkt_ram` NOLOAD
-  region; `wifi_init_smoke --features full-init` currently reaches the next hard
-  blocker, stock `rust-lld` rejecting HiSilicon `R_RISCV_48_LLUI` relocation 58
-  in the Wi-Fi objects. Reproduce and compare with the vendor linker via
-  `tools/rf-reloc58-diagnose.sh`.
-- **Pinning the netif pbuf layout** to the WiFi build's `lwipopts.h` and the
-  smoltcp TX sink to the blob's transmit symbol (on hardware).
+- **The runnable RF image HIL path.** `hisi-riscv-rt` owns `.wifi_pkt_ram`, heap,
+  preserved, and radar boundaries. `tools/rf-build-full-init-lld-layout-patch.sh`
+  uses a stock-`rust-lld` layout pass, patches only manifested vendor custom
+  relocations, then verifies the final section layout before producing the ELF.
+  Current bring-up is validating the PMP/shared-memory/NV platform setup on silicon.
+- Generating checks for the remaining optional pbuf fields from the WiFi build's
+  headers, and connecting the smoltcp TX sink to the blob's transmit symbol.
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
 
 See the workspace [`ROADMAP.md`](../../../ROADMAP.md) connectivity milestones for
@@ -96,7 +97,8 @@ qemu-system-riscv32 -M ws63 -nographic -serial mon:stdio \
 ```
 
 `rf_port_demo` exercises the implemented porting functions and links the vendor
-ROM-data blob *through* this crate (its `g_dmac_alg_main` / `g_mac_res_etc`
-resolve here). Wired into `ws63-qemu/scripts/smoke-test.sh`.
+ROM-data blob *through* this crate. QEMU supplies the ROM-owned state symbols;
+real WS63 images resolve their fixed addresses from `ws63_acore_rom.lds`. Wired
+into `ws63-qemu/scripts/smoke-test.sh`.
 
 [`linked_list_allocator`]: https://crates.io/crates/linked_list_allocator

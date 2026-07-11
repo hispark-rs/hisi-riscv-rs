@@ -27,21 +27,16 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   RF examples `--defsym` 定义。
 - 新增最小真机 example：`wifi_init_smoke`。它依赖 `ws63-rf-rs`，链接完整 Wi-Fi init
   需要的 blob set、ROM symbol table 和 runtime porting layer。
-- 当前实现状态：`wifi_init_smoke` 默认作为 RF1 image smoke 构建通过；开启
-  `--features full-init` 会拉入完整 vendor init closure，并稳定暴露 RF3 linker blocker：
-  stock `rust-lld` 在 vendor Wi-Fi 对象上报 unknown relocation 58。经
-  `tools/rf-reloc58-diagnose.sh` 对照，原厂 binutils 将该 relocation 解释为
-  HiSilicon `R_RISCV_48_LLUI`，并能 final-link；LLVM/upstream `lld` 按
-  `R_RISCV_IRELATIVE`/unknown path 处理，不能生成最终 executable。
-- 当前 workaround 保护：`tools/rf-build-full-init-oracle-patch.sh` 可用原厂 linker
-  生成 oracle ELF/map，再把 `R_RISCV_48_LLUI` patch 到 RF archive 后交给
-  stock `rust-lld` final-link；但该路径必须通过
-  `tools/rf-verify-oracle-layout.py` 校验 oracle/final section VMA 完全一致。当前
-  evidence 是 verifier 能识别真实 layout drift 并 fail closed，失败时删除不可信
-  final ELF，禁止进入烧录路径。
-- 当前 evidence：`hisi-fwpkg plan --chip ws63 --image-output` 可为默认
-  `wifi_init_smoke` 生成 8.8 KiB image；`.wifi_pkt_ram` 是 `SHT_NOBITS`，未进入
-  flash body。
+- 当前实现状态：`wifi_init_smoke --features full-init` 已可通过
+  `tools/rf-build-full-init-lld-layout-patch.sh` 生成完整 ELF。脚本先让 stock
+  `rust-lld` 决定最终 section layout，再按该 layout patch vendor custom relocation，
+  最后重新链接并逐 section 校验；布局漂移或 unresolved relocation 会 fail closed。
+- 原厂 linker/map 仍是诊断 oracle，但最终镜像不依赖原厂 linker。构建脚本为
+  patch manifest 和最终 RF section layout 做 fail-closed 校验；具体计数随 blob
+  closure 和诊断 feature 变化，不作为外部契约。
+- 当前 evidence：`hisi-fwpkg plan --chip ws63 --image-output` 已为完整
+  `wifi_init_smoke --features full-init` 产出从 `0x230000` 开始的 app image；
+  `.wifi_pkt_ram` 是 `SHT_NOBITS`，未进入 flash body。
 - 保持 `rf_port_demo` / `netif_smoltcp_selftest` 作为 QEMU/host selftest，不把它们称为
   真实 Wi-Fi。
 
@@ -55,17 +50,26 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
     维护 blob handler table。
 - `uapi_nv_read` 第一版从官方 fwpkg/NV 分区或已知 flash/NV item 读取真实 MAC/RF
   calibration；找不到时返回明确 `RF_ERR_NV_MISSING`，不静默使用全零校准。
+- 当前 evidence：SVD/PAC 已建模共享 RAM bank 与 BT exchange-memory gate；HAL
+  `SharedMemory`（unstable）实现原厂默认 `dyn_mem_cfg` 序列。`uapi_nv_read` 已对齐
+  4 参数 SDK ABI，并实现只读 ACPU KV page/key/CRC 解析；host parser tests 3/3 通过。
 
 ### RF3 -- Wi-Fi Init On Silicon
 
 - 调用最小 `uapi_wifi_init` / vendor init path。
-- 先解决 RF1 暴露的 HiSilicon `R_RISCV_48_LLUI` relocation 58：可选路径是
-  upstream `lld` 支持该 relocation、构建期使用原厂 linker，或实现受控 post-link /
-  object conversion；修复前不能宣称 stock `lld` 可直接生成完整 RF init executable。
-- oracle-patch 路径只作为受控 bring-up lane：固定输入、生成 patch manifest、
-  final-link 后强制校验布局；布局漂移时必须失败并清理 final ELF。下一步优先消除
-  oracle/final layout drift，或改成从 final `rust-lld` layout 解析 relocation 目标值，
-  避免依赖 vendor/final linker section 地址相同这一脆弱前提。
+- custom relocation 已采用 stock `rust-lld` layout 驱动的受控 patch lane；原厂
+  linker 不再参与最终地址决定。长期仍应推动 LLVM/binutils 正式识别 vendor
+  relocation，当前 lane 保留 manifest 与布局 fail-closed 保护。
+- 当前真机路径已越过 ROM veneer、cache、task ABI、PMP/shared-memory 和 NV 初始化，
+  UART 稳定输出 `RF2_INIT_OK ifname=wlan0`。任务切换按原厂 LiteOS 契约保存
+  `tp`、`mstatus` 和 `fcsr`，ROM FRW/HMAC 实现保持复用。
+- C ABI 对抗审计还修正了两个会静默破坏 init 的问题：tsensor 改回
+  `int8_t *` 输出参数 + status 返回；删除一参数 Rust `frw_rom_cb_register` stub，最终
+  ELF 已校验该符号解析到官方 mask-ROM `0x128d4a`。完整构建脚本会持续检查该地址。
+- 第一次修复后 HIL 已越过旧非对齐 trap，但定位到 `fe_rf_dev_attach.c:92` 的
+  `error rf cfg ops 35`。反汇编进一步证明 blob 自身按当前 feature 配置注册
+  `RX_NETBUF=0x105`、`RX_MSG=0x106`；示例原先手写 267/268 可能越界破坏 callback
+  table 相邻数据，现已删除这组重复注册，交由 vendor init 唯一负责。
 - 成功输出 `RF2_INIT_OK`；失败输出分类错误：
   ROM symbol fault、custom relocation fault、missing NV/eFuse、RF clock fault、
   IRQ not delivered、memory layout fault、blob panic。
@@ -75,20 +79,20 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 
 ### RF4 -- Scan MVP
 
-- 新增 `wifi_scan` example，只支持 STA scan。
-- `ws63-rf-rs` 暴露窄而不稳定的 API：
-  - `Wifi::init() -> Result<Wifi, RfError>`
-  - `Wifi::scan(&mut self, sink: impl FnMut(ScanRecord)) -> Result<(), RfError>`
-- 注册 vendor scan callback，将结果转换为最小
-  `ScanRecord { ssid, bssid, channel, rssi, auth_hint }`。
-- UART 最多输出前 N 个 AP，避免长日志阻塞。
-- HIL 验收：可控 AP 环境下输出 `RF3_SCAN_RESULT count=N`；若失败，输出分类失败码。
+- `wifi_init_smoke` 通过窄 `Wifi::init` / `Wifi::scan` API 执行 STA scan，并把
+  vendor 结果转换为固定容量 `ScanResult` 数组。
+- 原厂 `PBUF_ZERO_COPY_RESERVE=80` 已落实为
+  `[pbuf header][80-byte headroom][payload]`；`oal_pbuf_netbuf_alloc` 的
+  `payload - 0x50` 因而保持在分配内，不再覆盖通用 heap。
+- HIL 已验收：无高流量诊断的 `full-init` 镜像输出
+  `RF3_SCAN_OK count=0x20` 和真实 AP 的 SSID/frequency/RSSI；WLMAC IRQ 也在扫描期间
+  到达。输出仍限制为固定容量，避免无界日志。
 
 ### RF5 -- Post-Scan Preparation For Ping
 
 - 只在 scan 成功后进入，不阻塞 init+scan MVP。
-- 从 vendor `lwipopts.h` / C headers 抽取 pbuf layout，在 Rust 中加 offset/size 静态断言或
-  build-time check。
+- 为 pbuf 其余可选字段增加从 vendor headers 生成的 offset/size build-time check；
+  已验证的 80-byte zero-copy reserve 继续作为硬契约。
 - 找到真实 TX symbol，将 `netif_smoltcp` TX sink 从测试 sink 替换为 blob transmit adapter。
 - RX path 从 blob callback/IRQ 输入 `driverif_input`。
 - 开放 AP connect/ping 另立 milestone，不和 scan MVP 混在一个 PR/issue 里。
@@ -109,8 +113,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   - `cargo build -p ws63-rf-rs --release`
   - `cargo build -p rf_port_demo --release`
   - `cargo build -p wifi_init_smoke --release`
-  - `cargo build -p wifi_init_smoke --release --features full-init` 预期失败并报
-    `unknown relocation (58)`，直到 RF3 linker blocker 被解决。
+  - `chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh` 生成完整
+    `wifi_init_smoke` ELF，并验证 patch manifest 与 final layout。
+  - `cargo test -p ws63-rf-rs --target <host> --lib` 验证 NV parser。
   - `chips/ws63/rf/tools/mac-link-residual.sh`
   - `chips/ws63/rf/tools/rf-reloc58-diagnose.sh`
   - QEMU smoke：`rf_port_demo` 输出 `RF PORT DEMO: PASS`
@@ -119,8 +124,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   - `readelf` 验证 `.wifi_pkt_ram` 是 `NOBITS/NOLOAD`，地址 `0x00A00000`，大小 `0xC000`。
   - `hisi-fwpkg plan --image-output` 生成完整 image，hash/body range 正确。
 - HIL:
-  - `wifi_init_smoke` 必须输出 init OK 或分类错误。
-  - `wifi_scan` 必须在可控 AP 环境下输出 scan count 或分类错误。
+  - `wifi_init_smoke --features full-init` 必须输出 `RF2_INIT_OK`，随后输出
+    `RF3_SCAN_OK count=N` 或分类错误。
   - RF HIL 不进入普通 PR gate，放 self-hosted/manual workflow；每个 RF milestone 合并前必须留 UART log 证据。
 
 ## Assumptions
