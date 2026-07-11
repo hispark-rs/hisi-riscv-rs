@@ -15,17 +15,16 @@
 //!   them into smoltcp is the next step.
 //! - `netifapi_*` / `tcpip_callback` are accepted no-ops (no TCP/IP thread yet).
 //!
-//! ## ⚠ pbuf layout caveat
+//! ## pbuf layout boundary
 //!
 //! `struct pbuf` (lwip `pbuf.h`) is heavily `#if`-configured (`LWIP_RIPPLE`,
 //! `MEM_MALLOC_DMA_ALIGN`, `LWIP_USE_L2_METRICS`, zero-copy, `LWIP_PBUF_
 //! CUSTOM_DATA`, …). The blob accesses `payload`/`len`/`tot_len`/`next` at the
 //! offsets *it* was compiled with. The `Pbuf` struct below uses the **default**
-//! layout;
-//! before any real frame flows on hardware these offsets MUST be reconciled
-//! with the exact `lwipopts.h` the WiFi `.a` was built with (a mismatch would
-//! silently corrupt memory). For the current link/seam goal the definitions
-//! only need to exist.
+//! layout plus the WS63 `PBUF_ZERO_COPY_RESERVE=80` contract. The fields used
+//! by the vendor closure and this reserve have been reconciled against the
+//! original `lwipopts_default.h`; additional optional lwIP fields remain out of
+//! scope until the Rust data plane needs them.
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
@@ -59,12 +58,16 @@ struct Pbuf {
 }
 
 const PBUF_HDR: usize = core::mem::size_of::<Pbuf>();
+// The WS63 LiteOS lwIP configuration sets PBUF_ZERO_COPY_RESERVE to 80.
+// `oal_pbuf_netbuf_alloc` exposes this area as the netbuf's HCC/FRW/MAC
+// headroom by setting `data = pbuf->payload - 0x50`.
+const PBUF_ZERO_COPY_RESERVE: usize = 80;
 
-/// `pbuf_alloc(layer, length, type)` — allocate a single (unchained) pbuf whose
-/// payload directly follows the header. `layer`/`type` are ignored.
+/// `pbuf_alloc(layer, length, type)` — allocate a single (unchained) pbuf with
+/// the WS63 zero-copy headroom between its header and payload.
 #[unsafe(no_mangle)]
 pub extern "C" fn pbuf_alloc(_layer: c_int, length: u16, _type: c_int) -> *mut c_void {
-    let total = PBUF_HDR + length as usize;
+    let total = PBUF_HDR + PBUF_ZERO_COPY_RESERVE + length as usize;
     let raw = crate::alloc::osal_kmalloc(total) as *mut Pbuf;
     if raw.is_null() {
         return core::ptr::null_mut();
@@ -72,7 +75,7 @@ pub extern "C" fn pbuf_alloc(_layer: c_int, length: u16, _type: c_int) -> *mut c
     // SAFETY: freshly allocated `total` bytes.
     unsafe {
         (*raw).next = core::ptr::null_mut();
-        (*raw).payload = (raw as *mut u8).add(PBUF_HDR) as *mut c_void;
+        (*raw).payload = (raw as *mut u8).add(PBUF_HDR + PBUF_ZERO_COPY_RESERVE) as *mut c_void;
         (*raw).tot_len = length;
         (*raw).len = length;
         (*raw).list = core::ptr::null_mut();
