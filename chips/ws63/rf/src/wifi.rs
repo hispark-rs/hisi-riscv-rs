@@ -30,6 +30,10 @@ const EVENT_SCAN_DONE: c_int = 4;
 #[cfg(target_arch = "riscv32")]
 const EVENT_SCAN_RESULT: c_int = 5;
 #[cfg(target_arch = "riscv32")]
+const EVENT_CONNECT_RESULT: c_int = 6;
+#[cfg(target_arch = "riscv32")]
+const EVENT_DISCONNECT: c_int = 7;
+#[cfg(target_arch = "riscv32")]
 const IOCTL_SCAN: c_uint = 14;
 #[cfg(target_arch = "riscv32")]
 const IOCTL_SET_NETDEV: c_uint = 17;
@@ -77,6 +81,61 @@ pub struct ScanResult {
     pub frequency_mhz: u16,
     /// Signal strength in dBm. The vendor ABI reports hundredths of a dBm.
     pub rssi_dbm: i16,
+    security: ScanSecurity,
+}
+
+/// Security classification available from the scan result's capability bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScanSecurity {
+    /// IEEE 802.11 privacy is not advertised; no link-layer key is required.
+    Open,
+    /// Privacy is advertised. WPA/WPA2/WPA3 details require parsing the IEs.
+    Protected,
+}
+
+/// A discovered open network that can be passed to [`Wifi::connect_open`].
+///
+/// This type deliberately has no password or security-mode fields. RF5B only
+/// proves the unencrypted association and L2 data paths; authenticated networks
+/// will use a separate configuration type once the WPA boundary is integrated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OpenNetwork {
+    ssid: [u8; SSID_CAPACITY],
+    ssid_len: u8,
+    bssid: [u8; 6],
+    frequency_mhz: u16,
+}
+
+impl OpenNetwork {
+    /// Select an open network from a scan result.
+    pub fn from_scan(result: &ScanResult) -> Result<Self, Error> {
+        if result.ssid_len == 0 {
+            return Err(Error::InvalidSsid);
+        }
+        if result.security != ScanSecurity::Open {
+            return Err(Error::ProtectedNetwork);
+        }
+        Ok(Self {
+            ssid: result.ssid,
+            ssid_len: result.ssid_len,
+            bssid: result.bssid,
+            frequency_mhz: result.frequency_mhz,
+        })
+    }
+
+    /// SSID bytes used for this association.
+    pub fn ssid(&self) -> &[u8] {
+        &self.ssid[..self.ssid_len as usize]
+    }
+}
+
+/// Successful station association reported by the vendor runtime.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConnectionInfo {
+    /// BSSID selected by the firmware.
+    pub bssid: [u8; 6],
+    /// Associated center frequency in MHz.
+    pub frequency_mhz: u16,
 }
 
 impl ScanResult {
@@ -86,6 +145,7 @@ impl ScanResult {
         bssid: [0; 6],
         frequency_mhz: 0,
         rssi_dbm: 0,
+        security: ScanSecurity::Open,
     };
 
     /// SSID bytes exactly as advertised by the access point.
@@ -96,6 +156,11 @@ impl ScanResult {
     /// Empty value for caller-provided scan buffers.
     pub const fn empty() -> Self {
         Self::EMPTY
+    }
+
+    /// Coarse security classification reported by this beacon/probe response.
+    pub const fn security(&self) -> ScanSecurity {
+        self.security
     }
 }
 
@@ -116,10 +181,20 @@ pub enum Error {
     Timebase(u32),
     /// A scan is already in progress.
     Busy,
+    /// The selected network has an empty or otherwise unusable SSID.
+    InvalidSsid,
+    /// The selected AP advertises link-layer privacy and is not an open network.
+    ProtectedNetwork,
     /// The vendor scan ioctl failed.
     StartScan(c_int),
     /// The scan finished with a non-success vendor status.
     ScanFailed(ScanStatus),
+    /// The vendor refused to start the association.
+    StartConnect(c_int),
+    /// Association completed with an IEEE 802.11 status other than success.
+    ConnectFailed(u16),
+    /// The station disconnected while association was pending.
+    Disconnected(u16),
     /// Rust stopped waiting before the vendor emitted scan-done.
     Timeout,
     /// This API only runs on the WS63 RISC-V target.
@@ -304,6 +379,97 @@ impl<'d> Wifi<'d> {
         }
     }
 
+    /// Associate with a discovered unencrypted access point.
+    ///
+    /// The request is copied by the synchronous vendor ioctl. Completion is
+    /// deferred through the shared event callback and observed here in normal
+    /// task context; no user callback runs inside the vendor event path.
+    pub fn connect_open(
+        &mut self,
+        network: &OpenNetwork,
+        timeout_ms: u32,
+    ) -> Result<ConnectionInfo, Error> {
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            let _ = (network, timeout_ms);
+            Err(Error::UnsupportedTarget)
+        }
+
+        #[cfg(target_arch = "riscv32")]
+        {
+            let started = critical_section::with(|cs| {
+                let state = CONNECTION_STATE.borrow(cs);
+                if state.active.get() {
+                    return false;
+                }
+                state.active.set(true);
+                state.done.set(false);
+                state.outcome.set(ConnectionOutcome::Pending);
+                true
+            });
+            if !started {
+                return Err(Error::Busy);
+            }
+
+            let mut ssid = network.ssid;
+            let mut bssid = network.bssid;
+            let mut crypto = VendorCryptoSettings::zeroed();
+            let mut params = VendorAssociateParams {
+                bssid: bssid.as_mut_ptr(),
+                ssid: ssid.as_mut_ptr(),
+                ie: core::ptr::null_mut(),
+                key: core::ptr::null_mut(),
+                auth_type: 0, // EXT_AUTHTYPE_OPEN_SYSTEM
+                privacy: 0,
+                key_len: 0,
+                key_idx: 0,
+                mfp: 0,
+                auto_connect: 0,
+                reserved: [0; 2],
+                frequency_mhz: network.frequency_mhz as u32,
+                ssid_len: network.ssid_len as u32,
+                ie_len: 0,
+                crypto: &mut crypto,
+            };
+
+            // SAFETY: all pointers in `params` refer to live local buffers for
+            // the synchronous call. The layout is asserted against the SDK's
+            // RV32 `ext_associate_params_stru` contract below.
+            let result = unsafe {
+                uapi_ioctl_assoc(
+                    self.ifname.as_ptr().cast(),
+                    (&mut params as *mut VendorAssociateParams).cast(),
+                )
+            };
+            if result != 0 {
+                finish_connection();
+                return Err(Error::StartConnect(result));
+            }
+
+            let started_at = crate::uapi::monotonic_ms();
+            loop {
+                let (done, outcome) = critical_section::with(|cs| {
+                    let state = CONNECTION_STATE.borrow(cs);
+                    (state.done.get(), state.outcome.get())
+                });
+                if done {
+                    finish_connection();
+                    return match outcome {
+                        ConnectionOutcome::Connected(info) => Ok(info),
+                        ConnectionOutcome::Failed(status) => Err(Error::ConnectFailed(status)),
+                        ConnectionOutcome::Disconnected(reason) => Err(Error::Disconnected(reason)),
+                        ConnectionOutcome::Pending => Err(Error::Timeout),
+                    };
+                }
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
+                    finish_connection();
+                    return Err(Error::Timeout);
+                }
+                crate::sched::sleep_ms(1);
+            }
+        }
+    }
+
     /// Vendor-created, NUL-free interface name.
     pub fn interface_name(&self) -> &[u8] {
         let len = self
@@ -370,11 +536,86 @@ struct VendorScanResult {
 }
 
 #[cfg(target_arch = "riscv32")]
+#[repr(C)]
+struct VendorCryptoSettings {
+    wpa_versions: u32,
+    cipher_group: u32,
+    pairwise_count: i32,
+    pairwise: [u32; 5],
+    akm_count: i32,
+    akm: [u32; 2],
+    sae_pwe: u8,
+    reserved: [u8; 3],
+}
+
+#[cfg(target_arch = "riscv32")]
+impl VendorCryptoSettings {
+    const fn zeroed() -> Self {
+        Self {
+            wpa_versions: 0,
+            cipher_group: 0,
+            pairwise_count: 0,
+            pairwise: [0; 5],
+            akm_count: 0,
+            akm: [0; 2],
+            sae_pwe: 0,
+            reserved: [0; 3],
+        }
+    }
+}
+
+#[cfg(target_arch = "riscv32")]
+#[repr(C)]
+struct VendorAssociateParams {
+    bssid: *mut u8,
+    ssid: *mut u8,
+    ie: *mut u8,
+    key: *mut u8,
+    auth_type: u8,
+    privacy: u8,
+    key_len: u8,
+    key_idx: u8,
+    mfp: u8,
+    auto_connect: u8,
+    reserved: [u8; 2],
+    frequency_mhz: u32,
+    ssid_len: u32,
+    ie_len: u32,
+    crypto: *mut VendorCryptoSettings,
+}
+
+#[cfg(target_arch = "riscv32")]
+#[repr(C)]
+struct VendorConnectResult {
+    request_ie: *mut u8,
+    request_ie_len: u32,
+    response_ie: *mut u8,
+    response_ie_len: u32,
+    bssid: [u8; 6],
+    reserved: [u8; 2],
+    status: u16,
+    frequency_mhz: u16,
+}
+
+#[cfg(target_arch = "riscv32")]
+#[repr(C)]
+struct VendorDisconnect {
+    ie: *mut u8,
+    reason: u16,
+    reserved: [u8; 2],
+    ie_len: u32,
+}
+
+#[cfg(target_arch = "riscv32")]
 const _: () = {
     assert!(core::mem::size_of::<VendorScanSsid>() == 36);
     assert!(core::mem::size_of::<VendorScan>() == 24);
     assert!(core::mem::size_of::<VendorIoctl>() == 8);
     assert!(core::mem::size_of::<VendorScanResult>() == 44);
+    assert!(core::mem::size_of::<VendorCryptoSettings>() == 48);
+    assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
+    assert!(core::mem::size_of::<VendorConnectResult>() == 28);
+    assert!(core::mem::size_of::<VendorDisconnect>() == 12);
 };
 
 #[cfg(target_arch = "riscv32")]
@@ -409,8 +650,36 @@ static SCAN_RESULTS: ScanResultStorage =
 static WIFI_CLAIMED: AtomicBool = AtomicBool::new(false);
 
 #[cfg(target_arch = "riscv32")]
+#[derive(Clone, Copy)]
+enum ConnectionOutcome {
+    Pending,
+    Connected(ConnectionInfo),
+    Failed(u16),
+    Disconnected(u16),
+}
+
+#[cfg(target_arch = "riscv32")]
+struct ConnectionState {
+    active: Cell<bool>,
+    done: Cell<bool>,
+    outcome: Cell<ConnectionOutcome>,
+}
+
+#[cfg(target_arch = "riscv32")]
+static CONNECTION_STATE: Mutex<ConnectionState> = Mutex::new(ConnectionState {
+    active: Cell::new(false),
+    done: Cell::new(false),
+    outcome: Cell::new(ConnectionOutcome::Pending),
+});
+
+#[cfg(target_arch = "riscv32")]
 fn finish_scan() {
     critical_section::with(|cs| SCAN_STATE.borrow(cs).active.set(false));
+}
+
+#[cfg(target_arch = "riscv32")]
+fn finish_connection() {
+    critical_section::with(|cs| CONNECTION_STATE.borrow(cs).active.set(false));
 }
 
 #[cfg(any(target_arch = "riscv32", test))]
@@ -459,6 +728,11 @@ unsafe extern "C" fn scan_event(
             result.bssid = vendor.bssid;
             result.frequency_mhz = vendor.frequency.clamp(0, u16::MAX as i32) as u16;
             result.rssi_dbm = (vendor.level / 100).clamp(i16::MIN as i32, i16::MAX as i32) as i16;
+            result.security = if vendor.capabilities & 0x0010 == 0 {
+                ScanSecurity::Open
+            } else {
+                ScanSecurity::Protected
+            };
             if !vendor.variable.is_null() && vendor.ie_len as usize <= MAX_IE_LENGTH {
                 // SAFETY: the vendor event owns a readable IE buffer for this
                 // callback and reports its exact byte length.
@@ -484,6 +758,43 @@ unsafe extern "C" fn scan_event(
                 state.done.set(true);
             }
         });
+    } else if event == EVENT_CONNECT_RESULT
+        && !data.is_null()
+        && length as usize == core::mem::size_of::<VendorConnectResult>()
+    {
+        // SAFETY: the vendor callback reports the exact connect-result layout
+        // and the value is copied before the callback returns.
+        let result = unsafe { &*data.cast::<VendorConnectResult>() };
+        let outcome = if result.status == 0 {
+            ConnectionOutcome::Connected(ConnectionInfo {
+                bssid: result.bssid,
+                frequency_mhz: result.frequency_mhz,
+            })
+        } else {
+            ConnectionOutcome::Failed(result.status)
+        };
+        critical_section::with(|cs| {
+            let state = CONNECTION_STATE.borrow(cs);
+            if state.active.get() {
+                state.outcome.set(outcome);
+                state.done.set(true);
+            }
+        });
+    } else if event == EVENT_DISCONNECT
+        && !data.is_null()
+        && length as usize == core::mem::size_of::<VendorDisconnect>()
+    {
+        // SAFETY: the callback length was checked against the vendor layout.
+        let disconnect = unsafe { &*data.cast::<VendorDisconnect>() };
+        critical_section::with(|cs| {
+            let state = CONNECTION_STATE.borrow(cs);
+            if state.active.get() {
+                state
+                    .outcome
+                    .set(ConnectionOutcome::Disconnected(disconnect.reason));
+                state.done.set(true);
+            }
+        });
     }
     0
 }
@@ -501,11 +812,12 @@ unsafe extern "C" {
         callback: Option<unsafe extern "C" fn(*const c_char, c_int, *mut u8, c_uint) -> c_int>,
     ) -> c_int;
     fn drv_soc_hwal_wpa_ioctl(ifname: *mut c_char, command: *const VendorIoctl) -> c_int;
+    fn uapi_ioctl_assoc(ifname: *const c_char, params: *mut c_void) -> c_int;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ssid_from_ies;
+    use super::{Error, OpenNetwork, ScanResult, ScanSecurity, ssid_from_ies};
 
     #[test]
     fn finds_ssid_information_element() {
@@ -515,5 +827,39 @@ mod tests {
     #[test]
     fn rejects_truncated_information_element() {
         assert_eq!(ssid_from_ies(&[0, 4, b'a', b'b']), b"");
+    }
+
+    #[test]
+    fn open_network_is_constructed_from_a_scan_result() {
+        let mut result = ScanResult::empty();
+        result.ssid[..4].copy_from_slice(b"open");
+        result.ssid_len = 4;
+        result.bssid = [1, 2, 3, 4, 5, 6];
+        result.frequency_mhz = 2437;
+
+        let network = OpenNetwork::from_scan(&result).unwrap();
+        assert_eq!(network.ssid(), b"open");
+        assert_eq!(network.bssid, result.bssid);
+        assert_eq!(network.frequency_mhz, 2437);
+    }
+
+    #[test]
+    fn hidden_scan_result_is_not_a_connectable_open_network() {
+        assert_eq!(
+            OpenNetwork::from_scan(&ScanResult::empty()),
+            Err(Error::InvalidSsid)
+        );
+    }
+
+    #[test]
+    fn protected_scan_result_is_not_a_connectable_open_network() {
+        let mut result = ScanResult::empty();
+        result.ssid[0] = b'x';
+        result.ssid_len = 1;
+        result.security = ScanSecurity::Protected;
+        assert_eq!(
+            OpenNetwork::from_scan(&result),
+            Err(Error::ProtectedNetwork)
+        );
     }
 }
