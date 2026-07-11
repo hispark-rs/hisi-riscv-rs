@@ -17,6 +17,8 @@ use hisi_riscv_hal::interrupt::{self, Interrupt, Priority};
 
 #[cfg(feature = "rf-queue-guard")]
 static mut FRW_QUEUE_GUARD_ARMED: bool = false;
+#[cfg(feature = "rf-queue-guard")]
+static mut FRW_QUEUE_GUARD_CALLER: u32 = 0;
 
 // ── Interrupt lock / restore (REAL) ─────────────────────────────────────────
 
@@ -293,13 +295,11 @@ fn check_frw_queue_at_lock_boundary(phase: &[u8]) {
         return;
     }
     let tail = frw_queue_tail();
-    if frw_queue_link_valid(tail) {
+    let host_bad = first_bad_host_queue();
+    if frw_queue_link_valid(tail) && host_bad.is_none() {
         return;
     }
-    let caller: u32;
-    unsafe {
-        core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
-    }
+    let caller = unsafe { FRW_QUEUE_GUARD_CALLER };
     crate::log_emit(b"RFDBG_FRW_QUEUE_BOUNDARY phase=");
     crate::log_emit(phase);
     crate::log_emit(b" caller=0x");
@@ -323,9 +323,59 @@ fn check_frw_queue_at_lock_boundary(phase: &[u8]) {
         };
     }
     crate::log_emit(&hex);
+    if let Some((index, field, value)) = host_bad {
+        crate::log_emit(b" host_index=0x");
+        emit_guard_hex(index as u32, &mut hex);
+        crate::log_emit(&hex);
+        crate::log_emit(b" field=0x");
+        emit_guard_hex(field as u32, &mut hex);
+        crate::log_emit(&hex);
+        crate::log_emit(b" value=0x");
+        emit_guard_hex(value, &mut hex);
+        crate::log_emit(&hex);
+    }
     crate::log_emit(b"\r\n");
     loop {
         core::hint::spin_loop();
+    }
+}
+
+#[cfg(all(feature = "rf-queue-guard", target_arch = "riscv32"))]
+#[inline(always)]
+pub(crate) fn set_frw_queue_guard_caller(caller: u32) {
+    unsafe { FRW_QUEUE_GUARD_CALLER = caller };
+}
+
+#[cfg(feature = "rf-queue-guard")]
+fn first_bad_host_queue() -> Option<(usize, usize, u32)> {
+    let base = crate::netif::frw_host_queue_base();
+    for index in 0..5 {
+        let queue = base + 8 + index * 24;
+        for (field, offset) in [(0, 0), (1, 4)] {
+            let value = unsafe { core::ptr::read_volatile((queue + offset) as *const u32) };
+            if value != queue as u32
+                && (!(0x00a1_8700..0x00a8_df00).contains(&value) || !value.is_multiple_of(4))
+            {
+                return Some((index, field, value));
+            }
+        }
+        let callback = unsafe { core::ptr::read_volatile((queue + 16) as *const u32) };
+        if callback != 0 && !(0x0023_0000..0x0030_0000).contains(&callback) {
+            return Some((index, 2, callback));
+        }
+    }
+    None
+}
+
+#[cfg(feature = "rf-queue-guard")]
+fn emit_guard_hex(value: u32, output: &mut [u8; 8]) {
+    for (index, byte) in output.iter_mut().enumerate() {
+        let nibble = ((value >> ((7 - index) * 4)) & 0xf) as u8;
+        *byte = if nibble < 10 {
+            b'0' + nibble
+        } else {
+            b'a' + nibble - 10
+        };
     }
 }
 

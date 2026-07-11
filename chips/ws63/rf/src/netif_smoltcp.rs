@@ -50,6 +50,18 @@ static BRIDGE: BridgeCell = BridgeCell(UnsafeCell::new(Bridge {
     tx_sink: None,
 }));
 
+struct ScratchCell(UnsafeCell<[u8; MTU]>);
+// SAFETY: each scratch buffer is claimed and released under the single-hart
+// critical section before it is accessed outside that section.
+unsafe impl Sync for ScratchCell {}
+
+static RX_SCRATCH: ScratchCell = ScratchCell(UnsafeCell::new([0; MTU]));
+static TX_SCRATCH: ScratchCell = ScratchCell(UnsafeCell::new([0; MTU]));
+static RX_SCRATCH_CLAIMED: cs::Mutex<core::cell::Cell<bool>> =
+    cs::Mutex::new(core::cell::Cell::new(false));
+static TX_SCRATCH_CLAIMED: cs::Mutex<core::cell::Cell<bool>> =
+    cs::Mutex::new(core::cell::Cell::new(false));
+
 #[inline]
 fn with_bridge<R>(f: impl FnOnce(&mut Bridge) -> R) -> R {
     cs::with(|_| f(unsafe { &mut *BRIDGE.0.get() }))
@@ -72,17 +84,18 @@ pub fn rx_push(frame: &[u8]) {
     });
 }
 
-fn rx_pop(into: &mut [u8; MTU]) -> Option<usize> {
+fn rx_pop(into: &mut [u8]) -> Option<usize> {
     with_bridge(|b| {
         if b.rx_count == 0 {
             return None;
         }
         let slot = b.rx_head;
         let n = b.rx_len[slot];
-        into[..n].copy_from_slice(&b.rx[slot][..n]);
+        let copied = n.min(into.len());
+        into[..copied].copy_from_slice(&b.rx[slot][..copied]);
         b.rx_head = (b.rx_head + 1) % RX_DEPTH;
         b.rx_count -= 1;
-        Some(n)
+        Some(copied)
     })
 }
 
@@ -90,12 +103,55 @@ fn rx_pop(into: &mut [u8; MTU]) -> Option<usize> {
 /// Internal bring-up hook used by packet-level HIL checks.
 #[doc(hidden)]
 pub fn take_received(out: &mut [u8]) -> Option<usize> {
-    let mut frame = [0; MTU];
-    rx_pop(&mut frame).map(|length| {
-        let copied = length.min(out.len());
-        out[..copied].copy_from_slice(&frame[..copied]);
-        copied
-    })
+    rx_pop(out)
+}
+
+/// IPv4 configuration returned by a DHCP server.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DhcpConfig {
+    /// Assigned IPv4 address.
+    pub address: [u8; 4],
+    /// Prefix length associated with `address`.
+    pub prefix_len: u8,
+    /// Default router, if supplied by the server.
+    pub router: Option<[u8; 4]>,
+}
+
+/// Run smoltcp's DHCPv4 client over the real vendor L2 seam.
+///
+/// This bounded bring-up helper owns a temporary interface/socket set and
+/// returns after the first lease or `timeout_ms`.
+#[doc(hidden)]
+pub fn dhcp_probe(mac: [u8; 6], timeout_ms: u32) -> Option<DhcpConfig> {
+    use smoltcp::iface::{Config, Interface, SocketSet, SocketStorage};
+    use smoltcp::socket::dhcpv4;
+    use smoltcp::wire::{EthernetAddress, HardwareAddress};
+
+    let mut device = Ws63Device;
+    let mut config = Config::new(HardwareAddress::Ethernet(EthernetAddress(mac)));
+    config.random_seed = 0x5753_3633;
+    let mut interface = Interface::new(config, &mut device, Instant::from_millis(0));
+    let mut storage = [SocketStorage::EMPTY; 1];
+    let mut sockets = SocketSet::new(&mut storage[..]);
+    let handle = sockets.add(dhcpv4::Socket::new());
+
+    let mut elapsed = 0_u32;
+    while elapsed <= timeout_ms {
+        let now = Instant::from_millis(elapsed as i64);
+        let _ = interface.poll(now, &mut device, &mut sockets);
+        if let Some(dhcpv4::Event::Configured(config)) =
+            sockets.get_mut::<dhcpv4::Socket>(handle).poll()
+        {
+            return Some(DhcpConfig {
+                address: config.address.address().octets(),
+                prefix_len: config.address.prefix_len(),
+                router: config.router.map(|address| address.octets()),
+            });
+        }
+        crate::osal::osal_msleep(10);
+        elapsed = elapsed.saturating_add(10);
+    }
+    None
 }
 
 fn tx_emit(frame: &[u8]) {
@@ -139,7 +195,6 @@ pub struct Ws63Device;
 
 /// RX token carrying one dequeued frame (owns its bytes — no borrow of `Device`).
 pub struct RxFrame {
-    buf: [u8; MTU],
     len: usize,
 }
 
@@ -151,18 +206,54 @@ impl phy::Device for Ws63Device {
     type TxToken<'a> = TxBuf;
 
     fn receive(&mut self, _t: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
-        let mut rx = RxFrame {
-            buf: [0; MTU],
-            len: 0,
-        };
-        rx_pop(&mut rx.buf).map(|n| {
-            rx.len = n;
-            (rx, TxBuf)
-        })
+        let claimed = cs::with(|cs| {
+            let claim = RX_SCRATCH_CLAIMED.borrow(cs);
+            if claim.get() {
+                false
+            } else {
+                claim.set(true);
+                true
+            }
+        });
+        if !claimed {
+            return None;
+        }
+        let tx_claimed = cs::with(|cs| {
+            let claim = TX_SCRATCH_CLAIMED.borrow(cs);
+            if claim.get() {
+                false
+            } else {
+                claim.set(true);
+                true
+            }
+        });
+        if !tx_claimed {
+            cs::with(|cs| RX_SCRATCH_CLAIMED.borrow(cs).set(false));
+            return None;
+        }
+        let scratch = unsafe { &mut *RX_SCRATCH.0.get() };
+        match rx_pop(scratch) {
+            Some(len) => Some((RxFrame { len }, TxBuf)),
+            None => {
+                cs::with(|cs| {
+                    RX_SCRATCH_CLAIMED.borrow(cs).set(false);
+                    TX_SCRATCH_CLAIMED.borrow(cs).set(false);
+                });
+                None
+            }
+        }
     }
 
     fn transmit(&mut self, _t: Instant) -> Option<Self::TxToken<'_>> {
-        Some(TxBuf)
+        cs::with(|cs| {
+            let claim = TX_SCRATCH_CLAIMED.borrow(cs);
+            if claim.get() {
+                None
+            } else {
+                claim.set(true);
+                Some(TxBuf)
+            }
+        })
     }
 
     fn capabilities(&self) -> DeviceCapabilities {
@@ -175,17 +266,32 @@ impl phy::Device for Ws63Device {
 
 impl phy::RxToken for RxFrame {
     fn consume<R, F: FnOnce(&[u8]) -> R>(self, f: F) -> R {
-        f(&self.buf[..self.len])
+        let result = f(&unsafe { &*RX_SCRATCH.0.get() }[..self.len]);
+        cs::with(|cs| RX_SCRATCH_CLAIMED.borrow(cs).set(false));
+        result
     }
 }
 
 impl phy::TxToken for TxBuf {
     fn consume<R, F: FnOnce(&mut [u8]) -> R>(self, len: usize, f: F) -> R {
-        let mut buf = [0u8; MTU];
         let n = len.min(MTU);
-        let r = f(&mut buf[..n]);
-        tx_emit(&buf[..n]);
+        let scratch = unsafe { &mut *TX_SCRATCH.0.get() };
+        let r = f(&mut scratch[..n]);
+        tx_emit(&scratch[..n]);
+        cs::with(|cs| TX_SCRATCH_CLAIMED.borrow(cs).set(false));
         r
+    }
+}
+
+impl Drop for RxFrame {
+    fn drop(&mut self) {
+        cs::with(|cs| RX_SCRATCH_CLAIMED.borrow(cs).set(false));
+    }
+}
+
+impl Drop for TxBuf {
+    fn drop(&mut self) {
+        cs::with(|cs| TX_SCRATCH_CLAIMED.borrow(cs).set(false));
     }
 }
 
@@ -269,4 +375,15 @@ pub fn netif_smoltcp_selftest() -> [u32; 3] {
             && source_protocol_addr == our_ip;
     }
     [txc, reply_ok as u32, (txc >= 1 && reply_ok) as u32]
+}
+
+#[cfg(test)]
+mod stack_tests {
+    use super::{RxFrame, TxBuf};
+
+    #[test]
+    fn device_tokens_do_not_embed_mtu_sized_stack_buffers() {
+        assert!(core::mem::size_of::<RxFrame>() <= 16);
+        assert_eq!(core::mem::size_of::<TxBuf>(), 0);
+    }
 }

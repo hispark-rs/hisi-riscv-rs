@@ -138,7 +138,22 @@ pub use pmp::prepare_vendor_memory;
 #[cfg(target_arch = "riscv32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn __ws63_missing_rom_callback() -> ! {
-    log_emit(b"RFDBG_MISSING_ROM_CALLBACK\r\n");
+    let caller: u32;
+    unsafe {
+        core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
+    }
+    let mut hex = [0_u8; 8];
+    for (index, byte) in hex.iter_mut().enumerate() {
+        let nibble = ((caller >> ((7 - index) * 4)) & 0xf) as u8;
+        *byte = if nibble < 10 {
+            b'0' + nibble
+        } else {
+            b'a' + nibble - 10
+        };
+    }
+    log_emit(b"RFDBG_MISSING_ROM_CALLBACK ra=0x");
+    log_emit(&hex);
+    log_emit(b"\r\n");
     loop {
         core::hint::spin_loop();
     }

@@ -211,6 +211,14 @@ pub extern "C" fn osal_spin_lock_init(lock: *mut OsalSpinlock) -> c_int {
 /// Lock (disable interrupts; save prior state in the handle).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_spin_lock(lock: *mut OsalSpinlock) {
+    #[cfg(all(feature = "rf-queue-guard", target_arch = "riscv32"))]
+    {
+        let caller: u32;
+        unsafe {
+            core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
+        }
+        crate::osal::set_frw_queue_guard_caller(caller);
+    }
     let st = crate::osal::osal_irq_lock();
     if !lock.is_null() {
         unsafe { (*lock).lock = st as *mut c_void };
@@ -229,6 +237,14 @@ pub extern "C" fn osal_spin_unlock(lock: *mut OsalSpinlock) {
 /// Lock, saving the interrupt state into `flags`.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_spin_lock_irqsave(_lock: *mut OsalSpinlock, flags: *mut core::ffi::c_ulong) {
+    #[cfg(all(feature = "rf-queue-guard", target_arch = "riscv32"))]
+    {
+        let caller: u32;
+        unsafe {
+            core::arch::asm!("mv {caller}, ra", caller = out(reg) caller, options(nomem, nostack));
+        }
+        crate::osal::set_frw_queue_guard_caller(caller);
+    }
     let st = crate::osal::osal_irq_lock();
     if !flags.is_null() {
         unsafe { *flags = st };

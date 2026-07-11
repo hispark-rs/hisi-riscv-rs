@@ -33,6 +33,10 @@ const NETIF_HWADDR_LEN_OFFSET: usize = 274;
 const PBUF_TYPE_RAM: u8 = 0x80;
 const NETIF_NO_INDEX: u8 = 0;
 const PBUF_ZERO_COPY_TAILROOM: usize = 4;
+// The delivered lwIP configuration sets ETH_PAD_SIZE=2. The SDK RX adapter
+// exposes those two alignment bytes before calling `driverif_input`; smoltcp's
+// Ethernet device contract starts at the destination MAC and must not see them.
+const ETH_PAD_SIZE: usize = 2;
 
 /// Frames handed up by [`driverif_input`] and dropped (until smoltcp is wired).
 static RX_DROPPED: AtomicU32 = AtomicU32::new(0);
@@ -71,6 +75,31 @@ pub struct NetifDiagnostics {
     pub hardware_address_len: u8,
     /// Raw six-byte `netif.hwaddr` storage.
     pub hardware_address: [u8; 6],
+}
+
+#[cfg(feature = "rf-queue-guard")]
+pub(crate) fn frw_host_queue_base() -> usize {
+    unsafe extern "C" {
+        fn frw_netbuf_hook_register(kind: u16, callback: *const c_void) -> c_int;
+    }
+    let register = frw_netbuf_hook_register as *const u8;
+    // SAFETY: see `netbuf_hook_diagnostics`; `g_frw_thread_ctrl` immediately
+    // follows the 24-byte `g_netbuf_d2h_ctrl` object in frw_hmac/frw_thread.
+    unsafe { core::ptr::read_unaligned(register.add(12).cast::<u32>()) as usize + 24 }
+}
+
+/// Arm trigger 0 on the first host FRW queue's immutable callback word.
+#[cfg(all(feature = "rf-queue-guard", target_arch = "riscv32"))]
+#[doc(hidden)]
+pub fn arm_host_queue_callback_watchpoint() {
+    let address = frw_host_queue_base() + 8 + 16;
+    // mcontrol, machine mode, exact 32-bit store match, breakpoint exception.
+    let control = 0x2003_0042_u32;
+    unsafe {
+        core::arch::asm!("csrw tselect, zero", options(nomem, nostack));
+        core::arch::asm!("csrw tdata2, {address}", address = in(reg) address, options(nomem, nostack));
+        core::arch::asm!("csrw tdata1, {control}", control = in(reg) control, options(nomem, nostack));
+    }
 }
 
 /// Snapshot the registered vendor interface without calling into it.
@@ -292,6 +321,7 @@ pub fn transmit(frame: &[u8]) -> Result<(), TxError> {
 }
 
 #[cfg(feature = "net")]
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
 pub(crate) fn vendor_tx_sink(frame: &[u8]) {
     if transmit(frame).is_err() {
         TX_FAILED.fetch_add(1, Ordering::Relaxed);
@@ -318,8 +348,16 @@ pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
             // SAFETY: `p` is a live pbuf from pbuf_alloc; payload/len are set by
             // the driver. Copy the single-buffer frame to the smoltcp RX queue.
             let (payload, len) = unsafe { ((*pb).payload, (*pb).len as usize) };
-            if !payload.is_null() && len > 0 && len <= crate::netif_smoltcp::MTU {
-                let bytes = unsafe { core::slice::from_raw_parts(payload as *const u8, len) };
+            if !payload.is_null()
+                && len > ETH_PAD_SIZE
+                && len - ETH_PAD_SIZE <= crate::netif_smoltcp::MTU
+            {
+                let bytes = unsafe {
+                    core::slice::from_raw_parts(
+                        payload.cast::<u8>().add(ETH_PAD_SIZE),
+                        len - ETH_PAD_SIZE,
+                    )
+                };
                 crate::netif_smoltcp::rx_push(bytes);
                 RX_RECEIVED.fetch_add(1, Ordering::Relaxed);
             } else {
