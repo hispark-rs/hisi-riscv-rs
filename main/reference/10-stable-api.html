@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-1f4e4372.js";
+            window.path_to_searchindex_js = "../searchindex-920cc449.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -189,6 +189,8 @@
 <p><strong>证据基线（2026-07-04）：</strong> WS63 真机 <code>tests/hil.rs</code> embedded-test 套件 26/26 通过。下面的 STABLE 表只列默认
 <code>features = ["chip-ws63", "rt"]</code> 面向用户公开的子集；凡需额外台架、opt-in feature、或 soundness 不变量尚未闭合的入口，
 即使代码存在，也放在 UNSTABLE。</p>
+<p><strong>增量证据（2026-07-12）：</strong> <code>tests::i2c0_nack_is_reported_after_done</code> 在 WS63 真机通过，验证 v150
+控制器按 <code>DONE</code> 完成后报告 <code>ACK_ERR</code>；当前新增用例尚待 M2 默认套件全量重跑后并入新的总数基线。</p>
 <h2 id="stable默认暴露"><a class="header" href="#stable默认暴露">STABLE（默认暴露）</a></h2>
 <div class="table-wrapper">
 <table>
@@ -199,7 +201,7 @@
 <tr><td>GPIO <code>Input</code> / <code>Output</code> / <code>Flex</code>、<code>GpioBank</code></td><td>真机 GPIO 输出/输入基本路径覆盖</td><td>GPIO IRQ、等待边沿</td></tr>
 <tr><td>UART0/1 blocking、<code>BaudRate</code>、<code>UartClock</code>、<code>UartPort</code>、sealed <code>UartInstance</code></td><td>真机 UART0/1 blocking 配置与收发路径覆盖</td><td>UART2、async I/O、DMA</td></tr>
 <tr><td>SPI0 blocking、blocking-backed <code>async</code> <code>SpiBus</code> trait impl</td><td>真机 SPI0 配置/传输路径覆盖；外部 loopback 台架仍按需单独跑</td><td>SPI1、DMA、interrupt/waker async</td></tr>
-<tr><td>WS63 I2C0 blocking、blocking-backed <code>async</code> <code>I2c</code> trait impl</td><td>真机 I2C0 配置、7-bit 地址拒绝与无从机扫描行为覆盖</td><td>I2C1、需真实从机的业务事务承诺</td></tr>
+<tr><td>WS63 I2C0 blocking、blocking-backed <code>async</code> <code>I2c</code> trait impl</td><td>真机 I2C0 配置、7-bit 地址拒绝，以及 <code>DONE</code> 后 NACK 报告路径覆盖</td><td>I2C1、需真实从机的业务事务承诺</td></tr>
 <tr><td>Timer raw configure/enable/current/interrupt paths、<code>TimerChannel</code></td><td>真机 raw timer 与中断路径覆盖</td><td>one-shot/periodic wrapper、async delay</td></tr>
 <tr><td>TCXO</td><td>真机计数器读取与推进覆盖</td><td>—</td></tr>
 <tr><td>PWM Ch0 config/enable/disable、<code>PwmPeriod</code>、<code>Duty</code>、fallible duty writes</td><td>真机确认 WS63 <code>pwm_freq_h</code> 高半不 latch，因此稳定面只承诺 Ch0 register-latch 事实</td><td>Ch1..Ch7、真实波形 HIL、polarity/start/pulse-count、<code>into_running</code></td></tr>
