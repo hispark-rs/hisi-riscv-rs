@@ -14,8 +14,8 @@ I2S <code>CKEN_CTL0</code> bit 11 (bus) + bit 12 (clk) (<code>sio_porting.c</cod
 <li><strong>Not individually gated by the SDK</strong> (rely on the reset-default clock; the
 bit is not attested by the SVD or porting code): I2C, Timer, LSADC, Tsensor,
 TRNG, Security, DMA, SDMA, SFC, SPI1 — <code>cken_info</code> returns <code>None</code> for these
-rather than fabricating a bit. WiFi/BT entry gates (<code>CKEN_CTL1</code> 13 / 8–12 /
-29) are owned by the radio blobs and are not in this enum.</li>
+rather than fabricating a bit. The Wi-Fi entry gate at <code>CKEN_CTL1</code> bit 13
+is sequenced by [<code>crate::rf_power::RfPower</code>] and is not in this enum.</li>
 </ul>
 <p>The earlier <code>ClockControl</code> / <code>PeripheralGuard</code> RAII layer was removed: it had
 zero consumers (the drivers rely on the reset-default clocks) and was dead

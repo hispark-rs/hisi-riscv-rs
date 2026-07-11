@@ -14,8 +14,8 @@
 <a href=#14 id=14 data-nosnippet>14</a>//! - **Not individually gated by the SDK** (rely on the reset-default clock; the
 <a href=#15 id=15 data-nosnippet>15</a>//!   bit is not attested by the SVD or porting code): I2C, Timer, LSADC, Tsensor,
 <a href=#16 id=16 data-nosnippet>16</a>//!   TRNG, Security, DMA, SDMA, SFC, SPI1 — `cken_info` returns `None` for these
-<a href=#17 id=17 data-nosnippet>17</a>//!   rather than fabricating a bit. WiFi/BT entry gates (`CKEN_CTL1` 13 / 8–12 /
-<a href=#18 id=18 data-nosnippet>18</a>//!   29) are owned by the radio blobs and are not in this enum.
+<a href=#17 id=17 data-nosnippet>17</a>//!   rather than fabricating a bit. The Wi-Fi entry gate at `CKEN_CTL1` bit 13
+<a href=#18 id=18 data-nosnippet>18</a>//!   is sequenced by [`crate::rf_power::RfPower`] and is not in this enum.
 <a href=#19 id=19 data-nosnippet>19</a>//!
 <a href=#20 id=20 data-nosnippet>20</a>//! The earlier `ClockControl` / `PeripheralGuard` RAII layer was removed: it had
 <a href=#21 id=21 data-nosnippet>21</a>//! zero consumers (the drivers rely on the reset-default clocks) and was dead

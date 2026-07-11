@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["XoSignalSpec"],"type":["R","TrimCoarseR","TrimCoarseSelectR","TrimCoarseSelectW","TrimCoarseW","TrimFineR","TrimFineSelectR","TrimFineSelectW","TrimFineW","TrimReverseR","TrimReverseSelectR","TrimReverseSelectW","TrimReverseW","W"]};
