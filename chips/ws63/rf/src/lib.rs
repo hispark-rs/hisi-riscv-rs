@@ -37,7 +37,9 @@
 //! - **Logging / securec** — `osal_printk`, `log_event_*`, `memset_s`/`memcpy_s`
 //!   ([`log`]); string/time leaves ([`osal_ext`]).
 //! - **Adaptation** — the full `osal_adapt_*` shim ([`osal_adapt`]).
-//! - **Globals** — `g_dmac_alg_main` / `g_mac_res_etc` ([`globals`]).
+//! - **ROM state** — `g_dmac_alg_main` / `g_mac_res_etc` resolve to their
+//!   mask-ROM BSS addresses from `ws63_acore_rom.lds`; Rust must not shadow
+//!   these fixed objects with guessed storage.
 //!
 //! Scaffolds (defined, documented, need hardware / the real blob):
 //! - **netif pbuf layout** ([`netif`]) — `pbuf_*` use the default lwip layout;
@@ -80,7 +82,6 @@ use critical_section::Mutex;
 pub mod alloc;
 pub mod error;
 pub mod frw;
-pub mod globals;
 pub mod hcc;
 pub mod libc;
 pub mod litos;
