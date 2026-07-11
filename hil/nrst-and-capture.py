@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["pyserial"]
 # ///
-"""Pulse JLink hardware nRST (r0), then capture UART for MONITOR seconds."""
+"""Pulse the J-Link hardware reset pin, then capture UART."""
 import sys, os, time, subprocess
 import serial
 
@@ -13,14 +13,17 @@ MONITOR = int(os.environ.get("MONITOR", "10"))
 JLINK_CMD = "/tmp/_jlink_nrst_cmd.txt"
 
 def nrst_jlink():
-    """Pulse hardware nRST via JLinkExe.  r0 resets the target without
-    requiring a debug connection (unlike `r` which needs the device to be
-    known)."""
+    """Pulse hardware nRST through the probe's reset-pin commands.
+
+    `r0` stopped driving the physical pin with J-Link Commander 9.52 even
+    though it still returned success. SetRESET/ClrRESET is target-independent
+    and was verified by observing the WS63 boot ROM UART banner.
+    """
     with open(JLINK_CMD, "w") as f:
-        f.write("device WS63\n")
-        f.write("si 1\n")
-        f.write("speed 4000\n")
-        f.write("r0\n")
+        f.write("SetRESET\n")
+        f.write("sleep 200\n")
+        f.write("ClrRESET\n")
+        f.write("sleep 100\n")
         f.write("q\n")
     try:
         subprocess.run(
