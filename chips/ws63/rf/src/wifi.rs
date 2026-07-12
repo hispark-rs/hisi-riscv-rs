@@ -19,6 +19,7 @@ use portable_atomic::{AtomicBool, Ordering};
 
 const IFNAME_CAPACITY: usize = 17;
 const SSID_CAPACITY: usize = 32;
+#[cfg(feature = "wifi-wpa2-personal")]
 const WPA_KEY_CAPACITY: usize = 64;
 #[cfg(target_arch = "riscv32")]
 const MAX_IE_LENGTH: usize = 2304;

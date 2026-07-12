@@ -63,6 +63,8 @@ silicon.
   loading, and the vendor lwIP data-plane ABI.
 - Make connectivity HIL package the canonical planned image and pulse the J-Link
   nRST line before UART capture, eliminating stale image/reset behavior.
+- Align the RT ROM-patch pointer code and `rf_port_demo` with the pinned
+  nightly's Clippy rules and the current packed Wi-Fi log/OSAL time ABI.
 
 ---
 
