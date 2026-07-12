@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-61473eb0.js";
+            window.path_to_searchindex_js = "searchindex-9eb0260e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -324,7 +324,7 @@ rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
 </code></pre>
 <h2 id="第-3-步安装打包工具-hisi-fwpkg烧真机用"><a class="header" href="#第-3-步安装打包工具-hisi-fwpkg烧真机用">第 3 步：安装打包工具 hisi-fwpkg（烧真机用）</a></h2>
 <p>烧到真板时，flashboot 期望一个带 <code>0x300</code> 启动头的应用镜像，<code>hisi-fwpkg</code> 负责打包：</p>
-<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.0
+<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.2
 </code></pre>
 <blockquote>
 <p>也可以克隆 <a href="https://github.com/hispark-rs/hisi-fwpkg">github.com/hispark-rs/hisi-fwpkg</a>
@@ -579,7 +579,7 @@ bash scripts/build.sh
 <p>安装方法（深入说明见 <a href="#如何安装官方-rust-工具链">安装官方 Rust 工具链</a> 与
 <a href="#如何用-probe-rs-烧录到真机">用 probe-rs 烧录到真机</a>）：</p>
 <pre><code class="language-bash"># hisi-fwpkg
-cargo +stable install hisi-fwpkg-cli --version 0.3.0
+cargo +stable install hisi-fwpkg-cli --version 0.3.2
 
 # 打过补丁的 probe-rs 分支
 cargo install --git https://github.com/hispark-rs/probe-rs --branch add-hisilicon-ws63-bs21-hil-baseline probe-rs-tools
@@ -935,7 +935,7 @@ cargo build -Zbuild-std=core,alloc -p spi_loopback --release
 <li><code>patch-hash</code> 只保留给需要 ELF 元数据的路径，例如 <code>probe-rs run</code> / <code>embedded-test</code>；普通 smoke/download 不再直接烧 ELF。</li>
 </ul>
 <blockquote>
-<p>安装：<code>cargo +stable install hisi-fwpkg-cli --version 0.3.0</code>。</p>
+<p>安装：<code>cargo +stable install hisi-fwpkg-cli --version 0.3.2</code>。</p>
 </blockquote>
 <h2 id="生成-plan-image"><a class="header" href="#生成-plan-image">生成 plan image</a></h2>
 <p><code>plan</code> 会输出 JSON，并可同时写出要烧录的完整 flash image：</p>
@@ -1604,6 +1604,8 @@ cargo build -p myperiph_demo --release     # 示例能编出 ELF
 <ul>
 <li><code>hisi-riscv-rs v0.6.0-alpha.2</code> 的 anchor 是
 <code>hisi-riscv-hal 0.6.0-alpha.2</code>。</li>
+<li><code>hisi-riscv-rs v0.6.0-rc.1</code> 的 anchor 是
+<code>hisi-riscv-hal 0.6.0-rc.1</code>。</li>
 <li><code>hisi-riscv-rs v0.6.0</code> 的 anchor 可以是 HAL stable API <code>0.6.0</code>。</li>
 <li>未来如果 runtime 做大改，父仓 <code>v0.7.0-alpha.1</code> 可以 anchor 到
 RT/HAL 的组合，而不是单独跟 HAL。</li>
@@ -2630,7 +2632,7 @@ cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --feat
 <p>镜像字段布局见 <a href="#应用镜像格式与签名">应用镜像格式</a>；烧录步骤见 <a href="#如何用-probe-rs-烧录到真机">用 probe-rs 烧录</a>、<a href="#如何用-hisiflash-烧录到真机">用 hisiflash 烧录</a>。</p>
 <h2 id="hisi-fwpkg"><a class="header" href="#hisi-fwpkg"><code>hisi-fwpkg</code></a></h2>
 <p>把编译产物（ELF、带 header 的 ELF、裸 bin 或 fwpkg）解释成 HiSilicon app 镜像 / fwpkg。镜像格式事实源在 <code>hisi-fwpkg</code>；probe-rs/hisiflash 只消费它产出的 plan/image/package。</p>
-<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.0
+<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.2
 </code></pre>
 <h3 id="hisi-fwpkg-plan"><a class="header" href="#hisi-fwpkg-plan"><code>hisi-fwpkg plan</code></a></h3>
 <p>ELF/headered ELF/raw image/fwpkg → <code>FlashPlan</code> JSON；可同时输出 probe-rs smoke/download 使用的完整 flash image。WS63 即使使用 link-time <code>boot-header</code>，普通下载也推荐走 plan image，而不是让 probe-rs 直接烧 ELF 段。</p>

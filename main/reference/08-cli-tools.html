@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-61473eb0.js";
+            window.path_to_searchindex_js = "../searchindex-9eb0260e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -187,7 +187,7 @@
 <p>镜像字段布局见 <a href="06-image-format.html">应用镜像格式</a>；烧录步骤见 <a href="../how-to/04-flash-probe-rs.html">用 probe-rs 烧录</a>、<a href="../how-to/05-flash-hisiflash.html">用 hisiflash 烧录</a>。</p>
 <h2 id="hisi-fwpkg"><a class="header" href="#hisi-fwpkg"><code>hisi-fwpkg</code></a></h2>
 <p>把编译产物（ELF、带 header 的 ELF、裸 bin 或 fwpkg）解释成 HiSilicon app 镜像 / fwpkg。镜像格式事实源在 <code>hisi-fwpkg</code>；probe-rs/hisiflash 只消费它产出的 plan/image/package。</p>
-<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.0
+<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.2
 </code></pre>
 <h3 id="hisi-fwpkg-plan"><a class="header" href="#hisi-fwpkg-plan"><code>hisi-fwpkg plan</code></a></h3>
 <p>ELF/headered ELF/raw image/fwpkg → <code>FlashPlan</code> JSON；可同时输出 probe-rs smoke/download 使用的完整 flash image。WS63 即使使用 link-time <code>boot-header</code>，普通下载也推荐走 plan image，而不是让 probe-rs 直接烧 ELF 段。</p>

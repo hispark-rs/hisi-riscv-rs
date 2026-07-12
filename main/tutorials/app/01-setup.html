@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-61473eb0.js";
+            window.path_to_searchindex_js = "../../searchindex-9eb0260e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -223,7 +223,7 @@ rustup target list --toolchain nightly-2026-07-09 | grep riscv32imfc || \
 </code></pre>
 <h2 id="第-3-步安装打包工具-hisi-fwpkg烧真机用"><a class="header" href="#第-3-步安装打包工具-hisi-fwpkg烧真机用">第 3 步：安装打包工具 hisi-fwpkg（烧真机用）</a></h2>
 <p>烧到真板时，flashboot 期望一个带 <code>0x300</code> 启动头的应用镜像，<code>hisi-fwpkg</code> 负责打包：</p>
-<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.0
+<pre><code class="language-bash">cargo +stable install hisi-fwpkg-cli --version 0.3.2
 </code></pre>
 <blockquote>
 <p>也可以克隆 <a href="https://github.com/hispark-rs/hisi-fwpkg">github.com/hispark-rs/hisi-fwpkg</a>
