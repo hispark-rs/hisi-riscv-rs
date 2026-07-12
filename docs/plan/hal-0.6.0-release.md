@@ -60,7 +60,9 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 - HIL gate：
   - [x] 跑默认 WS63 HAL embedded-test suite：`chip-ws63,rt`；2026-07-12 真机
     30/30 通过。
-  - 跑一组 `unstable` smoke HIL，至少证明当前已有 unstable HIL 未回归。
+  - [x] 跑一组 `unstable` smoke HIL；2026-07-12 使用
+    `chip-ws63,rt,unstable` 在真实 WS63 上 32/32 通过，其中包含
+    `dma_mem_to_mem` 与 `dma_transfer_guard` 两个实验性用例。
   - `hil-loopback`、`hil-rtc`、示例级 `hil-smoke.sh` 不作为 crates.io 0.6.0 blocker。
 
 ### M3 -- Release Candidate
