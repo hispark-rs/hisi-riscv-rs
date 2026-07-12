@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KcRdSlotNumSpec"],"type":["R","SlotCfgTypeR","SlotCfgTypeW","SlotNumCfgR","SlotNumCfgW","TscipherSlotIndR","TscipherSlotIndW","W"]};

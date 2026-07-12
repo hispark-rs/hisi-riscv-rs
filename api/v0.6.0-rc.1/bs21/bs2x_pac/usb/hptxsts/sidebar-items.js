@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["HptxstsSpec"],"type":["ChanR","ChanW","OddR","OddW","PtxfspcavailR","PtxfspcavailW","PtxqspcavailR","PtxqspcavailW","R","TerminateR","TerminateW","TokenR","TokenW","W"]};

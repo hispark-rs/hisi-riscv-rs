@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UpFifoDataSpec"],"type":["PcmWordR","R"]};

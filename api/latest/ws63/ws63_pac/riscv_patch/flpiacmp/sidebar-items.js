@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FlpiacmpSpec"],"type":["R","W"]};

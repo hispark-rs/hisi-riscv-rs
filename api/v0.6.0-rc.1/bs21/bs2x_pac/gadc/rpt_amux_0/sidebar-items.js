@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RptAmux0Spec"],"type":["R","W"]};

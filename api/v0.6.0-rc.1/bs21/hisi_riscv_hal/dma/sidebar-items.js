@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DMA_ALIGN"],"enum":["BurstSize","DmaError","FlowControl","TransferWidth"],"struct":["Dma0","DmaChannel","DmaChannelConfig","DmaChannels","DmaDriver","DmaStartError","DmaSyncMask","DmaTransferSize","DmaWaitError","Sdma0","Transfer"],"trait":["DmaInstance"],"type":["DmaTransferParts","DmaWaitResult"]};

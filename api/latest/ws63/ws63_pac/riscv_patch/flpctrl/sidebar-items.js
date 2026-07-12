@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["FlpctrlSpec"],"type":["EnableR","EnableW","LoadCompare0EnableR","LoadCompare0EnableW","LoadCompare1EnableR","LoadCompare1EnableW","Outside1mR","Outside1mW","R","W","WriteProtectR","WriteProtectW"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GdfifocfgSpec"],"type":["R","W"]};

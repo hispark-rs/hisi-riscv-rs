@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgTempBankSelCtrlSpec"],"type":["R","W"]};

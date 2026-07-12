@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KlComStatusSpec"],"type":["KlComLv1RdyR","KlComRkRdyR","R","W"]};

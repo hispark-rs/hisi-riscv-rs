@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IcTarSpec"],"type":["DeviceIdR","DeviceIdW","GcOrStartR","GcOrStartW","IcTarR","IcTarW","Master10bitaddrR","Master10bitaddrW","R","SmbusQuickCmdR","SmbusQuickCmdW","SpecialR","SpecialW","W"]};

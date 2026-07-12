@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IcTxTlSpec"],"type":["R","TxTlR","TxTlW","W"]};

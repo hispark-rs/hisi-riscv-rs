@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DmacBurstReqSpec"],"type":["BurstReqR","BurstReqW","LastBurstReqR","LastBurstReqW","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TrngTeroVctrCfgSpec"],"type":["R","TeroVctrCfgR","TeroVctrCfgW","TeroVctrLowCfgR","TeroVctrLowCfgW","W"]};

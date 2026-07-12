@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["efuse_avdd_ctl","efuse_clk_period","efuse_ctl_data","efuse_data","efuse_sts"],"struct":["RegisterBlock"],"type":["EfuseAvddCtl","EfuseClkPeriod","EfuseCtlData","EfuseData","EfuseSts"]};

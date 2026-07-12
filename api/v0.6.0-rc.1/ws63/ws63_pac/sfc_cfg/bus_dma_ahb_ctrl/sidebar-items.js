@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BusDmaAhbCtrlSpec"],"type":["Incr16EnR","Incr16EnW","Incr4EnR","Incr4EnW","Incr8EnR","Incr8EnW","R","W"]};

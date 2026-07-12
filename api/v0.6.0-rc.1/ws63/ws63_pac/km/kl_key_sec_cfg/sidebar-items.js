@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KlKeySecCfgSpec"],"type":["DestNsecR","DestNsecW","DestSecR","DestSecW","KeySecR","KeySecW","MasterOnlyR","MasterOnlyW","R","SrcNsecR","SrcNsecW","SrcSecR","SrcSecW","W"]};

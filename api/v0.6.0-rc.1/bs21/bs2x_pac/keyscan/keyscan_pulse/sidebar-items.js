@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KeyscanPulseSpec"],"type":["R","TidleR","TidleW","TpulseR","TpulseW","TternR","TternW","W"]};

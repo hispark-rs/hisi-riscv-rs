@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TsensorCtrl1Spec"],"type":["DftR","DftW","R","TempCalibR","TempCalibW","TempCtSelR","TempCtSelW","W"]};
