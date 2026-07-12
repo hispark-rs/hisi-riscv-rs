@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"attr":["entry","pre_init"],"mod":["boot_header","interrupt","prelude","rt_core"]};

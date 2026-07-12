@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorTempLowLimitSpec"],"type":["R","TempLowLimitR","TempLowLimitW","W"]};

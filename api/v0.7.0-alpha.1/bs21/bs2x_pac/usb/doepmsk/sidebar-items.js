@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DoepmskSpec"],"type":["AhberrmskR","AhberrmskW","Back2backsetupR","Back2backsetupW","EpdisbldmskR","EpdisbldmskW","OutpkterrmskR","OutpkterrmskW","OuttknepdismskR","OuttknepdismskW","R","SetupmskR","SetupmskW","W","XfercomplmskR","XfercomplmskW"]};

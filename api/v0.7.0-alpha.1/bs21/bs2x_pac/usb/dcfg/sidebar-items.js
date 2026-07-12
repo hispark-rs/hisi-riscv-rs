@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DcfgSpec"],"type":["DevaddrR","DevaddrW","DevspdR","DevspdW","EpmiscntR","EpmiscntW","NzstsouthshkR","NzstsouthshkW","PerfrintR","PerfrintW","R","W"]};

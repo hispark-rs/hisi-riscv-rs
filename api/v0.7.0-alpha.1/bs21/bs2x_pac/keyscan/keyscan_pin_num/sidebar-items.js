@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KeyscanPinNumSpec"],"type":["CloPinEnR","CloPinEnW","R","RowPinEnR","RowPinEnW","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2cComSpec"],"type":["OpAckR","OpAckW","OpRdR","OpRdW","OpStartR","OpStartW","OpStopR","OpStopW","OpWeR","OpWeW","R","W"]};

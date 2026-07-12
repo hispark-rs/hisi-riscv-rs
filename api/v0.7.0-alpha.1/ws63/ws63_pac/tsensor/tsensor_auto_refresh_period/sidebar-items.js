@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorAutoRefreshPeriodSpec"],"type":["AutoRefreshPeriodR","AutoRefreshPeriodW","R","W"]};

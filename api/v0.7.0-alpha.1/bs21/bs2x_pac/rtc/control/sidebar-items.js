@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ControlSpec"],"type":["CntLockR","CntLockW","CntReqR","CntReqW","EnableR","EnableW","IntMaskR","IntMaskW","ModeR","ModeW","R","RstfsmR","RstfsmW","W"]};

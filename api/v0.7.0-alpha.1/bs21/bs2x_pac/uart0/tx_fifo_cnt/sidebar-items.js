@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TxFifoCntSpec"],"type":["R","TxFifoLevelR","W"]};

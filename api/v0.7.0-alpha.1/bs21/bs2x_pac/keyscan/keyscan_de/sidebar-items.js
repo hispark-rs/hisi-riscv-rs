@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KeyscanDeSpec"],"type":["GhostR","GhostW","IoDeR","IoDeW","KeyNumSelR","KeyNumSelW","R","RepAllKeyR","RepAllKeyW","ScanNumR","ScanNumW","W"]};

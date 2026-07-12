@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["hw_ctl","reg_sys_rst_record","reset_count","sys_diag_clr_1","sys_rst_record_0"],"struct":["RegisterBlock"],"type":["HwCtl","RegSysRstRecord","ResetCount","SysDiagClr1","SysRstRecord0"]};

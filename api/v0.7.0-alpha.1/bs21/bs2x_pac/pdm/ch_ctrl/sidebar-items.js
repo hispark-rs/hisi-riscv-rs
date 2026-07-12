@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ChCtrlSpec"],"type":["MicSelR","MicSelW","R","UpFsSel0R","UpFsSel0W","UpFsSel1R","UpFsSel1W","W"]};

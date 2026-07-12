@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["PkeWorkLenSpec"],"type":["R","W","WorkLenR","WorkLenW"]};

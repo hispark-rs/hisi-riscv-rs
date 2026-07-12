@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Ghwcfg1Spec"],"type":["R","W"]};

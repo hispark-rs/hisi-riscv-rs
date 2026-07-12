@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngOnlineTestFailCkThSpec"],"type":["OnlineTestFailCkCntR","OnlineTestFailCkCntW","R","W"]};

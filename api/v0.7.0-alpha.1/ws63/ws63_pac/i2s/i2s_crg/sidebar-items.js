@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2sCrgSpec"],"type":["BclkDivR","BclkDivW","ClkEnR","ClkEnW","ClkSelR","ClkSelW","R","W"]};

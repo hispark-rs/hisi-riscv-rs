@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["UartParameterSpec"],"type":["AfceModeR","ApbDataWidthR","DmaModeR","FifoDepthR","R","ShadowR","W"]};

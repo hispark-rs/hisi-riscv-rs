@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgCmpOs12Spec"],"type":["CfgManualCmpOsCodeR","CfgManualCmpOsCodeW","CfgManualCmpOsUpdateR","CfgManualCmpOsUpdateW","R","W"]};

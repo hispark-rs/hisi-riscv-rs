@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AlgMode","AlgSel","DataWidth","KeyLen"],"struct":["InSymChn0KeyCtrlSpec"],"type":["AlgModeR","AlgModeW","AlgSelR","AlgSelW","DataWidthR","DataWidthW","DecryptR","DecryptW","KeyChnIdR","KeyChnIdW","KeyLenR","KeyLenW","R","W"]};

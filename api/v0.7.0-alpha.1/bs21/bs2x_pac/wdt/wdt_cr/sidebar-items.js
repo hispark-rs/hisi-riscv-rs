@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["WdtMode"],"struct":["WdtCrSpec"],"type":["R","RstEnR","RstEnW","RstPlR","RstPlW","W","WdtEnR","WdtEnW","WdtImskR","WdtImskW","WdtModeR","WdtModeW"]};

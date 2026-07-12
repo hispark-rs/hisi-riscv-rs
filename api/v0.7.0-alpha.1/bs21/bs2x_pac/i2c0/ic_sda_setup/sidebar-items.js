@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IcSdaSetupSpec"],"type":["R","SdaSetupR","SdaSetupW","W"]};

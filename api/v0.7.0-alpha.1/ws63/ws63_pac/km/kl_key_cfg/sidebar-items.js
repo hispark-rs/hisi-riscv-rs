@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KlKeyCfgSpec"],"type":["DscCodeR","DscCodeW","KeyDecR","KeyDecW","KeyEncR","KeyEncW","KlFlashSelR","KlFlashSelW","PortSelR","PortSelW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TimingSpec"],"type":["R","TcshR","TcshW","TcssR","TcssW","TshslR","TshslW","W"]};

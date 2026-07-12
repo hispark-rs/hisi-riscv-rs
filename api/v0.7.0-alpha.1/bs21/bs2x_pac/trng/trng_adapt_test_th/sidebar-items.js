@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngAdaptTestThSpec"],"type":["AdaptHigTestR","AdaptHigTestW","AdaptLowTestR","AdaptLowTestW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorCtrlSpec"],"type":["R","TsensorEnableR","TsensorEnableW","TsensorModeR","TsensorModeW","W"]};

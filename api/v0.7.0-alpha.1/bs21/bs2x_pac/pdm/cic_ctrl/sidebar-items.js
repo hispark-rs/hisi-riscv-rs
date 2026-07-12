@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CicCtrlSpec"],"type":["CicEn0R","CicEn0W","CicEn1R","CicEn1W","CicGain0R","CicGain0W","CicGain1R","CicGain1W","R","W"]};

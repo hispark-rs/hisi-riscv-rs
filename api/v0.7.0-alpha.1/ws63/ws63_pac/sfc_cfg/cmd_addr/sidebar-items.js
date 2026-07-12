@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CmdAddrSpec"],"type":["CmdAddrR","CmdAddrW","R","W"]};

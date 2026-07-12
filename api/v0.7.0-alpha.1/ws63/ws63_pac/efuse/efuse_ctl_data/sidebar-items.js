@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["EfuseCtlDataSpec"],"type":["EfuseWrRdR","EfuseWrRdW","R","W"]};

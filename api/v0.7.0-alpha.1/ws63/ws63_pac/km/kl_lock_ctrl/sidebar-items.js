@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KlLockCtrlSpec"],"type":["KlLockNumR","KlLockNumW","KlLockW","R","W"]};

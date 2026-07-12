@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CkenCtl1Spec"],"type":["BtCkenR","BtCkenW","R","SpiCkenR","SpiCkenW","UartCkenR","UartCkenW","W","WifiCkenR","WifiCkenW"]};

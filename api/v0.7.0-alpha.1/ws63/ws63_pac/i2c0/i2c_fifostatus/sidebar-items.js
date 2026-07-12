@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2cFifostatusSpec"],"type":["R","RxfeR","RxffR","TxfeR","TxffR","W"]};

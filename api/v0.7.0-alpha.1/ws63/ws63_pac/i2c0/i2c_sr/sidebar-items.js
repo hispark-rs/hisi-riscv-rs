@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2cSrSpec"],"type":["BusBusyR","IntAckErrR","IntArbLossR","IntDoneR","IntRxR","IntRxtideR","IntStartR","IntStopR","IntTxR","IntTxfifoOverR","IntTxtideR","R","W"]};

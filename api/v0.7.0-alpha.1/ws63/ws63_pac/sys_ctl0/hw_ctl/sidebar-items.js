@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HwCtlSpec"],"type":["R","RefclkFreqStatusR"]};

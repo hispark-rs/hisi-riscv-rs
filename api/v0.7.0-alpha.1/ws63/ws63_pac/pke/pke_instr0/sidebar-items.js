@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Instr0"],"struct":["PkeInstr0Spec"],"type":["Instr0R","Instr0W","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ClkSelSpec"],"type":["BusClkSelR","BusClkSelW","FlashClkSelR","FlashClkSelW","PwmClkSelR","PwmClkSelW","R","RfCtlClkSelR","RfCtlClkSelW","SpiClkSelR","SpiClkSelW","Uart0ClkSelR","Uart0ClkSelW","Uart1ClkSelR","Uart1ClkSelW","Uart2ClkSelR","Uart2ClkSelW","W","WifiMacClkSelR","WifiMacClkSelW","WifiPhyClkSelR","WifiPhyClkSelW"]};

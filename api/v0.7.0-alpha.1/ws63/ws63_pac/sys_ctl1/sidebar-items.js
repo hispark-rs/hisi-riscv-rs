@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["ip_auto_cg_bypass","nmi_int","soft_int_clr","soft_int_en","soft_int_set","soft_int_sts"],"struct":["RegisterBlock"],"type":["IpAutoCgBypass","NmiInt","SoftIntClr","SoftIntEn","SoftIntSet","SoftIntSts"]};

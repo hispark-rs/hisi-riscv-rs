@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"attr":["entry","pre_init"],"enum":["Interrupt"]};

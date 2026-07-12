@@ -1,9 +1,9 @@
 (function() {
-    const implementors = Object.fromEntries([["hisi_hal",[["impl DelayNs for <a class=\"struct\" href=\"hisi_hal/delay/struct.Delay.html\" title=\"struct hisi_hal::delay::Delay\">Delay</a>",0],["impl DelayNs for <a class=\"struct\" href=\"hisi_hal/timer/struct.OneShotTimer.html\" title=\"struct hisi_hal::timer::OneShotTimer\">OneShotTimer</a>&lt;'_&gt;",0]]]]);
+    const implementors = Object.fromEntries([["hisi_riscv_hal",[["impl DelayNs for <a class=\"struct\" href=\"hisi_riscv_hal/delay/struct.Delay.html\" title=\"struct hisi_riscv_hal::delay::Delay\">Delay</a>",0],["impl DelayNs for <a class=\"struct\" href=\"hisi_riscv_hal/timer/struct.OneShotTimer.html\" title=\"struct hisi_riscv_hal::timer::OneShotTimer\">OneShotTimer</a>&lt;'_&gt;",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":59,"fragment_lengths":[315]}
+//{"start":59,"fragment_lengths":[345]}

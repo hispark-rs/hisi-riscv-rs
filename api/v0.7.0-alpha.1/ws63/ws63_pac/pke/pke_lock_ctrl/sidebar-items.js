@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["PkeLockCtrlSpec"],"type":["PkeLockR","PkeLockTypeR","PkeLockTypeW","PkeLockW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Ghwcfg3Spec"],"type":["DfifodepthR","DfifodepthW","I2cintselR","I2cintselW","OptfeatureR","OptfeatureW","OtgenR","OtgenW","PktsizewidthR","PktsizewidthW","R","RsttypeR","RsttypeW","VndctlsuptR","VndctlsuptW","W","XfersizewidthR","XfersizewidthW"]};

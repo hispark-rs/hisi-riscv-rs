@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RtcCurrentValueSpec"],"type":["CurrentValueR","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["AfeGadcDataLSpec"],"type":["R","W"]};

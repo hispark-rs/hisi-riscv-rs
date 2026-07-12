@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BcpuResetStsSpec"],"type":["BcpuResetStsR","R","W"]};

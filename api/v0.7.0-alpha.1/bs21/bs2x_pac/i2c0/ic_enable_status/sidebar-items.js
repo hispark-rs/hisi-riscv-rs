@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IcEnableStatusSpec"],"type":["IcEnR","IcEnW","R","SlvDisableWhlleBusyR","SlvDisableWhlleBusyW","SlvRxDataLostR","SlvRxDataLostW","W"]};

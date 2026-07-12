@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KlComCtrlSpec"],"type":["KlComAlgSelR","KlComAlgSelW","KlComKeySizeR","KlComKeySizeW","KlComLevelSelR","KlComLevelSelW","KlComStartW","R","RkChooseR","RkChooseW","W"]};

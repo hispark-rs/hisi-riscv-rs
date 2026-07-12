@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngMonobitTestCkThSpec"],"type":["MonoCkHigR","MonoCkHigW","MonoCkLowR","MonoCkLowW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CoreInterrupt","Exception","ExternalInterrupt"],"fn":["cause","disable","enable","free","nested","try_cause"],"trait":["ExceptionNumber","HartIdNumber","InterruptNumber","PriorityNumber"],"type":["Trap"]};

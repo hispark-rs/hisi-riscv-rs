@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgClkenSpec"],"type":["CfgClkenTstR","CfgClkenTstW","CfgGadcClkenBcR","CfgGadcClkenBcW","CfgGadcClkenBypR","CfgGadcClkenBypW","CfgGadcClkenCtrlR","CfgGadcClkenCtrlW","CfgGadcClkenFcR","CfgGadcClkenFcW","CfgGadcClkenPrechgR","CfgGadcClkenPrechgW","R","W"]};

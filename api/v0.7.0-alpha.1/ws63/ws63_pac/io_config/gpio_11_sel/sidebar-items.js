@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Gpio11SelSpec"],"type":["Gpio11SelR","Gpio11SelW","R","W"]};

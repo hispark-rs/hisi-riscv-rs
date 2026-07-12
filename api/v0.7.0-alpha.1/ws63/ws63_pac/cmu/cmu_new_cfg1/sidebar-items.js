@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CmuNewCfg1Spec"],"type":["CpuDivFlashRstnR","CpuDivFlashRstnSyncR","CpuDivFlashRstnSyncW","CpuDivFlashRstnW","R","W"]};

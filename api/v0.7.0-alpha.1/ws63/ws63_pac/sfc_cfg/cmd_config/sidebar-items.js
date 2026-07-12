@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CmdConfigSpec"],"type":["AddrEnR","AddrEnW","DataCntR","DataCntW","DataEnR","DataEnW","DummyByteCntR","DummyByteCntW","MemIfTypeR","MemIfTypeW","R","RwR","RwW","SelCsR","SelCsW","StartR","StartW","W"]};

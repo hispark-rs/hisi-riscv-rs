@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["QdecIntClrSpec"],"type":["AccClrR","AccClrW","DblClrR","DblClrW","R","ReportClrR","ReportClrW","SampleClrR","SampleClrW","StopIntClrR","StopIntClrW","W"]};

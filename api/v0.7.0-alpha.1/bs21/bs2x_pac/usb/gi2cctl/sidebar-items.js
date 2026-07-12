@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Gi2cctlSpec"],"type":["AckR","AckW","AddrR","AddrW","BsydneScR","BsydneScW","I2cdatse0R","I2cdatse0W","I2cdevadrR","I2cdevadrW","I2cenR","I2cenW","I2csuspctlR","I2csuspctlW","R","RegaddrR","RegaddrW","RwR","RwW","RwdataR","RwdataW","W"]};

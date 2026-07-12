@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["em_gt_mode"],"struct":["RegisterBlock"],"type":["EmGtMode"]};

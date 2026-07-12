@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["QdecEnableSpec"],"type":["EnR","EnW","R","W"]};

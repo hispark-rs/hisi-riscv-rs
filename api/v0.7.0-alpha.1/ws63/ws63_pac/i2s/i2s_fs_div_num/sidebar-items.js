@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2sFsDivNumSpec"],"type":["FsDivNumR","FsDivNumW","R","W"]};

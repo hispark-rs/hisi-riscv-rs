@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["TEMP_CODE_MAX","TEMP_CODE_MIN"],"struct":["TempSensor"]};

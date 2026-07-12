@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DataBits","Parity","StopBits","UartClock","UartPort"],"struct":["BaudRate","Config","Uart"],"trait":["UartInstance"]};

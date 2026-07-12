@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["FarSpec"],"type":["FarR","FarW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["AfeSoftRstSpec"],"type":["AfeSoftRstR","AfeSoftRstW","R","W"]};

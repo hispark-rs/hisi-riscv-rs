@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngDataStSpec"],"type":["DataStR","R","W"]};

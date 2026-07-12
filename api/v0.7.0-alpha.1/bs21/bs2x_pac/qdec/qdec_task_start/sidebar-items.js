@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["QdecTaskStartSpec"],"type":["R","StartR","StartW","W"]};

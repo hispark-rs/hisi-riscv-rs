@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DmacDAddr_Spec"],"type":["DmacDAddr0R","DmacDAddr0W","R","W"]};

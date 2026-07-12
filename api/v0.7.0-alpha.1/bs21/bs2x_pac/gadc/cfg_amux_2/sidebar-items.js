@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgAmux2Spec"],"type":["CfgAmuxnAudioChSelR","CfgAmuxnAudioChSelW","CfgAmuxpAudioChSelR","CfgAmuxpAudioChSelW","R","W"]};

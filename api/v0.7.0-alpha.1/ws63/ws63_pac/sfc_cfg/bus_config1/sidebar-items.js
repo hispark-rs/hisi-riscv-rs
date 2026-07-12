@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BusConfig1Spec"],"type":["R","RdDummyBytesR","RdDummyBytesW","RdEnableR","RdEnableW","RdInsR","RdInsW","RdMemIfTypeR","RdMemIfTypeW","RdPrefetchCntR","RdPrefetchCntW","W","WrDummyBytesR","WrDummyBytesW","WrEnableR","WrEnableW","WrInsR","WrInsW","WrMemIfTypeR","WrMemIfTypeW"]};

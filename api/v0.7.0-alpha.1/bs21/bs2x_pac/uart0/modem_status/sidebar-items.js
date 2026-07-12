@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ModemStatusSpec"],"type":["CtsR","DctsR","R","W"]};

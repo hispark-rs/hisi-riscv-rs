@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgGadcCtrl5Spec"],"type":["R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgAmux5Spec"],"type":["R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccIeSpec"],"type":["R","SpaccIeHppR","SpaccIeHppW","SpaccIeReeR","SpaccIeReeW","SpaccIeTeeR","SpaccIeTeeW","W"]};

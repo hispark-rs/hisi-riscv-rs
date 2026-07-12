@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Interrupt"],"struct":["Dma","Gadc","GlbCtlM","Gpio0","Gpio1","Gpio2","Gpio3","Gpio4","I2c0","I2c1","Keyscan","Pdm","Peripherals","Pwm","Qdec","Rtc","Sdma","Spi0","Spi1","Spi2","Tcxo","Timer","Trng","Uart0","Uart1","Uart2","UlpGpio","Usb","Wdt"]};

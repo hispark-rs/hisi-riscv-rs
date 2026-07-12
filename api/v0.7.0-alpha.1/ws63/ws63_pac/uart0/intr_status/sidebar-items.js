@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IntrStatusSpec"],"type":["BusyDetIntrR","CharToIntrStatusR","DataAvailIntrStatusR","LineIntrStatusR","ModemIntrStatusR","R","ThreIntrStatusR","W"]};

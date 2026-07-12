@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccSymChnClearReqSpec"],"type":["R","SymChnClearReqW","W"]};

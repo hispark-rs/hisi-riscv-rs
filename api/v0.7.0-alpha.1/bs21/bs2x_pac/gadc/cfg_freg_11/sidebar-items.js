@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgFreg11Spec"],"type":["CfgDregIsoEnbR","CfgDregIsoEnbW","CfgGadcMetaDetEnR","CfgGadcMetaDetEnW","CfgGadcMetaDetTrimR","CfgGadcMetaDetTrimW","CfgGadcOsRangeSelR","CfgGadcOsRangeSelW","CfgGadcRSelRiseR","CfgGadcRSelRiseW","R","W"]};

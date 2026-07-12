@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KlAlarmInfoSpec"],"type":["KlCfgSigAlarmR","KlComCrc16AlarmR","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TimerEoiSpec"],"type":["EoiR","R","W"]};

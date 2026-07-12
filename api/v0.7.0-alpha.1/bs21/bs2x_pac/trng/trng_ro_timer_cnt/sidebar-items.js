@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngRoTimerCntSpec"],"type":["R","RoTimerCntR","RoTimerCntW","W"]};

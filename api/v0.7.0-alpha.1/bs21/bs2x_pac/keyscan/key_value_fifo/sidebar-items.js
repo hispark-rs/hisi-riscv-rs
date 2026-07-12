@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["KeyValueFifoSpec"],"type":["KeyValueR","KeyValueW","R","W"]};

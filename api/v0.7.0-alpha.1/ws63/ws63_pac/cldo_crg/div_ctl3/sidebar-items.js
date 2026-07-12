@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DivCtl3Spec"],"type":["Pwm0Div1CfgR","Pwm0Div1CfgW","Pwm0LoadDivEnR","Pwm0LoadDivEnW","Pwm1Div1CfgR","Pwm1Div1CfgW","Pwm1LoadDivEnR","Pwm1LoadDivEnW","R","SpiDiv1CfgR","SpiDiv1CfgW","SpiDiv2CfgR","SpiDiv2CfgW","SpiLoadDivEnR","SpiLoadDivEnW","W"]};

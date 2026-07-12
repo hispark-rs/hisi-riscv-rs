@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["control","current_value0","current_value1","eoi_ren","intr","load_count0","load_count1","raw_intr"],"struct":["RegisterBlock"],"type":["Control","CurrentValue0","CurrentValue1","EoiRen","Intr","LoadCount0","LoadCount1","RawIntr"]};

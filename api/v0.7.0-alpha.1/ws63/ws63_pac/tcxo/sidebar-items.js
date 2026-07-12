@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["tcxo_count0","tcxo_count1","tcxo_count2","tcxo_count3","tcxo_status"],"struct":["RegisterBlock"],"type":["TcxoCount0","TcxoCount1","TcxoCount2","TcxoCount3","TcxoStatus"]};

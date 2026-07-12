@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2sFsDivRatioNumSpec"],"type":["FsDivRatioNumR","FsDivRatioNumW","R","W"]};

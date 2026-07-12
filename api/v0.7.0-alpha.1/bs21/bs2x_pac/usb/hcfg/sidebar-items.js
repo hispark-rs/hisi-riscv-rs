@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HcfgSpec"],"type":["F32khzsuspendR","F32khzsuspendW","FlentriesR","FlentriesW","FslspclkselR","FslspclkselW","FslssuppR","FslssuppW","ModechangerdyR","ModechangerdyW","MultisegdmaR","MultisegdmaW","PerschedenableR","PerschedenableW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["AbnorImskSpec"],"type":["AbnorImskR","AbnorImskW","R","W"]};

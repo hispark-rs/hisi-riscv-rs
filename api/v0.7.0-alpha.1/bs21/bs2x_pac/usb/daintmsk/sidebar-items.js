@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DaintmskSpec"],"type":["InepintR","InepintW","R","W"]};

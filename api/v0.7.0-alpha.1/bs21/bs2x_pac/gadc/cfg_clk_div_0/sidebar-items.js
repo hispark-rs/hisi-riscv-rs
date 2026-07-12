@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgClkDiv0Spec"],"type":["CfgAdcAnaDivCycR","CfgAdcAnaDivCycW","CfgAdcAnaDivThR","CfgAdcAnaDivThW","R","W"]};

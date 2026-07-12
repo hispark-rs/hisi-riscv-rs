@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HfirSpec"],"type":["FrintR","FrintW","R","ReloadctrlR","ReloadctrlW","W"]};

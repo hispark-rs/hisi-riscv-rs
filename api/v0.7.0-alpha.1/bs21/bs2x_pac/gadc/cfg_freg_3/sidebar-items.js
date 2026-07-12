@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgFreg3Spec"],"type":["CfgPreampBypassEnR","CfgPreampBypassEnW","CfgPreampGainSelR","CfgPreampGainSelW","CfgPreampRcEnR","CfgPreampRcEnW","CfgPreampVinShortR","CfgPreampVinShortW","CfgPreampVipShortR","CfgPreampVipShortW","R","W"]};

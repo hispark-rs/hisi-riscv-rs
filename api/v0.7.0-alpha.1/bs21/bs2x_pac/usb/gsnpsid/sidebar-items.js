@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["GsnpsidSpec"],"type":["R","W"]};

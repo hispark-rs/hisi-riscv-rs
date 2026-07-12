@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["GrxstsrdSpec"],"type":["BcntR","BcntW","ChnumR","ChnumW","DpidData2R","DpidData2W","FnR","FnW","GlobOutNakR","GlobOutNakW","R","W"]};

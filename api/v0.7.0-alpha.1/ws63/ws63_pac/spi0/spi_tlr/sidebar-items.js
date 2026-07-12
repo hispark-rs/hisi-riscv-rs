@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SpiTlrSpec"],"type":["R","TxFifoLevelR","W"]};

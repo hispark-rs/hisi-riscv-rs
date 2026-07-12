@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["EfuseClkPeriodSpec"],"type":["ClkPeriodR","ClkPeriodW","R","W"]};

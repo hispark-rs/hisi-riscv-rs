@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["BaudDiv"],"struct":["BaudCtlSpec"],"type":["BaudDivR","BaudDivW","R","SamplePhaseR","SamplePhaseW","W"]};

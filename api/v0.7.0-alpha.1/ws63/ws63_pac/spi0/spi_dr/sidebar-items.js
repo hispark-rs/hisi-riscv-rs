@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SpiDrSpec"],"type":["DrR","DrW","R","W"]};

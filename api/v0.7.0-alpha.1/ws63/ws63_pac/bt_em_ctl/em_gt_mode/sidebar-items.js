@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["EmGtModeSpec"],"type":["EnableR","EnableW","R","W"]};

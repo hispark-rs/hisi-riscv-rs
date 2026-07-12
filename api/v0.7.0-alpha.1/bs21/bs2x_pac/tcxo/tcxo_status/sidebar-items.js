@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TcxoStatusSpec"],"type":["ClearR","ClearW","EnableR","EnableW","R","RefreshR","RefreshW","ValidR","W"]};

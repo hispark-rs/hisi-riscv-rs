@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IcDataCmdSpec"],"type":["CmdR","CmdW","DatR","DatW","FirstDataByteR","FirstDataByteW","R","RestartR","RestartW","StopR","StopW","W"]};

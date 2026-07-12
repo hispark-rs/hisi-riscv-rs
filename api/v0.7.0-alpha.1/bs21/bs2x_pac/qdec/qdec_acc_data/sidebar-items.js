@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["QdecAccDataSpec"],"type":["AccRdValR","AccRdValW","R","W"]};

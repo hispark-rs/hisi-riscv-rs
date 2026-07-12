@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RtcControlSpec"],"type":["EnableR","EnableW","IntMaskR","IntMaskW","ModeR","ModeW","R","W"]};

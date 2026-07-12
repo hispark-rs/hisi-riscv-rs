@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgFreg5Spec"],"type":["CfgPgaBypassEnR","CfgPgaBypassEnW","CfgPgaChopModeSelR","CfgPgaChopModeSelW","CfgPgaGainSelR","CfgPgaGainSelW","CfgPgaRcEnR","CfgPgaRcEnW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IntRawStatusSpec"],"type":["CmdOpEndRawStatusR","DmaDoneIntRawStatusR","R","W"]};

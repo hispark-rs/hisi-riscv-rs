@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["PadSfcIo3CtrlSpec"],"type":["PadSfcIo3CtrlDs0R","PadSfcIo3CtrlDs0W","PadSfcIo3CtrlDs1R","PadSfcIo3CtrlDs1W","PadSfcIo3CtrlDs2R","PadSfcIo3CtrlDs2W","PadSfcIo3CtrlIeR","PadSfcIo3CtrlIeW","PadSfcIo3CtrlPeR","PadSfcIo3CtrlPeW","PadSfcIo3CtrlPsR","PadSfcIo3CtrlPsW","PadSfcIo3CtrlStR","PadSfcIo3CtrlStW","R","W"]};

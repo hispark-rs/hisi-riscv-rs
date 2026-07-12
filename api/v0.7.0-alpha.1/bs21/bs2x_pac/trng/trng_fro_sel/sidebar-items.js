@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngFroSelSpec"],"type":["FroSelR","FroSelW","R","W"]};

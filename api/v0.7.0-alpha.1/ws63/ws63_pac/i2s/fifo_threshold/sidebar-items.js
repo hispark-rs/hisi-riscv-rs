@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["FifoThresholdSpec"],"type":["R","RxThresholdR","RxThresholdW","TxThresholdR","TxThresholdW","W"]};

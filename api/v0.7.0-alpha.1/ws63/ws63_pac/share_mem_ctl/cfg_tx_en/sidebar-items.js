@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgTxEnSpec"],"type":["R","W"]};

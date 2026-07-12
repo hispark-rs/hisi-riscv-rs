@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngAlarmSpec"],"type":["AdaptTestAlarmR","AdaptTestAlarmW","CrcAlarmR","CrcAlarmW","OnlineTestAlarmR","OnlineTestAlarmW","PrtAlarmR","PrtAlarmW","R","RnChkAlarmR","RnChkAlarmW","RptTestAlarmR","RptTestAlarmW","TotalFailureTestAlarmR","TotalFailureTestAlarmW","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["WdtLoadSpec"],"type":["R","W","WdtLoadR","WdtLoadW"]};

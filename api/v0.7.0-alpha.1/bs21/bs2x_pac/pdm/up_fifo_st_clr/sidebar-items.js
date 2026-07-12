@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["UpFifoStClrSpec"],"type":["R","UpFifoAemptyIntClrR","UpFifoAemptyIntClrW","UpFifoAfullIntClrR","UpFifoAfullIntClrW","UpFifoClrR","UpFifoClrW","UpFifoEmptyIntClrR","UpFifoEmptyIntClrW","UpFifoFullIntClrR","UpFifoFullIntClrW","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["wdt_ccvr_en","wdt_cnt","wdt_cr","wdt_eoi","wdt_intr","wdt_load","wdt_lock","wdt_lpif_state","wdt_raw_intr","wdt_restart","wdt_status"],"struct":["RegisterBlock"],"type":["WdtCcvrEn","WdtCnt","WdtCr","WdtEoi","WdtIntr","WdtLoad","WdtLock","WdtLpifState","WdtRawIntr","WdtRestart","WdtStatus"]};

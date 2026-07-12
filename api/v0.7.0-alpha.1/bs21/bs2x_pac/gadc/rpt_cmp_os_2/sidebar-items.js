@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RptCmpOs2Spec"],"type":["R","W"]};

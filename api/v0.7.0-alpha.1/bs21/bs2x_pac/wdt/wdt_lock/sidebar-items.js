@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["WdtLockSpec"],"type":["R","W","WdtLockW"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DataWidthSetSpec"],"type":["R","RxModeR","RxModeW","TxModeR","TxModeW","W"]};

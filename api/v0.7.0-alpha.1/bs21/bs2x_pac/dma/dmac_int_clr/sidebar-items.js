@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DmacIntClrSpec"],"type":["IntErrClrR","IntErrClrW","IntTransClrR","IntTransClrW","R","W"]};

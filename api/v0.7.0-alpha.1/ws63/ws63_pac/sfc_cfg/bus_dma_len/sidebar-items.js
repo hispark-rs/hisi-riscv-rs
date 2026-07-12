@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BusDmaLenSpec"],"type":["DmaLenR","DmaLenW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DivCtl7Spec"],"type":["DivTsensorBusR","DivTsensorBusW","R","W"]};

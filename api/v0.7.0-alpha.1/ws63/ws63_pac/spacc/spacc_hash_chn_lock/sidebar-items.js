@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccHashChnLockSpec"],"type":["HashChnLockR","HashChnLockW","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Dtknqr2Spec"],"type":["R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SrcdnCtrlSpec"],"type":["R","SrcdnBypassEn0R","SrcdnBypassEn0W","SrcdnBypassEn1R","SrcdnBypassEn1W","SrcdnFifoClr0R","SrcdnFifoClr0W","SrcdnFifoClr1R","SrcdnFifoClr1W","SrcdnMode0R","SrcdnMode0W","SrcdnMode1R","SrcdnMode1W","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RfAddaIsoSpec"],"type":["ControlR","ControlW","R","W"]};

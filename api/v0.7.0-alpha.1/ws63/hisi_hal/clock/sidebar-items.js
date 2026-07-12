@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["PERIPHERAL_COUNT"],"enum":["Peripheral"]};

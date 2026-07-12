@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["InSymChn0Iv2Spec"],"type":["Iv2R","Iv2W","R","W"]};

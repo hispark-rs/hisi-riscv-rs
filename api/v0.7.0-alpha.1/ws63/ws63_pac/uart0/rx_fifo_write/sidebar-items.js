@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RxFifoWriteSpec"],"type":["R","RxFifoFeW","RxFifoPeW","RxFifoWriteR","RxFifoWriteW","W"]};

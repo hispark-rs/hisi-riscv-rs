@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["InSymChn0IvDataCtrlSpec"],"type":["BlockLenR","BlockLenW","FirstBlockR","FirstBlockW","LastBlockR","LastBlockW","R","W"]};

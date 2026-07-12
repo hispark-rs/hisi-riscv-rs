@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["DctlSpec"],"type":["CgnpinnakR","CgnpinnakW","CgoutnakR","CgoutnakW","GnpinnakstsR","GnpinnakstsW","GoutnakstsR","GoutnakstsW","PwronprgdoneR","PwronprgdoneW","R","RmtwkupsigR","RmtwkupsigW","SftdisconR","SftdisconW","SgnpinnakR","SgnpinnakW","SgoutnakR","SgoutnakW","TstctlR","TstctlW","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorCtlIdSpec"],"type":["R","TsensorCtlIdR","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DmacFlowCtl0"],"struct":["DmacChnConfig_Spec"],"type":["DmacActive0R","DmacChnEn0R","DmacChnEn0W","DmacDPeripheral0R","DmacDPeripheral0W","DmacFlowCtl0R","DmacFlowCtl0W","DmacHalt0R","DmacHalt0W","DmacIntEn0R","DmacIntEn0W","DmacIntTc0R","DmacIntTc0W","DmacLock0R","DmacLock0W","DmacSPeripheral0R","DmacSPeripheral0W","R","W"]};

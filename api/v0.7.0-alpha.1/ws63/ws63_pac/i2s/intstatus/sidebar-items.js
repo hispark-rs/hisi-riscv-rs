@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IntstatusSpec"],"type":["R","RxIntR","RxOverflowR","TxIntR","TxUnderflowR","W"]};

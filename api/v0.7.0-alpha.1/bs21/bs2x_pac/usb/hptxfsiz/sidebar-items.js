@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HptxfsizSpec"],"type":["PtxfsizeR","PtxfsizeW","PtxfstaddrR","PtxfstaddrW","R","W"]};

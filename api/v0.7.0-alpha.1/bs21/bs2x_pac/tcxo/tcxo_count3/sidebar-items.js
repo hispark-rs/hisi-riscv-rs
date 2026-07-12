@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TcxoCount3Spec"],"type":["Count3R","R","W"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["PWM_CLOCK_HZ"],"enum":["PwmChannelId","PwmError"],"struct":["Duty","PwmChannel","PwmPeriod","PwmRunning"]};

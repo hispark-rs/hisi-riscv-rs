@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["LineStatusSpec"],"type":["BreakIntrR","DataAvailableR","FrameErrR","OverrunErrR","ParityErrR","R","RxFifoErrR","ThreSR","TxEmptySR","W"]};

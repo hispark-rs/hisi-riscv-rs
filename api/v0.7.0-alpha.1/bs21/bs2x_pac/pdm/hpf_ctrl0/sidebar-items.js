@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HpfCtrl0Spec"],"type":["HpfAdcDcR","HpfAdcDcW","HpfBypassEnR","HpfBypassEnW","HpfFsSelR","HpfFsSelW","R","W"]};

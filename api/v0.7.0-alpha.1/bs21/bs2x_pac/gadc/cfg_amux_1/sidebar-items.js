@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CfgAmux1Spec"],"type":["AmuxnDevideDisableR","AmuxnDevideDisableW","AmuxnSensorChSelR","AmuxnSensorChSelW","AmuxpDevideDisableR","AmuxpDevideDisableW","AmuxpSensorChSelR","AmuxpSensorChSelW","R","W"]};

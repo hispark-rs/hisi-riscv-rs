@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CompdCtrlSpec"],"type":["CompdBypassEn0R","CompdBypassEn0W","CompdBypassEn1R","CompdBypassEn1W","R","W"]};

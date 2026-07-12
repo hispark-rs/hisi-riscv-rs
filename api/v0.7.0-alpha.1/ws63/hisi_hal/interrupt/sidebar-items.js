@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Interrupt"],"fn":["clear_pending","disable","disable_global","enable","enable_global","free","init","is_enabled","is_pending","priority","set_priority","set_threshold","threshold"],"struct":["Priority","Threshold"]};

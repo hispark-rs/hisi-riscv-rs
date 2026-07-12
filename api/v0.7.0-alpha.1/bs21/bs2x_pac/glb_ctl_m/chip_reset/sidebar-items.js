@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ChipResetSpec"],"type":["ChipResetEnR","ChipResetEnW","R","W"]};

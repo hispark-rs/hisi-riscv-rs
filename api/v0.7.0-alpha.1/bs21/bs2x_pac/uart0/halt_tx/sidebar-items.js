@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["HaltTxSpec"],"type":["HaltTxR","HaltTxW","R","W"]};

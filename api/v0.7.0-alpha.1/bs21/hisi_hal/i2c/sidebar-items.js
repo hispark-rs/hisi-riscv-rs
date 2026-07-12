@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["I2cError","Speed"],"struct":["I2c"]};

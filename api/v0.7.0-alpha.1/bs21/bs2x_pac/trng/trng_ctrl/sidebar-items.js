@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TrngCtrlSpec"],"type":["HealthTestEnR","HealthTestEnW","LfsrReseedEnR","LfsrReseedEnW","OnlineTestEnR","OnlineTestEnW","PostProcEnR","PostProcEnW","PrivateEnR","PrivateEnW","R","RndChkEnR","RndChkEnW","W"]};

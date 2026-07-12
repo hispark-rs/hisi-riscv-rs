@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["QdecTaskReadclrAccSpec"],"type":["R","ReadclrAccR","ReadclrAccW","W"]};

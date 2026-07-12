@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["I2cTxtideSpec"],"type":["R","TxtideR","TxtideW","W"]};
