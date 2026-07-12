@@ -95,6 +95,7 @@ jobs:
         run: python3 scripts/check-versioned-docs.py site
 
       - name: Persist versioned docs state
+        id: docs_state
         run: scripts/publish-docs-state.sh --site site --message "Update docs site for ${GITHUB_REF_NAME}"
 
       - name: Setup Pages
@@ -107,6 +108,14 @@ jobs:
 
       - name: Deploy versioned docs to GitHub Pages
         uses: actions/deploy-pages@v5
+        env:
+          GITHUB_SHA: ${{ steps.docs_state.outputs.deployment_sha }}
+
+      - name: Verify live versioned documentation
+        run: >-
+          python3 scripts/check-live-docs.py
+          --version "${GITHUB_REF_NAME}"
+          --latest-version "${GITHUB_REF_NAME}"
 
   # ── crates.io publishing is OWNED BY EACH CRATE'S OWN REPO ─────────────────
   # The monorepo tag only cuts the firmware GitHub Release above. Each library

@@ -191,6 +191,7 @@ jobs:
           path: docs-output
 
       - name: Persist versioned docs state
+        id: docs_state
         run: scripts/publish-docs-state.sh --site docs-output --message "Update main docs site"
 
       - name: Setup Pages
@@ -209,6 +210,14 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        env:
+          # deploy-pages keys deployments by GITHUB_SHA. The generated docs
+          # state has its own commit so a tag and main at the same source commit
+          # cannot accidentally reuse the older artifact.
+          GITHUB_SHA: ${{ steps.docs_state.outputs.deployment_sha }}
+
+      - name: Verify live main documentation
+        run: python3 scripts/check-live-docs.py --version main
 
   # ── mdBook internal link check (gating) ───────────────────────
   # Validates the handbook's own cross-references (SUMMARY entries, relative

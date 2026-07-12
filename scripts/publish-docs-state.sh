@@ -42,3 +42,9 @@ else
     git -C "$WORKTREE" commit -m "$MESSAGE"
     git -C "$WORKTREE" push origin gh-pages
 fi
+
+DEPLOYMENT_SHA="$(git -C "$WORKTREE" rev-parse HEAD)"
+echo "publish-docs-state: deployment SHA $DEPLOYMENT_SHA"
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "deployment_sha=$DEPLOYMENT_SHA" >> "$GITHUB_OUTPUT"
+fi
