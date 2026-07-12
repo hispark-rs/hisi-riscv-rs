@@ -8,7 +8,7 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 ## Current State
 
-**Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0-alpha.2` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and WS63 Wi-Fi init/scan/open-AP connect/DHCP/ARP/ping through the Rust-visible L2 path.
+**Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0-rc.1` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and WS63 Wi-Fi init/scan/open/WPA2 connect/DHCP/ARP/ping through the Rust-visible L2 path.
 
 **Active focus:** preserve the frozen C5/A0 connectivity baseline while completing HAL 0.6.0 stabilization and starting C6 ownership decomposition. Every extraction must reproduce the same scan/connect/ping markers and link/image evidence.
 

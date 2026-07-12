@@ -67,12 +67,13 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 
 ### M3 -- Release Candidate
 
-- 发布 `0.6.0-rc.1`，rc 后只接受编译、文档、CI、release、stable API 行为 bug 修复。
-- rc 后冻结 stable API、默认 feature 语义和 breaking rename。
+- [x] 发布 `0.6.0-rc.1`；2026-07-12 crates.io publish workflow 成功。rc 后只接受编译、文档、CI、release、stable API 行为 bug 修复。
+- [x] rc 后冻结 stable API、默认 feature 语义和 breaking rename。
 - 父仓同步：
-  - 更新 submodule pointer / patch 状态。
-  - 用 rc 验证 happy path docs 和 template。
-  - 父仓 changelog 标记 anchor 为 `hisi-riscv-hal 0.6.0-rc.1`。
+  - [x] 更新 submodule pointer / patch 状态。
+  - [x] 用 rc 验证 template：WS63 blinky、WS63 UART、BS21 blinky 均从
+    crates.io 解析 RC 并通过 check/build；WS63 image plan 通过。
+  - [x] 父仓 changelog 标记 anchor 为 `hisi-riscv-hal 0.6.0-rc.1`。
 
 ### M4 -- Final v0.6.0 Release
 

@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+---
+
+## [2026-07-12] — WS63 connectivity baseline · HAL RC
+
+Release train anchor: `hisi-riscv-hal 0.6.0-rc.1`. This snapshot freezes the
+HAL 0.6 stable surface and the first reproducible WS63 connectivity baseline:
+Wi-Fi init, scan, WPA2-Personal association, DHCP/ARP, and ICMP ping on real
+silicon.
+
+### Added
+
+- **WS63 connectivity C1-C5** — link and boot the vendor Wi-Fi runtime, initialize
+  RF, scan, associate to open and WPA2-Personal networks, obtain a DHCP lease,
+  resolve ARP, and ping through the Rust-visible L2 path. The UART markers and
+  final image/layout evidence are frozen as the A0 migration baseline.
+- **WPA2-Personal closure** — crop the vendor supplicant to the required source
+  profile, derive PMKs through the WS63 public crypto UAPI plus RustCrypto
+  primitives, and remove the supplicant's direct mbedTLS archive dependency.
+  Future application TLS remains a separate `hisi-tls` layer whose default
+  backend is mbedTLS.
+- **HAL stable API freeze** — commit a generated public-API snapshot, add
+  stable-only rustdoc checks, and run the official `riscv32imfc` target in the
+  standalone HAL CI instead of accepting host-only builds.
+- **Connectivity execution plans** — record the RF5/A0-R0 decomposition,
+  component ownership, future `hisi-crypto`/`hisi-tls` boundaries, and the
+  post-0.6 `hisi-riscv-hal` to `hisi-hal` migration.
+
+### Changed
+
+- **`hisi-riscv-hal 0.6.0-rc.1` published** — freezes the default WS63 stable
+  surface. The self-contained real-silicon suite passes 30/30 by default and
+  32/32 with `unstable`; DMA, RF helpers, Embassy, and BS2X remain experimental.
+- **`ws63-pac 0.2.2` published** — adds the shared-RAM, RF power, factory XO-trim,
+  and mask-ROM patch-controller definitions required by standalone HAL and RF
+  builds.
+- **`hisi-rs-template v0.6.0-rc.2`** — generated WS63/BS21 projects consume the
+  published HAL RC and PAC 0.2.2; its local three-project build/image matrix
+  passes without parent path patches.
+- **`hisi-fwpkg 0.3.2` published** — all ELF/headered-image/FWPKG planning paths
+  now materialize linker-aligned verified tails as erased `0xFF`, so image,
+  hash, erase, and write ranges describe the same bytes flashboot verifies.
+- **RF linker contract** — validate the Rust-linked ELF against the vendor oracle
+  map and fail before flashing when relocation/layout addresses drift.
+
 ### Fixed
 
 - Align the WS63 I2C HAL with the vendor v150 non-FIFO polling sequence and add
@@ -14,6 +58,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Make `hisi-fwpkg patch-hash` hash linker-aligned trailing bytes as erased
   flash, matching the canonical FlashPlan and restoring embedded-test images
   whose verified body ends on a padded boundary.
+- Close RF runtime mismatches in ROM-owned state, timed waits, task CPU context,
+  TCXO selection, calibration eFuse access, zero-copy pbuf headroom, factory MAC
+  loading, and the vendor lwIP data-plane ABI.
+- Make connectivity HIL package the canonical planned image and pulse the J-Link
+  nRST line before UART capture, eliminating stale image/reset behavior.
 
 ---
 
