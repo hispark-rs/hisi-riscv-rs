@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9f003f43.js";
+            window.path_to_searchindex_js = "../searchindex-c8e66a5d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -195,7 +195,7 @@ HIL runner 与脚本环境变量见 <a href="07-hil-markers.html">HIL 脚本与 
 </thead>
 <tbody>
 <tr><td><code>blinky</code></td><td>GPIO0 1 Hz 闪灯（现代 <code>Output</code> 路径）</td><td>GPIO</td><td>无（GPIO0 翻转，逻辑分析仪/LED 观测）</td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">✅ (2026-06-14)</td></tr>
-<tr><td><code>uart_hello</code></td><td>UART hello + tick 计数</td><td>UART</td><td><code>Hello from WS63 on QEMU!</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️⁹</td></tr>
+<tr><td><code>uart_hello</code></td><td>HAL UART hello + tick 计数</td><td>UART</td><td><code>Hello from WS63 (HAL UART driver)!</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">✅ (2026-07-12)</td></tr>
 <tr><td><code>gpio_irq</code></td><td>GPIO0 pin0 上升沿 → IRQ 33（自定义 local IRQ ≥32）</td><td>UART</td><td><code>OK: custom local IRQ (&gt;=32) delivered</code></td><td style="text-align: center">否¹</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>i2c_scan</code></td><td>I2C0 100 kHz 扫描 0x08..0x77</td><td>UART</td><td><code>scan done</code> / <code>no devices acked</code></td><td style="text-align: center">否²</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️³</td></tr>
 <tr><td><code>spi_loopback</code></td><td>SPI0 Mode0 1 MHz 全双工自环</td><td>UART</td><td><code>SPI loopback OK</code></td><td style="text-align: center">真机需短接 MOSI↔MISO</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️⁴</td></tr>
@@ -211,7 +211,7 @@ HIL runner 与脚本环境变量见 <a href="07-hil-markers.html">HIL 脚本与 
 <tr><td><code>semihost_selftest</code></td><td>CPU 自检（M/F 扩展、mcycle），半主机退出码</td><td>semihosting</td><td>退出码 <code>0</code>，console <code>semihost_selftest: PASS</code></td><td style="text-align: center">否⁸</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁸</td></tr>
 <tr><td><code>custom_memory</code></td><td>验证 per-example <code>memory.x</code> 覆盖 rt 自带</td><td>UART</td><td><code>custom_memory: OK (per-example memory.x in effect)</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>wifi_blob_link</code></td><td><code>--whole-archive</code> 链接 Wi-Fi ROM-data blob + 重定位证明</td><td>UART</td><td><code>BLOB LINK SPIKE: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
-<tr><td><code>xip_flash_clk_hazard</code></td><td>演示 XIP 执行中切 flash 时钟会挂死</td><td>UART</td><td><code>XIP-HAZARD: before flash-clock switch</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">❌¹⁰</td></tr>
+<tr><td><code>xip_flash_clk_hazard</code></td><td>演示 XIP 执行中切 flash 时钟会挂死</td><td>UART</td><td><code>XIP-HAZARD: before flash-clock switch</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁹</td></tr>
 </tbody>
 </table>
 </div>
@@ -228,7 +228,6 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <li><code>net_ping</code> 依赖 ws63-qemu 合成 MAC（<code>ws63-netmac @ 0x4421_0000</code>），真机无此通道。</li>
 <li><code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位；完整 vendor runtime 由 <code>wifi_init_smoke</code> 验证。</li>
 <li><code>semihost_selftest</code> 需 QEMU <code>-semihosting</code>；真机半主机陷阱为 no-op，<code>exit</code> 只自旋。</li>
-<li><code>uart_hello</code> 真机上已确认能跑到 <code>main</code> 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。</li>
 <li><code>xip_flash_clk_hazard</code> 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，
 常规 HIL 不运行它。</li>
 </ol>
@@ -239,7 +238,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <tr><th>示例</th><th>成功标记串（verbatim）</th></tr>
 </thead>
 <tbody>
-<tr><td><code>uart_hello</code></td><td><code>Hello from WS63 on QEMU!</code></td></tr>
+<tr><td><code>uart_hello</code></td><td><code>Hello from WS63 (HAL UART driver)!</code></td></tr>
 <tr><td><code>gpio_irq</code></td><td><code>OK: custom local IRQ (&gt;=32) delivered</code></td></tr>
 <tr><td><code>i2c_scan</code></td><td><code>scan done</code>（有从机时）或 <code>no devices acked</code></td></tr>
 <tr><td><code>spi_loopback</code></td><td><code>SPI loopback OK</code></td></tr>

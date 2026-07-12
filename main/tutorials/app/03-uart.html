@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-9f003f43.js";
+            window.path_to_searchindex_js = "../../searchindex-c8e66a5d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -186,8 +186,8 @@
 <p>上一课你的工程只会闪灯，这一课我们让它<strong>开口打印</strong>。最简单的办法是用
 <code>uart_hello</code> 起手重新生成一个工程，在 QEMU 里看到它打印 <code>Hello from WS63 ...</code>。</p>
 <blockquote>
-<p>QEMU 是本课<strong>可靠的成功路径</strong>。<code>uart_hello</code> 就是为 QEMU 设计的：它故意不初始化时钟，
-只碰 UART0 寄存器。</p>
+<p>本课用 QEMU 完成无需硬件的学习路径。生成的 <code>uart_hello</code> 使用 HAL UART 驱动和
+flashboot boot-clock 配置；同一路径已在 WS63 真实硅片上通过 115200 8N1 UART smoke。</p>
 </blockquote>
 <h2 id="第-1-步用-uart_hello-起手生成工程"><a class="header" href="#第-1-步用-uart_hello-起手生成工程">第 1 步：用 uart_hello 起手生成工程</a></h2>
 <p>再跑一次 <code>cargo generate</code>，这次 <strong>Starter app</strong> 选 <code>uart_hello</code>：</p>
@@ -208,8 +208,7 @@
 <p><code>-nographic</code> 会把 UART0 接到你的终端。</p>
 <h2 id="第-3-步看到它说话"><a class="header" href="#第-3-步看到它说话">第 3 步：看到它说话</a></h2>
 <p>控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
-<pre><code class="language-console">Hello from WS63 on QEMU!
-UART0 @ 0x44010000 is alive.
+<pre><code class="language-console">Hello from WS63 (HAL UART driver)!
 tick 0
 tick 1
 tick 2
@@ -219,13 +218,10 @@ tick 2
 <p>按 <code>Ctrl-A</code> 然后按 <code>X</code> 退出 QEMU。</p>
 <p>成功了！你刚刚让一个属于你的工程打印出了第一行串口日志。</p>
 <h2 id="关于真机"><a class="header" href="#关于真机">关于真机</a></h2>
-<p>在真正的硬件上，串口 banner 的点亮工作<strong>仍在进行中</strong>——真机需要先初始化时钟，
-让波特率分频与 PLL 匹配，而 <code>uart_hello</code> 为了适配 QEMU 故意省去了这一步。
-所以本课<strong>不承诺</strong>真机上能看到这条 banner；要在真板上稳定看到串口输出，
-请关注 <a href="../../explanation/07-hil-framework.html">HIL 测试框架</a> 的进展。</p>
-<blockquote>
-<p>想在真机上看到稳定可观测的行为，最稳妥的仍是上一课的 blinky（GPIO 翻转，已验证）。</p>
-</blockquote>
+<p>真机路径由 <code>hil/hil-smoke.sh</code> 构建同一个 <code>uart_hello</code>、生成完整 flash image、烧录并匹配
+<code>Hello from WS63</code> 标记。烧录器、串口和 runner 参数见
+<a href="../../reference/07-hil-markers.html">HIL 脚本与 runner 环境变量</a>；这些硬件步骤不在普通
+GitHub-hosted 教程 CI 中执行，而由 self-hosted HIL 轨道保留硅片证据。</p>
 <p>接下来想做点什么？</p>
 <ul>
 <li>想完成具体任务（加驱动、调试读内存）——看 <a href="../../how-to/00-index.html">操作指南</a>。</li>

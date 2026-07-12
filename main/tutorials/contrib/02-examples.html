@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-9f003f43.js";
+            window.path_to_searchindex_js = "../../searchindex-c8e66a5d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -233,19 +233,16 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
 </code></pre>
-<p><code>uart_hello</code> 为 QEMU 设计：它故意不初始化时钟，只碰 UART0 寄存器（<code>0x4401_0000</code>）。
-控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
-<pre><code class="language-console">Hello from WS63 on QEMU!
-ws63-qemu: UART0 @ 0x44010000 is alive.
+<p><code>uart_hello</code> 使用 <code>hisi-riscv-hal</code> 的 UART0 驱动，并按 flashboot 留下的 boot clock 配置
+115200 8N1。控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
+<pre><code class="language-console">Hello from WS63 (HAL UART driver)!
 tick 0
 tick 1
 tick 2
 ...
 </code></pre>
-<blockquote>
-<p>真机上的串口 banner 仍在打磨（需要先初始化时钟），本课只承诺 QEMU。第 3 课的
-blinky 才是当前确认可观测的真机行为。</p>
-</blockquote>
+<p>该示例已在 WS63 真实硅片上通过 115200 波特率 UART smoke；同一标记串也用于
+<code>hil/hil-smoke.sh</code> 的自动判定。QEMU 与真机共享 HAL 构造路径，教程不另维护一套裸寄存器实现。</p>
 <h2 id="第-3-步timer_irq定时器中断"><a class="header" href="#第-3-步timer_irq定时器中断">第 3 步：timer_irq（定时器中断）</a></h2>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p timer_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9f003f43.js";
+            window.path_to_searchindex_js = "searchindex-c8e66a5d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -437,8 +437,8 @@ probe-rs 分支与 YAML 的细节见 <a href="#如何用-probe-rs-烧录到真�
 <p>上一课你的工程只会闪灯，这一课我们让它<strong>开口打印</strong>。最简单的办法是用
 <code>uart_hello</code> 起手重新生成一个工程，在 QEMU 里看到它打印 <code>Hello from WS63 ...</code>。</p>
 <blockquote>
-<p>QEMU 是本课<strong>可靠的成功路径</strong>。<code>uart_hello</code> 就是为 QEMU 设计的：它故意不初始化时钟，
-只碰 UART0 寄存器。</p>
+<p>本课用 QEMU 完成无需硬件的学习路径。生成的 <code>uart_hello</code> 使用 HAL UART 驱动和
+flashboot boot-clock 配置；同一路径已在 WS63 真实硅片上通过 115200 8N1 UART smoke。</p>
 </blockquote>
 <h2 id="第-1-步用-uart_hello-起手生成工程"><a class="header" href="#第-1-步用-uart_hello-起手生成工程">第 1 步：用 uart_hello 起手生成工程</a></h2>
 <p>再跑一次 <code>cargo generate</code>，这次 <strong>Starter app</strong> 选 <code>uart_hello</code>：</p>
@@ -459,8 +459,7 @@ probe-rs 分支与 YAML 的细节见 <a href="#如何用-probe-rs-烧录到真�
 <p><code>-nographic</code> 会把 UART0 接到你的终端。</p>
 <h2 id="第-3-步看到它说话"><a class="header" href="#第-3-步看到它说话">第 3 步：看到它说话</a></h2>
 <p>控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
-<pre><code class="language-console">Hello from WS63 on QEMU!
-UART0 @ 0x44010000 is alive.
+<pre><code class="language-console">Hello from WS63 (HAL UART driver)!
 tick 0
 tick 1
 tick 2
@@ -470,13 +469,10 @@ tick 2
 <p>按 <code>Ctrl-A</code> 然后按 <code>X</code> 退出 QEMU。</p>
 <p>成功了！你刚刚让一个属于你的工程打印出了第一行串口日志。</p>
 <h2 id="关于真机"><a class="header" href="#关于真机">关于真机</a></h2>
-<p>在真正的硬件上，串口 banner 的点亮工作<strong>仍在进行中</strong>——真机需要先初始化时钟，
-让波特率分频与 PLL 匹配，而 <code>uart_hello</code> 为了适配 QEMU 故意省去了这一步。
-所以本课<strong>不承诺</strong>真机上能看到这条 banner；要在真板上稳定看到串口输出，
-请关注 <a href="#hil-测试框架">HIL 测试框架</a> 的进展。</p>
-<blockquote>
-<p>想在真机上看到稳定可观测的行为，最稳妥的仍是上一课的 blinky（GPIO 翻转，已验证）。</p>
-</blockquote>
+<p>真机路径由 <code>hil/hil-smoke.sh</code> 构建同一个 <code>uart_hello</code>、生成完整 flash image、烧录并匹配
+<code>Hello from WS63</code> 标记。烧录器、串口和 runner 参数见
+<a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a>；这些硬件步骤不在普通
+GitHub-hosted 教程 CI 中执行，而由 self-hosted HIL 轨道保留硅片证据。</p>
 <p>接下来想做点什么？</p>
 <ul>
 <li>想完成具体任务（加驱动、调试读内存）——看 <a href="#操作指南--how-to-guides">操作指南</a>。</li>
@@ -660,19 +656,16 @@ qemu-system-riscv32 -M ws63 -nographic -bios none \
 qemu-system-riscv32 -M ws63 -nographic -bios none \
     -kernel target/riscv32imfc-unknown-none-elf/release/uart_hello
 </code></pre>
-<p><code>uart_hello</code> 为 QEMU 设计：它故意不初始化时钟，只碰 UART0 寄存器（<code>0x4401_0000</code>）。
-控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
-<pre><code class="language-console">Hello from WS63 on QEMU!
-ws63-qemu: UART0 @ 0x44010000 is alive.
+<p><code>uart_hello</code> 使用 <code>hisi-riscv-hal</code> 的 UART0 驱动，并按 flashboot 留下的 boot clock 配置
+115200 8N1。控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：</p>
+<pre><code class="language-console">Hello from WS63 (HAL UART driver)!
 tick 0
 tick 1
 tick 2
 ...
 </code></pre>
-<blockquote>
-<p>真机上的串口 banner 仍在打磨（需要先初始化时钟），本课只承诺 QEMU。第 3 课的
-blinky 才是当前确认可观测的真机行为。</p>
-</blockquote>
+<p>该示例已在 WS63 真实硅片上通过 115200 波特率 UART smoke；同一标记串也用于
+<code>hil/hil-smoke.sh</code> 的自动判定。QEMU 与真机共享 HAL 构造路径，教程不另维护一套裸寄存器实现。</p>
 <h2 id="第-3-步timer_irq定时器中断"><a class="header" href="#第-3-步timer_irq定时器中断">第 3 步：timer_irq（定时器中断）</a></h2>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc -p timer_irq --release
 qemu-system-riscv32 -M ws63 -nographic -bios none \
@@ -1893,7 +1886,7 @@ HIL runner 与脚本环境变量见 <a href="#hil-脚本与-runner-环境变量"
 </thead>
 <tbody>
 <tr><td><code>blinky</code></td><td>GPIO0 1 Hz 闪灯（现代 <code>Output</code> 路径）</td><td>GPIO</td><td>无（GPIO0 翻转，逻辑分析仪/LED 观测）</td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">✅ (2026-06-14)</td></tr>
-<tr><td><code>uart_hello</code></td><td>UART hello + tick 计数</td><td>UART</td><td><code>Hello from WS63 on QEMU!</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️⁹</td></tr>
+<tr><td><code>uart_hello</code></td><td>HAL UART hello + tick 计数</td><td>UART</td><td><code>Hello from WS63 (HAL UART driver)!</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">✅ (2026-07-12)</td></tr>
 <tr><td><code>gpio_irq</code></td><td>GPIO0 pin0 上升沿 → IRQ 33（自定义 local IRQ ≥32）</td><td>UART</td><td><code>OK: custom local IRQ (&gt;=32) delivered</code></td><td style="text-align: center">否¹</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>i2c_scan</code></td><td>I2C0 100 kHz 扫描 0x08..0x77</td><td>UART</td><td><code>scan done</code> / <code>no devices acked</code></td><td style="text-align: center">否²</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️³</td></tr>
 <tr><td><code>spi_loopback</code></td><td>SPI0 Mode0 1 MHz 全双工自环</td><td>UART</td><td><code>SPI loopback OK</code></td><td style="text-align: center">真机需短接 MOSI↔MISO</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️⁴</td></tr>
@@ -1909,7 +1902,7 @@ HIL runner 与脚本环境变量见 <a href="#hil-脚本与-runner-环境变量"
 <tr><td><code>semihost_selftest</code></td><td>CPU 自检（M/F 扩展、mcycle），半主机退出码</td><td>semihosting</td><td>退出码 <code>0</code>，console <code>semihost_selftest: PASS</code></td><td style="text-align: center">否⁸</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁸</td></tr>
 <tr><td><code>custom_memory</code></td><td>验证 per-example <code>memory.x</code> 覆盖 rt 自带</td><td>UART</td><td><code>custom_memory: OK (per-example memory.x in effect)</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>wifi_blob_link</code></td><td><code>--whole-archive</code> 链接 Wi-Fi ROM-data blob + 重定位证明</td><td>UART</td><td><code>BLOB LINK SPIKE: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
-<tr><td><code>xip_flash_clk_hazard</code></td><td>演示 XIP 执行中切 flash 时钟会挂死</td><td>UART</td><td><code>XIP-HAZARD: before flash-clock switch</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">❌¹⁰</td></tr>
+<tr><td><code>xip_flash_clk_hazard</code></td><td>演示 XIP 执行中切 flash 时钟会挂死</td><td>UART</td><td><code>XIP-HAZARD: before flash-clock switch</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁹</td></tr>
 </tbody>
 </table>
 </div>
@@ -1926,7 +1919,6 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <li><code>net_ping</code> 依赖 ws63-qemu 合成 MAC（<code>ws63-netmac @ 0x4421_0000</code>），真机无此通道。</li>
 <li><code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位；完整 vendor runtime 由 <code>wifi_init_smoke</code> 验证。</li>
 <li><code>semihost_selftest</code> 需 QEMU <code>-semihosting</code>；真机半主机陷阱为 no-op，<code>exit</code> 只自旋。</li>
-<li><code>uart_hello</code> 真机上已确认能跑到 <code>main</code> 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。</li>
 <li><code>xip_flash_clk_hazard</code> 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，
 常规 HIL 不运行它。</li>
 </ol>
@@ -1937,7 +1929,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <tr><th>示例</th><th>成功标记串（verbatim）</th></tr>
 </thead>
 <tbody>
-<tr><td><code>uart_hello</code></td><td><code>Hello from WS63 on QEMU!</code></td></tr>
+<tr><td><code>uart_hello</code></td><td><code>Hello from WS63 (HAL UART driver)!</code></td></tr>
 <tr><td><code>gpio_irq</code></td><td><code>OK: custom local IRQ (&gt;=32) delivered</code></td></tr>
 <tr><td><code>i2c_scan</code></td><td><code>scan done</code>（有从机时）或 <code>no devices acked</code></td></tr>
 <tr><td><code>spi_loopback</code></td><td><code>SPI loopback OK</code></td></tr>
@@ -2537,7 +2529,7 @@ cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --feat
 <tr><th>示例</th><th>匹配的 egrep 模式</th><th>描述</th></tr>
 </thead>
 <tbody>
-<tr><td><code>uart_hello</code></td><td><code>Hello from WS63</code></td><td>UART banner（验证 160 MHz 波特基）</td></tr>
+<tr><td><code>uart_hello</code></td><td><code>Hello from WS63</code></td><td>已在 WS63 真机通过；验证 HAL UART boot-clock 配置与 115200 8N1 输出</td></tr>
 <tr><td><code>timer_irq</code></td><td>`timer irq #</td><td>OK: timer`</td></tr>
 <tr><td><code>gpio_irq</code></td><td><code>gpio irq #</code></td><td>GPIO IRQ 投递</td></tr>
 <tr><td><code>reset_demo</code></td><td><code>OK: software reset observed</code></td><td>software_reset + reset_reason（第二次启动标记）</td></tr>
