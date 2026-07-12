@@ -22,8 +22,8 @@
 <a href=#22 id=22 data-nosnippet>22</a>        <span class="kw">static </span>__rom_patch_cmp_begin__: u32;
 <a href=#23 id=23 data-nosnippet>23</a>    }
 <a href=#24 id=24 data-nosnippet>24</a>
-<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">let </span>remap = <span class="kw-2">&amp;</span><span class="kw">raw const </span>__rom_patch_begin__ <span class="kw">as </span><span class="kw-2">*const </span>u32;
-<a href=#26 id=26 data-nosnippet>26</a>    <span class="kw">let </span>compare = <span class="kw-2">&amp;</span><span class="kw">raw const </span>__rom_patch_cmp_begin__ <span class="kw">as </span><span class="kw-2">*const </span>u32;
+<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">let </span>remap = <span class="kw-2">&amp;</span><span class="kw">raw const </span>__rom_patch_begin__;
+<a href=#26 id=26 data-nosnippet>26</a>    <span class="kw">let </span>compare = <span class="kw-2">&amp;</span><span class="kw">raw const </span>__rom_patch_cmp_begin__;
 <a href=#27 id=27 data-nosnippet>27</a>    <span class="kw">let </span>entry_count = <span class="kw">unsafe </span>{ compare.add(<span class="number">2</span>).read() } <span class="kw">as </span>usize;
 <a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">if </span>entry_count == <span class="number">0 </span>|| entry_count &gt; INSTRUCTION_COMPARE_COUNT {
 <a href=#29 id=29 data-nosnippet>29</a>        <span class="kw">return</span>;
