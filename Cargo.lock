@@ -625,6 +625,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "hisi-crypto"
+version = "0.1.0-alpha.2"
+dependencies = [
+ "aes",
+ "hmac",
+ "pbkdf2",
+ "sha1",
+ "sha2",
+]
+
+[[package]]
 name = "hisi-hal"
 version = "0.7.0-alpha.1"
 dependencies = [
@@ -1541,16 +1552,12 @@ dependencies = [
 name = "ws63-rf-rs"
 version = "0.1.0"
 dependencies = [
- "aes",
  "critical-section",
  "hisi-alloc",
+ "hisi-crypto",
  "hisi-hal",
  "hisi-riscv-rt",
- "hmac",
- "pbkdf2",
  "portable-atomic",
- "sha1",
- "sha2",
  "smoltcp",
 ]
 

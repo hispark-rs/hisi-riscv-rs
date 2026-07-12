@@ -37,3 +37,6 @@
 [submodule "crates/hisi-rom-sys"]
 	path = crates/hisi-rom-sys
 	url = https://github.com/hispark-rs/hisi-rom-sys.git
+[submodule "crates/hisi-crypto"]
+	path = crates/hisi-crypto
+	url = https://github.com/hispark-rs/hisi-crypto.git

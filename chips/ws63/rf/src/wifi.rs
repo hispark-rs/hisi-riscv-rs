@@ -402,7 +402,8 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
-            crate::crypto::ws63_security_self_test().map_err(|error| Error::Crypto(error.0))?;
+            crate::crypto::ws63_security_self_test()
+                .map_err(|error| Error::Crypto(error.code()))?;
             let started = critical_section::with(|cs| {
                 let state = CONNECTION_STATE.borrow(cs);
                 if state.active.get() {
@@ -421,14 +422,14 @@ impl<'d> WpaWifi<'d> {
                 .copy_from_slice(&network.ssid[..network.ssid_len as usize]);
             request.auth_mode = network.auth_mode as u8;
             let mut pmk = [0; 32];
-            crate::crypto::CryptoProvider::pbkdf2_hmac_sha1(
+            hisi_crypto::CryptoProvider::pbkdf2_hmac_sha1(
                 &crate::crypto::Ws63CryptoProvider,
                 &network.key[..network.key_len as usize],
                 network.ssid(),
                 4096,
                 &mut pmk,
             )
-            .map_err(|error| Error::Crypto(error.0))?;
+            .map_err(|error| Error::Crypto(error.code()))?;
             encode_hex(&pmk, &mut request.key[..64]);
             // Leave BSSID unspecified. The delivered control path formats a
             // pinned BSSID through a six-argument `snprintf_s(MACSTR, ...)`;
