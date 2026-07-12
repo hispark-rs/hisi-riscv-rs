@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9eb0260e.js";
+            window.path_to_searchindex_js = "../searchindex-9f003f43.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-61aafd75.js"></script>
@@ -207,7 +207,7 @@ HIL runner 与脚本环境变量见 <a href="07-hil-markers.html">HIL 脚本与 
 <tr><td><code>embassy_multitask</code></td><td>embassy 双任务 <code>Timer::after</code></td><td>UART</td><td><code>EMBASSY MULTITASK: PASS</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>net_ping</code></td><td>smoltcp over ws63-netmac + SLIRP（ARP/ICMP/UDP）</td><td>UART</td><td><code>NET PING: PASS</code></td><td style="text-align: center">否⁵</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁶</td></tr>
 <tr><td><code>reset_demo</code></td><td><code>software_reset</code> + <code>reset_reason</code> 端到端</td><td>UART</td><td><code>OK: software reset observed</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
-<tr><td><code>rf_port_demo</code></td><td>ws63-rf-rs porting 层 + Wi-Fi ROM-data blob 链接</td><td>UART</td><td><code>RF PORT DEMO: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
+<tr><td><code>rf_port_demo</code></td><td>ws63-rf-rs allocator/securec/log porting 层</td><td>UART</td><td><code>RF PORT DEMO: PASS</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>semihost_selftest</code></td><td>CPU 自检（M/F 扩展、mcycle），半主机退出码</td><td>semihosting</td><td>退出码 <code>0</code>，console <code>semihost_selftest: PASS</code></td><td style="text-align: center">否⁸</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁸</td></tr>
 <tr><td><code>custom_memory</code></td><td>验证 per-example <code>memory.x</code> 覆盖 rt 自带</td><td>UART</td><td><code>custom_memory: OK (per-example memory.x in effect)</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>wifi_blob_link</code></td><td><code>--whole-archive</code> 链接 Wi-Fi ROM-data blob + 重定位证明</td><td>UART</td><td><code>BLOB LINK SPIKE: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
@@ -226,7 +226,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <li><code>spi_loopback</code>：QEMU 把 SPI0 TX FIFO 环回 RX，无需跳线；真机必须短接 MOSI↔MISO。</li>
 <li><code>net_ping</code> 需 QEMU user netdev（<code>-nic user</code>，默认），纯软件/SLIRP，无需外部网络。</li>
 <li><code>net_ping</code> 依赖 ws63-qemu 合成 MAC（<code>ws63-netmac @ 0x4421_0000</code>），真机无此通道。</li>
-<li><code>rf_port_demo</code> / <code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位。</li>
+<li><code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位；完整 vendor runtime 由 <code>wifi_init_smoke</code> 验证。</li>
 <li><code>semihost_selftest</code> 需 QEMU <code>-semihosting</code>；真机半主机陷阱为 no-op，<code>exit</code> 只自旋。</li>
 <li><code>uart_hello</code> 真机上已确认能跑到 <code>main</code> 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。</li>
 <li><code>xip_flash_clk_hazard</code> 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，

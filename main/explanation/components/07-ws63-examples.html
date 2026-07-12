@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-9eb0260e.js";
+            window.path_to_searchindex_js = "../../searchindex-9f003f43.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-61aafd75.js"></script>
@@ -210,7 +210,7 @@ porting 层冒烟，以及 XIP flash 时钟 hazard 教学例。另有 crate 内�
                  ├─&gt; examples/bs21/*   (BS21 示例，隔离)
                  └─&gt; examples/bs20/*   (BS20 示例，隔离)
 hisi-riscv-rt      (启动汇编 / 链接脚本 / 中断向量) ──#[entry] + 导出 hisi-riscv-link.x──┘
-ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──┘
+ws63-rf-rs   (RF porting 层) ──rf_port_demo / wifi_blob_link / wifi_init_smoke──┘
 </code></pre>
 <p>每个示例的 <code>Cargo.toml</code> 直接依赖其所需 crate（典型为 <code>hisi-riscv-hal</code> + <code>hisi-riscv-rt</code>；async 示例再加 <code>embassy-*</code>；RF 示例加 <code>ws63-rf-rs</code>）。0.6.0 起，演示 DMA、interrupt/waker async、embassy 或 software reset 的示例会显式启用 <code>unstable</code>，避免让默认稳定 API 暗示这些实验面已毕业。</p>
 <p>链接脚本传播问题已修：<code>hisi-riscv-rt</code> 经 <code>cargo:rustc-link-search</code> 导出 <code>hisi-riscv-link.x</code>（<code>hisi-riscv-rt/build.rs</code>），各二进制以自己的 <code>build.rs</code> 用 <code>-Thisi-riscv-link.x</code> 引入。因此当前 WS63 default-member 示例均可链接，默认 <code>cargo build</code> 即构建（仅 <code>ws63-flashboot</code> 仍单独排除——它是实验性、非 secure boot，见其 README）。注：<code>blinky/Cargo.toml</code> 历史上多声明了一条 <code>ws63-pac</code> 直接依赖而源码未用，该问题已随示例依赖整理清理。</p>
@@ -223,7 +223,7 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 <li><strong>自定义内存布局</strong>：<code>custom_memory</code> 演示用示例自带的 <code>memory.x</code> 覆盖 <code>hisi-riscv-rt</code> 的 bundled 链接脚本（<code>hisi-riscv-rt</code> 的默认 feature <code>bundled-memory-x</code>，关掉后由示例侧提供），从而不与 rt 冲突。</li>
 <li><strong>semihosting / CI 信号</strong>：<code>semihost_selftest</code> 用 semihosting <code>exit()</code> 给 CI 一个免解析 UART 的 pass/fail 退出码。</li>
 <li><strong>异步</strong>：<code>async_*</code> / <code>embassy_*</code> 用 hisi-riscv-hal 的 <code>async</code> / <code>embassy</code> feature + <code>unstable</code> + <code>embassy-executor</code>（机制见 <a href="06-async-embassy.html">async-embassy.md</a>）。</li>
-<li><strong>RF porting</strong>：<code>rf_port_demo</code> 经 <code>ws63-rf-rs</code> 行使 porting 函数，并把 vendor ROM-data blob 链入镜像（<code>g_dmac_alg_main</code> / <code>g_mac_res_etc</code> 在 rf-rs 解析）。</li>
+<li><strong>RF porting</strong>：<code>rf_port_demo</code> 只行使 allocator/securec/log shims；<code>wifi_blob_link</code> 负责最小 archive link，<code>wifi_init_smoke</code> 负责完整 vendor runtime 与连接性路径，避免旧 demo 维护一套不完整的伪 blob 环境。</li>
 </ul>
 <p>与参考实现的关系：esp-hal 示例普遍调用 <code>Delay</code> / embedded-hal trait；ws63 示例集现已从「单一点灯」扩展为覆盖各外设 + async + RF porting 的一组最小演示。</p>
 

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9eb0260e.js";
+            window.path_to_searchindex_js = "searchindex-9f003f43.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61aafd75.js"></script>
@@ -1905,7 +1905,7 @@ HIL runner 与脚本环境变量见 <a href="#hil-脚本与-runner-环境变量"
 <tr><td><code>embassy_multitask</code></td><td>embassy 双任务 <code>Timer::after</code></td><td>UART</td><td><code>EMBASSY MULTITASK: PASS</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>net_ping</code></td><td>smoltcp over ws63-netmac + SLIRP（ARP/ICMP/UDP）</td><td>UART</td><td><code>NET PING: PASS</code></td><td style="text-align: center">否⁵</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁶</td></tr>
 <tr><td><code>reset_demo</code></td><td><code>software_reset</code> + <code>reset_reason</code> 端到端</td><td>UART</td><td><code>OK: software reset observed</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
-<tr><td><code>rf_port_demo</code></td><td>ws63-rf-rs porting 层 + Wi-Fi ROM-data blob 链接</td><td>UART</td><td><code>RF PORT DEMO: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
+<tr><td><code>rf_port_demo</code></td><td>ws63-rf-rs allocator/securec/log porting 层</td><td>UART</td><td><code>RF PORT DEMO: PASS</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>semihost_selftest</code></td><td>CPU 自检（M/F 扩展、mcycle），半主机退出码</td><td>semihosting</td><td>退出码 <code>0</code>，console <code>semihost_selftest: PASS</code></td><td style="text-align: center">否⁸</td><td style="text-align: center">✅</td><td style="text-align: center">❌⁸</td></tr>
 <tr><td><code>custom_memory</code></td><td>验证 per-example <code>memory.x</code> 覆盖 rt 自带</td><td>UART</td><td><code>custom_memory: OK (per-example memory.x in effect)</code></td><td style="text-align: center">否</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
 <tr><td><code>wifi_blob_link</code></td><td><code>--whole-archive</code> 链接 Wi-Fi ROM-data blob + 重定位证明</td><td>UART</td><td><code>BLOB LINK SPIKE: PASS</code></td><td style="text-align: center">否⁷</td><td style="text-align: center">✅</td><td style="text-align: center">⚠️</td></tr>
@@ -1924,7 +1924,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 <li><code>spi_loopback</code>：QEMU 把 SPI0 TX FIFO 环回 RX，无需跳线；真机必须短接 MOSI↔MISO。</li>
 <li><code>net_ping</code> 需 QEMU user netdev（<code>-nic user</code>，默认），纯软件/SLIRP，无需外部网络。</li>
 <li><code>net_ping</code> 依赖 ws63-qemu 合成 MAC（<code>ws63-netmac @ 0x4421_0000</code>），真机无此通道。</li>
-<li><code>rf_port_demo</code> / <code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位。</li>
+<li><code>wifi_blob_link</code> 需厂商 blob <code>libwifi_rom_data.a</code>（ws63-RF 子模块）链接到位；完整 vendor runtime 由 <code>wifi_init_smoke</code> 验证。</li>
 <li><code>semihost_selftest</code> 需 QEMU <code>-semihosting</code>；真机半主机陷阱为 no-op，<code>exit</code> 只自旋。</li>
 <li><code>uart_hello</code> 真机上已确认能跑到 <code>main</code> 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。</li>
 <li><code>xip_flash_clk_hazard</code> 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，
@@ -4440,7 +4440,7 @@ porting 层冒烟，以及 XIP flash 时钟 hazard 教学例。另有 crate 内�
                  ├─&gt; examples/bs21/*   (BS21 示例，隔离)
                  └─&gt; examples/bs20/*   (BS20 示例，隔离)
 hisi-riscv-rt      (启动汇编 / 链接脚本 / 中断向量) ──#[entry] + 导出 hisi-riscv-link.x──┘
-ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──┘
+ws63-rf-rs   (RF porting 层) ──rf_port_demo / wifi_blob_link / wifi_init_smoke──┘
 </code></pre>
 <p>每个示例的 <code>Cargo.toml</code> 直接依赖其所需 crate（典型为 <code>hisi-riscv-hal</code> + <code>hisi-riscv-rt</code>；async 示例再加 <code>embassy-*</code>；RF 示例加 <code>ws63-rf-rs</code>）。0.6.0 起，演示 DMA、interrupt/waker async、embassy 或 software reset 的示例会显式启用 <code>unstable</code>，避免让默认稳定 API 暗示这些实验面已毕业。</p>
 <p>链接脚本传播问题已修：<code>hisi-riscv-rt</code> 经 <code>cargo:rustc-link-search</code> 导出 <code>hisi-riscv-link.x</code>（<code>hisi-riscv-rt/build.rs</code>），各二进制以自己的 <code>build.rs</code> 用 <code>-Thisi-riscv-link.x</code> 引入。因此当前 WS63 default-member 示例均可链接，默认 <code>cargo build</code> 即构建（仅 <code>ws63-flashboot</code> 仍单独排除——它是实验性、非 secure boot，见其 README）。注：<code>blinky/Cargo.toml</code> 历史上多声明了一条 <code>ws63-pac</code> 直接依赖而源码未用，该问题已随示例依赖整理清理。</p>
@@ -4453,7 +4453,7 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 <li><strong>自定义内存布局</strong>：<code>custom_memory</code> 演示用示例自带的 <code>memory.x</code> 覆盖 <code>hisi-riscv-rt</code> 的 bundled 链接脚本（<code>hisi-riscv-rt</code> 的默认 feature <code>bundled-memory-x</code>，关掉后由示例侧提供），从而不与 rt 冲突。</li>
 <li><strong>semihosting / CI 信号</strong>：<code>semihost_selftest</code> 用 semihosting <code>exit()</code> 给 CI 一个免解析 UART 的 pass/fail 退出码。</li>
 <li><strong>异步</strong>：<code>async_*</code> / <code>embassy_*</code> 用 hisi-riscv-hal 的 <code>async</code> / <code>embassy</code> feature + <code>unstable</code> + <code>embassy-executor</code>（机制见 <a href="#异步与-embassy-适配">async-embassy.md</a>）。</li>
-<li><strong>RF porting</strong>：<code>rf_port_demo</code> 经 <code>ws63-rf-rs</code> 行使 porting 函数，并把 vendor ROM-data blob 链入镜像（<code>g_dmac_alg_main</code> / <code>g_mac_res_etc</code> 在 rf-rs 解析）。</li>
+<li><strong>RF porting</strong>：<code>rf_port_demo</code> 只行使 allocator/securec/log shims；<code>wifi_blob_link</code> 负责最小 archive link，<code>wifi_init_smoke</code> 负责完整 vendor runtime 与连接性路径，避免旧 demo 维护一套不完整的伪 blob 环境。</li>
 </ul>
 <p>与参考实现的关系：esp-hal 示例普遍调用 <code>Delay</code> / embedded-hal trait；ws63 示例集现已从「单一点灯」扩展为覆盖各外设 + async + RF porting 的一组最小演示。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0-alpha.2", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0-alpha.2", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
