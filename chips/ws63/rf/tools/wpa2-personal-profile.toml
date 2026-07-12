@@ -1,0 +1,87 @@
+# Source-selection contract for the first independently built supplicant.
+# The SDK CMake file remains the source oracle; this profile narrows it and the
+# checker fails if a forbidden source family or define enters the result.
+
+name = "wifi-wpa2-personal"
+sdk_component = "build/cmake/open_source/wpa_supplicant.cmake"
+
+required_defines = [
+  "WPA_SUPPLICANT",
+  "CONFIG_WPA",
+  "CONFIG_SHA256",
+  "CONFIG_DRIVER_SOC",
+  "CONFIG_OS_OSAL",
+  "IEEE8021X_EAPOL",
+]
+
+forbidden_defines = [
+  "HOSTAPD",
+  "SOFTAP_MODE",
+  "CONFIG_WPA3",
+  "CONFIG_SAE",
+  "CONFIG_ECC",
+  "CONFIG_HOSTAPD_WPA3",
+  "CONFIG_OWE",
+  "CONFIG_WPS",
+  "CONFIG_WPS_AP",
+  "EAP_WSC",
+  "EAP_SERVER",
+  "EAP_SERVER_WSC",
+  "LOS_CONFIG_WPA_ENTERPRISE",
+  "LOS_CONFIG_EAP_TLS",
+  "EAP_TLS",
+  "CONFIG_WAPI",
+  "CONFIG_IEEE80211R",
+  "CONFIG_MBO",
+  "CONFIG_WNM",
+]
+
+# Paths are matched as slash-delimited fragments after ${ROOT_DIR} expansion.
+forbidden_source_fragments = [
+  "/src/ap/",
+  "/src/eap_peer/",
+  "/src/eap_server/",
+  "/src/eap_common/",
+  "/src/eapol_auth/",
+  "/src/wps/",
+  "/src/common/sae.c",
+  "/src/common/dragonfly.c",
+  "/src/crypto/dh_groups.c",
+  "/src/crypto/crypto_internal-modexp.c",
+  "/src/crypto/sha384-",
+  "/src/crypto/sha512-",
+  "/wpa_supplicant/ap.c",
+  "/wpa_supplicant/eap_register.c",
+  "/wpa_supplicant/wps_supplicant.c",
+  "/wpa_supplicant/mbo.c",
+  "/wpa_supplicant/wnm_sta.c",
+  "/liteos_wpa_src/tls_mbedtls.c",
+  "/hostapd/",
+  "/wapi/",
+  "/wifi_softap_api.c",
+  "/wapi_api.c",
+  "/wpa_ft.c",
+]
+
+[crypto]
+# Hardware-backed unified-cipher APIs are the WS63 default. A symbol is not
+# treated as ROM ABI merely because an implementation happens to reside there;
+# only published UAPI or generated hisi-rom-sys symbols may be called.
+ws63_preferred = [
+  "uapi_drv_cipher_pbkdf2",
+  "uapi_drv_cipher_hash_start",
+  "uapi_drv_cipher_hash_update",
+  "uapi_drv_cipher_hash_finish",
+  "uapi_drv_cipher_mac_start",
+  "uapi_drv_cipher_mac_update",
+  "uapi_drv_cipher_mac_finish",
+  "uapi_drv_cipher_symc_aes_cmac",
+  "uapi_drv_cipher_trng_get_random_bytes",
+]
+rust_fallback = [
+  "pbkdf2-hmac-sha1",
+  "hmac-sha1",
+  "hmac-sha256",
+  "aes-128",
+]
+
