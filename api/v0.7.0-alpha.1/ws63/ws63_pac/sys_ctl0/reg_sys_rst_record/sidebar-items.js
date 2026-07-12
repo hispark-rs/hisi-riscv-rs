@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RegSysRstRecordSpec"],"type":["HardRstR","HardRstW","R","SoftRstR","SoftRstW","W","WdtRstR","WdtRstW"]};

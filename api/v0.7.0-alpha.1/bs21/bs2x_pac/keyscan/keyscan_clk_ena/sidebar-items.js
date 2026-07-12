@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KeyscanClkEnaSpec"],"type":["FifoRdClkenR","FifoRdClkenW","R","W"]};

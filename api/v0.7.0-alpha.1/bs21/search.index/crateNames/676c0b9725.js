@@ -1,0 +1,1 @@
+rd_("hbs2x_pachhisi_halmhisi_riscv_rt")

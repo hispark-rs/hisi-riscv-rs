@@ -1,1 +1,0 @@
-rd_("nhisi_riscv_halmhisi_riscv_rthws63_pac")

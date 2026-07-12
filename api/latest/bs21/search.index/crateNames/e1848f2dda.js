@@ -1,1 +1,0 @@
-rd_("hbs2x_pacnhisi_riscv_halmhisi_riscv_rt")

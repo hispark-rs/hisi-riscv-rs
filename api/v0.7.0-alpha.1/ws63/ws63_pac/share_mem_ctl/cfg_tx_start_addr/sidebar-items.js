@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgTxStartAddrSpec"],"type":["R","W"]};

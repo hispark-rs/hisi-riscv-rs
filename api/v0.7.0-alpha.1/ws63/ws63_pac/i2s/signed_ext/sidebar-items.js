@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SignedExtSpec"],"type":["R","SignedExtEnR","SignedExtEnW","W"]};

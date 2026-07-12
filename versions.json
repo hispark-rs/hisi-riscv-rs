@@ -1,12 +1,12 @@
 {
   "default": "latest",
-  "latest": "v0.6.0",
+  "latest": "v0.7.0-alpha.1",
   "versions": [
     {
       "id": "latest",
       "label": "Latest",
       "kind": "alias",
-      "target": "v0.6.0",
+      "target": "v0.7.0-alpha.1",
       "book_base": "/hisi-riscv-rs/latest/",
       "api_base": "/hisi-riscv-rs/api/latest/"
     },
@@ -37,6 +37,13 @@
       "kind": "release",
       "book_base": "/hisi-riscv-rs/v0.6.0/",
       "api_base": "/hisi-riscv-rs/api/v0.6.0/"
+    },
+    {
+      "id": "v0.7.0-alpha.1",
+      "label": "v0.7.0-alpha.1",
+      "kind": "release",
+      "book_base": "/hisi-riscv-rs/v0.7.0-alpha.1/",
+      "api_base": "/hisi-riscv-rs/api/v0.7.0-alpha.1/"
     }
   ]
 }

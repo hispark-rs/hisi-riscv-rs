@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgGainSpec"],"type":["GainR","GainW","R","W"]};

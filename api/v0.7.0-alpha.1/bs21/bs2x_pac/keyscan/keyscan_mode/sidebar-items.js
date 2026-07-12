@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KeyscanModeSpec"],"type":["R","ScanDirR","ScanDirW","ScanModeR","ScanModeW","W"]};

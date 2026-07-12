@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["WDT_CLOCK_HZ","WDT_MAX_LOAD"],"enum":["ResetPulseLength","WdtError","WdtMode"],"struct":["Watchdog","WatchdogArmed","WdtTimeout"]};

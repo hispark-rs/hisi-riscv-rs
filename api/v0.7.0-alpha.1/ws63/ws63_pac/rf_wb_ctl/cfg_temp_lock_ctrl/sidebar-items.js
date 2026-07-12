@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgTempLockCtrlSpec"],"type":["R","W"]};

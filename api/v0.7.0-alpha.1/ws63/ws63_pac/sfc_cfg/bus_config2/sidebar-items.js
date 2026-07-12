@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BusConfig2Spec"],"type":["R","W","WipLocateR","WipLocateW"]};

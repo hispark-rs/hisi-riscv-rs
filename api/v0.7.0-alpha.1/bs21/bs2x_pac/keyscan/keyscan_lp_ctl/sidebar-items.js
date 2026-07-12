@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KeyscanLpCtlSpec"],"type":["AlowSlpR","AlowSlpW","R","SlpAckR","SlpAckW","SlpReqR","SlpReqW","W"]};

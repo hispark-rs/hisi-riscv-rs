@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgRcCal7Spec"],"type":["R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgGadcData4Spec"],"type":["AdcCdacFcScaleDivR","AdcCdacFcScaleDivW","AdcCdacScaleDivSelR","AdcCdacScaleDivSelW","R","W"]};

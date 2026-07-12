@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BusDmaFlashSaddrSpec"],"type":["DmaFlashSaddrR","DmaFlashSaddrW","R","W"]};

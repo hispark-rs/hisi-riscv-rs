@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AfeGadcCfgSpec"],"type":["D2sGadcAlarmR","D2sGadcAlarmW","D2sGadcDoneR","D2sGadcDoneW","R","S2dGadcEnR","S2dGadcEnW","S2dGadcIsoEnR","S2dGadcIsoEnW","S2dGadcMuxEnR","S2dGadcMuxEnW","W"]};

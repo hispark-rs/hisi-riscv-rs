@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ChannelCount","ClockEdge","DataWidth","I2sMode"],"struct":["I2sDriver","Master","MasterConfig","Slave","SlaveConfig"]};

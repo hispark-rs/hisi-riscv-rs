@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GrstctlSpec"],"type":["AhbidleR","AhbidleW","CsftrstR","CsftrstW","DmareqR","DmareqW","FrmcntrrstR","FrmcntrrstW","HsftrstR","HsftrstW","IntknqflshR","IntknqflshW","R","RxfflshR","RxfflshW","TxfflshR","TxfflshW","TxfnumR","TxfnumW","W"]};

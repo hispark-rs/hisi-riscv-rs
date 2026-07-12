@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KeyscanEventStsSpec"],"type":["EventFifoAfullR","EventFifoAfullW","EventFifoFullR","EventFifoFullW","EventKeyPressAonR","EventKeyPressAonW","EventKeyPressR","EventKeyPressW","EventKeyReleaseR","EventKeyReleaseW","EventKeyStoppedR","EventKeyStoppedW","EventKeyValueRdyR","EventKeyValueRdyW","EventKeyscanOneR","EventKeyscanOneW","R","W"]};

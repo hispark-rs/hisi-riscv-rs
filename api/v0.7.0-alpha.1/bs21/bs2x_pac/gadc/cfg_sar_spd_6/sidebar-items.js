@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgSarSpd6Spec"],"type":["CfgManualSarSpdDlyCodeR","CfgManualSarSpdDlyCodeW","CfgManualSarSpdUpdateR","CfgManualSarSpdUpdateW","R","W"]};
