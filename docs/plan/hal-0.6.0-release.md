@@ -27,26 +27,35 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 
 ### M1 -- Stable API Freeze
 
-- 默认 `chip-ws63,rt` 暴露项必须全部出现在
+- [x] 默认 `chip-ws63,rt` 暴露项必须全部出现在
   `docs/src/reference/10-stable-api.md`。
-- 没有 WS63 HIL 证据、或 soundness 尚未闭合的 public item 必须继续 gated behind
+- [x] 没有 WS63 HIL 证据、或 soundness 尚未闭合的 public item 必须继续 gated behind
   `unstable`。
-- 不扩大 0.6.0 stable 面：DMA、embassy、BS2X、SFC/PKE/SPACC/KM、RTC、UartDma、
+- [x] 不扩大 0.6.0 stable 面：DMA、embassy、BS2X、SFC/PKE/SPACC/KM、RTC、UartDma、
   GPIO wait/IRQ async 继续实验性。
-- `CHANGELOG.md` 的 `[Unreleased]` 只记录 alpha.2 之后的 bug fix、docs、CI、gate
+- [x] `CHANGELOG.md` 的 `[Unreleased]` 只记录 alpha.2 之后的 bug fix、docs、CI、gate
   cleanup，不重复宣传 alpha.1 已有内容。
+
+冻结证据：HAL 独立仓提交 `api/hisi-riscv-hal-0.6-stable.txt`，由
+`scripts/check-stable-api.sh` 使用 `cargo-public-api 0.52.0` 生成。生成时关闭
+`instability` 的 doc-only unstable 展开，CI 对任意新增、删除或签名变化执行精确 diff；
+能力级说明仍以 stable API reference 为用户事实源。stable-only rustdoc 另以
+`-D warnings` 检查公开文档不得链接被 gate 的私有项。
 
 ### M2 -- Evidence Gate
 
 - 本地与 CI 必须通过：
   - `cargo fmt --all -- --check`
   - `python3 scripts/check-register-access.py`
-  - `cargo clippy --locked --no-default-features --features chip-ws63,rt,async,embassy -- -D warnings`
-  - `cargo clippy --locked --no-default-features --features chip-ws63,rt,async,embassy,defmt -- -D warnings`
-  - `cargo clippy --locked --no-default-features --features chip-bs21,rt,unstable -- -D warnings`
-  - `cargo check --locked --no-default-features --features chip-ws63,rt,async,embassy --release`
-  - `cargo check --locked --no-default-features --features chip-bs21,rt,unstable --release`
-  - `cargo doc --locked --no-deps --document-private-items --no-default-features --features chip-ws63,rt,async,embassy` with `RUSTDOCFLAGS=-D warnings`
+  - 以下 target 命令统一带
+    `-Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf`；HAL 独立仓 pin
+    `nightly-2026-07-09` + `rust-src`，不得依赖父仓配置或用 host build 代替。
+  - `cargo clippy ... --locked --no-default-features --features chip-ws63,rt,async,embassy -- -D warnings`
+  - `cargo clippy ... --locked --no-default-features --features chip-ws63,rt,async,embassy,defmt -- -D warnings`
+  - `cargo clippy ... --locked --no-default-features --features chip-bs21,rt,unstable -- -D warnings`
+  - `cargo check ... --locked --no-default-features --features chip-ws63,rt,async,embassy --release`
+  - `cargo check ... --locked --no-default-features --features chip-bs21,rt,unstable --release`
+  - `cargo doc ... --locked --no-deps --document-private-items --no-default-features --features chip-ws63,rt,async,embassy` with `RUSTDOCFLAGS=-D warnings`
 - BS2X negative gate：`chip-bs21,rt` without `unstable` 必须失败并包含实验性提示。
 - HIL gate：
   - [x] 跑默认 WS63 HAL embedded-test suite：`chip-ws63,rt`；2026-07-12 真机
