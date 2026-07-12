@@ -12,7 +12,7 @@ implementations.
 > language-neutral so the blobs can be ported to *any* runtime. This crate is
 > the ws63-rs runtime's implementation of `ws63-RF`'s C contract.
 
-## Status: Wi-Fi init + scan verified on silicon; connect + ping next
+## Status: Wi-Fi init, scan, WPA2 connect, and ping verified on silicon
 
 **Project context:** ws63-rs is now focused on the connectivity milestones in
 [`ROADMAP.md`](../../../ROADMAP.md). This crate owns the RF runtime half of C1-C5:
@@ -24,15 +24,16 @@ runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
 timers, netif→smoltcp) are implemented and self-tested standalone on `ws63-qemu`
 (`rf_port_demo`, plus the crate's `sched_selftest` / `frw_hcc_selftest` /
 `netif_smoltcp_selftest`). The guarded full-init image now boots on a real WS63,
-initializes `wlan0`, and returns real STA scan results. The remaining boundary is
-the bidirectional L2 data path, association, and IP connectivity; real RF behavior
+initializes `wlan0`, returns real STA scan results, associates through the cropped
+WPA2-Personal supplicant, obtains a DHCP lease, resolves the gateway with ARP, and
+receives an ICMP Echo Reply through the Rust-visible L2 path. Real RF behavior
 remains hardware-in-the-loop because the ROM symbols are silicon addresses.
 
 ### Implemented for real (usable today)
 
 | Area | Symbols | Notes |
 |------|---------|-------|
-| Memory | `osal_kmalloc`/`osal_kfree`, `malloc`/`free`/`memalign`, `oal_mem_*` | real first-fit heap over the linker-owned SRAM remainder; zero-initialised, 8-aligned |
+| Memory | `osal_kmalloc`/`osal_kfree`, `malloc`/`free`/`memalign`, `oal_mem_*` | WS63 C ABI adapter over [`hisi-alloc`]; linker-owned arena, zero-initialized and aligned |
 | Scheduler | `osal_kthread_*`, `osal_sem_*`, `osal_mutex_*`, `osal_wait_*`, queues + event groups | real cooperative scheduler with **timed** blocking (`*_timeout` deadlines); validated by `sched_selftest` |
 | Sync / IRQ | `osal_irq_lock`/`restore`, spinlocks, atomics, `ArchIntLock`/`Restore` | real, via `mstatus.MIE` |
 | Timers | `osal_adapt_timer_*`, `frw_dmac_timer_*` | real ms software-timer service, fired from the FRW worker loop |
@@ -48,7 +49,7 @@ remains hardware-in-the-loop because the ROM symbols are silicon addresses.
 
 | Area | Symbols | Needs |
 |------|---------|-------|
-| WLAN TX/RX | `driverif_input`, blob transmit adapter | RX is observed during scan; real TX and bounded L2 queue are RF5A |
+| WLAN TX/RX | `driverif_input`, blob transmit adapter | bounded Rust-visible L2 queue; DHCP, ARP and ICMP passed on silicon |
 | eFuse / TRNG / tsensor | `uapi_efuse_*`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
 | NV read | `uapi_nv_read` | read-only parser for the official WS63 ACPU KV partition; validates page headers, key state, bounds, and CRC |
 
@@ -74,9 +75,10 @@ almost all **obtainable from the vendor delivery** (see `ws63-rf-rs/ws63-RF/LIB_
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **The post-scan data path.** The guarded RF image and its PMP/shared-memory/NV
-  platform setup are verified on silicon through init and active scan. RF5 now
-  closes TX/RX, open-AP association, and ICMP ping before the component split.
+- **Component extraction without behavior drift.** The guarded RF image and its
+  PMP/shared-memory/NV platform setup are verified through init, active scan,
+  WPA2 association, DHCP, ARP and ICMP. A1-A4 now move ownership into independent
+  crates while preserving those HIL markers.
 - Generating checks for the remaining optional pbuf fields from the WiFi build's
   headers, and connecting the smoltcp TX sink to the blob's transmit symbol.
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-rf-rs/ws63-RF/lib` (`LIB_EXTRACT.md`).
@@ -99,4 +101,4 @@ vendor archive. `wifi_blob_link` owns the minimal raw-archive link check, while
 `wifi_init_smoke` owns the complete runtime and connectivity path. The port demo
 is wired into `ws63-qemu/scripts/smoke-test.sh`; it does not claim RF behavior.
 
-[`linked_list_allocator`]: https://crates.io/crates/linked_list_allocator
+[`hisi-alloc`]: https://github.com/hispark-rs/hisi-alloc

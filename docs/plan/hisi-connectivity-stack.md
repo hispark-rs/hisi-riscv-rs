@@ -249,6 +249,17 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 5. W4 Enterprise 前建立 `hisi-tls`：先完成默认 mbedTLS async BIO，再以相同 contract
    接 `embedded-tls`；TLS 不阻塞 A1-A4 的 Wi-Fi personal 迁移。
 
+#### A1 progress
+
+- [x] `hisi-alloc` 已抽为独立 repository/release unit。通用 crate 只拥有 caller-provided
+  arena、对齐/ownership 校验和可选 C allocation mechanics；WS63 linker symbols、RF C ABI
+  和诊断仍留在 adapter。
+- [x] RF adapter 已移除对 `linked_list_allocator` 的直接依赖，并在 2026-07-13 真机复现
+  init、scan、WPA2 connect、DHCP、ARP 和 ping。证据见
+  [A1 allocator migration](evidence/ws63-rf-a1-alloc-2026-07-13.md)。
+- [ ] `hisi-rom-sys`、`hisi-crypto`、`ws63-radio-sys` 与 `hisi-rf-link` 尚未抽取；因此 A1
+  整体仍为进行中，不能把 allocator parity 解释为组件拆分已完成。
+
 ### B0-B3 -- BLE Vendor Host First
 
 1. B0：对 `libbg_common`、`libbt_host`、`libbt_app`、`libbth_sdk` 做 symbol closure、
