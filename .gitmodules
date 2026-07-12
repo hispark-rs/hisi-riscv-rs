@@ -34,3 +34,6 @@
 [submodule "crates/hisi-alloc"]
 	path = crates/hisi-alloc
 	url = https://github.com/hispark-rs/hisi-alloc.git
+[submodule "crates/hisi-rom-sys"]
+	path = crates/hisi-rom-sys
+	url = https://github.com/hispark-rs/hisi-rom-sys.git

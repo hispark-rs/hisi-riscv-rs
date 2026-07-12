@@ -102,6 +102,10 @@ jobs:
       # whole workspace is gated.
       - name: Check HAL register-access policy
         run: python3 crates/hisi-hal/scripts/check-register-access.py
+      - name: Check generated ROM artifacts
+        run: >-
+          python3 crates/hisi-rom-sys/tools/sync-ws63-rom.py
+          --source chips/ws63/rf/ws63-RF/rom --check
       - name: Run clippy
         run: cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 
