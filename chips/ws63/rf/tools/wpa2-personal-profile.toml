@@ -12,15 +12,17 @@ required_defines = [
   "CONFIG_DRIVER_SOC",
   "CONFIG_OS_OSAL",
   "IEEE8021X_EAPOL",
+  # SDK 1.10.106 uses these names for shared RSN/PMK compile shape as well as
+  # WPA3/AP fields. Keep the defines, but exclude every SAE/AP implementation.
+  "CONFIG_WPA3",
+  "CONFIG_HOSTAPD_WPA3",
 ]
 
 forbidden_defines = [
   "HOSTAPD",
   "SOFTAP_MODE",
-  "CONFIG_WPA3",
   "CONFIG_SAE",
   "CONFIG_ECC",
-  "CONFIG_HOSTAPD_WPA3",
   "CONFIG_OWE",
   "CONFIG_WPS",
   "CONFIG_WPS_AP",
@@ -39,10 +41,12 @@ forbidden_defines = [
 # Paths are matched as slash-delimited fragments after ${ROOT_DIR} expansion.
 forbidden_source_fragments = [
   "/src/ap/",
-  "/src/eap_peer/",
   "/src/eap_server/",
-  "/src/eap_common/",
   "/src/eapol_auth/",
+  "/src/eap_common/eap_wsc_common.c",
+  "/src/eap_peer/eap_tls.c",
+  "/src/eap_peer/eap_tls_common.c",
+  "/src/eap_peer/eap_wsc.c",
   "/src/wps/",
   "/src/common/sae.c",
   "/src/common/dragonfly.c",
@@ -51,7 +55,6 @@ forbidden_source_fragments = [
   "/src/crypto/sha384-",
   "/src/crypto/sha512-",
   "/wpa_supplicant/ap.c",
-  "/wpa_supplicant/eap_register.c",
   "/wpa_supplicant/wps_supplicant.c",
   "/wpa_supplicant/mbo.c",
   "/wpa_supplicant/wnm_sta.c",
@@ -62,6 +65,8 @@ forbidden_source_fragments = [
   "/wapi_api.c",
   "/wpa_ft.c",
 ]
+
+stub_sources = ["wpa2-personal-compat.c", "wpa2-personal-unsupported.c"]
 
 [crypto]
 # Hardware-backed unified-cipher APIs are the WS63 default. A symbol is not
@@ -84,4 +89,3 @@ rust_fallback = [
   "hmac-sha256",
   "aes-128",
 ]
-

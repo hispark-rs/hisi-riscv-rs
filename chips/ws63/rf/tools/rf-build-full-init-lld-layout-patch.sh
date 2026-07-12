@@ -50,12 +50,18 @@ LIBS=(
   "$RF_DIR/lib/libwifi_alg_txbf.a"
   "$RF_DIR/lib/libwifi_rom_data.a"
 )
+WPA_ARCHIVE=""
 
 case ",$FEATURES," in
   *,wpa,*)
     SDK_APP_OUT="${WS63_SDK_APP_OUT:-/Users/sanchuan/Documents/hispark/fbb_ws63/src/output/ws63/acore/ws63-liteos-app}"
+    WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-$RF_DIR/lib/libwpa_supplicant.a}"
+    test -f "$WPA_ARCHIVE" || {
+      echo "ERROR: WPA archive not found: $WPA_ARCHIVE" >&2
+      exit 1
+    }
     LIBS+=(
-      "$RF_DIR/lib/libwpa_supplicant.a"
+      "$WPA_ARCHIVE"
       "$SDK_APP_OUT/libmbedtls_v3.6.0.a"
       "$SDK_APP_OUT/driver/security_unified/mbedtls_harden_adapt/libmbedtls_harden.a"
       "$SDK_APP_OUT/driver/security_unified/libdrv_security_unified.a"
@@ -184,7 +190,11 @@ prepare_rf_diag_sources() {
   mkdir -p "$DIAG_SOURCE_DIR"
   local archive
   for archive in "${LIBS[@]}"; do
-    cp "$archive" "$DIAG_SOURCE_DIR/$(basename "$archive")"
+    local destination="$DIAG_SOURCE_DIR/$(basename "$archive")"
+    case "$archive" in
+      "$WPA_ARCHIVE") destination="$DIAG_SOURCE_DIR/libwpa_supplicant.a" ;;
+    esac
+    cp "$archive" "$destination"
   done
   case ",$FEATURES," in
     *,rf-init-diag,*) rename_rf_diag_symbol "$DIAG_SOURCE_DIR" ;;
@@ -196,7 +206,10 @@ prepare_rf_diag_sources() {
 
 DIAG_LIBS=()
 for archive in "${LIBS[@]}"; do
-  DIAG_LIBS+=("$DIAG_SOURCE_DIR/$(basename "$archive")")
+  case "$archive" in
+    "$WPA_ARCHIVE") DIAG_LIBS+=("$DIAG_SOURCE_DIR/libwpa_supplicant.a") ;;
+    *) DIAG_LIBS+=("$DIAG_SOURCE_DIR/$(basename "$archive")") ;;
+  esac
 done
 
 cd "$ROOT"
