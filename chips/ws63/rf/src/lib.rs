@@ -89,13 +89,6 @@ mod host_test_support {
 
         unsafe fn release(_: critical_section::RawRestoreState) {}
     }
-
-    // Host parser tests do not allocate, but the full RF crate still contains
-    // the firmware allocator and therefore needs its linker symbols resolved.
-    #[unsafe(no_mangle)]
-    static mut __heap_start__: u8 = 0;
-    #[unsafe(no_mangle)]
-    static mut __heap_end__: u8 = 0;
 }
 
 use core::cell::Cell;

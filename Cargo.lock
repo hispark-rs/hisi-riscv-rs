@@ -617,6 +617,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hisi-alloc"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "critical-section",
+ "linked_list_allocator",
+]
+
+[[package]]
 name = "hisi-hal"
 version = "0.7.0-alpha.1"
 dependencies = [
@@ -1530,10 +1538,10 @@ version = "0.1.0"
 dependencies = [
  "aes",
  "critical-section",
+ "hisi-alloc",
  "hisi-hal",
  "hisi-riscv-rt",
  "hmac",
- "linked_list_allocator",
  "pbkdf2",
  "portable-atomic",
  "sha1",

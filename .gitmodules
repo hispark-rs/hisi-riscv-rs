@@ -31,3 +31,6 @@
 [submodule "crates/pac/hi3322-pac"]
 	path = crates/pac/hi3322-pac
 	url = https://github.com/hispark-rs/hi3322-pac.git
+[submodule "crates/hisi-alloc"]
+	path = crates/hisi-alloc
+	url = https://github.com/hispark-rs/hisi-alloc.git

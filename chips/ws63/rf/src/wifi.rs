@@ -483,9 +483,9 @@ impl<'d> WpaWifi<'d> {
 fn encode_hex(input: &[u8], output: &mut [u8]) {
     const HEX: &[u8; 16] = b"0123456789abcdef";
     debug_assert_eq!(output.len(), input.len() * 2);
-    for (byte, encoded) in input.iter().zip(output.chunks_exact_mut(2)) {
-        encoded[0] = HEX[(byte >> 4) as usize];
-        encoded[1] = HEX[(byte & 0x0f) as usize];
+    for (index, byte) in input.iter().enumerate() {
+        output[index * 2] = HEX[(byte >> 4) as usize];
+        output[index * 2 + 1] = HEX[(byte & 0x0f) as usize];
     }
 }
 
