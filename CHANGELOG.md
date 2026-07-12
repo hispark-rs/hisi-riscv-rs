@@ -41,9 +41,12 @@ silicon.
 - **`ws63-pac 0.2.2` published** — adds the shared-RAM, RF power, factory XO-trim,
   and mask-ROM patch-controller definitions required by standalone HAL and RF
   builds.
-- **`hisi-rs-template v0.6.0-rc.2`** — generated WS63/BS21 projects consume the
-  published HAL RC and PAC 0.2.2; its local three-project build/image matrix
-  passes without parent path patches.
+- **`hisi-riscv-rt 0.5.3` published** — publishes the RF memory/ROM-patch startup
+  support and adds real WS63/BS21 link-smoke CI. WS63-only Wi-Fi ROM-data
+  relocation is excluded from the BS2X compatibility adapter.
+- **`hisi-rs-template v0.6.0-rc.3`** — generated WS63/BS21 projects consume the
+  published HAL RC, RT 0.5.3, and PAC releases; its three-project build/image
+  matrix runs without parent path patches.
 - **`hisi-fwpkg 0.3.2` published** — all ELF/headered-image/FWPKG planning paths
   now materialize linker-aligned verified tails as erased `0xFF`, so image,
   hash, erase, and write ranges describe the same bytes flashboot verifies.
