@@ -307,14 +307,9 @@ impl<'d> WpaWifi<'d> {
                 return Err(Error::Timebase(timebase));
             }
             crate::uapi::enable_efuse_reads();
-            // Match the vendor startup order: initialize the unified cipher
-            // driver, then register its hash/AES/ECP mbedTLS providers before
-            // the supplicant can derive a PSK or process EAPOL frames.
+            // The cropped WPA2 profile calls unified-cipher directly for
+            // PBKDF2, hash/HMAC, AES block operations, and entropy.
             unsafe { uapi_drv_cipher_env_init() };
-            let security = unsafe { mbedtls_adapt_register_func() };
-            if security != 0 {
-                return Err(Error::Initialize(security as u32));
-            }
             let init = unsafe { uapi_wifi_init(2, 7) };
             if init != 0 {
                 return Err(Error::Initialize(init));
@@ -406,6 +401,7 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
+            crate::crypto::ws63_security_self_test().map_err(|error| Error::Crypto(error.0))?;
             let started = critical_section::with(|cs| {
                 let state = CONNECTION_STATE.borrow(cs);
                 if state.active.get() {
@@ -1228,8 +1224,6 @@ unsafe extern "C" {
     fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_drv_cipher_env_init();
-    #[cfg(feature = "wifi-wpa2-personal")]
-    fn mbedtls_adapt_register_func() -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]

@@ -79,6 +79,11 @@ def run_compile(command: list[str], source: str) -> tuple[str, str]:
     return source, result.stdout
 
 
+def remove_stale_archive(archive: Path) -> None:
+    """Make source removal effective when reusing a build directory."""
+    archive.unlink(missing_ok=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sdk", type=Path, required=True)
@@ -181,6 +186,7 @@ def main() -> int:
 
     archive = build_dir / "libwpa_supplicant_wpa2_personal.a"
     ar = archive_command[2] if archive_command[:2] == [":", "&&"] else archive_command[0]
+    remove_stale_archive(archive)
     subprocess.run([ar, "rcD", str(archive), *(str(path) for path in objects)], check=True)
     manifest = {
         "profile": profile["name"],

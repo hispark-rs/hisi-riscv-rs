@@ -36,6 +36,8 @@ forbidden_defines = [
   "CONFIG_IEEE80211R",
   "CONFIG_MBO",
   "CONFIG_WNM",
+  "CONFIG_SHA384",
+  "CONFIG_SHA512",
 ]
 
 # Paths are matched as slash-delimited fragments after ${ROOT_DIR} expansion.
@@ -52,6 +54,7 @@ forbidden_source_fragments = [
   "/src/common/dragonfly.c",
   "/src/crypto/dh_groups.c",
   "/src/crypto/crypto_internal-modexp.c",
+  "/src/crypto/md5.c",
   "/src/crypto/sha384-",
   "/src/crypto/sha512-",
   "/wpa_supplicant/ap.c",
@@ -59,6 +62,7 @@ forbidden_source_fragments = [
   "/wpa_supplicant/mbo.c",
   "/wpa_supplicant/wnm_sta.c",
   "/liteos_wpa_src/tls_mbedtls.c",
+  "/liteos_wpa_src/crypto_mbedtls.c",
   "/hostapd/",
   "/wapi/",
   "/wifi_softap_api.c",
@@ -66,7 +70,10 @@ forbidden_source_fragments = [
   "/wpa_ft.c",
 ]
 
-stub_sources = ["wpa2-personal-compat.c", "wpa2-personal-unsupported.c"]
+stub_sources = [
+  "wpa2-personal-compat.c",
+  "wpa2-personal-unsupported.c",
+]
 
 [crypto]
 # Hardware-backed unified-cipher APIs are the WS63 default. A symbol is not
@@ -81,6 +88,10 @@ ws63_preferred = [
   "uapi_drv_cipher_mac_update",
   "uapi_drv_cipher_mac_finish",
   "uapi_drv_cipher_symc_aes_cmac",
+  "uapi_drv_cipher_symc_create",
+  "uapi_drv_cipher_symc_set_config",
+  "uapi_drv_cipher_symc_encrypt",
+  "uapi_drv_cipher_symc_decrypt",
   "uapi_drv_cipher_trng_get_random_bytes",
 ]
 rust_fallback = [

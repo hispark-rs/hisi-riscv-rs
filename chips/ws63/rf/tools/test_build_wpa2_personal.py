@@ -1,4 +1,5 @@
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -41,6 +42,13 @@ class CommandRewriteTest(unittest.TestCase):
         declared = {"CONFIG_WPA3", "CONFIG_SAE"}
         preserved = {"CONFIG_WPA3"}
         self.assertEqual(declared - preserved, {"CONFIG_SAE"})
+
+    def test_rebuild_removes_stale_archive_members(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "profile.a"
+            archive.write_bytes(b"stale member")
+            MODULE.remove_stale_archive(archive)
+            self.assertFalse(archive.exists())
 
 
 if __name__ == "__main__":

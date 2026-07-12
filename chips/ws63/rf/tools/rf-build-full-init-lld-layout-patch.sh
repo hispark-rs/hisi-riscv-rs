@@ -62,8 +62,6 @@ case ",$FEATURES," in
     }
     LIBS+=(
       "$WPA_ARCHIVE"
-      "$SDK_APP_OUT/libmbedtls_v3.6.0.a"
-      "$SDK_APP_OUT/driver/security_unified/mbedtls_harden_adapt/libmbedtls_harden.a"
       "$SDK_APP_OUT/driver/security_unified/libdrv_security_unified.a"
       "$SDK_APP_OUT/hal/security_unified/libhal_security_unified.a"
       "$SDK_APP_OUT/liteos/libs/libc.a"
