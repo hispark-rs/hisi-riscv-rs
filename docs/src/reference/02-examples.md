@@ -24,7 +24,7 @@ HIL runner 与脚本环境变量见 [HIL 脚本与 runner 环境变量](07-hil-m
 | `embassy_multitask` | embassy 双任务 `Timer::after` | UART | `EMBASSY MULTITASK: PASS` | 否 | ✅ | ⚠️ |
 | `net_ping` | smoltcp over ws63-netmac + SLIRP（ARP/ICMP/UDP） | UART | `NET PING: PASS` | 否⁵ | ✅ | ❌⁶ |
 | `reset_demo` | `software_reset` + `reset_reason` 端到端 | UART | `OK: software reset observed` | 否 | ✅ | ⚠️ |
-| `rf_port_demo` | ws63-rf-rs porting 层 + Wi-Fi ROM-data blob 链接 | UART | `RF PORT DEMO: PASS` | 否⁷ | ✅ | ⚠️ |
+| `rf_port_demo` | ws63-rf-rs allocator/securec/log porting 层 | UART | `RF PORT DEMO: PASS` | 否 | ✅ | ⚠️ |
 | `semihost_selftest` | CPU 自检（M/F 扩展、mcycle），半主机退出码 | semihosting | 退出码 `0`，console `semihost_selftest: PASS` | 否⁸ | ✅ | ❌⁸ |
 | `custom_memory` | 验证 per-example `memory.x` 覆盖 rt 自带 | UART | `custom_memory: OK (per-example memory.x in effect)` | 否 | ✅ | ⚠️ |
 | `wifi_blob_link` | `--whole-archive` 链接 Wi-Fi ROM-data blob + 重定位证明 | UART | `BLOB LINK SPIKE: PASS` | 否⁷ | ✅ | ⚠️ |
@@ -41,7 +41,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 4. `spi_loopback`：QEMU 把 SPI0 TX FIFO 环回 RX，无需跳线；真机必须短接 MOSI↔MISO。
 5. `net_ping` 需 QEMU user netdev（`-nic user`，默认），纯软件/SLIRP，无需外部网络。
 6. `net_ping` 依赖 ws63-qemu 合成 MAC（`ws63-netmac @ 0x4421_0000`），真机无此通道。
-7. `rf_port_demo` / `wifi_blob_link` 需厂商 blob `libwifi_rom_data.a`（ws63-RF 子模块）链接到位。
+7. `wifi_blob_link` 需厂商 blob `libwifi_rom_data.a`（ws63-RF 子模块）链接到位；完整 vendor runtime 由 `wifi_init_smoke` 验证。
 8. `semihost_selftest` 需 QEMU `-semihosting`；真机半主机陷阱为 no-op，`exit` 只自旋。
 9. `uart_hello` 真机上已确认能跑到 `main` 并运行（probe-rs 单步/采样验证），但 UART banner 在 115200 下暂不可读 —— 疑似该例不做时钟初始化、波特率基于 QEMU 默认时钟假设，真机 UART 时钟不同。属已知 bring-up 待修项。
 10. `xip_flash_clk_hazard` 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，

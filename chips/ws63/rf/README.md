@@ -94,9 +94,9 @@ qemu-system-riscv32 -M ws63 -nographic -serial mon:stdio \
   -kernel target/riscv32imfc-unknown-none-elf/release/rf_port_demo
 ```
 
-`rf_port_demo` exercises the implemented porting functions and links the vendor
-ROM-data blob *through* this crate. QEMU supplies the ROM-owned state symbols;
-real WS63 images resolve their fixed addresses from `ws63_acore_rom.lds`. Wired
-into `ws63-qemu/scripts/smoke-test.sh`.
+`rf_port_demo` exercises the allocator/securec/log porting functions without a
+vendor archive. `wifi_blob_link` owns the minimal raw-archive link check, while
+`wifi_init_smoke` owns the complete runtime and connectivity path. The port demo
+is wired into `ws63-qemu/scripts/smoke-test.sh`; it does not claim RF behavior.
 
 [`linked_list_allocator`]: https://crates.io/crates/linked_list_allocator

@@ -32,7 +32,7 @@ crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
                  ├─> examples/bs21/*   (BS21 示例，隔离)
                  └─> examples/bs20/*   (BS20 示例，隔离)
 hisi-riscv-rt      (启动汇编 / 链接脚本 / 中断向量) ──#[entry] + 导出 hisi-riscv-link.x──┘
-ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──┘
+ws63-rf-rs   (RF porting 层) ──rf_port_demo / wifi_blob_link / wifi_init_smoke──┘
 ```
 
 每个示例的 `Cargo.toml` 直接依赖其所需 crate（典型为 `hisi-riscv-hal` + `hisi-riscv-rt`；async 示例再加 `embassy-*`；RF 示例加 `ws63-rf-rs`）。0.6.0 起，演示 DMA、interrupt/waker async、embassy 或 software reset 的示例会显式启用 `unstable`，避免让默认稳定 API 暗示这些实验面已毕业。
@@ -49,7 +49,6 @@ ws63-rf-rs   (RF porting 层) ──仅 rf_port_demo / wifi_blob_link 用──�
 - **自定义内存布局**：`custom_memory` 演示用示例自带的 `memory.x` 覆盖 `hisi-riscv-rt` 的 bundled 链接脚本（`hisi-riscv-rt` 的默认 feature `bundled-memory-x`，关掉后由示例侧提供），从而不与 rt 冲突。
 - **semihosting / CI 信号**：`semihost_selftest` 用 semihosting `exit()` 给 CI 一个免解析 UART 的 pass/fail 退出码。
 - **异步**：`async_*` / `embassy_*` 用 hisi-riscv-hal 的 `async` / `embassy` feature + `unstable` + `embassy-executor`（机制见 [async-embassy.md](06-async-embassy.md)）。
-- **RF porting**：`rf_port_demo` 经 `ws63-rf-rs` 行使 porting 函数，并把 vendor ROM-data blob 链入镜像（`g_dmac_alg_main` / `g_mac_res_etc` 在 rf-rs 解析）。
+- **RF porting**：`rf_port_demo` 只行使 allocator/securec/log shims；`wifi_blob_link` 负责最小 archive link，`wifi_init_smoke` 负责完整 vendor runtime 与连接性路径，避免旧 demo 维护一套不完整的伪 blob 环境。
 
 与参考实现的关系：esp-hal 示例普遍调用 `Delay` / embedded-hal trait；ws63 示例集现已从「单一点灯」扩展为覆盖各外设 + async + RF porting 的一组最小演示。
-
