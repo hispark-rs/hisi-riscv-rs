@@ -103,6 +103,8 @@ use critical_section::Mutex;
 
 pub mod alloc;
 mod compiler_rt;
+#[cfg(feature = "wifi-wpa2-personal")]
+mod crypto;
 pub mod error;
 pub mod frw;
 pub mod hcc;

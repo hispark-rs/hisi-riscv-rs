@@ -23,11 +23,15 @@ smoltcp = { version = "0.13", default-features = false, features = [
     "socket-raw",
     "socket-dhcpv4",
 ], optional = true }
+pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"], optional = true }
+sha1 = { version = "0.10", default-features = false, optional = true }
 
 [features]
 net = ["dep:smoltcp"]
 # Link and expose the WPA2-Personal/CCMP supplicant runtime.
 wifi-wpa2-personal = []
+# Portable provider and host oracle. WS63 firmware defaults to unified-cipher.
+wifi-security-rustcrypto = ["dep:pbkdf2", "dep:sha1"]
 # Compatibility alias for the pre-profile bring-up feature.
 wpa = ["wifi-wpa2-personal"]
 # Internal on-silicon bring-up instrumentation for the guarded full-init image.

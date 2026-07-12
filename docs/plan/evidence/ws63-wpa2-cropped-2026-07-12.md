@@ -41,9 +41,16 @@ RF5A_ARP_OK rx=0x00000004
 RF5C_PING_OK rx=0x00000005
 ```
 
+The follow-up W1 run moved PBKDF2-HMAC-SHA1 out of mbedTLS: Rust calls the
+published WS63 `uapi_drv_cipher_pbkdf2`, converts the resulting 32-byte PMK to
+the vendor API's 64-byte hexadecimal PSK form, and reproduced the same markers.
+The portable provider passed both the IEEE WPA PMK vector and RFC 6070 vector
+on the host. This proves the UAPI parameter layout and hardware PMK derivation;
+HMAC/AES provider closure remains pending.
+
 ## Remaining Boundary
 
-The supplicant source boundary is now cropped, but the image still links the
-SDK mbedTLS and unified-cipher archives. W1 must replace that broad dependency
-with the explicit WS63 hardware/ROM provider plus common Rust known-answer
-tests. WPA3/SAE, SoftAP and Enterprise remain separate later gates.
+The supplicant source boundary and PBKDF2 provider are cropped, but the image
+still links SDK mbedTLS for the remaining HMAC/AES adapter symbols. W1 must
+finish that closure before those broad archives can be removed. WPA3/SAE,
+SoftAP and Enterprise remain separate later gates.

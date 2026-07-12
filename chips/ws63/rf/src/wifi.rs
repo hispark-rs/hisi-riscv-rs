@@ -252,6 +252,8 @@ pub enum Error {
     UnsupportedSecurity(i32),
     /// WPA personal passphrases must be 8-63 printable ASCII bytes.
     InvalidPassphrase,
+    /// The WS63 unified-cipher provider failed while deriving the WPA2 PMK.
+    Crypto(u32),
     /// The vendor scan ioctl failed.
     StartScan(c_int),
     /// The scan finished with a non-success vendor status.
@@ -421,8 +423,16 @@ impl<'d> WpaWifi<'d> {
             request.ssid[..network.ssid_len as usize]
                 .copy_from_slice(&network.ssid[..network.ssid_len as usize]);
             request.auth_mode = network.auth_mode as u8;
-            request.key[..network.key_len as usize]
-                .copy_from_slice(&network.key[..network.key_len as usize]);
+            let mut pmk = [0; 32];
+            crate::crypto::CryptoProvider::pbkdf2_hmac_sha1(
+                &crate::crypto::Ws63CryptoProvider,
+                &network.key[..network.key_len as usize],
+                network.ssid(),
+                4096,
+                &mut pmk,
+            )
+            .map_err(|error| Error::Crypto(error.0))?;
+            encode_hex(&pmk, &mut request.key[..64]);
             // Leave BSSID unspecified. The delivered control path formats a
             // pinned BSSID through a six-argument `snprintf_s(MACSTR, ...)`;
             // the minimal Rust libc adapter intentionally does not emulate
@@ -469,6 +479,16 @@ impl<'d> WpaWifi<'d> {
             .position(|byte| *byte == 0)
             .unwrap_or(IFNAME_CAPACITY);
         &self.ifname[..len]
+    }
+}
+
+#[cfg(feature = "wifi-wpa2-personal")]
+fn encode_hex(input: &[u8], output: &mut [u8]) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    debug_assert_eq!(output.len(), input.len() * 2);
+    for (byte, encoded) in input.iter().zip(output.chunks_exact_mut(2)) {
+        encoded[0] = HEX[(byte >> 4) as usize];
+        encoded[1] = HEX[(byte & 0x0f) as usize];
     }
 }
 
@@ -1222,7 +1242,17 @@ unsafe extern "C" {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "wifi-wpa2-personal")]
+    use super::encode_hex;
     use super::{Error, OpenNetwork, ScanResult, ScanSecurity, ssid_from_ies};
+
+    #[test]
+    #[cfg(feature = "wifi-wpa2-personal")]
+    fn encodes_binary_pmk_for_vendor_hex_psk_path() {
+        let mut output = [0; 8];
+        encode_hex(&[0x00, 0x19, 0xa5, 0xff], &mut output);
+        assert_eq!(&output, b"0019a5ff");
+    }
 
     #[test]
     fn finds_ssid_information_element() {

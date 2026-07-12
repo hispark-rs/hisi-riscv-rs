@@ -169,6 +169,8 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
    符号，禁止把反汇编发现的内部地址直接当稳定 ABI；RustCrypto
    provider 覆盖 PBKDF2-HMAC-SHA1、SHA-1/SHA-256、HMAC/AES host vectors 和无硬件 fallback。
    两个 provider 必须通过相同 known-answer tests，WS63 provider 另跑真机 HIL。
+   当前进度：PBKDF2-HMAC-SHA1 已通过 RustCrypto IEEE/RFC 向量，并在 WS63 上改走
+   `uapi_drv_cipher_pbkdf2` 后复现 WPA2/ping；HMAC 与 AES adapter closure 尚未完成。
 4. **W2 WPA3/SAE**：单独恢复 SAE/H2E、PMF 和所需 ECC/HKDF/AES-SIV primitives；先做
    WPA3-Personal，再做 WPA2/WPA3 transition mode。优先复用 unified-cipher PKE/ECC 与
    hash/HKDF UAPI，RustCrypto 继续作为向量 oracle；不得让 W2 扩大 W0B 的默认体积。
