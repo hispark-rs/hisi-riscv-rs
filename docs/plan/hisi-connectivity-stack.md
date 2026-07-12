@@ -205,6 +205,17 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 ### H0 -- Rename `hisi-riscv-hal` To `hisi-hal`
 
+**Status: complete (2026-07-13).** Evidence:
+
+- Published migration-only `hisi-riscv-hal 0.6.1` and preserved the
+  `release/0.6` maintenance branch without yanking history.
+- Renamed the GitHub repository and parent gitlink to `hisi-hal`, published
+  `hisi-hal 0.7.0-alpha.1`, and passed the normalized stable API parity gate.
+- Migrated and linked WS63/BS20/BS21 examples, RF, stable/unstable HIL ELFs,
+  template `v0.7.0-alpha.1`, CI, skills, mdBook metadata, and WS63/BS21 rustdoc.
+- The template's three-project GitHub CI matrix passes using the crates.io
+  package, proving the happy path does not depend on the old repository redirect.
+
 - H0 只在 `hisi-riscv-hal 0.6.0` 正式发布且 RF5C baseline 已冻结后开始，并在
   A1 新组件建仓前完成。重命名 release 不夹带 API、寄存器行为或 feature 重构。
 - 先发布仅补迁移说明的 `hisi-riscv-hal 0.6.1`，保留 `release/0.6` 分支一个

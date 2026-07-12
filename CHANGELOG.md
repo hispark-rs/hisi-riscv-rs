@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Release train anchor: `hisi-hal 0.7.0-alpha.1`.
+
+### Changed
+
+- **HAL package migration** — renamed the active HAL package, Rust crate, GitHub
+  repository, and parent submodule path from `hisi-riscv-hal` /
+  `hisi_riscv_hal` / `crates/hisi-riscv-hal` to `hisi-hal` / `hisi_hal` /
+  `crates/hisi-hal`. The old `0.6.x` package remains on its maintenance branch.
+- **Consumer closure** — migrated WS63 and BS2X examples, RF, HIL runners,
+  template `v0.7.0-alpha.1`, CI, skills, chip metadata, mdBook, and multi-chip
+  rustdoc publishing to the new package without relying on GitHub redirects.
+
+### Verification
+
+- HAL rename API parity, stable API snapshot, register-access policy, 315 host
+  tests, WS63/BS21 feature builds, WS63/BS21 rustdoc, and stable/unstable HIL
+  ELF linking pass under the new package name.
+- Template CI generates and links WS63 blinky, WS63 `uart_hello`, and BS21
+  blinky from crates.io; both WS63 projects also generate FlashPlan images.
+
 ---
 
 ## [2026-07-12] — WS63 connectivity baseline · HAL 0.6.0

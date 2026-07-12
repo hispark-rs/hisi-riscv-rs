@@ -10,7 +10,7 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 **Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and WS63 Wi-Fi init/scan/open/WPA2 connect/DHCP/ARP/ping through the Rust-visible L2 path.
 
-**Active focus:** preserve the frozen C5/A0 connectivity baseline while completing HAL 0.6.0 stabilization and starting C6 ownership decomposition. Every extraction must reproduce the same scan/connect/ping markers and link/image evidence.
+**Active focus:** preserve the frozen C5/A0 connectivity baseline while starting C6 ownership decomposition. HAL 0.6.0 stabilization and the H0 `hisi-hal` rename are complete; every extraction must reproduce the same scan/connect/ping markers and link/image evidence.
 
 **Not a near-term target:** BSP/board-manager, BS2X BLE/SLE real-board connectivity, Hi3322 runtime implementation, DMA stable graduation, and embassy stable graduation. These are deferred until they serve the connectivity path or have hardware evidence.
 
@@ -28,14 +28,14 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 | C3 Scan (done) | Enable STA scan and return AP results or a precise RF/NV failure. | Add a `wifi_scan` example and HIL marker; scan either prints at least one AP in a controlled environment or reports a known categorized failure. |
 | C4 Connect (done) | Associate to a controlled open or WPA2 test AP. | Connection state transitions and failure codes are observable over UART/HIL. |
 | C5 Ping (done) | Complete an IP round trip over the Rust-visible network path, using smoltcp or the vendor netif boundary chosen by the bring-up evidence. | Connectivity HIL reproduced ICMP Echo to `1.1.1.1` on real WS63 silicon; see the [A0 baseline](docs/plan/evidence/ws63-rf-a0-2026-07-12.md). |
-| C6 Architecture baseline | Rename `hisi-riscv-hal` to `hisi-hal`, then split ROM, blob sys, allocator, storage/NVS, RTOS-driver, RTOS, and high-level RF ownership without regressing C5. | HAL rename checks show no API drift; frozen scan/connect/ping markers and link/image reports pass through the new dependency graph. |
+| C6 Architecture baseline (H0 done) | The `hisi-riscv-hal` → `hisi-hal` rename is complete. Next split ROM, blob sys, allocator, storage/NVS, RTOS-driver, RTOS, and high-level RF ownership without regressing C5. | HAL rename checks show no API drift; frozen scan/connect/ping markers and link/image reports pass through the new dependency graph. |
 | C7 BLE | Bring up the vendor BLE host through the shared RTOS/storage/runtime contracts. | Advertising, scanning, and GATT client/server have bounded-event APIs and real-board evidence. |
 | C8 SLE and coexistence | Bring up SLE, then validate concurrent Wi-Fi plus BLE/SLE operation. | Two-board SLE data exchange passes; `coex` remains hidden until concurrent HIL passes. |
 | C9 Connectivity release | Turn the full stack into repeatable release units. | Compatibility/resource matrices, release notes, known issues, examples, docs, and HIL evidence are aligned. |
 
 ## Maintenance Tracks
 
-**HAL 0.6.0 stabilization:** fix stable API blockers only. Keep the default stable surface scoped to HIL-proven WS63 APIs. DMA, embassy, BS2X, and unproven helper surfaces stay behind `unstable` until their invariants and HIL evidence are closed.
+**HAL 0.6.0 stabilization (complete):** the stable release is published. The renamed `hisi-hal 0.7.0-alpha.1` preserves that stable surface; DMA, embassy, BS2X, and unproven helper surfaces remain behind `unstable` until their invariants and HIL evidence are closed.
 
 The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](docs/plan/hal-0.6.0-release.md). RF/Connectivity may drive HAL bug fixes, but does not block HAL 0.6.0 unless it exposes a bug in an already-stable HAL API.
 
