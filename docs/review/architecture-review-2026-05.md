@@ -170,7 +170,7 @@ PAC 是手工维护的文件伪装成生成代码：SVD 为手写 CMSIS-SVD（�
 
 - 总览：[../src/explanation/components/01-overview.md](../src/explanation/components/01-overview.md)
 - PAC + SVD 生成层：[../src/explanation/components/03-ws63-pac.md](../src/explanation/components/03-ws63-pac.md) · [../src/explanation/components/02-ws63-svd.md](../src/explanation/components/02-ws63-svd.md)
-- HAL 核心与驱动：[../src/explanation/components/04-hisi-riscv-hal.md](../src/explanation/components/04-hisi-riscv-hal.md)
+- HAL 核心与驱动：[../src/explanation/components/04-hisi-hal.md](../src/explanation/components/04-hisi-hal.md)
 - 运行时与 bootloader：[../src/explanation/components/05-hisi-riscv-rt.md](../src/explanation/components/05-hisi-riscv-rt.md) · [../src/explanation/components/08-ws63-flashboot.md](../src/explanation/components/08-ws63-flashboot.md)
 - 示例：[../src/explanation/components/07-ws63-examples.md](../src/explanation/components/07-ws63-examples.md)
 - 连接性（RF / Wi-Fi / BT / SLE）：[../src/explanation/components/09-ws63-rf.md](../src/explanation/components/09-ws63-rf.md)
