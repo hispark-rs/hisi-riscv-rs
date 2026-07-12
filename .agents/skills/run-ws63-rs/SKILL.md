@@ -1,10 +1,10 @@
 ---
 name: run-ws63-rs
-description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test hisi-riscv-hal, ws63-pac, or any crate in this workspace.
+description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test hisi-hal, ws63-pac, or any crate in this workspace.
 ---
 
 Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
-`hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
+`hisi-hal`, `hisi-riscv-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
 
 ## Toolchain (required)
 
@@ -54,13 +54,13 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot --release   # experimental 
 ## Documentation
 
 ```bash
-cargo doc -Zbuild-std=core,alloc -p hisi-riscv-hal -p ws63-pac -p hisi-riscv-rt --no-deps
-# Output: target/riscv32imfc-unknown-none-elf/doc/hisi_riscv_hal/index.html
+cargo doc -Zbuild-std=core,alloc -p hisi-hal -p ws63-pac -p hisi-riscv-rt --no-deps
+# Output: target/riscv32imfc-unknown-none-elf/doc/hisi_hal/index.html
 ```
 
 ## Test
 
-In-binary unit tests (`#[cfg(test)]`) cannot run on the host: hisi-riscv-hal contains RISC-V
+In-binary unit tests (`#[cfg(test)]`) cannot run on the host: hisi-hal contains RISC-V
 inline asm (e.g. `asm!("ebreak")`), so the crate does not compile for an x86 host. They
 are compile-checked only as part of `cargo check`. Running real host unit tests requires
 cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP phase 1.

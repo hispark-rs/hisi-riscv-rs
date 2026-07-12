@@ -22,6 +22,10 @@ CHECK_ROOTS = [
 
 PATTERNS = [
     (
+        re.compile(r"hisi-riscv-hal\s*=|use\s+hisi_riscv_hal|crates/hisi-riscv-hal"),
+        "current recipes must use the renamed hisi-hal dependency, import, and path",
+    ),
+    (
         re.compile(r"cargo\s+(?:\+stable\s+)?install\s+--git\s+https://github\.com/hispark-rs/hisi-fwpkg\b"),
         "install hisi-fwpkg-cli from crates.io, not the git repo, in the happy path",
     ),
@@ -46,7 +50,7 @@ PATTERNS = [
         "rustup does not ship this target's rust-std component yet; use rust-src + -Zbuild-std",
     ),
     (
-        re.compile(r"hisi-riscv-hal\s*=\s*[{ ]version\s*=\s*\"0\.(?:4|5|6)(?:\"|[^\"]*\"(?!0-alpha\.1))"),
+        re.compile(r"hisi-hal\s*=\s*[{ ]version\s*=\s*\"0\.(?:4|5|6)(?:\"|[^\"]*\")"),
         "template happy path must not drift to an old HAL dependency",
     ),
     (

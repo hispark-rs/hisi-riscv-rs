@@ -10,7 +10,7 @@ what emulation can't at the example-image level: real boot, UART, timing, and bo
 wiring. User-invoked: it writes firmware to hardware.
 
 > **Scope**: this skill is only the UART/example smoke track. The HAL stable API proof
-> track is `cargo test -p hisi-riscv-hal --test hil` through `hil/embedded-test-runner.sh`
+> track is `cargo test -p hisi-hal --test hil` through `hil/embedded-test-runner.sh`
 > (`embedded-test` + semihosting), documented in `docs/src/how-to/07-run-hil-tests.md`.
 
 ## Usage

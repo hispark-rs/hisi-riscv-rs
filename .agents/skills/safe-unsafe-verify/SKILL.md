@@ -1,6 +1,6 @@
 ---
 name: safe-unsafe-verify
-description: Run SAFETY comment audit, unsound-encapsulation scan, and Kani verification on hisi-riscv-hal unsafe code. Use during the safe/unsafe verification cycle (P0–P3) to validate soundness before a release.
+description: Run SAFETY comment audit, unsound-encapsulation scan, and Kani verification on hisi-hal unsafe code. Use during the safe/unsafe verification cycle (P0–P3) to validate soundness before a release.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Runs the layered verification pipeline from the research report
 (`docs/review/safe-unsafe-formal-verification-research-2026-07.md`)
-on hisi-riscv-hal unsafe code:
+on hisi-hal unsafe code:
 
 | Step | What | Tool | Cost |
 |------|------|------|------|
@@ -69,7 +69,7 @@ Equivalent manual command:
 ```bash
 # Find safe fns that call unsafe fns / contain unsafe blocks
 # (heuristic: `pub fn` + `unsafe {` in the same non-test function)
-grep -rn 'pub fn' crates/hisi-riscv-hal/src/ \
+grep -rn 'pub fn' crates/hisi-hal/src/ \
   | grep -v '#\[' \
   | grep -v 'test' \
   | while IFS=: read -r file line rest; do
@@ -83,7 +83,7 @@ grep -rn 'pub fn' crates/hisi-riscv-hal/src/ \
 ### Step 3 — Clippy undocumented-unsafe-blocks lint
 
 ```bash
-cd crates/hisi-riscv-hal
+cd crates/hisi-hal
 cargo clippy --no-deps --no-default-features --features chip-ws63 \
   --target riscv32imfc-unknown-none-elf -- \
   -W clippy::undocumented_unsafe_blocks 2>&1 | \
@@ -122,7 +122,7 @@ site.
 
 Manual scan:
 ```bash
-rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-riscv-hal/src
+rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-hal/src
 ```
 
 Flag any closure / irq-disabled region containing `while`, `loop`, `wait`, `delay`,
@@ -140,7 +140,7 @@ Miri cannot run no_std RISC-V code directly. The check works on **host-testable
 standalone functions** only (pure-logic helpers, const fns, newtype methods).
 
 ```bash
-cd crates/hisi-riscv-hal
+cd crates/hisi-hal
 cargo +nightly miri test --target x86_64-unknown-linux-gnu 2>&1
 ```
 

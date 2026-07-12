@@ -29,14 +29,14 @@ check_step() {
 # ── Library check ──────────────────────────────────────────────────
 run_check() {
     banner "cargo check"
-    check_step "hisi-riscv-hal"      "cargo check $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET"
+    check_step "hisi-hal"      "cargo check $BUILD_STD -p hisi-hal --no-default-features --features chip-ws63 --target $TARGET"
     check_step "ws63-pac"      "cargo check $BUILD_STD -p ws63-pac --target $TARGET"
     check_step "hisi-riscv-rt"        "cargo check $BUILD_STD -p hisi-riscv-rt --target $TARGET"
     check_step "blinky (check)" "cargo check $BUILD_STD -p blinky --target $TARGET"
     check_step "workspace"      "cargo check $BUILD_STD --workspace --target $TARGET"
 
     banner "cargo doc"
-    check_step "hisi-riscv-hal docs"  "cargo doc $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET --no-deps 2>/dev/null"
+    check_step "hisi-hal docs"  "cargo doc $BUILD_STD -p hisi-hal --no-default-features --features chip-ws63 --target $TARGET --no-deps 2>/dev/null"
 
     banner "blinky release build (links via hisi-riscv-rt linker scripts)"
     # blinky links now (dual-PAC fixed + hisi-riscv-rt exports its linker scripts), so do a
@@ -47,7 +47,7 @@ run_check() {
 # ── Clippy ─────────────────────────────────────────────────────────
 run_clippy() {
     banner "cargo clippy"
-    check_step "hisi-riscv-hal clippy" "cargo clippy $BUILD_STD -p hisi-riscv-hal --no-default-features --features chip-ws63 --target $TARGET -- -D warnings 2>&1 | grep -q 'Finished'"
+    check_step "hisi-hal clippy" "cargo clippy $BUILD_STD -p hisi-hal --no-default-features --features chip-ws63 --target $TARGET -- -D warnings 2>&1 | grep -q 'Finished'"
 }
 
 # ── Format ─────────────────────────────────────────────────────────

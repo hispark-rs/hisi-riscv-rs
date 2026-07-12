@@ -47,7 +47,7 @@ def verify(base: str, version: str, latest_version: str | None, attempt: int) ->
     for path in (
         f"{version}/index.html",
         f"api/{version}/ws63/index.html",
-        f"api/{version}/ws63/hisi_riscv_hal/index.html",
+        f"api/{version}/ws63/hisi_hal/index.html",
     ):
         fetch(urljoin(base, path), attempt)
 

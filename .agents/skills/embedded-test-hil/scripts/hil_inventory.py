@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List and lightly validate hisi-riscv-hal embedded-test HIL registrations."""
+"""List and lightly validate hisi-hal embedded-test HIL registrations."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[4]
-HARNESS = ROOT / "crates/hisi-riscv-hal/tests/hil.rs"
-HELPERS = ROOT / "crates/hisi-riscv-hal/tests/hil"
+HARNESS = ROOT / "crates/hisi-hal/tests/hil.rs"
+HELPERS = ROOT / "crates/hisi-hal/tests/hil"
 
 
 MOD_RE = re.compile(r'#\[path\s*=\s*"hil/([^"]+\.rs)"\]\s*\nmod\s+([A-Za-z0-9_]+);')

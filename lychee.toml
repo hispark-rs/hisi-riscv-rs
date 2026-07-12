@@ -5,7 +5,7 @@
 # hygiene is checked in those repos, not here — and the Check Links checkout does
 # not fetch submodules, so their trees are empty anyway. Skip them as inputs.
 exclude_path = [
-  "crates/hisi-riscv-hal",
+  "crates/hisi-hal",
   "crates/hisi-riscv-rt",
   "crates/pac/ws63-pac",
   "crates/pac/bs2x-pac",

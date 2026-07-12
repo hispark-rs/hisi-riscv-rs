@@ -20,7 +20,7 @@ cause with evidence, not to guess broadly.
   per-step expected output and first-guess causes. Start here.
 - **Example source**: `/root/ws63-rs/examples/ws63/<ex>/src/main.rs` (WS63) or
   `examples/bs21|bs20/<ex>/src/main.rs` (BS2X) — what it prints and in what order.
-- **HAL clock/UART/timer drivers**: `/root/ws63-rs/crates/hisi-riscv-hal/src/{clock,uart,time,gpio}.rs`.
+- **HAL clock/UART/timer drivers**: `/root/ws63-rs/crates/hisi-hal/src/{clock,uart,time,gpio}.rs`.
 - **C SDK** (authoritative chip behaviour): `/root/fbb_ws63` (WS63), `/root/fbb_bs2x` (BS2X).
 - **QEMU model** (what was validated, and its known synthetic gaps): `/root/ws63-qemu`.
 

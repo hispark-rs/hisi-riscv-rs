@@ -2,7 +2,7 @@
 set -u
 
 ROOT="$(git rev-parse --show-toplevel)"
-HAL_DIR="$ROOT/crates/hisi-riscv-hal"
+HAL_DIR="$ROOT/crates/hisi-hal"
 OUT="$ROOT/docs/review/unsafe-audit-$(date +%F).md"
 AUDIT_ONLY=0
 
@@ -28,7 +28,7 @@ unsafe_count="$(grep -RIn --include='*.rs' 'unsafe' "$HAL_DIR/src" | wc -l | tr 
   echo "# Unsafe Verification Readiness"
   echo
   echo "- Date: $(date +%F)"
-  echo "- Scope: crates/hisi-riscv-hal/src"
+  echo "- Scope: crates/hisi-hal/src"
   echo "- Unsafe occurrences: $unsafe_count"
   echo
   echo "## Unsafe Occurrences By File"
@@ -77,7 +77,7 @@ if [ "$AUDIT_ONLY" -eq 0 ]; then
 
   (
     cd "$ROOT"
-    cargo clippy -p hisi-riscv-hal --no-deps --no-default-features --features chip-ws63 \
+    cargo clippy -p hisi-hal --no-deps --no-default-features --features chip-ws63 \
       --target x86_64-unknown-linux-gnu -- \
       -W clippy::undocumented_unsafe_blocks
   ) >"$TMP_CLIPPY" 2>&1

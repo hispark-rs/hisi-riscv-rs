@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
 echo "==> HAL register-access policy"
-python3 "$ROOT/crates/hisi-riscv-hal/scripts/check-register-access.py"
+python3 "$ROOT/crates/hisi-hal/scripts/check-register-access.py"
 
 if command -v uv >/dev/null 2>&1; then
     for svd_dir in \
@@ -23,13 +23,13 @@ fi
 
 if [ "${RUN_CARGO:-0}" = "1" ]; then
     echo "==> HAL cargo check/clippy matrix"
-    cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features \
+    cargo check -Zbuild-std=core,alloc -p hisi-hal --no-default-features \
         --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf
-    cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features \
+    cargo clippy -Zbuild-std=core,alloc -p hisi-hal --no-default-features \
         --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
-    cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features \
+    cargo check -Zbuild-std=core,alloc -p hisi-hal --no-default-features \
         --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf
-    cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features \
+    cargo clippy -Zbuild-std=core,alloc -p hisi-hal --no-default-features \
         --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
 else
     echo "==> RUN_CARGO=1 not set; skipping cargo matrix"

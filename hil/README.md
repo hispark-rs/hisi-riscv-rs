@@ -5,7 +5,7 @@ ws63-qemu 已把固件「跑得足够真」做软件在环验证；这一层是�
 
 > ✅ **真机验证（2026-06-14）**：完整的 Rust → flash 流程已在**真实 WS63 硅片**上跑通——
 > `blinky` 上电启动并翻转 GPIO0。验证路径见下方「打包 + 烧录」。
-> ✅ **HAL 驱动级 HIL**：`hisi-riscv-hal/tests/hil.rs` 已在真实 WS63 硅片上通过；
+> ✅ **HAL 驱动级 HIL**：`hisi-hal/tests/hil.rs` 已在真实 WS63 硅片上通过；
 > 精确用例数与 stable API 边界见 `docs/src/reference/10-stable-api.md`。
 
 镜像计划/打包/补哈希用 [`hisi-fwpkg`](https://github.com/hispark-rs/hisi-fwpkg)；烧录有两条已记录的路径：
@@ -129,7 +129,7 @@ probe-rs fork 的 `probe-rs run` 经 **RISC-V 半主机（semihosting）** 逐�
 
 - **`tests-hil`** —— 跨切面 / CPU / PAC 冒烟套件：纯 CPU 的 M/F/CSR 指令不变式，以及 PAC 基址
   结构性地址映射不变式（不属于任何单个 HAL 驱动）。
-- **`hisi-riscv-hal/tests/hil.rs`** —— HAL **驱动**在板测试（GPIO/TCXO/UART/timer/WDT/PWM/TRNG/eFuse/
+- **`hisi-hal/tests/hil.rs`** —— HAL **驱动**在板测试（GPIO/TCXO/UART/timer/WDT/PWM/TRNG/eFuse/
   I2C/I2S/LSADC/TSENSOR/peripherals 等 stable 子面）。它们与所测代码同处一 crate，随 HAL 发布与运行，并继承 HAL 的芯片
   门控（HAL standalone 无默认芯片；WS63 显式 `--features chip-ws63,rt`，实验性 `chip-bs21` 经 `--features chip-bs21,unstable`）。在板跑（用 `--test hil`
   只构建这一 embedded-test 集成测试目标——HAL 的主机单测在 `src/*.rs` 的 lib 测试目标里用默认
@@ -143,7 +143,7 @@ WS63 测试 ELF 自带 0x300 启动头（通过 `hisi-riscv-rt` 的 `boot-header
 
 ```bash
 # 1. HAL 驱动级：仅构建测试 ELF（不上板）
-cargo test -p hisi-riscv-hal \
+cargo test -p hisi-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -152,7 +152,7 @@ cargo test -p hisi-riscv-hal \
 #    （只覆盖这一次；.cargo/config.toml 里 `cargo run` 仍走 QEMU，不受影响）
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-    cargo test -p hisi-riscv-hal \
+    cargo test -p hisi-hal \
         --no-default-features --features chip-ws63,rt \
         --target riscv32imfc-unknown-none-elf \
         --test hil
@@ -172,12 +172,12 @@ runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `carg
 用例（自包含、无需跳线，QEMU/裸板皆安全）：`tests-hil` 跨切面套件 = (a) M/F/CSR 指令不变式
 （整数乘、ilp32f 硬浮点、mcycle 自增，镜像 `semihost_selftest`）；(b) PAC 基址结构性断言
 （GPIO0/UART0/TCXO/I2C0/PWM/WDT/RTC… 窗口未漂移）。HAL 驱动套件
-（`hisi-riscv-hal/tests/hil.rs`）已在真机通过；具体用例数、stable API 覆盖与不包含项以
+（`hisi-hal/tests/hil.rs`）已在真机通过；具体用例数、stable API 覆盖与不包含项以
 `docs/src/reference/10-stable-api.md` 为事实源。
 
 > 注意：`tests-hil` 是 workspace member 但**不在 default-members**，故普通 `cargo build` 不会拉
 > embedded-test。HAL 的在板测试是 riscv-only 的 target-gated dev-dep，普通 `cargo build -p
-> hisi-riscv-hal` 与主机单测（`cargo test --target x86_64`）都不会拉 embedded-test / hisi-riscv-rt。
+> hisi-hal` 与主机单测（`cargo test --target x86_64`）都不会拉 embedded-test / hisi-riscv-rt。
 
 ## Bring-up 清单（按序，每步附预期 + 失败诊断）
 

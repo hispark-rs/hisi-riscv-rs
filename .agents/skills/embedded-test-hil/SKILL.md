@@ -1,6 +1,6 @@
 ---
 name: embedded-test-hil
-description: Create, modify, audit, build, or run on-target embedded-test HIL tests for hisi-riscv-hal and tests-hil. Use when adding HAL driver silicon evidence, writing crates/hisi-riscv-hal/tests/hil/*.rs cases, registering #[embedded_test::tests] wrappers, running hil/embedded-test-runner.sh, filtering cargo test --test hil, or checking stable API HIL coverage.
+description: Create, modify, audit, build, or run on-target embedded-test HIL tests for hisi-hal and tests-hil. Use when adding HAL driver silicon evidence, writing crates/hisi-hal/tests/hil/*.rs cases, registering #[embedded_test::tests] wrappers, running hil/embedded-test-runner.sh, filtering cargo test --test hil, or checking stable API HIL coverage.
 ---
 
 # Embedded-Test HIL
@@ -12,8 +12,8 @@ example UART smoke; that is `$hil-smoke`.
 ## First Moves
 
 1. Read the current harness shape:
-   - `crates/hisi-riscv-hal/tests/hil.rs`
-   - the relevant `crates/hisi-riscv-hal/tests/hil/<driver>.rs`
+   - `crates/hisi-hal/tests/hil.rs`
+   - the relevant `crates/hisi-hal/tests/hil/<driver>.rs`
    - `hil/embedded-test-runner.sh`
 2. For policy/gating context, also read:
    - `docs/src/reference/10-stable-api.md`
@@ -28,13 +28,13 @@ python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py
 
 | Need | Location | Rule |
 |---|---|---|
-| HAL driver/API evidence | `crates/hisi-riscv-hal/tests/hil.rs` + `tests/hil/<driver>.rs` | Preferred path for stable API graduation |
+| HAL driver/API evidence | `crates/hisi-hal/tests/hil.rs` + `tests/hil/<driver>.rs` | Preferred path for stable API graduation |
 | CPU/PAC/critical-section cross-cutting smoke | `tests-hil/tests/hil.rs` | Not tied to one HAL driver |
 | Complete example image behavior | `hil/hil-smoke.sh` + example crate | Use `$hil-smoke`, not this skill |
 
 ## Add Or Change A HAL HIL Test
 
-1. Put test logic in `crates/hisi-riscv-hal/tests/hil/<driver>.rs`.
+1. Put test logic in `crates/hisi-hal/tests/hil/<driver>.rs`.
 2. Register the module near the other `#[path = "hil/<driver>.rs"] mod <driver>;` lines in `tests/hil.rs`.
 3. Add a small wrapper inside `#[embedded_test::tests] mod tests`:
 
@@ -60,7 +60,7 @@ For detailed patterns and anti-patterns, read [references/patterns.md](reference
 Build the HAL test ELF only:
 
 ```bash
-cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil --no-run
@@ -71,7 +71,7 @@ Run on real WS63:
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil
@@ -82,7 +82,7 @@ Filter one test:
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal \
+cargo test -Zbuild-std=core,alloc -p hisi-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- wdt_leak_keeps_watchdog_armed

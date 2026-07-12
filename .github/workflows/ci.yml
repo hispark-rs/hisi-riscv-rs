@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # hisi-riscv-hal has NO default chip (0.5.0, esp-hal style), so a bare
-        # `cargo check -p hisi-riscv-hal` fires the no-chip compile_error; select
+        # hisi-hal has NO default chip (0.5.0, esp-hal style), so a bare
+        # `cargo check -p hisi-hal` fires the no-chip compile_error; select
         # chip-ws63 for it. ws63-pac / hisi-riscv-rt compile chip-neutrally.
         include:
           - crate: ws63-pac
             args: ""
-          - crate: hisi-riscv-hal
+          - crate: hisi-hal
             args: "--no-default-features --features chip-ws63"
           - crate: hisi-riscv-rt
             args: ""
@@ -101,7 +101,7 @@ jobs:
       # ws63-flashboot is now clippy-clean too (was excluded as experimental), so the
       # whole workspace is gated.
       - name: Check HAL register-access policy
-        run: python3 crates/hisi-riscv-hal/scripts/check-register-access.py
+        run: python3 crates/hisi-hal/scripts/check-register-access.py
       - name: Run clippy
         run: cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 
@@ -119,7 +119,7 @@ jobs:
         run: cargo fmt --all -- --check
 
   # ── Host unit tests ─────────────────────────────────────────────
-  # hisi-riscv-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
+  # hisi-hal's riscv CSR asm is cfg-gated to riscv32 (host gets no-op stubs), and
   # ws63-pac's riscv coupling is gated too, so the crate compiles for x86 and the
   # pure-logic unit tests (encoding, tick math, proptests) actually run. Uses the
   # stable toolchain on the host target (RUSTUP_TOOLCHAIN overrides the nightly pin in
@@ -134,11 +134,11 @@ jobs:
         with:
           submodules: recursive
       # The HAL has NO default chip (esp-hal style, 0.5.0) and its `default` pulls
-      # `rt`, so a bare `cargo test -p hisi-riscv-hal` resolves with no chip and every
+      # `rt`, so a bare `cargo test -p hisi-hal` resolves with no chip and every
       # `soc::pac` reference vanishes. Select `chip-ws63` explicitly (mirrors the HAL's
       # `just test` recipe): 309 unit/property tests + the doctests run on the host.
       - name: Run host unit tests (x86_64)
-        run: cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63 --target x86_64-unknown-linux-gnu
+        run: cargo test -p hisi-hal --no-default-features --features chip-ws63 --target x86_64-unknown-linux-gnu
 
   # ── Dependency audit (advisory) ─────────────────────────────────
   audit:

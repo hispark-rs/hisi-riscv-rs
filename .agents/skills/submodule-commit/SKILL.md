@@ -16,7 +16,7 @@ the parent never points at an unpushed commit.
 | ws63-pac | `main` | upstream of hal/rt; **nests ws63-svd** |
 | ws63-svd | `main` | source of the PAC — **nested submodule at `crates/pac/ws63-pac/ws63-svd`** |
 | hisi-riscv-rt | `master` | runtime |
-| hisi-riscv-hal | `master` | drivers; depends on pac |
+| hisi-hal | `master` | drivers; depends on pac |
 | ws63-examples | `master` | blinky |
 | ws63-RF | `main` | blobs — parent submodule at nested path `chips/ws63/rf/ws63-RF` |
 | ws63-guide | `main` | docs |
@@ -81,6 +81,6 @@ git status -s                   # clean (except transient agent worktrees)
   fast-forward and lose nothing.
 - **Never add transient agent worktrees** (`.claude/worktrees/`, Codex worktrees, or similar) — they are harness state, not repo content.
 - **Cargo.lock ownership follows the repo that resolves it.** Independently published
-  Rust submodules (`hisi-riscv-hal`, `hisi-riscv-rt`, `ws63-pac`, `bs2x-pac`) commit
+  Rust submodules (`hisi-hal`, `hisi-riscv-rt`, `ws63-pac`, `bs2x-pac`) commit
   their own `Cargo.lock` inside the submodule. The parent `Cargo.lock` belongs only
   with the parent commit.

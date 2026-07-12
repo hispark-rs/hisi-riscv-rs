@@ -37,7 +37,7 @@ bash .agents/skills/qemu-smoke/smoke.sh <chip> [example]
 
 - **Build split** — WS63 examples are root-workspace members (`cargo build -p <ex>`);
   BS2X examples are **isolated workspaces** (`--manifest-path examples/bs21|bs20/Cargo.toml`)
-  because one `cargo build --workspace` would unify hisi-riscv-hal features and pull in
+  because one `cargo build --workspace` would unify hisi-hal features and pull in
   both chips at once (a `compile_error!`). The script builds each the right way.
 - **Chip → machine / binaries** — `bs21e` and `bs22` reuse the `examples/bs21` (chip-bs21)
   binaries booted under their own `-M`; `bs20` has its own dir (128K `memory.x`). BS2X

@@ -1,11 +1,11 @@
 ---
 name: stable-unstable
-description: "Manage the stable/unstable API gating in hisi-riscv-hal: add a new unstable surface, graduate one to stable (write HIL + remove the gate), or audit which items should be gated. Use when adding a driver/API, reviewing a PR that touches pub items, or checking gating compliance."
+description: "Manage the stable/unstable API gating in hisi-hal: add a new unstable surface, graduate one to stable (write HIL + remove the gate), or audit which items should be gated. Use when adding a driver/API, reviewing a PR that touches pub items, or checking gating compliance."
 ---
 
 # Stable/Unstable API Gating Skill
 
-This skill manages the `#[instability::unstable]` / `unstable_module!` gating in `hisi-riscv-hal`. The policy: **an API is STABLE only if a named HIL test exercises it on real WS63 silicon; everything else is UNSTABLE (gated behind the `unstable` cargo feature).**
+This skill manages the `#[instability::unstable]` / `unstable_module!` gating in `hisi-hal`. The policy: **an API is STABLE only if a named HIL test exercises it on real WS63 silicon; everything else is UNSTABLE (gated behind the `unstable` cargo feature).**
 
 ## When to use
 
@@ -52,8 +52,8 @@ When adding a new driver/API that has no HIL test yet:
 When an unstable API gets a HIL test passing on real WS63 silicon:
 
 1. **Write the HIL test** with the current embedded-test layout: put the helper in
-   `crates/hisi-riscv-hal/tests/hil/<driver>.rs`, then register a tiny wrapper in
-   `crates/hisi-riscv-hal/tests/hil.rs`. Gate it `#[cfg(feature = "unstable")]`
+   `crates/hisi-hal/tests/hil/<driver>.rs`, then register a tiny wrapper in
+   `crates/hisi-hal/tests/hil.rs`. Gate it `#[cfg(feature = "unstable")]`
    for now if it exercises unstable public API.
 2. **Run it on silicon** through `hil/embedded-test-runner.sh` with the needed
    features; see `docs/src/how-to/07-run-hil-tests.md`. It must PASS.
@@ -86,13 +86,13 @@ Run this to list all currently-gated items + check for ungapped unstable surface
 
 ```bash
 # All #[instability::unstable] items:
-grep -rn '#\[instability::unstable\]' crates/hisi-riscv-hal/src/
+grep -rn '#\[instability::unstable\]' crates/hisi-hal/src/
 
 # All unstable_module! / unstable_driver! invocations:
-grep -rn 'unstable_module!\|unstable_driver!' crates/hisi-riscv-hal/src/lib.rs
+grep -rn 'unstable_module!\|unstable_driver!' crates/hisi-hal/src/lib.rs
 
 # HIL tests that are gated unstable (should run only with --features unstable):
-grep -n 'feature = "unstable"' crates/hisi-riscv-hal/tests/hil.rs
+grep -n 'feature = "unstable"' crates/hisi-hal/tests/hil.rs
 ```
 
 ## What's currently STABLE vs UNSTABLE

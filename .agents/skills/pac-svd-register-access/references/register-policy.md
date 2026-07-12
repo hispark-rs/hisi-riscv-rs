@@ -73,7 +73,7 @@ r.reg().modify(|r, w| unsafe { w.bits(r.bits() | mask) });
 The last form is allowed only for dynamic bit-position registers where the active
 bit is a runtime pin/channel number and svd2rust cannot expose one useful field
 per legal bit. Add an allowlist entry in
-`crates/hisi-riscv-hal/scripts/check-register-access.py` with a rationale.
+`crates/hisi-hal/scripts/check-register-access.py` with a rationale.
 
 ## BS2X SVD Generation Policy
 
@@ -94,7 +94,7 @@ SVD unless generator evidence is no longer recoverable.
 
 ## CI Gate Interpretation
 
-`crates/hisi-riscv-hal/scripts/check-register-access.py` currently catches:
+`crates/hisi-hal/scripts/check-register-access.py` currently catches:
 
 - raw volatile access in HAL production code,
 - numeric MMIO pointer casts,
@@ -127,10 +127,10 @@ cd crates/pac/bs2x-pac/bs2x-svd && uv run validate.py && bash regen.sh
 For HAL register behavior:
 
 ```bash
-cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf
-cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
-cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf
-cargo clippy -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo check -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-ws63,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
+cargo check -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf
+cargo clippy -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-bs21,rt,unstable --target riscv32imfc-unknown-none-elf -- -D warnings
 ```
 
 For public API or stable behavior changes, also use `stable-unstable`,

@@ -10,7 +10,7 @@
 ## Good HAL Test Shape
 
 ```rust
-// crates/hisi-riscv-hal/tests/hil/wdt.rs
+// crates/hisi-hal/tests/hil/wdt.rs
 #[cfg(feature = "chip-ws63")]
 pub(crate) fn wdt_leak_keeps_watchdog_armed() {
     use hal::wdt::{ResetPulseLength, Watchdog, WdtMode, WdtTimeout};
@@ -34,7 +34,7 @@ pub(crate) fn wdt_leak_keeps_watchdog_armed() {
 ```
 
 ```rust
-// crates/hisi-riscv-hal/tests/hil.rs
+// crates/hisi-hal/tests/hil.rs
 #[cfg(feature = "chip-ws63")]
 #[test]
 fn wdt_leak_keeps_watchdog_armed() {

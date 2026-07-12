@@ -55,7 +55,7 @@ git diff --stat <passing-sha>..<failing-sha>
 |---------|-------------|--------|
 | No UART output at all | Boot hang: wrong loaderboot, flash address, or power | Check `ADDRESS` and `LOADERBOOT` in the CI config. Compare with hil-smoke --preflight. |
 | Garbled UART | Baud mismatch: clock-tree change affects UART divider | Check `TIMER_CLOCK_HZ` / UART clock source in the diff. |
-| Specific test FAILED | Code regression in the exercised driver | `git diff <passing-sha>..<failing-sha> -- crates/hisi-riscv-hal/src/<driver>.rs` |
+| Specific test FAILED | Code regression in the exercised driver | `git diff <passing-sha>..<failing-sha> -- crates/hisi-hal/src/<driver>.rs` |
 | All tests FAIL (incl. ones not touched) | **Rig issue**: board disconnected, probe-rs failed, power cycled | Check the CI runner logs for hardware errors, USB resets, timeout on `probe-rs run`. |
 | Intermittent (passes locally) | Board contact / wiring / timing edge | Re-run HIL CI (`gh run rerun <run-id>`). If 2/3 passes → wiring flaky, not code. |
 

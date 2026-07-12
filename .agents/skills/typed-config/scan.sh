@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # typed-config candidate scanner — heuristically flags "compiles-but-won't-run"
-# config smells in a hisi-riscv-hal driver (or the whole src/ dir). Each hit is a
+# config smells in a hisi-hal driver (or the whole src/ dir). Each hit is a
 # CANDIDATE to investigate, not a confirmed defect: trace it to the register field
 # (PAC) + valid range / clock precondition (vendor SDK), classify A/B/C/D, then
 # apply the decision tree in SKILL.md.
 #
 # Usage:
 #   bash .agents/skills/typed-config/scan.sh [path ...]
-#   bash .agents/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/spi.rs
+#   bash .agents/skills/typed-config/scan.sh crates/hisi-hal/src/spi.rs
 #   bash .agents/skills/typed-config/scan.sh            # default: the HAL src/ dir
 set -euo pipefail
 
 targets=("$@")
 if [ ${#targets[@]} -eq 0 ]; then
     # Default to the HAL src dir relative to repo root (works from repo root).
-    targets=(crates/hisi-riscv-hal/src)
+    targets=(crates/hisi-hal/src)
 fi
 
 # rg if available (faster, line numbers); else grep -rnE.
@@ -52,5 +52,5 @@ cat <<'EOF'
 Next: for each hit, see .agents/skills/typed-config/SKILL.md —
   trace -> classify (A/B/C/D) -> decision tree -> implement (config layer only) ->
   host tests + tests/hil.rs -> validate on the board.
-Reference impl: crates/hisi-riscv-hal/src/pwm.rs (PwmPeriod / Duty).
+Reference impl: crates/hisi-hal/src/pwm.rs (PwmPeriod / Duty).
 EOF

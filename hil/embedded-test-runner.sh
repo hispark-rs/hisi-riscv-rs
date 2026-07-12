@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cargo *runner* for on-target HIL tests (`hisi-riscv-hal --test hil` and
+# Cargo *runner* for on-target HIL tests (`hisi-hal --test hil` and
 # `tests-hil`). Turns
 # `cargo test --target riscv32imfc-unknown-none-elf` into "run each embedded-test
 # case on a real WS63 board over semihosting" instead of "boot in QEMU".
@@ -23,7 +23,7 @@
 # Enable it for the test invocation only (does NOT touch the QEMU `cargo run`
 # default in .cargo/config.toml):
 #   CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-#       cargo test -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+#       cargo test -p hisi-hal --no-default-features --features chip-ws63,rt \
 #           --target riscv32imfc-unknown-none-elf --test hil
 #
 # Env (all optional, sensible defaults — mirrors hil/cargo-run-hw.sh):

@@ -1,6 +1,6 @@
 ---
 name: pac-svd-register-access
-description: Maintain hisi-riscv-hal register access through SVD/PAC truth sources. Use when changing HAL MMIO/register code, reviewing raw PAC usage, fixing check-register-access CI failures, adding or correcting SVD/PAC fields/access types, regenerating ws63-pac or bs2x-pac, deciding whether a register should be modeled in SVD versus handled in HAL, or auditing read/modify/write behavior for write-only or dynamically masked registers.
+description: Maintain hisi-hal register access through SVD/PAC truth sources. Use when changing HAL MMIO/register code, reviewing raw PAC usage, fixing check-register-access CI failures, adding or correcting SVD/PAC fields/access types, regenerating ws63-pac or bs2x-pac, deciding whether a register should be modeled in SVD versus handled in HAL, or auditing read/modify/write behavior for write-only or dynamically masked registers.
 ---
 
 # PAC/SVD Register Access

@@ -77,7 +77,7 @@ def build_chip(chip: str, meta: dict[str, object], version: str, out: Path, targ
     dest.mkdir(parents=True, exist_ok=True)
     shutil.copytree(target_doc, dest, dirs_exist_ok=True)
     (dest / "index.html").write_text(
-        '<!doctype html><meta http-equiv="refresh" content="0; url=hisi_riscv_hal/index.html">\n',
+        '<!doctype html><meta http-equiv="refresh" content="0; url=hisi_hal/index.html">\n',
         encoding="utf-8",
     )
 

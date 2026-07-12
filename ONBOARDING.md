@@ -53,7 +53,7 @@ Top MCP Servers:
 
 Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 
-- **Submodules are everything.** Core submodules: `crates/pac/{ws63-pac,bs2x-pac}` (PACs), `crates/{hisi-riscv-hal,hisi-riscv-rt}` (HAL + runtime), `examples/{ws63,bs21,bs20}` (chip-specific examples), `chips/{ws63,bs2x}/guide` (hardware guides), `chips/ws63/rf/ws63-RF` (Wi-Fi blob). SVD repos (`ws63-svd`, `bs2x-svd`) are separate root-level submodules. Always clone/update with `git submodule update --init --recursive`.
+- **Submodules are everything.** Core submodules: `crates/pac/{ws63-pac,bs2x-pac}` (PACs), `crates/{hisi-hal,hisi-riscv-rt}` (HAL + runtime), `examples/{ws63,bs21,bs20}` (chip-specific examples), `chips/{ws63,bs2x}/guide` (hardware guides), `chips/ws63/rf/ws63-RF` (Wi-Fi blob). SVD repos (`ws63-svd`, `bs2x-svd`) are separate root-level submodules. Always clone/update with `git submodule update --init --recursive`.
 - **Submodule-first, then bump the pointer.** When you edit a file inside a submodule, commit *inside the submodule* first, push it, then update and commit the parent repo's submodule pointer. Don't commit the parent pointer to an unpushed submodule commit. (The `/submodule-commit` skill does this for you.)
 - **Build with the pinned official Rust nightly.** The workspace default target is `riscv32imfc-unknown-none-elf` (hard-float ilp32f, no atomics). rustc knows the target, but rustup has no prebuilt std component yet, so RISC-V commands use `-Zbuild-std=core,alloc`. Core loop: `cargo build -Zbuild-std=core,alloc`, `cargo check -Zbuild-std=core,alloc --workspace`, `cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings`, `cargo fmt --all -- --check`.
 - **Official C SDK is the single source of truth.** The WS63 and BS2X chips are undocumented — the official HiSilicon C SDKs (`fbb_ws63`, `fbb_bs2x`) are ground-truth for register offsets, bit fields, and init sequences. Before trusting or writing a driver, grep the SDK for the registers you're touching. The `register-auditor` subagent automates this cross-check. `esp-hal` is the reference for *Rust HAL patterns*, not register behavior.
@@ -66,7 +66,7 @@ Straight from `CLAUDE.md` — the conventions that keep this monorepo sane:
 First task for a new teammate — get a clean build going end to end:
 
 1. Clone the monorepo with submodules: `git clone --recurse-submodules https://github.com/hispark-rs/hisi-riscv-rs` (or `git submodule update --init --recursive` if you already cloned).
-   - Note: BS21/BS20 examples are in isolated workspaces (`examples/bs21/`, `examples/bs20/`) because `hisi-riscv-hal` builds for exactly one chip at a time (enforced by `compile_error!`). WS63 examples are in the root workspace.
+   - Note: BS21/BS20 examples are in isolated workspaces (`examples/bs21/`, `examples/bs20/`) because `hisi-hal` builds for exactly one chip at a time (enforced by `compile_error!`). WS63 examples are in the root workspace.
 2. Install the pinned nightly from `rust-toolchain.toml`: `rustup toolchain install nightly-2026-07-09 --profile minimal --component rust-src --component clippy --component rustfmt --component llvm-tools-preview`.
 3. Build the libraries + blinky: `cargo build -Zbuild-std=core,alloc`, then sanity-check the whole tree: `cargo check -Zbuild-std=core,alloc --workspace` (the `/run-ws63-rs` skill wraps this).
 4. Boot blinky in the emulator to see it run end to end: `/qemu-smoke ws63 blinky`.
