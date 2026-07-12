@@ -263,8 +263,14 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] ROM artifact 迁移后再次通过 1,486 section、5,335 relocation、37 patch 的 guarded
   link，并在真机复现完整 connectivity marker。证据见
   [A1 ROM metadata migration](evidence/ws63-rf-a1-rom-sys-2026-07-13.md)。
-- [ ] `hisi-crypto`、`ws63-radio-sys` 与 `hisi-rf-link` 尚未抽取；因此 A1 整体仍为进行中，
-  不能把 allocator/ROM parity 解释为组件拆分已完成。
+- [x] `hisi-crypto` 已抽为独立 repository/release unit。芯片中立 trait 覆盖
+  PBKDF2/SHA/HMAC/AES/entropy，RustCrypto backend 作为软件实现与 KAT oracle；RF 只保留
+  WS63 unified-cipher PBKDF2/TRNG backend 和 supplicant C ABI adapter。
+- [x] RF 已移除对 `aes`、`hmac`、`sha1`、`sha2`、`pbkdf2` 的直接依赖；迁移后的
+  guarded link 与真机 WPA2/DHCP/ARP/ping 均通过。证据见
+  [A1 crypto provider migration](evidence/ws63-rf-a1-crypto-2026-07-13.md)。
+- [ ] `ws63-radio-sys` 与 `hisi-rf-link` 尚未抽取；因此 A1 整体仍为进行中，不能把
+  allocator/ROM/crypto parity 解释为组件拆分已完成。
 
 ### B0-B3 -- BLE Vendor Host First
 
