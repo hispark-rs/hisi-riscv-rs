@@ -26,8 +26,8 @@ PATTERNS = [
         "install hisi-fwpkg-cli from crates.io, not the git repo, in the happy path",
     ),
     (
-        re.compile(r"cargo\s+(?:\+stable\s+)?install\s+hisi-fwpkg-cli(?!\s+--version\s+0\.3\.0)"),
-        "pin hisi-fwpkg-cli 0.3.0 in tested happy-path docs",
+        re.compile(r"cargo\s+(?:\+stable\s+)?install\s+hisi-fwpkg-cli(?!\s+--version\s+0\.3\.2)"),
+        "pin hisi-fwpkg-cli 0.3.2 in tested happy-path docs",
     ),
     (
         re.compile(r"probe-rs\s+download(?!.*--binary-format\s+bin).*target/riscv32imfc", re.IGNORECASE),
@@ -67,7 +67,6 @@ ALLOW = [
     re.compile(r"no prebuilt rust-std"),
     re.compile(r"has no prebuilt rust-std"),
     re.compile(r"0\.5\.0\+ has NO default chip"),
-    re.compile(r"hisi-fwpkg-cli 0\.3\.0"),
 ]
 
 

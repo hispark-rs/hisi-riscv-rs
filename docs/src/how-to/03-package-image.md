@@ -8,7 +8,7 @@
 - `probe-rs` 不理解 HiSilicon 镜像格式，只用通用裸 bin 下载能力：`probe-rs download --binary-format bin --base-address <plan.base_addr> <plan.image>`。
 - `patch-hash` 只保留给需要 ELF 元数据的路径，例如 `probe-rs run` / `embedded-test`；普通 smoke/download 不再直接烧 ELF。
 
-> 安装：`cargo +stable install hisi-fwpkg-cli --version 0.3.0`。
+> 安装：`cargo +stable install hisi-fwpkg-cli --version 0.3.2`。
 
 ## 生成 plan image
 
