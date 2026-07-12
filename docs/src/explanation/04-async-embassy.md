@@ -9,7 +9,7 @@
 
 ## 同一套 HAL，三种用法
 
-hisi-riscv-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。在它之上，
+hisi-hal 默认是一套**阻塞**驱动（符合 `embedded-hal 1.0`）。在它之上，
 两个 feature 叠出了异步能力，于是同一套驱动有三档用法：
 
 1. **不开任何 feature——纯阻塞**。`uart.write()` 就在那儿自旋等 FIFO 有位。

@@ -1,6 +1,6 @@
 # 外设清单与覆盖情况
 
-`crates/hisi-riscv-hal/src/*.rs` 下的全部驱动模块。基地址取自各模块的 doc 注释/常量或 `safety.rs` 断言；标 "—" 者源文件头未列。"芯片"列：默认构建为 `chip-ws63`，标注 BS21 的模块仅在 `chip-bs21` 下编译。
+`crates/hisi-hal/src/*.rs` 下的全部驱动模块。基地址取自各模块的 doc 注释/常量或 `safety.rs` 断言；标 "—" 者源文件头未列。"芯片"列：默认构建为 `chip-ws63`，标注 BS21 的模块仅在 `chip-bs21` 下编译。
 
 完整 API 见 [HAL API 总览](03-hal-api.md)；驱动如何新增见 [新增一个外设驱动](../how-to/10-add-driver.md)。
 

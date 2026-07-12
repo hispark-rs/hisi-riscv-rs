@@ -23,8 +23,8 @@
 
 {{#tutorial-snippet app_first_cd}}
 
-这个工程是**自包含的**：它的依赖（`hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-pac`）
-都来自 crates.io，它自带 `rust-toolchain.toml`（钉死 `hisi-riscv` 工具链）、
+这个工程是**自包含的**：它的依赖（`hisi-hal` / `hisi-riscv-rt` / `ws63-pac`）
+都来自 crates.io，它自带 `rust-toolchain.toml`（钉死工具链）、
 `.cargo/config.toml`（设好目标和 QEMU runner）和一个 `justfile`。
 你**不需要**克隆任何monorepo。
 

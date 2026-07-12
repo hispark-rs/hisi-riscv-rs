@@ -10,10 +10,10 @@
 |------|------|
 | [内存映射](01-memory-map.md) | WS63 内存区域、导出的链接符号、栈大小、复位向量与入口 |
 | [示例目录与验证标记串](02-examples.md) | 18 个示例的用途、观测通道、精确的成功标记串、是否需接线、QEMU/真机状态 |
-| [HAL API 总览](03-hal-api.md) | `hisi-riscv-hal` 公开 API 结构图：驱动模块、构造函数、单例/GPIO/多实例/sealed/特性 |
+| [HAL API 总览](03-hal-api.md) | `hisi-hal` 公开 API 结构图：驱动模块、构造函数、单例/GPIO/多实例/sealed/特性 |
 | [完整 API 文档（rustdoc）↗](https://hispark-rs.github.io/hisi-riscv-rs/api/) | hal/pac/rt 的逐项 API；与本手册同站部署在 `/api/`，CI 自动构建 |
 | [外设清单与覆盖情况](04-peripherals.md) | 全部 HAL 驱动模块、外设、基地址、示例覆盖、可否裸板自检 |
-| [Stable API 清单与门控状态](10-stable-api.md) | `hisi-riscv-hal` 0.6.0 默认 stable 面和 `unstable` feature 门后的 API |
+| [Stable API 清单与门控状态](10-stable-api.md) | `hisi-hal 0.7.0-alpha.1` 默认 stable 面和 `unstable` feature 门后的 API |
 | [工具链与编译目标](05-toolchain.md) | 官方 pinned nightly、目标三元组、build-std 状态、`rust-toolchain.toml`、`.cargo/config.toml` |
 | [应用镜像格式与签名](06-image-format.md) | 0x300 镜像头字段布局、fwpkg V1 容器、CRC16 |
 | [HIL 脚本与 runner 环境变量](07-hil-markers.md) | `embedded-test` runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源 |

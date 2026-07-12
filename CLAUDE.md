@@ -4,7 +4,7 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-riscv-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/pac/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/pac/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
 
 ### Repository layout (grouped tree)
 
@@ -12,7 +12,7 @@ Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS
 crates/      core publishable library crates
   pac/         per-chip register-access crates (svd2rust-generated)
     ws63-pac/  (submodule; nests ws63-svd)     bs2x-pac/  (submodule; nests bs2x-svd)
-  hisi-riscv-hal/ (submodule)                  hisi-riscv-rt/ (submodule)
+  hisi-hal/ (submodule)                  hisi-riscv-rt/ (submodule)
 examples/    application examples
   ws63/        (= ws63-examples submodule: blinky, uart_hello, …)
   bs21/        (in-tree, isolated workspace; current members in docs reference)
@@ -23,7 +23,7 @@ chips/       chip-specific support
 docs/        architecture docs (Chinese)        hil/  hardware-in-the-loop scripts
 ```
 
-Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-riscv-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` and `examples/bs20` are separate isolated workspaces (build with `--manifest-path examples/bs21/Cargo.toml` / `examples/bs20/Cargo.toml`); their current member lists live in `docs/src/reference/02-examples.md`.
+Crate **package names are unchanged** by this grouping — `cargo build -p blinky`, `-p hisi-hal`, `-p ws63-rf-rs`, etc. all work by name; only the on-disk paths are grouped. `examples/bs21` and `examples/bs20` are separate isolated workspaces (build with `--manifest-path examples/bs21/Cargo.toml` / `examples/bs20/Cargo.toml`); their current member lists live in `docs/src/reference/02-examples.md`.
 
 **Docs (Chinese):** the full handbook is an mdBook under [`docs/`](docs/) (build with `mdbook build docs`, serve with `mdbook serve docs`), organized by the [Diátaxis](https://diataxis.fr/) framework (tutorials / how-to / reference / explanation). The per-component architecture deep-dives now live under [`docs/src/explanation/components/`](docs/src/explanation/components/) (e.g. `overview.md` for the whole picture); the full review ledger is in [`docs/review/architecture-review-2026-05.md`](docs/review/architecture-review-2026-05.md), the archived remediation ledger is under [`docs/archive/`](docs/archive/), and the current connectivity-first plan is in [`ROADMAP.md`](ROADMAP.md). Read these before large changes — connectivity is the north star.
 
@@ -38,8 +38,8 @@ cargo build -Zbuild-std=core,alloc                         # Build libraries + d
 cargo check -Zbuild-std=core,alloc --workspace             # Full workspace check.
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
-cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --features chip-ws63    # Check HAL only (chip-ws63)
-cargo check -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
+cargo check -Zbuild-std=core,alloc -p hisi-hal --features chip-ws63    # Check HAL only (chip-ws63)
+cargo check -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-bs21,rt,unstable   # …or BS2X
 cargo check -Zbuild-std=core,alloc -p ws63-pac             # Check PAC only
 cargo build -Zbuild-std=core,alloc -p blinky --release     # Build example
 
@@ -52,8 +52,8 @@ cargo fmt --all -- --check
 
 # Submodule operations
 git submodule update --init --recursive
-git -C crates/hisi-riscv-hal status              # Work inside submodule
-git -C crates/hisi-riscv-hal add -A && git -C crates/hisi-riscv-hal commit -m "..."
+git -C crates/hisi-hal status              # Work inside submodule
+git -C crates/hisi-hal add -A && git -C crates/hisi-hal commit -m "..."
 ```
 
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
@@ -64,18 +64,18 @@ git -C crates/hisi-riscv-hal add -A && git -C crates/hisi-riscv-hal commit -m ".
 
 ```
 ws63-svd (XML) → ws63-pac (svd2rust generated, ~1.5MB lib.rs)
-                → hisi-riscv-hal (hand-written safe drivers)
+                → hisi-hal (hand-written safe drivers)
                 → examples/ws63/* (applications)
 hisi-riscv-rt (riscv-rt facade + chip startup adapters)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for 36 peripheral/register blocks. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`hisi-riscv-hal`**: 43 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
+- **`hisi-hal`**: 43 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
 - **`hisi-riscv-rt`**: Runtime crate — thin `riscv-rt` entry facade plus chip startup adapters. WS63 owns `asm/ws63` + `linker/ws63` startup/layout/header resources and uses `ws63-pac/rt` for `device.x`; BS2X currently reuses the legacy adapter with per-example `memory.x` and `bs2x-pac/rt` `device.x`.
 
 ### Peripheral Singleton Pattern
 
-`crates/hisi-riscv-hal/src/peripherals.rs` defines two macros:
+`crates/hisi-hal/src/peripherals.rs` defines two macros:
 - `peripheral!($name, $pac_ty)` — generates a lifetime-parameterized ZST `$name<'d>` with `steal()`, `ptr()`, and an `unstable` + `unsafe` raw `register_block()` escape hatch.
 - `peripherals!(...)` — generates the `Peripherals` struct with `take()` (safe) and `steal()` (unsafe).
 
@@ -170,7 +170,7 @@ typestate pattern. Two layers:
 
 When adding or tightening a driver, run the **`typed-config` skill** (the checklist +
 the A/B/C/D defect taxonomy + a candidate scanner). Reference implementation:
-`crates/hisi-riscv-hal/src/pwm.rs` (`PwmPeriod` / `Duty`). Every tightened surface is
+`crates/hisi-hal/src/pwm.rs` (`PwmPeriod` / `Duty`). Every tightened surface is
 proven on the connected board via the HIL suite (`tests/hil.rs`).
 
 ### Atomics & critical-section discipline
@@ -213,7 +213,7 @@ Seven GitHub Actions workflows in `.github/workflows/`:
 完整操作流程见 [`docs/src/how-to/11-release.md`](docs/src/how-to/11-release.md)。
 
 Every independently published Rust repository in this ecosystem commits its own
-`Cargo.lock`, including library crates. This applies to `hisi-riscv-hal`,
+`Cargo.lock`, including library crates. This applies to `hisi-hal`,
 `hisi-riscv-rt`, `ws63-pac`, and `bs2x-pac`. Their standalone CI and `publish.yml`
 must use `--locked`; release preflight is:
 

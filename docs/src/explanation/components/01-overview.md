@@ -15,7 +15,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 │ ├─ ws63-pac/ws63-svd (CMSIS-SVD) ──svd2rust──┐ │
 │ └─ bs2x-pac/bs2x-svd (CMSIS-SVD) ─────────────┤ │
 │                                            ▼ ▼ │
-│                    hisi-riscv-hal (多芯片 HAL；standalone 无默认 chip，chip-bs21 需 unstable) ◀── embedded-hal 1.0
+│                    hisi-hal (多芯片 HAL；standalone 无默认 chip，chip-bs21 需 unstable) ◀── embedded-hal 1.0
 │                    │  ├─ feature "async"  ◀── embedded-hal-async / embedded-io-async
 │                    │  │     SPI/I2C blocking-backed async traits; interrupt/waker async 需 unstable
 │                    │  └─ feature "embassy" ◀── embassy-time-driver / -queue-utils（模块需 unstable）
@@ -43,7 +43,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `crates/pac/ws63-pac/ws63-svd` | 嵌套 submodule | WS63 SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
 | `crates/pac/bs2x-pac` | submodule | BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
 | `crates/pac/bs2x-pac/bs2x-svd` | 嵌套 submodule | BS2X SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
-| `crates/hisi-riscv-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-riscv-hal.md](04-hisi-riscv-hal.md) |
+| `crates/hisi-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-hal.md](04-hisi-hal.md) |
 | `crates/hisi-riscv-rt` | submodule | 运行时：启动、中断向量、链接脚本、critical-section | [hisi-riscv-rt.md](05-hisi-riscv-rt.md) |
 | `examples/ws63/*` | in-tree 独立工作区 | WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…） | [ws63-examples.md](07-ws63-examples.md) |
 | `examples/bs21/*` | in-tree 独立工作区 | BS2X/BS21 示例；成员清单见参考页 | [ws63-examples.md](07-ws63-examples.md) |
@@ -108,7 +108,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 1. **连接性状态**：
    - **WS63 Wi-Fi**（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。
    - **BS2X BLE/SLE**（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 `hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md`。
-2. ~~示例无法链接~~ **（已修）**；~~多芯片支持~~ **（已实现）**：hisi-riscv-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
+2. ~~示例无法链接~~ **（已修）**；~~多芯片支持~~ **（已实现）**：hisi-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
 3. **硬件在环（HIL）进度**：HAL 驱动级 WS63 embedded-test 证据基线见
    [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 仍按
    [HIL 测试框架](../07-hil-framework.md) 和 [示例目录与验证标记串](../../reference/02-examples.md) 分轨推进。
@@ -117,7 +117,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 ## 多芯片支持细节
 
 - **PAC 组织**：`crates/pac/ws63-pac` 和 `crates/pac/bs2x-pac` 各自独立（SVD 源→svd2rust 生成），root `Cargo.toml` 经 `[patch.crates-io]` 统一链接到本地实例（保证单一 PAC 版本）。
-- **HAL 多芯片**：`hisi-riscv-hal` standalone 无默认 chip；下游需显式启用 `chip-ws63`，实验性 `chip-bs21` 需同时启用 `unstable`。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。
+- **HAL 多芯片**：`hisi-hal` standalone 无默认 chip；下游需显式启用 `chip-ws63`，实验性 `chip-bs21` 需同时启用 `unstable`。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。
 - **示例组织**：WS63 示例遵循原 submodule 路径 `examples/ws63/`；BS2X 示例为 in-tree 独立工作区 `examples/bs21/` 和 `examples/bs20/`（避免 submodule 膨胀）。
 - **QEMU 支持**：ws63-qemu 已支持 `-M ws63`（8 GB 地址空间）、`-M bs21`（不同时钟/外设）、`-M bs22`/`-M bs20`（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。
 

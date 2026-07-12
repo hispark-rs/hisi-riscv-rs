@@ -12,7 +12,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 
 | 入口 | 用途 | 观测通道 |
 |------|------|----------|
-| `hil/embedded-test-runner.sh` | `hisi-riscv-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
+| `hil/embedded-test-runner.sh` | `hisi-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
@@ -43,7 +43,7 @@ Cargo 以 `<runner> <built-test-elf> [embedded-test args...]` 调用 runner。�
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --features chip-ws63,rt \
+cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf --test hil
 ```
 

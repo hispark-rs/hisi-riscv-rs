@@ -54,7 +54,7 @@
 手动烧一个示例、肉眼看一个结果，是理解 HIL 的好起点。但仓库里现在有两条自动化 HIL 轨道：
 
 - **HAL 驱动级**：`embedded-test` + semihosting，通过 `hil/embedded-test-runner.sh` 在真板逐个运行
-  `hisi-riscv-hal/tests/hil.rs` 里的 Rust `#[test]`。这是 stable API 的证据线。
+  `hisi-hal/tests/hil.rs` 里的 Rust `#[test]`。这是 stable API 的证据线。
 - **示例级 smoke**：`hil/hil-smoke.sh` 把常规 UART smoke 子集烧上去、读 UART、断言它打印了预期
   grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或需要半主机的示例另走人工/调试器路径。
 

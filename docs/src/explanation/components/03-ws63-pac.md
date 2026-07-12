@@ -9,7 +9,7 @@
 `ws63-pac` 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 `svd2rust` 从 SVD 描述生成。它的职责非常聚焦：
 
 - **负责**：为芯片上的 36 个外设/寄存器块提供 `RegisterBlock` 结构体与类型安全的寄存器读/写/改访问器；提供 `Peripherals` 单例（`take()` / `steal()`）；提供外部中断枚举 `ExternalInterrupt`；在 `rt` feature 下提供中断向量表 `device.x`。
-- **不负责**：任何驱动逻辑、时钟门控策略、引脚复用、外设初始化时序。这些全部上移到 `hisi-riscv-hal`。PAC 只暴露"裸寄存器 + 地址映射"，是 `unsafe` 寄存器写入的最底层封装边界。
+- **不负责**：任何驱动逻辑、时钟门控策略、引脚复用、外设初始化时序。这些全部上移到 `hisi-hal`。PAC 只暴露"裸寄存器 + 地址映射"，是 `unsafe` 寄存器写入的最底层封装边界。
 
 crate 元数据齐全（`Cargo.toml:1-9`）：`license = "MIT"`、`repository`、`keywords`、`categories`，具备发布到 crates.io 的条件。
 
@@ -19,13 +19,13 @@ crate 元数据齐全（`Cargo.toml:1-9`）：`license = "MIT"`、`repository`�
 ws63-svd (XML)
    │ svd2rust 0.37.1 生成
    ▼
-ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
+ws63-pac ──► hisi-hal ──► examples/ws63/*
    │
    └──► hisi-riscv-rt（通过 chip-ws63 启用 ws63-pac/rt，并在 linker contract 中 INCLUDE device.x）
 ```
 
 - 上游：`ws63-svd` 的 XML 描述，经 `svd2rust v0.37.1` 一次性生成（`src/lib.rs:1` doc 注释标注版本）。
-- 下游：`hisi-riscv-hal`（安全驱动）与 `hisi-riscv-rt`（启动/链接）均消费本 crate。两者对外通过 **registry 版本依赖** 声明（`ws63-pac = "0.2"`；BS2X 路径使用 `bs2x-pac = "0.1"`），standalone CI / publish 按各自 `Cargo.lock` 从 crates.io 解析；在 monorepo 内由根 `Cargo.toml` 的 `[patch.crates-io]` 重定向到本地 submodule，保证开发时全工作区只链接**单一** PAC 实例。
+- 下游：`hisi-hal`（安全驱动）与 `hisi-riscv-rt`（启动/链接）均消费本 crate。两者对外通过 **registry 版本依赖** 声明（`ws63-pac = "0.2"`；BS2X 路径使用 `bs2x-pac = "0.1"`），standalone CI / publish 按各自 `Cargo.lock` 从 crates.io 解析；在 monorepo 内由根 `Cargo.toml` 的 `[patch.crates-io]` 重定向到本地 submodule，保证开发时全工作区只链接**单一** PAC 实例。
 
 ## 关键设计
 

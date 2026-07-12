@@ -33,7 +33,7 @@ blinky 把 **GPIO0** 配成推挽输出，死循环里拉高、延时、拉低�
 
 {{#tutorial-snippet contrib_run_uart_hello}}
 
-`uart_hello` 使用 `hisi-riscv-hal` 的 UART0 驱动，并按 flashboot 留下的 boot clock 配置
+`uart_hello` 使用 `hisi-hal` 的 UART0 驱动，并按 flashboot 留下的 boot clock 配置
 115200 8N1。控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：
 
 ```console

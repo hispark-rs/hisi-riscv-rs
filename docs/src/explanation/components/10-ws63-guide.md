@@ -29,7 +29,7 @@ ws63-guide 不在 Rust crate 编译依赖链（SVD → PAC → HAL → examples�
 flowchart LR
     vendor[HiSilicon vendor 文档] -->|逆向/MinerU 提取| guide[ws63-guide 硬件手册]
     guide -.参考硬件语义.-> svd[ws63-svd]
-    guide -.参考寄存器位/中断/内存图.-> hal[hisi-riscv-hal]
+    guide -.参考寄存器位/中断/内存图.-> hal[hisi-hal]
     svd --> pac[ws63-pac] --> hal --> ex[ws63-examples]
     rt[hisi-riscv-rt] -. 启动/链接 .-> ex
 ```

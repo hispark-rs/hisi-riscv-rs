@@ -12,7 +12,7 @@
 
 整套生态包含：
 
-- **`hisi-riscv-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
+- **`hisi-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
 - **{{#chip-field pac_crate}}** —— svd2rust 生成的寄存器访问层。
 - **`hisi-riscv-rt`** —— 启动汇编、链接脚本、中断向量。
 - **官方 Rust nightly 工具链** —— 使用 upstream `riscv32imfc-unknown-none-elf`（硬浮点、无原子）目标，当前经 `rust-src` + `-Zbuild-std=core,alloc` 构建。
@@ -40,7 +40,7 @@
 ## 仓库
 
 - 在线手册：<https://hispark-rs.github.io/hisi-riscv-rs/>（本书）
-- API 文档（rustdoc）：{{#api-link hisi_riscv_hal/index.html|hisi-riscv-hal}}（按当前 chip/version 切换）
+- API 文档（rustdoc）：{{#api-link hisi_hal/index.html|hisi-hal}}（按当前 chip/version 切换）
 - 主仓库：<https://github.com/hispark-rs/hisi-riscv-rs>
 - 工程模板：<https://github.com/hispark-rs/hisi-rs-template>（`cargo generate`）
 - 其它仓库见 [CLI 工具速查](reference/08-cli-tools.md) 与各[组件文档](explanation/components/00-index.md)。

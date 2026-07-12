@@ -4,7 +4,7 @@
 
 ## 核心倾向：底座应该可以被别人拿走
 
-这个生态的目标不是把 `hisi-riscv-hal` 变成唯一正确的上层选择。更理想的形态是：
+这个生态的目标不是把 `hisi-hal` 变成唯一正确的上层选择。更理想的形态是：
 
 - 有人只想要 **PAC**，自己写一个完全不同风格的 HAL；
 - 有人只想要 **runtime/linker/critical-section**，上面接自己的 BSP 或 C/Rust 混合工程；
@@ -82,7 +82,7 @@ PAC 还有一个额外约束：全程序不能链接两份 PAC。PAC 内部的 s
 所以顺序必须从底往上：
 
 ```text
-PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 pointer
+PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
 ```
 
 这个顺序不是仪式，而是依赖解析的自然结果。比如 HAL 需要消费新版 PAC，PAC 就必须先发布；父仓要 pin 到新版 HAL，HAL 的 commit 就必须先 push。父仓 pointer 永远是最后一步，因为它记录的是“已经存在、可 fetch、可复现的一组提交”。

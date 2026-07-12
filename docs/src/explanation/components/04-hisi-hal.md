@@ -1,12 +1,12 @@
-# hisi-riscv-hal 架构
+# hisi-hal 架构
 
 > 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
-> **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 `chip-bs21` target 目前需 `unstable`。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-riscv-hal`。
+> **2026-06 更新**：HAL 现为**多芯片** —— 使用 `chip-ws63` / `chip-bs21` 特性二选一（HAL standalone 无默认芯片）。后者基于 `bs2x-pac` 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 `chip-bs21` target 目前需 `unstable`。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU `-M bs21/bs22/bs20` 上验证。crate 路径 `crates/hisi-hal`。
 
 ## 职责与边界
 
-`hisi-riscv-hal` 是 WS63 SoC 的硬件抽象层（HAL），在 `ws63-pac` 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。
+`hisi-hal` 是 WS63 SoC 的硬件抽象层（HAL），在 `ws63-pac` 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。
 
 - **负责**：
   - 为 36 个 PAC 外设/寄存器块提供生命周期化的安全单例封装（`peripherals.rs`），并在其上实现按功能聚合的驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、KM/PKE/SPACC、shared memory 等）。
@@ -27,12 +27,12 @@
 ws63-svd (XML)
    │ svd2rust 生成
    ▼
-ws63-pac ──► hisi-riscv-hal ──► examples/ws63/*
+ws63-pac ──► hisi-hal ──► examples/ws63/*
                 ▲
        hisi-riscv-rt（启动汇编 / 链接脚本；中断符号来自 PAC/rt）并行提供运行期支撑
 ```
 
-`hisi-riscv-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期中断符号由当前 PAC 的 `rt` feature（WS63 为 `ws63-pac/rt`）提供，并由 `hisi-riscv-rt` 的 linker contract 引入。
+`hisi-hal` 是承上启下的核心层：向下消费 `ws63-pac` 的 `RegisterBlock`，向上为示例提供驱动。它**不**直接依赖 `hisi-riscv-rt`，但其中断子系统依赖 `riscv` crate 的 trap 模型，运行期中断符号由当前 PAC 的 `rt` feature（WS63 为 `ws63-pac/rt`）提供，并由 `hisi-riscv-rt` 的 linker contract 引入。
 
 依赖：`embedded-hal 1.0`、`embedded-hal-nb 1.0`、`embedded-io 0.6`、`nb`、`portable-atomic`、`riscv`。
 

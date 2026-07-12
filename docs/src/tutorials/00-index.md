@@ -12,7 +12,7 @@
 
 ### 应用开发者（用 WS63 写你自己的 App）
 
-你想用我们**已发布到 crates.io 的库**（`hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-pac`）
+你想用我们**已发布到 crates.io 的库**（`hisi-hal` / `hisi-riscv-rt` / `ws63-pac`）
 开发自己的 WS63 程序。你**不需要**克隆这个monorepo——
 起点是用 `cargo generate` 从模板 [`hisi-rs-template`](https://github.com/hispark-rs/hisi-rs-template)
 生成一个自包含的工程。有没有开发板都行（QEMU 不需要硬件）。

@@ -53,7 +53,7 @@
     - [架构总览](explanation/components/01-overview.md)
     - [ws63-svd](explanation/components/02-ws63-svd.md)
     - [ws63-pac](explanation/components/03-ws63-pac.md)
-    - [hisi-riscv-hal](explanation/components/04-hisi-riscv-hal.md)
+    - [hisi-hal](explanation/components/04-hisi-hal.md)
     - [hisi-riscv-rt](explanation/components/05-hisi-riscv-rt.md)
     - [async 与 embassy（深入）](explanation/components/06-async-embassy.md)
     - [ws63-examples](explanation/components/07-ws63-examples.md)

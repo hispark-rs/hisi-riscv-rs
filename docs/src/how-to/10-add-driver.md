@@ -1,12 +1,12 @@
 # 如何新增一个外设驱动
 
-给 `hisi-riscv-hal` 加一个新外设驱动，照仓库统一的「驱动模块范式」走，再配一个带 UART PASS 标记的示例让 HIL 能验证它。本篇是配方；范式背后的设计取舍见 [HAL API 总览](../reference/03-hal-api.md) 和[外设清单与覆盖情况](../reference/04-peripherals.md)，也对照仓库 `CLAUDE.md` 的「Driver Module Pattern」一节。
+给 `hisi-hal` 加一个新外设驱动，照仓库统一的「驱动模块范式」走，再配一个带 UART PASS 标记的示例让 HIL 能验证它。本篇是配方；范式背后的设计取舍见 [HAL API 总览](../reference/03-hal-api.md) 和[外设清单与覆盖情况](../reference/04-peripherals.md)，也对照仓库 `CLAUDE.md` 的「Driver Module Pattern」一节。
 
 > **配置接口必须遵守[类型化配置约定](../explanation/policies/01-typed-config.md)** ——「能编译就能在硅片上跑」是本项目头号 API 约定:配置面用校验 newtype / type-state / 自起时钟收紧,不留「能写出来却被静默 clamp/截断/没接时钟」的参数;操作面保持 embedded-hal 的 `Result`。落地按 docs-first(先改文档再写代码),用 `.agents/skills/typed-config/scan.sh` 扫候选,参考 `pwm.rs`。
 
 ## 0. 确认外设单例存在
 
-驱动消费的是 `crates/hisi-riscv-hal/src/peripherals.rs` 里用宏生成的外设单例。文件里两个宏：
+驱动消费的是 `crates/hisi-hal/src/peripherals.rs` 里用宏生成的外设单例。文件里两个宏：
 
 - `peripheral!($name, $pac_ty)` —— 为某个 PAC 类型生成带生命周期的 ZST `$name<'d>`，附 `steal()`、`ptr()`；raw PAC `register_block()` 是 `unstable` + `unsafe` 的逃生口。
 - `peripherals!(...)` —— 生成 `Peripherals` 结构体，带 `take()`（安全单例）和 `steal()`（unsafe）。
@@ -25,7 +25,7 @@ peripherals!(
 
 ## 1. 写驱动模块
 
-在 `crates/hisi-riscv-hal/src/` 加 `<name>.rs`，并在 `lib.rs` 加 `pub mod <name>;`（按芯片可加 `#[cfg(...)]`）。模块结构：
+在 `crates/hisi-hal/src/` 加 `<name>.rs`，并在 `lib.rs` 加 `pub mod <name>;`（按芯片可加 `#[cfg(...)]`）。模块结构：
 
 ```rust
 //! <Name> driver for WS63.
@@ -106,7 +106,7 @@ WS63 是单 hart + 无 A 扩展目标:需要 RMW/CAS 语义时会经 `portable-a
 提交前至少跑一遍人工扫描:
 
 ```bash
-rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-riscv-hal/src
+rg -n "critical_section::with|interrupt::free|disable\\(|enable\\(" crates/hisi-hal/src
 ```
 
 逐个检查闭包/关中断区间里没有 `while`、`loop`、`wait`、`delay`、`transfer`、`read_dma`、`write_dma`、`block_on`、`callback`、用户 `Fn*` 调用,也没有跨 `.await` 的借用。
@@ -122,15 +122,15 @@ smoke 只证明完整示例镜像能端到端运行，不能替代驱动级测�
 
 做法：
 
-1. 在 `crates/hisi-riscv-hal/tests/hil/<driver>.rs` 放具体测试实现。
-2. 在 `crates/hisi-riscv-hal/tests/hil.rs` 加一个很小的 `#[test]` wrapper 调用它。
+1. 在 `crates/hisi-hal/tests/hil/<driver>.rs` 放具体测试实现。
+2. 在 `crates/hisi-hal/tests/hil.rs` 加一个很小的 `#[test]` wrapper 调用它。
 3. 如果测试用到还未稳定的 API，先按 `#[cfg(feature = "unstable")]` gate；毕业时再去掉 gate，并同步
    更新 [Stable API 清单与门控状态](../reference/10-stable-api.md)。
 
 最小形态：
 
 ```rust
-// crates/hisi-riscv-hal/tests/hil/myperiph.rs
+// crates/hisi-hal/tests/hil/myperiph.rs
 #[cfg(feature = "chip-ws63")]
 pub(crate) fn myperiph_register_latches() {
     let p = unsafe { hal::peripherals::Myperiph::steal() };
@@ -145,7 +145,7 @@ pub(crate) fn myperiph_register_latches() {
 ```bash
 PROBE_YAML=/path/HiSilicon_WS63.yaml \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
-cargo test -p hisi-riscv-hal \
+cargo test -p hisi-hal \
     --no-default-features --features chip-ws63,rt \
     --target riscv32imfc-unknown-none-elf \
     --test hil -- myperiph_register_latches
@@ -158,8 +158,8 @@ cargo test -p hisi-riscv-hal \
 ```rust
 #![no_std]
 #![no_main]
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
+use hisi_hal::Peripherals;
+use hisi_hal::uart::{Config as UartConfig, Uart};
 use hisi_riscv_rt::entry;
 
 #[entry]
@@ -167,7 +167,7 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, UartConfig::default());
 
-    let mut dev = hisi_riscv_hal::myperiph::MyDriver::new(p.MYPERIPH, Default::default());
+    let mut dev = hisi_hal::myperiph::MyDriver::new(p.MYPERIPH, Default::default());
     match dev.do_thing() {
         Ok(_)  => uart.write(0, b"  MyPeriph OK\r\n"),   // <- HIL PASS 标记
         Err(_) => uart.write(0, b"  MyPeriph FAIL\r\n"),
@@ -186,7 +186,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! { loop { core::hint::spin_loop() } }
 ## 6. 验证
 
 ```bash
-cargo check -p hisi-riscv-hal              # 驱动能编过（host 上 check）
+cargo check -p hisi-hal              # 驱动能编过（host 上 check）
 cargo build -p myperiph_demo --release     # 示例能编出 ELF
 ```
 

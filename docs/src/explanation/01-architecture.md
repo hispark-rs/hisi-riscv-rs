@@ -17,7 +17,7 @@ ws63-svd (XML 真值)
 ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，36 个外设/寄存器块）
    │
    ▼
-hisi-riscv-hal  ── 手写的安全驱动（35 个源文件 + 可选 async/embassy）
+hisi-hal  ── 手写的安全驱动（35 个源文件 + 可选 async/embassy）
    │
    ▼
 examples/ws63/*  ── 应用
@@ -35,7 +35,7 @@ PAC 把它机械地翻成 Rust 类型，HAL 在 PAC 之上用人手写出安全�
 这种分层也对应仓库和 release 边界：越底层的组件越应该能被别人单独复用，而不是把我们的 HAL
 或 examples 变成唯一选择。这个取舍见[仓库与发布模型](08-repository-release-model.md)。
 逐层的实现细节见各自的深入文档：[ws63-svd](components/02-ws63-svd.md)、
-[ws63-pac](components/03-ws63-pac.md)、[hisi-riscv-hal](components/04-hisi-riscv-hal.md)、
+[ws63-pac](components/03-ws63-pac.md)、[hisi-hal](components/04-hisi-hal.md)、
 [hisi-riscv-rt](components/05-hisi-riscv-rt.md)、[ws63-examples](components/07-ws63-examples.md)。
 
 ### 为什么 PAC 必须只有一份

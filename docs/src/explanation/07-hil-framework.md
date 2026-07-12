@@ -23,7 +23,7 @@ HIL 现在不是单一脚本，而是两条互补轨道。
 
 ### HAL 驱动级：embedded-test + semihosting
 
-`hisi-riscv-hal/tests/hil.rs` 是 `harness = false` 的 RISC-V integration test，测试入口由
+`hisi-hal/tests/hil.rs` 是 `harness = false` 的 RISC-V integration test，测试入口由
 [`embedded-test`](https://github.com/probe-rs/embedded-test) 提供。测试 ELF 仍由 `hisi-riscv-rt`
 启动：rt 负责 reset vector、链接脚本、critical-section impl，以及 WS63 `boot-header` 让测试 ELF 可被
 flashboot 引导；`embedded-test` 导出 `main`、panic handler 和 semihosting 测试调度。
@@ -52,8 +52,8 @@ HAL API 的细粒度证据源。
 
 驱动级工作流：
 
-1. 在 `hisi-riscv-hal/tests/hil.rs` 注册 `embedded-test` 用例，具体实现放在 `tests/hil/*.rs`。
-2. 本地先 `cargo test -p hisi-riscv-hal ... --test hil --no-run` 确认测试 ELF 能链接。
+1. 在 `hisi-hal/tests/hil.rs` 注册 `embedded-test` 用例，具体实现放在 `tests/hil/*.rs`。
+2. 本地先 `cargo test -p hisi-hal ... --test hil --no-run` 确认测试 ELF 能链接。
 3. 用 `hil/embedded-test-runner.sh` 跑真机，拿到逐用例 PASS/FAIL。
 4. 若该用例证明了一个默认公开 API，再同步更新 [Stable API 清单与门控状态](../reference/10-stable-api.md)。
 
@@ -82,7 +82,7 @@ QEMU↔硅片的分歧高度集中在固定几类：
 
 这里要分清两条 HIL 轨道，否则文档很容易互相打架：
 
-- **HAL 驱动级 embedded-test：默认稳定面已有 WS63 真机证据。** 这是 `hisi-riscv-hal` 的稳定 API 证据线；
+- **HAL 驱动级 embedded-test：默认稳定面已有 WS63 真机证据。** 这是 `hisi-hal` 的稳定 API 证据线；
   当前用例数、覆盖面与 stable/unstable 边界以 [Stable API 清单与门控状态](../reference/10-stable-api.md) 为唯一事实源。
 - **跨切面 `tests-hil`：** 用同一个 embedded-test runner 覆盖 CPU/PAC/critical-section 这类非单驱动事实；
   它是补充证据，不替代 HAL 驱动级 suite。

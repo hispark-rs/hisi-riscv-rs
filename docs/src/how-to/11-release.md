@@ -11,13 +11,13 @@
 | `ws63-pac` | `crates/pac/ws63-pac` 子仓 | crates.io |
 | `bs2x-pac` | `crates/pac/bs2x-pac` 子仓 | crates.io |
 | `hisi-riscv-rt` | `crates/hisi-riscv-rt` 子仓 | crates.io |
-| `hisi-riscv-hal` | `crates/hisi-riscv-hal` 子仓 | crates.io |
+| `hisi-hal` | `crates/hisi-hal` 子仓 | crates.io |
 | 父仓 `hisi-riscv-rs` | 仓库根 | GitHub Release firmware assets；不发布子 crate |
 
 如果一次改动跨多个子仓，按依赖顺序发：
 
 ```text
-PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 pointer
+PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
 ```
 
 依赖方的 `Cargo.lock` 会解析到已发布的 crates.io 版本，所以先发布上游，等 crates.io index 可见后再发布下游。
@@ -37,8 +37,10 @@ PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 po
   `hisi-riscv-hal 0.6.0-rc.1`。
 - `hisi-riscv-rs v0.6.0` 的 anchor 是 `hisi-riscv-hal 0.6.0`。
 - `hisi-riscv-rs v0.6.0` 的 anchor 可以是 HAL stable API `0.6.0`。
-- 未来如果 runtime 做大改，父仓 `v0.7.0-alpha.1` 可以 anchor 到
-  RT/HAL 的组合，而不是单独跟 HAL。
+- 当前改名列车 `hisi-riscv-rs v0.7.0-alpha.1` 的 anchor 是
+  `hisi-hal 0.7.0-alpha.1`；它证明生态消费者已从旧 package 迁移。
+- 未来如果 runtime 做大改，父仓也可以 anchor 到 RT/HAL 的组合，而不是
+  单独跟 HAL。
 
 打父仓 tag 前，必须在父仓 `CHANGELOG.md` 明确写出本轮 anchor。父仓 tag 还会
 控制版本化手册和 API 文档：`/vX.Y.Z/`、`/latest/`、
@@ -70,17 +72,17 @@ git diff --exit-code -- Cargo.lock
 
 ## 2. 发布一个 crate 子仓
 
-下面以 `hisi-riscv-hal` 为例；其他 crate 把路径换成对应子仓。
+下面以 `hisi-hal` 为例；其他 crate 把路径换成对应子仓。
 
 ```bash
-cd crates/hisi-riscv-hal
+cd crates/hisi-hal
 git status --short --branch
 ```
 
 如果是 detached HEAD，先切回该仓的发布分支。不要直接跳到远端新 HEAD；确认当前改动在你要发布的提交上：
 
 ```bash
-git switch master        # hisi-riscv-hal / hisi-riscv-rt
+git switch master        # hisi-hal / hisi-riscv-rt
 # 或:
 git switch main          # ws63-pac / bs2x-pac
 ```
@@ -115,7 +117,7 @@ cargo check -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-el
 cargo clippy -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-elf -- -D warnings
 cargo doc -Zbuild-std=core,alloc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
 
-# hisi-riscv-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
+# hisi-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
 cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async,embassy
 cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-bs21,rt,unstable
 ```
@@ -166,8 +168,8 @@ git status --short
 
 ```bash
 cargo generate-lockfile
-git add crates/hisi-riscv-hal Cargo.lock
-git commit -m "chore: bump hisi-riscv-hal to vX.Y.Z"
+git add crates/hisi-hal Cargo.lock
+git commit -m "chore: bump hisi-hal to vX.Y.Z"
 git push origin main
 ```
 

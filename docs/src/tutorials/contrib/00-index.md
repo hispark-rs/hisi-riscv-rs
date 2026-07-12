@@ -6,7 +6,7 @@
 
 ## 适合谁
 
-- 想给 `hisi-riscv-hal` / `ws63-pac` / `hisi-riscv-rt` / `hisi-riscv-qemu` 提交改动。
+- 想给 `hisi-hal` / `ws63-pac` / `hisi-riscv-rt` / `hisi-riscv-qemu` 提交改动。
 - 想新增或调试示例（`examples/ws63/*`），并用 QEMU + HIL 验证它们。
 
 ## 你需要准备什么

@@ -14,8 +14,8 @@ api_chip = "ws63"
 app_addr = "0x00230000"
 fwpkg_chip = "ws63"
 probe_chip = "WS63"
-rustdoc_packages = ["hisi-riscv-hal", "ws63-pac", "hisi-riscv-rt"]
-rustdoc_features = "hisi-riscv-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header"
+rustdoc_packages = ["hisi-hal", "ws63-pac", "hisi-riscv-rt"]
+rustdoc_features = "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header"
 rustdoc_no_default_features = false
 notes = "默认 stable + HIL 验证路径。"
 
@@ -32,8 +32,8 @@ api_chip = "bs21"
 app_addr = "0x00090000"
 fwpkg_chip = "bs21"
 probe_chip = "BS21"
-rustdoc_packages = ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"]
-rustdoc_features = "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable"
+rustdoc_packages = ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"]
+rustdoc_features = "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable"
 rustdoc_no_default_features = true
 notes = "BS2X family 实验路径；当前无真机 HIL 承诺。"
 
@@ -50,8 +50,8 @@ api_chip = "bs21"
 app_addr = "0x00090000"
 fwpkg_chip = "bs21"
 probe_chip = "BS20"
-rustdoc_packages = ["hisi-riscv-hal", "bs2x-pac", "hisi-riscv-rt"]
-rustdoc_features = "hisi-riscv-hal/chip-bs21,hisi-riscv-hal/rt,hisi-riscv-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable"
+rustdoc_packages = ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"]
+rustdoc_features = "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable"
 rustdoc_no_default_features = true
 notes = "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"
 

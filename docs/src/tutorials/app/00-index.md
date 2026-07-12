@@ -1,7 +1,7 @@
 # 应用开发者路径 · 导读
 
 本路径面向**用 WS63 写自己 App 的开发者**。你会用已发布到 crates.io 的库
-（`hisi-riscv-hal` / `hisi-riscv-rt` / `ws63-pac`），从模板
+（`hisi-hal` / `hisi-riscv-rt` / `ws63-pac`），从模板
 [`hisi-rs-template`](https://github.com/hispark-rs/hisi-rs-template) 生成一个
 **自包含的工程**，在 QEMU 里跑起来，再烧到真板。
 

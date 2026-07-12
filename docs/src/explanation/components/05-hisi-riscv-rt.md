@@ -16,7 +16,7 @@
 ```text
 下游 firmware / examples
         │
-        ├── uses hisi-riscv-hal ───────► 当前芯片 PAC
+        ├── uses hisi-hal ───────► 当前芯片 PAC
         │                                  ├── interrupt enum
         │                                  └── device.x via PAC/rt
         │

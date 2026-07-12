@@ -19,7 +19,7 @@
 
 - **真实性验签（secure boot）** —— 没有基于 efuse 根密钥的 ECC-bp256 / SM2 签名校验。
 - 分区表解析、A/B app 槽选择、FOTA / 升级、镜像解压、flash 在线加密 —— 这些在原厂 flashboot 中存在，本 crate 为桩或缺失（`src/main.rs:206-231`）。
-- 不依赖 `ws63-pac` / `hisi-riscv-hal`：有意用裸 MMIO 保持独立、避免第二份 PAC 在链接期与 `hisi-riscv-hal` 的 `DEVICE_PERIPHERALS` 冲突（`Cargo.toml:17-19`）。
+- 不依赖 `ws63-pac` / `hisi-hal`：有意用裸 MMIO 保持独立、避免第二份 PAC 在链接期与 `hisi-hal` 的 `DEVICE_PERIPHERALS` 冲突（`Cargo.toml:17-19`）。
 
 生产正确做法：复用 fbb_ws63 原厂 flashboot，把本仓库构建的 Rust 应用按原厂打包/签名流程烧到原厂 flashboot 加载的 APP 分区（`README.md:22-26`）。
 
@@ -28,7 +28,7 @@
 `ws63-flashboot` **不在** 主依赖链（SVD → PAC → HAL → examples）上，是一条独立的二进制旁支：
 
 ```console
-SVD → ws63-pac → hisi-riscv-hal → examples/ws63/*   （主链，hisi-riscv-rt 提供启动）
+SVD → ws63-pac → hisi-hal → examples/ws63/*   （主链，hisi-riscv-rt 提供启动）
 
 ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO，
                 不依赖 pac/hal/rt；被排除在默认构建之外）
@@ -36,7 +36,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 
 - 它是一个 `[[bin]]`（`Cargo.toml:13-15`，产物名 `flashboot`），仅依赖 `riscv` 与 `critical-section`（`Cargo.toml:20-22`）。
 - 在工作区中它是 `members` 之一（`cargo check --workspace` 仍覆盖），但**不在 `default-members`** 中，默认 `cargo build` 不构建它（根 `Cargo.toml` `default-members` 是库 + WS63 示例集合，不含 `chips/ws63/flashboot`）。
-- 它逻辑上位于 PAC/HAL 之"下"：在硬件上电后、Rust 应用（用 `hisi-riscv-rt` 启动 + `hisi-riscv-hal` 驱动）运行之"前"运行，但在代码上与三者完全解耦。
+- 它逻辑上位于 PAC/HAL 之"下"：在硬件上电后、Rust 应用（用 `hisi-riscv-rt` 启动 + `hisi-hal` 驱动）运行之"前"运行，但在代码上与三者完全解耦。
 
 ## 关键设计
 

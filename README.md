@@ -25,7 +25,7 @@ in-tree and are not published.
 |-------|------|-----------|
 | [`ws63-pac`](crates/pac/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
 | [`bs2x-pac`](crates/pac/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
-| [`hisi-riscv-hal`](crates/hisi-riscv-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-riscv-hal`](https://crates.io/crates/hisi-riscv-hal) |
+| [`hisi-hal`](crates/hisi-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-hal`](https://crates.io/crates/hisi-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
@@ -46,7 +46,7 @@ hisi-riscv-rs/
 │   │   │   └── ws63-svd/      # submodule of ws63-pac — svd2rust source (WS63.svd)
 │   │   └── bs2x-pac/          # submodule
 │   │       └── bs2x-svd/      # submodule of bs2x-pac — svd2rust source (BS2X.svd)
-│   ├── hisi-riscv-hal/        # submodule (multi-chip: chip-ws63 / chip-bs21)
+│   ├── hisi-hal/        # submodule (multi-chip: chip-ws63 / chip-bs21)
 │   └── hisi-riscv-rt/         # submodule
 ├── examples/                  # application examples
 │   ├── ws63/                  # submodule (blinky, uart_hello, …)
@@ -138,7 +138,7 @@ WS63_RS=../ws63-rs bash scripts/smoke-test.sh   # boots ws63-rs examples + asser
 
 ## Async & embassy
 
-`hisi-riscv-hal` has an async layer (no heap, no global executor required), built on
+`hisi-hal` has an async layer (no heap, no global executor required), built on
 `embedded-hal-async` / `embedded-io-async`. It runs on the no-atomics WS63 core via
 portable-atomic + critical-section, but the public surface is deliberately split:
 
@@ -152,7 +152,7 @@ See [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md)
 ## Releasing
 
 Each published crate **self-publishes from its own repository**: bump + tag
-`vX.Y.Z` in `ws63-pac` / `hisi-riscv-hal` / `hisi-riscv-rt`, and that repo's
+`vX.Y.Z` in `ws63-pac` / `hisi-hal` / `hisi-riscv-rt`, and that repo's
 `.github/workflows/release.yml` publishes it to crates.io (using its own
 `CRATES_IO_TOKEN`). The monorepo `v*` tag cuts only a **firmware GitHub
 Release** — it does not publish the library crates.

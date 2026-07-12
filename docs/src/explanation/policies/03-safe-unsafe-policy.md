@@ -166,7 +166,7 @@ AI 辅助验证只能作为候选生成器：可以帮助写审计队列、harne
 6. **上板验证**：只有涉及硬件行为的结论，必须用 HIL 或明确标成未验证。
 7. **接稳定门控**：有 HIL 且无确认 soundness 缺口，才考虑从 `unstable` 毕业。
 
-当前基线（2026-07-02）：`crates/hisi-riscv-hal/src` 有 486 处 `unsafe` 命中，`clippy::undocumented_unsafe_blocks` 仍未形成门禁；Miri 和 Kani 还没有形成门禁。这是**整改起点**，不是已完成状态。
+当前基线（2026-07-02）：`crates/hisi-hal/src` 有 486 处 `unsafe` 命中，`clippy::undocumented_unsafe_blocks` 仍未形成门禁；Miri 和 Kani 还没有形成门禁。这是**整改起点**，不是已完成状态。
 
 ## 参考实现方向
 

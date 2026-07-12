@@ -58,7 +58,7 @@
 ## 落地流程(docs-first)
 
 1. **先改文档** —— 本约定要求 docs-first:先更新该驱动的组件文档 + 本页 + ROADMAP,再写代码。
-2. **扫候选**:`bash .agents/skills/typed-config/scan.sh crates/hisi-riscv-hal/src/<driver>.rs`。
+2. **扫候选**:`bash .agents/skills/typed-config/scan.sh crates/hisi-hal/src/<driver>.rs`。
 3. **追到寄存器**:从 PAC 拿字段真实位宽,从 vendor SDK 拿有效范围 + 时钟前提,标 `file:line`。
 4. **定级 + 选方案**(决策树),**只动配置层**,embedded-hal trait impl 的签名不碰。参考 `pwm.rs`。
 5. **更新测试**:host 单测/property(newtype 的接受/拒绝边界)+ `tests/hil.rs`。
@@ -66,7 +66,7 @@
 
 ## 参考实现与依据
 
-- **参考实现**:`crates/hisi-riscv-hal/src/pwm.rs` —— `PwmPeriod`(u16,`from_count`/`try_from_hz`)、`Duty`(0..=100)、`configure` 自起时钟树、`SetDutyCycle` 用 `Result` 拒绝越界 duty。另见 `uart.rs` 的 `UartClock` 与 `i2c.rs` 的 7-bit 地址拒绝。
+- **参考实现**:`crates/hisi-hal/src/pwm.rs` —— `PwmPeriod`(u16,`from_count`/`try_from_hz`)、`Duty`(0..=100)、`configure` 自起时钟树、`SetDutyCycle` 用 `Result` 拒绝越界 duty。另见 `uart.rs` 的 `UartClock` 与 `i2c.rs` 的 7-bit 地址拒绝。
 - **仓库约定**:`AGENTS.md` 的「Typed config — if it compiles, it runs on silicon」一节 + `.agents/skills/typed-config/` skill。
 - **业界依据**:
   - [esp-hal API 准则](https://hackmd.io/@esp-rs/Hy8RR5FkC):「prefer compile-time checks over runtime checks; prefer a fallible API over panics」—— 本 HAL 本就仿照 esp-hal。

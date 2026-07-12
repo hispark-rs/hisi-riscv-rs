@@ -99,7 +99,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 ## BS2X isolated workspaces
 
 BS2X 示例不在根 workspace 中；它们各自是隔离 workspace，避免和 WS63 示例一起统一
-`hisi-riscv-hal` 的 chip feature。当前成员事实取自各自 `Cargo.toml` 的 `[workspace].members`：
+`hisi-hal` 的 chip feature。当前成员事实取自各自 `Cargo.toml` 的 `[workspace].members`：
 
 | 工作区 | members | 备注 |
 |--------|---------|------|
