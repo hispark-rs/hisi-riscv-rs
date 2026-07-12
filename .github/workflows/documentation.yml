@@ -92,6 +92,12 @@ jobs:
       - name: Check versioned docs metadata
         run: python3 scripts/check-versioned-docs.py
 
+      - name: Check Pages deployment payload
+        run: >-
+          python3 scripts/deploy-pages.py --dry-run
+          --artifact-id 123
+          --build-version 0123456789abcdef0123456789abcdef01234567
+
   # ── Executable happy path (no hardware) ───────────────────────
   happy-path:
     name: Happy Path Smoke (no hardware)
@@ -203,18 +209,19 @@ jobs:
           enablement: true
 
       - name: Upload Pages artifact
+        id: pages_artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: docs-output
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        run: >-
+          python3 scripts/deploy-pages.py
+          --artifact-id "${{ steps.pages_artifact.outputs.artifact_id }}"
+          --build-version "${{ steps.docs_state.outputs.deployment_sha }}"
         env:
-          # deploy-pages keys deployments by GITHUB_SHA. The generated docs
-          # state has its own commit so a tag and main at the same source commit
-          # cannot accidentally reuse the older artifact.
-          GITHUB_SHA: ${{ steps.docs_state.outputs.deployment_sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify live main documentation
         run: python3 scripts/check-live-docs.py --version main
