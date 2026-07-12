@@ -257,8 +257,14 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] RF adapter 已移除对 `linked_list_allocator` 的直接依赖，并在 2026-07-13 真机复现
   init、scan、WPA2 connect、DHCP、ARP 和 ping。证据见
   [A1 allocator migration](evidence/ws63-rf-a1-alloc-2026-07-13.md)。
-- [ ] `hisi-rom-sys`、`hisi-crypto`、`ws63-radio-sys` 与 `hisi-rf-link` 尚未抽取；因此 A1
-  整体仍为进行中，不能把 allocator parity 解释为组件拆分已完成。
+- [x] `hisi-rom-sys` 已抽为独立 repository/release unit，发布生成的 WS63 ROM symbol、
+  callback ABI 和 Wi-Fi patch metadata；Cargo `links` contract 取代 example 对
+  `ws63-RF/rom` 的横向读取，父仓 drift check 保证生成 artifact 与语言中立源一致。
+- [x] ROM artifact 迁移后再次通过 1,486 section、5,335 relocation、37 patch 的 guarded
+  link，并在真机复现完整 connectivity marker。证据见
+  [A1 ROM metadata migration](evidence/ws63-rf-a1-rom-sys-2026-07-13.md)。
+- [ ] `hisi-crypto`、`ws63-radio-sys` 与 `hisi-rf-link` 尚未抽取；因此 A1 整体仍为进行中，
+  不能把 allocator/ROM parity 解释为组件拆分已完成。
 
 ### B0-B3 -- BLE Vendor Host First
 
