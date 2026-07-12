@@ -1,8 +1,9 @@
 //! Internal Wi-Fi security provider boundary.
 //!
 //! The C supplicant must not make mbedTLS contexts part of the Rust API. WS63
-//! uses the published unified-cipher UAPI; RustCrypto is the portable provider
-//! and host-side known-answer oracle.
+//! uses the published unified-cipher UAPI where it is proven on silicon and
+//! RustCrypto for the portable SHA/HMAC/AES primitives. The boundary is meant
+//! to move into `hisi-crypto`; RF only owns the temporary supplicant ABI shim.
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct CryptoError(pub(crate) u32);

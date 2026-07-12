@@ -21,6 +21,10 @@ Embassy executor/time 运行环境。
 graph TD
   APP["Application / Embassy"] --> RF["hisi-rf"]
   APP --> RTOS["hisi-rtos"]
+  APP --> TLS["hisi-tls"]
+  TLS --> CRYPTO["hisi-crypto"]
+  TLS --> RF
+  RF --> CRYPTO
   RF --> SYS["ws63-radio-sys"]
   RF --> DRIVER["hisi-rf-rtos-driver"]
   RTOS --> DRIVER
@@ -49,6 +53,8 @@ HAL；RF 不实现 IP stack；examples 不直接列 vendor archives 或 ROM 地�
 | `hisi-alloc` | 用户提供 SRAM arenas、对齐分配，以及可选 C/global allocator adapter；移出 RF heap 所有权。 |
 | `hisi-storage` | runtime internal-flash access 和 `embedded-storage` traits；memory-mapped read 优先，erase/write 暂留 unstable。 |
 | `hisi-nvs` | WS63 ACPU KV page parser、CRC、partition selection 和 typed read API；RF item IDs 由 RF crate 定义。 |
+| `hisi-crypto` | 芯片中立 entropy/hash/HMAC/PBKDF2/AES/PKE provider；WS63 backend 只暴露经 HIL 的 unified-cipher/ROM 能力，RustCrypto 是软件 backend 和 KAT oracle。 |
+| `hisi-tls` | async TLS facade；默认 `mbedtls` backend，可选 `embedded-tls`。拥有 BIO/WANT_READ/WANT_WRITE 到 Rust async I/O 的映射，不依赖 LiteOS socket。 |
 | `hisi-rf` | 用户入口和安全的 `wifi`/`ble`/`sle`/`coex` API；拥有 blob adapter，不拥有 scheduler、allocator、NVS format、ROM symbols 或 IP stack。 |
 | `hisi-hal` | `hisi-riscv-hal` 在 0.6.0 stable 之后的新 package/repository 名；继续拥有多芯片 peripheral drivers，不吸收 RF/RTOS/storage policy。 |
 | `hisi-riscv-rt` | startup/trap/linker mechanism；收集 memory-profile descriptor 和 init hooks，不知道 Wi-Fi/BLE/SLE policy。 |
@@ -96,11 +102,23 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 - SLE 使用相同事件模型，提供 announce/seek/connect 和 SSAP client/server。
 - 所有 blob callback 只把 bounded event 写入队列并 wake task；不得在 ISR、critical
   section 或 scheduler lock 中调用用户 callback。
-- Wi-Fi security 采用 provider 边界：WS63 默认 provider 优先调用 mask-ROM/硬件
-  hash、HMAC、PBKDF2、AES/TRNG；纯 Rust provider 使用 RustCrypto 的 `no_std`
-  primitives 作为可移植 fallback 和 host oracle。RF 不公开 mbedTLS C context。
+- Wi-Fi security 采用 `hisi-crypto` provider 边界。当前已验证组合是 WS63
+  unified-cipher PBKDF2/TRNG + RustCrypto SHA/HMAC/AES；SPACC hash/SYMC 只有在独立
+  clock/IRQ/wait HIL 通过后才能成为默认 backend。RF 不公开密码实现 context。
 - 初始稳定候选仅为 WPA2-Personal/CCMP。WPA3-SAE、SoftAP authenticator 和 Enterprise
   分别使用独立 feature 与 HIL gate；编译进完整原厂 archive 不等于 API 已支持。
+
+### TLS
+
+- `hisi-tls` 默认使用 mbedTLS；`embedded-tls` 是显式 opt-in backend。backend 选择不改变
+  上层 async stream contract，应用不得依赖 mbedTLS C context。
+- mbedTLS 作为无 OS 协议库使用，不直接调用 LiteOS socket。自有 BIO adapter 接
+  `embedded-io-async`/smoltcp/Embassy Net，把 `WANT_READ/WANT_WRITE` 转为 async 等待。
+- 每个 TLS context 由单一 Embassy task 独占；跨 task 使用通过 channel/ownership 转移，
+  不在 ISR、critical section 或 scheduler lock 内推进握手。
+- 熵源来自 `hisi-crypto`，可信时间来自平台 time contract，内存来自 `hisi-alloc` 的
+  Rust/C shared allocator 或专用 C arena。硬件加速只存在于 crypto backend，不散落在
+  TLS 状态机、BIO 或证书策略中。
 
 ### Runtime And Link
 
@@ -163,14 +181,13 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
    `check-wpa-profile.py` 对原厂 CMake source/define 集执行 fail-closed 检查。
    2026-07-12 真机复现 connect、DHCP、ARP、ping；构建闭包、SDK compatibility define
    陷阱和资源差异见 [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
-3. **W1 crypto provider**：建立 `CryptoProvider` 内部 contract。WS63 provider 复用
-   官方 unified-cipher UAPI 背后的 ROM/硬件 hash、HMAC、PBKDF2、AES、TRNG，并由 HAL
-   管理 cache/aligned DMA。只允许调用公开 UAPI 或由 `hisi-rom-sys` 固定并验证的 ROM
-   符号，禁止把反汇编发现的内部地址直接当稳定 ABI；RustCrypto
-   provider 覆盖 PBKDF2-HMAC-SHA1、SHA-1/SHA-256、HMAC/AES host vectors 和无硬件 fallback。
-   两个 provider 必须通过相同 known-answer tests，WS63 provider 另跑真机 HIL。
-   当前进度：PBKDF2-HMAC-SHA1 已通过 RustCrypto IEEE/RFC 向量，并在 WS63 上改走
-   `uapi_drv_cipher_pbkdf2` 后复现 WPA2/ping；HMAC 与 AES adapter closure 尚未完成。
+3. **W1 crypto provider（已完成）**：内部 `CryptoProvider` 已覆盖 PBKDF2-HMAC-SHA1、
+   SHA-1/SHA-256、HMAC-SHA1/HMAC-SHA256、AES 和 TRNG。WS63 当前使用已验证的
+   unified-cipher PBKDF2/TRNG，SHA/HMAC/AES 使用 RustCrypto；最终 ELF 无 `mbedtls_*`
+   supplicant 符号，并在真机 KAT 后完成 WPA2 connect/DHCP/ARP/ping。SPACC HMAC/SYMC
+   因 transitional runtime 下的 calc timeout 保持 experimental，待 `hisi-crypto` 独立
+   clock/IRQ/wait HIL 后再启用。证据见
+   [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
 4. **W2 WPA3/SAE**：单独恢复 SAE/H2E、PMF 和所需 ECC/HKDF/AES-SIV primitives；先做
    WPA3-Personal，再做 WPA2/WPA3 transition mode。优先复用 unified-cipher PKE/ECC 与
    hash/HKDF UAPI，RustCrypto 继续作为向量 oracle；不得让 W2 扩大 W0B 的默认体积。
@@ -180,8 +197,8 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
    server 对象重新塞入默认 STA archive。
 6. **W4 Enterprise**：最后接入 EAP/TLS、证书/私钥存储、可信时间和 server validation；
    WPA2-Enterprise 与 WPA3-Enterprise 分开 gate。TLS provider 独立于 WPA2/WPA3 personal
-   crypto provider，优先复用硬件密钥/散列能力，但证书解析、握手状态机与验证策略可用
-  经过审计的 Rust TLS 实现；不得把“能链接 TLS”当作认证证据。
+   crypto provider。默认 backend 固定为 mbedTLS，可选 `embedded-tls`；两者必须复用同一
+   async BIO、entropy/time/allocator contract，不得把“能链接 TLS”当作认证证据。
 
 W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。测试 SSID 和
 passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或 evidence artifact。
@@ -209,7 +226,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 ### A1-A4 -- Decomposition And Wi-Fi Migration
 
-1. A1：在 H0 完成后抽取 `hisi-rom-sys`、`hisi-alloc`、`ws63-radio-sys`、
+1. A1：在 H0 完成后抽取 `hisi-rom-sys`、`hisi-alloc`、`hisi-crypto`、`ws63-radio-sys`、
    `hisi-rf-link`；examples
    不再维护 ROM/link/archive 列表。
 2. A2：抽取 `hisi-storage` 和 read-only `hisi-nvs`；移除 RF parser 与 RT 中的 NVS
@@ -218,6 +235,8 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
    抢占式实现并接管 Embassy time/executor。
 4. A4：建立 `hisi-rf` 并迁移 Wi-Fi API/L2 device。每一步复跑 A0；全部等价后
    `ws63-rf-rs` 作为 re-export facade 保留一个 migration release，再删除。
+5. W4 Enterprise 前建立 `hisi-tls`：先完成默认 mbedTLS async BIO，再以相同 contract
+   接 `embedded-tls`；TLS 不阻塞 A1-A4 的 Wi-Fi personal 迁移。
 
 ### B0-B3 -- BLE Vendor Host First
 

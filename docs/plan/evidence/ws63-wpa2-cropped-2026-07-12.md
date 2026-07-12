@@ -11,11 +11,11 @@ credential nor the resulting firmware is published.
 
 ## Build Closure
 
-- 52 selected vendor C sources plus two repository-owned compatibility units.
-- Archive size: 6.9 MiB versus 13 MiB for the delivered full archive.
-- Canonical app image: 535,792 bytes versus 656,584 bytes for the full oracle,
-  a reduction of 120,792 bytes.
-- 1,683 final RF layout sections verified, 5,827 vendor relocations patched and
+- 50 selected vendor C sources plus two repository-owned compatibility units.
+- Archive size: 6.7 MiB versus 13 MiB for the delivered full archive.
+- Canonical app image: 519,020 bytes versus 656,584 bytes for the full oracle,
+  a reduction of 137,564 bytes.
+- 1,486 final RF layout sections verified, 5,335 vendor relocations patched and
   37 mask-ROM patches generated.
 - Final ELF contains no SAE, dragonfly, EAP-TLS/server, WPS or WAPI
   implementation. AP entry points are fail-closed stubs because the vendor STA
@@ -41,16 +41,21 @@ RF5A_ARP_OK rx=0x00000004
 RF5C_PING_OK rx=0x00000005
 ```
 
-The follow-up W1 run moved PBKDF2-HMAC-SHA1 out of mbedTLS: Rust calls the
-published WS63 `uapi_drv_cipher_pbkdf2`, converts the resulting 32-byte PMK to
-the vendor API's 64-byte hexadecimal PSK form, and reproduced the same markers.
-The portable provider passed both the IEEE WPA PMK vector and RFC 6070 vector
-on the host. This proves the UAPI parameter layout and hardware PMK derivation;
-HMAC/AES provider closure remains pending.
+The completed W1 run removed both SDK mbedTLS archives from the supplicant
+image. Rust calls the published WS63 `uapi_drv_cipher_pbkdf2`, converts the
+resulting 32-byte PMK to the vendor API's 64-byte hexadecimal PSK form, and
+uses RustCrypto SHA-1/SHA-256, HMAC-SHA1/HMAC-SHA256 and AES block primitives.
+The provider passes IEEE/RFC HMAC, PBKDF2 and AES known-answer tests before
+association and reproduced all connectivity markers on real WS63 silicon.
+
+Direct SPACC HMAC was also exercised: clear-key loading required the SDK's
+`--short-enums` ABI, then the engine reached `ERROR_SECURITY_HASH_CALC_TIMEOUT`
+in the transitional bare-metal runtime. It is therefore not silently selected.
+It remains an experimental future `hisi-crypto` backend until clock, IRQ and
+wait semantics have their own HIL gate.
 
 ## Remaining Boundary
 
-The supplicant source boundary and PBKDF2 provider are cropped, but the image
-still links SDK mbedTLS for the remaining HMAC/AES adapter symbols. W1 must
-finish that closure before those broad archives can be removed. WPA3/SAE,
-SoftAP and Enterprise remain separate later gates.
+WPA2-Personal/CCMP no longer links SDK mbedTLS. Application TLS is a separate
+layer: its planned default remains mbedTLS, with `embedded-tls` as an optional
+backend. WPA3/SAE, SoftAP and Enterprise remain separate later gates.

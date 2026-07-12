@@ -307,8 +307,8 @@ impl<'d> WpaWifi<'d> {
                 return Err(Error::Timebase(timebase));
             }
             crate::uapi::enable_efuse_reads();
-            // The cropped WPA2 profile calls unified-cipher directly for
-            // PBKDF2, hash/HMAC, AES block operations, and entropy.
+            // The cropped WPA2 profile uses unified-cipher for its verified
+            // PBKDF2/TRNG paths and RustCrypto for SHA/HMAC/AES.
             unsafe { uapi_drv_cipher_env_init() };
             let init = unsafe { uapi_wifi_init(2, 7) };
             if init != 0 {

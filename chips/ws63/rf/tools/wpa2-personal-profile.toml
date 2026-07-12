@@ -76,11 +76,14 @@ stub_sources = [
 ]
 
 [crypto]
-# Hardware-backed unified-cipher APIs are the WS63 default. A symbol is not
-# treated as ROM ABI merely because an implementation happens to reside there;
-# only published UAPI or generated hisi-rom-sys symbols may be called.
-ws63_preferred = [
+# Only these unified-cipher paths currently have WS63 connectivity HIL proof.
+ws63_verified = [
   "uapi_drv_cipher_pbkdf2",
+  "uapi_drv_cipher_trng_get_random_bytes",
+]
+# SPACC hash/SYMC remains experimental until its clock/IRQ/wait contract has a
+# dedicated hisi-crypto HIL; the bare-metal RF runtime observed calc timeouts.
+ws63_experimental = [
   "uapi_drv_cipher_hash_start",
   "uapi_drv_cipher_hash_update",
   "uapi_drv_cipher_hash_finish",
@@ -92,10 +95,10 @@ ws63_preferred = [
   "uapi_drv_cipher_symc_set_config",
   "uapi_drv_cipher_symc_encrypt",
   "uapi_drv_cipher_symc_decrypt",
-  "uapi_drv_cipher_trng_get_random_bytes",
 ]
-rust_fallback = [
-  "pbkdf2-hmac-sha1",
+rust_default = [
+  "sha1",
+  "sha256",
   "hmac-sha1",
   "hmac-sha256",
   "aes-128",

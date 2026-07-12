@@ -4,7 +4,7 @@
 
 WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**；该目标现已
 通过 HIL。RF5 的 TX/RX、open-AP connect、WPA2-Personal oracle 和 ping 也已在
-2026-07-12 完成；当前工作转入 WPA2-only 裁剪与
+2026-07-12 完成；WPA2-only 裁剪和 crypto closure 也已完成，当前工作转入
 [Connectivity 全栈重构计划](hisi-connectivity-stack.md) 拆分独立组件。
 
 RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通用硬件能力默认先进
@@ -125,7 +125,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 - WPA2-Personal oracle 的独立真机记录见
   [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
 - WPA2-only supplicant 已从原厂 Ninja 编译图独立重建，并在删除 SAE/AP/EAP-TLS/WPS/WAPI
-  源码后复现同一组真机 marker；见
+  源码及 supplicant mbedTLS archives 后复现同一组真机 marker。PBKDF2/TRNG 使用
+  WS63 unified-cipher，SHA/HMAC/AES 使用 RustCrypto，并在关联前执行真机 KAT；见
   [WS63 cropped WPA2 evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
@@ -174,8 +175,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
-- Init、scan 与 RF5A-C 已完成；当前优先级是从 oracle 裁出可独立构建、可审计的
-  WPA2-PSK/CCMP supplicant，同时保持既有连接性 marker 不回归。
+- Init、scan、RF5A-C 与 WPA2-PSK/CCMP W0-W1 已完成；当前优先级是按
+  [Connectivity 全栈重构计划](hisi-connectivity-stack.md) 抽取 `hisi-crypto` 等独立组件，
+  然后推进 WPA3/SAE、SoftAP 和 Enterprise，各阶段保持连接性 marker 不回归。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。
