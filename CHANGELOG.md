@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-## [2026-07-12] — WS63 connectivity baseline · HAL RC
+## [2026-07-12] — WS63 connectivity baseline · HAL 0.6.0
 
-Release train anchor: `hisi-riscv-hal 0.6.0-rc.1`. This snapshot freezes the
+Release train anchor: `hisi-riscv-hal 0.6.0`. This snapshot freezes the
 HAL 0.6 stable surface and the first reproducible WS63 connectivity baseline:
 Wi-Fi init, scan, WPA2-Personal association, DHCP/ARP, and ICMP ping on real
 silicon.
@@ -35,7 +35,7 @@ silicon.
 
 ### Changed
 
-- **`hisi-riscv-hal 0.6.0-rc.1` published** — freezes the default WS63 stable
+- **`hisi-riscv-hal 0.6.0` published** — freezes the default WS63 stable
   surface. The self-contained real-silicon suite passes 30/30 by default and
   32/32 with `unstable`; DMA, RF helpers, Embassy, and BS2X remain experimental.
 - **`ws63-pac 0.2.2` published** — adds the shared-RAM, RF power, factory XO-trim,
@@ -44,8 +44,8 @@ silicon.
 - **`hisi-riscv-rt 0.5.3` published** — publishes the RF memory/ROM-patch startup
   support and adds real WS63/BS21 link-smoke CI. WS63-only Wi-Fi ROM-data
   relocation is excluded from the BS2X compatibility adapter.
-- **`hisi-rs-template v0.6.0-rc.3`** — generated WS63/BS21 projects consume the
-  published HAL RC, RT 0.5.3, and PAC releases; its three-project build/image
+- **`hisi-rs-template v0.6.0`** — generated WS63/BS21 projects consume the
+  published HAL 0.6.0, RT 0.5.3, and PAC releases; its three-project build/image
   matrix runs without parent path patches.
 - **`hisi-fwpkg 0.3.2` published** — all ELF/headered-image/FWPKG planning paths
   now materialize linker-aligned verified tails as erased `0xFF`, so image,

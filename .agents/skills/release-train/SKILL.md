@@ -20,6 +20,7 @@ version with a main crate, that crate is the release train anchor and the parent
 Current release train:
 
 - `hisi-riscv-rs v0.6.0-rc.1` anchor: `hisi-riscv-hal 0.6.0-rc.1`.
+- `hisi-riscv-rs v0.6.0` anchor: `hisi-riscv-hal 0.6.0`.
 
 Only cut a parent tag when the docs, submodule pointers, template contracts,
 toolchain policy, image tooling, and firmware assets should become a versioned

@@ -77,10 +77,10 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 
 ### M4 -- Final v0.6.0 Release
 
-- 将 HAL 版本提升到 `0.6.0`，更新 changelog 日期。
-- `cargo generate-lockfile --locked` 后确认 `Cargo.lock` 无意外漂移。
-- `cargo package --locked --no-verify` 通过。
-- 打 tag `v0.6.0`，观察 publish workflow，确认 crates.io 发布成功。
+- [x] 将 HAL 版本提升到 `0.6.0`，更新 changelog 日期。
+- [x] 使用 standalone lock helper 更新并确认 `Cargo.lock` 无父仓 patch 漂移。
+- [x] `cargo package --locked --no-verify` 通过。
+- [x] 打 tag `v0.6.0`；2026-07-12 publish workflow 成功，crates.io 已可解析。
 - 父仓更新 HAL submodule pointer，并发布 ecosystem release train：
   `hisi-riscv-rs v0.6.0`，anchor 为 `hisi-riscv-hal 0.6.0`。
 

@@ -35,6 +35,7 @@ PAC/SVD → hisi-riscv-rt → hisi-riscv-hal → examples/RF/guide → 父仓 po
   `hisi-riscv-hal 0.6.0-alpha.2`。
 - `hisi-riscv-rs v0.6.0-rc.1` 的 anchor 是
   `hisi-riscv-hal 0.6.0-rc.1`。
+- `hisi-riscv-rs v0.6.0` 的 anchor 是 `hisi-riscv-hal 0.6.0`。
 - `hisi-riscv-rs v0.6.0` 的 anchor 可以是 HAL stable API `0.6.0`。
 - 未来如果 runtime 做大改，父仓 `v0.7.0-alpha.1` 可以 anchor 到
   RT/HAL 的组合，而不是单独跟 HAL。
