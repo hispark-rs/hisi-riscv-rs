@@ -1,6 +1,6 @@
 //! Build script for the on-target HIL test crate (chip-gated: WS63 default,
 //! experimental BS21 via `--features chip-bs21`, which forwards
-//! `hisi-riscv-hal/unstable` because the whole BS2X target is unstable-only.
+//! `hisi-hal/unstable` because the whole BS2X target is unstable-only.
 //!
 //! Two linker scripts must be on the link line for an embedded-test ELF:
 //!

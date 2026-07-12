@@ -10,10 +10,10 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::pwm::{Duty, PwmChannel, PwmChannelId, PwmPeriod};
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
-use hisi_riscv_hal::wdt::{ResetPulseLength, Watchdog, WdtMode, WdtTimeout};
+use hisi_hal::Peripherals;
+use hisi_hal::pwm::{Duty, PwmChannel, PwmChannelId, PwmPeriod};
+use hisi_hal::uart::{Config as UartConfig, Uart, UartInstance};
+use hisi_hal::wdt::{ResetPulseLength, Watchdog, WdtMode, WdtTimeout};
 use hisi_riscv_rt::entry;
 
 fn put_hex32(uart: &Uart<'_, impl UartInstance>, v: u32) {

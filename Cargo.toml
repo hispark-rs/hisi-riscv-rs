@@ -3,7 +3,7 @@ resolver = "3"
 members = [
     "crates/pac/ws63-pac",
     "crates/pac/bs2x-pac",
-    "crates/hisi-riscv-hal",
+    "crates/hisi-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
     "examples/ws63/uart_hello",
@@ -42,7 +42,7 @@ members = [
 # and tests-hil is an on-target test crate that must be run explicitly.
 default-members = [
     "crates/pac/ws63-pac",
-    "crates/hisi-riscv-hal",
+    "crates/hisi-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
     "examples/ws63/uart_hello",
@@ -75,7 +75,7 @@ repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 
 [workspace.dependencies]
 ws63-pac = { path = "crates/pac/ws63-pac" }
-hisi-riscv-hal = { path = "crates/hisi-riscv-hal" }
+hisi-hal = { path = "crates/hisi-hal" }
 hisi-riscv-rt  = { path = "crates/hisi-riscv-rt" }
 
 # External dependencies
@@ -86,7 +86,7 @@ embedded-io = "0.6"
 nb = "1"
 critical-section = "1"
 
-# hisi-riscv-hal (a standalone submodule) depends on ws63-pac via a registry version
+# hisi-hal (a standalone submodule) depends on ws63-pac via a registry version
 # requirement so it builds on its own. Inside this monorepo we redirect that to the
 # local submodule so EVERY crate links exactly ONE ws63-pac instance (otherwise the
 # PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and
@@ -94,7 +94,7 @@ critical-section = "1"
 [patch.crates-io]
 ws63-pac = { path = "crates/pac/ws63-pac" }
 bs2x-pac = { path = "crates/pac/bs2x-pac" }
-# hisi-riscv-hal now depends on hisi-riscv-rt by version (resolved through cargo);
+# hisi-hal depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
 hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }
 hisi-panic-handler = { path = "crates/hisi-panic-handler" }

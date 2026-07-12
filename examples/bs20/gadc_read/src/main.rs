@@ -9,14 +9,14 @@
 //!
 //! BS2X-only: the GADC has no WS63 analogue (WS63 uses LSADC v154). The driver
 //! drives bs2x-pac's `gadc` block + the ANA/PMU power sub-blocks; see
-//! hisi-riscv-hal `gadc.rs`.
+//! hisi-hal `gadc.rs`.
 
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::gadc::{AdcChannel, Gadc};
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
+use hisi_hal::Peripherals;
+use hisi_hal::gadc::{AdcChannel, Gadc};
+use hisi_hal::uart::{Config as UartConfig, Uart, UartInstance};
 use hisi_riscv_rt::entry;
 
 const EXPECTED: i32 = 0x0001_2345; // the QEMU GADC model's fixed test sample

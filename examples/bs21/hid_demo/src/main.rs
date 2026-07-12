@@ -11,11 +11,11 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::keyscan::Keyscan;
-use hisi_riscv_hal::pdm::Pdm;
-use hisi_riscv_hal::qdec::Qdec;
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
+use hisi_hal::Peripherals;
+use hisi_hal::keyscan::Keyscan;
+use hisi_hal::pdm::Pdm;
+use hisi_hal::qdec::Qdec;
+use hisi_hal::uart::{Config as UartConfig, Uart, UartInstance};
 use hisi_riscv_rt::entry;
 
 fn put_dec_i16(uart: &Uart<'_, impl UartInstance>, v: i16) {

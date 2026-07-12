@@ -16,7 +16,7 @@ name = "bs21_blinky"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -26,7 +26,7 @@ name = "bs21_clock_rng"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -36,7 +36,7 @@ name = "bs21_dma_mem"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -48,7 +48,7 @@ dependencies = [
  "bs2x-pac",
  "embassy-executor",
  "embassy-time",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "static_cell",
@@ -59,7 +59,7 @@ name = "bs21_gadc_read"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -69,7 +69,7 @@ name = "bs21_hid_demo"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -79,7 +79,7 @@ name = "bs21_i2c_scan"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -89,7 +89,7 @@ name = "bs21_pwm_wdt"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -99,7 +99,7 @@ name = "bs21_spi_loopback"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -109,7 +109,7 @@ name = "bs21_timer_irq"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -119,14 +119,14 @@ name = "bs21_uart_hello"
 version = "0.1.0"
 dependencies = [
  "bs2x-pac",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
 
 [[package]]
 name = "bs2x-pac"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "critical-section",
  "riscv",
@@ -141,9 +141,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cc"
-version = "1.2.63"
+version = "1.2.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "556e016178bb5662a08681bbe0f00f8e17631781a4dfc8c45e466e4b185ec27f"
+checksum = "e17dd265a7d0f31ef544e1b20e03add05d3b45b491b633b10d67145d2acc1a38"
 dependencies = [
  "find-msvc-tools",
  "shlex",
@@ -418,8 +418,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "hisi-riscv-hal"
-version = "0.6.0"
+name = "hisi-hal"
+version = "0.7.0-alpha.1"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-riscv-rt"
-version = "0.4.0"
+version = "0.5.3"
 dependencies = [
  "bs2x-pac",
  "critical-section",
@@ -494,9 +494,9 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
 name = "log"
-version = "0.4.32"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "953f07c43838f8e6f9758cab68bf5bed85465e7587ebe0b823f1bcd81978ad3a"
+checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "loom"
@@ -522,9 +522,9 @@ dependencies = [
 
 [[package]]
 name = "memchr"
-version = "2.8.2"
+version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4"
+checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "nb"
@@ -588,18 +588,18 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.45"
+version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
+checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
 dependencies = [
  "proc-macro2",
 ]
 
 [[package]]
 name = "regex-automata"
-version = "0.4.14"
+version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
+checksum = "1f388202e4b80542a0921078cc23b6333bcf1409c1e3f86404cae4766a6131db"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -673,9 +673,9 @@ checksum = "b1376b15f3ff160e9b1e8ea564ce427f2f6fcf77528cc0a8bf405cb476f9cea7"
 
 [[package]]
 name = "rustversion"
-version = "1.0.22"
+version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
+checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "scoped-tls"
@@ -727,9 +727,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "syn"
-version = "2.0.117"
+version = "2.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+checksum = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -738,9 +738,9 @@ dependencies = [
 
 [[package]]
 name = "thread_local"
-version = "1.1.9"
+version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
+checksum = "1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070"
 dependencies = [
  "cfg-if",
 ]
@@ -856,7 +856,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-pac"
-version = "0.2.0"
+version = "0.2.2"
 dependencies = [
  "critical-section",
  "riscv",

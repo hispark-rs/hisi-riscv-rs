@@ -6,7 +6,7 @@
 //! ioctl, and copy bounded scan events into Rust values.
 
 use core::ffi::c_int;
-use hisi_riscv_hal::peripherals::Efuse;
+use hisi_hal::peripherals::Efuse;
 
 #[cfg(target_arch = "riscv32")]
 use core::cell::{Cell, UnsafeCell};

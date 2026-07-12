@@ -9,10 +9,10 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::dma::DmaDriver;
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart};
-use hisi_riscv_hal::usb::{Speed, Usb};
+use hisi_hal::Peripherals;
+use hisi_hal::dma::DmaDriver;
+use hisi_hal::uart::{Config as UartConfig, Uart};
+use hisi_hal::usb::{Speed, Usb};
 use hisi_riscv_rt::entry;
 
 #[entry]

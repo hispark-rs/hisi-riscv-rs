@@ -8,7 +8,7 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::interrupt::{self, Interrupt};
+use hisi_hal::interrupt::{self, Interrupt};
 use hisi_riscv_rt::entry;
 
 const UART0_DATA: *mut u32 = 0x5208_1004 as *mut u32;

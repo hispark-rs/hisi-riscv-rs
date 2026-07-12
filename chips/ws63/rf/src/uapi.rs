@@ -109,7 +109,7 @@ fn read_mcycle() -> u64 {
 /// Current chip temperature in °C.
 ///
 /// SCAFFOLD: writes a conservative 25 °C. The pointer/result ABI matches the
-/// vendor SDK; a real reading still needs the hisi-riscv-hal tsensor (RF2/RF3).
+/// vendor SDK; a real reading still needs the hisi-hal tsensor (RF2/RF3).
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_tsensor_get_current_temp(temp: *mut i8) -> u32 {
     if temp.is_null() {
@@ -254,7 +254,7 @@ mod nv_tests {
         NV_KEY_HEADER_SIZE, NV_PAGE_HEADER_SIZE, NV_PAGE_SIZE, crc32, find_nv_value,
         tcxo_vendor_id, uapi_tsensor_get_current_temp,
     };
-    use hisi_riscv_hal::clock_init::TcxoFreq;
+    use hisi_hal::clock_init::TcxoFreq;
 
     fn page_with_key() -> [u8; NV_PAGE_SIZE] {
         let mut page = [0xff; NV_PAGE_SIZE];
@@ -329,13 +329,13 @@ pub extern "C" fn uapi_efuse_read_bit(value: *mut u8, byte: u32, bit: u8) -> u32
     }
     let Some(address) = u16::try_from(byte)
         .ok()
-        .and_then(hisi_riscv_hal::efuse::EfuseByteAddress::from_byte)
+        .and_then(hisi_hal::efuse::EfuseByteAddress::from_byte)
     else {
         return crate::OSAL_NOK as u32;
     };
     // SAFETY: `Wifi` keeps the unique eFuse token alive after enabling reads;
     // the HAL serializes the complete read transaction.
-    let byte = unsafe { hisi_riscv_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
+    let byte = unsafe { hisi_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
     // SAFETY: the SDK ABI defines `value` as a writable one-byte output.
     unsafe { value.write((byte >> bit) & 1) };
     crate::OSAL_OK as u32
@@ -353,12 +353,12 @@ pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, byte: u32, length: u16
     for offset in 0..length {
         let Some(address) = start
             .checked_add(offset)
-            .and_then(hisi_riscv_hal::efuse::EfuseByteAddress::from_byte)
+            .and_then(hisi_hal::efuse::EfuseByteAddress::from_byte)
         else {
             return crate::OSAL_NOK as u32;
         };
         // SAFETY: `Wifi` holds the unique eFuse token and HAL serializes reads.
-        let value = unsafe { hisi_riscv_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
+        let value = unsafe { hisi_hal::efuse::EfuseDriver::read_byte_unchecked(address) };
         // SAFETY: the SDK ABI guarantees a writable `length`-byte buffer.
         unsafe { buffer.add(offset as usize).write(value) };
     }
@@ -366,7 +366,7 @@ pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, byte: u32, length: u16
 }
 
 /// Random bytes. SCAFFOLD: a tiny `mcycle`-seeded xorshift (NOT cryptographically
-/// secure — a hardware run must use the real TRNG via hisi-riscv-hal).
+/// secure — a hardware run must use the real TRNG via hisi-hal).
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_drv_cipher_trng_get_random_bytes(randnum: *mut u8, size: u32) -> u32 {
     if randnum.is_null() {
@@ -467,10 +467,10 @@ pub extern "C" fn get_dev_addr(pc_addr: *mut u8, addr_len: u8, interface_type: u
 const CLK40M_TCXO: u32 = 0;
 const CLK24M_TCXO: u32 = 1;
 
-const fn tcxo_vendor_id(freq: hisi_riscv_hal::clock_init::TcxoFreq) -> u32 {
+const fn tcxo_vendor_id(freq: hisi_hal::clock_init::TcxoFreq) -> u32 {
     match freq {
-        hisi_riscv_hal::clock_init::TcxoFreq::MHz40 => CLK40M_TCXO,
-        hisi_riscv_hal::clock_init::TcxoFreq::MHz24 => CLK24M_TCXO,
+        hisi_hal::clock_init::TcxoFreq::MHz40 => CLK40M_TCXO,
+        hisi_hal::clock_init::TcxoFreq::MHz24 => CLK24M_TCXO,
     }
 }
 
@@ -484,9 +484,9 @@ const fn tcxo_vendor_id(freq: hisi_riscv_hal::clock_init::TcxoFreq) -> u32 {
 #[unsafe(no_mangle)]
 pub extern "C" fn get_tcxo_freq() -> u32 {
     #[cfg(target_arch = "riscv32")]
-    let freq = hisi_riscv_hal::clock_init::TcxoFreq::detect();
+    let freq = hisi_hal::clock_init::TcxoFreq::detect();
     #[cfg(not(target_arch = "riscv32"))]
-    let freq = hisi_riscv_hal::clock_init::TcxoFreq::MHz40;
+    let freq = hisi_hal::clock_init::TcxoFreq::MHz40;
 
     tcxo_vendor_id(freq)
 }

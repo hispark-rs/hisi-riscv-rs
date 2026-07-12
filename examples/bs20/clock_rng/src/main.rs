@@ -11,10 +11,10 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::rtc::{Mode, Rtc};
-use hisi_riscv_hal::trng::Trng;
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
+use hisi_hal::Peripherals;
+use hisi_hal::rtc::{Mode, Rtc};
+use hisi_hal::trng::Trng;
+use hisi_hal::uart::{Config as UartConfig, Uart, UartInstance};
 use hisi_riscv_rt::entry;
 
 fn put_hex32(uart: &Uart<'_, impl UartInstance>, v: u32) {

@@ -13,7 +13,7 @@ use crate::OSAL_OK;
 use core::cell::Cell;
 use core::ffi::{c_char, c_int, c_ulong, c_void};
 use critical_section::Mutex;
-use hisi_riscv_hal::interrupt::{self, Interrupt, Priority};
+use hisi_hal::interrupt::{self, Interrupt, Priority};
 
 #[cfg(feature = "rf-queue-guard")]
 static mut FRW_QUEUE_GUARD_ARMED: bool = false;
@@ -82,22 +82,22 @@ pub extern "C" fn osal_flush_cache() {
     // SAFETY: the vendor calls this before descriptors become visible to WLMAC.
     // The RF runtime is single-hart and does not concurrently transfer cache
     // ownership from another execution context.
-    unsafe { hisi_riscv_hal::cache::flush_all() };
+    unsafe { hisi_hal::cache::flush_all() };
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_dcache_region_clean(address: *mut c_void, size: u32) {
-    unsafe { hisi_riscv_hal::cache::clean_range(address as usize, size as usize) };
+    unsafe { hisi_hal::cache::clean_range(address as usize, size as usize) };
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_dcache_region_inv(address: *mut c_void, size: u32) {
-    unsafe { hisi_riscv_hal::cache::invalidate_range(address as usize, size as usize) };
+    unsafe { hisi_hal::cache::invalidate_range(address as usize, size as usize) };
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_dcache_flush_all() {
-    unsafe { hisi_riscv_hal::cache::flush_all() };
+    unsafe { hisi_hal::cache::flush_all() };
 }
 
 // ── Per-line IRQ management ─────────────────────────────────────────────────

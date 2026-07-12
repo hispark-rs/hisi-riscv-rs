@@ -4,7 +4,7 @@
 //! This crate is now the cross-cutting smoke suite: pure-CPU (M/F/CSR) invariants
 //! and PAC structural address-map invariants that don't belong to any single HAL
 //! driver. The HAL-**driver** on-target tests (GPIO/TCXO/UART/clock/system/timer/
-//! DMA) live with the code they exercise, in `hisi-riscv-hal/tests/hil.rs`, where
+//! DMA) live with the code they exercise, in `hisi-hal/tests/hil.rs`, where
 //! they ship + run with the HAL and inherit its chip gating.
 //!
 //! Built with `cargo test -p tests-hil --target riscv32imfc-unknown-none-elf`
@@ -122,7 +122,7 @@ mod tests {
 
     /// More PAC base-address structural facts, extending
     /// `pac_peripheral_base_addresses`: a few additional peripheral windows whose
-    /// HAL drivers are exercised by `hisi-riscv-hal/tests/hil.rs`. Pure
+    /// HAL drivers are exercised by `hisi-hal/tests/hil.rs`. Pure
     /// compile-time constants — identical on hardware and QEMU, never flaky.
     /// (Expected values verified against ws63-pac's `pub type X = Periph<.., 0x..>`
     /// definitions.)

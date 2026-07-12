@@ -1,9 +1,9 @@
 [submodule "ws63-guide"]
 	path = chips/ws63/guide
 	url = https://github.com/hispark-rs/ws63-guide.git
-[submodule "hisi-riscv-hal"]
-	path = crates/hisi-riscv-hal
-	url = https://github.com/hispark-rs/hisi-riscv-hal.git
+[submodule "hisi-hal"]
+	path = crates/hisi-hal
+	url = https://github.com/hispark-rs/hisi-hal.git
 [submodule "ws63-pac"]
 	path = crates/pac/ws63-pac
 	url = https://github.com/hispark-rs/ws63-pac.git

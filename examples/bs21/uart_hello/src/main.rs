@@ -12,8 +12,8 @@
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::uart::{Config, Uart};
+use hisi_hal::Peripherals;
+use hisi_hal::uart::{Config, Uart};
 use hisi_riscv_rt::entry;
 
 /// Format a u32 as decimal into `buf`, returning the used slice.

@@ -3,7 +3,7 @@
 //! The BS21 analogue of `examples/ws63/embassy_multitask`: runs `embassy-executor`
 //! (platform-riscv32, thread mode) with two async tasks that
 //! `embassy_time::Timer::after_millis(..).await` at different rates. Time comes
-//! from `hisi_riscv_hal::embassy` — the same chip-neutral embassy-time `Driver`
+//! from `hisi_hal::embassy` — the same chip-neutral embassy-time `Driver`
 //! WS63 uses (now() via the TCXO 64-bit counter, alarms via a TIMER channel),
 //! built with `--features chip-bs21,unstable` so the TCXO rate (32 MHz) and the alarm IRQ
 //! come from `soc/bs21.rs`.
@@ -12,7 +12,7 @@
 //! number: WS63 uses `TIMER_INT0` = 26 (a standard `mie`-bit local interrupt),
 //! BS21 uses `TIMER_0` = 53 (a HiSilicon LOCI custom local interrupt). Both are
 //! delivered with `mcause = <irq>`, so the trap handler routes the alarm by
-//! testing `mcause & 0xFFF == hisi_riscv_hal::embassy::ALARM_IRQ` — no chip
+//! testing `mcause & 0xFFF == hisi_hal::embassy::ALARM_IRQ` — no chip
 //! literals in this file.
 
 #![no_std]
@@ -20,8 +20,8 @@
 
 use embassy_executor::{Executor, Spawner};
 use embassy_time::Timer;
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::interrupt;
+use hisi_hal::Peripherals;
+use hisi_hal::interrupt;
 use hisi_riscv_rt::entry;
 use static_cell::StaticCell;
 
@@ -84,8 +84,8 @@ extern "C" fn atrap_handle() {
     let mcause: u32;
     unsafe { core::arch::asm!("csrr {0}, mcause", out(reg) mcause) };
     // Interrupt (bit31) and cause == the embassy alarm IRQ (53 on BS21).
-    if (mcause & 0x8000_0000) != 0 && (mcause & 0xFFF) == hisi_riscv_hal::embassy::ALARM_IRQ {
-        hisi_riscv_hal::embassy::on_alarm_interrupt(); // embassy-time alarm fired
+    if (mcause & 0x8000_0000) != 0 && (mcause & 0xFFF) == hisi_hal::embassy::ALARM_IRQ {
+        hisi_hal::embassy::on_alarm_interrupt(); // embassy-time alarm fired
     }
 }
 
@@ -122,7 +122,7 @@ static EXECUTOR: StaticCell<Executor> = StaticCell::new();
 fn main() -> ! {
     let p = Peripherals::take().unwrap();
     // Start the TCXO free-running counter (the embassy-time `now()` source).
-    let mut tcxo = hisi_riscv_hal::tcxo::TcxoDriver::new(p.TCXO);
+    let mut tcxo = hisi_hal::tcxo::TcxoDriver::new(p.TCXO);
     tcxo.enable();
 
     puts(b"\r\nBS21 embassy multitask (embassy-time: TCXO now() + TIMER alarm)\r\n");

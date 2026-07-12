@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 # NOTE: flashboot intentionally does NOT depend on ws63-pac — it uses raw MMIO
 # (see src/main.rs) so it stays minimal and standalone. Do not re-add ws63-pac:
-# a second PAC copy would clash with hisi-riscv-hal's at link time (DEVICE_PERIPHERALS).
+# a second PAC copy would clash with hisi-hal's at link time (DEVICE_PERIPHERALS).
 [dependencies]
 riscv = "0.13"
 critical-section = "1"

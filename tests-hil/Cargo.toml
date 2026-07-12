@@ -23,7 +23,7 @@ publish = false
 # wiring). Exactly one PAC is linked, selected by the chip feature below; both
 # are `optional` so the inactive one is never compiled. Registry version (not a
 # path dep) so the workspace-root `[patch.crates-io]` redirect to the local
-# crates/pac/* paths applies — same pattern as hisi-riscv-hal/rt. We name the
+# crates/pac/* paths applies — same pattern as hisi-hal/rt. We name the
 # active PAC via a cfg-selected alias in tests/hil.rs (`ws63_pac as pac` /
 # `bs2x_pac as pac`) — the HAL keeps its PAC `pub(crate)`.
 ws63-pac = { version = "0.2", optional = true }
@@ -32,7 +32,7 @@ bs2x-pac = { version = "0.1", optional = true }
 # (transitively) the same single PAC instance are exercised under test. Chip
 # selection is deferred to the chip feature (default-features off; the chip
 # feature turns on the matching `chip-*` + `rt`).
-hisi-riscv-hal = { path = "../crates/hisi-riscv-hal", default-features = false }
+hisi-hal = { path = "../crates/hisi-hal", default-features = false }
 # hisi-riscv-rt provides the startup + critical-section impl + the riscv-rt
 # runtime that calls embedded-test's exported `main` (see tests/hil.rs). Chip
 # selection (and, for WS63, the `boot-header` feature that bakes the 0x300
@@ -46,7 +46,7 @@ portable-atomic = { version = "1", default-features = false, features = ["critic
 critical-section = "1"
 
 [features]
-# Chip selection mirrors hisi-riscv-hal: exactly one chip, WS63 the default. Each
+# Chip selection mirrors hisi-hal: exactly one chip, WS63 the default. Each
 # pulls its PAC and turns on the matching `chip-*` (+ `rt`) features of the HAL
 # and rt. The `boot-header` feature (link-time 0x300 header at flash 0x230000) is
 # WS63-specific (BS21's app partition is 0x90000, a different header placement —
@@ -54,8 +54,8 @@ critical-section = "1"
 default = ["chip-ws63"]
 chip-ws63 = [
     "dep:ws63-pac",
-    "hisi-riscv-hal/chip-ws63",
-    "hisi-riscv-hal/rt",
+    "hisi-hal/chip-ws63",
+    "hisi-hal/rt",
     "hisi-riscv-rt/chip-ws63",
     # WS63-only: bake the 0x300 image header into the test ELF (bootable by flashboot).
     "hisi-riscv-rt/boot-header",
@@ -67,9 +67,9 @@ chip-ws63 = [
 ]
 chip-bs21 = [
     "dep:bs2x-pac",
-    "hisi-riscv-hal/chip-bs21",
-    "hisi-riscv-hal/rt",
-    "hisi-riscv-hal/unstable",
+    "hisi-hal/chip-bs21",
+    "hisi-hal/rt",
+    "hisi-hal/unstable",
     "hisi-riscv-rt/chip-bs21",
 ]
 

@@ -7,14 +7,14 @@
 //!
 //! BS2X's I2C is a Synopsys DesignWare core — a different IP from WS63's custom
 //! v150 I2C. The chip-bs21 HAL drives the v151 register block (rewritten into
-//! bs2x-pac); see hisi-riscv-hal `i2c_v151.rs`.
+//! bs2x-pac); see hisi-hal `i2c_v151.rs`.
 
 #![no_std]
 #![no_main]
 
-use hisi_riscv_hal::Peripherals;
-use hisi_riscv_hal::i2c::{I2c, Speed};
-use hisi_riscv_hal::uart::{Config as UartConfig, Uart, UartInstance};
+use hisi_hal::Peripherals;
+use hisi_hal::i2c::{I2c, Speed};
+use hisi_hal::uart::{Config as UartConfig, Uart, UartInstance};
 use hisi_riscv_rt::entry;
 
 const EXPECTED_ADDR: u8 = 0x50; // the QEMU I2C model's single slave

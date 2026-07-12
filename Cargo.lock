@@ -27,7 +27,7 @@ name = "async_bus"
 version = "0.1.0"
 dependencies = [
  "embedded-hal-async",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -38,7 +38,7 @@ name = "async_delay"
 version = "0.1.0"
 dependencies = [
  "embedded-hal-async",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -82,7 +82,7 @@ name = "blinky"
 version = "0.1.0"
 dependencies = [
  "embedded-hal 1.0.0",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -177,7 +177,7 @@ dependencies = [
 name = "custom_memory"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -307,7 +307,7 @@ dependencies = [
 name = "dma_loopback"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -396,7 +396,7 @@ dependencies = [
  "embassy-time",
  "embedded-hal-async",
  "embedded-io-async",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "static_cell",
@@ -409,7 +409,7 @@ version = "0.1.0"
 dependencies = [
  "embassy-executor",
  "embassy-time",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "static_cell",
@@ -591,7 +591,7 @@ dependencies = [
 name = "gpio_irq"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -617,12 +617,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "hisi-panic-handler"
-version = "0.1.0"
-
-[[package]]
-name = "hisi-riscv-hal"
-version = "0.6.0"
+name = "hisi-hal"
+version = "0.7.0-alpha.1"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -648,6 +644,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "hisi-panic-handler"
+version = "0.1.0"
+
+[[package]]
 name = "hisi-riscv-rt"
 version = "0.5.3"
 dependencies = [
@@ -671,7 +671,7 @@ dependencies = [
 name = "i2c_scan"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -802,7 +802,7 @@ checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 name = "net_ping"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "smoltcp",
  "ws63-rf-rs",
@@ -1008,7 +1008,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 name = "reset_demo"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "ws63-pac",
 ]
@@ -1018,7 +1018,7 @@ name = "rf_port_demo"
 version = "0.1.0"
 dependencies = [
  "critical-section",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1194,7 +1194,7 @@ dependencies = [
 name = "spi_loopback"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
 ]
@@ -1258,7 +1258,7 @@ dependencies = [
  "critical-section",
  "embedded-test",
  "embedded-test-linker-script",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "portable-atomic",
  "ws63-pac",
@@ -1297,7 +1297,7 @@ dependencies = [
 name = "timer_irq"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1374,8 +1374,8 @@ checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 name = "uart_hello"
 version = "0.1.0"
 dependencies = [
+ "hisi-hal",
  "hisi-panic-handler",
- "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1385,8 +1385,8 @@ dependencies = [
 name = "uart_stepbystep"
 version = "0.1.0"
 dependencies = [
+ "hisi-hal",
  "hisi-panic-handler",
- "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1396,8 +1396,8 @@ dependencies = [
 name = "uart_tailcall"
 version = "0.1.0"
 dependencies = [
+ "hisi-hal",
  "hisi-panic-handler",
- "hisi-riscv-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1461,7 +1461,7 @@ dependencies = [
 name = "wifi_blob_link"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
@@ -1471,8 +1471,8 @@ dependencies = [
 name = "wifi_init_smoke"
 version = "0.1.0"
 dependencies = [
+ "hisi-hal",
  "hisi-panic-handler",
- "hisi-riscv-hal",
  "hisi-riscv-rt",
  "ws63-rf-rs",
 ]
@@ -1530,7 +1530,7 @@ version = "0.1.0"
 dependencies = [
  "aes",
  "critical-section",
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "hmac",
  "linked_list_allocator",
@@ -1545,7 +1545,7 @@ dependencies = [
 name = "xip_flash_clk_hazard"
 version = "0.1.0"
 dependencies = [
- "hisi-riscv-hal",
+ "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
  "ws63-pac",
