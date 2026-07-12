@@ -96,6 +96,11 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 - SLE 使用相同事件模型，提供 announce/seek/connect 和 SSAP client/server。
 - 所有 blob callback 只把 bounded event 写入队列并 wake task；不得在 ISR、critical
   section 或 scheduler lock 中调用用户 callback。
+- Wi-Fi security 采用 provider 边界：WS63 默认 provider 优先调用 mask-ROM/硬件
+  hash、HMAC、PBKDF2、AES/TRNG；纯 Rust provider 使用 RustCrypto 的 `no_std`
+  primitives 作为可移植 fallback 和 host oracle。RF 不公开 mbedTLS C context。
+- 初始稳定候选仅为 WPA2-Personal/CCMP。WPA3-SAE、SoftAP authenticator 和 Enterprise
+  分别使用独立 feature 与 HIL gate；编译进完整原厂 archive 不等于 API 已支持。
 
 ### Runtime And Link
 
@@ -146,6 +151,27 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
   和 FlashPlan 的 SHA-256 与资源摘要。
 - [x] 保留 `.wifi_pkt_ram` NOBITS、ROM symbol、patch count 与 image body/erase range 证据。
 - A1-A4 的每个迁移阶段必须复现该 baseline；不能用仅构建或 QEMU 结果替代 RF 真机证据。
+
+### W0-W4 -- Wi-Fi Security Closure
+
+1. **W0A oracle（已完成）**：完整原厂 supplicant + mbedTLS/security archives 在真机完成
+   WPA2-Personal connect、DHCP、ARP、ping；保留 marker、ABI probe 和资源基线。
+2. **W0B WPA2-only**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
+   删除 SAE、AP、EAP/TLS/WPS/P2P/WAPI 对象。以 link closure 固定所需 crypto/libc ABI，
+   对外 feature 命名为 `wifi-wpa2-personal`。
+3. **W1 crypto provider**：建立 `CryptoProvider` 内部 contract。WS63 provider 复用
+   ROM/硬件 hash、HMAC、PBKDF2、AES、TRNG，并由 HAL 管理 cache/aligned DMA；RustCrypto
+   provider 覆盖 PBKDF2-HMAC-SHA1、SHA-1/SHA-256、HMAC/AES host vectors 和无硬件 fallback。
+   两个 provider 必须通过相同 known-answer tests，WS63 provider 另跑真机 HIL。
+4. **W2 WPA3/SAE**：单独恢复 SAE/H2E、PMF 和所需 ECC/HKDF/AES-SIV primitives；先做
+   WPA3-Personal，再做 WPA2/WPA3 transition mode。不得让 W2 扩大 W0B 的默认体积。
+5. **W3 SoftAP**：分别验证 open AP、WPA2-Personal authenticator、WPA3-SAE AP；覆盖
+   beacon、STA join/leave、GTK rekey、多客户端和 Wi-Fi/BT coexistence。
+6. **W4 Enterprise**：最后接入 EAP/TLS、证书/私钥存储、可信时间和 server validation；
+   WPA2-Enterprise 与 WPA3-Enterprise 分开 gate。不得把“能链接 TLS”当作认证证据。
+
+W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。测试 SSID 和
+passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或 evidence artifact。
 
 ### H0 -- Rename `hisi-riscv-hal` To `hisi-hal`
 
@@ -206,7 +232,8 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 ## Verification
 
 - Host：NVS malformed pages/CRC、allocator alignment/ownership、scheduler state model、IPC
-  timeout/cancellation、ABI sizes、relocation transforms 和 feature matrix。
+  timeout/cancellation、ABI sizes、relocation transforms、WPA crypto known-answer vectors 和
+  security feature matrix。
 - Link：ROM/blob hash、archive closure、唯一 memory profile、NOBITS regions、final/oracle
   layout、无 unresolved vendor relocation、`hisi-fwpkg` image plan。
 - QEMU：RTOS priority/preemption、ISR wake、FP context、Embassy timers、stubbed radio adapter；

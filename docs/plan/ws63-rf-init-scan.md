@@ -108,7 +108,12 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   `RF5B_CONNECT_OK freq=0x0000096c`（2412 MHz）。这证明 802.11 open-system
   auth/association 已闭合，但不替代尚未完成的 RF5A Rust-visible TX/RX 与 RF5C ping。
 - 原厂 app 变体的 `libwpa_supplicant.a` 已作为可选 archive 收入 `ws63-RF`，用于后续
-  WPA2/WPA3；开放网络路径默认不链接它，不能据此宣称受保护网络已经可用。
+  WPA bring-up；开放网络路径默认不链接它。
+- **RF5B WPA2-Personal oracle**：`wpa` 实验 feature 已按原厂 `--short-enums` ABI
+  对齐 scan/association/event 结构，并按原厂顺序初始化 unified cipher driver 与
+  mbedTLS harden provider。2026-07-12 真机连接受保护的 `HUAWEI-HLJ_Guest` 后依次输出
+  `RF5B_WPA_CONNECT_OK`、DHCP、ARP 和 ping marker。该路径仍链接完整原厂 supplicant
+  与 mbedTLS，只作为裁剪前行为 oracle；不据此承诺 WPA3、SoftAP 或 Enterprise。
 - **RF5C Ping**：静态 IPv4 先行、DHCP 后补；ICMP 必须经过 Rust-visible L2 path。
   UART、ELF layout、patch manifest、image plan 和资源占用形成后续拆分的 A0 baseline。
 - 当前 RF5C evidence：2026-07-12 真机通过。修复 ICMP frame buffer 只有 42 bytes、
@@ -116,6 +121,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   `RF5B_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK` 和 `RF5C_PING_OK rx=0x00000004`。
   Echo Request/Reply 均经过 Rust-visible L2 path；A0 证据冻结在
   [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
+- WPA2-Personal oracle 的独立真机记录见
+  [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 
@@ -155,6 +162,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
     `RFDBG_EXCEPTION` / `RFDBG_FRW_QUEUE_BOUNDARY`。
   - RF5C 只有出现 `RF5C_PING_OK` 才通过；该 marker 已于 2026-07-12 在 WS63 真机获得。
     `RF5C_PING_TIMEOUT` 仍只表示 request TX 已运行，不是 connectivity pass。
+  - WPA2-Personal HIL 从 secret 注入 passphrase，必须依次出现
+    `RF5B_WPA_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK`、`RF5C_PING_OK`；日志和
+    artifact 不得记录 passphrase。
 
 ## Assumptions
 
