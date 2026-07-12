@@ -33,20 +33,19 @@ blinky 把 **GPIO0** 配成推挽输出，死循环里拉高、延时、拉低�
 
 {{#tutorial-snippet contrib_run_uart_hello}}
 
-`uart_hello` 为 QEMU 设计：它故意不初始化时钟，只碰 UART0 寄存器（`0x4401_0000`）。
-控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：
+`uart_hello` 使用 `hisi-riscv-hal` 的 UART0 驱动，并按 flashboot 留下的 boot clock 配置
+115200 8N1。控制台上你应当立刻看到 banner，随后是不断递增的 tick 计数：
 
 ```console
-Hello from WS63 on QEMU!
-ws63-qemu: UART0 @ 0x44010000 is alive.
+Hello from WS63 (HAL UART driver)!
 tick 0
 tick 1
 tick 2
 ...
 ```
 
-> 真机上的串口 banner 仍在打磨（需要先初始化时钟），本课只承诺 QEMU。第 3 课的
-> blinky 才是当前确认可观测的真机行为。
+该示例已在 WS63 真实硅片上通过 115200 波特率 UART smoke；同一标记串也用于
+`hil/hil-smoke.sh` 的自动判定。QEMU 与真机共享 HAL 构造路径，教程不另维护一套裸寄存器实现。
 
 ## 第 3 步：timer_irq（定时器中断）
 

@@ -54,7 +54,7 @@ cargo test -Zbuild-std=core,alloc -p hisi-riscv-hal --no-default-features --feat
 
 | 示例 | 匹配的 egrep 模式 | 描述 |
 |------|-------------------|------|
-| `uart_hello` | `Hello from WS63` | UART banner（验证 160 MHz 波特基） |
+| `uart_hello` | `Hello from WS63` | 已在 WS63 真机通过；验证 HAL UART boot-clock 配置与 115200 8N1 输出 |
 | `timer_irq` | `timer irq #|OK: timer` | Timer IRQ 投递（验证 24 MHz TCXO 定时器时钟） |
 | `gpio_irq` | `gpio irq #` | GPIO IRQ 投递 |
 | `reset_demo` | `OK: software reset observed` | software_reset + reset_reason（第二次启动标记） |
