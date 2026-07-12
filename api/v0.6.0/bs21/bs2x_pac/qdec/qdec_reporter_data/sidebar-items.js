@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecReporterDataSpec"],"type":["R","SamlpleRepoValR","SamlpleRepoValW","W"]};

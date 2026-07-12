@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GpioIntDedge"],"struct":["GpioIntDedgeSpec"],"type":["GpioIntDedgeR","GpioIntDedgeW","R","W"]};

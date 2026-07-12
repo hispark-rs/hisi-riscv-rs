@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GlpmcfgSpec"],"type":["HsicConnR","HsicConnW","R","W"]};

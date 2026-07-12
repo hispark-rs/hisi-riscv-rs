@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KcPcpuLockCmdSpec"],"type":["FlushHmacKslotIndR","FlushHmacKslotIndW","KeySlotNumR","KeySlotNumW","LockCmdW","R","TscipherIndR","TscipherIndW","W"]};

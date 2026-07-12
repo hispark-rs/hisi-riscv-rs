@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ModemCtlSpec"],"type":["AfcEnR","AfcEnW","LbModeR","LbModeW","R","RtsR","RtsW","W"]};

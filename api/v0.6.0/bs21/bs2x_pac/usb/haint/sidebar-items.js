@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["HaintSpec"],"type":["HaintR","HaintW","R","W"]};

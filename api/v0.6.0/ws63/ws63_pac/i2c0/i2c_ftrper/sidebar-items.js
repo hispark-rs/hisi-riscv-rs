@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["I2cFtrperSpec"],"type":["FtrperR","FtrperW","R","W"]};

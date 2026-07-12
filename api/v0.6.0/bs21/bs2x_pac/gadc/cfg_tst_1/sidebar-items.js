@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgTst1Spec"],"type":["DiagNodeR","DiagNodeW","R","W"]};

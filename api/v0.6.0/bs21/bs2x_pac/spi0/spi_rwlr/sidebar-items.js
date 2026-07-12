@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SpiRwlrSpec"],"type":["R","RxFifoThresholdR","RxFifoThresholdW","W"]};

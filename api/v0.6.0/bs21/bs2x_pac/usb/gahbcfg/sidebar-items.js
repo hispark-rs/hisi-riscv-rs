@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GahbcfgSpec"],"type":["DmaenR","DmaenW","GlblintrmskR","GlblintrmskW","HbstlenR","HbstlenW","NptxfemplvlR","NptxfemplvlW","PtxfemplvlR","PtxfemplvlW","R","W"]};

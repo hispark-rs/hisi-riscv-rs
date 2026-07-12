@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DmacSingleReqSpec"],"type":["LastSingleReqR","LastSingleReqW","R","SingleReqR","SingleReqW","W"]};

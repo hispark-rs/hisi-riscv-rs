@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DivFraSpec"],"type":["DivFraR","DivFraW","R","W"]};

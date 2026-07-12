@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgRfDiagMuxSpec"],"type":["R","W"]};

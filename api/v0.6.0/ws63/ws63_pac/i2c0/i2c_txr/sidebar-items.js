@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["I2cTxrSpec"],"type":["I2cTxrR","I2cTxrW","R","W"]};
