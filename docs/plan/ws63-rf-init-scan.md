@@ -3,7 +3,8 @@
 ## Summary
 
 WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**；该目标现已
-通过 HIL。下一步 RF5 沿当前实现完成 TX/RX、open-AP connect 和 ping，之后再按
+通过 HIL。RF5 的 TX/RX、open-AP connect、WPA2-Personal oracle 和 ping 也已在
+2026-07-12 完成；当前工作转入 WPA2-only 裁剪与
 [Connectivity 全栈重构计划](hisi-connectivity-stack.md) 拆分独立组件。
 
 RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通用硬件能力默认先进
@@ -106,7 +107,7 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   只复制连接/断开状态，用户逻辑在普通任务上下文轮询。2026-07-12 真机扫描并关联
   无密码测试 AP `HUAWEI-HLJ_Guest`，UART 输出
   `RF5B_CONNECT_OK freq=0x0000096c`（2412 MHz）。这证明 802.11 open-system
-  auth/association 已闭合，但不替代尚未完成的 RF5A Rust-visible TX/RX 与 RF5C ping。
+  auth/association 已闭合；同日 RF5A Rust-visible TX/RX 与 RF5C ping 也已通过。
 - 原厂 app 变体的 `libwpa_supplicant.a` 已作为可选 archive 收入 `ws63-RF`，用于后续
   WPA bring-up；开放网络路径默认不链接它。
 - **RF5B WPA2-Personal oracle**：`wpa` 实验 feature 已按原厂 `--short-enums` ABI
@@ -170,7 +171,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
-- Init + scan MVP 已完成；当前优先级是 RF5A-C 的 TX/RX、connect、ping。
+- Init、scan 与 RF5A-C 已完成；当前优先级是从 oracle 裁出可独立构建、可审计的
+  WPA2-PSK/CCMP supplicant，同时保持既有连接性 marker 不回归。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。

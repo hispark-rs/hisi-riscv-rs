@@ -158,17 +158,26 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
    WPA2-Personal connect、DHCP、ARP、ping；保留 marker、ABI probe 和资源基线。
 2. **W0B WPA2-only**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
    删除 SAE、AP、EAP/TLS/WPS/P2P/WAPI 对象。以 link closure 固定所需 crypto/libc ABI，
-   对外 feature 命名为 `wifi-wpa2-personal`。
+   对外 feature 命名为 `wifi-wpa2-personal`。机器可读边界由
+   `chips/ws63/rf/tools/wpa2-personal-profile.toml` 定义，并由
+   `check-wpa-profile.py` 对原厂 CMake source/define 集执行 fail-closed 检查。
 3. **W1 crypto provider**：建立 `CryptoProvider` 内部 contract。WS63 provider 复用
-   ROM/硬件 hash、HMAC、PBKDF2、AES、TRNG，并由 HAL 管理 cache/aligned DMA；RustCrypto
+   官方 unified-cipher UAPI 背后的 ROM/硬件 hash、HMAC、PBKDF2、AES、TRNG，并由 HAL
+   管理 cache/aligned DMA。只允许调用公开 UAPI 或由 `hisi-rom-sys` 固定并验证的 ROM
+   符号，禁止把反汇编发现的内部地址直接当稳定 ABI；RustCrypto
    provider 覆盖 PBKDF2-HMAC-SHA1、SHA-1/SHA-256、HMAC/AES host vectors 和无硬件 fallback。
    两个 provider 必须通过相同 known-answer tests，WS63 provider 另跑真机 HIL。
 4. **W2 WPA3/SAE**：单独恢复 SAE/H2E、PMF 和所需 ECC/HKDF/AES-SIV primitives；先做
-   WPA3-Personal，再做 WPA2/WPA3 transition mode。不得让 W2 扩大 W0B 的默认体积。
+   WPA3-Personal，再做 WPA2/WPA3 transition mode。优先复用 unified-cipher PKE/ECC 与
+   hash/HKDF UAPI，RustCrypto 继续作为向量 oracle；不得让 W2 扩大 W0B 的默认体积。
 5. **W3 SoftAP**：分别验证 open AP、WPA2-Personal authenticator、WPA3-SAE AP；覆盖
-   beacon、STA join/leave、GTK rekey、多客户端和 Wi-Fi/BT coexistence。
+   beacon、STA join/leave、GTK rekey、多客户端和 Wi-Fi/BT coexistence。AP authenticator
+   与 STA supplicant 使用独立 feature 和任务资源预算，不能为了 SoftAP 把 hostapd/EAP
+   server 对象重新塞入默认 STA archive。
 6. **W4 Enterprise**：最后接入 EAP/TLS、证书/私钥存储、可信时间和 server validation；
-   WPA2-Enterprise 与 WPA3-Enterprise 分开 gate。不得把“能链接 TLS”当作认证证据。
+   WPA2-Enterprise 与 WPA3-Enterprise 分开 gate。TLS provider 独立于 WPA2/WPA3 personal
+   crypto provider，优先复用硬件密钥/散列能力，但证书解析、握手状态机与验证策略可用
+  经过审计的 Rust TLS 实现；不得把“能链接 TLS”当作认证证据。
 
 W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。测试 SSID 和
 passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或 evidence artifact。
