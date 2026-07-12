@@ -51,6 +51,21 @@ LIBS=(
   "$RF_DIR/lib/libwifi_rom_data.a"
 )
 
+case ",$FEATURES," in
+  *,wpa,*)
+    SDK_APP_OUT="${WS63_SDK_APP_OUT:-/Users/sanchuan/Documents/hispark/fbb_ws63/src/output/ws63/acore/ws63-liteos-app}"
+    LIBS+=(
+      "$RF_DIR/lib/libwpa_supplicant.a"
+      "$SDK_APP_OUT/libmbedtls_v3.6.0.a"
+      "$SDK_APP_OUT/driver/security_unified/mbedtls_harden_adapt/libmbedtls_harden.a"
+      "$SDK_APP_OUT/driver/security_unified/libdrv_security_unified.a"
+      "$SDK_APP_OUT/hal/security_unified/libhal_security_unified.a"
+      "$SDK_APP_OUT/liteos/libs/libc.a"
+      "$SDK_APP_OUT/liteos/libs/libm.a"
+    )
+    ;;
+esac
+
 rename_rf_diag_symbol() {
   local archive="$1/libwifi_driver_dmac.a"
   local rewritten="$archive.rewritten"
@@ -134,6 +149,36 @@ rename_rf_diag_symbol() {
   mv "$rewritten" "$archive"
 }
 
+rename_wpa_libc_conflicts() {
+  local archive="$1/libc.a"
+  local rewritten="$archive.rewritten"
+  local work
+  work="$(mktemp -d)"
+  "$LLVM_AR" t "$archive" > "$work/members.txt"
+  (
+    cd "$work"
+    "$LLVM_AR" x "$archive"
+    test -f cstdlib.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym malloc=__ws63_vendor_libc_malloc \
+      --redefine-sym free=__ws63_vendor_libc_free \
+      --redefine-sym realloc=__ws63_vendor_libc_realloc \
+      cstdlib.c.obj cstdlib.c.obj.rewritten
+    mv cstdlib.c.obj.rewritten cstdlib.c.obj
+    test -f time.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym gettimeofday=__ws63_vendor_libc_gettimeofday \
+      --redefine-sym clock_gettime=__ws63_vendor_libc_clock_gettime \
+      time.c.obj time.c.obj.rewritten
+    mv time.c.obj.rewritten time.c.obj
+    local members=()
+    while IFS= read -r member; do members+=("$member"); done < members.txt
+    "$LLVM_AR" rcs "$rewritten" "${members[@]}"
+  )
+  rm -rf "$work"
+  mv "$rewritten" "$archive"
+}
+
 prepare_rf_diag_sources() {
   rm -rf "$DIAG_SOURCE_DIR"
   mkdir -p "$DIAG_SOURCE_DIR"
@@ -143,6 +188,9 @@ prepare_rf_diag_sources() {
   done
   case ",$FEATURES," in
     *,rf-init-diag,*) rename_rf_diag_symbol "$DIAG_SOURCE_DIR" ;;
+  esac
+  case ",$FEATURES," in
+    *,wpa,*) rename_wpa_libc_conflicts "$DIAG_SOURCE_DIR" ;;
   esac
 }
 

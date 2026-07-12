@@ -85,6 +85,21 @@ pub extern "C" fn osal_flush_cache() {
     unsafe { hisi_riscv_hal::cache::flush_all() };
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_dcache_region_clean(address: *mut c_void, size: u32) {
+    unsafe { hisi_riscv_hal::cache::clean_range(address as usize, size as usize) };
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_dcache_region_inv(address: *mut c_void, size: u32) {
+    unsafe { hisi_riscv_hal::cache::invalidate_range(address as usize, size as usize) };
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_dcache_flush_all() {
+    unsafe { hisi_riscv_hal::cache::flush_all() };
+}
+
 // ── Per-line IRQ management ─────────────────────────────────────────────────
 
 type IrqHandler = Option<unsafe extern "C" fn(u32, *mut c_void)>;

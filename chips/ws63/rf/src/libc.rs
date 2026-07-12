@@ -123,6 +123,12 @@ pub extern "C" fn free(ptr: *mut c_void) {
     crate::alloc::osal_kfree(ptr);
 }
 
+/// `realloc` for allocations owned by the RF heap.
+#[cfg_attr(target_arch = "riscv32", unsafe(no_mangle))]
+pub extern "C" fn realloc(ptr: *mut c_void, size: c_ulong) -> *mut c_void {
+    crate::alloc::realloc_owned(ptr, size as usize)
+}
+
 /// `memalign`. NOTE: the backing heap returns 8-byte-aligned blocks; stricter
 /// `alignment` (e.g. 64-byte DMA) is NOT yet honoured — a real aligned
 /// allocator is a TODO before any DMA buffer is sourced through here.
@@ -199,6 +205,26 @@ pub extern "C" fn tolower(c: c_int) -> c_int {
 #[cfg_attr(target_arch = "riscv32", unsafe(no_mangle))]
 pub extern "C" fn gettimeofday(tv: *mut crate::osal_ext::OsalTimeval, _tz: *mut c_void) -> c_int {
     crate::osal_ext::osal_gettimeofday(tv);
+    0
+}
+
+#[repr(C)]
+pub struct Timespec {
+    tv_sec: c_long,
+    tv_nsec: c_long,
+}
+
+/// Monotonic `clock_gettime` used by the supplicant eloop.
+#[cfg_attr(target_arch = "riscv32", unsafe(no_mangle))]
+pub extern "C" fn clock_gettime(_clock_id: c_int, ts: *mut Timespec) -> c_int {
+    if ts.is_null() {
+        return -1;
+    }
+    let us = crate::uapi::monotonic_us();
+    unsafe {
+        (*ts).tv_sec = (us / 1_000_000) as c_long;
+        (*ts).tv_nsec = ((us % 1_000_000) * 1_000) as c_long;
+    }
     0
 }
 

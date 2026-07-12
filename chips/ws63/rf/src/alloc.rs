@@ -17,6 +17,8 @@ use linked_list_allocator::Heap;
 #[repr(C, align(8))]
 struct AllocationHeader {
     total: u32,
+    alignment: u32,
+    base_offset: u32,
     magic: u32,
 }
 
@@ -34,14 +36,31 @@ static HEAP: Mutex<RefCell<Heap>> = Mutex::new(RefCell::new(Heap::empty()));
 /// Allocate `size` zero-initialised bytes. Returns null on failure / `size==0`.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
+    allocate_aligned(size, HDR)
+}
+
+/// Allocate memory with the alignment required by crypto/DMA buffers.
+#[unsafe(no_mangle)]
+pub extern "C" fn osal_kmalloc_align(size: u32, _flags: u32, boundary: u32) -> *mut c_void {
+    let alignment = boundary as usize;
+    if alignment < HDR || !alignment.is_power_of_two() {
+        return core::ptr::null_mut();
+    }
+    allocate_aligned(size as usize, alignment)
+}
+
+fn allocate_aligned(size: usize, alignment: usize) -> *mut c_void {
     if size == 0 {
         return core::ptr::null_mut();
     }
-    let total = match size.checked_add(HDR) {
+    let total = match size
+        .checked_add(HDR)
+        .and_then(|value| value.checked_add(alignment - 1))
+    {
         Some(t) => t,
         None => return core::ptr::null_mut(),
     };
-    let layout = match Layout::from_size_align(total, HDR) {
+    let layout = match Layout::from_size_align(total, alignment) {
         Ok(l) => l,
         Err(_) => return core::ptr::null_mut(),
     };
@@ -59,13 +78,17 @@ pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
         match heap.allocate_first_fit(layout) {
             Ok(base) => {
                 let base = base.as_ptr();
+                let user_addr = (base as usize + HDR + alignment - 1) & !(alignment - 1);
+                let user = user_addr as *mut u8;
+                let header = unsafe { user.sub(HDR).cast::<AllocationHeader>() };
                 // SAFETY: base..base+total is owned by this allocation.
                 unsafe {
-                    (base as *mut AllocationHeader).write(AllocationHeader {
+                    header.write(AllocationHeader {
                         total: total as u32,
+                        alignment: alignment as u32,
+                        base_offset: header.cast::<u8>().offset_from(base) as u32,
                         magic: ALLOC_MAGIC,
                     });
-                    let user = base.add(HDR);
                     core::ptr::write_bytes(user, 0, size);
                     user as *mut c_void
                 }
@@ -86,6 +109,37 @@ pub extern "C" fn osal_kfree(ptr: *mut c_void) {
     free_owned(ptr);
 }
 
+/// Resize an owned allocation, preserving the common prefix.
+pub(crate) fn realloc_owned(ptr: *mut c_void, size: usize) -> *mut c_void {
+    if ptr.is_null() {
+        return osal_kmalloc(size);
+    }
+    if size == 0 {
+        osal_kfree(ptr);
+        return core::ptr::null_mut();
+    }
+    let old_size = unsafe {
+        let header = (ptr as *mut u8).sub(HDR) as *const AllocationHeader;
+        if (*header).magic != ALLOC_MAGIC || (*header).total < HDR as u32 {
+            return core::ptr::null_mut();
+        }
+        (*header).total as usize - (*header).base_offset as usize - HDR
+    };
+    let replacement = osal_kmalloc(size);
+    if replacement.is_null() {
+        return replacement;
+    }
+    unsafe {
+        core::ptr::copy_nonoverlapping(
+            ptr.cast::<u8>(),
+            replacement.cast::<u8>(),
+            old_size.min(size),
+        );
+    }
+    osal_kfree(ptr);
+    replacement
+}
+
 fn free_owned(ptr: *mut c_void) {
     let caller = caller_address();
 
@@ -101,14 +155,18 @@ fn free_owned(ptr: *mut c_void) {
             return;
         }
 
-        let base = user.wrapping_sub(HDR) as *mut u8;
-        let header = base as *mut AllocationHeader;
+        let header = user.wrapping_sub(HDR) as *mut AllocationHeader;
         let total = (*header).total as usize;
+        let base_offset = (*header).base_offset as usize;
         let magic = (*header).magic;
+        let base = (header as usize).wrapping_sub(base_offset) as *mut u8;
+        let alignment = (*header).alignment as usize;
         let valid = magic == ALLOC_MAGIC
             && total >= HDR
             && total <= heap_end.saturating_sub(base as usize)
-            && (base as usize).is_multiple_of(HDR);
+            && alignment >= HDR
+            && alignment.is_power_of_two()
+            && (base as usize).is_multiple_of(alignment);
 
         if !valid {
             trace_bad_free(ptr as usize, total, magic, caller);
@@ -116,7 +174,7 @@ fn free_owned(ptr: *mut c_void) {
         }
 
         (*header).magic = FREED_MAGIC;
-        let layout = Layout::from_size_align_unchecked(total, HDR);
+        let layout = Layout::from_size_align_unchecked(total, alignment);
         let nn = core::ptr::NonNull::new_unchecked(base);
         critical_section::with(|cs| HEAP.borrow_ref_mut(cs).deallocate(nn, layout));
     }

@@ -19,6 +19,7 @@ use portable_atomic::{AtomicBool, Ordering};
 
 const IFNAME_CAPACITY: usize = 17;
 const SSID_CAPACITY: usize = 32;
+const WPA_KEY_CAPACITY: usize = 64;
 #[cfg(target_arch = "riscv32")]
 const MAX_IE_LENGTH: usize = 2304;
 
@@ -82,6 +83,9 @@ pub struct ScanResult {
     /// Signal strength in dBm. The vendor ABI reports hundredths of a dBm.
     pub rssi_dbm: i16,
     security: ScanSecurity,
+    auth_mode: i32,
+    pairwise: i32,
+    channel: u8,
 }
 
 /// Security classification available from the scan result's capability bits.
@@ -104,6 +108,60 @@ pub struct OpenNetwork {
     ssid_len: u8,
     bssid: [u8; 6],
     frequency_mhz: u16,
+}
+
+/// A discovered WPA2-Personal/CCMP network and validated ASCII passphrase.
+#[cfg(feature = "wpa")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PersonalNetwork {
+    ssid: [u8; SSID_CAPACITY],
+    ssid_len: u8,
+    bssid: [u8; 6],
+    auth_mode: i32,
+    pairwise: i32,
+    channel: u8,
+    key: [u8; WPA_KEY_CAPACITY + 1],
+    key_len: u8,
+}
+
+#[cfg(feature = "wpa")]
+impl PersonalNetwork {
+    /// Select a WPA2-Personal/CCMP AP and validate an ASCII passphrase.
+    pub fn from_scan(result: &ScanResult, passphrase: &[u8]) -> Result<Self, Error> {
+        if result.ssid_len == 0 {
+            return Err(Error::InvalidSsid);
+        }
+        if result.security != ScanSecurity::Protected {
+            return Err(Error::OpenNetwork);
+        }
+        // Delivered SDK enums: WPA2PSK=2 and AES/CCMP=1. WPA1 mixed mode,
+        // SAE/transition mode, Enterprise and TKIP remain separate gates.
+        if result.auth_mode != 2 || result.pairwise != 1 {
+            return Err(Error::UnsupportedSecurity(result.auth_mode));
+        }
+        if !(8..=63).contains(&passphrase.len())
+            || passphrase.iter().any(|byte| *byte < 32 || *byte == 127)
+        {
+            return Err(Error::InvalidPassphrase);
+        }
+        let mut key = [0; WPA_KEY_CAPACITY + 1];
+        key[..passphrase.len()].copy_from_slice(passphrase);
+        Ok(Self {
+            ssid: result.ssid,
+            ssid_len: result.ssid_len,
+            bssid: result.bssid,
+            auth_mode: result.auth_mode,
+            pairwise: result.pairwise,
+            channel: result.channel,
+            key,
+            key_len: passphrase.len() as u8,
+        })
+    }
+
+    /// SSID bytes used for this connection.
+    pub fn ssid(&self) -> &[u8] {
+        &self.ssid[..self.ssid_len as usize]
+    }
 }
 
 impl OpenNetwork {
@@ -146,6 +204,9 @@ impl ScanResult {
         frequency_mhz: 0,
         rssi_dbm: 0,
         security: ScanSecurity::Open,
+        auth_mode: 0,
+        pairwise: 0,
+        channel: 0,
     };
 
     /// SSID bytes exactly as advertised by the access point.
@@ -185,6 +246,12 @@ pub enum Error {
     InvalidSsid,
     /// The selected AP advertises link-layer privacy and is not an open network.
     ProtectedNetwork,
+    /// The selected AP is open and cannot be used as a WPA personal network.
+    OpenNetwork,
+    /// The scan reported a security mode this adapter does not support yet.
+    UnsupportedSecurity(i32),
+    /// WPA personal passphrases must be 8-63 printable ASCII bytes.
+    InvalidPassphrase,
     /// The vendor scan ioctl failed.
     StartScan(c_int),
     /// The scan finished with a non-success vendor status.
@@ -205,6 +272,215 @@ pub enum Error {
 pub struct Wifi<'d> {
     ifname: [u8; IFNAME_CAPACITY],
     _efuse: Efuse<'d>,
+}
+
+/// Exclusive station handle backed by the vendor WPA supplicant.
+#[cfg(feature = "wpa")]
+pub struct WpaWifi<'d> {
+    ifname: [u8; IFNAME_CAPACITY],
+    _efuse: Efuse<'d>,
+}
+
+#[cfg(feature = "wpa")]
+impl<'d> WpaWifi<'d> {
+    /// Initialize the RF runtime, start the STA interface and its supplicant task.
+    pub fn initialize(efuse: Efuse<'d>) -> Result<Self, Error> {
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            let _ = efuse;
+            Err(Error::UnsupportedTarget)
+        }
+        #[cfg(target_arch = "riscv32")]
+        {
+            if WIFI_CLAIMED
+                .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
+                return Err(Error::AlreadyInitialized);
+            }
+            crate::force_link_contract();
+            unsafe { crate::prepare_vendor_memory() };
+            let timebase = crate::uapi::initialize_rom_timebases();
+            if timebase != 0 {
+                return Err(Error::Timebase(timebase));
+            }
+            crate::uapi::enable_efuse_reads();
+            // Match the vendor startup order: initialize the unified cipher
+            // driver, then register its hash/AES/ECP mbedTLS providers before
+            // the supplicant can derive a PSK or process EAPOL frames.
+            unsafe { uapi_drv_cipher_env_init() };
+            let security = unsafe { mbedtls_adapt_register_func() };
+            if security != 0 {
+                return Err(Error::Initialize(security as u32));
+            }
+            let init = unsafe { uapi_wifi_init(2, 7) };
+            if init != 0 {
+                return Err(Error::Initialize(init));
+            }
+            let mut ifname = [0; IFNAME_CAPACITY];
+            let mut length = IFNAME_CAPACITY as c_int;
+            let start = unsafe { uapi_wifi_sta_start(ifname.as_mut_ptr().cast(), &mut length) };
+            if start != 0 || length <= 0 || length as usize >= IFNAME_CAPACITY {
+                return Err(Error::CreateStation(start));
+            }
+            let callback_mode = unsafe { uapi_wifi_config_callback(1, 10, 2048) };
+            if callback_mode != 0 {
+                return Err(Error::RegisterEvents(callback_mode));
+            }
+            let register = unsafe { uapi_wifi_register_event_callback(Some(wpa_event)) };
+            if register != 0 {
+                return Err(Error::RegisterEvents(register));
+            }
+            #[cfg(feature = "net")]
+            crate::netif_smoltcp::set_tx_sink(crate::netif::vendor_tx_sink);
+            Ok(Self {
+                ifname,
+                _efuse: efuse,
+            })
+        }
+    }
+
+    /// Scan using the supplicant-owned event channel and copy bounded results.
+    pub fn scan(&mut self, output: &mut [ScanResult], timeout_ms: u32) -> Result<usize, Error> {
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            let _ = (output, timeout_ms);
+            Err(Error::UnsupportedTarget)
+        }
+        #[cfg(target_arch = "riscv32")]
+        {
+            if unsafe { uapi_wifi_sta_scan() } != 0 {
+                return Err(Error::StartScan(-1));
+            }
+            let started_at = crate::uapi::monotonic_ms();
+            while unsafe { uapi_wifi_get_scan_flag() } != 0 {
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
+                    return Err(Error::Timeout);
+                }
+                crate::sched::sleep_ms(1);
+            }
+            let mut vendor = [VendorWpaApInfo::zeroed(); MAX_SCAN_RESULTS];
+            let mut count = MAX_SCAN_RESULTS as c_uint;
+            if unsafe { uapi_wifi_get_scan_results(vendor.as_mut_ptr(), &mut count) } != 0 {
+                return Err(Error::ScanFailed(ScanStatus::Failed));
+            }
+            let count = (count as usize).min(output.len()).min(MAX_SCAN_RESULTS);
+            for (dst, src) in output[..count].iter_mut().zip(&vendor[..count]) {
+                let ssid_len = src
+                    .ssid
+                    .iter()
+                    .position(|byte| *byte == 0)
+                    .unwrap_or(SSID_CAPACITY);
+                let mut result = ScanResult::EMPTY;
+                result.ssid[..ssid_len].copy_from_slice(&src.ssid[..ssid_len]);
+                result.ssid_len = ssid_len as u8;
+                result.bssid = src.bssid;
+                result.channel = src.channel.clamp(0, u8::MAX as u32) as u8;
+                result.frequency_mhz = channel_to_frequency(result.channel);
+                result.rssi_dbm = (src.rssi / 100).clamp(i16::MIN as i32, i16::MAX as i32) as i16;
+                result.auth_mode = i32::from(src.auth_mode);
+                result.pairwise = i32::from(src.pairwise);
+                result.security = if src.auth_mode == 0 {
+                    ScanSecurity::Open
+                } else {
+                    ScanSecurity::Protected
+                };
+                *dst = result;
+            }
+            Ok(count)
+        }
+    }
+
+    /// Connect and wait until the WPA supplicant reports an authorized link.
+    pub fn connect(
+        &mut self,
+        network: &PersonalNetwork,
+        timeout_ms: u32,
+    ) -> Result<ConnectionInfo, Error> {
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            let _ = (network, timeout_ms);
+            Err(Error::UnsupportedTarget)
+        }
+        #[cfg(target_arch = "riscv32")]
+        {
+            let started = critical_section::with(|cs| {
+                let state = CONNECTION_STATE.borrow(cs);
+                if state.active.get() {
+                    return false;
+                }
+                state.active.set(true);
+                state.done.set(false);
+                state.outcome.set(ConnectionOutcome::Pending);
+                true
+            });
+            if !started {
+                return Err(Error::Busy);
+            }
+            let mut request = VendorWpaAssoc::zeroed();
+            request.ssid[..network.ssid_len as usize]
+                .copy_from_slice(&network.ssid[..network.ssid_len as usize]);
+            request.auth_mode = network.auth_mode as u8;
+            request.key[..network.key_len as usize]
+                .copy_from_slice(&network.key[..network.key_len as usize]);
+            // Leave BSSID unspecified. The delivered control path formats a
+            // pinned BSSID through a six-argument `snprintf_s(MACSTR, ...)`;
+            // the minimal Rust libc adapter intentionally does not emulate
+            // arbitrary C variadics. SSID selection is an official API path.
+            request.pairwise = network.pairwise as u8;
+            request.channel = network.channel;
+            let result = unsafe { uapi_wifi_sta_connect(&request) };
+            if result != 0 {
+                finish_connection();
+                return Err(Error::StartConnect(result));
+            }
+            let started_at = crate::uapi::monotonic_ms();
+            loop {
+                let (done, outcome) = critical_section::with(|cs| {
+                    let state = CONNECTION_STATE.borrow(cs);
+                    (state.done.get(), state.outcome.get())
+                });
+                if done {
+                    finish_connection();
+                    return match outcome {
+                        ConnectionOutcome::Connected(info) => Ok(ConnectionInfo {
+                            frequency_mhz: channel_to_frequency(network.channel),
+                            ..info
+                        }),
+                        ConnectionOutcome::Failed(status) => Err(Error::ConnectFailed(status)),
+                        ConnectionOutcome::Disconnected(reason) => Err(Error::Disconnected(reason)),
+                        ConnectionOutcome::Pending => Err(Error::Timeout),
+                    };
+                }
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
+                    finish_connection();
+                    return Err(Error::Timeout);
+                }
+                crate::sched::sleep_ms(10);
+            }
+        }
+    }
+
+    /// Vendor-created interface name.
+    pub fn interface_name(&self) -> &[u8] {
+        let len = self
+            .ifname
+            .iter()
+            .position(|byte| *byte == 0)
+            .unwrap_or(IFNAME_CAPACITY);
+        &self.ifname[..len]
+    }
+}
+
+#[cfg(feature = "wpa")]
+const fn channel_to_frequency(channel: u8) -> u16 {
+    if channel == 14 {
+        2484
+    } else if channel >= 1 && channel <= 13 {
+        2407 + channel as u16 * 5
+    } else {
+        0
+    }
 }
 
 impl<'d> Wifi<'d> {
@@ -609,6 +885,75 @@ struct VendorDisconnect {
     ie_len: u32,
 }
 
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[derive(Clone, Copy)]
+#[repr(C)]
+struct VendorWpaApInfo {
+    ssid: [u8; SSID_CAPACITY + 1],
+    bssid: [u8; 6],
+    auth_mode: u8,
+    channel: u32,
+    rssi: i32,
+    flags: u8,
+    pairwise: u8,
+    tail_padding: [u8; 2],
+}
+
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+impl VendorWpaApInfo {
+    const fn zeroed() -> Self {
+        Self {
+            ssid: [0; SSID_CAPACITY + 1],
+            bssid: [0; 6],
+            auth_mode: 0,
+            channel: 0,
+            rssi: 0,
+            flags: 0,
+            pairwise: 0,
+            tail_padding: [0; 2],
+        }
+    }
+}
+
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[repr(C)]
+struct VendorWpaAssoc {
+    ssid: [u8; SSID_CAPACITY + 1],
+    auth_mode: u8,
+    key: [u8; WPA_KEY_CAPACITY + 1],
+    bssid: [u8; 6],
+    pairwise: u8,
+    hex_flag: u8,
+    ft_flag: u8,
+    channel: u8,
+    reserved: [u8; 2],
+}
+
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+impl VendorWpaAssoc {
+    const fn zeroed() -> Self {
+        Self {
+            ssid: [0; SSID_CAPACITY + 1],
+            auth_mode: 0,
+            key: [0; WPA_KEY_CAPACITY + 1],
+            bssid: [0; 6],
+            pairwise: 0,
+            hex_flag: 0,
+            ft_flag: 0,
+            channel: 0,
+            reserved: [0; 2],
+        }
+    }
+}
+
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[repr(C)]
+struct VendorWpaEvent {
+    kind: u8,
+    padding: [u8; 3],
+    info: [u8; 172],
+}
+
 #[cfg(target_arch = "riscv32")]
 const _: () = {
     assert!(core::mem::size_of::<VendorScanSsid>() == 36);
@@ -619,6 +964,14 @@ const _: () = {
     assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
     assert!(core::mem::size_of::<VendorConnectResult>() == 28);
     assert!(core::mem::size_of::<VendorDisconnect>() == 12);
+    #[cfg(feature = "wpa")]
+    {
+        // The vendor SDK compiles these public C structs with -fshort-enums.
+        // Keep these values in sync with tools/wifi-abi-probe.c.
+        assert!(core::mem::size_of::<VendorWpaApInfo>() == 52);
+        assert!(core::mem::size_of::<VendorWpaAssoc>() == 111);
+        assert!(core::mem::size_of::<VendorWpaEvent>() == 176);
+    }
 };
 
 #[cfg(target_arch = "riscv32")]
@@ -802,6 +1155,35 @@ unsafe extern "C" fn scan_event(
     0
 }
 
+#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+unsafe extern "C" fn wpa_event(event: *const VendorWpaEvent) {
+    if event.is_null() {
+        return;
+    }
+    // SAFETY: the registered callback receives a live ext_wifi_event for the
+    // duration of this call. tools/wifi-abi-probe.c verifies info starts at 4.
+    let event = unsafe { &*event };
+    let outcome = match event.kind {
+        2 => {
+            let mut bssid = [0; 6];
+            bssid.copy_from_slice(&event.info[33..39]);
+            ConnectionOutcome::Connected(ConnectionInfo {
+                bssid,
+                frequency_mhz: 0,
+            })
+        }
+        3 => ConnectionOutcome::Disconnected(u16::from_le_bytes([event.info[6], event.info[7]])),
+        _ => return,
+    };
+    critical_section::with(|cs| {
+        let state = CONNECTION_STATE.borrow(cs);
+        if state.active.get() {
+            state.outcome.set(outcome);
+            state.done.set(true);
+        }
+    });
+}
+
 #[cfg(target_arch = "riscv32")]
 unsafe extern "C" {
     fn uapi_wifi_init(vap_res_num: u8, user_res_num: u8) -> u32;
@@ -816,6 +1198,26 @@ unsafe extern "C" {
     ) -> c_int;
     fn drv_soc_hwal_wpa_ioctl(ifname: *mut c_char, command: *const VendorIoctl) -> c_int;
     fn uapi_ioctl_assoc(ifname: *const c_char, params: *mut c_void) -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_sta_start(ifname: *mut c_char, length: *mut c_int) -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_sta_scan() -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_get_scan_flag() -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_drv_cipher_env_init();
+    #[cfg(feature = "wpa")]
+    fn mbedtls_adapt_register_func() -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_config_callback(mode: u8, task_priority: u8, stack_size: u16) -> c_int;
+    #[cfg(feature = "wpa")]
+    fn uapi_wifi_register_event_callback(
+        callback: Option<unsafe extern "C" fn(*const VendorWpaEvent)>,
+    ) -> c_int;
 }
 
 #[cfg(test)]
