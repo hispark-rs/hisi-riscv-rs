@@ -127,7 +127,7 @@ mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
 pub mod wifi;
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 mod wpa_compat;
 
 pub use pmp::prepare_vendor_memory;
@@ -367,7 +367,7 @@ pub fn force_link_contract() {
     keep!(uapi::uapi_drv_cipher_trng_get_random_bytes as extern "C" fn(*mut u8, u32) -> u32);
     keep!(uapi::get_dev_addr as extern "C" fn(*mut u8, u8, u8) -> u32);
     keep!(uapi::get_tcxo_freq as extern "C" fn() -> u32);
-    #[cfg(not(feature = "wpa"))]
+    #[cfg(not(feature = "wifi-wpa2-personal"))]
     {
         keep!(uapi::uapi_wifi_softap_stop as extern "C" fn() -> i32);
         keep!(uapi::uapi_wifi_sta_stop as extern "C" fn() -> i32);

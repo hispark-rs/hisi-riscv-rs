@@ -156,11 +156,13 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 
 1. **W0A oracle（已完成）**：完整原厂 supplicant + mbedTLS/security archives 在真机完成
    WPA2-Personal connect、DHCP、ARP、ping；保留 marker、ABI probe 和资源基线。
-2. **W0B WPA2-only**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
+2. **W0B WPA2-only（已完成）**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
    删除 SAE、AP、EAP/TLS/WPS/P2P/WAPI 对象。以 link closure 固定所需 crypto/libc ABI，
    对外 feature 命名为 `wifi-wpa2-personal`。机器可读边界由
    `chips/ws63/rf/tools/wpa2-personal-profile.toml` 定义，并由
    `check-wpa-profile.py` 对原厂 CMake source/define 集执行 fail-closed 检查。
+   2026-07-12 真机复现 connect、DHCP、ARP、ping；构建闭包、SDK compatibility define
+   陷阱和资源差异见 [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
 3. **W1 crypto provider**：建立 `CryptoProvider` 内部 contract。WS63 provider 复用
    官方 unified-cipher UAPI 背后的 ROM/硬件 hash、HMAC、PBKDF2、AES、TRNG，并由 HAL
    管理 cache/aligned DMA。只允许调用公开 UAPI 或由 `hisi-rom-sys` 固定并验证的 ROM

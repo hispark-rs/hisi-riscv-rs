@@ -508,14 +508,14 @@ pub extern "C" fn uapi_at_print(_fmt: *const core::ffi::c_char) -> u32 {
 // ── Wi-Fi service entry points referenced internally ─────────────────────────
 
 /// Stop the SoftAP. STUB.
-#[cfg(not(feature = "wpa"))]
+#[cfg(not(feature = "wifi-wpa2-personal"))]
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_wifi_softap_stop() -> i32 {
     crate::OSAL_OK
 }
 
 /// Stop the station. STUB.
-#[cfg(not(feature = "wpa"))]
+#[cfg(not(feature = "wifi-wpa2-personal"))]
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_wifi_sta_stop() -> i32 {
     crate::OSAL_OK

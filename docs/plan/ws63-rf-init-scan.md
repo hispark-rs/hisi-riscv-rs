@@ -124,6 +124,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
 - WPA2-Personal oracle 的独立真机记录见
   [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
+- WPA2-only supplicant 已从原厂 Ninja 编译图独立重建，并在删除 SAE/AP/EAP-TLS/WPS/WAPI
+  源码后复现同一组真机 marker；见
+  [WS63 cropped WPA2 evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 

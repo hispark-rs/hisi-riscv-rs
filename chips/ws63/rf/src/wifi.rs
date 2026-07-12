@@ -111,7 +111,7 @@ pub struct OpenNetwork {
 }
 
 /// A discovered WPA2-Personal/CCMP network and validated ASCII passphrase.
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PersonalNetwork {
     ssid: [u8; SSID_CAPACITY],
@@ -124,7 +124,7 @@ pub struct PersonalNetwork {
     key_len: u8,
 }
 
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 impl PersonalNetwork {
     /// Select a WPA2-Personal/CCMP AP and validate an ASCII passphrase.
     pub fn from_scan(result: &ScanResult, passphrase: &[u8]) -> Result<Self, Error> {
@@ -275,13 +275,13 @@ pub struct Wifi<'d> {
 }
 
 /// Exclusive station handle backed by the vendor WPA supplicant.
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 pub struct WpaWifi<'d> {
     ifname: [u8; IFNAME_CAPACITY],
     _efuse: Efuse<'d>,
 }
 
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 impl<'d> WpaWifi<'d> {
     /// Initialize the RF runtime, start the STA interface and its supplicant task.
     pub fn initialize(efuse: Efuse<'d>) -> Result<Self, Error> {
@@ -472,7 +472,7 @@ impl<'d> WpaWifi<'d> {
     }
 }
 
-#[cfg(feature = "wpa")]
+#[cfg(feature = "wifi-wpa2-personal")]
 const fn channel_to_frequency(channel: u8) -> u16 {
     if channel == 14 {
         2484
@@ -885,7 +885,7 @@ struct VendorDisconnect {
     ie_len: u32,
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct VendorWpaApInfo {
@@ -899,7 +899,7 @@ struct VendorWpaApInfo {
     tail_padding: [u8; 2],
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 impl VendorWpaApInfo {
     const fn zeroed() -> Self {
         Self {
@@ -915,7 +915,7 @@ impl VendorWpaApInfo {
     }
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 #[repr(C)]
 struct VendorWpaAssoc {
     ssid: [u8; SSID_CAPACITY + 1],
@@ -929,7 +929,7 @@ struct VendorWpaAssoc {
     reserved: [u8; 2],
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 impl VendorWpaAssoc {
     const fn zeroed() -> Self {
         Self {
@@ -946,7 +946,7 @@ impl VendorWpaAssoc {
     }
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 #[repr(C)]
 struct VendorWpaEvent {
     kind: u8,
@@ -964,7 +964,7 @@ const _: () = {
     assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
     assert!(core::mem::size_of::<VendorConnectResult>() == 28);
     assert!(core::mem::size_of::<VendorDisconnect>() == 12);
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     {
         // The vendor SDK compiles these public C structs with -fshort-enums.
         // Keep these values in sync with tools/wifi-abi-probe.c.
@@ -1155,7 +1155,7 @@ unsafe extern "C" fn scan_event(
     0
 }
 
-#[cfg(all(feature = "wpa", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
 unsafe extern "C" fn wpa_event(event: *const VendorWpaEvent) {
     if event.is_null() {
         return;
@@ -1198,23 +1198,23 @@ unsafe extern "C" {
     ) -> c_int;
     fn drv_soc_hwal_wpa_ioctl(ifname: *mut c_char, command: *const VendorIoctl) -> c_int;
     fn uapi_ioctl_assoc(ifname: *const c_char, params: *mut c_void) -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_start(ifname: *mut c_char, length: *mut c_int) -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_scan() -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_get_scan_flag() -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_drv_cipher_env_init();
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn mbedtls_adapt_register_func() -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_config_callback(mode: u8, task_priority: u8, stack_size: u16) -> c_int;
-    #[cfg(feature = "wpa")]
+    #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_register_event_callback(
         callback: Option<unsafe extern "C" fn(*const VendorWpaEvent)>,
     ) -> c_int;

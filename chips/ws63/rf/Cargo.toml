@@ -26,9 +26,10 @@ smoltcp = { version = "0.13", default-features = false, features = [
 
 [features]
 net = ["dep:smoltcp"]
-# Link and expose the vendor WPA supplicant runtime. This is deliberately
-# explicit: it adds a scheduler-heavy archive and owns the Wi-Fi event channel.
-wpa = []
+# Link and expose the WPA2-Personal/CCMP supplicant runtime.
+wifi-wpa2-personal = []
+# Compatibility alias for the pre-profile bring-up feature.
+wpa = ["wifi-wpa2-personal"]
 # Internal on-silicon bring-up instrumentation for the guarded full-init image.
 # Not a public radio API and not enabled by normal consumers.
 rf-init-diag = []
