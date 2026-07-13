@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-60152770.js";
+            window.path_to_searchindex_js = "../../searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -222,10 +222,10 @@
 <tr><th>组件</th><th>类型</th><th>角色</th><th>架构文档</th></tr>
 </thead>
 <tbody>
-<tr><td><code>crates/pac/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="03-ws63-pac.html">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="02-ws63-svd.html">ws63-svd.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="03-ws63-pac.html">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="02-ws63-svd.html">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="03-ws63-pac.html">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="02-ws63-svd.html">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/chips/bs2x/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="03-ws63-pac.html">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/chips/bs2x/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="02-ws63-svd.html">ws63-svd.md</a></td></tr>
 <tr><td><code>crates/hisi-hal</code></td><td>submodule</td><td>多芯片 HAL（standalone 需显式选 <code>chip-ws63</code>；实验性 <code>chip-bs21</code> 需 <code>unstable</code>）+ 可选 <code>async</code>/<code>embassy</code></td><td><a href="04-hisi-hal.html">hisi-hal.md</a></td></tr>
 <tr><td><code>crates/hisi-riscv-rt</code></td><td>submodule</td><td>运行时：启动、中断向量、链接脚本、critical-section</td><td><a href="05-hisi-riscv-rt.html">hisi-riscv-rt.md</a></td></tr>
 <tr><td><code>examples/ws63/*</code></td><td>in-tree 独立工作区</td><td>WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…）</td><td><a href="07-ws63-examples.html">ws63-examples.md</a></td></tr>
@@ -233,7 +233,9 @@
 <tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="07-ws63-examples.html">ws63-examples.md</a></td></tr>
 <tr><td><code>chips/ws63/flashboot</code></td><td>in-tree</td><td><strong>实验性</strong>二级引导（非安全启动）</td><td><a href="08-ws63-flashboot.html">ws63-flashboot.md</a></td></tr>
 <tr><td><code>chips/ws63/rf/</code></td><td>in-tree</td><td>WS63 Wi-Fi porting 层 <code>ws63-rf-rs</code></td><td>—</td></tr>
-<tr><td><code>crates/ws63-radio-sys</code></td><td>submodule</td><td>WS63 raw ABI、archive profile、<code>hisi-rf-link</code>，并嵌套语言中立 <code>ws63-RF</code> payload</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-radio-sys</code></td><td>submodule</td><td>WS63 raw ABI、archive profile、<code>hisi-rf-link</code>，并嵌套语言中立 <code>ws63-RF</code> payload</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-rom-sys</code></td><td>submodule</td><td>芯片中立 ROM facts facade 与 Cargo metadata 转发</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/hisi-rom-sys-ws63</code></td><td>submodule</td><td>WS63 固定 ROM 地址与生成 symbol/callback/patch metadata</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
 <tr><td><code>chips/ws63/guide</code></td><td>submodule</td><td>WS63 中文硬件手册（Sphinx）</td><td><a href="10-ws63-guide.html">ws63-guide.md</a></td></tr>
 <tr><td><code>chips/bs2x/guide</code></td><td>submodule</td><td>BS2X 中文硬件手册（Sphinx）</td><td>—</td></tr>
 </tbody>
@@ -316,7 +318,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 </ol>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>
 <ul>
-<li><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
+<li><strong>PAC 组织</strong>：<code>crates/chips/ws63/ws63-pac</code> 和 <code>crates/chips/bs2x/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
 <li><strong>HAL 多芯片</strong>：<code>hisi-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</li>
 <li><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</li>
 <li><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</li>

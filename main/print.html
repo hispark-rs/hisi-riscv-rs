@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-60152770.js";
+            window.path_to_searchindex_js = "searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -1576,8 +1576,8 @@ cargo build -p myperiph_demo --release     # 示例能编出 ELF
 <tr><th>目标</th><th>在哪里 tag</th><th>产物</th></tr>
 </thead>
 <tbody>
-<tr><td><code>ws63-pac</code></td><td><code>crates/pac/ws63-pac</code> 子仓</td><td>crates.io</td></tr>
-<tr><td><code>bs2x-pac</code></td><td><code>crates/pac/bs2x-pac</code> 子仓</td><td>crates.io</td></tr>
+<tr><td><code>ws63-pac</code></td><td><code>crates/chips/ws63/ws63-pac</code> 子仓</td><td>crates.io</td></tr>
+<tr><td><code>bs2x-pac</code></td><td><code>crates/chips/bs2x/bs2x-pac</code> 子仓</td><td>crates.io</td></tr>
 <tr><td><code>hisi-riscv-rt</code></td><td><code>crates/hisi-riscv-rt</code> 子仓</td><td>crates.io</td></tr>
 <tr><td><code>hisi-hal</code></td><td><code>crates/hisi-hal</code> 子仓</td><td>crates.io</td></tr>
 <tr><td>父仓 <code>hisi-riscv-rs</code></td><td>仓库根</td><td>GitHub Release firmware assets；不发布子 crate</td></tr>
@@ -3818,7 +3818,7 @@ blinky 上电启动并翻转 GPIO0。</li>
 <p>本地开发又需要另一件事：在父仓里同时改 PAC、rt、HAL 时，要让它们链接到同一份本地源码。根 <code>[patch.crates-io]</code> 正好表达这个意思：</p>
 <ul>
 <li>对外：<code>hisi-riscv-rt</code> 依赖 <code>ws63-pac = "0.2"</code>；</li>
-<li>在父仓开发时：这个 registry 依赖被 patch 到 <code>crates/pac/ws63-pac</code>；</li>
+<li>在父仓开发时：这个 registry 依赖被 patch 到 <code>crates/chips/ws63/ws63-pac</code>；</li>
 <li>发布时：子仓自己的 CI 不依赖父仓 patch，按 crates.io 解析。</li>
 </ul>
 <p>这不是两套事实源，而是 Cargo 的两层语义：<strong>manifest 声明公共契约，workspace patch 声明本地集成替换</strong>。</p>
@@ -3938,10 +3938,10 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <tr><th>组件</th><th>类型</th><th>角色</th><th>架构文档</th></tr>
 </thead>
 <tbody>
-<tr><td><code>crates/pac/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
-<tr><td><code>crates/pac/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-pac</code></td><td>submodule</td><td>WS63 svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-pac/ws63-svd</code></td><td>嵌套 submodule</td><td>WS63 SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
+<tr><td><code>crates/chips/bs2x/bs2x-pac</code></td><td>submodule</td><td>BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层</td><td><a href="#ws63-pac-架构">ws63-pac.md</a></td></tr>
+<tr><td><code>crates/chips/bs2x/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="#ws63-svd-架构">ws63-svd.md</a></td></tr>
 <tr><td><code>crates/hisi-hal</code></td><td>submodule</td><td>多芯片 HAL（standalone 需显式选 <code>chip-ws63</code>；实验性 <code>chip-bs21</code> 需 <code>unstable</code>）+ 可选 <code>async</code>/<code>embassy</code></td><td><a href="#hisi-hal-架构">hisi-hal.md</a></td></tr>
 <tr><td><code>crates/hisi-riscv-rt</code></td><td>submodule</td><td>运行时：启动、中断向量、链接脚本、critical-section</td><td><a href="#hisi-riscv-rt-架构">hisi-riscv-rt.md</a></td></tr>
 <tr><td><code>examples/ws63/*</code></td><td>in-tree 独立工作区</td><td>WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…）</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
@@ -3949,7 +3949,9 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
 <tr><td><code>chips/ws63/flashboot</code></td><td>in-tree</td><td><strong>实验性</strong>二级引导（非安全启动）</td><td><a href="#ws63-flashboot-架构">ws63-flashboot.md</a></td></tr>
 <tr><td><code>chips/ws63/rf/</code></td><td>in-tree</td><td>WS63 Wi-Fi porting 层 <code>ws63-rf-rs</code></td><td>—</td></tr>
-<tr><td><code>crates/ws63-radio-sys</code></td><td>submodule</td><td>WS63 raw ABI、archive profile、<code>hisi-rf-link</code>，并嵌套语言中立 <code>ws63-RF</code> payload</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/ws63-radio-sys</code></td><td>submodule</td><td>WS63 raw ABI、archive profile、<code>hisi-rf-link</code>，并嵌套语言中立 <code>ws63-RF</code> payload</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-rom-sys</code></td><td>submodule</td><td>芯片中立 ROM facts facade 与 Cargo metadata 转发</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/hisi-rom-sys-ws63</code></td><td>submodule</td><td>WS63 固定 ROM 地址与生成 symbol/callback/patch metadata</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
 <tr><td><code>chips/ws63/guide</code></td><td>submodule</td><td>WS63 中文硬件手册（Sphinx）</td><td><a href="#ws63-guide-架构">ws63-guide.md</a></td></tr>
 <tr><td><code>chips/bs2x/guide</code></td><td>submodule</td><td>BS2X 中文硬件手册（Sphinx）</td><td>—</td></tr>
 </tbody>
@@ -4032,7 +4034,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 </ol>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>
 <ul>
-<li><strong>PAC 组织</strong>：<code>crates/pac/ws63-pac</code> 和 <code>crates/pac/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
+<li><strong>PAC 组织</strong>：<code>crates/chips/ws63/ws63-pac</code> 和 <code>crates/chips/bs2x/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
 <li><strong>HAL 多芯片</strong>：<code>hisi-hal</code> standalone 无默认 chip；下游需显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 需同时启用 <code>unstable</code>。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。</li>
 <li><strong>示例组织</strong>：WS63 示例遵循原 submodule 路径 <code>examples/ws63/</code>；BS2X 示例为 in-tree 独立工作区 <code>examples/bs21/</code> 和 <code>examples/bs20/</code>（避免 submodule 膨胀）。</li>
 <li><strong>QEMU 支持</strong>：ws63-qemu 已支持 <code>-M ws63</code>（8 GB 地址空间）、<code>-M bs21</code>（不同时钟/外设）、<code>-M bs22</code>/<code>-M bs20</code>（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。</li>
@@ -4070,7 +4072,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
     RT["hisi-riscv-rt&lt;br/&gt;(启动/链接/向量)"] --&gt; EX
 </code></pre>
 <p>ws63-svd 处于链条最上游：<code>WS63.svd</code> 经 svd2rust 生成 <code>ws63-pac</code> 的 <code>lib.rs</code>，再由 <code>hisi-hal</code> 封装为安全驱动，最终被 <code>ws63-examples</code> 使用。<code>hisi-riscv-rt</code> 提供启动代码与链接脚本，是与上述生成链平行的独立分支。</p>
-<p><strong>生成关系（2026-05-31 起可复现）</strong>：<code>WS63.svd</code> 经 <code>regen.sh</code>（svd2rust 0.37.1 + 确定性后处理 + cargo fix/fmt）生成 <code>crates/pac/ws63-pac/src/lib.rs</code>，<strong>幂等</strong>（同 SVD → 字节一致产物），内建 build+clippy 门禁。SVD 与 PAC 之间已是可复现的生成关系，不再“人工对照”。</p>
+<p><strong>生成关系（2026-05-31 起可复现）</strong>：<code>WS63.svd</code> 经 <code>regen.sh</code>（svd2rust 0.37.1 + 确定性后处理 + cargo fix/fmt）生成 <code>crates/chips/ws63/ws63-pac/src/lib.rs</code>，<strong>幂等</strong>（同 SVD → 字节一致产物），内建 build+clippy 门禁。SVD 与 PAC 之间已是可复现的生成关系，不再“人工对照”。</p>
 <h2 id="关键设计"><a class="header" href="#关键设计">关键设计</a></h2>
 <h3 id="svd-文件结构与建模质量"><a class="header" href="#svd-文件结构与建模质量">SVD 文件结构与建模质量</a></h3>
 <p><code>WS63.svd</code> 约 1.07 万行（精确 10744 行）（<code>WS63.svd:1-10744</code>），device 头声明了 CPU 为 <code>other</code>、<code>fpuPresent=true</code>/<code>fpuDP=false</code>、<code>width/size=32</code>、<code>nvicPrioBits=3</code>（<code>WS63.svd:9-18</code>），description 中记录了 ISA <code>rv32i2p1_m2p0_f2p2_c2p0_zicsr2p0</code> 与 512KB ITCM / 288KB DTCM / 640KB 共享 SRAM 的内存规格（<code>WS63.svd:4</code>）。</p>
@@ -4085,7 +4087,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <h3 id="校验工具"><a class="header" href="#校验工具">校验工具</a></h3>
 <p><code>validate.py</code>（<code>validate.py:1-29</code>）从 ARM CMSIS_5 仓库下载 <code>CMSIS-SVD.xsd</code> 缓存到 <code>/tmp</code>，用 <code>xmlschema</code> 对 <code>WS63.svd</code> 做 XSD 校验，PASS/FAIL 返回码区分。依赖在 <code>pyproject.toml</code> 声明为 <code>xmlschema&gt;=4.3.1</code>，由 <code>uv.lock</code> 锁定。这是目前唯一真实可用的工具。</p>
 <h3 id="生成流水线regensh可复现"><a class="header" href="#生成流水线regensh可复现">生成流水线（regen.sh，可复现）</a></h3>
-<p><code>regen.sh</code> + <code>postprocess.py</code>（2026-05-31）把 <code>WS63.svd</code> 可复现地生成为 <code>crates/pac/ws63-pac/src/lib.rs</code>，固定工具版本 <code>svd2rust@0.37.1</code> / <code>form@0.13.0</code>。五步：</p>
+<p><code>regen.sh</code> + <code>postprocess.py</code>（2026-05-31）把 <code>WS63.svd</code> 可复现地生成为 <code>crates/chips/ws63/ws63-pac/src/lib.rs</code>，固定工具版本 <code>svd2rust@0.37.1</code> / <code>form@0.13.0</code>。五步：</p>
 <ol>
 <li><code>svd2rust -i WS63.svd --target riscv --settings ws63-settings.yaml</code></li>
 <li><code>rustfmt</code>（svd2rust 原始输出未格式化，后续正则后处理依赖多行格式）</li>
@@ -4093,7 +4095,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <li><code>cargo fix</code> 自动套 <code>unsafe_op_in_unsafe_fn</code>（<code>rt</code>+<code>critical-section</code> 特性下 <code>Peripherals::steal()</code> 的 unsafe 包裹）</li>
 <li><code>cargo fmt</code>，随后 build + clippy 作为门禁</li>
 </ol>
-<p>流水线<strong>幂等</strong>：同一 SVD 重跑产出字节一致的 lib.rs。<code>ws63-settings.yaml</code> 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。<code>main.py</code> 仍是 uv 占位入口，实际生成走 <code>regen.sh</code>。主仓 PreToolUse hook 拦截对 <code>crates/pac/ws63-pac/src/lib.rs</code> 的手改，强制走重生成。</p>
+<p>流水线<strong>幂等</strong>：同一 SVD 重跑产出字节一致的 lib.rs。<code>ws63-settings.yaml</code> 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。<code>main.py</code> 仍是 uv 占位入口，实际生成走 <code>regen.sh</code>。主仓 PreToolUse hook 拦截对 <code>crates/chips/ws63/ws63-pac/src/lib.rs</code> 的手改，强制走重生成。</p>
 <h2 id="相关架构"><a class="header" href="#相关架构">相关架构</a></h2>
 <p><strong>BS2X SVD</strong>：<a href="https://github.com/hispark-rs/bs2x-svd"><code>bs2x-svd</code></a> 与 <code>bs2x-pac</code> 是 BS2X 路径的寄存器事实源；WS63 与 BS2X 的 SVD/PAC 分仓维护，避免把两个芯片族的寄存器事实混成一份。</p>
 <p><strong>不属于 SVD 的事实源</strong>：probe-rs 调试支持、镜像格式、Wi-Fi/BT/BLE/SLE 连接性状态分别由 probe-rs / <code>hisi-fwpkg</code> / RF porting 文档和根 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a> 维护；本页只解释 WS63 SVD 的建模与生成流水线。</p>
@@ -4103,7 +4105,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
-<p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/pac/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/pac/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
+<p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/chips/ws63/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/chips/bs2x/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
 </blockquote>
 <h2 id="职责与边界-1"><a class="header" href="#职责与边界-1">职责与边界</a></h2>
 <p><code>ws63-pac</code> 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 <code>svd2rust</code> 从 SVD 描述生成。它的职责非常聚焦：</p>
@@ -4414,7 +4416,7 @@ embassy 仓库<strong>确实</strong>收录了一批 <strong>in-tree HAL</strong
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-3"><a class="header" href="#职责与边界-3">职责与边界</a></h2>
-<p><code>ws63-examples</code> 是面向最终用户的<strong>应用示例集合</strong>，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 <code>hisi-riscv-rt</code>（启动）+ <code>hisi-hal</code>（驱动，支持 <code>chip-ws63</code>/实验性 <code>chip-bs21</code> + <code>unstable</code> 特性）+ PAC（<code>ws63-pac</code> 或 <code>bs2x-pac</code>，见 <code>crates/pac/</code>）+ 连接性场景下的 <code>ws63-rf-rs</code>（RF porting），组合成可烧录的裸机固件。</p>
+<p><code>ws63-examples</code> 是面向最终用户的<strong>应用示例集合</strong>，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 <code>hisi-riscv-rt</code>（启动）+ <code>hisi-hal</code>（驱动，支持 <code>chip-ws63</code>/实验性 <code>chip-bs21</code> + <code>unstable</code> 特性）+ PAC（<code>ws63-pac</code> 或 <code>bs2x-pac</code>，见 <code>crates/chips/&lt;family&gt;/</code>）+ 连接性场景下的 <code>ws63-rf-rs</code>（RF porting），组合成可烧录的裸机固件。</p>
 <ul>
 <li><strong>负责</strong>：提供可参考的 <code>#![no_std]</code> / <code>#![no_main]</code> 入口，以及各外设/子系统的最小调用示例（GPIO/UART/Timer/DMA、中断、复位、semihosting、自定义内存布局、async/embassy、RF porting）。</li>
 <li><strong>不负责</strong>：实现任何驱动或运行时逻辑（这些属于 <code>hisi-hal</code> / <code>hisi-riscv-rt</code> / <code>ws63-rf-rs</code>）；不承担系统测试覆盖职责（单测在各 crate 内）。</li>
@@ -4427,7 +4429,7 @@ porting 层冒烟，以及 XIP flash 时钟 hazard 教学例。另有 crate 内�
 是隔离工作区，提供 BS2X 多芯片变种。仍缺真实<strong>连接性</strong>（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。</p>
 <h2 id="在依赖链中的位置-3"><a class="header" href="#在依赖链中的位置-3">在依赖链中的位置</a></h2>
 <p>examples 位于整条依赖链的<strong>最下游</strong>（叶子节点），消费上游各 crate：</p>
-<pre><code class="language-console">crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
+<pre><code class="language-console">crates/chips/ws63/ws63-pac/ws63-svd (XML)      crates/chips/bs2x/bs2x-pac/bs2x-svd (XML)
        │                                            │
        └─&gt; ws63-pac   (svd2rust)                   └─&gt; bs2x-pac   (svd2rust)
             │                                            │
@@ -4513,7 +4515,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-5"><a class="header" href="#职责与边界-5">职责与边界</a></h2>
-<p><code>ws63-RF</code> 是嵌套在 <code>crates/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
+<p><code>ws63-RF</code> 是嵌套在 <code>crates/chips/ws63/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
 <ol>
 <li><strong>重分发 vendor 闭源协议栈</strong>——7 个从 HiSilicon WS63 SDK 抽取的预编译 RISC-V 静态库 <code>lib/*.a</code>（合计约 3.1 MB），包含完整的 Wi-Fi MAC 协议栈（HMAC + DMAC + RF 前端控制）与 BLE/SLE 主机协议栈（GAP/GATT/SMP/L2CAP、SLE/GLE）。</li>
 <li><strong>提供 porting 接口契约</strong>——<code>include/port/port_*.h</code> 共 8 个头文件，约 70 个 OS/IPC/缓冲管理抽象函数，外加 <code>include/api/</code>（公开 API 头）与 <code>include/internal/</code>（blob 内部依赖的类型头）。</li>
@@ -4529,12 +4531,12 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与 relocation，再由过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现 porting 契约：</p>
 <pre><code class="language-mermaid">graph TD
     subgraph 主链["已接入的 Rust 主链"]
-        SVD[crates/pac/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
+        SVD[crates/chips/ws63/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
         PAC --&gt; HAL[hisi-hal]
         HAL --&gt; EX[ws63-examples]
         RT[hisi-riscv-rt] -.启动/链接脚本.-&gt; EX
     end
-    subgraph RF["crates/ws63-radio-sys/ws63-RF（vendor payload）"]
+    subgraph RF["crates/chips/ws63/ws63-radio-sys/ws63-RF（vendor payload）"]
         BLOB["lib/*.a 闭源协议栈"]
         PORT["include/port/port_*.h&lt;br/&gt;~77 个 porting 接口契约"]
         PORT -.接口契约.-&gt; BLOB
@@ -4590,7 +4592,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
 <p>WS63-RF 中的 blob + porting 层当前<strong>专为 WS63 设计</strong>（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有<strong>独立的 blob</strong> (<code>bs2x-pac</code> + <code>chips/bs2x/</code> 目录结构)。</p>
 <ul>
-<li><strong>WS63 blob</strong>：<code>crates/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
+<li><strong>WS63 blob</strong>：<code>crates/chips/ws63/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
 <li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
 <li><strong>hisi-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
 </ul>

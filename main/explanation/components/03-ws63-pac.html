@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-60152770.js";
+            window.path_to_searchindex_js = "../../searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -187,7 +187,7 @@
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <blockquote>
-<p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/pac/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/pac/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
+<p><strong>2026-06 更新</strong>：PAC crate 现归并在 <code>crates/chips/ws63/ws63-pac</code>（内嵌生成源 <code>ws63-svd</code>）。其 BS2X 同胞 <code>crates/chips/bs2x/bs2x-pac</code>（由 <code>bs2x-svd</code> 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
 <p><code>ws63-pac</code> 是 WS63 SoC 的外设访问层（Peripheral Access Crate），由 <code>svd2rust</code> 从 SVD 描述生成。它的职责非常聚焦：</p>

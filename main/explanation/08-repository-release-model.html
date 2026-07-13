@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-60152770.js";
+            window.path_to_searchindex_js = "../searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -227,7 +227,7 @@
 <p>本地开发又需要另一件事：在父仓里同时改 PAC、rt、HAL 时，要让它们链接到同一份本地源码。根 <code>[patch.crates-io]</code> 正好表达这个意思：</p>
 <ul>
 <li>对外：<code>hisi-riscv-rt</code> 依赖 <code>ws63-pac = "0.2"</code>；</li>
-<li>在父仓开发时：这个 registry 依赖被 patch 到 <code>crates/pac/ws63-pac</code>；</li>
+<li>在父仓开发时：这个 registry 依赖被 patch 到 <code>crates/chips/ws63/ws63-pac</code>；</li>
 <li>发布时：子仓自己的 CI 不依赖父仓 patch，按 crates.io 解析。</li>
 </ul>
 <p>这不是两套事实源，而是 Cargo 的两层语义：<strong>manifest 声明公共契约，workspace patch 声明本地集成替换</strong>。</p>

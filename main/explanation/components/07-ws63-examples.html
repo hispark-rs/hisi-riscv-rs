@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-60152770.js";
+            window.path_to_searchindex_js = "../../searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -187,7 +187,7 @@
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
-<p><code>ws63-examples</code> 是面向最终用户的<strong>应用示例集合</strong>，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 <code>hisi-riscv-rt</code>（启动）+ <code>hisi-hal</code>（驱动，支持 <code>chip-ws63</code>/实验性 <code>chip-bs21</code> + <code>unstable</code> 特性）+ PAC（<code>ws63-pac</code> 或 <code>bs2x-pac</code>，见 <code>crates/pac/</code>）+ 连接性场景下的 <code>ws63-rf-rs</code>（RF porting），组合成可烧录的裸机固件。</p>
+<p><code>ws63-examples</code> 是面向最终用户的<strong>应用示例集合</strong>，演示 WS63、BS21 等多芯片的固件组合。例子展示如何把 <code>hisi-riscv-rt</code>（启动）+ <code>hisi-hal</code>（驱动，支持 <code>chip-ws63</code>/实验性 <code>chip-bs21</code> + <code>unstable</code> 特性）+ PAC（<code>ws63-pac</code> 或 <code>bs2x-pac</code>，见 <code>crates/chips/&lt;family&gt;/</code>）+ 连接性场景下的 <code>ws63-rf-rs</code>（RF porting），组合成可烧录的裸机固件。</p>
 <ul>
 <li><strong>负责</strong>：提供可参考的 <code>#![no_std]</code> / <code>#![no_main]</code> 入口，以及各外设/子系统的最小调用示例（GPIO/UART/Timer/DMA、中断、复位、semihosting、自定义内存布局、async/embassy、RF porting）。</li>
 <li><strong>不负责</strong>：实现任何驱动或运行时逻辑（这些属于 <code>hisi-hal</code> / <code>hisi-riscv-rt</code> / <code>ws63-rf-rs</code>）；不承担系统测试覆盖职责（单测在各 crate 内）。</li>
@@ -200,7 +200,7 @@ porting 层冒烟，以及 XIP flash 时钟 hazard 教学例。另有 crate 内�
 是隔离工作区，提供 BS2X 多芯片变种。仍缺真实<strong>连接性</strong>（Wi-Fi/BLE/SLE 实际链路）示例（北极星，待 blob 上板 HIL）。</p>
 <h2 id="在依赖链中的位置"><a class="header" href="#在依赖链中的位置">在依赖链中的位置</a></h2>
 <p>examples 位于整条依赖链的<strong>最下游</strong>（叶子节点），消费上游各 crate：</p>
-<pre><code class="language-console">crates/pac/ws63-pac/ws63-svd (XML)      crates/pac/bs2x-pac/bs2x-svd (XML)
+<pre><code class="language-console">crates/chips/ws63/ws63-pac/ws63-svd (XML)      crates/chips/bs2x/bs2x-pac/bs2x-svd (XML)
        │                                            │
        └─&gt; ws63-pac   (svd2rust)                   └─&gt; bs2x-pac   (svd2rust)
             │                                            │

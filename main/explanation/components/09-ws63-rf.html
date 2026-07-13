@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-60152770.js";
+            window.path_to_searchindex_js = "../../searchindex-baf3a8ce.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -187,7 +187,7 @@
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
-<p><code>ws63-RF</code> 是嵌套在 <code>crates/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
+<p><code>ws63-RF</code> 是嵌套在 <code>crates/chips/ws63/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
 <ol>
 <li><strong>重分发 vendor 闭源协议栈</strong>——7 个从 HiSilicon WS63 SDK 抽取的预编译 RISC-V 静态库 <code>lib/*.a</code>（合计约 3.1 MB），包含完整的 Wi-Fi MAC 协议栈（HMAC + DMAC + RF 前端控制）与 BLE/SLE 主机协议栈（GAP/GATT/SMP/L2CAP、SLE/GLE）。</li>
 <li><strong>提供 porting 接口契约</strong>——<code>include/port/port_*.h</code> 共 8 个头文件，约 70 个 OS/IPC/缓冲管理抽象函数，外加 <code>include/api/</code>（公开 API 头）与 <code>include/internal/</code>（blob 内部依赖的类型头）。</li>
@@ -203,12 +203,12 @@
 <p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与 relocation，再由过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现 porting 契约：</p>
 <pre><code class="language-mermaid">graph TD
     subgraph 主链["已接入的 Rust 主链"]
-        SVD[crates/pac/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
+        SVD[crates/chips/ws63/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
         PAC --&gt; HAL[hisi-hal]
         HAL --&gt; EX[ws63-examples]
         RT[hisi-riscv-rt] -.启动/链接脚本.-&gt; EX
     end
-    subgraph RF["crates/ws63-radio-sys/ws63-RF（vendor payload）"]
+    subgraph RF["crates/chips/ws63/ws63-radio-sys/ws63-RF（vendor payload）"]
         BLOB["lib/*.a 闭源协议栈"]
         PORT["include/port/port_*.h&lt;br/&gt;~77 个 porting 接口契约"]
         PORT -.接口契约.-&gt; BLOB
@@ -264,7 +264,7 @@
 <h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
 <p>WS63-RF 中的 blob + porting 层当前<strong>专为 WS63 设计</strong>（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有<strong>独立的 blob</strong> (<code>bs2x-pac</code> + <code>chips/bs2x/</code> 目录结构)。</p>
 <ul>
-<li><strong>WS63 blob</strong>：<code>crates/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
+<li><strong>WS63 blob</strong>：<code>crates/chips/ws63/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
 <li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
 <li><strong>hisi-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
 </ul>
