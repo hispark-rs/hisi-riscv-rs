@@ -50,7 +50,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `examples/bs20/` | in-tree 独立工作区 | BS20（M1）示例；不是 BS21 示例全集 | [ws63-examples.md](07-ws63-examples.md) |
 | `chips/ws63/flashboot` | in-tree | **实验性**二级引导（非安全启动） | [ws63-flashboot.md](08-ws63-flashboot.md) |
 | `chips/ws63/rf/` | in-tree | WS63 Wi-Fi porting 层 `ws63-rf-rs` | — |
-| `chips/ws63/rf/ws63-RF` | submodule（嵌套） | WS63 闭源协议栈 blob + porting 接口 | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/ws63-radio-sys` | submodule | WS63 raw ABI、archive profile、`hisi-rf-link`，并嵌套语言中立 `ws63-RF` payload | [ws63-RF.md](09-ws63-rf.md) |
 | `chips/ws63/guide` | submodule | WS63 中文硬件手册（Sphinx） | [ws63-guide.md](10-ws63-guide.md) |
 | `chips/bs2x/guide` | submodule | BS2X 中文硬件手册（Sphinx） | — |
 

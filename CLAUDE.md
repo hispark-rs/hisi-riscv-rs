@@ -4,7 +4,7 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Two are **nested under the crate/dir that owns them** (so generation inputs / vendor blobs are not reached into laterally): `ws63-svd` is a submodule of `ws63-pac` (`crates/pac/ws63-pac/ws63-svd`, the svd2rust source), and `ws63-RF` is a submodule whose path lives inside the in-tree RF crate (`chips/ws63/rf/ws63-RF`, the closed Wi-Fi/BLE blobs). Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Generation inputs and vendor blobs are nested under their owning integration repositories: `ws63-svd` lives under `ws63-pac`, while the language-neutral `ws63-RF` payload lives under `crates/ws63-radio-sys`. Always clone/update with `git submodule update --init --recursive`.
 
 ### Repository layout (grouped tree)
 
@@ -18,7 +18,7 @@ examples/    application examples
   bs21/        (in-tree, isolated workspace; current members in docs reference)
   bs20/        (in-tree, isolated workspace; current members in docs reference)
 chips/       chip-specific support
-  ws63/        guide/ (submodule)  rf/ (in-tree, nests ws63-RF)  flashboot/ (in-tree)
+  ws63/        guide/ (submodule)  rf/ (transitional in-tree adapter)  flashboot/ (in-tree)
   bs2x/        guide/ (submodule)
 docs/        architecture docs (Chinese)        hil/  hardware-in-the-loop scripts
 ```

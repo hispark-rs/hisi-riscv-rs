@@ -12,7 +12,7 @@ exclude_path = [
   "examples/ws63",
   "chips/ws63/guide",
   "chips/bs2x/guide",
-  "chips/ws63/rf/ws63-RF",
+  "crates/ws63-radio-sys/ws63-RF",
 ]
 
 # Links the shallow link-check checkout legitimately cannot resolve:
