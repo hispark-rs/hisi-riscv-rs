@@ -35,12 +35,42 @@ fn trace_nv(key: u16, max_len: u16, actual_len: u16, result: u32) {
 unsafe extern "C" {
     #[link_name = "uapi_systick_get_ms"]
     fn rom_systick_get_ms() -> u64;
+    #[link_name = "uapi_systick_get_count"]
+    fn rom_systick_get_count() -> u64;
     #[link_name = "uapi_tcxo_get_us"]
     fn rom_tcxo_get_us() -> u64;
     #[link_name = "uapi_tcxo_delay_us"]
     fn rom_tcxo_delay_us(usec: u32) -> u32;
     fn uapi_systick_init();
     fn uapi_tcxo_init() -> u32;
+    static mut g_systick_clock: u32;
+}
+
+#[cfg(target_arch = "riscv32")]
+unsafe fn calibrate_systick_clock() {
+    const CALIBRATION_US: u32 = 100_000;
+
+    let systick_start = unsafe { rom_systick_get_count() };
+    let tcxo_start = unsafe { rom_tcxo_get_us() };
+    let _ = unsafe { rom_tcxo_delay_us(CALIBRATION_US) };
+    let systick_delta = unsafe { rom_systick_get_count() }.wrapping_sub(systick_start);
+    let tcxo_delta = unsafe { rom_tcxo_get_us() }.wrapping_sub(tcxo_start);
+    if tcxo_delta == 0 {
+        return;
+    }
+
+    let calibrated = systick_delta
+        .saturating_mul(1_000_000)
+        .saturating_add(tcxo_delta / 2)
+        / tcxo_delta;
+    if let Ok(clock) = u32::try_from(calibrated)
+        && (1_000..=100_000).contains(&clock)
+    {
+        // SAFETY: this is the vendor ROM-data conversion word used by
+        // `uapi_systick_get_ms`. The official LiteOS startup performs the same
+        // RTC-vs-TCXO calibration before normal application work.
+        unsafe { (&raw mut g_systick_clock).write_volatile(clock) };
+    }
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -51,7 +81,9 @@ pub(crate) fn initialize_rom_timebases() -> u32 {
         // platform ROM-data initializer, including both HAL function tables and
         // the 32 kHz / 24 MHz conversion values, to their fixed DTCM ABI slots.
         uapi_systick_init();
-        uapi_tcxo_init()
+        let result = uapi_tcxo_init();
+        calibrate_systick_clock();
+        result
     }
 }
 
