@@ -49,7 +49,7 @@ rf-queue-guard = []
 # for the macOS/Linux host assembler.
 [target.'cfg(target_arch = "riscv32")'.dev-dependencies]
 hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws63"] }
-hisi-rtos = "0.1.0-alpha.2"
+hisi-rtos = "0.1.0-alpha.3"
 
 [[example]]
 name = "sched_selftest"
