@@ -56,7 +56,12 @@ pub(crate) fn initialize_rom_timebases() -> u32 {
 }
 
 /// Monotonic milliseconds from the mask-ROM 32 kHz systick implementation.
-pub(crate) fn monotonic_ms() -> u64 {
+///
+/// This hidden callback is exported only so the application can inject the
+/// chip time source into `hisi-rtos`; it is not a general RF control API. The
+/// runtime must not call it before `Wifi::initialize` initializes ROM timebases.
+#[doc(hidden)]
+pub fn monotonic_ms() -> u64 {
     #[cfg(target_arch = "riscv32")]
     unsafe {
         // SAFETY: initialized once by `Wifi::initialize`; the ROM function only

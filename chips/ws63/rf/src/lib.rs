@@ -156,10 +156,7 @@ pub extern "C" fn __ws63_missing_rom_callback() -> ! {
     }
 }
 
-// The task scheduler / runtime is an INTERNAL implementation detail: the vendor
-// blob reaches it only through the `osal_*` C-ABI symbols (in `osal`), never as
-// a Rust API. So `sched` is private (not part of this crate's public surface).
-mod sched;
+mod runtime;
 mod selftest;
 /// Internal netif→smoltcp bridge self-test (feature `net`). NOT a public API.
 #[cfg(feature = "net")]

@@ -33,6 +33,15 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
     uart.write(b"\r\nWS63 ws63-rf-rs scheduler self-test\r\n");
+    hisi_rtos::start(
+        hisi_rtos::Config::default(),
+        hisi_rtos::Resources {
+            allocate: rtos_allocate,
+            deallocate: rtos_deallocate,
+            monotonic_ms: ws63_rf_rs::uapi::monotonic_ms,
+        },
+    )
+    .expect("start scheduler self-test runtime");
 
     let r = ws63_rf_rs::sched_selftest(); // [worker0, worker1, sem_items, done]
 
@@ -105,6 +114,14 @@ fn main() -> ! {
     loop {
         core::hint::spin_loop();
     }
+}
+
+unsafe fn rtos_allocate(size: usize) -> *mut u8 {
+    ws63_rf_rs::alloc::osal_kmalloc(size).cast()
+}
+
+unsafe fn rtos_deallocate(pointer: *mut u8) {
+    ws63_rf_rs::alloc::osal_kfree(pointer.cast());
 }
 
 #[panic_handler]

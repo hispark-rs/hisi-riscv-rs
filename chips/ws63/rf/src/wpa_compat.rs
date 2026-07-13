@@ -30,7 +30,7 @@ pub extern "C" fn IntActive() -> c_int {
 /// Current LiteOS task ID compatibility hook.
 #[unsafe(no_mangle)]
 pub extern "C" fn LOS_CurTaskIDGet() -> u32 {
-    crate::sched::current_id() as u32
+    crate::runtime::current_id() as u32
 }
 
 /// Dummy LiteOS pool anchor; the compatibility allocators ignore the pool.

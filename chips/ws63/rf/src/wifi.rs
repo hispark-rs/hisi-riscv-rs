@@ -297,7 +297,7 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
-            crate::sched::install_driver().map_err(Error::Runtime)?;
+            hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()
@@ -358,7 +358,7 @@ impl<'d> WpaWifi<'d> {
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
                     return Err(Error::Timeout);
                 }
-                crate::sched::sleep_ms(1);
+                crate::runtime::sleep_ms(1);
             }
             let mut vendor = [VendorWpaApInfo::zeroed(); MAX_SCAN_RESULTS];
             let mut count = MAX_SCAN_RESULTS as c_uint;
@@ -467,7 +467,7 @@ impl<'d> WpaWifi<'d> {
                     finish_connection();
                     return Err(Error::Timeout);
                 }
-                crate::sched::sleep_ms(10);
+                crate::runtime::sleep_ms(10);
             }
         }
     }
@@ -519,7 +519,7 @@ impl<'d> Wifi<'d> {
 
         #[cfg(target_arch = "riscv32")]
         {
-            crate::sched::install_driver().map_err(Error::Runtime)?;
+            hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()
@@ -675,7 +675,7 @@ impl<'d> Wifi<'d> {
                     finish_scan();
                     return Err(Error::Timeout);
                 }
-                crate::sched::sleep_ms(1);
+                crate::runtime::sleep_ms(1);
             }
         }
     }
@@ -766,7 +766,7 @@ impl<'d> Wifi<'d> {
                     finish_connection();
                     return Err(Error::Timeout);
                 }
-                crate::sched::sleep_ms(1);
+                crate::runtime::sleep_ms(1);
             }
         }
     }

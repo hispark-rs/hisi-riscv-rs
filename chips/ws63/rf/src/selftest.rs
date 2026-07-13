@@ -1,11 +1,11 @@
 //! Internal scheduler self-test (NOT a public API).
 //!
-//! Exercises [`crate::sched`] the way the vendor blob's OSAL would: two worker
+//! Exercises the selected runtime the way the vendor blob's OSAL would: two worker
 //! tasks that yield between increments (context switching) and a
 //! producer/consumer pair handing off through a blocking semaphore (park/wake).
 //! Returned to the `sched_selftest` example so it can report over UART.
 
-use crate::sched;
+use crate::runtime;
 use core::ffi::c_void;
 use hisi_rf_rtos_driver::Semaphore;
 use portable_atomic::{AtomicU32, Ordering};
@@ -23,7 +23,7 @@ static SEM: Semaphore = Semaphore::new(0);
 extern "C" fn worker0(_arg: *mut c_void) -> *mut c_void {
     for _ in 0..ROUNDS {
         C0.fetch_add(1, Ordering::Relaxed);
-        sched::yield_now();
+        runtime::yield_now();
     }
     DONE.fetch_add(1, Ordering::Relaxed);
     core::ptr::null_mut()
@@ -31,7 +31,7 @@ extern "C" fn worker0(_arg: *mut c_void) -> *mut c_void {
 extern "C" fn worker1(_arg: *mut c_void) -> *mut c_void {
     for _ in 0..ROUNDS {
         C1.fetch_add(1, Ordering::Relaxed);
-        sched::yield_now();
+        runtime::yield_now();
     }
     DONE.fetch_add(1, Ordering::Relaxed);
     core::ptr::null_mut()
@@ -39,7 +39,7 @@ extern "C" fn worker1(_arg: *mut c_void) -> *mut c_void {
 extern "C" fn producer(_arg: *mut c_void) -> *mut c_void {
     for _ in 0..ITEMS {
         SEM.up().unwrap();
-        sched::yield_now();
+        runtime::yield_now();
     }
     DONE.fetch_add(1, Ordering::Relaxed);
     core::ptr::null_mut()
@@ -59,8 +59,6 @@ extern "C" fn consumer(_arg: *mut c_void) -> *mut c_void {
 /// path (one item is available, so it does not park). Internal hook.
 #[doc(hidden)]
 pub fn osal_queue_selftest() -> u32 {
-    sched::init();
-    sched::install_driver().unwrap();
     use core::ffi::{c_uint, c_ulong, c_void};
     let mut qid: c_ulong = 0;
     if crate::osal_queue::osal_msg_queue_create(core::ptr::null(), 4, &mut qid, 0, 4)
@@ -110,8 +108,6 @@ extern "C" fn frw_mock_handler(msg: *mut crate::frw::FrwMsg) {
 #[doc(hidden)]
 pub fn frw_hcc_selftest() -> [u32; 4] {
     use crate::frw::FrwMsg;
-    sched::init();
-    sched::install_driver().unwrap();
     crate::hcc::register_local(Some(frw_mock_handler));
     crate::frw::start_worker();
 
@@ -129,17 +125,17 @@ pub fn frw_hcc_selftest() -> [u32; 4] {
         expect ^= dlen;
         FRW_SENT.fetch_add(1, Ordering::Relaxed);
         crate::hcc::send_local(node as *mut FrwMsg);
-        sched::yield_now(); // let the worker drain
+        runtime::yield_now(); // let the worker drain
     }
 
     let mut guard: u32 = 0;
     while crate::frw::dispatched() < FRW_N && guard < 1_000_000 {
-        sched::yield_now();
+        runtime::yield_now();
         guard += 1;
     }
     crate::frw::stop_worker();
     for _ in 0..16 {
-        sched::yield_now(); // let the worker observe the stop and exit
+        runtime::yield_now(); // let the worker observe the stop and exit
     }
     [
         FRW_SENT.load(Ordering::Relaxed),
@@ -214,18 +210,16 @@ pub fn timer_selftest() -> [u32; 3] {
 /// a pass is `[ROUNDS, ROUNDS, ITEMS, 4]`. Internal hook — not a public API.
 #[doc(hidden)]
 pub fn sched_selftest() -> [u32; 4] {
-    sched::init();
-    sched::install_driver().unwrap();
-    sched::spawn(worker0, core::ptr::null_mut(), 0);
-    sched::spawn(worker1, core::ptr::null_mut(), 0);
-    sched::spawn(producer, core::ptr::null_mut(), 0);
-    sched::spawn(consumer, core::ptr::null_mut(), 0);
+    runtime::spawn(worker0, core::ptr::null_mut(), 0);
+    runtime::spawn(worker1, core::ptr::null_mut(), 0);
+    runtime::spawn(producer, core::ptr::null_mut(), 0);
+    runtime::spawn(consumer, core::ptr::null_mut(), 0);
 
     // Drive the scheduler cooperatively from the main task until the 4 spawned
     // tasks finish (bounded so a bug can't hang).
     let mut guard: u32 = 0;
     while DONE.load(Ordering::Relaxed) < 4 && guard < 1_000_000 {
-        sched::yield_now();
+        runtime::yield_now();
         guard += 1;
     }
     [

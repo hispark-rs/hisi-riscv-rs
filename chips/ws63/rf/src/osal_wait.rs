@@ -135,7 +135,7 @@ pub extern "C" fn osal_wait_uninterruptible(
         #[cfg(feature = "rf-init-diag")]
         crate::rf_init_diag::trace_wait(
             b"forever-pred",
-            crate::sched::current_id(),
+            crate::runtime::current_id(),
             wait as usize,
             u32::MAX,
             ready,
@@ -182,7 +182,7 @@ pub extern "C" fn osal_wait_timeout_interruptible(
     #[cfg(feature = "rf-init-diag")]
     crate::rf_init_diag::trace_wait(
         b"begin",
-        crate::sched::current_id(),
+        crate::runtime::current_id(),
         wait as usize,
         timeout_ms,
         0,
@@ -214,7 +214,7 @@ pub extern "C" fn osal_wait_timeout_interruptible(
             #[cfg(feature = "rf-init-diag")]
             crate::rf_init_diag::trace_wait(
                 b"ready",
-                crate::sched::current_id(),
+                crate::runtime::current_id(),
                 wait as usize,
                 timeout_ms,
                 result,
@@ -230,7 +230,7 @@ pub extern "C" fn osal_wait_timeout_interruptible(
                 #[cfg(feature = "rf-init-diag")]
                 crate::rf_init_diag::trace_wait(
                     b"timeout",
-                    crate::sched::current_id(),
+                    crate::runtime::current_id(),
                     wait as usize,
                     timeout_ms,
                     0,

@@ -728,6 +728,14 @@ name = "hisi-rom-sys-ws63"
 version = "0.1.0-alpha.1"
 
 [[package]]
+name = "hisi-rtos"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "critical-section",
+ "hisi-rf-rtos-driver",
+]
+
+[[package]]
 name = "hisi-storage"
 version = "0.1.0-alpha.1"
 dependencies = [
@@ -1641,6 +1649,7 @@ dependencies = [
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rom-sys",
+ "hisi-rtos",
  "ws63-radio-sys",
  "ws63-rf-rs",
 ]
@@ -1724,6 +1733,7 @@ dependencies = [
  "hisi-nvs",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
+ "hisi-rtos",
  "hisi-storage",
  "portable-atomic",
  "smoltcp",

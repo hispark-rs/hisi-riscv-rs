@@ -23,7 +23,7 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-use crate::sched;
+use crate::runtime;
 use crate::{OSAL_NOK, OSAL_OK};
 use core::cell::UnsafeCell;
 use core::ffi::{c_int, c_void};
@@ -255,7 +255,7 @@ extern "C" fn local_task_thread(_arg: *mut c_void) -> *mut c_void {
 
 /// Spawn [`local_task_thread`] for the standalone Rust self-test.
 pub(crate) fn start_worker() -> Option<usize> {
-    sched::spawn(local_task_thread, core::ptr::null_mut(), 0)
+    runtime::spawn(local_task_thread, core::ptr::null_mut(), 0)
 }
 
 /// Stop the worker (wakes it so it can exit). Internal.

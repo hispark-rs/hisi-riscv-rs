@@ -422,7 +422,7 @@ radio_irq_entry!(WLPHY_INT, 44);
 radio_irq_entry!(WLMAC_INT, 45);
 radio_irq_entry!(MAC_MONITOR_INT, 69);
 
-// ── Threads (backed by the real scheduler in `crate::sched`) ────────────────
+// ── Threads (backed by the application-selected runtime) ───────────────────
 
 type KthreadFunc = Option<extern "C" fn(*mut c_void) -> *mut c_void>;
 

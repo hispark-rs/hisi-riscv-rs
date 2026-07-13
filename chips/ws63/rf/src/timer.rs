@@ -87,7 +87,7 @@ fn alloc_slot() -> Option<usize> {
 #[cfg(target_arch = "riscv32")]
 extern "C" fn timer_worker(_arg: *mut c_void) -> *mut c_void {
     loop {
-        crate::sched::sleep_ms(1);
+        crate::runtime::sleep_ms(1);
         local_timer_timeout_proc();
     }
 }
@@ -110,7 +110,7 @@ fn ensure_timer_worker() -> bool {
         if !should_start {
             return true;
         }
-        if crate::sched::spawn(timer_worker, core::ptr::null_mut(), 4096).is_some() {
+        if crate::runtime::spawn(timer_worker, core::ptr::null_mut(), 4096).is_some() {
             true
         } else {
             cs::with(|token| TIMER_WORKER_STARTED.borrow(token).set(false));

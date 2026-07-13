@@ -48,7 +48,8 @@ rf-queue-guard = []
 # Keep this off host unit-test builds: riscv-rt's startup assembly is not valid
 # for the macOS/Linux host assembler.
 [target.'cfg(target_arch = "riscv32")'.dev-dependencies]
-hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt" }
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws63"] }
+hisi-rtos = "0.1.0-alpha.1"
 
 [[example]]
 name = "sched_selftest"

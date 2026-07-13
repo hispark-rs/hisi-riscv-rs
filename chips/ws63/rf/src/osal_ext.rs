@@ -199,7 +199,7 @@ pub extern "C" fn osal_gettimeofday(tv: *mut OsalTimeval) {
 /// Current task id (adapt alias).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_get_current_tid() -> c_long {
-    crate::sched::current_id() as c_long
+    crate::runtime::current_id() as c_long
 }
 
 /// Copy to "user" memory (flat address space — a plain memcpy). Returns the
