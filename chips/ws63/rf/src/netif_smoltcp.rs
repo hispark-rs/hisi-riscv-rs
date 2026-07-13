@@ -23,12 +23,15 @@ use smoltcp::time::Instant;
 /// Max Ethernet frame we buffer (1514 payload + a little slack).
 pub const MTU: usize = 1536;
 const RX_DEPTH: usize = 4;
+const FRAME_PREFIX: usize = 64;
 
 struct Bridge {
     rx: [[u8; MTU]; RX_DEPTH],
     rx_len: [usize; RX_DEPTH],
     rx_head: usize,
     rx_count: usize,
+    last_rx_prefix: [u8; FRAME_PREFIX],
+    last_rx_len: usize,
     tx_buf: [u8; MTU],
     tx_len: usize,
     tx_count: u32,
@@ -44,6 +47,8 @@ static BRIDGE: BridgeCell = BridgeCell(UnsafeCell::new(Bridge {
     rx_len: [0; RX_DEPTH],
     rx_head: 0,
     rx_count: 0,
+    last_rx_prefix: [0; FRAME_PREFIX],
+    last_rx_len: 0,
     tx_buf: [0; MTU],
     tx_len: 0,
     tx_count: 0,
@@ -74,6 +79,9 @@ pub fn rx_push(frame: &[u8]) {
         return;
     }
     with_bridge(|b| {
+        let prefix_len = frame.len().min(FRAME_PREFIX);
+        b.last_rx_prefix[..prefix_len].copy_from_slice(&frame[..prefix_len]);
+        b.last_rx_len = frame.len();
         if b.rx_count >= RX_DEPTH {
             return;
         }
@@ -82,6 +90,17 @@ pub fn rx_push(frame: &[u8]) {
         b.rx_len[slot] = frame.len();
         b.rx_count += 1;
     });
+}
+
+/// Copy the prefix of the most recently received frame and return its full length.
+/// Internal bring-up hook; the snapshot is captured without UART I/O in the RX path.
+#[doc(hidden)]
+pub fn last_rx(out: &mut [u8]) -> usize {
+    with_bridge(|b| {
+        let copied = b.last_rx_len.min(FRAME_PREFIX).min(out.len());
+        out[..copied].copy_from_slice(&b.last_rx_prefix[..copied]);
+        b.last_rx_len
+    })
 }
 
 fn rx_pop(into: &mut [u8]) -> Option<usize> {
@@ -135,8 +154,10 @@ pub fn dhcp_probe(mac: [u8; 6], timeout_ms: u32) -> Option<DhcpConfig> {
     let mut sockets = SocketSet::new(&mut storage[..]);
     let handle = sockets.add(dhcpv4::Socket::new());
 
+    #[cfg(target_arch = "riscv32")]
+    let started_at = crate::uapi::monotonic_ms();
     let mut elapsed = 0_u32;
-    while elapsed <= timeout_ms {
+    loop {
         let now = Instant::from_millis(elapsed as i64);
         let _ = interface.poll(now, &mut device, &mut sockets);
         if let Some(dhcpv4::Event::Configured(config)) =
@@ -148,8 +169,20 @@ pub fn dhcp_probe(mac: [u8; 6], timeout_ms: u32) -> Option<DhcpConfig> {
                 router: config.router.map(|address| address.octets()),
             });
         }
+        if elapsed >= timeout_ms {
+            break;
+        }
         crate::osal::osal_msleep(10);
-        elapsed = elapsed.saturating_add(10);
+        #[cfg(target_arch = "riscv32")]
+        {
+            elapsed = crate::uapi::monotonic_ms()
+                .wrapping_sub(started_at)
+                .min(u32::MAX as u64) as u32;
+        }
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            elapsed = elapsed.saturating_add(10);
+        }
     }
     None
 }
@@ -184,7 +217,7 @@ pub fn last_tx(out: &mut [u8]) -> usize {
     with_bridge(|b| {
         let n = b.tx_len.min(out.len());
         out[..n].copy_from_slice(&b.tx_buf[..n]);
-        n
+        b.tx_len
     })
 }
 

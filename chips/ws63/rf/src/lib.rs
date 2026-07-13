@@ -355,7 +355,7 @@ pub fn force_link_contract() {
     keep!(netif::pbuf_free as extern "C" fn(*mut c_void) -> u8);
     keep!(netif::pbuf_ref as extern "C" fn(*mut c_void));
     keep!(netif::pbuf_header as extern "C" fn(*mut c_void, i16) -> u8);
-    keep!(netif::driverif_input as extern "C" fn(*mut c_void, *mut c_void));
+    keep!(netif::driverif_input as extern "C" fn(*mut c_void, *mut c_void) -> i32);
     keep!(
         netif::netifapi_netif_add
             as extern "C" fn(*mut c_void, *const u32, *const u32, *const u32) -> c_int

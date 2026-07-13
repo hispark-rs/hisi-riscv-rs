@@ -340,7 +340,7 @@ pub fn hardware_address() -> Option<[u8; 6]> {
 /// otherwise (or if the pbuf has no payload) the frame is counted and dropped.
 /// The pbuf is freed either way (lwip owns it after input).
 #[unsafe(no_mangle)]
-pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
+pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) -> c_int {
     #[cfg(feature = "net")]
     {
         let pb = p as *const Pbuf;
@@ -370,6 +370,7 @@ pub extern "C" fn driverif_input(_netif: *mut c_void, p: *mut c_void) {
         RX_DROPPED.fetch_add(1, Ordering::Relaxed);
     }
     pbuf_free(p);
+    0
 }
 
 // ── Interface management / tcpip thread ─────────────────────────────────────
