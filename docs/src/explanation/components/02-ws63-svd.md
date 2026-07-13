@@ -31,7 +31,7 @@ flowchart LR
 
 ws63-svd 处于链条最上游：`WS63.svd` 经 svd2rust 生成 `ws63-pac` 的 `lib.rs`，再由 `hisi-hal` 封装为安全驱动，最终被 `ws63-examples` 使用。`hisi-riscv-rt` 提供启动代码与链接脚本，是与上述生成链平行的独立分支。
 
-**生成关系（2026-05-31 起可复现）**：`WS63.svd` 经 `regen.sh`（svd2rust 0.37.1 + 确定性后处理 + cargo fix/fmt）生成 `crates/pac/ws63-pac/src/lib.rs`，**幂等**（同 SVD → 字节一致产物），内建 build+clippy 门禁。SVD 与 PAC 之间已是可复现的生成关系，不再“人工对照”。
+**生成关系（2026-05-31 起可复现）**：`WS63.svd` 经 `regen.sh`（svd2rust 0.37.1 + 确定性后处理 + cargo fix/fmt）生成 `crates/chips/ws63/ws63-pac/src/lib.rs`，**幂等**（同 SVD → 字节一致产物），内建 build+clippy 门禁。SVD 与 PAC 之间已是可复现的生成关系，不再“人工对照”。
 
 ## 关键设计
 
@@ -54,7 +54,7 @@ UART/GPIO/KM 等外设建模质量较高：字段拆分、枚举值与访问属�
 
 ### 生成流水线（regen.sh，可复现）
 
-`regen.sh` + `postprocess.py`（2026-05-31）把 `WS63.svd` 可复现地生成为 `crates/pac/ws63-pac/src/lib.rs`，固定工具版本 `svd2rust@0.37.1` / `form@0.13.0`。五步：
+`regen.sh` + `postprocess.py`（2026-05-31）把 `WS63.svd` 可复现地生成为 `crates/chips/ws63/ws63-pac/src/lib.rs`，固定工具版本 `svd2rust@0.37.1` / `form@0.13.0`。五步：
 
 1. `svd2rust -i WS63.svd --target riscv --settings ws63-settings.yaml`
 2. `rustfmt`（svd2rust 原始输出未格式化，后续正则后处理依赖多行格式）
@@ -62,7 +62,7 @@ UART/GPIO/KM 等外设建模质量较高：字段拆分、枚举值与访问属�
 4. `cargo fix` 自动套 `unsafe_op_in_unsafe_fn`（`rt`+`critical-section` 特性下 `Peripherals::steal()` 的 unsafe 包裹）
 5. `cargo fmt`，随后 build + clippy 作为门禁
 
-流水线**幂等**：同一 SVD 重跑产出字节一致的 lib.rs。`ws63-settings.yaml` 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。`main.py` 仍是 uv 占位入口，实际生成走 `regen.sh`。主仓 PreToolUse hook 拦截对 `crates/pac/ws63-pac/src/lib.rs` 的手改，强制走重生成。
+流水线**幂等**：同一 SVD 重跑产出字节一致的 lib.rs。`ws63-settings.yaml` 提供 svd2rust 目标设置（RV32IMFC_Zicsr、自定义中断控制器 SYS_CTL1 无标准 CLINT/PLIC、单 hart、240MHz）。`main.py` 仍是 uv 占位入口，实际生成走 `regen.sh`。主仓 PreToolUse hook 拦截对 `crates/chips/ws63/ws63-pac/src/lib.rs` 的手改，强制走重生成。
 
 ## 相关架构
 

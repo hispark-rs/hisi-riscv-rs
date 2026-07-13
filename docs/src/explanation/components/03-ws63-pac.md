@@ -2,7 +2,7 @@
 
 > 本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 [ROADMAP](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md)。
 
-> **2026-06 更新**：PAC crate 现归并在 `crates/pac/ws63-pac`（内嵌生成源 `ws63-svd`）。其 BS2X 同胞 `crates/pac/bs2x-pac`（由 `bs2x-svd` 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。
+> **2026-06 更新**：PAC crate 现归并在 `crates/chips/ws63/ws63-pac`（内嵌生成源 `ws63-svd`）。其 BS2X 同胞 `crates/chips/bs2x/bs2x-pac`（由 `bs2x-svd` 生成）以同样的 svd2rust 流水线服务 BS21/BS2X 家族。
 
 ## 职责与边界
 

@@ -10,7 +10,7 @@ name = "bs21_uart_hello"
 path = "src/main.rs"
 
 [dependencies]
-bs2x-pac = { path = "../../../crates/pac/bs2x-pac" }
+bs2x-pac = { path = "../../../crates/chips/bs2x/bs2x-pac" }
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-bs21", "rt", "unstable"] }
 hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21", "unstable"] }
 riscv = "0.13"

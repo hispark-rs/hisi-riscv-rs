@@ -23,11 +23,11 @@ in-tree and are not published.
 
 | Crate | Role | crates.io |
 |-------|------|-----------|
-| [`ws63-pac`](crates/pac/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
-| [`bs2x-pac`](crates/pac/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
+| [`ws63-pac`](crates/chips/ws63/ws63-pac/) | `svd2rust`-generated WS63 peripheral access (raw `RegisterBlock`s, `Peripherals::take()`) | [`ws63-pac`](https://crates.io/crates/ws63-pac) |
+| [`bs2x-pac`](crates/chips/bs2x/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
 | [`hisi-hal`](crates/hisi-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-hal`](https://crates.io/crates/hisi-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
-| [`ws63-radio-sys`](crates/ws63-radio-sys/) | WS63 blob ABI/archive profile and versioned `hisi-rf-link` post-link tooling; nests the language-neutral vendor payload | GitHub/submodule |
+| [`ws63-radio-sys`](crates/chips/ws63/ws63-radio-sys/) | WS63 blob ABI/archive profile and versioned `hisi-rf-link` post-link tooling; nests the language-neutral vendor payload | GitHub/submodule |
 | [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
 | [`ws63-examples`](examples/ws63/) | Runnable WS63 examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
@@ -170,5 +170,5 @@ Release** — it does not publish the library crates.
 ## License
 
 MIT for the Rust code (see each crate's `Cargo.toml`). The closed-source vendor
-blobs under `crates/ws63-radio-sys/ws63-RF` carry HiSilicon's own license and are **not**
+blobs under `crates/chips/ws63/ws63-radio-sys/ws63-RF` carry HiSilicon's own license and are **not**
 MIT — that delivery stays language-neutral and is only linked, never modified.

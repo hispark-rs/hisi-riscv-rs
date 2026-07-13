@@ -120,8 +120,8 @@ bash .agents/skills/pac-svd-register-access/scripts/run-register-audit.sh
 For SVD/PAC changes:
 
 ```bash
-cd crates/pac/ws63-pac/ws63-svd && uv run validate.py && bash regen.sh
-cd crates/pac/bs2x-pac/bs2x-svd && uv run validate.py && bash regen.sh
+cd crates/chips/ws63/ws63-pac/ws63-svd && uv run validate.py && bash regen.sh
+cd crates/chips/bs2x/bs2x-pac/bs2x-svd && uv run validate.py && bash regen.sh
 ```
 
 For HAL register behavior:

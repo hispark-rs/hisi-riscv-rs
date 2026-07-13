@@ -13,7 +13,7 @@ path = "src/main.rs"
 # Select the BS21 chip across the stack (see blinky's Cargo.toml). `embassy` adds
 # the embassy-time Driver — it is chip-neutral and does NOT pull the (WS63-only)
 # `async` embedded-hal-async layer, so it builds for chip-bs21.
-bs2x-pac = { path = "../../../crates/pac/bs2x-pac" }
+bs2x-pac = { path = "../../../crates/chips/bs2x/bs2x-pac" }
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-bs21", "rt", "embassy", "unstable"] }
 hisi-riscv-rt  = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21", "unstable"] }
 embassy-executor = { version = "0.10", features = ["platform-riscv32", "executor-thread"] }

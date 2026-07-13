@@ -18,9 +18,9 @@ or whole-register RMW, first ask whether the SVD/PAC model is missing a fact.
    - CI fails in `check-register-access.py`.
 
 2. **Patch the lowest truthful layer first.**
-   - For WS63: edit `crates/pac/ws63-pac/ws63-svd/WS63.svd`, then regenerate `ws63-pac`.
-   - For BS2X: prefer `crates/pac/bs2x-pac/bs2x-svd/tools/*` plus audited supplements, then regenerate `bs2x-pac`.
-   - Never hand-edit `crates/pac/*-pac/src/lib.rs`; it is generated.
+   - For WS63: edit `crates/chips/ws63/ws63-pac/ws63-svd/WS63.svd`, then regenerate `ws63-pac`.
+   - For BS2X: prefer `crates/chips/bs2x/bs2x-pac/bs2x-svd/tools/*` plus audited supplements, then regenerate `bs2x-pac`.
+   - Never hand-edit `crates/chips/*/*-pac/src/lib.rs`; it is generated.
 
 3. **Use the HAL register rules.**
    - Production HAL code must not use `read_volatile` / `write_volatile` for MMIO.

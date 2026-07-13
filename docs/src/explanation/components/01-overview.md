@@ -39,10 +39,10 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 
 | 组件 | 类型 | 角色 | 架构文档 |
 |------|------|------|----------|
-| `crates/pac/ws63-pac` | submodule | WS63 svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
-| `crates/pac/ws63-pac/ws63-svd` | 嵌套 submodule | WS63 SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
-| `crates/pac/bs2x-pac` | submodule | BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
-| `crates/pac/bs2x-pac/bs2x-svd` | 嵌套 submodule | BS2X SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
+| `crates/chips/ws63/ws63-pac` | submodule | WS63 svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
+| `crates/chips/ws63/ws63-pac/ws63-svd` | 嵌套 submodule | WS63 SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
+| `crates/chips/bs2x/bs2x-pac` | submodule | BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
+| `crates/chips/bs2x/bs2x-pac/bs2x-svd` | 嵌套 submodule | BS2X SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
 | `crates/hisi-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-hal.md](04-hisi-hal.md) |
 | `crates/hisi-riscv-rt` | submodule | 运行时：启动、中断向量、链接脚本、critical-section | [hisi-riscv-rt.md](05-hisi-riscv-rt.md) |
 | `examples/ws63/*` | in-tree 独立工作区 | WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…） | [ws63-examples.md](07-ws63-examples.md) |
@@ -50,7 +50,9 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `examples/bs20/` | in-tree 独立工作区 | BS20（M1）示例；不是 BS21 示例全集 | [ws63-examples.md](07-ws63-examples.md) |
 | `chips/ws63/flashboot` | in-tree | **实验性**二级引导（非安全启动） | [ws63-flashboot.md](08-ws63-flashboot.md) |
 | `chips/ws63/rf/` | in-tree | WS63 Wi-Fi porting 层 `ws63-rf-rs` | — |
-| `crates/ws63-radio-sys` | submodule | WS63 raw ABI、archive profile、`hisi-rf-link`，并嵌套语言中立 `ws63-RF` payload | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/chips/ws63/ws63-radio-sys` | submodule | WS63 raw ABI、archive profile、`hisi-rf-link`，并嵌套语言中立 `ws63-RF` payload | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-rom-sys` | submodule | 芯片中立 ROM facts facade 与 Cargo metadata 转发 | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/chips/ws63/hisi-rom-sys-ws63` | submodule | WS63 固定 ROM 地址与生成 symbol/callback/patch metadata | [ws63-RF.md](09-ws63-rf.md) |
 | `chips/ws63/guide` | submodule | WS63 中文硬件手册（Sphinx） | [ws63-guide.md](10-ws63-guide.md) |
 | `chips/bs2x/guide` | submodule | BS2X 中文硬件手册（Sphinx） | — |
 
@@ -116,7 +118,7 @@ cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性
 
 ## 多芯片支持细节
 
-- **PAC 组织**：`crates/pac/ws63-pac` 和 `crates/pac/bs2x-pac` 各自独立（SVD 源→svd2rust 生成），root `Cargo.toml` 经 `[patch.crates-io]` 统一链接到本地实例（保证单一 PAC 版本）。
+- **PAC 组织**：`crates/chips/ws63/ws63-pac` 和 `crates/chips/bs2x/bs2x-pac` 各自独立（SVD 源→svd2rust 生成），root `Cargo.toml` 经 `[patch.crates-io]` 统一链接到本地实例（保证单一 PAC 版本）。
 - **HAL 多芯片**：`hisi-hal` standalone 无默认 chip；下游需显式启用 `chip-ws63`，实验性 `chip-bs21` 需同时启用 `unstable`。条件编译外设模块（WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设）。
 - **示例组织**：WS63 示例遵循原 submodule 路径 `examples/ws63/`；BS2X 示例为 in-tree 独立工作区 `examples/bs21/` 和 `examples/bs20/`（避免 submodule 膨胀）。
 - **QEMU 支持**：ws63-qemu 已支持 `-M ws63`（8 GB 地址空间）、`-M bs21`（不同时钟/外设）、`-M bs22`/`-M bs20`（M2/M1），完整的 QEMU 外设仿真（UART/GPIO/Timer/DMA/SDMA/SPI/I2C/WDT/PDM/USB DWC OTG 等）。

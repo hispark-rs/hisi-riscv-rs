@@ -56,7 +56,7 @@
 本地开发又需要另一件事：在父仓里同时改 PAC、rt、HAL 时，要让它们链接到同一份本地源码。根 `[patch.crates-io]` 正好表达这个意思：
 
 - 对外：`hisi-riscv-rt` 依赖 `ws63-pac = "0.2"`；
-- 在父仓开发时：这个 registry 依赖被 patch 到 `crates/pac/ws63-pac`；
+- 在父仓开发时：这个 registry 依赖被 patch 到 `crates/chips/ws63/ws63-pac`；
 - 发布时：子仓自己的 CI 不依赖父仓 patch，按 crates.io 解析。
 
 这不是两套事实源，而是 Cargo 的两层语义：**manifest 声明公共契约，workspace patch 声明本地集成替换**。

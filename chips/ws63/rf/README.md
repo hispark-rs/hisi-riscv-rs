@@ -1,7 +1,7 @@
 # ws63-rf-rs
 
 Rust **porting layer + FFI bindings** for the closed-source WS63 Wi-Fi/BLE radio
-blobs delivered by [`ws63-radio-sys`](../../../crates/ws63-radio-sys) (which nests the language-neutral `ws63-RF` payload). It is the WS63 analogue of esp-hal's
+blobs delivered by [`ws63-radio-sys`](../../../crates/chips/ws63/ws63-radio-sys) (which nests the language-neutral `ws63-RF` payload). It is the WS63 analogue of esp-hal's
 `esp-radio` OS-adapter: it implements the **runtime-agnostic porting contract**
 (`ws63-radio-sys/ws63-RF/include/port/*.h`) in Rust as `#[unsafe(no_mangle)] extern "C"`
 symbols, so when a firmware links a vendor blob the linker resolves the blob's

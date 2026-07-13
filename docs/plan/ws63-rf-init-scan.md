@@ -15,7 +15,7 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
 ### RF0 -- Baseline And Truth Sources
 
 - 固定事实源：vendor 行为以 `fbb_ws63` 为准；blob delivery 以
-  `crates/ws63-radio-sys/ws63-RF` 为准；archive/ABI/post-link 以
+  `crates/chips/ws63/ws63-radio-sys/ws63-RF` 为准；archive/ABI/post-link 以
   `ws63-radio-sys`/`hisi-rf-link` 为边界，Rust porting layer 暂由 `ws63-rf-rs` 实现。
 - 更新 RF link residual 工具到官方 nightly 工具链路径，不再引用旧 `+hisi-riscv`。
 - 建立 RF bring-up 日志规范：固定 UART marker

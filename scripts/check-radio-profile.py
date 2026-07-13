@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROFILE = ROOT / "crates/ws63-radio-sys/crates/hisi-rf-link/profiles/ws63.toml"
+PROFILE = ROOT / "crates/chips/ws63/ws63-radio-sys/crates/hisi-rf-link/profiles/ws63.toml"
 OPERATIONAL = [
     ROOT / "examples/ws63/wifi_init_smoke/build.rs",
     ROOT / "examples/ws63/wifi_blob_link/build.rs",
@@ -45,4 +45,3 @@ for path in OPERATIONAL:
         fail(f"unprofiled archives in {path.relative_to(ROOT)}: {unknown}")
 
 print(f"radio profile OK: {len(wifi)} Wi-Fi + {len(wpa)} WPA archives")
-

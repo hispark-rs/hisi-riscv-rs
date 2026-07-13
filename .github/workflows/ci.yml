@@ -104,8 +104,8 @@ jobs:
         run: python3 crates/hisi-hal/scripts/check-register-access.py
       - name: Check generated ROM artifacts
         run: >-
-          python3 crates/hisi-rom-sys/tools/sync-ws63-rom.py
-          --source crates/ws63-radio-sys/ws63-RF/rom --check
+          python3 crates/chips/ws63/hisi-rom-sys-ws63/tools/sync-ws63-rom.py
+          --source crates/chips/ws63/ws63-radio-sys/ws63-RF/rom --check
 
       - name: Check radio archive profile ownership
         run: python3 scripts/check-radio-profile.py

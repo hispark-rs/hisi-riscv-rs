@@ -15,7 +15,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-RADIO_SYS_DIR="$ROOT/crates/ws63-radio-sys"
+RADIO_SYS_DIR="$ROOT/crates/chips/ws63/ws63-radio-sys"
 RF_DIR="$RADIO_SYS_DIR/ws63-RF"
 HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
 RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"

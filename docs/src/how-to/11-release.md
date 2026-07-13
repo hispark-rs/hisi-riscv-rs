@@ -8,8 +8,8 @@
 
 | 目标 | 在哪里 tag | 产物 |
 | --- | --- | --- |
-| `ws63-pac` | `crates/pac/ws63-pac` 子仓 | crates.io |
-| `bs2x-pac` | `crates/pac/bs2x-pac` 子仓 | crates.io |
+| `ws63-pac` | `crates/chips/ws63/ws63-pac` 子仓 | crates.io |
+| `bs2x-pac` | `crates/chips/bs2x/bs2x-pac` 子仓 | crates.io |
 | `hisi-riscv-rt` | `crates/hisi-riscv-rt` 子仓 | crates.io |
 | `hisi-hal` | `crates/hisi-hal` 子仓 | crates.io |
 | 父仓 `hisi-riscv-rs` | 仓库根 | GitHub Release firmware assets；不发布子 crate |

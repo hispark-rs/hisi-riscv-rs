@@ -16,8 +16,8 @@ set -eu
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
 repo="$(cd "$here/../../.." && pwd)"
-rf="$repo/crates/ws63-radio-sys/ws63-RF"
-radio_sys="$repo/crates/ws63-radio-sys"
+rf="$repo/crates/chips/ws63/ws63-radio-sys/ws63-RF"
+radio_sys="$repo/crates/chips/ws63/ws63-radio-sys"
 host="$(rustc -vV | sed -n 's/^host: //p')"
 rf_link_target="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
 cargo build --manifest-path "$radio_sys/Cargo.toml" \

@@ -23,7 +23,7 @@ publish = false
 # wiring). Exactly one PAC is linked, selected by the chip feature below; both
 # are `optional` so the inactive one is never compiled. Registry version (not a
 # path dep) so the workspace-root `[patch.crates-io]` redirect to the local
-# crates/pac/* paths applies — same pattern as hisi-hal/rt. We name the
+# crates/chips/*/*-pac paths applies — same pattern as hisi-hal/rt. We name the
 # active PAC via a cfg-selected alias in tests/hil.rs (`ws63_pac as pac` /
 # `bs2x_pac as pac`) — the HAL keeps its PAC `pub(crate)`.
 ws63-pac = { version = "0.2", optional = true }

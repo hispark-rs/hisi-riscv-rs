@@ -9,8 +9,8 @@ python3 "$ROOT/crates/hisi-hal/scripts/check-register-access.py"
 
 if command -v uv >/dev/null 2>&1; then
     for svd_dir in \
-        "$ROOT/crates/pac/ws63-pac/ws63-svd" \
-        "$ROOT/crates/pac/bs2x-pac/bs2x-svd"
+        "$ROOT/crates/chips/ws63/ws63-pac/ws63-svd" \
+        "$ROOT/crates/chips/bs2x/bs2x-pac/bs2x-svd"
     do
         if [ -f "$svd_dir/validate.py" ]; then
             echo "==> SVD schema: ${svd_dir#$ROOT/}"

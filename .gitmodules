@@ -5,7 +5,7 @@
 	path = crates/hisi-hal
 	url = https://github.com/hispark-rs/hisi-hal.git
 [submodule "ws63-pac"]
-	path = crates/pac/ws63-pac
+	path = crates/chips/ws63/ws63-pac
 	url = https://github.com/hispark-rs/ws63-pac.git
 [submodule "hisi-riscv-rt"]
 	path = crates/hisi-riscv-rt
@@ -14,7 +14,7 @@
 	path = examples/ws63
 	url = https://github.com/hispark-rs/ws63-examples.git
 [submodule "bs2x-pac"]
-	path = crates/pac/bs2x-pac
+	path = crates/chips/bs2x/bs2x-pac
 	url = https://github.com/hispark-rs/bs2x-pac.git
 [submodule "bs2x-guide"]
 	path = chips/bs2x/guide
@@ -25,8 +25,8 @@
 [submodule "crates/hisi-rs-template"]
 	path = crates/hisi-rs-template
 	url = https://github.com/hispark-rs/hisi-rs-template.git
-[submodule "crates/pac/hi3322-pac"]
-	path = crates/pac/hi3322-pac
+[submodule "crates/chips/hi3322/hi3322-pac"]
+	path = crates/chips/hi3322/hi3322-pac
 	url = https://github.com/hispark-rs/hi3322-pac.git
 [submodule "crates/hisi-alloc"]
 	path = crates/hisi-alloc
@@ -37,9 +37,12 @@
 [submodule "crates/hisi-crypto"]
 	path = crates/hisi-crypto
 	url = https://github.com/hispark-rs/hisi-crypto.git
-[submodule "crates/ws63-radio-sys"]
-	path = crates/ws63-radio-sys
+[submodule "crates/chips/ws63/ws63-radio-sys"]
+	path = crates/chips/ws63/ws63-radio-sys
 	url = https://github.com/hispark-rs/ws63-radio-sys.git
-[submodule "crates/hisi-crypto-ws63"]
-	path = crates/hisi-crypto-ws63
+[submodule "crates/chips/ws63/hisi-crypto-ws63"]
+	path = crates/chips/ws63/hisi-crypto-ws63
 	url = https://github.com/hispark-rs/hisi-crypto-ws63.git
+[submodule "crates/chips/ws63/hisi-rom-sys-ws63"]
+	path = crates/chips/ws63/hisi-rom-sys-ws63
+	url = https://github.com/hispark-rs/hisi-rom-sys-ws63.git

@@ -7,12 +7,12 @@
 exclude_path = [
   "crates/hisi-hal",
   "crates/hisi-riscv-rt",
-  "crates/pac/ws63-pac",
-  "crates/pac/bs2x-pac",
+  "crates/chips/ws63/ws63-pac",
+  "crates/chips/bs2x/bs2x-pac",
   "examples/ws63",
   "chips/ws63/guide",
   "chips/bs2x/guide",
-  "crates/ws63-radio-sys/ws63-RF",
+  "crates/chips/ws63/ws63-radio-sys/ws63-RF",
 ]
 
 # Links the shallow link-check checkout legitimately cannot resolve:

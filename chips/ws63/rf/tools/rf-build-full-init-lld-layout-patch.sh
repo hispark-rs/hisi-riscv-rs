@@ -15,7 +15,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-RADIO_SYS_DIR="$ROOT/crates/ws63-radio-sys"
+RADIO_SYS_DIR="$ROOT/crates/chips/ws63/ws63-radio-sys"
 RF_DIR="$RADIO_SYS_DIR/ws63-RF"
 ROM_SYMBOLS="$RF_DIR/rom/ws63_acore_rom.lds"
 ROM_PATCHES="$RF_DIR/rom/ws63_acore_wifi_patches.txt"

@@ -29,8 +29,8 @@ set -u
 
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/
 root="$(cd "$here/../../.." && pwd)"               # repo root
-rf="$root/crates/ws63-radio-sys/ws63-RF"           # owned by ws63-radio-sys
-radio_sys="$root/crates/ws63-radio-sys"
+rf="$root/crates/chips/ws63/ws63-radio-sys/ws63-RF" # owned by ws63-radio-sys
+radio_sys="$root/crates/chips/ws63/ws63-radio-sys"
 host="$(rustc -vV | sed -n 's/^host: //p')"
 rf_link_target="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
 cargo build --manifest-path "$radio_sys/Cargo.toml" \

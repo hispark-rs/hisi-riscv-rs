@@ -53,7 +53,8 @@ HAL；RF 不实现 IP stack；examples 不直接列 vendor archives 或 ROM 地�
 | Component | Responsibility |
 | --- | --- |
 | `ws63-RF` | Language-neutral blobs、headers、ROM symbol/patch lists；不放 Rust 实现。 |
-| `hisi-rom-sys` | 生成的 unsafe ROM symbols、固定 ROM state 和 patch metadata；只允许追加符号，不放 HAL/NVS/高层 API。 |
+| `hisi-rom-sys` | 芯片中立的显式 chip-selection facade；统一 re-export ROM facts，并转发 backend Cargo metadata。 |
+| `hisi-rom-sys-ws63` | WS63 固定 ROM 地址、生成 symbol/callback/patch metadata 与同步工具；位于 `crates/chips/ws63/`。 |
 | `ws63-radio-sys` | WS63 Wi-Fi/BLE/SLE raw FFI、archive selection、ABI/layout assertions 和 relocation 规则。仓库同时发布 host CLI `hisi-rf-link`。 |
 | `hisi-rf-rtos-driver` | runtime-neutral scheduler、semaphore、queue、timer、wait 和 ISR-wakeup contract；每个 firmware 只能注册一个实现。 |
 | `hisi-rtos` | 默认单-hart、优先级抢占、tickless scheduler，以及 IPC、Embassy executor/time integration；不依赖 RF。 |
@@ -307,9 +308,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] RF adapter 已移除对 `linked_list_allocator` 的直接依赖，并在 2026-07-13 真机复现
   init、scan、WPA2 connect、DHCP、ARP 和 ping。证据见
   [A1 allocator migration](evidence/ws63-rf-a1-alloc-2026-07-13.md)。
-- [x] `hisi-rom-sys` 已抽为独立 repository/release unit，发布生成的 WS63 ROM symbol、
-  callback ABI 和 Wi-Fi patch metadata；Cargo `links` contract 取代 example 对
-  `ws63-RF/rom` 的横向读取，父仓 drift check 保证生成 artifact 与语言中立源一致。
+- [x] `hisi-rom-sys` 已进一步收窄为芯片中立 facade；WS63 固定地址、生成 ROM symbol、
+  callback ABI、Wi-Fi patch metadata 和同步工具由独立 `hisi-rom-sys-ws63` backend
+  拥有。facade 的 Cargo `links` contract 转发 backend metadata，父仓 drift check 保证
+  生成 artifact 与语言中立源一致。
 - [x] ROM artifact 迁移后再次通过 1,486 section、5,335 relocation、37 patch 的 guarded
   link，并在真机复现完整 connectivity marker。证据见
   [A1 ROM metadata migration](evidence/ws63-rf-a1-rom-sys-2026-07-13.md)。
@@ -331,8 +333,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [A1 radio sys/link migration](evidence/ws63-rf-a1-radio-sys-2026-07-13.md)。
 - [x] 父仓 example/build/tool scripts 已统一读取 `ws63-radio-sys` machine profile；CI
   drift check 禁止 operational scripts 重新维护 archive 名称、顺序或旧 payload 路径。
-- [ ] A1 代码与机器可检验边界已齐；`hisi-crypto-ws63` 仍需获得组织
-  `CRATES_IO_TOKEN` 权限并完成 crates.io release，之后才能整体标为完成。
+- [x] A1 已完成：`hisi-crypto-ws63 0.1.0-alpha.1`、芯片中立
+  `hisi-rom-sys 0.1.0-alpha.3` 与 WS63 backend `hisi-rom-sys-ws63 0.1.0-alpha.1`
+  均已由 GitHub Actions 发布到 crates.io；父仓 workspace、machine profile 和 drift
+  checks 只消费各自 owner 导出的契约。
 
 #### Crypto migration gates
 

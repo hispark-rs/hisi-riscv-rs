@@ -4,7 +4,7 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Repository Overview
 
-Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/pac/ws63-pac`, `crates/hisi-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules (the chip-specific PAC crates are grouped under `crates/pac/`). Generation inputs and vendor blobs are nested under their owning integration repositories: `ws63-svd` lives under `ws63-pac`, while the language-neutral `ws63-RF` payload lives under `crates/ws63-radio-sys`. Always clone/update with `git submodule update --init --recursive`.
+Adhering to the ws63-rs monorepo: a Rust embedded ecosystem for the HiSilicon WS63 RISC-V SoC (Wi-Fi 6 + SLE/SparkLink + BLE). The repo uses git submodules extensively — `crates/chips/ws63/ws63-pac`, `crates/hisi-hal`, `crates/hisi-riscv-rt`, `examples/ws63` are each standalone repos linked as submodules. Chip-specific crates, including PACs, are grouped under `crates/chips/<family>/`; chip-neutral crates remain directly under `crates/`. Generation inputs and vendor blobs are nested under their owning integration repositories: `ws63-svd` lives under `ws63-pac`, while the language-neutral `ws63-RF` payload lives under `crates/chips/ws63/ws63-radio-sys`. Always clone/update with `git submodule update --init --recursive`.
 
 ### Repository layout (grouped tree)
 

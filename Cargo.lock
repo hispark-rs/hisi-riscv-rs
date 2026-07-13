@@ -698,7 +698,14 @@ dependencies = [
 
 [[package]]
 name = "hisi-rom-sys"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
+dependencies = [
+ "hisi-rom-sys-ws63",
+]
+
+[[package]]
+name = "hisi-rom-sys-ws63"
+version = "0.1.0-alpha.1"
 
 [[package]]
 name = "hmac"
