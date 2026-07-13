@@ -400,7 +400,8 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 - [x] `hisi-storage 0.1.0-alpha.1` 已作为独立 repository/release unit 发布，稳定候选面
   仅包含 bounded memory-mapped/read-only `embedded-storage` contract；erase/write 未暴露。
-- [x] `hisi-nvs 0.1.0-alpha.1` 已建立独立 repository、tag 和 green CI；ACPU KV reader
+- [x] `hisi-nvs 0.1.0-alpha.1` 已建立独立 repository、tag、green CI，并发布到 crates.io；
+  ACPU KV reader
   覆盖 page complement、duplicate sequence、record bounds/state/encryption length、CRC 与
   integrity-before-buffer-size，共 9/9 host tests。
 - [x] RF 已删除内联 NVS format/constants/parser，`uapi_nv_read` 仅保留 vendor C ABI 与
@@ -410,8 +411,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   37 ROM patch 不变，迁移前后 planned image 逐字节一致。
 - [x] WS63 HIL 已复现 init/scan/WPA2 connect/DHCP/ARP/ping；证据见
   [A2 storage/NVS migration](evidence/ws63-rf-a2-nvs-2026-07-13.md)。
-- [ ] `hisi-nvs` crates.io publish workflow 因新仓尚未获得组织
-  `CARGO_REGISTRY_TOKEN` selected-repository access 而失败；授权并重跑后 A2 才整体完成。
+- [x] 发布 workflow 已统一使用生态事实源 secret `CARGO_REGISTRY_TOKEN`；crate 与 GitHub
+  prerelease 均可从当前 tag 获取。A2 已完成，主机端 image builder/CLI 继续按独立 N0-N5
+  计划推进，不反向阻塞只读 runtime reader。
 
 #### A3 progress
 
