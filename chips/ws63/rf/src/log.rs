@@ -283,6 +283,11 @@ unsafe fn vsnprintf_subset(
 }
 
 /// Debug printf (OSAL), including its C variadic arguments.
+///
+/// # Safety
+///
+/// `fmt` must point to a valid NUL-terminated C format string, and every
+/// variadic argument must match the type required by its conversion specifier.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn osal_printk(fmt: *const c_char, arguments: ...) -> c_int {
     let mut output = [0 as c_char; 512];
@@ -313,6 +318,12 @@ pub unsafe extern "C" fn osal_printk(fmt: *const c_char, arguments: ...) -> c_in
 /// Unsupported conversion specifiers are copied literally without consuming
 /// an argument. Returns bytes written (excluding NUL), or `-1` after clearing
 /// the destination when the result would be truncated.
+///
+/// # Safety
+///
+/// `buf` must be writable for `size` bytes, `fmt` must point to a valid
+/// NUL-terminated C format string, and every variadic argument must match the
+/// type required by its conversion specifier.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn snprintf_s(
     buf: *mut c_char,
