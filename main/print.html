@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-86cfe00f.js";
+            window.path_to_searchindex_js = "searchindex-60152770.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -3949,7 +3949,7 @@ reset、CLIC、中断、内存布局与 <code>riscv-rt</code> 复用边界。</l
 <tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="#ws63-examples-架构">ws63-examples.md</a></td></tr>
 <tr><td><code>chips/ws63/flashboot</code></td><td>in-tree</td><td><strong>实验性</strong>二级引导（非安全启动）</td><td><a href="#ws63-flashboot-架构">ws63-flashboot.md</a></td></tr>
 <tr><td><code>chips/ws63/rf/</code></td><td>in-tree</td><td>WS63 Wi-Fi porting 层 <code>ws63-rf-rs</code></td><td>—</td></tr>
-<tr><td><code>chips/ws63/rf/ws63-RF</code></td><td>submodule（嵌套）</td><td>WS63 闭源协议栈 blob + porting 接口</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/ws63-radio-sys</code></td><td>submodule</td><td>WS63 raw ABI、archive profile、<code>hisi-rf-link</code>，并嵌套语言中立 <code>ws63-RF</code> payload</td><td><a href="#ws63-rf-架构">ws63-RF.md</a></td></tr>
 <tr><td><code>chips/ws63/guide</code></td><td>submodule</td><td>WS63 中文硬件手册（Sphinx）</td><td><a href="#ws63-guide-架构">ws63-guide.md</a></td></tr>
 <tr><td><code>chips/bs2x/guide</code></td><td>submodule</td><td>BS2X 中文硬件手册（Sphinx）</td><td>—</td></tr>
 </tbody>
@@ -4513,21 +4513,20 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
 </blockquote>
 <h2 id="职责与边界-5"><a class="header" href="#职责与边界-5">职责与边界</a></h2>
-<p><code>ws63-RF</code> 是 ws63-rs monorepo 的一个 git 子模块（<code>.gitmodules:10-12</code>，URL 指向独立仓库 <code>ws63-RF.git</code>），定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的载体</strong>。它负责两件事：</p>
+<p><code>ws63-RF</code> 是嵌套在 <code>crates/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
 <ol>
 <li><strong>重分发 vendor 闭源协议栈</strong>——7 个从 HiSilicon WS63 SDK 抽取的预编译 RISC-V 静态库 <code>lib/*.a</code>（合计约 3.1 MB），包含完整的 Wi-Fi MAC 协议栈（HMAC + DMAC + RF 前端控制）与 BLE/SLE 主机协议栈（GAP/GATT/SMP/L2CAP、SLE/GLE）。</li>
 <li><strong>提供 porting 接口契约</strong>——<code>include/port/port_*.h</code> 共 8 个头文件，约 70 个 OS/IPC/缓冲管理抽象函数，外加 <code>include/api/</code>（公开 API 头）与 <code>include/internal/</code>（blob 内部依赖的类型头）。</li>
 </ol>
 <p>它<strong>不负责</strong>：</p>
 <ul>
-<li>不提供任何 Rust 绑定、链接胶水或可编译产物——目录中无 <code>.rs</code> / <code>build.rs</code> / <code>Cargo.toml</code> / bindgen（已 <code>find</code> 核实，0 结果）。</li>
-<li><strong>不是 Cargo workspace 成员</strong>——根 <code>Cargo.toml</code> 的 <code>members</code> / <code>default-members</code> 与 <code>Cargo.lock</code> 均未引用 <code>ws63-RF</code>（已 grep 核实，0 结果）。因此当前它对 <code>cargo check --workspace</code> 完全不可见。</li>
+<li>不提供 Rust 绑定或 Cargo package；这些由 <code>ws63-radio-sys</code> 提供，payload 自身仍对 Cargo workspace 不可见。</li>
 <li>不实现 porting 层本身——<code>port_*.h</code> 只是接口声明，实现由下游 in-tree crate <strong><code>ws63-rf-rs</code></strong> 填充，<strong>现已实现</strong>（见下）。</li>
 <li>不提供链接脚本——<code>port_linker.h</code> 仅以 <code>extern</code> 声明 blob 期望的链接符号，实际的 <code>SECTIONS</code> / 内存区段需调用方在 linker script 中给出。</li>
 </ul>
 <p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥）。完整 init closure 现在由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验 section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已通过 <code>wifi_init</code>，并由主动扫描返回 32 个 AP；当前边界是尚未完成关联与 IP 连通性。</p>
 <h2 id="在依赖链中的位置-5"><a class="header" href="#在依赖链中的位置-5">在依赖链中的位置</a></h2>
-<p>ws63-RF（blob）经 in-tree crate <strong><code>ws63-rf-rs</code></strong> 接入主链 —— rf-rs 实现 porting 契约、把 blob 链进镜像：</p>
+<p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与 relocation，再由过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现 porting 契约：</p>
 <pre><code class="language-mermaid">graph TD
     subgraph 主链["已接入的 Rust 主链"]
         SVD[crates/pac/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
@@ -4535,14 +4534,16 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
         HAL --&gt; EX[ws63-examples]
         RT[hisi-riscv-rt] -.启动/链接脚本.-&gt; EX
     end
-    subgraph RF["chips/ws63/rf/ws63-RF（闭源 blob 交付）"]
+    subgraph RF["crates/ws63-radio-sys/ws63-RF（vendor payload）"]
         BLOB["lib/*.a 闭源协议栈"]
         PORT["include/port/port_*.h&lt;br/&gt;~77 个 porting 接口契约"]
         PORT -.接口契约.-&gt; BLOB
     end
+    SYS["ws63-radio-sys + hisi-rf-link&lt;br/&gt;ABI / archive / relocation contract"]
     PLATFORM["ws63-rf-rs（已实现）&lt;br/&gt;osal/oal/log/uapi/frw/hcc + 调度器 + netif→smoltcp"]
     HAL --&gt; PLATFORM
-    PORT --&gt; PLATFORM
+    PORT --&gt; SYS
+    SYS --&gt; PLATFORM
     PLATFORM --&gt;|实现契约 + 链接 blob| BLOB
     BLOB -.HIL:真机连接性示例.-&gt; EX
 
@@ -4589,7 +4590,7 @@ ws63-flashboot （独立 bin，自带 startup.S / uart / sfc / sha256，裸 MMIO
 <h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
 <p>WS63-RF 中的 blob + porting 层当前<strong>专为 WS63 设计</strong>（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有<strong>独立的 blob</strong> (<code>bs2x-pac</code> + <code>chips/bs2x/</code> 目录结构)。</p>
 <ul>
-<li><strong>WS63 blob</strong>：<code>chips/ws63/rf/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 7 个库，Wi-Fi MAC/RF/BLE/SLE 完整堆栈。</li>
+<li><strong>WS63 blob</strong>：<code>crates/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
 <li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
 <li><strong>hisi-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
 </ul>
