@@ -76,6 +76,7 @@
 //! [`ws63-RF`]: https://github.com/hispark-rs/ws63-RF
 
 #![no_std]
+#![feature(c_variadic)]
 #![allow(non_upper_case_globals)] // contract symbols must match the C names exactly
 
 #[cfg(all(test, not(target_arch = "riscv32")))]
@@ -233,16 +234,7 @@ pub fn force_link_contract() {
     keep!(log::osal_printk as extern "C" fn(*const c_char) -> c_int);
     keep!(
         log::snprintf_s
-            as extern "C" fn(
-                *mut c_char,
-                usize,
-                usize,
-                *const c_char,
-                c_uint,
-                c_uint,
-                c_uint,
-                c_uint,
-            ) -> c_int
+            as unsafe extern "C" fn(*mut c_char, usize, usize, *const c_char, ...) -> c_int
     );
     keep!(log::memset_s as extern "C" fn(*mut c_void, usize, c_int, usize) -> c_int);
     keep!(log::memcpy_s as extern "C" fn(*mut c_void, usize, *const c_void, usize) -> c_int);

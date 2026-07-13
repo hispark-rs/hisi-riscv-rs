@@ -434,10 +434,11 @@ impl<'d> WpaWifi<'d> {
             )
             .map_err(|error| Error::Crypto(error.code()))?;
             encode_hex(&pmk, &mut request.key[..64]);
-            // Leave BSSID unspecified. The delivered control path formats a
-            // pinned BSSID through a six-argument `snprintf_s(MACSTR, ...)`;
-            // the minimal Rust libc adapter intentionally does not emulate
-            // arbitrary C variadics. SSID selection is an official API path.
+            // Pin the exact BSS selected by the immediately preceding scan.
+            // The vendor `uapi_wifi_sta_connect` consumes these six raw bytes
+            // directly and uses them as a scan-selection constraint; no C
+            // variadic formatting is involved at this API boundary.
+            request.bssid.copy_from_slice(&network.bssid);
             request.pairwise = network.pairwise as u8;
             request.channel = network.channel;
             let result = unsafe { uapi_wifi_sta_connect(&request) };

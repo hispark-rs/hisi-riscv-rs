@@ -153,22 +153,19 @@ pub extern "C" fn osal_printk(fmt: *const c_char) -> c_int {
 
 /// Bounded `snprintf_s` subset used by the vendor Wi-Fi objects.
 ///
-/// The RV32 ABI passes the first four variadic words in `a4..a7`; model those
-/// words explicitly so `%s%u` netdev names and simple diagnostic strings retain
-/// their C calling convention without requiring Rust variadic definitions.
+/// The implementation consumes a real C [`core::ffi::VaList`], so arguments
+/// beyond `a7` remain ABI-correct. Supported conversions are `%s`, `%d`, `%u`,
+/// `%x`, `%%`, and integer field widths including the vendor `MACSTR` `%02x`.
 /// Unsupported conversion specifiers are copied literally without consuming
 /// an argument. Returns bytes written (excluding NUL), or `-1` after clearing
 /// the destination when the result would be truncated.
 #[unsafe(no_mangle)]
-pub extern "C" fn snprintf_s(
+pub unsafe extern "C" fn snprintf_s(
     buf: *mut c_char,
     size: usize,
     count: usize,
     fmt: *const c_char,
-    arg0: c_uint,
-    arg1: c_uint,
-    arg2: c_uint,
-    arg3: c_uint,
+    mut arguments: ...
 ) -> c_int {
     if buf.is_null() || size == 0 {
         return -1;
@@ -176,8 +173,6 @@ pub extern "C" fn snprintf_s(
     let src = cstr_bytes(fmt);
     let limit = core::cmp::min(size - 1, count);
     let output = buf.cast::<u8>();
-    let arguments = [arg0, arg1, arg2, arg3];
-    let mut argument_index = 0;
     let mut input_index = 0;
     let mut output_index = 0;
 
@@ -194,34 +189,47 @@ pub extern "C" fn snprintf_s(
     };
 
     while input_index < src.len() {
-        let conversion = if src[input_index] == b'%' {
-            src.get(input_index + 1).copied()
-        } else {
-            None
-        };
-        if matches!(conversion, Some(b's' | b'u' | b'd' | b'x')) && argument_index < arguments.len()
-        {
+        let mut conversion_end = input_index + 1;
+        let mut zero_pad = false;
+        let mut width = 0usize;
+        if src[input_index] == b'%' {
+            if src.get(conversion_end) == Some(&b'0') {
+                zero_pad = true;
+                conversion_end += 1;
+            }
+            while let Some(digit @ b'0'..=b'9') = src.get(conversion_end).copied() {
+                width = width
+                    .saturating_mul(10)
+                    .saturating_add((digit - b'0') as usize);
+                conversion_end += 1;
+            }
+        }
+        let conversion = src.get(conversion_end).copied();
+        if src[input_index] == b'%' && matches!(conversion, Some(b's' | b'u' | b'd' | b'x')) {
             let specifier = conversion.unwrap_or_default();
-            let argument = arguments[argument_index];
-            argument_index += 1;
             if specifier == b's' {
-                let bytes = cstr_bytes(argument as usize as *const c_char);
+                // SAFETY: the C caller must match `%s` with a promoted pointer.
+                let argument = unsafe { arguments.next_arg::<*const c_char>() };
+                let bytes = cstr_bytes(argument);
                 if !write_bytes(bytes, &mut output_index) {
                     // SAFETY: `size > 0`, so the first destination byte exists.
                     unsafe { output.write(0) };
                     return -1;
                 }
-                input_index += 2;
+                input_index = conversion_end + 1;
                 continue;
             }
 
             let mut digits = [0_u8; 10];
-            let negative = specifier == b'd' && (argument as i32) < 0;
-            let mut value = if negative {
-                (argument as i32).unsigned_abs()
+            // SAFETY: C default argument promotions pass integer conversions as
+            // `c_int`/`c_uint`; the format string selects the matching type.
+            let (argument, negative) = if specifier == b'd' {
+                let signed = unsafe { arguments.next_arg::<c_int>() };
+                (signed.unsigned_abs(), signed < 0)
             } else {
-                argument
+                (unsafe { arguments.next_arg::<c_uint>() }, false)
             };
+            let mut value = if negative { argument } else { argument };
             let radix = if specifier == b'x' { 16 } else { 10 };
             let mut digits_len = 0;
             loop {
@@ -237,7 +245,8 @@ pub extern "C" fn snprintf_s(
                     break;
                 }
             }
-            if output_index + digits_len + usize::from(negative) > limit {
+            let rendered_len = (digits_len + usize::from(negative)).max(width);
+            if output_index + rendered_len > limit {
                 // SAFETY: `size > 0`, so the first destination byte exists.
                 unsafe { output.write(0) };
                 return -1;
@@ -247,12 +256,22 @@ pub extern "C" fn snprintf_s(
                 unsafe { output.add(output_index).write(b'-') };
                 output_index += 1;
             }
+            let padding = rendered_len - digits_len - usize::from(negative);
+            for _ in 0..padding {
+                // SAFETY: padding is included in the bounds check above.
+                unsafe {
+                    output
+                        .add(output_index)
+                        .write(if zero_pad { b'0' } else { b' ' })
+                };
+                output_index += 1;
+            }
             for digit in digits[..digits_len].iter().rev() {
                 // SAFETY: the bounds check above keeps every write below size.
                 unsafe { output.add(output_index).write(*digit) };
                 output_index += 1;
             }
-            input_index += 2;
+            input_index = conversion_end + 1;
             continue;
         }
 
@@ -286,16 +305,15 @@ mod snprintf_tests {
     #[test]
     fn expands_vendor_netdev_id() {
         let mut output = [0_i8; 16];
-        let result = snprintf_s(
-            output.as_mut_ptr(),
-            output.len(),
-            output.len(),
-            c"Featureid%u".as_ptr(),
-            0,
-            0,
-            0,
-            0,
-        );
+        let result = unsafe {
+            snprintf_s(
+                output.as_mut_ptr(),
+                output.len(),
+                output.len(),
+                c"Featureid%u".as_ptr(),
+                0_u32,
+            )
+        };
         let bytes = output.map(|byte| byte as u8);
         assert_eq!(result, 10);
         assert_eq!(&bytes[..11], b"Featureid0\0");
@@ -305,19 +323,40 @@ mod snprintf_tests {
     fn rejects_truncated_output() {
         let mut output = [1_i8; 8];
         assert_eq!(
-            snprintf_s(
-                output.as_mut_ptr(),
-                output.len(),
-                output.len(),
-                c"Featureid%u".as_ptr(),
-                12,
-                0,
-                0,
-                0,
-            ),
+            unsafe {
+                snprintf_s(
+                    output.as_mut_ptr(),
+                    output.len(),
+                    output.len(),
+                    c"Featureid%u".as_ptr(),
+                    12_u32,
+                )
+            },
             -1
         );
         assert_eq!(output[0], 0);
+    }
+
+    #[test]
+    fn expands_vendor_mac_address() {
+        let mut output = [0_i8; 18];
+        let result = unsafe {
+            snprintf_s(
+                output.as_mut_ptr(),
+                output.len(),
+                output.len() - 1,
+                c"%02x:%02x:%02x:%02x:%02x:%02x".as_ptr(),
+                0x82_u32,
+                0x2e_u32,
+                0xb3_u32,
+                0xc1_u32,
+                0x55_u32,
+                0xc4_u32,
+            )
+        };
+        let bytes = output.map(|byte| byte as u8);
+        assert_eq!(result, 17);
+        assert_eq!(&bytes, b"82:2e:b3:c1:55:c4\0");
     }
 }
 
