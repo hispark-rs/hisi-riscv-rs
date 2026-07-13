@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-baf3a8ce.js";
+            window.path_to_searchindex_js = "../searchindex-1c02a1c4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -192,7 +192,7 @@
 <ol>
 <li>调 <code>hisi-fwpkg plan &lt;elf&gt; --chip ws63 --image-output &lt;elf&gt;.hisi.img</code>；</li>
 <li>从 plan JSON 读取 <code>base_addr</code>；</li>
-<li>执行 <code>probe-rs download --binary-format bin --base-address &lt;base_addr&gt; &lt;image&gt;</code>；</li>
+<li>执行 <code>probe-rs download --verify --binary-format bin --base-address &lt;base_addr&gt; &lt;image&gt;</code>，并完整回读校验；</li>
 <li>触发硬件 nRST；</li>
 <li>如果设置了 <code>PORT</code>，提前打开 UART0 抓启动输出。</li>
 </ol>
@@ -217,6 +217,7 @@ PORT=/dev/ttyUSB0 \
 <tr><td><code>PROBE_RS</code></td><td>probe-rs 二进制</td><td>PATH 里的 <code>probe-rs</code></td></tr>
 <tr><td><code>PROBE_CHIP</code></td><td><code>probe-rs --chip</code> 值</td><td><code>WS63</code></td></tr>
 <tr><td><code>PROBE_YAML</code></td><td><code>--chip-description-path</code> yaml</td><td>空 = 用内置数据库</td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td>调试传输时钟，单位 kHz</td><td><code>2000</code></td></tr>
 <tr><td><code>HISI_FWPKG</code></td><td>hisi-fwpkg 二进制</td><td>PATH 里的 <code>hisi-fwpkg</code></td></tr>
 <tr><td><code>PORT</code></td><td>复位后要抓的板子 UART0</td><td>空 = 不抓串口</td></tr>
 <tr><td><code>UART_BAUD</code></td><td>抓串口的波特率</td><td><code>115200</code></td></tr>
@@ -224,10 +225,12 @@ PORT=/dev/ttyUSB0 \
 </tbody>
 </table>
 </div>
+<p>runner 固定启用 probe-rs <code>--verify</code>。WS63 的擦除和传输性能基线、target 专属 repeated-DMI 能力边界见<a href="04-flash-probe-rs.html#ws63-下载性能基线">probe-rs 烧录指南</a>。</p>
 <p>典型一条龙：</p>
 <pre><code class="language-bash">CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh \
 PROBE_RS=/home/me/probe-rs/target/debug/probe-rs \
 PROBE_YAML=/home/me/probe-rs/targets/HiSilicon_WS63.yaml \
+PROBE_SPEED=2000 \
 PORT=/dev/ttyUSB0 UART_BAUD=115200 MONITOR=15 \
     cargo run -p uart_hello --release
 </code></pre>

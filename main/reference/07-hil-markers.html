@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-baf3a8ce.js";
+            window.path_to_searchindex_js = "../searchindex-1c02a1c4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -229,6 +229,7 @@
 <tr><td><code>PROBE_RS</code></td><td><code>probe-rs</code></td><td>probe-rs 二进制；需要 <code>hispark-rs/probe-rs</code> 的 <code>add-hisilicon-ws63-bs21-hil-baseline</code> 分支</td></tr>
 <tr><td><code>PROBE_CHIP</code></td><td><code>WS63</code></td><td>probe-rs <code>--chip</code> 值</td></tr>
 <tr><td><code>PROBE_YAML</code></td><td>空</td><td><code>--chip-description-path</code> YAML；需要显式指定时填 <code>HiSilicon_WS63.yaml</code></td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td><code>2000</code></td><td>调试传输时钟，单位 kHz</td></tr>
 <tr><td><code>HISI_FWPKG</code></td><td><code>hisi-fwpkg</code></td><td><code>hisi-fwpkg</code> 二进制名，用于 <code>patch-hash</code></td></tr>
 </tbody>
 </table>
@@ -326,6 +327,7 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 <tr><td><code>PROBE_RS</code></td><td><code>probe-rs</code></td><td>probe-rs 二进制名</td></tr>
 <tr><td><code>PROBE_CHIP</code></td><td><code>WS63</code></td><td>probe-rs <code>--chip</code> 值</td></tr>
 <tr><td><code>PROBE_YAML</code></td><td>空</td><td><code>--chip-description-path</code> YAML</td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td><code>2000</code></td><td>调试传输时钟，单位 kHz</td></tr>
 <tr><td><code>HISI_FWPKG</code></td><td><code>hisi-fwpkg</code></td><td>hisi-fwpkg 二进制名</td></tr>
 <tr><td><code>PORT</code></td><td>无</td><td>复位后流式 UART0 的端口</td></tr>
 <tr><td><code>UART_BAUD</code></td><td><code>115200</code></td><td>流式 UART 波特</td></tr>
