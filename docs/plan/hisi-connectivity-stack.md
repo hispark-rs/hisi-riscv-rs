@@ -15,6 +15,10 @@ Embassy executor/time 运行环境。
 入口仍记录在 [WS63 RF Init/Scan 计划](ws63-rf-init-scan.md)；根
 [`ROADMAP.md`](../../ROADMAP.md) 只保留优先级和里程碑，不复制本文细节。
 
+更长期的 protection domain、跨芯片 port、host runtime 与 CLI-first observability
+架构已作为 deferred outlook 记录在
+[`hisi-rtos` 未来架构](hisi-rtos-future-architecture.md)；它不属于当前 A3/A4 gate。
+
 ## Target Architecture
 
 ```mermaid
