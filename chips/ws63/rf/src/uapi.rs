@@ -11,6 +11,10 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use core::ffi::c_void;
+#[cfg(target_arch = "riscv32")]
+use hisi_nvs::{NvConfig, NvError, NvKey, NvReader};
+#[cfg(target_arch = "riscv32")]
+use hisi_storage::MemoryMappedStorage;
 use portable_atomic::{AtomicBool, Ordering};
 
 static EFUSE_READY: AtomicBool = AtomicBool::new(false);
@@ -125,11 +129,13 @@ pub extern "C" fn uapi_tsensor_get_current_temp(temp: *mut i8) -> u32 {
 /// Encrypted records are rejected until the device crypto-key path is wired.
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_nv_read(
-    _key: u16,
-    _max_len: u16,
+    key: u16,
+    max_len: u16,
     actual_len: *mut u16,
-    _value: *mut u8,
+    value: *mut u8,
 ) -> u32 {
+    #[cfg(not(target_arch = "riscv32"))]
+    let _ = value;
     if !actual_len.is_null() {
         // SAFETY: the SDK ABI defines this as a writable out-parameter.
         unsafe { *actual_len = 0 };
@@ -143,22 +149,41 @@ pub extern "C" fn uapi_nv_read(
         }
 
         let storage_len = &raw const __nv_storage_length as usize;
-        let storage = core::slice::from_raw_parts(&raw const __nv_storage_start, storage_len);
-        if let Some(data) = find_nv_value(storage, _key) {
-            if !actual_len.is_null() {
-                *actual_len = data.len() as u16;
+        // SAFETY: the linker-provided region is the flashboot-initialized,
+        // read-only WS63 NV partition and remains mapped for the firmware life.
+        let storage =
+            MemoryMappedStorage::from_raw_parts(&raw const __nv_storage_start, storage_len);
+        let Ok(mut reader) = NvReader::try_new(storage, NvConfig::WS63_ACPU) else {
+            trace_nv(key, max_len, 0, crate::OSAL_NOK as u32);
+            return crate::OSAL_NOK as u32;
+        };
+        let output = if value.is_null() {
+            &mut []
+        } else {
+            core::slice::from_raw_parts_mut(value, max_len as usize)
+        };
+        match reader.read(NvKey::from_raw(key), output) {
+            Ok(length) => {
+                let length = length as u16;
+                if !actual_len.is_null() {
+                    *actual_len = length;
+                }
+                trace_nv(key, max_len, length, crate::OSAL_OK as u32);
+                return crate::OSAL_OK as u32;
             }
-            if _value.is_null() || data.len() > _max_len as usize {
-                trace_nv(_key, _max_len, data.len() as u16, crate::OSAL_NOK as u32);
+            Err(NvError::BufferTooSmall { required }) => {
+                let required = u16::try_from(required).unwrap_or(u16::MAX);
+                if !actual_len.is_null() {
+                    *actual_len = required;
+                }
+                trace_nv(key, max_len, required, crate::OSAL_NOK as u32);
                 return crate::OSAL_NOK as u32;
             }
-            core::ptr::copy_nonoverlapping(data.as_ptr(), _value, data.len());
-            trace_nv(_key, _max_len, data.len() as u16, crate::OSAL_OK as u32);
-            return crate::OSAL_OK as u32;
+            Err(_) => {}
         }
     }
 
-    trace_nv(_key, _max_len, 0, crate::OSAL_NOK as u32);
+    trace_nv(key, max_len, 0, crate::OSAL_NOK as u32);
     crate::OSAL_NOK as u32
 }
 
@@ -169,138 +194,11 @@ pub extern "C" fn uapi_nv_write(_key: u16, _value: *const u8, _len: u16) -> u32 
     crate::OSAL_NOK as u32
 }
 
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_PAGE_SIZE: usize = 0x1000;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_PAGE_HEADER_SIZE: usize = 16;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_KEY_HEADER_SIZE: usize = 16;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_KEY_CRC_SIZE: usize = 4;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_STORE_ID_ACPU: u16 = 0x254d;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_KEY_MAGIC: u8 = 0xa9;
-#[cfg(any(target_arch = "riscv32", test))]
-const NV_KEY_VALID: u8 = 0xff;
-
-#[cfg(any(target_arch = "riscv32", test))]
-fn find_nv_value(storage: &[u8], wanted_key: u16) -> Option<&[u8]> {
-    let page_count = storage.len() / NV_PAGE_SIZE;
-    for page_index in 0..page_count {
-        let start = page_index * NV_PAGE_SIZE;
-        let page = &storage[start..start + NV_PAGE_SIZE];
-        let details = u32::from_le_bytes(page[0..4].try_into().ok()?);
-        let inverted_details = u32::from_le_bytes(page[4..8].try_into().ok()?);
-        let sequence = u32::from_le_bytes(page[8..12].try_into().ok()?);
-        let inverted_sequence = u32::from_le_bytes(page[12..16].try_into().ok()?);
-        if details as u16 != NV_STORE_ID_ACPU
-            || inverted_details != !details
-            || inverted_sequence != !sequence
-        {
-            continue;
-        }
-
-        let mut offset = NV_PAGE_HEADER_SIZE;
-        while offset + NV_KEY_HEADER_SIZE + NV_KEY_CRC_SIZE <= page.len() {
-            let header = &page[offset..offset + NV_KEY_HEADER_SIZE];
-            if header[0] == 0xff {
-                break;
-            }
-            if header[0] != NV_KEY_MAGIC {
-                offset += 4;
-                continue;
-            }
-
-            let length = u16::from_le_bytes([header[2], header[3]]) as usize;
-            let key = u16::from_le_bytes([header[6], header[7]]);
-            let encrypted_key = u16::from_le_bytes([header[8], header[9]]);
-            let padded_len = (length + 3) & !3;
-            let record_len = NV_KEY_HEADER_SIZE + padded_len + NV_KEY_CRC_SIZE;
-            if record_len < NV_KEY_HEADER_SIZE || offset + record_len > page.len() {
-                break;
-            }
-
-            let crc_input_end = offset + NV_KEY_HEADER_SIZE + padded_len;
-            let stored_crc = &page[crc_input_end..crc_input_end + NV_KEY_CRC_SIZE];
-            let crc = crc32(&page[offset..crc_input_end]);
-            let crc_matches = stored_crc == crc.to_be_bytes();
-            if header[1] == NV_KEY_VALID && encrypted_key == 0 && key == wanted_key && crc_matches {
-                let data_start = offset + NV_KEY_HEADER_SIZE;
-                return Some(&page[data_start..data_start + length]);
-            }
-            offset += record_len;
-        }
-    }
-    None
-}
-
-#[cfg(any(target_arch = "riscv32", test))]
-fn crc32(bytes: &[u8]) -> u32 {
-    let mut crc = 0xffff_ffff_u32;
-    for &byte in bytes {
-        crc ^= byte as u32;
-        for _ in 0..8 {
-            crc = (crc >> 1) ^ (0xedb8_8320 & 0_u32.wrapping_sub(crc & 1));
-        }
-    }
-    !crc
-}
-
 // ── eFuse / TRNG / device identity ───────────────────────────────────────────
 #[cfg(test)]
-mod nv_tests {
-    use super::{
-        NV_KEY_HEADER_SIZE, NV_PAGE_HEADER_SIZE, NV_PAGE_SIZE, crc32, find_nv_value,
-        tcxo_vendor_id, uapi_tsensor_get_current_temp,
-    };
+mod uapi_tests {
+    use super::{tcxo_vendor_id, uapi_tsensor_get_current_temp};
     use hisi_hal::clock_init::TcxoFreq;
-
-    fn page_with_key() -> [u8; NV_PAGE_SIZE] {
-        let mut page = [0xff; NV_PAGE_SIZE];
-        let details = 0x0001_254d_u32;
-        page[0..4].copy_from_slice(&details.to_le_bytes());
-        page[4..8].copy_from_slice(&(!details).to_le_bytes());
-        page[8..12].copy_from_slice(&0_u32.to_le_bytes());
-        page[12..16].copy_from_slice(&u32::MAX.to_le_bytes());
-
-        let offset = NV_PAGE_HEADER_SIZE;
-        page[offset] = 0xa9;
-        page[offset + 1] = 0xff;
-        page[offset + 2..offset + 4].copy_from_slice(&3_u16.to_le_bytes());
-        page[offset + 4] = 0xff;
-        page[offset + 5] = 0xff;
-        page[offset + 6..offset + 8].copy_from_slice(&0x2003_u16.to_le_bytes());
-        page[offset + 8..offset + 10].copy_from_slice(&0_u16.to_le_bytes());
-        page[offset + 10..offset + 12].copy_from_slice(&u16::MAX.to_le_bytes());
-        page[offset + 12..offset + 16].copy_from_slice(&u32::MAX.to_le_bytes());
-
-        let data = offset + NV_KEY_HEADER_SIZE;
-        page[data..data + 4].copy_from_slice(&[1, 2, 3, 0]);
-        let crc = crc32(&page[offset..data + 4]);
-        page[data + 4..data + 8].copy_from_slice(&crc.to_be_bytes());
-        page
-    }
-
-    #[test]
-    fn finds_crc_valid_plaintext_key() {
-        let page = page_with_key();
-        assert_eq!(find_nv_value(&page, 0x2003), Some(&[1, 2, 3][..]));
-    }
-
-    #[test]
-    fn rejects_corrupt_crc() {
-        let mut page = page_with_key();
-        page[NV_PAGE_HEADER_SIZE + NV_KEY_HEADER_SIZE] ^= 1;
-        assert_eq!(find_nv_value(&page, 0x2003), None);
-    }
-
-    #[test]
-    fn rejects_corrupt_page_header() {
-        let mut page = page_with_key();
-        page[4] ^= 1;
-        assert_eq!(find_nv_value(&page, 0x2003), None);
-    }
 
     #[test]
     fn tsensor_contract_writes_output_and_returns_status() {

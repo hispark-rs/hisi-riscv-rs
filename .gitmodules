@@ -46,3 +46,9 @@
 [submodule "crates/chips/ws63/hisi-rom-sys-ws63"]
 	path = crates/chips/ws63/hisi-rom-sys-ws63
 	url = https://github.com/hispark-rs/hisi-rom-sys-ws63.git
+[submodule "crates/hisi-storage"]
+	path = crates/hisi-storage
+	url = https://github.com/hispark-rs/hisi-storage.git
+[submodule "crates/hisi-nvs"]
+	path = crates/hisi-nvs
+	url = https://github.com/hispark-rs/hisi-nvs.git

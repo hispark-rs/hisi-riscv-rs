@@ -7,6 +7,8 @@ members = [
     "crates/hisi-crypto",
     "crates/chips/ws63/hisi-crypto-ws63",
     "crates/hisi-rom-sys",
+    "crates/hisi-storage",
+    "crates/hisi-nvs",
     "crates/chips/ws63/hisi-rom-sys-ws63",
     "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
@@ -52,6 +54,8 @@ default-members = [
     "crates/hisi-crypto",
     "crates/chips/ws63/hisi-crypto-ws63",
     "crates/hisi-rom-sys",
+    "crates/hisi-storage",
+    "crates/hisi-nvs",
     "crates/chips/ws63/hisi-rom-sys-ws63",
     "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
@@ -91,6 +95,8 @@ hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
 hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
+hisi-storage = { path = "crates/hisi-storage" }
+hisi-nvs = { path = "crates/hisi-nvs" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
 ws63-radio-sys = { path = "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys" }
 hisi-hal = { path = "crates/hisi-hal" }
@@ -115,6 +121,8 @@ bs2x-pac = { path = "crates/chips/bs2x/bs2x-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
+hisi-storage = { path = "crates/hisi-storage" }
+hisi-nvs = { path = "crates/hisi-nvs" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
 hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
 # hisi-hal depends on hisi-riscv-rt by version (resolved through cargo);
