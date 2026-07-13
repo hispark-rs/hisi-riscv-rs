@@ -140,10 +140,13 @@ pub extern "C" fn osal_adapt_kthread_unlock() {}
 pub extern "C" fn osal_adapt_kthread_should_stop() -> c_int {
     0
 }
-/// Set priority (no-op — round-robin scheduler).
+/// Set task priority through the canonical OSAL implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_kthread_set_priority(_task: *mut c_void, _priority: c_uint) -> c_int {
-    OSAL_OK
+pub extern "C" fn osal_adapt_kthread_set_priority(task: *mut c_void, priority: c_uint) -> c_int {
+    let Ok(priority) = c_int::try_from(priority) else {
+        return OSAL_NOK;
+    };
+    crate::osal::osal_kthread_set_priority(task, priority)
 }
 
 // Software timers (`osal_adapt_timer_init/mod/destroy`) are now real — see

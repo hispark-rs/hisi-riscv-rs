@@ -458,7 +458,9 @@ pub extern "C" fn osal_kthread_create(
         arg,
         hisi_rf_rtos_driver::TaskConfig {
             stack_size,
-            priority: 0,
+            // LiteOS callers set the requested priority immediately after
+            // creation. Keep a not-yet-configured task at the lowest level.
+            priority: 31,
         },
     ) {
         Ok(task) => {
@@ -490,11 +492,25 @@ pub extern "C" fn osal_kthread_lock() {}
 /// Re-allow preemption (see [`osal_kthread_lock`]).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_unlock() {}
-/// Set thread priority. NO-OP: the cooperative scheduler is round-robin (no
-/// priorities yet) — TODO when preemption lands.
+/// Set thread priority using LiteOS ordering (0 highest, 31 lowest).
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_set_priority(_thread: *mut c_void, _priority: c_int) -> c_int {
-    OSAL_OK
+pub extern "C" fn osal_kthread_set_priority(thread: *mut c_void, priority: c_int) -> c_int {
+    if thread.is_null() || !(0..=31).contains(&priority) {
+        return OSAL_NOK;
+    }
+    // SAFETY: successful `osal_kthread_create` returns a live `OsalTask*` and
+    // the vendor ABI requires the caller to keep it valid while setting priority.
+    let raw_task = unsafe { (*(thread.cast::<OsalTask>())).task } as usize;
+    let Ok(raw_task) = u32::try_from(raw_task) else {
+        return OSAL_NOK;
+    };
+    match hisi_rf_rtos_driver::set_task_priority(
+        hisi_rf_rtos_driver::TaskId::from_raw(raw_task),
+        priority as u8,
+    ) {
+        Ok(()) => OSAL_OK,
+        Err(_) => OSAL_NOK,
+    }
 }
 
 /// Sleep the current task for `ms` milliseconds (scheduler-backed).

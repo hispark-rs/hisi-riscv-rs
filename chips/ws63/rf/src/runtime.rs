@@ -11,7 +11,7 @@ pub fn spawn(entry: TaskEntry, arg: *mut c_void, stack_size: usize) -> Option<us
         arg,
         TaskConfig {
             stack_size,
-            priority: 0,
+            priority: 31,
         },
     )
     .ok()
