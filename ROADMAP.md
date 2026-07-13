@@ -45,6 +45,8 @@ Deferred after the connectivity baseline: the portable/protected RTOS and CLI-fi
 
 **Probe, fwpkg, and toolchain:** make only the changes required to keep connectivity work reproducible. `hisi-fwpkg` remains the image-format fact source; probe-rs should stay a generic transport/debug path and avoid HiSilicon image-format parsing.
 
+Deferred read-only investigation of additional WS63 system-memory debug paths is tracked in [docs/plan/ws63-debug-memory-access.md](docs/plan/ws63-debug-memory-access.md); it is not on the connectivity critical path.
+
 **Docs and CI:** preserve the happy path, stable API reference, and connectivity roadmap. Avoid expanding component documentation unless it prevents drift or directly supports C1-C6.
 
 Low-priority i18n track: integrate `mdbook-i18n-helpers` after the current Chinese handbook, chip selector, version selector, snippet preprocessor, and happy-path CI stay stable. The intended shape is gettext-style extraction/translation around the existing mdBook source, without forking the command snippets or reference facts into per-language copies. Acceptance: `mdbook-xgettext`/`mdbook-gettext` are wired into a documented script or CI check, translated pages reuse the same chip/version metadata and snippet contracts, and untranslated pages degrade back to the canonical Chinese source. This track must not block connectivity milestones C1-C6.
