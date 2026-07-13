@@ -110,7 +110,12 @@ fn ensure_timer_worker() -> bool {
         if !should_start {
             return true;
         }
-        if crate::runtime::spawn(timer_worker, core::ptr::null_mut(), 4096).is_some() {
+        // LiteOS creates Swt_Task at LOS_TASK_PRIORITY_HIGHEST. Radio protocol
+        // deadlines depend on timer callbacks running ahead of ordinary FRW,
+        // WPA and application work once the timer task becomes ready.
+        if crate::runtime::spawn_with_priority(timer_worker, core::ptr::null_mut(), 4096, 0)
+            .is_some()
+        {
             true
         } else {
             cs::with(|token| TIMER_WORKER_STARTED.borrow(token).set(false));

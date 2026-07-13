@@ -239,6 +239,7 @@ pub extern "C" fn osal_irq_set_priority(irq: core::ffi::c_uint, priority: u16) -
 }
 
 fn dispatch_irq(irq: u32) {
+    let _ = hisi_rf_rtos_driver::interrupt_enter();
     let slot = critical_section::with(|cs| {
         let cell = IRQ_SLOTS[irq as usize].borrow(cs);
         let slot = cell.get();
@@ -263,9 +264,12 @@ fn dispatch_irq(irq: u32) {
             }
         }
     }
-    if let Some(interrupt) = radio_interrupt(irq) {
-        interrupt::clear_pending(interrupt);
-    }
+    // Match the vendor WS63 `local_interrupt_handler`: the generic dispatcher
+    // does not clear LOCIPCLR after invoking a device handler. The device ISR
+    // acknowledges its own source and calls `osal_irq_clear` when the local
+    // pending latch also needs clearing. Clearing here can erase an interrupt
+    // that reasserted while the handler was processing the previous event.
+    let _ = hisi_rf_rtos_driver::interrupt_exit();
 }
 
 #[cfg(feature = "rf-queue-guard")]
@@ -397,7 +401,6 @@ fn emit_guard_hex(value: u32, output: &mut [u8; 8]) {
 /// Return how many times a registered IRQ reached its vendor handler.
 ///
 /// This is an on-silicon bring-up probe, not part of the public RF API.
-#[cfg(feature = "rf-init-diag")]
 #[doc(hidden)]
 pub fn irq_dispatch_count(irq: u32) -> u32 {
     if irq as usize >= IRQ_COUNT {

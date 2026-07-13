@@ -9,7 +9,9 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use crate::{OSAL_NOK, OSAL_OK};
+use core::cell::RefCell;
 use core::ffi::{c_char, c_int, c_uint, c_ulong, c_void};
+use critical_section::Mutex;
 use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 
 // ── Message queue (bounded ring + counting semaphore) ───────────────────────
@@ -181,14 +183,103 @@ pub extern "C" fn osal_msg_queue_delete(queue_id: c_ulong) {
     crate::alloc::osal_kfree(q as *mut c_void);
 }
 
-// ── Event group (bitmask + semaphore the reader rechecks) ───────────────────
+// ── Event group (bitmask + per-waiter wakeup) ───────────────────────────────
 
 const WAITMODE_AND: c_uint = 4; // all bits (OR / any is the default else-branch)
 const WAITMODE_CLR: c_uint = 1; // clear matched bits on success
 
 struct EventGroup {
     bits: u32,
-    sem: Semaphore,
+    waiters: [EventWaiter; MAX_EVENT_WAITERS],
+    reads: u32,
+    writes: u32,
+    matches: u32,
+    last_read_mask: u32,
+    last_write_mask: u32,
+    last_mode: u32,
+}
+
+const MAX_EVENT_WAITERS: usize = 8;
+
+#[derive(Clone, Copy)]
+struct EventWaiter {
+    semaphore: usize,
+    mask: u32,
+    mode: u32,
+}
+
+impl EventWaiter {
+    const EMPTY: Self = Self {
+        semaphore: 0,
+        mask: 0,
+        mode: 0,
+    };
+}
+
+const MAX_EVENT_GROUPS: usize = 16;
+static EVENT_GROUPS: Mutex<RefCell<[usize; MAX_EVENT_GROUPS]>> =
+    Mutex::new(RefCell::new([0; MAX_EVENT_GROUPS]));
+
+/// Read-only event-group state used while matching the Rust OSAL to LiteOS.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct EventDiagnostic {
+    pub event: usize,
+    pub bits: u32,
+    pub reads: u32,
+    pub writes: u32,
+    pub matches: u32,
+    pub last_read_mask: u32,
+    pub last_write_mask: u32,
+    pub last_mode: u32,
+}
+
+fn register_event_group(group: *mut EventGroup) -> bool {
+    critical_section::with(|cs| {
+        let mut groups = EVENT_GROUPS.borrow_ref_mut(cs);
+        let Some(slot) = groups.iter_mut().find(|slot| **slot == 0) else {
+            return false;
+        };
+        *slot = group as usize;
+        true
+    })
+}
+
+fn unregister_event_group(group: *mut EventGroup) {
+    critical_section::with(|cs| {
+        let mut groups = EVENT_GROUPS.borrow_ref_mut(cs);
+        if let Some(slot) = groups.iter_mut().find(|slot| **slot == group as usize) {
+            *slot = 0;
+        }
+    });
+}
+
+/// Copies live event-group snapshots without changing their state.
+pub fn event_diagnostics(output: &mut [EventDiagnostic]) -> usize {
+    critical_section::with(|cs| {
+        let groups = EVENT_GROUPS.borrow_ref(cs);
+        let mut count = 0;
+        for pointer in groups.iter().copied().filter(|pointer| *pointer != 0) {
+            if count == output.len() {
+                break;
+            }
+            // SAFETY: live event groups stay registered from successful init
+            // until destroy, and all fields are serialized by this same
+            // single-hart critical section.
+            let group = unsafe { &*(pointer as *const EventGroup) };
+            output[count] = EventDiagnostic {
+                event: pointer,
+                bits: group.bits,
+                reads: group.reads,
+                writes: group.writes,
+                matches: group.matches,
+                last_read_mask: group.last_read_mask,
+                last_write_mask: group.last_write_mask,
+                last_mode: group.last_mode,
+            };
+            count += 1;
+        }
+        count
+    })
 }
 
 /// Mirrors C `osal_event { void *event; }`.
@@ -211,9 +302,20 @@ pub extern "C" fn osal_event_init(event_obj: *mut OsalEvent) -> c_int {
     unsafe {
         g.write(EventGroup {
             bits: 0,
-            sem: Semaphore::new(0),
+            waiters: [EventWaiter::EMPTY; MAX_EVENT_WAITERS],
+            reads: 0,
+            writes: 0,
+            matches: 0,
+            last_read_mask: 0,
+            last_write_mask: 0,
+            last_mode: 0,
         });
         (*event_obj).event = g as *mut c_void;
+    }
+    if !register_event_group(g) {
+        crate::alloc::osal_kfree(g as *mut c_void);
+        unsafe { (*event_obj).event = core::ptr::null_mut() };
+        return OSAL_NOK;
     }
     OSAL_OK
 }
@@ -225,10 +327,42 @@ fn event_ptr(event_obj: *mut OsalEvent) -> *mut EventGroup {
     unsafe { (*event_obj).event as *mut EventGroup }
 }
 
+fn event_matches(bits: u32, mask: u32, mode: u32) -> Option<u32> {
+    let matched = bits & mask;
+    let satisfied = if mode & WAITMODE_AND != 0 {
+        matched == mask && mask != 0
+    } else {
+        matched != 0
+    };
+    satisfied.then_some(matched)
+}
+
+fn poll_event(group: &mut EventGroup, mask: u32, mode: u32) -> Option<u32> {
+    let matched = event_matches(group.bits, mask, mode)?;
+    group.matches = group.matches.saturating_add(1);
+    if mode & WAITMODE_CLR != 0 {
+        group.bits &= !matched;
+    }
+    Some(matched)
+}
+
+fn unregister_waiter(group: *mut EventGroup, semaphore: usize) {
+    critical_section::with(|_cs| {
+        let group = unsafe { &mut *group };
+        if let Some(waiter) = group
+            .waiters
+            .iter_mut()
+            .find(|waiter| waiter.semaphore == semaphore)
+        {
+            *waiter = EventWaiter::EMPTY;
+        }
+    });
+}
+
 /// Wait up to `timeout_ms` (`u32::MAX` == forever) for `mask` bits (OR = any,
 /// AND = all; CLR clears them on success). Returns the matched bits, or 0 on
-/// timeout. NOTE: single-waiter (the WiFi worker); a write wakes the waiter,
-/// which rechecks.
+/// timeout. Each blocked reader registers its mask/mode and a private semaphore;
+/// a write wakes every matching reader, matching LiteOS `LOS_EventWrite`.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_event_read(
     event_obj: *mut OsalEvent,
@@ -245,20 +379,10 @@ pub extern "C" fn osal_event_read(
     loop {
         let matched = critical_section::with(|_cs| {
             let e = unsafe { &mut *g };
-            let m = e.bits & mask;
-            let sat = if mode & WAITMODE_AND != 0 {
-                m == mask && mask != 0
-            } else {
-                m != 0 // OR (default)
-            };
-            if sat {
-                if mode & WAITMODE_CLR != 0 {
-                    e.bits &= !m;
-                }
-                Some(m)
-            } else {
-                None
-            }
+            e.reads = e.reads.saturating_add(1);
+            e.last_read_mask = mask;
+            e.last_mode = mode;
+            poll_event(e, mask, mode)
         });
         if let Some(m) = matched {
             return m as c_int;
@@ -272,31 +396,75 @@ pub extern "C" fn osal_event_read(
             }
             (deadline - now).min(u32::MAX as u64) as u32
         };
-        // SAFETY: g is a live handle. Block until a write() signals (or the
-        // deadline passes), then recheck the bits at the top of the loop.
-        if unsafe { (*g).sem.down_timeout(WaitTimeout::from_millis(remaining)) }.is_err() {
+        let semaphore = core::pin::pin!(Semaphore::new(0));
+        if semaphore.try_init().is_err() {
+            return OSAL_NOK;
+        }
+        let semaphore_pointer = semaphore.as_ref().get_ref() as *const Semaphore as usize;
+        let registration = critical_section::with(|_cs| {
+            let e = unsafe { &mut *g };
+            if let Some(matched) = poll_event(e, mask, mode) {
+                return Ok(Some(matched));
+            }
+            let Some(waiter) = e.waiters.iter_mut().find(|waiter| waiter.semaphore == 0) else {
+                return Err(());
+            };
+            *waiter = EventWaiter {
+                semaphore: semaphore_pointer,
+                mask,
+                mode,
+            };
+            Ok(None)
+        });
+
+        match registration {
+            Ok(Some(matched)) => {
+                let _ = unsafe { semaphore.destroy() };
+                return matched as c_int;
+            }
+            Err(()) => {
+                let _ = unsafe { semaphore.destroy() };
+                return OSAL_NOK;
+            }
+            Ok(None) => {}
+        }
+
+        let wait = semaphore.down_timeout(WaitTimeout::from_millis(remaining));
+        unregister_waiter(g, semaphore_pointer);
+        let _ = unsafe { semaphore.destroy() };
+        if !matches!(wait, Ok(WaitOutcome::Acquired)) {
             return OSAL_NOK;
         }
     }
 }
 
-/// Set `mask` bits and wake a waiter.
+/// Set `mask` bits and wake every waiter whose condition is satisfied.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_event_write(event_obj: *mut OsalEvent, mask: c_uint) -> c_int {
     let g = event_ptr(event_obj);
     if g.is_null() {
         return OSAL_NOK;
     }
-    critical_section::with(|_cs| {
+    let waiters = critical_section::with(|_cs| {
         let e = unsafe { &mut *g };
         e.bits |= mask;
+        e.writes = e.writes.saturating_add(1);
+        e.last_write_mask = mask;
+        let mut waiters = [0; MAX_EVENT_WAITERS];
+        for (output, waiter) in waiters.iter_mut().zip(e.waiters.iter()) {
+            if waiter.semaphore != 0 && event_matches(e.bits, waiter.mask, waiter.mode).is_some() {
+                *output = waiter.semaphore;
+            }
+        }
+        waiters
     });
-    // SAFETY: g is a live handle.
-    if unsafe { (*g).sem.up() }.is_ok() {
-        OSAL_OK
-    } else {
-        OSAL_NOK
+    for pointer in waiters.into_iter().filter(|pointer| *pointer != 0) {
+        let semaphore = unsafe { &*(pointer as *const Semaphore) };
+        if semaphore.up().is_err() {
+            return OSAL_NOK;
+        }
     }
+    OSAL_OK
 }
 
 /// Clear `mask` bits.
@@ -320,8 +488,9 @@ pub extern "C" fn osal_event_destroy(event_obj: *mut OsalEvent) -> c_int {
     if g.is_null() {
         return OSAL_NOK;
     }
-    // SAFETY: event destruction requires no active reader/writer.
-    let _ = unsafe { (*g).sem.destroy() };
+    // Event destruction requires no active reader/writer.
+    debug_assert!(unsafe { (*g).waiters.iter().all(|waiter| waiter.semaphore == 0) });
+    unregister_event_group(g);
     crate::alloc::osal_kfree(g as *mut c_void);
     if !event_obj.is_null() {
         unsafe { (*event_obj).event = core::ptr::null_mut() };

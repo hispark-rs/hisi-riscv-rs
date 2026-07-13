@@ -5,13 +5,22 @@ use core::num::{NonZeroU32, NonZeroUsize};
 use hisi_rf_rtos_driver::{TaskConfig, TaskEntry};
 
 pub fn spawn(entry: TaskEntry, arg: *mut c_void, stack_size: usize) -> Option<usize> {
+    spawn_with_priority(entry, arg, stack_size, 31)
+}
+
+pub fn spawn_with_priority(
+    entry: TaskEntry,
+    arg: *mut c_void,
+    stack_size: usize,
+    priority: u8,
+) -> Option<usize> {
     let stack_size = NonZeroUsize::new(stack_size.max(1)).unwrap();
     hisi_rf_rtos_driver::spawn(
         entry,
         arg,
         TaskConfig {
             stack_size,
-            priority: 31,
+            priority,
         },
     )
     .ok()
