@@ -409,6 +409,20 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [ ] `hisi-nvs` crates.io publish workflow 因新仓尚未获得组织
   `CARGO_REGISTRY_TOKEN` selected-repository access 而失败；授权并重跑后 A2 才整体完成。
 
+#### A3 progress
+
+- [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.1` release unit；其 contract
+  仅包含可失败 task/semaphore 能力、validated stack/timeout 类型和 exactly-one runtime
+  注册，不依赖 WS63、RF、scheduler、allocator 或网络栈。
+- [x] 现 cooperative scheduler 已作为 transitional backend 注册；真实 vendor
+  `osal_kthread_create`、`osal_msleep` 和 current-task ABI 穿过 driver contract，不是空 facade。
+- [x] Guarded link 仍验证 1,486 section、5,335 relocation 和 37 ROM patch；WS63 HIL
+  已复现 init/scan/WPA2 connect/DHCP/ARP/ping。证据见
+  [A3 driver contract](evidence/ws63-rf-a3-driver-contract-2026-07-13.md)。
+- [ ] Semaphore/wait/event 尚待迁移到 contract；scheduler/context switch/task stack ownership
+  尚待移入 `hisi-rtos`。priority/preemption、deferred stack reclamation 与 Embassy integration
+  完成前，A3 不得标记完成。
+
 ### B0-B3 -- BLE Vendor Host First
 
 1. B0：对 `libbg_common`、`libbt_host`、`libbt_app`、`libbth_sdk` 做 symbol closure、
