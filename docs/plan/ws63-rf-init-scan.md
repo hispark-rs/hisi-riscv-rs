@@ -10,6 +10,12 @@ WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**�
 RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通用硬件能力默认先进
 `unstable`。RF 专用 glue、blob ABI、NV item id、porting contract 保持在 `ws63-rf-rs`。
 
+后续 `hisi-rf` 拆分不得反向改写本计划已经验证的行为。迁移以当前
+init/scan/connect/ping marker、Rust-visible L2 和真机 HIL 为 parity contract；先完成
+storage/NVS 与 RTOS ownership 拆分，再按
+[Connectivity 全栈重构计划](hisi-connectivity-stack.md#a4-extraction-gates)建立统一
+`RadioController`/`RadioRunner`，不提前并行维护第二条 RF 主路径。
+
 ## Key Milestones
 
 ### RF0 -- Baseline And Truth Sources
@@ -55,7 +61,9 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   calibration；找不到时返回明确 `RF_ERR_NV_MISSING`，不静默使用全零校准。
 - 当前 evidence：SVD/PAC 已建模共享 RAM bank 与 BT exchange-memory gate；HAL
   `SharedMemory`（unstable）实现原厂默认 `dyn_mem_cfg` 序列。`uapi_nv_read` 已对齐
-  4 参数 SDK ABI，并实现只读 ACPU KV page/key/CRC 解析；host parser tests 3/3 通过。
+  4 参数 SDK ABI，但 KV format/parser 已迁到独立 `hisi-nvs`；page/sequence/key/CRC 的
+  9/9 host tests 与完整 connectivity HIL 通过。WS63 partition link contract 由
+  `ws63-radio-sys` 拥有，不再位于 RT。
 
 ### RF3 -- Wi-Fi Init On Silicon
 
@@ -150,7 +158,8 @@ RF 作为独立 connectivity track 推进；HAL 能力优先，但新补的通�
   - `cargo build -p wifi_init_smoke --release`
   - `chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh` 生成完整
     `wifi_init_smoke` ELF，并验证 patch manifest 与 final layout。
-  - `cargo test -p ws63-rf-rs --target <host> --lib` 验证 NV parser。
+  - `cargo test -p hisi-nvs --target <host>` 验证 KV parser；
+    `cargo test -p ws63-rf-rs --target <host> --lib` 验证 RF C-ABI adapter。
   - `chips/ws63/rf/tools/mac-link-residual.sh`
   - `chips/ws63/rf/tools/rf-reloc58-diagnose.sh`
   - QEMU smoke：`rf_port_demo` 输出 `RF PORT DEMO: PASS`

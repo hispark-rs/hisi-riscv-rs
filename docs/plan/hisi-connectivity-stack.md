@@ -142,13 +142,34 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 
 ### Radio
 
-- `hisi_rf::init(RadioConfig, RadioResources)` 返回独占
-  `RadioController`；`split()` 只产生编译时启用的协议 handle。
+- `hisi_rf::init(RadioConfig, RadioResources)` 返回独占 `RadioController`；所有协议共享
+  RF、IRQ、blob、memory profile 和 coexistence resources，禁止分别以 `Wifi::new()`、
+  `Ble::new()` 抢占同一硬件。`split()` 返回
+  `RadioParts { wifi, ble, sle, runner }`，且只产生编译时启用的协议 handle。
+- `RadioRunner` 是必须持续 poll 的长期后台任务，唯一负责推进 blob、处理控制命令、
+  ack/wake 和投递事件；协议 handle 不在调用者 task 中直接驱动 vendor scheduler。
+- 公共接口分四个平面，不能用一个“万能 Radio trait”抹平协议语义：
+  - **配置面**：`RadioConfig`、`ScanConfig`、`StationConfig`、`AdvertisingConfig`、
+    `SeekConfig`、`CoexistenceConfig`；使用 validated newtype、enum 与 secret type，
+    不接受无约束裸 channel、interval、密码或 key bytes。
+  - **控制面**：Wi-Fi、BLE、SLE 各自提供 inherent async API；状态机和错误保持协议语义。
+  - **数据面**：只在存在成熟标准时实现 ecosystem trait，不发明自有通用 socket/IP 层。
+  - **事件面**：有界队列 + `next_event().await`；后续可选
+    `futures_core::Stream` adapter。ISR/blob callback 只复制 bounded event、更新小状态并 wake，
+    绝不调用用户 callback。
+- Wi-Fi 分离 `WifiController` 与 `WifiDevice`。前者以 `&mut self` 串行化
+  `scan/connect/disconnect/wait_for_link`，明确 cancellation 与状态迁移；scan 使用调用者
+  提供的固定结果 buffer，返回 `{ count, truncated }`。后者只提供 L2 RX/TX，主要实现
+  `embassy_net_driver::Driver`，可选实现 `smoltcp::phy::Device`。
 - Wi-Fi 提供 L2 device；按 feature 实现 `smoltcp::phy::Device` 和
   `embassy-net-driver`。DHCP、ICMP、TCP/IP sockets 属于 smoltcp/Embassy Net。
-- BLE 第一阶段封装 vendor GAP/GATT/SMP host。raw HCI/TrouBLE 仅在 controller-only
-  边界被符号和 HIL 证明后进入 experimental feature。
+- `embedded-svc::wifi` 仅可作为兼容 adapter，不是核心 API 的事实源。
+- BLE 第一阶段封装 vendor GAP/GATT/SMP host 并提供安全自有 API。只有 controller-only
+  边界被符号、packet ownership 和 HIL 证明后，才增加实验性 `ble-hci` 并实现
+  `bt_hci::controller::Controller` 供 Trouble 使用；不得在 vendor host 上伪造 HCI。
 - SLE 使用相同事件模型，提供 announce/seek/connect 和 SSAP client/server。
+  SLE 没有可用的通用 Rust 标准，API 必须保持真实 SLE 语义，不伪装成 BLE。
+- `coex` 初始始终 unstable；只有 Wi-Fi traffic 与 BLE/SLE 并发 HIL 通过后才允许稳定。
 - 所有 blob callback 只把 bounded event 写入队列并 wake task；不得在 ISR、critical
   section 或 scheduler lock 中调用用户 callback。
 - Wi-Fi security 采用 `hisi-crypto` provider 边界。当前已验证组合是 WS63
@@ -156,6 +177,13 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   clock/IRQ/wait HIL 通过后才能成为默认 backend。RF 不公开密码实现 context。
 - 初始稳定候选仅为 WPA2-Personal/CCMP。WPA3-SAE、SoftAP authenticator 和 Enterprise
   分别使用独立 feature 与 HIL gate；编译进完整原厂 archive 不等于 API 已支持。
+- `hisi-rf` 的依赖边界固定为 `hisi-rf-rtos-driver`、`hisi-crypto`、`hisi-nvs`、HAL
+  和 chip backend（WS63 为 `ws63-radio-sys`）；它不拥有 scheduler、ROM symbols、NVS
+  format、通用 crypto、TLS 或 IP stack。WPA supplicant 属于
+  `hisi-rf::wifi::security` 并依赖 `hisi-crypto`，不经过 `hisi-tls`。
+- `hisi-rf` 的公共概念保持芯片中立；WS63 FFI/blob/ABI 只存在于
+  `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
+  `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
 
 ### TLS
 
@@ -291,7 +319,8 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
    `hisi-crypto-ws63`、`ws63-radio-sys`、`hisi-rf-link`；examples
    不再维护 ROM/link/archive 列表。
 2. A2：抽取 `hisi-storage` 和 read-only `hisi-nvs`；移除 RF parser 与 RT 中的 NVS
-   partition symbols。
+   partition symbols。主机端 image builder/CLI 的 N0-N5 后续独立按
+   [NVS 镜像工具链计划](hisi-nvs-image.md)推进，不阻塞 A2/connectivity。
 3. A3：建立 `hisi-rf-rtos-driver`；把现 scheduler/IPC 迁到 `hisi-rtos`，再升级为
    抢占式实现并接管 Embassy time/executor。
 4. A4：建立 `hisi-rf` 并迁移 Wi-Fi API/L2 device。每一步复跑 A0；全部等价后
@@ -299,6 +328,18 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 5. W4 Enterprise 前建立 `hisi-tls`、默认 `hisi-tls-mbedtls` 与可选
    `hisi-tls-embedded`；TLS 不阻塞 A1-A4 的 Wi-Fi personal 迁移。密钥句柄策略随后
    独立到 `hisi-keystore`，不塞进 NVS 或 TLS backend。
+
+#### A4 extraction gates
+
+- 在 A2/A3 完成前不启动 `hisi-rf` 大规模迁移；现有 `ws63-rf-rs` 继续承载已经验证的
+  init/scan/connect/ping，架构整洁不能中断 connectivity baseline。
+- 第一条 A4 vertical slice 必须同时交付 `RadioController`、`RadioParts`、可运行的
+  `RadioRunner`、Wi-Fi controller/device 分离和一个 bounded event queue；禁止只创建
+  facade/空 trait 后长期双轨维护。
+- 每次迁移必须在同一真机镜像复现 A0 marker 和 Rust-visible L2 ping；完成 parity 后
+  才迁下一平面。兼容 facade 保留一个 release，并明确弃用窗口。
+- `hisi-rf-link` 继续唯一拥有 radio relocation/layout；`hisi-fwpkg` 继续唯一拥有
+  header/hash/body/image semantics。任何 backend 或私有 blob 分发都不得复制这两类事实。
 
 #### A1 progress
 
@@ -350,6 +391,23 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   backend 不得把每次随机读取直接映射为同步 TRNG 调用。
 - [ ] 每个新增硬件 hash/MAC/AES/AEAD 能力必须同时具备标准向量、错误注入、timeout、
   独占冲突和真机 HIL；只有语义严格匹配时才提供对应 RustCrypto trait adapter。
+
+#### A2 progress
+
+- [x] `hisi-storage 0.1.0-alpha.1` 已作为独立 repository/release unit 发布，稳定候选面
+  仅包含 bounded memory-mapped/read-only `embedded-storage` contract；erase/write 未暴露。
+- [x] `hisi-nvs 0.1.0-alpha.1` 已建立独立 repository、tag 和 green CI；ACPU KV reader
+  覆盖 page complement、duplicate sequence、record bounds/state/encryption length、CRC 与
+  integrity-before-buffer-size，共 9/9 host tests。
+- [x] RF 已删除内联 NVS format/constants/parser，`uapi_nv_read` 仅保留 vendor C ABI 与
+  RF key IDs，通过 `NvReader<MemoryMappedStorage>` 读取。
+- [x] `__nv_storage_*` 已从 `hisi-riscv-rt` 移到芯片专属
+  `ws63-radio-sys/linker/ws63-nvs.x`；guarded link 的 1,486 section、5,335 relocation、
+  37 ROM patch 不变，迁移前后 planned image 逐字节一致。
+- [x] WS63 HIL 已复现 init/scan/WPA2 connect/DHCP/ARP/ping；证据见
+  [A2 storage/NVS migration](evidence/ws63-rf-a2-nvs-2026-07-13.md)。
+- [ ] `hisi-nvs` crates.io publish workflow 因新仓尚未获得组织
+  `CARGO_REGISTRY_TOKEN` selected-repository access 而失败；授权并重跑后 A2 才整体完成。
 
 ### B0-B3 -- BLE Vendor Host First
 

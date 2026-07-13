@@ -51,7 +51,7 @@ remains hardware-in-the-loop because the ROM symbols are silicon addresses.
 |------|---------|-------|
 | WLAN TX/RX | `driverif_input`, blob transmit adapter | bounded Rust-visible L2 queue; DHCP, ARP and ICMP passed on silicon |
 | eFuse / TRNG / tsensor | `uapi_efuse_*`, `uapi_tsensor_get_current_temp`, … | scaffold values; a HW run needs real ones |
-| NV read | `uapi_nv_read` | read-only parser for the official WS63 ACPU KV partition; validates page headers, key state, bounds, and CRC |
+| NV read | `uapi_nv_read` | C-ABI adapter over `hisi-nvs::NvReader`; KV page/key/CRC format and errors are owned by `hisi-nvs` |
 
 ### What a full Wi-Fi link still needs (NOT radio reverse-engineering)
 
