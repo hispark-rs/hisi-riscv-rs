@@ -19,7 +19,11 @@
 use crate::alloc::{osal_kfree, osal_kmalloc};
 use core::cell::{RefCell, UnsafeCell};
 use core::ffi::c_void;
+use core::num::{NonZeroU32, NonZeroUsize};
 use critical_section::Mutex;
+use hisi_rf_rtos_driver::{
+    Error as DriverError, Runtime, SemaphoreHandle, TaskConfig, TaskId, WaitOutcome, WaitTimeout,
+};
 
 /// Max concurrent tasks (slot table; the WiFi stack uses only a few).
 const MAX_TASKS: usize = 16;
@@ -601,5 +605,93 @@ impl Semaphore {
                 st.count += 1;
             }
         });
+    }
+}
+
+// Transitional A3 backend: the runtime implementation still lives in this
+// crate, while every radio-facing task operation crosses the chip-neutral
+// hisi-rf-rtos-driver contract. The implementation moves intact to hisi-rtos
+// after this seam is covered by the existing scheduler and connectivity HIL.
+struct CooperativeRuntime;
+
+static COOPERATIVE_RUNTIME: CooperativeRuntime = CooperativeRuntime;
+
+pub fn install_driver() -> Result<(), DriverError> {
+    hisi_rf_rtos_driver::install(&COOPERATIVE_RUNTIME)
+}
+
+fn semaphore_from_handle(handle: SemaphoreHandle) -> &'static Semaphore {
+    let pointer = handle.into_raw().get() as *const Semaphore;
+    // SAFETY: this backend creates handles only from heap-allocated Semaphore
+    // objects and the driver contract requires users to stop all access before
+    // destroy.
+    unsafe { &*pointer }
+}
+
+impl Runtime for CooperativeRuntime {
+    fn spawn(
+        &self,
+        entry: hisi_rf_rtos_driver::TaskEntry,
+        arg: *mut c_void,
+        config: TaskConfig,
+    ) -> Result<TaskId, DriverError> {
+        let slot =
+            spawn(entry, arg, config.stack_size.get()).ok_or(DriverError::ResourceExhausted)?;
+        let raw = u32::try_from(slot).map_err(|_| DriverError::Runtime)?;
+        Ok(TaskId::from_raw(raw))
+    }
+
+    fn yield_now(&self) -> Result<(), DriverError> {
+        yield_now();
+        Ok(())
+    }
+
+    fn sleep_ms(&self, milliseconds: NonZeroU32) -> Result<(), DriverError> {
+        sleep_ms(milliseconds.get());
+        Ok(())
+    }
+
+    fn current_task(&self) -> Result<TaskId, DriverError> {
+        let raw = u32::try_from(current_id()).map_err(|_| DriverError::Runtime)?;
+        Ok(TaskId::from_raw(raw))
+    }
+
+    fn semaphore_create(&self, initial: u32) -> Result<SemaphoreHandle, DriverError> {
+        let count = i32::try_from(initial).map_err(|_| DriverError::Runtime)?;
+        let pointer = osal_kmalloc(core::mem::size_of::<Semaphore>()) as *mut Semaphore;
+        let raw = NonZeroUsize::new(pointer as usize).ok_or(DriverError::ResourceExhausted)?;
+        // SAFETY: the RF allocator guarantees size/alignment for Semaphore.
+        unsafe { pointer.write(Semaphore::new(count)) };
+        // SAFETY: `raw` identifies this live allocation until destroy.
+        Ok(unsafe { SemaphoreHandle::from_raw(raw) })
+    }
+
+    fn semaphore_down(
+        &self,
+        semaphore: SemaphoreHandle,
+        timeout: WaitTimeout,
+    ) -> Result<WaitOutcome, DriverError> {
+        let timeout_ms = match timeout {
+            WaitTimeout::NoWait => 0,
+            WaitTimeout::Milliseconds(value) => value.get(),
+            WaitTimeout::Forever => u32::MAX,
+        };
+        Ok(
+            if semaphore_from_handle(semaphore).down_timeout(timeout_ms) {
+                WaitOutcome::Acquired
+            } else {
+                WaitOutcome::TimedOut
+            },
+        )
+    }
+
+    fn semaphore_up(&self, semaphore: SemaphoreHandle) -> Result<(), DriverError> {
+        semaphore_from_handle(semaphore).up();
+        Ok(())
+    }
+
+    unsafe fn semaphore_destroy(&self, semaphore: SemaphoreHandle) -> Result<(), DriverError> {
+        osal_kfree(semaphore.into_raw().get() as *mut c_void);
+        Ok(())
     }
 }

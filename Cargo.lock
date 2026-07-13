@@ -699,6 +699,13 @@ name = "hisi-panic-handler"
 version = "0.1.0"
 
 [[package]]
+name = "hisi-rf-rtos-driver"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "critical-section",
+]
+
+[[package]]
 name = "hisi-riscv-rt"
 version = "0.5.3"
 dependencies = [
@@ -1631,6 +1638,7 @@ version = "0.1.0"
 dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rom-sys",
  "ws63-radio-sys",
@@ -1714,6 +1722,7 @@ dependencies = [
  "hisi-crypto-ws63",
  "hisi-hal",
  "hisi-nvs",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-storage",
  "portable-atomic",

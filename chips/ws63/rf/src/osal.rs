@@ -452,19 +452,27 @@ pub extern "C" fn osal_kthread_create(
     if handle.is_null() {
         return core::ptr::null_mut();
     }
-    match crate::sched::spawn(f, arg, stack_size) {
-        Some(slot) => {
+    let stack_size = core::num::NonZeroUsize::new(stack_size.max(1)).unwrap();
+    match hisi_rf_rtos_driver::spawn(
+        f,
+        arg,
+        hisi_rf_rtos_driver::TaskConfig {
+            stack_size,
+            priority: 0,
+        },
+    ) {
+        Ok(task) => {
             // SAFETY: `handle` owns an allocation large and aligned enough for
             // `OsalTask`; the allocation remains live for the long-lived Wi-Fi
             // worker task.
             unsafe {
                 handle.write(OsalTask {
-                    task: slot as *mut c_void,
+                    task: task.into_raw() as usize as *mut c_void,
                 });
             }
             handle.cast()
         }
-        None => {
+        Err(_) => {
             crate::alloc::osal_kfree(handle.cast());
             core::ptr::null_mut()
         }
@@ -492,18 +500,22 @@ pub extern "C" fn osal_kthread_set_priority(_thread: *mut c_void, _priority: c_i
 /// Sleep the current task for `ms` milliseconds (scheduler-backed).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_msleep(ms: u32) {
-    crate::sched::sleep_ms(ms);
+    if let Some(milliseconds) = core::num::NonZeroU32::new(ms) {
+        let _ = hisi_rf_rtos_driver::sleep_ms(milliseconds);
+    } else {
+        let _ = hisi_rf_rtos_driver::yield_now();
+    }
 }
 
 /// Current task id ("pid"/"tid") — the scheduler slot index.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_get_current_pid() -> c_int {
-    crate::sched::current_id() as c_int
+    hisi_rf_rtos_driver::current_task().map_or(-1, |task| task.into_raw() as c_int)
 }
 /// Current task id (alias of [`osal_get_current_pid`]).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_get_current_tid() -> c_int {
-    crate::sched::current_id() as c_int
+    osal_get_current_pid()
 }
 
 // Wait objects (`osal_wait { void *wait; }`, condition-variable semantics) live

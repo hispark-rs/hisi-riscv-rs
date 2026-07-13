@@ -52,3 +52,6 @@
 [submodule "crates/hisi-nvs"]
 	path = crates/hisi-nvs
 	url = https://github.com/hispark-rs/hisi-nvs.git
+[submodule "crates/hisi-rf-rtos-driver"]
+	path = crates/hisi-rf-rtos-driver
+	url = https://github.com/hispark-rs/hisi-rf-rtos-driver

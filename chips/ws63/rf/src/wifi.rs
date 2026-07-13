@@ -229,6 +229,8 @@ impl ScanResult {
 /// Error returned by the thin Wi-Fi adapter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
+    /// The selected radio runtime could not be installed or dispatched.
+    Runtime(hisi_rf_rtos_driver::Error),
     /// The single vendor Wi-Fi runtime was already claimed.
     AlreadyInitialized,
     /// `uapi_wifi_init` failed with the enclosed vendor error code.
@@ -295,6 +297,7 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
+            crate::sched::install_driver().map_err(Error::Runtime)?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()
@@ -516,6 +519,7 @@ impl<'d> Wifi<'d> {
 
         #[cfg(target_arch = "riscv32")]
         {
+            crate::sched::install_driver().map_err(Error::Runtime)?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()
