@@ -184,6 +184,123 @@ rename_wpa_libc_conflicts() {
   mv "$rewritten" "$archive"
 }
 
+rename_wpa_diag_symbols() {
+  local archive="$1/libwpa_supplicant.a"
+  local rewritten="$archive.rewritten"
+  local work
+  work="$(mktemp -d)"
+  "$LLVM_AR" t "$archive" > "$work/members.txt"
+  (
+    cd "$work"
+    "$LLVM_AR" x "$archive"
+    test -f 007-eloop_rtos.o
+    "$LLVM_OBJCOPY" \
+      --redefine-sym eloop_post_event=__ws63_vendor_eloop_post_event \
+      --redefine-sym eloop_read_event=__ws63_vendor_eloop_read_event \
+      007-eloop_rtos.o 007-eloop_rtos.o.rewritten
+    mv 007-eloop_rtos.o.rewritten 007-eloop_rtos.o
+    test -f 000-driver_soc.o
+    "$LLVM_OBJCOPY" \
+      --globalize-symbol drv_soc_driver_event_process \
+      --globalize-symbol drv_soc_driver_ap_event_process \
+      000-driver_soc.o 000-driver_soc.o.rewritten
+    mv 000-driver_soc.o.rewritten 000-driver_soc.o
+    test -f 044-events.o
+    "$LLVM_OBJCOPY" \
+      --redefine-sym wpa_supplicant_event=__ws63_vendor_wpa_supplicant_event \
+      044-events.o 044-events.o.rewritten
+    mv 044-events.o.rewritten 044-events.o
+    local members=()
+    while IFS= read -r member; do members+=("$member"); done < members.txt
+    "$LLVM_AR" rcs "$rewritten" "${members[@]}"
+  )
+  rm -rf "$work"
+  mv "$rewritten" "$archive"
+}
+
+rename_auth_diag_symbols() {
+  local dmac_archive="$1/libwifi_driver_dmac.a"
+  local dmac_rewritten="$dmac_archive.rewritten"
+  local dmac_work
+  dmac_work="$(mktemp -d)"
+  "$LLVM_AR" t "$dmac_archive" > "$dmac_work/members.txt"
+  (
+    cd "$dmac_work"
+    "$LLVM_AR" x "$dmac_archive"
+    test -f dmac_forward_main.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym dmac_tx_complete_event_handler=__ws63_diag_dmac_tx_complete_event_handler \
+      dmac_forward_main.c.obj dmac_forward_main.c.obj.rewritten
+    mv dmac_forward_main.c.obj.rewritten dmac_forward_main.c.obj
+    test -f dmac_wifi_patch.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym dmac_rx_prepare_data_patch=__ws63_vendor_dmac_rx_prepare_data_patch \
+      dmac_wifi_patch.c.obj dmac_wifi_patch.c.obj.rewritten
+    mv dmac_wifi_patch.c.obj.rewritten dmac_wifi_patch.c.obj
+    local members=()
+    while IFS= read -r member; do members+=("$member"); done < members.txt
+    "$LLVM_AR" rcs "$dmac_rewritten" "${members[@]}"
+  )
+  rm -rf "$dmac_work"
+  mv "$dmac_rewritten" "$dmac_archive"
+
+  local tcm_archive="$1/libwifi_driver_tcm.a"
+  local tcm_rewritten="$tcm_archive.rewritten"
+  local tcm_work
+  tcm_work="$(mktemp -d)"
+  "$LLVM_AR" t "$tcm_archive" > "$tcm_work/members.txt"
+  (
+    cd "$tcm_work"
+    "$LLVM_AR" x "$tcm_archive"
+    test -f wal_net.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym hmac_bridge_vap_xmit_etc=__ws63_diag_hmac_bridge_vap_xmit_etc \
+      wal_net.c.obj wal_net.c.obj.rewritten
+    mv wal_net.c.obj.rewritten wal_net.c.obj
+    test -f hmac_rx_data.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym hwal_netif_rx=__ws63_diag_hwal_netif_rx \
+      hmac_rx_data.c.obj hmac_rx_data.c.obj.rewritten
+    mv hmac_rx_data.c.obj.rewritten hmac_rx_data.c.obj
+    local members=()
+    while IFS= read -r member; do members+=("$member"); done < members.txt
+    "$LLVM_AR" rcs "$tcm_rewritten" "${members[@]}"
+  )
+  rm -rf "$tcm_work"
+  mv "$tcm_rewritten" "$tcm_archive"
+
+  local archive="$1/libwifi_driver_hmac.a"
+  local rewritten="$archive.rewritten"
+  local work
+  work="$(mktemp -d)"
+  "$LLVM_AR" t "$archive" > "$work/members.txt"
+  (
+    cd "$work"
+    "$LLVM_AR" x "$archive"
+    test -f hmac_mgmt_sta.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym hmac_sta_wait_auth_seq2_rx_etc=__ws63_vendor_hmac_sta_wait_auth_seq2_rx_etc \
+      --redefine-sym hmac_sta_auth_timeout_etc=__ws63_vendor_hmac_sta_auth_timeout_etc \
+      hmac_mgmt_sta.c.obj hmac_mgmt_sta.c.obj.rewritten
+    mv hmac_mgmt_sta.c.obj.rewritten hmac_mgmt_sta.c.obj
+    test -f hmac_mgmt_classifier.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym hmac_rx_mgmt_event_adapt=__ws63_vendor_hmac_rx_mgmt_event_adapt \
+      hmac_mgmt_classifier.c.obj hmac_mgmt_classifier.c.obj.rewritten
+    mv hmac_mgmt_classifier.c.obj.rewritten hmac_mgmt_classifier.c.obj
+    test -f hmac_mgmt_bss_comm.c.obj
+    "$LLVM_OBJCOPY" \
+      --redefine-sym hmac_tx_mgmt_send_event_etc=__ws63_vendor_hmac_tx_mgmt_send_event_etc \
+      hmac_mgmt_bss_comm.c.obj hmac_mgmt_bss_comm.c.obj.rewritten
+    mv hmac_mgmt_bss_comm.c.obj.rewritten hmac_mgmt_bss_comm.c.obj
+    local members=()
+    while IFS= read -r member; do members+=("$member"); done < members.txt
+    "$LLVM_AR" rcs "$rewritten" "${members[@]}"
+  )
+  rm -rf "$work"
+  mv "$rewritten" "$archive"
+}
+
 prepare_rf_diag_sources() {
   rm -rf "$DIAG_SOURCE_DIR"
   mkdir -p "$DIAG_SOURCE_DIR"
@@ -200,6 +317,16 @@ prepare_rf_diag_sources() {
   esac
   case ",$FEATURES," in
     *,wpa,*) rename_wpa_libc_conflicts "$DIAG_SOURCE_DIR" ;;
+  esac
+  case ",$FEATURES," in
+    *,rf-init-diag,*|*,rf-eloop-diag,*)
+      case ",$FEATURES," in
+        *,wpa,*) rename_wpa_diag_symbols "$DIAG_SOURCE_DIR" ;;
+      esac
+      ;;
+  esac
+  case ",$FEATURES," in
+    *,rf-eloop-diag,*) rename_auth_diag_symbols "$DIAG_SOURCE_DIR" ;;
   esac
 }
 

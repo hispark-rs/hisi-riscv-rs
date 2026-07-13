@@ -41,6 +41,12 @@ wpa = ["wifi-wpa2-personal"]
 # Internal on-silicon bring-up instrumentation for the guarded full-init image.
 # Not a public radio API and not enabled by normal consumers.
 rf-init-diag = []
+# Low-disturbance in-memory WPA event-loop counters. Unlike `rf-init-diag`,
+# this does not emit synchronous UART traces from hot paths.
+rf-eloop-diag = []
+# Diagnostic-only differential: use the vendor scan RX filter while waiting
+# for Authentication seq2. This intentionally changes receive policy.
+rf-auth-scan-filter = ["rf-eloop-diag"]
 # Bring-up-only guard for the mask-ROM FRW queue. It observes the ROM-owned
 # list around IRQ dispatch without replacing or mutating that implementation.
 rf-queue-guard = []

@@ -17,7 +17,8 @@ pub extern "C" fn LOS_TaskResRecycle() {}
 /// text is enough to identify the failing vendor path without a second printf.
 #[unsafe(no_mangle)]
 pub extern "C" fn UartVprintf(fmt: *const c_char, _args: *mut c_void) -> c_int {
-    crate::log::osal_printk(fmt);
+    // SAFETY: this compatibility path forwards only the static format string.
+    unsafe { crate::log::osal_printk(fmt) };
     0
 }
 

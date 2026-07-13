@@ -197,6 +197,23 @@ pub struct ConnectionInfo {
     pub frequency_mhz: u16,
 }
 
+/// Low-disturbance state captured at the vendor WPA event callback boundary.
+#[cfg(all(
+    feature = "rf-eloop-diag",
+    feature = "wifi-wpa2-personal",
+    target_arch = "riscv32"
+))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WpaEventDiagnostic {
+    pub calls: u32,
+    pub last_kind: u8,
+    pub scan_events: u32,
+    pub scan_active_on_event: bool,
+    pub scan_done_published: bool,
+    pub vendor_scan_flag: i32,
+    pub registered_callback: usize,
+}
+
 impl ScanResult {
     const EMPTY: Self = Self {
         ssid: [0; SSID_CAPACITY],
@@ -341,7 +358,7 @@ impl<'d> WpaWifi<'d> {
         }
     }
 
-    /// Scan using the supplicant-owned event channel and copy bounded results.
+    /// Scan using the supplicant-owned completion event and copy bounded results.
     pub fn scan(&mut self, output: &mut [ScanResult], timeout_ms: u32) -> Result<usize, Error> {
         #[cfg(not(target_arch = "riscv32"))]
         {
@@ -350,16 +367,34 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
+            let started = critical_section::with(|cs| {
+                let state = SCAN_STATE.borrow(cs);
+                if state.active.get() {
+                    return false;
+                }
+                state.active.set(true);
+                state.done.set(false);
+                true
+            });
+            if !started {
+                return Err(Error::Busy);
+            }
             if unsafe { uapi_wifi_sta_scan() } != 0 {
+                finish_scan();
                 return Err(Error::StartScan(-1));
             }
             let started_at = crate::uapi::monotonic_ms();
-            while unsafe { uapi_wifi_get_scan_flag() } != 0 {
+            loop {
+                if critical_section::with(|cs| SCAN_STATE.borrow(cs).done.get()) {
+                    break;
+                }
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
+                    finish_scan();
                     return Err(Error::Timeout);
                 }
                 crate::runtime::sleep_ms(1);
             }
+            finish_scan();
             let mut vendor = [VendorWpaApInfo::zeroed(); MAX_SCAN_RESULTS];
             let mut count = MAX_SCAN_RESULTS as c_uint;
             if unsafe { uapi_wifi_get_scan_results(vendor.as_mut_ptr(), &mut count) } != 0 {
@@ -1051,6 +1086,47 @@ static CONNECTION_STATE: Mutex<ConnectionState> = Mutex::new(ConnectionState {
     outcome: Cell::new(ConnectionOutcome::Pending),
 });
 
+#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-wpa2-personal"))]
+struct WpaEventState {
+    calls: Cell<u32>,
+    last_kind: Cell<u8>,
+    scan_events: Cell<u32>,
+    scan_active_on_event: Cell<bool>,
+    scan_done_published: Cell<bool>,
+}
+
+#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-wpa2-personal"))]
+static WPA_EVENT_STATE: Mutex<WpaEventState> = Mutex::new(WpaEventState {
+    calls: Cell::new(0),
+    last_kind: Cell::new(0),
+    scan_events: Cell::new(0),
+    scan_active_on_event: Cell::new(false),
+    scan_done_published: Cell::new(false),
+});
+
+/// Returns a snapshot of the vendor WPA callback boundary.
+#[cfg(all(
+    feature = "rf-eloop-diag",
+    feature = "wifi-wpa2-personal",
+    target_arch = "riscv32"
+))]
+pub fn wpa_event_diagnostics() -> WpaEventDiagnostic {
+    critical_section::with(|cs| {
+        let state = WPA_EVENT_STATE.borrow(cs);
+        WpaEventDiagnostic {
+            calls: state.calls.get(),
+            last_kind: state.last_kind.get(),
+            scan_events: state.scan_events.get(),
+            scan_active_on_event: state.scan_active_on_event.get(),
+            scan_done_published: state.scan_done_published.get(),
+            // SAFETY: these are read-only snapshots of vendor globals with
+            // matching C scalar/pointer widths.
+            vendor_scan_flag: unsafe { g_scan_flag },
+            registered_callback: unsafe { g_wpa_event_cb },
+        }
+    })
+}
+
 #[cfg(target_arch = "riscv32")]
 fn finish_scan() {
     critical_section::with(|cs| SCAN_STATE.borrow(cs).active.set(false));
@@ -1186,6 +1262,31 @@ unsafe extern "C" fn wpa_event(event: *const VendorWpaEvent) {
     // SAFETY: the registered callback receives a live ext_wifi_event for the
     // duration of this call. tools/wifi-abi-probe.c verifies info starts at 4.
     let event = unsafe { &*event };
+    #[cfg(feature = "rf-eloop-diag")]
+    critical_section::with(|cs| {
+        let state = WPA_EVENT_STATE.borrow(cs);
+        state.calls.set(state.calls.get().saturating_add(1));
+        state.last_kind.set(event.kind);
+    });
+    if event.kind == 1 {
+        critical_section::with(|cs| {
+            let state = SCAN_STATE.borrow(cs);
+            #[cfg(feature = "rf-eloop-diag")]
+            {
+                let diagnostic = WPA_EVENT_STATE.borrow(cs);
+                diagnostic
+                    .scan_events
+                    .set(diagnostic.scan_events.get().saturating_add(1));
+                diagnostic.scan_active_on_event.set(state.active.get());
+            }
+            if state.active.get() {
+                state.done.set(true);
+                #[cfg(feature = "rf-eloop-diag")]
+                WPA_EVENT_STATE.borrow(cs).scan_done_published.set(true);
+            }
+        });
+        return;
+    }
     let outcome = match event.kind {
         2 => {
             let mut bssid = [0; 6];
@@ -1225,8 +1326,11 @@ unsafe extern "C" {
     fn uapi_wifi_sta_start(ifname: *mut c_char, length: *mut c_int) -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_scan() -> c_int;
+    #[cfg(all(feature = "wifi-wpa2-personal", feature = "rf-eloop-diag"))]
+    static g_scan_flag: c_int;
+    #[cfg(all(feature = "wifi-wpa2-personal", feature = "rf-eloop-diag"))]
+    static g_wpa_event_cb: usize;
     #[cfg(feature = "wifi-wpa2-personal")]
-    fn uapi_wifi_get_scan_flag() -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]

@@ -231,7 +231,8 @@ pub extern "C" fn clock_gettime(_clock_id: c_int, ts: *mut Timespec) -> c_int {
 /// `print_str` — emit a C string to the log sink.
 #[cfg_attr(target_arch = "riscv32", unsafe(no_mangle))]
 pub extern "C" fn print_str(s: *const c_char) {
-    crate::log::osal_printk(s);
+    // SAFETY: no conversions are supplied, so this call has no variadic values.
+    unsafe { crate::log::osal_printk(s) };
 }
 
 /// `panic` — fatal error from the blob. Emit a marker and halt (a real handler

@@ -144,28 +144,12 @@ pub extern "C" fn log_event_print4() -> c_int {
     0
 }
 
-/// Debug printf (OSAL). Emits the raw format string to the log sink.
-#[unsafe(no_mangle)]
-pub extern "C" fn osal_printk(fmt: *const c_char) -> c_int {
-    log_emit(cstr_bytes(fmt));
-    0
-}
-
-/// Bounded `snprintf_s` subset used by the vendor Wi-Fi objects.
-///
-/// The implementation consumes a real C [`core::ffi::VaList`], so arguments
-/// beyond `a7` remain ABI-correct. Supported conversions are `%s`, `%d`, `%u`,
-/// `%x`, `%%`, and integer field widths including the vendor `MACSTR` `%02x`.
-/// Unsupported conversion specifiers are copied literally without consuming
-/// an argument. Returns bytes written (excluding NUL), or `-1` after clearing
-/// the destination when the result would be truncated.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn snprintf_s(
+unsafe fn vsnprintf_subset(
     buf: *mut c_char,
     size: usize,
     count: usize,
     fmt: *const c_char,
-    mut arguments: ...
+    mut arguments: core::ffi::VaList<'_>,
 ) -> c_int {
     if buf.is_null() || size == 0 {
         return -1;
@@ -229,7 +213,7 @@ pub unsafe extern "C" fn snprintf_s(
             } else {
                 (unsafe { arguments.next_arg::<c_uint>() }, false)
             };
-            let mut value = if negative { argument } else { argument };
+            let mut value = argument;
             let radix = if specifier == b'x' { 16 } else { 10 };
             let mut digits_len = 0;
             loop {
@@ -298,6 +282,49 @@ pub unsafe extern "C" fn snprintf_s(
     output_index as c_int
 }
 
+/// Debug printf (OSAL), including its C variadic arguments.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn osal_printk(fmt: *const c_char, arguments: ...) -> c_int {
+    let mut output = [0 as c_char; 512];
+    // SAFETY: the vendor caller's format string defines the variadic ABI.
+    let written = unsafe {
+        vsnprintf_subset(
+            output.as_mut_ptr(),
+            output.len(),
+            output.len() - 1,
+            fmt,
+            arguments,
+        )
+    };
+    if written >= 0 {
+        log_emit(cstr_bytes(output.as_ptr()));
+    } else {
+        log_emit(b"[osal_printk truncated] ");
+        log_emit(cstr_bytes(fmt));
+    }
+    written
+}
+
+/// Bounded `snprintf_s` subset used by the vendor Wi-Fi objects.
+///
+/// The implementation consumes a real C [`core::ffi::VaList`], so arguments
+/// beyond `a7` remain ABI-correct. Supported conversions are `%s`, `%d`, `%u`,
+/// `%x`, `%%`, and integer field widths including the vendor `MACSTR` `%02x`.
+/// Unsupported conversion specifiers are copied literally without consuming
+/// an argument. Returns bytes written (excluding NUL), or `-1` after clearing
+/// the destination when the result would be truncated.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn snprintf_s(
+    buf: *mut c_char,
+    size: usize,
+    count: usize,
+    fmt: *const c_char,
+    arguments: ...
+) -> c_int {
+    // SAFETY: the vendor caller's format string defines the variadic ABI.
+    unsafe { vsnprintf_subset(buf, size, count, fmt, arguments) }
+}
+
 #[cfg(test)]
 mod snprintf_tests {
     use super::snprintf_s;
@@ -363,6 +390,26 @@ mod snprintf_tests {
 /// Safe memset (securec): refuses if `count > dest_max`.
 #[unsafe(no_mangle)]
 pub extern "C" fn memset_s(dest: *mut c_void, dest_max: usize, c: c_int, count: usize) -> c_int {
+    #[cfg(all(feature = "rf-eloop-diag", target_arch = "riscv32"))]
+    {
+        let caller: usize;
+        let command: usize;
+        let length: usize;
+        // SAFETY: these moves only snapshot registers. s2/s4 are callee-saved,
+        // so they still contain the vendor dispatcher's live switch operands.
+        unsafe {
+            core::arch::asm!(
+                "mv {caller}, ra",
+                "mv {command}, s2",
+                "mv {length}, s4",
+                caller = out(reg) caller,
+                command = out(reg) command,
+                length = out(reg) length,
+                options(nomem, nostack),
+            );
+        }
+        crate::eloop_diag::record_dispatch_registers(caller, command, length);
+    }
     if dest.is_null() || count > dest_max {
         return crate::OSAL_NOK;
     }

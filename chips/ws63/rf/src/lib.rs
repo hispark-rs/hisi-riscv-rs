@@ -99,6 +99,9 @@ pub mod alloc;
 mod compiler_rt;
 #[cfg(feature = "wifi-wpa2-personal")]
 mod crypto;
+#[cfg(feature = "rf-eloop-diag")]
+#[doc(hidden)]
+pub mod eloop_diag;
 pub mod error;
 pub mod frw;
 pub mod hcc;
@@ -119,7 +122,8 @@ pub mod osal_sync;
 pub mod osal_wait;
 mod pmp;
 #[cfg(feature = "rf-init-diag")]
-mod rf_init_diag;
+#[doc(hidden)]
+pub mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
 pub mod wifi;
@@ -231,13 +235,47 @@ pub fn force_link_contract() {
     keep!(log::log_event_print2 as extern "C" fn() -> c_int);
     keep!(log::log_event_print3 as extern "C" fn() -> c_int);
     keep!(log::log_event_print4 as extern "C" fn() -> c_int);
-    keep!(log::osal_printk as extern "C" fn(*const c_char) -> c_int);
+    keep!(log::osal_printk as unsafe extern "C" fn(*const c_char, ...) -> c_int);
     keep!(
         log::snprintf_s
             as unsafe extern "C" fn(*mut c_char, usize, usize, *const c_char, ...) -> c_int
     );
     keep!(log::memset_s as extern "C" fn(*mut c_void, usize, c_int, usize) -> c_int);
     keep!(log::memcpy_s as extern "C" fn(*mut c_void, usize, *const c_void, usize) -> c_int);
+
+    #[cfg(all(feature = "rf-eloop-diag", target_arch = "riscv32"))]
+    {
+        keep!(
+            eloop_diag::hmac_sta_wait_auth_seq2_rx_etc
+                as unsafe extern "C" fn(*mut c_void, *mut c_void) -> u32
+        );
+        keep!(
+            eloop_diag::hmac_sta_auth_timeout_etc
+                as unsafe extern "C" fn(*mut c_void, *mut c_void) -> u32
+        );
+        keep!(
+            eloop_diag::hmac_rx_mgmt_event_adapt
+                as unsafe extern "C" fn(*mut c_void, *mut c_void) -> i32
+        );
+        keep!(
+            eloop_diag::hmac_tx_mgmt_send_event_etc
+                as unsafe extern "C" fn(*mut c_void, *mut c_void, u16) -> u32
+        );
+        keep!(
+            eloop_diag::__ws63_diag_dmac_tx_complete_event_handler
+                as unsafe extern "C" fn(*mut c_void, *mut c_void) -> i32
+        );
+        keep!(
+            eloop_diag::dmac_rx_prepare_data_patch
+                as unsafe extern "C" fn(
+                    *mut c_void,
+                    *mut c_void,
+                    u32,
+                    *mut c_void,
+                    *mut c_void,
+                ) -> u32
+        );
+    }
 
     keep!(libc::malloc as extern "C" fn(c_ulong) -> *mut c_void);
     keep!(libc::free as extern "C" fn(*mut c_void));
