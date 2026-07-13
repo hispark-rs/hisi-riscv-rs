@@ -32,6 +32,7 @@
 #                                                 branch add-hisilicon-ws63-bs21-hil-baseline)
 #   PROBE_CHIP   probe-rs --chip value           (default WS63)
 #   PROBE_YAML   --chip-description-path YAML     (default: empty = built-in DB)
+#   PROBE_SPEED  debug transport speed in kHz    (default 2000)
 #   HISI_FWPKG   hisi-fwpkg binary               (default: `hisi-fwpkg` in PATH)
 set -euo pipefail
 
@@ -40,6 +41,7 @@ shift # remaining args ($@) are the embedded-test/libtest args, forwarded verbat
 
 PROBE_RS="${PROBE_RS:-probe-rs}"
 PROBE_CHIP="${PROBE_CHIP:-WS63}"
+PROBE_SPEED="${PROBE_SPEED:-2000}"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
 
 command -v "$HISI_FWPKG" >/dev/null 2>&1 || {
@@ -57,5 +59,5 @@ yaml_args=()
 echo "embedded-test-runner: patch-hashing $(basename "$ELF") (fills the boot-header body SHA-256 in place)" >&2
 "$HISI_FWPKG" patch-hash "$ELF"
 
-echo "embedded-test-runner: probe-rs run --chip $PROBE_CHIP $(basename "$ELF") (semihosting embedded-test harness)" >&2
-exec "$PROBE_RS" run --chip "$PROBE_CHIP" "${yaml_args[@]}" "$ELF" "$@"
+echo "embedded-test-runner: probe-rs run --chip $PROBE_CHIP --speed $PROBE_SPEED $(basename "$ELF") (semihosting embedded-test harness)" >&2
+exec "$PROBE_RS" run --chip "$PROBE_CHIP" --speed "$PROBE_SPEED" "${yaml_args[@]}" "$ELF" "$@"

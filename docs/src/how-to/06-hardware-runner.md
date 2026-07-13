@@ -10,7 +10,7 @@ cargo 调用 runner 的方式是 `<runner> <编译出的 ELF 路径> [args...]`�
 
 1. 调 `hisi-fwpkg plan <elf> --chip ws63 --image-output <elf>.hisi.img`；
 2. 从 plan JSON 读取 `base_addr`；
-3. 执行 `probe-rs download --binary-format bin --base-address <base_addr> <image>`；
+3. 执行 `probe-rs download --verify --binary-format bin --base-address <base_addr> <image>`，并完整回读校验；
 4. 触发硬件 nRST；
 5. 如果设置了 `PORT`，提前打开 UART0 抓启动输出。
 
@@ -40,10 +40,13 @@ PORT=/dev/ttyUSB0 \
 | `PROBE_RS` | probe-rs 二进制 | PATH 里的 `probe-rs` |
 | `PROBE_CHIP` | `probe-rs --chip` 值 | `WS63` |
 | `PROBE_YAML` | `--chip-description-path` yaml | 空 = 用内置数据库 |
+| `PROBE_SPEED` | 调试传输时钟，单位 kHz | `2000` |
 | `HISI_FWPKG` | hisi-fwpkg 二进制 | PATH 里的 `hisi-fwpkg` |
 | `PORT` | 复位后要抓的板子 UART0 | 空 = 不抓串口 |
 | `UART_BAUD` | 抓串口的波特率 | `115200` |
 | `MONITOR` | 抓串口的秒数 | `10` |
+
+runner 固定启用 probe-rs `--verify`。WS63 的擦除和传输性能基线、target 专属 repeated-DMI 能力边界见[probe-rs 烧录指南](04-flash-probe-rs.md#ws63-下载性能基线)。
 
 典型一条龙：
 
@@ -51,6 +54,7 @@ PORT=/dev/ttyUSB0 \
 CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh \
 PROBE_RS=/home/me/probe-rs/target/debug/probe-rs \
 PROBE_YAML=/home/me/probe-rs/targets/HiSilicon_WS63.yaml \
+PROBE_SPEED=2000 \
 PORT=/dev/ttyUSB0 UART_BAUD=115200 MONITOR=15 \
     cargo run -p uart_hello --release
 ```

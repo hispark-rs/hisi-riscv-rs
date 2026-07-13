@@ -27,6 +27,7 @@
 #   PROBE_RS_YAML chip-description YAML from the fork (REQUIRED — HiSilicon_WS63.yaml).
 #   BASE_ADDRESS  optional app-partition override; otherwise read from hisi-fwpkg plan.
 #   PROBE_RS      the probe-rs binary (default `probe-rs` in PATH).
+#   PROBE_SPEED   debug transport speed in kHz (default 2000).
 # Env (hisiflash path):
 #   PORT          serial port (exported as HISIFLASH_PORT). Auto-detected if unset.
 #   BAUD          flash baud (HISIFLASH_BAUD; hisiflash default 921600).
@@ -52,6 +53,7 @@ ARG="${1:?usage: flash.sh <program.elf|program.bin|example-name> [port]}"
 if [ "$METHOD" = "probe-rs" ]; then
     # VALIDATED path: build the canonical image, then probe-rs bin download + reset.
     PROBE_RS="${PROBE_RS:-probe-rs}"
+    PROBE_SPEED="${PROBE_SPEED:-2000}"
     CHIP="${CHIP:-WS63}"
     command -v "$PROBE_RS" >/dev/null 2>&1 || {
         echo "ERROR: '$PROBE_RS' not found — install the PATCHED fork" >&2
@@ -77,9 +79,9 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
 
-    echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS (plan=$PLAN, yaml=$PROBE_RS_YAML)"
-    "$PROBE_RS" download --chip "$CHIP" --chip-description-path "$PROBE_RS_YAML" \
-        --binary-format bin --base-address "$BASE_ADDRESS" "$IMG"
+    echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS, ${PROBE_SPEED} kHz (plan=$PLAN, yaml=$PROBE_RS_YAML)"
+    "$PROBE_RS" download --chip "$CHIP" --speed "$PROBE_SPEED" --chip-description-path "$PROBE_RS_YAML" \
+        --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMG"
     echo "==> probe-rs reset"
     exec "$PROBE_RS" reset --chip "$CHIP" --chip-description-path "$PROBE_RS_YAML"
 fi

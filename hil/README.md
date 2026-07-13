@@ -34,6 +34,7 @@ hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
 # 3a. 烧录【验证主路径】：probe-rs 只烧裸 bin image
 BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
 probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \
+    --speed 2000 --verify \
     --binary-format bin --base-address "$BASE_ADDR" blinky.img
 
 # 3b. 示例 smoke 可走 hil/flash.sh：它内部执行同样的 plan + download
@@ -79,12 +80,15 @@ FWPKG=1   hil/pack.sh blinky            # 额外产出 blinky.fwpkg（hisiflash 
 PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/flash.sh blinky
 # 等价于：
 probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \
+    --speed 2000 --verify \
     --binary-format bin --base-address 0x00230000 blinky.img
 probe-rs reset    --chip WS63 --chip-description-path HiSilicon_WS63.yaml
 ```
 
 环境变量：`PROBE_RS_YAML`（必填，fork 的芯片描述）、`CHIP`（默认 WS63）、`BASE_ADDRESS`
-（可选覆盖，传给 `hisi-fwpkg plan`）、`PROBE_RS`（二进制名）。
+（可选覆盖，传给 `hisi-fwpkg plan`）、`PROBE_RS`（二进制名）、`PROBE_SPEED`（默认 `2000` kHz）。
+脚本始终启用完整 readback verify；性能数据与 repeated-DMI 的 target capability 边界以
+[`docs/src/how-to/04-flash-probe-rs.md`](../docs/src/how-to/04-flash-probe-rs.md#ws63-下载性能基线)为唯一详细记录。
 
 ## 烧录路径 B：hisiflash YMODEM（厂商路径）
 
@@ -166,6 +170,7 @@ CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
 runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `cargo-run-hw.sh`）：
 `PROBE_RS`（probe-rs 二进制，需补丁 fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21-hil-baseline`）、
 `PROBE_CHIP`（默认 `WS63`）、`PROBE_YAML`（`--chip-description-path` 的 YAML，默认空=内置库）、
+`PROBE_SPEED`（默认 `2000`，单位 kHz）、
 `HISI_FWPKG`（默认 `hisi-fwpkg`）。runner 先 `hisi-fwpkg patch-hash <elf>`（原地补头），
 再 `probe-rs run --chip WS63 [--chip-description-path YAML] <elf> [embedded-test 参数]`。
 

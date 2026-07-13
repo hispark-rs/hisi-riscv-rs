@@ -10,6 +10,7 @@
 #   PROBE_RS     probe-rs binary                    (default: `probe-rs` in PATH)
 #   PROBE_CHIP   probe-rs --chip value              (default WS63)
 #   PROBE_YAML   --chip-description-path YAML       (default: empty = built-in DB)
+#   PROBE_SPEED  debug transport speed in kHz       (default 2000)
 #   HISI_FWPKG   hisi-fwpkg binary                  (default: `hisi-fwpkg` in PATH)
 #   PORT         board UART0 to capture             (default: none = don't capture)
 #   UART_BAUD    UART baud                          (default 115200)
@@ -20,6 +21,7 @@ ELF="${1:?cargo passes the built ELF path as \$1}"
 
 PROBE_RS="${PROBE_RS:-probe-rs}"
 PROBE_CHIP="${PROBE_CHIP:-WS63}"
+PROBE_SPEED="${PROBE_SPEED:-2000}"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
 UART_BAUD="${UART_BAUD:-115200}"
 MONITOR="${MONITOR:-10}"
@@ -50,9 +52,9 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
 
-echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS"
-"$PROBE_RS" download --chip "$PROBE_CHIP" "${yaml_args[@]}" \
-    --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"
+echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS (${PROBE_SPEED} kHz)"
+"$PROBE_RS" download --chip "$PROBE_CHIP" --speed "$PROBE_SPEED" "${yaml_args[@]}" \
+    --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"
 
 if [ -n "${PORT:-}" ]; then
     echo "run-hw: nRST + capturing $PORT @ ${UART_BAUD} for ${MONITOR}s"

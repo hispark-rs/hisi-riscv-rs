@@ -36,6 +36,7 @@ Cargo 以 `<runner> <built-test-elf> [embedded-test args...]` 调用 runner。�
 | `PROBE_RS` | `probe-rs` | probe-rs 二进制；需要 `hispark-rs/probe-rs` 的 `add-hisilicon-ws63-bs21-hil-baseline` 分支 |
 | `PROBE_CHIP` | `WS63` | probe-rs `--chip` 值 |
 | `PROBE_YAML` | 空 | `--chip-description-path` YAML；需要显式指定时填 `HiSilicon_WS63.yaml` |
+| `PROBE_SPEED` | `2000` | 调试传输时钟，单位 kHz |
 | `HISI_FWPKG` | `hisi-fwpkg` | `hisi-fwpkg` 二进制名，用于 `patch-hash` |
 
 典型启用方式：
@@ -117,6 +118,7 @@ Cargo 以 `<runner> <built-elf>` 调用，脚本执行 `hisi-fwpkg plan --image-
 | `PROBE_RS` | `probe-rs` | probe-rs 二进制名 |
 | `PROBE_CHIP` | `WS63` | probe-rs `--chip` 值 |
 | `PROBE_YAML` | 空 | `--chip-description-path` YAML |
+| `PROBE_SPEED` | `2000` | 调试传输时钟，单位 kHz |
 | `HISI_FWPKG` | `hisi-fwpkg` | hisi-fwpkg 二进制名 |
 | `PORT` | 无 | 复位后流式 UART0 的端口 |
 | `UART_BAUD` | `115200` | 流式 UART 波特 |

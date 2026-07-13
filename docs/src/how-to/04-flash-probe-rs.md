@@ -36,6 +36,8 @@ hisi-fwpkg plan \
 BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
 probe-rs download --chip WS63 \
     --chip-description-path HiSilicon_WS63.yaml \
+    --speed 2000 \
+    --verify \
     --binary-format bin \
     --base-address "$BASE_ADDR" \
     blinky.img
@@ -69,6 +71,25 @@ PROBE_RS_YAML=/path/HiSilicon_WS63.yaml hil/flash.sh blinky
 | `CHIP_KIND` | `ws63`/`bs21`，传给 `hisi-fwpkg plan` | `ws63` |
 | `BASE_ADDRESS` | 可选 app 分区覆盖值，会传给 plan | 未设则用 chip 默认 |
 | `PROBE_RS` | probe-rs 二进制 | `probe-rs` |
+| `PROBE_SPEED` | 调试传输时钟，单位 kHz | `2000` |
+
+WS63 当前默认使用 `2 MHz`。`4 MHz` 可缩短小镜像传输，但在长镜像连续传输中观察到过 DAP NoAck，因而不作为 HIL 默认值；调整速度不能替代完整校验和复位后的启动 marker。
+
+`hil/flash.sh` 和 `hil/cargo-run-hw.sh` 始终传入 `--verify`，写入后完整回读计划镜像。不要为了缩短 HIL 时间删除校验；flashboot 的 body hash 只能证明它读取的 body，不能代替主机对完整计划镜像的回读。
+
+### WS63 下载性能基线
+
+以下数据来自同一块真实 WS63、同一份 `656584` 字节 RF plan image，并保留完整回读校验：
+
+| 路径 | 三次或稳定测量 | 说明 |
+| --- | --- | --- |
+| 4 KiB sector erase、400 kHz | `202.72 / 206.20 / 201.04 s` | 约 161 次 erase 调用 |
+| 64 KiB block erase、2 MHz | `79.71 / 79.98 / 79.72 s` | 约 11 次 erase、11 次 program |
+| 上述路径 + WS63 显式 repeated-DMI batch `64` | `29.65 / 29.45 / 29.49 s` | 两个 64 KiB page buffer，完整 verify |
+
+repeated-DMI 不是所有 `ArmWithRiscv` target 的通用默认值。probe-rs 默认仍逐字写；只有 target 明确声明 `dmi_repeated_write_batch_size` 才启用，并在每批后检查 Debug Module 状态。WS63 的 `64` 是经过小 UART 镜像和大 RF 镜像重复 HIL 后的目标能力上限，不能据此改动 RP235x 或其它目标。
+
+若一次激进实验中途失败，SFC/flash 状态可能污染后续结果。此时先用官方完整 fwpkg 恢复已知基线，再重新测量；不能把污染状态下的 verify 失败归因于新 batch 值。
 
 ## embedded-test / probe-rs run 例外
 
