@@ -105,7 +105,7 @@ jobs:
       - name: Check generated ROM artifacts
         run: >-
           python3 crates/hisi-rom-sys/tools/sync-ws63-rom.py
-          --source chips/ws63/rf/ws63-RF/rom --check
+          --source crates/ws63-radio-sys/ws63-RF/rom --check
       - name: Run clippy
         run: cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 
