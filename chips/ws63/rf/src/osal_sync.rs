@@ -3,7 +3,7 @@
 //! These are part of the *deeper* C SDK OSAL the WiFi blob uses (NOT the
 //! documented `ws63-RF/port_*.h` contract). Signatures + the `{ void* }` handle
 //! structs are from fbb_ws63 `kernel/osal/include/semaphore/osal_semaphore.h`
-//! and `.../lock/osal_mutex.h`. Each wraps a heap `crate::sched::Semaphore`
+//! and `.../lock/osal_mutex.h`. Each wraps a heap driver-level `Semaphore`
 //! (a mutex is a binary semaphore initialised available).
 
 // These are C-ABI entry points: the vendor blob passes valid `osal_semaphore*`
@@ -12,9 +12,9 @@
 // change the C symbol, so allow the lint at module scope.
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-use crate::sched::Semaphore;
 use crate::{OSAL_NOK, OSAL_OK};
 use core::ffi::{c_int, c_uint, c_void};
+use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 
 /// Mirrors C `osal_semaphore { void *sem; }` (caller-provided).
 #[repr(C)]
@@ -28,7 +28,7 @@ pub struct OsalMutex {
 }
 
 /// Allocate a heap `Semaphore` with `count`; returns its address (null on OOM).
-fn new_sem(count: i32) -> *mut c_void {
+fn new_sem(count: u32) -> *mut c_void {
     let p = crate::alloc::osal_kmalloc(core::mem::size_of::<Semaphore>()) as *mut Semaphore;
     if !p.is_null() {
         // SAFETY: freshly allocated, sized + 8-aligned for Semaphore.
@@ -53,10 +53,10 @@ fn handle<'a>(h: *mut c_void) -> Option<&'a Semaphore> {
 /// Create a counting semaphore with initial count `val`.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_sem_init(sem: *mut OsalSemaphore, val: c_int) -> c_int {
-    if sem.is_null() {
+    if sem.is_null() || val < 0 {
         return OSAL_NOK;
     }
-    let h = new_sem(val);
+    let h = new_sem(val as u32);
     if h.is_null() {
         return OSAL_NOK;
     }
@@ -78,8 +78,11 @@ pub extern "C" fn osal_sem_down(sem: *mut OsalSemaphore) -> c_int {
     }
     match handle(unsafe { (*sem).sem }) {
         Some(s) => {
-            s.down();
-            OSAL_OK
+            if s.down().is_ok() {
+                OSAL_OK
+            } else {
+                OSAL_NOK
+            }
         }
         None => OSAL_NOK,
     }
@@ -93,7 +96,14 @@ pub extern "C" fn osal_sem_down_timeout(sem: *mut OsalSemaphore, timeout: c_uint
         return OSAL_NOK;
     }
     match handle(unsafe { (*sem).sem }) {
-        Some(s) if s.down_timeout(timeout) => OSAL_OK,
+        Some(s)
+            if matches!(
+                s.down_timeout(WaitTimeout::from_millis(timeout)),
+                Ok(WaitOutcome::Acquired)
+            ) =>
+        {
+            OSAL_OK
+        }
         _ => OSAL_NOK,
     }
 }
@@ -105,7 +115,7 @@ pub extern "C" fn osal_sem_up(sem: *mut OsalSemaphore) {
         return;
     }
     if let Some(s) = handle(unsafe { (*sem).sem }) {
-        s.up();
+        let _ = s.up();
     }
 }
 
@@ -117,6 +127,8 @@ pub extern "C" fn osal_sem_destroy(sem: *mut OsalSemaphore) {
     }
     let h = unsafe { (*sem).sem };
     if !h.is_null() {
+        // SAFETY: destroy requires all waiters/users to be quiesced.
+        let _ = unsafe { (&*(h as *const Semaphore)).destroy() };
         crate::alloc::osal_kfree(h);
         unsafe { (*sem).sem = core::ptr::null_mut() };
     }
@@ -146,8 +158,11 @@ pub extern "C" fn osal_mutex_lock(mutex: *mut OsalMutex) -> c_int {
     }
     match handle(unsafe { (*mutex).mutex }) {
         Some(s) => {
-            s.down();
-            OSAL_OK
+            if s.down().is_ok() {
+                OSAL_OK
+            } else {
+                OSAL_NOK
+            }
         }
         None => OSAL_NOK,
     }
@@ -161,7 +176,14 @@ pub extern "C" fn osal_mutex_lock_timeout(mutex: *mut OsalMutex, timeout: c_uint
         return OSAL_NOK;
     }
     match handle(unsafe { (*mutex).mutex }) {
-        Some(s) if s.down_timeout(timeout) => OSAL_OK,
+        Some(s)
+            if matches!(
+                s.down_timeout(WaitTimeout::from_millis(timeout)),
+                Ok(WaitOutcome::Acquired)
+            ) =>
+        {
+            OSAL_OK
+        }
         _ => OSAL_NOK,
     }
 }
@@ -173,7 +195,7 @@ pub extern "C" fn osal_mutex_unlock(mutex: *mut OsalMutex) {
         return;
     }
     if let Some(s) = handle(unsafe { (*mutex).mutex }) {
-        s.up();
+        let _ = s.up();
     }
 }
 
@@ -185,6 +207,8 @@ pub extern "C" fn osal_mutex_destroy(mutex: *mut OsalMutex) {
     }
     let h = unsafe { (*mutex).mutex };
     if !h.is_null() {
+        // SAFETY: destroy requires no mutex owner or waiter.
+        let _ = unsafe { (&*(h as *const Semaphore)).destroy() };
         crate::alloc::osal_kfree(h);
         unsafe { (*mutex).mutex = core::ptr::null_mut() };
     }

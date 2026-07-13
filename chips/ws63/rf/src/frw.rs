@@ -23,11 +23,12 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-use crate::sched::{self, Semaphore};
+use crate::sched;
 use crate::{OSAL_NOK, OSAL_OK};
 use core::cell::UnsafeCell;
 use core::ffi::{c_int, c_void};
 use critical_section as cs;
+use hisi_rf_rtos_driver::{Semaphore, WaitTimeout};
 
 /// Mirrors C `frw_msg` (16 bytes): a host↔device config/data message.
 #[repr(C)]
@@ -196,7 +197,7 @@ pub(crate) fn post(node: *mut FrwMsgNode) -> c_int {
         true
     });
     if ok {
-        EVENT.up();
+        let _ = EVENT.up();
         OSAL_OK
     } else {
         OSAL_NOK
@@ -228,7 +229,7 @@ extern "C" fn local_task_thread(_arg: *mut c_void) -> *mut c_void {
     loop {
         // Park until a message is posted OR the nearest timer is due (so timers
         // fire even with no message traffic). u32::MAX == no timer armed.
-        EVENT.down_timeout(crate::timer::next_delay_ms());
+        let _ = EVENT.down_timeout(WaitTimeout::from_millis(crate::timer::next_delay_ms()));
         if !with_state(|s| s.running) {
             break;
         }
@@ -260,7 +261,7 @@ pub(crate) fn start_worker() -> Option<usize> {
 /// Stop the worker (wakes it so it can exit). Internal.
 pub(crate) fn stop_worker() {
     with_state(|s| s.running = false);
-    EVENT.up();
+    let _ = EVENT.up();
 }
 
 /// Number of messages the worker has dispatched (diagnostic). Internal.

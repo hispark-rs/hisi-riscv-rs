@@ -8,9 +8,9 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-use crate::sched::Semaphore;
 use crate::{OSAL_NOK, OSAL_OK};
 use core::ffi::{c_char, c_int, c_uint, c_ulong, c_void};
+use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 
 // ── Message queue (bounded ring + counting semaphore) ───────────────────────
 
@@ -93,8 +93,11 @@ pub extern "C" fn osal_msg_queue_write_copy(
     });
     if ok {
         // SAFETY: q is a live handle.
-        unsafe { (*q).items.up() };
-        OSAL_OK
+        if unsafe { (*q).items.up() }.is_ok() {
+            OSAL_OK
+        } else {
+            OSAL_NOK
+        }
     } else {
         OSAL_NOK
     }
@@ -114,7 +117,10 @@ pub extern "C" fn osal_msg_queue_read_copy(
         return OSAL_NOK;
     }
     // SAFETY: q is a live handle. Block (up to `timeout`) for an item.
-    if !unsafe { (*q).items.down_timeout(timeout) } {
+    if !matches!(
+        unsafe { (*q).items.down_timeout(WaitTimeout::from_millis(timeout)) },
+        Ok(WaitOutcome::Acquired)
+    ) {
         return OSAL_NOK;
     }
     critical_section::with(|_cs| {
@@ -169,6 +175,8 @@ pub extern "C" fn osal_msg_queue_delete(queue_id: c_ulong) {
         if !ring.is_null() {
             crate::alloc::osal_kfree(ring as *mut c_void);
         }
+        // SAFETY: deletion requires all producers/consumers to be quiesced.
+        let _ = (*q).items.destroy();
     }
     crate::alloc::osal_kfree(q as *mut c_void);
 }
@@ -266,7 +274,9 @@ pub extern "C" fn osal_event_read(
         };
         // SAFETY: g is a live handle. Block until a write() signals (or the
         // deadline passes), then recheck the bits at the top of the loop.
-        unsafe { (*g).sem.down_timeout(remaining) };
+        if unsafe { (*g).sem.down_timeout(WaitTimeout::from_millis(remaining)) }.is_err() {
+            return OSAL_NOK;
+        }
     }
 }
 
@@ -282,8 +292,11 @@ pub extern "C" fn osal_event_write(event_obj: *mut OsalEvent, mask: c_uint) -> c
         e.bits |= mask;
     });
     // SAFETY: g is a live handle.
-    unsafe { (*g).sem.up() };
-    OSAL_OK
+    if unsafe { (*g).sem.up() }.is_ok() {
+        OSAL_OK
+    } else {
+        OSAL_NOK
+    }
 }
 
 /// Clear `mask` bits.
@@ -307,6 +320,8 @@ pub extern "C" fn osal_event_destroy(event_obj: *mut OsalEvent) -> c_int {
     if g.is_null() {
         return OSAL_NOK;
     }
+    // SAFETY: event destruction requires no active reader/writer.
+    let _ = unsafe { (*g).sem.destroy() };
     crate::alloc::osal_kfree(g as *mut c_void);
     if !event_obj.is_null() {
         unsafe { (*event_obj).event = core::ptr::null_mut() };

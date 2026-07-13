@@ -5,8 +5,9 @@
 //! producer/consumer pair handing off through a blocking semaphore (park/wake).
 //! Returned to the `sched_selftest` example so it can report over UART.
 
-use crate::sched::{self, Semaphore};
+use crate::sched;
 use core::ffi::c_void;
+use hisi_rf_rtos_driver::Semaphore;
 use portable_atomic::{AtomicU32, Ordering};
 
 const ROUNDS: u32 = 5;
@@ -37,7 +38,7 @@ extern "C" fn worker1(_arg: *mut c_void) -> *mut c_void {
 }
 extern "C" fn producer(_arg: *mut c_void) -> *mut c_void {
     for _ in 0..ITEMS {
-        SEM.up();
+        SEM.up().unwrap();
         sched::yield_now();
     }
     DONE.fetch_add(1, Ordering::Relaxed);
@@ -45,7 +46,7 @@ extern "C" fn producer(_arg: *mut c_void) -> *mut c_void {
 }
 extern "C" fn consumer(_arg: *mut c_void) -> *mut c_void {
     for _ in 0..ITEMS {
-        SEM.down(); // blocks until the producer up()s
+        SEM.down().unwrap(); // blocks until the producer up()s
         GOT.fetch_add(1, Ordering::Relaxed);
     }
     DONE.fetch_add(1, Ordering::Relaxed);
@@ -58,6 +59,8 @@ extern "C" fn consumer(_arg: *mut c_void) -> *mut c_void {
 /// path (one item is available, so it does not park). Internal hook.
 #[doc(hidden)]
 pub fn osal_queue_selftest() -> u32 {
+    sched::init();
+    sched::install_driver().unwrap();
     use core::ffi::{c_uint, c_ulong, c_void};
     let mut qid: c_ulong = 0;
     if crate::osal_queue::osal_msg_queue_create(core::ptr::null(), 4, &mut qid, 0, 4)
@@ -108,6 +111,7 @@ extern "C" fn frw_mock_handler(msg: *mut crate::frw::FrwMsg) {
 pub fn frw_hcc_selftest() -> [u32; 4] {
     use crate::frw::FrwMsg;
     sched::init();
+    sched::install_driver().unwrap();
     crate::hcc::register_local(Some(frw_mock_handler));
     crate::frw::start_worker();
 
@@ -211,6 +215,7 @@ pub fn timer_selftest() -> [u32; 3] {
 #[doc(hidden)]
 pub fn sched_selftest() -> [u32; 4] {
     sched::init();
+    sched::install_driver().unwrap();
     sched::spawn(worker0, core::ptr::null_mut(), 0);
     sched::spawn(worker1, core::ptr::null_mut(), 0);
     sched::spawn(producer, core::ptr::null_mut(), 0);

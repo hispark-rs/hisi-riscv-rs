@@ -13,7 +13,7 @@ name = "ws63_rf_rs"
 hisi-alloc = "0.1.0-alpha.1"
 hisi-storage = "0.1.0-alpha.1"
 hisi-nvs = "0.1.0-alpha.1"
-hisi-rf-rtos-driver = "0.1.0-alpha.1"
+hisi-rf-rtos-driver = "0.1.0-alpha.2"
 hisi-crypto = { version = "0.1.0-alpha.3", optional = true }
 hisi-crypto-ws63 = { version = "0.1.0-alpha.1", optional = true }
 ws63-radio-sys = { path = "../../../crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys", default-features = false }

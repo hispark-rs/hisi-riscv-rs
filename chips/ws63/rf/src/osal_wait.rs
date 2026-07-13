@@ -9,8 +9,8 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use crate::OSAL_OK;
-use crate::sched::Semaphore;
 use core::ffi::{c_int, c_uint, c_void};
+use hisi_rf_rtos_driver::{Semaphore, WaitTimeout};
 
 const OSAL_FAILURE: c_int = -1;
 
@@ -58,6 +58,8 @@ pub extern "C" fn osal_wait_destroy(wait: *mut OsalWait) {
     // SAFETY: valid osal_wait.
     let h = unsafe { (*wait).wait };
     if !h.is_null() {
+        // SAFETY: the vendor destroy contract requires no active waiter.
+        let _ = unsafe { (&*(h as *const Semaphore)).destroy() };
         crate::alloc::osal_kfree(h);
         unsafe { (*wait).wait = core::ptr::null_mut() };
     }
@@ -71,7 +73,7 @@ pub extern "C" fn osal_wait_wakeup(wait: *mut OsalWait) {
         return;
     }
     // SAFETY: `s` points at a live Semaphore inside the wait object.
-    unsafe { (*s).up() };
+    let _ = unsafe { (*s).up() };
 }
 
 /// Block until `func(param)` is nonzero, re-checking after each wakeup. Returns
@@ -95,7 +97,9 @@ pub extern "C" fn osal_wait_interruptible(
             return OSAL_OK; // no predicate == immediately satisfied
         }
         // SAFETY: live Semaphore; a wakeup() releases us, then we re-check.
-        unsafe { (*s).down() };
+        if unsafe { (*s).down() }.is_err() {
+            return OSAL_FAILURE;
+        }
     }
 }
 
@@ -142,7 +146,9 @@ pub extern "C" fn osal_wait_uninterruptible(
         }
         // SAFETY: live Semaphore; wakeup grants a count and the condition is
         // re-evaluated after this task is scheduled again.
-        unsafe { (*s).down() };
+        if unsafe { (*s).down() }.is_err() {
+            return OSAL_FAILURE;
+        }
     }
 }
 
@@ -235,7 +241,9 @@ pub extern "C" fn osal_wait_timeout_interruptible(
             (deadline - now).min(u32::MAX as u64) as u32
         };
         // SAFETY: live Semaphore.
-        unsafe { (*s).down_timeout(remaining) };
+        if unsafe { (*s).down_timeout(WaitTimeout::from_millis(remaining)) }.is_err() {
+            return OSAL_FAILURE;
+        }
     }
 }
 
