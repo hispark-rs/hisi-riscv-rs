@@ -16,7 +16,7 @@ set -eu
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
 repo="$(cd "$here/../../.." && pwd)"
-rf="$here/ws63-RF"
+rf="$repo/crates/ws63-radio-sys/ws63-RF"
 obj_dir="${TMPDIR:-/tmp}/ws63-rf-reloc58"
 
 sysroot="$(rustc --print sysroot)"

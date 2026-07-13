@@ -15,13 +15,20 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-RF_DIR="$ROOT/chips/ws63/rf/ws63-RF"
+RADIO_SYS_DIR="$ROOT/crates/ws63-radio-sys"
+RF_DIR="$RADIO_SYS_DIR/ws63-RF"
 ROM_SYMBOLS="$RF_DIR/rom/ws63_acore_rom.lds"
 ROM_PATCHES="$RF_DIR/rom/ws63_acore_wifi_patches.txt"
 LLVM_NM="$(find "$(rustc --print sysroot)" -name llvm-nm -type f | head -1)"
 LLVM_OBJCOPY="$(find "$(rustc --print sysroot)" -name llvm-objcopy -type f | head -1)"
 LLVM_AR="$(find "$(rustc --print sysroot)" -name llvm-ar -type f | head -1)"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
+HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
+RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
+
+cargo build --manifest-path "$RADIO_SYS_DIR/Cargo.toml" \
+  -p hisi-rf-link --target "$HOST_TRIPLE" --target-dir "$RF_LINK_TARGET"
+RF_LINK="$RF_LINK_TARGET/$HOST_TRIPLE/debug/hisi-rf-link"
 
 command -v "$HISI_FWPKG" >/dev/null 2>&1 || {
   echo "ERROR: '$HISI_FWPKG' is required to seal the post-link ELF hash" >&2
@@ -55,7 +62,13 @@ WPA_ARCHIVE=""
 case ",$FEATURES," in
   *,wpa,*)
     SDK_APP_OUT="${WS63_SDK_APP_OUT:-/Users/sanchuan/Documents/hispark/fbb_ws63/src/output/ws63/acore/ws63-liteos-app}"
-    WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-$RF_DIR/lib/libwpa_supplicant.a}"
+    WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-}"
+    test -n "$WPA_ARCHIVE" || {
+      echo "ERROR: wpa requires the explicit WPA2 profile archive" >&2
+      echo "Set WS63_WPA_ARCHIVE=/path/to/libwpa_supplicant_wpa2_personal.a" >&2
+      echo "Build it with chips/ws63/rf/tools/build-wpa2-personal.py" >&2
+      exit 1
+    }
     test -f "$WPA_ARCHIVE" || {
       echo "ERROR: WPA archive not found: $WPA_ARCHIVE" >&2
       exit 1
@@ -220,7 +233,7 @@ rm -f target/riscv32imfc-unknown-none-elf/release/deps/wifi_init_smoke-*
 prepare_rf_diag_sources
 
 echo "== neutralize RF archives for rust-lld layout pass =="
-python3 "$SCRIPT_DIR/rf-patch-reloc58-from-layout.py" \
+"$RF_LINK" patch-reloc \
   --mode neutralize \
   --out-dir "$NEUTRAL_DIR" \
   "${DIAG_LIBS[@]}"
@@ -235,7 +248,7 @@ LAYOUT_ELF="$ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 
 echo
 echo "== patch RF archives from rust-lld layout =="
-python3 "$SCRIPT_DIR/rf-patch-reloc58-from-layout.py" \
+"$RF_LINK" patch-reloc \
   --mode patch \
   --allow-missing-layout \
   --final-map "$LAYOUT_MAP" \
@@ -255,7 +268,7 @@ cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release --features "$FEA
 
 echo
 echo "== verify layout/final map =="
-if ! python3 "$SCRIPT_DIR/rf-verify-oracle-layout.py" \
+if ! "$RF_LINK" verify-layout \
   --manifest "$MANIFEST" \
   --final-map "$FINAL_MAP" \
   --final-elf "$LAYOUT_ELF"; then
@@ -267,7 +280,7 @@ fi
 
 echo
 echo "== generate mask-ROM patch table from final ELF =="
-python3 "$SCRIPT_DIR/rf-generate-rom-patch.py" \
+"$RF_LINK" generate-rom-patch \
   --elf "$LAYOUT_ELF" \
   --llvm-nm "$LLVM_NM" \
   --rom-symbols "$ROM_SYMBOLS" \

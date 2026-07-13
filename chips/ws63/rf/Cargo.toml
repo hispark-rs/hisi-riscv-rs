@@ -12,6 +12,7 @@ name = "ws63_rf_rs"
 [dependencies]
 hisi-alloc = "0.1.0-alpha.1"
 hisi-crypto = { version = "0.1.0-alpha.2", optional = true }
+ws63-radio-sys = { path = "../../../crates/ws63-radio-sys/crates/ws63-radio-sys", default-features = false }
 hisi-hal = { path = "../../../crates/hisi-hal", features = ["chip-ws63", "unstable"] }
 critical-section = "1"
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }

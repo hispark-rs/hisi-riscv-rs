@@ -7,9 +7,6 @@
 [submodule "ws63-pac"]
 	path = crates/pac/ws63-pac
 	url = https://github.com/hispark-rs/ws63-pac.git
-[submodule "ws63-RF"]
-	path = chips/ws63/rf/ws63-RF
-	url = https://github.com/hispark-rs/ws63-RF.git
 [submodule "hisi-riscv-rt"]
 	path = crates/hisi-riscv-rt
 	url = https://github.com/hispark-rs/hisi-riscv-rt.git
@@ -40,3 +37,6 @@
 [submodule "crates/hisi-crypto"]
 	path = crates/hisi-crypto
 	url = https://github.com/hispark-rs/hisi-crypto.git
+[submodule "crates/ws63-radio-sys"]
+	path = crates/ws63-radio-sys
+	url = https://github.com/hispark-rs/ws63-radio-sys.git

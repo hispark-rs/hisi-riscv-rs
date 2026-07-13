@@ -1,7 +1,7 @@
 //! `errcode_t` mapping for the public Wi-Fi API (future use).
 //!
 //! The vendor public API (`wifi_init`, `wifi_sta_scan`, `wifi_sta_connect`, …,
-//! declared in `ws63-rf-rs/ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
+//! declared in `ws63-radio-sys/ws63-RF/include/api/wifi/`) returns `errcode_t` (0 = success).
 //! NOTE: the current blob delivery exports the lower-level `uapi_wifi_init`
 //! symbol from `libwifi_driver_hmac.a`, while the public header still declares
 //! `wifi_init`. The guarded two-pass RF build can now produce the full init

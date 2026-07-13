@@ -15,7 +15,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-RF_DIR="$ROOT/chips/ws63/rf/ws63-RF"
+RADIO_SYS_DIR="$ROOT/crates/ws63-radio-sys"
+RF_DIR="$RADIO_SYS_DIR/ws63-RF"
+HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
+RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
+cargo build --manifest-path "$RADIO_SYS_DIR/Cargo.toml" \
+  -p hisi-rf-link --target "$HOST_TRIPLE" --target-dir "$RF_LINK_TARGET"
+RF_LINK="$RF_LINK_TARGET/$HOST_TRIPLE/debug/hisi-rf-link"
 
 SDK="${FBB_WS63_SDK:-$HOME/Documents/hispark/fbb_ws63/src}"
 VENDOR_BIN="$SDK/tools/bin/compiler/riscv/cc_riscv32_musl_105/cc_riscv32_musl_fp/bin"
@@ -62,7 +68,7 @@ ORACLE_ELF="$ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 rm -rf "$OUT_DIR"
 echo
 echo "== patch RF archives =="
-python3 "$SCRIPT_DIR/rf-patch-reloc58-from-oracle.py" \
+"$RF_LINK" patch-from-oracle \
   --allow-missing-map \
   --map "$MAP" \
   --oracle-elf "$ORACLE_ELF" \
@@ -81,7 +87,7 @@ cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release --features "$FEA
 
 echo
 echo "== verify oracle/final layout =="
-if ! python3 "$SCRIPT_DIR/rf-verify-oracle-layout.py" \
+if ! "$RF_LINK" verify-layout \
   --manifest "$MANIFEST" \
   --final-map "$FINAL_MAP"; then
   echo "ERROR: final rust-lld ELF layout does not match the oracle; refusing burnable output" >&2

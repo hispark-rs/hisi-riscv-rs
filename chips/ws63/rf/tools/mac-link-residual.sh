@@ -5,7 +5,7 @@
 #
 # It links, with rust-lld, the whole MAC blob set from the ws63-RF delivery
 # against this crate (ws63-rf-rs), the WS63 mask-ROM symbol table
-# (ws63-rf-rs/ws63-RF/rom/ws63_acore_rom.lds) and compiler-rt, two ways:
+# (`ws63-radio-sys/ws63-RF/rom/ws63_acore_rom.lds`) and compiler-rt, two ways:
 #
 #   (1) full-stack   : `-r --whole-archive` over EVERY blob object — proves the
 #                      whole stack links with no duplicate symbols, and prints
@@ -29,7 +29,7 @@ set -u
 
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/
 root="$(cd "$here/../../.." && pwd)"               # repo root
-rf="$here/ws63-RF"                                 # nested submodule
+rf="$root/crates/ws63-radio-sys/ws63-RF"           # owned by ws63-radio-sys
 if [ -n "${RUSTUP_TOOLCHAIN:-}" ]; then
   sysroot="$(rustc +"$RUSTUP_TOOLCHAIN" --print sysroot 2>/dev/null || rustc --print sysroot)"
 else

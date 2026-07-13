@@ -6,6 +6,7 @@ members = [
     "crates/hisi-alloc",
     "crates/hisi-crypto",
     "crates/hisi-rom-sys",
+    "crates/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
@@ -48,6 +49,7 @@ default-members = [
     "crates/hisi-alloc",
     "crates/hisi-crypto",
     "crates/hisi-rom-sys",
+    "crates/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
     "crates/hisi-riscv-rt",
     "examples/ws63/blinky",
@@ -84,6 +86,7 @@ ws63-pac = { path = "crates/pac/ws63-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
+ws63-radio-sys = { path = "crates/ws63-radio-sys/crates/ws63-radio-sys" }
 hisi-hal = { path = "crates/hisi-hal" }
 hisi-riscv-rt  = { path = "crates/hisi-riscv-rt" }
 
