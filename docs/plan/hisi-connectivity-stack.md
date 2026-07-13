@@ -305,8 +305,11 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [A1 ROM metadata migration](evidence/ws63-rf-a1-rom-sys-2026-07-13.md)。
 - [x] `hisi-crypto` 已抽为独立 repository/release unit。当前过渡 trait 覆盖
   PBKDF2/SHA/HMAC/AES/entropy，RustCrypto backend 作为软件实现与 KAT oracle。
-- [ ] WS63 unified-cipher PBKDF2/TRNG backend 和资源/timeout/error contract 仍在 RF
-  adapter，尚待抽入 `hisi-crypto-ws63`；抽取时同步把单体 provider 收窄为小能力 traits。
+- [x] WS63 unified-cipher PBKDF2/TRNG backend 已抽入独立 `hisi-crypto-ws63`；
+  `hisi-crypto 0.1.0-alpha.3` 新增小能力 traits 与显式 suite。RF 分别注入硬件
+  PBKDF2/TRNG 和软件 SHA/HMAC/AES，禁止失败后静默回退。host、guarded link、硬件
+  PBKDF2 KAT 与 WPA2/DHCP/ARP/ping 通过，证据见
+  [A1 WS63 crypto backend](evidence/ws63-rf-a1-crypto-ws63-2026-07-13.md)。
 - [x] RF 已移除对 `aes`、`hmac`、`sha1`、`sha2`、`pbkdf2` 的直接依赖；迁移后的
   guarded link 与真机 WPA2/DHCP/ARP/ping 均通过。证据见
   [A1 crypto provider migration](evidence/ws63-rf-a1-crypto-2026-07-13.md)。
@@ -316,8 +319,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   patch 工具；父仓删除重复 Python 实现。迁移后 guarded link 与 WPA2/DHCP/ARP/ping
   真机 parity 通过，证据见
   [A1 radio sys/link migration](evidence/ws63-rf-a1-radio-sys-2026-07-13.md)。
-- [ ] A1 仍待 `hisi-crypto-ws63` 和小能力 trait 迁移；在该 backend 离开 RF adapter 前，
-  不能把 A1 整体标为完成。
+- [ ] A1 代码拆分已齐；仍需把父仓 shell 的 transform archive 清单改为读取
+  `ws63-radio-sys` machine profile，并完成 `hisi-crypto-ws63` crates.io release，之后
+  才能整体标为完成。
 
 ### B0-B3 -- BLE Vendor Host First
 
