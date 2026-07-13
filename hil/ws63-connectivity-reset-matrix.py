@@ -18,7 +18,7 @@ import time
 import serial
 
 
-TERMINAL_MARKERS = (
+RUST_TERMINAL_MARKERS = (
     b"RF5C_PING_OK",
     b"RF5C_PING_TIMEOUT",
     b"RF5B_WPA_CONNECT_ERR:",
@@ -29,7 +29,7 @@ TERMINAL_MARKERS = (
     b"RFDBG_EXCEPTION",
 )
 
-TIMED_MARKERS = (
+RUST_TIMED_MARKERS = (
     b"RF1_IMAGE_OK",
     b"RF2_INIT_OK",
     b"RF3_SCAN_OK",
@@ -44,6 +44,18 @@ TIMED_MARKERS = (
 # fbb_ws63 log_def_wifi.h maps file 0x13 to hmac_sme_sta.c; line 0x44f
 # reports WLAN_AUTH_RSP2_TIMEOUT (5201) and the vendor retry count.
 AUTH_RSP2_TIMEOUT_EVENT = b"file=0x00000013 line=0x0000044f"
+OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT = b"wifi:auth fail[5201]"
+
+OFFICIAL_TERMINAL_MARKERS = (b"APP|[WIFI_STA_SAMPLE]::STA DHCP success.",)
+OFFICIAL_TIMED_MARKERS = (
+    b"APP|[WIFI_STA_SAMPLE]::wifi init succ.",
+    b"APP|[WIFI_STA_SAMPLE]::Scan start!",
+    b"APP|[WIFI_STA_SAMPLE]::Scan done!.",
+    b"APP|[WIFI_STA_SAMPLE]::Connect start.",
+    b"wifi:rx auth seq 2 alg 0 code 0",
+    b"+NOTICE:CONNECTED",
+    b"APP|[WIFI_STA_SAMPLE]::STA DHCP success.",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,6 +64,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baud", type=int, default=115_200)
     parser.add_argument("--runs", type=int, default=20)
     parser.add_argument("--timeout", type=float, default=65.0)
+    parser.add_argument("--profile", choices=("rust", "official-liteos"), default="rust")
+    parser.add_argument(
+        "--stage",
+        choices=("connect", "connectivity"),
+        default="connectivity",
+        help="stop after association or continue through the IP connectivity probe",
+    )
     parser.add_argument("--jlink", default="JLinkExe")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
@@ -79,7 +98,20 @@ def pulse_nrst(jlink: str) -> None:
         command_path.unlink(missing_ok=True)
 
 
-def classify(log: bytes) -> str:
+def classify(log: bytes, profile: str, stage: str) -> str:
+    if profile == "official-liteos":
+        if stage == "connect" and b"+NOTICE:CONNECTED" in log:
+            return "pass"
+        if b"APP|[WIFI_STA_SAMPLE]::STA DHCP success." in log:
+            return "pass"
+        if OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT in log:
+            return "auth_rsp2_timeout"
+        if b"APP|[WIFI_STA_SAMPLE]::Connect fail!." in log:
+            return "connect_error"
+        return "capture_timeout"
+
+    if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
+        return "pass"
     if b"RF5C_PING_OK" in log:
         return "pass"
     if b"RF5C_PING_TIMEOUT" in log:
@@ -99,7 +131,9 @@ def classify(log: bytes) -> str:
     return "capture_timeout"
 
 
-def capture_run(port: serial.Serial, jlink: str, timeout: float) -> tuple[bytes, dict[str, float]]:
+def capture_run(
+    port: serial.Serial, jlink: str, timeout: float, profile: str, stage: str
+) -> tuple[bytes, dict[str, float]]:
     port.reset_input_buffer()
     started = time.monotonic()
     pulse_nrst(jlink)
@@ -107,17 +141,29 @@ def capture_run(port: serial.Serial, jlink: str, timeout: float) -> tuple[bytes,
     marker_times: dict[str, float] = {}
     deadline = started + timeout
 
+    timed_markers = OFFICIAL_TIMED_MARKERS if profile == "official-liteos" else RUST_TIMED_MARKERS
+    terminal_markers = (
+        OFFICIAL_TERMINAL_MARKERS if profile == "official-liteos" else RUST_TERMINAL_MARKERS
+    )
+    if stage == "connect":
+        success_marker = (
+            b"+NOTICE:CONNECTED"
+            if profile == "official-liteos"
+            else b"RF5B_WPA_CONNECT_OK"
+        )
+        terminal_markers = (*terminal_markers, success_marker)
+
     while time.monotonic() < deadline:
         chunk = port.read(4096)
         if not chunk:
             continue
         log.extend(chunk)
         now = time.monotonic() - started
-        for marker in TIMED_MARKERS:
+        for marker in timed_markers:
             name = marker.decode()
             if name not in marker_times and marker in log:
                 marker_times[name] = round(now, 3)
-        if any(marker in log for marker in TERMINAL_MARKERS):
+        if any(marker in log for marker in terminal_markers):
             break
 
     return bytes(log), marker_times
@@ -137,15 +183,18 @@ def main() -> int:
     # observable. Keep the descriptor open across runs to avoid driver churn.
     with serial.Serial(args.port, args.baud, timeout=0.2) as port:
         for run in range(1, args.runs + 1):
-            log, marker_times = capture_run(port, args.jlink, args.timeout)
-            result = classify(log)
+            log, marker_times = capture_run(
+                port, args.jlink, args.timeout, args.profile, args.stage
+            )
+            result = classify(log, args.profile, args.stage)
             log_path = output / f"run-{run:02d}.uart.log"
             log_path.write_bytes(log)
             record = {
                 "run": run,
                 "result": result,
                 "bytes": len(log),
-                "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT),
+                "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
+                + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
                 "marker_seconds": marker_times,
                 "log": log_path.name,
             }
@@ -163,6 +212,8 @@ def main() -> int:
     summary = {
         "port": args.port,
         "baud": args.baud,
+        "profile": args.profile,
+        "stage": args.stage,
         "runs": args.runs,
         "timeout_seconds": args.timeout,
         "counts": counts,
