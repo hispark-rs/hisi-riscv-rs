@@ -485,13 +485,16 @@ pub extern "C" fn osal_kthread_create(
 /// worker threads are long-lived, so this is acceptable for the scaffold.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_destroy(_thread: *mut c_void, _stop_flag: u32) {}
-/// Prevent preemption. The scheduler is cooperative (no time-slicing yet), so a
-/// task already runs to its next yield/block — this is a no-op.
+/// Prevent scheduler-driven preemption of the current task. Calls nest.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_lock() {}
-/// Re-allow preemption (see [`osal_kthread_lock`]).
+pub extern "C" fn osal_kthread_lock() {
+    let _ = hisi_rf_rtos_driver::lock_scheduler();
+}
+/// Release one scheduler-lock nesting level.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_kthread_unlock() {}
+pub extern "C" fn osal_kthread_unlock() {
+    let _ = hisi_rf_rtos_driver::unlock_scheduler();
+}
 /// Set thread priority using LiteOS ordering (0 highest, 31 lowest).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kthread_set_priority(thread: *mut c_void, priority: c_int) -> c_int {

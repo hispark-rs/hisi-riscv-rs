@@ -129,12 +129,16 @@ pub extern "C" fn osal_adapt_kthread_create(
 /// Destroy a task (no-op — see `osal_kthread_destroy`).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_kthread_destroy(_task: *mut c_void, _stop_flag: c_uint) {}
-/// Prevent preemption (cooperative — no-op).
+/// Prevent scheduler-driven preemption through the canonical OSAL entry.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_kthread_lock() {}
-/// Re-allow preemption (cooperative — no-op).
+pub extern "C" fn osal_adapt_kthread_lock() {
+    crate::osal::osal_kthread_lock();
+}
+/// Release one scheduler-lock nesting level.
 #[unsafe(no_mangle)]
-pub extern "C" fn osal_adapt_kthread_unlock() {}
+pub extern "C" fn osal_adapt_kthread_unlock() {
+    crate::osal::osal_kthread_unlock();
+}
 /// Whether the current task should stop (never, here).
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_adapt_kthread_should_stop() -> c_int {
