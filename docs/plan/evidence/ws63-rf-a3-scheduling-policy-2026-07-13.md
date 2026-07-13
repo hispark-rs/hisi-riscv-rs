@@ -58,9 +58,11 @@ Its archive SHA-256 is
 
 ## Silicon Evidence
 
-Two association attempts reached init and scan but returned transient vendor
-authentication error `0x1451`. A third physical J-Link nRST of the unchanged
-image then produced the full parity sequence:
+Two association attempts reached init and scan but returned vendor error
+`0x1451`. The original SDK defines this as `WLAN_AUTH_RSP2_TIMEOUT` (5201): the
+station timed out waiting for IEEE 802.11 Authentication response frame 2,
+before the WPA2 four-way handshake. A third physical J-Link nRST of the
+unchanged image then produced the full parity sequence:
 
 ```text
 RF1_IMAGE_OK
@@ -75,9 +77,19 @@ RF5C_PING_OK
 The credential was injected through the build environment and is not stored in
 the repository or evidence bundle.
 
+The third success proves that the image can connect, but does not assign the
+first two failures to the AP or prove deterministic operation. Until an
+unchanged-image reset matrix, vendor baseline, scheduler/IRQ/timer trace, and
+air-side or vendor OAM evidence identify where response frame 2 is lost, this is
+classified as a **non-deterministic authentication-response timeout** and an A3
+release risk.
+
 ## Remaining A3 Gates
 
 - TIMER_INT0 + software-interrupt preemption and budget enforcement;
 - priority inheritance;
+- diagnose `WLAN_AUTH_RSP2_TIMEOUT` with at least 20 unchanged-image nRST runs,
+  compare the vendor scheduler and current policies, and add a statistical HIL
+  gate once the failure boundary is attributable;
 - FP context, nested IRQ, timeout, and scheduler stress HIL;
 - Embassy thread-mode executor and unique time-driver integration.
