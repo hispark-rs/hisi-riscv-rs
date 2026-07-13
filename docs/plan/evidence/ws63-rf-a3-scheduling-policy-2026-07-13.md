@@ -77,19 +77,33 @@ RF5C_PING_OK
 The credential was injected through the build environment and is not stored in
 the repository or evidence bundle.
 
-The third success proves that the image can connect, but does not assign the
-first two failures to the AP or prove deterministic operation. Until an
-unchanged-image reset matrix, vendor baseline, scheduler/IRQ/timer trace, and
-air-side or vendor OAM evidence identify where response frame 2 is lost, this is
-classified as a **non-deterministic authentication-response timeout** and an A3
-release risk.
+Follow-up reset matrices isolated the disturbance to synchronous vendor logging
+from RF hot paths:
+
+| Image/profile | Runs | Full pass | `WLAN_AUTH_RSP2_TIMEOUT` | Other result |
+| --- | ---: | ---: | ---: | --- |
+| Rust, synchronous vendor UART enabled | 20 | 15 | 3 | 1 connect error, 1 ping timeout |
+| Rust, synchronous vendor UART disabled | 20 | 20 | 0 | none |
+| Official LiteOS SDK oracle | 20 | 20 | 0 | none |
+
+The Rust silent-log matrix summary SHA-256 is
+`88cbc9a4d3ab927b1195b4a4e6005a204d91fa2b7ad73708199b6dde192d9033`;
+the official LiteOS summary SHA-256 is
+`d70c28d348d315f1be452eda7aee7e89d66c4fcd984e36561b9bd6e47bac2fd5`.
+All runs used an unchanged image and physical J-Link nRST between attempts.
+
+The failure was therefore not assigned to an AP transient. Blocking UART output
+from vendor RF/authentication paths perturbed the time-sensitive receive path
+enough to produce authentication-response timeouts. `rf-vendor-log` is now an
+explicit diagnostic feature and is excluded from normal connectivity images.
+The reset matrix remains the statistical HIL regression contract; reintroducing
+synchronous logging into RF hot paths is forbidden.
 
 ## Remaining A3 Gates
 
 - TIMER_INT0 + software-interrupt preemption and budget enforcement;
 - priority inheritance;
-- diagnose `WLAN_AUTH_RSP2_TIMEOUT` with at least 20 unchanged-image nRST runs,
-  compare the vendor scheduler and current policies, and add a statistical HIL
-  gate once the failure boundary is attributable;
+- keep the unchanged-image reset matrix as a statistical HIL gate for
+  `WLAN_AUTH_RSP2_TIMEOUT` and other association regressions;
 - FP context, nested IRQ, timeout, and scheduler stress HIL;
 - Embassy thread-mode executor and unique time-driver integration.

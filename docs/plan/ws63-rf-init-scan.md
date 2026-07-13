@@ -131,6 +131,10 @@ storage/NVS 与 RTOS ownership 拆分，再按
   `RF5B_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK` 和 `RF5C_PING_OK rx=0x00000004`。
   Echo Request/Reply 均经过 Rust-visible L2 path；A0 证据冻结在
   [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
+- 2026-07-13 在 WPA2-only + `hisi-rtos` 路径再次完成 DHCP、网关 ARP 与公网
+  `1.1.1.1` ICMP echo。该次诊断同时证明正式 A4 网络路径必须持久化 smoltcp/Embassy-net
+  interface：一次性 DHCP helper 返回后不会继续回答邻居 ARP；bring-up example 的有界 ARP
+  responder 只用于冻结 RF5C 数据面证据，不是正式 IP runner。
 - WPA2-Personal oracle 的独立真机记录见
   [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
 - WPA2-only supplicant 已从原厂 Ninja 编译图独立重建，并在删除 SAE/AP/EAP-TLS/WPS/WAPI

@@ -440,10 +440,12 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   迁移证据见 [A3 hisi-rtos extraction](evidence/ws63-rf-a3-hisi-rtos-2026-07-13.md)，策略
   收窄与最新真机 parity 见
   [A3 scheduling policy](evidence/ws63-rf-a3-scheduling-policy-2026-07-13.md)。
-- [ ] `0x1451` 已按原厂定义确认为 `WLAN_AUTH_RSP2_TIMEOUT`：等待 802.11
-  Authentication response frame 2 超时，发生在 WPA2 四次握手之前。相同镜像第三次
-  nRST 成功不能证明是 AP 瞬态；A3 必须完成至少 20 次 unchanged-image nRST 统计、原厂
-  LiteOS 对照、调度/IRQ/timer/event trace，并以空口或 vendor OAM 判断响应帧是否到达。
+- [x] `0x1451` 已按原厂定义确认为 `WLAN_AUTH_RSP2_TIMEOUT`，并通过 unchanged-image
+  reset matrix 完成归因：同步 vendor UART 开启时 20 次中出现 3 次该超时；关闭 RF 热路径
+  同步日志后 Rust 为 20/20、原厂 LiteOS 对照也为 20/20，均无 0x1451。该问题不是“AP
+  瞬态”；`rf-vendor-log` 仅保留为显式诊断 feature，统计型连接回归继续作为 HIL gate。
+  完整矩阵和 summary hash 见
+  [A3 scheduling policy](evidence/ws63-rf-a3-scheduling-policy-2026-07-13.md)。
 - [ ] TIMER_INT0 + software-interrupt preemption、priority inheritance、
   FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
