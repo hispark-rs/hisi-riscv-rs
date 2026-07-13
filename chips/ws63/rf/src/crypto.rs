@@ -7,94 +7,21 @@
 
 #[cfg(target_arch = "riscv32")]
 pub(crate) use hisi_crypto::CryptoError;
-use hisi_crypto::{CryptoProvider, RustCryptoProvider};
-
 #[cfg(target_arch = "riscv32")]
-pub(crate) struct Ws63CryptoProvider;
-
+use hisi_crypto::{
+    EntropySource, Pbkdf2HmacSha1, RustCryptoProvider, TryBlockCipher, TryHash, TryMac,
+};
 #[cfg(target_arch = "riscv32")]
-impl CryptoProvider for Ws63CryptoProvider {
-    fn pbkdf2_hmac_sha1(
-        &self,
-        password: &[u8],
-        salt: &[u8],
-        iterations: u32,
-        output: &mut [u8; 32],
-    ) -> Result<(), CryptoError> {
-        let password_len = u32::try_from(password.len()).map_err(|_| CryptoError::InvalidLength)?;
-        let salt_len = u32::try_from(salt.len()).map_err(|_| CryptoError::InvalidLength)?;
-        let parameters = Pbkdf2Parameters {
-            hash_type: HMAC_SHA1,
-            password: password.as_ptr().cast_mut(),
-            password_len,
-            salt: salt.as_ptr().cast_mut(),
-            salt_len,
-            iterations: u16::try_from(iterations).map_err(|_| CryptoError::InvalidLength)?,
-        };
-        let result = unsafe {
-            uapi_drv_cipher_pbkdf2(&parameters, output.as_mut_ptr(), output.len() as u32)
-        };
-        if result == 0 {
-            Ok(())
-        } else {
-            Err(CryptoError::Backend(result))
-        }
-    }
+use hisi_crypto_ws63::Ws63Crypto;
 
-    fn sha1(&self, parts: &[&[u8]], output: &mut [u8; 20]) -> Result<(), CryptoError> {
-        RustCryptoProvider.sha1(parts, output)
-    }
-
-    fn sha256(&self, parts: &[&[u8]], output: &mut [u8; 32]) -> Result<(), CryptoError> {
-        RustCryptoProvider.sha256(parts, output)
-    }
-
-    fn hmac_sha1(
-        &self,
-        key: &[u8],
-        parts: &[&[u8]],
-        output: &mut [u8; 20],
-    ) -> Result<(), CryptoError> {
-        RustCryptoProvider.hmac_sha1(key, parts, output)
-    }
-
-    fn hmac_sha256(
-        &self,
-        key: &[u8],
-        parts: &[&[u8]],
-        output: &mut [u8; 32],
-    ) -> Result<(), CryptoError> {
-        RustCryptoProvider.hmac_sha256(key, parts, output)
-    }
-
-    fn aes_encrypt_block(
-        &self,
-        key: &[u8],
-        input: &[u8; 16],
-        output: &mut [u8; 16],
-    ) -> Result<(), CryptoError> {
-        RustCryptoProvider.aes_encrypt_block(key, input, output)
-    }
-
-    fn aes_decrypt_block(
-        &self,
-        key: &[u8],
-        input: &[u8; 16],
-        output: &mut [u8; 16],
-    ) -> Result<(), CryptoError> {
-        RustCryptoProvider.aes_decrypt_block(key, input, output)
-    }
-
-    fn fill_random(&self, output: &mut [u8]) -> Result<(), CryptoError> {
-        let length = u32::try_from(output.len()).map_err(|_| CryptoError::InvalidLength)?;
-        let result = unsafe { uapi_drv_cipher_trng_get_random_bytes(output.as_mut_ptr(), length) };
-        if result == 0 {
-            Ok(())
-        } else {
-            Err(CryptoError::Backend(result))
-        }
-    }
-}
+/// Explicit hardware capability selection for the vendor PBKDF2/TRNG ABI.
+#[cfg(target_arch = "riscv32")]
+pub(crate) static WS63_CRYPTO: Ws63Crypto = {
+    // SAFETY: this is the sole `Ws63Crypto` value in the firmware. The vendor
+    // security service serializes its synchronous UAPI calls; no fallback
+    // backend is selected if an operation fails.
+    unsafe { Ws63Crypto::assume_exclusive() }
+};
 
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn ws63_security_self_test() -> Result<(), CryptoError> {
@@ -119,15 +46,26 @@ pub(crate) fn ws63_security_self_test() -> Result<(), CryptoError> {
         0x2b, 0x88, 0x1d, 0xc2, 0x00, 0xc9, 0x83, 0x3d, 0xa7, 0x26, 0xe9, 0x37, 0x6c, 0x2e, 0x32,
         0xcf, 0xf7,
     ];
+    const PBKDF2_EXPECTED: [u8; 32] = [
+        0xf4, 0x2c, 0x6f, 0xc5, 0x2d, 0xf0, 0xeb, 0xef, 0x9e, 0xbb, 0x4b, 0x90, 0xb3, 0x8a, 0x5f,
+        0x90, 0x2e, 0x83, 0xfe, 0x1b, 0x13, 0x5a, 0x70, 0xe2, 0x3a, 0xed, 0x76, 0x2e, 0x97, 0x10,
+        0xa1, 0x2e,
+    ];
+
+    let mut pmk = [0; 32];
+    WS63_CRYPTO.derive_32(b"password", b"IEEE", 4096, &mut pmk)?;
+    if pmk != PBKDF2_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0103));
+    }
 
     let parts = [&b"Hi There"[..]];
     let mut sha1 = [0; 20];
-    Ws63CryptoProvider.hmac_sha1(&[0x0b; 20], &parts, &mut sha1)?;
+    TryMac::<20>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha1)?;
     if sha1 != HMAC_SHA1_EXPECTED {
         return Err(CryptoError::Backend(0xffff_0101));
     }
     let mut sha256 = [0; 32];
-    Ws63CryptoProvider.hmac_sha256(&[0x0b; 20], &parts, &mut sha256)?;
+    TryMac::<32>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha256)?;
     if sha256 != HMAC_SHA256_EXPECTED {
         return Err(CryptoError::Backend(0xffff_0102));
     }
@@ -198,9 +136,9 @@ unsafe fn aes_block(
     let output = unsafe { &mut *output.cast::<[u8; 16]>() };
     let key = &context.key[..context.key_len];
     let result = if decrypt {
-        RustCryptoProvider.aes_decrypt_block(key, input, output)
+        RustCryptoProvider.decrypt_block(key, input, output)
     } else {
-        RustCryptoProvider.aes_encrypt_block(key, input, output)
+        RustCryptoProvider.encrypt_block(key, input, output)
     };
     result.map(|()| 0).unwrap_or(-1)
 }
@@ -251,20 +189,6 @@ unsafe extern "C" fn aes_decrypt_deinit(context: *mut core::ffi::c_void) {
     if !context.is_null() {
         unsafe { os_free(context) };
     }
-}
-
-#[cfg(target_arch = "riscv32")]
-const HMAC_SHA1: u32 = 0x10f6_90a0;
-
-#[cfg(target_arch = "riscv32")]
-#[repr(C)]
-struct Pbkdf2Parameters {
-    hash_type: u32,
-    password: *mut u8,
-    password_len: u32,
-    salt: *mut u8,
-    salt_len: u32,
-    iterations: u16,
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -346,7 +270,7 @@ extern "C" fn hmac_sha1_vector(
         addresses,
         lengths,
         output,
-        |key, parts, output| Ws63CryptoProvider.hmac_sha1(key, parts, output),
+        |key, parts, output| TryMac::<20>::mac(&RustCryptoProvider, key, parts, output),
     )
 }
 
@@ -379,7 +303,7 @@ extern "C" fn hmac_sha256_vector(
         addresses,
         lengths,
         output,
-        |key, parts, output| Ws63CryptoProvider.hmac_sha256(key, parts, output),
+        |key, parts, output| TryMac::<32>::mac(&RustCryptoProvider, key, parts, output),
     )
 }
 
@@ -404,7 +328,7 @@ extern "C" fn sha1_vector(
     output: *mut u8,
 ) -> i32 {
     ffi_digest::<20>(count, addresses, lengths, output, |parts, output| {
-        Ws63CryptoProvider.sha1(parts, output)
+        TryHash::<20>::hash(&RustCryptoProvider, parts, output)
     })
 }
 
@@ -417,7 +341,7 @@ extern "C" fn sha256_vector(
     output: *mut u8,
 ) -> i32 {
     ffi_digest::<32>(count, addresses, lengths, output, |parts, output| {
-        Ws63CryptoProvider.sha256(parts, output)
+        TryHash::<32>::hash(&RustCryptoProvider, parts, output)
     })
 }
 
@@ -450,8 +374,8 @@ extern "C" fn pbkdf2_sha1(
     let password = unsafe { core::slice::from_raw_parts(password.cast(), password_len) };
     let salt = unsafe { core::slice::from_raw_parts(salt, salt_len) };
     let output = unsafe { &mut *output.cast::<[u8; 32]>() };
-    Ws63CryptoProvider
-        .pbkdf2_hmac_sha1(password, salt, iterations as u32, output)
+    WS63_CRYPTO
+        .derive_32(password, salt, iterations as u32, output)
         .map(|()| 0)
         .unwrap_or(-1)
 }
@@ -467,38 +391,24 @@ extern "C" fn crypto_get_random(output: *mut core::ffi::c_void, length: usize) -
     } else {
         unsafe { core::slice::from_raw_parts_mut(output.cast(), length) }
     };
-    Ws63CryptoProvider
-        .fill_random(output)
-        .map(|()| 0)
-        .unwrap_or(-1)
+    WS63_CRYPTO.fill_entropy(output).map(|()| 0).unwrap_or(-1)
 }
 
 #[cfg(target_arch = "riscv32")]
 unsafe extern "C" {
-    fn uapi_drv_cipher_pbkdf2(
-        parameters: *const Pbkdf2Parameters,
-        output: *mut u8,
-        output_len: u32,
-    ) -> u32;
-    fn uapi_drv_cipher_trng_get_random_bytes(output: *mut u8, length: u32) -> u32;
     fn os_zalloc(size: usize) -> *mut core::ffi::c_void;
     fn os_free(pointer: *mut core::ffi::c_void);
 }
 
-#[cfg(target_arch = "riscv32")]
-const _: () = {
-    assert!(core::mem::size_of::<Pbkdf2Parameters>() == 24);
-};
-
 #[cfg(all(test, feature = "wifi-security-rustcrypto"))]
 mod tests {
-    use super::{CryptoProvider, RustCryptoProvider};
+    use hisi_crypto::{Pbkdf2HmacSha1, RustCryptoProvider, TryMac};
 
     #[test]
     fn derives_ieee_wpa_pmk() {
         let mut output = [0; 32];
         RustCryptoProvider
-            .pbkdf2_hmac_sha1(b"password", b"IEEE", 4096, &mut output)
+            .derive_32(b"password", b"IEEE", 4096, &mut output)
             .unwrap();
         assert_eq!(
             output,
@@ -514,7 +424,7 @@ mod tests {
     fn derives_rfc6070_block_prefix() {
         let mut output = [0; 32];
         RustCryptoProvider
-            .pbkdf2_hmac_sha1(b"password", b"salt", 1, &mut output)
+            .derive_32(b"password", b"salt", 1, &mut output)
             .unwrap();
         assert_eq!(
             &output[..20],
@@ -530,12 +440,8 @@ mod tests {
         let mut sha1 = [0; 20];
         let mut sha256 = [0; 32];
         let parts = [&b"Hi There"[..4], &b"Hi There"[4..]];
-        RustCryptoProvider
-            .hmac_sha1(&[0x0b; 20], &parts, &mut sha1)
-            .unwrap();
-        RustCryptoProvider
-            .hmac_sha256(&[0x0b; 20], &parts, &mut sha256)
-            .unwrap();
+        TryMac::<20>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha1).unwrap();
+        TryMac::<32>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha256).unwrap();
         assert_eq!(
             sha1,
             [

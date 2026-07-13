@@ -422,8 +422,8 @@ impl<'d> WpaWifi<'d> {
                 .copy_from_slice(&network.ssid[..network.ssid_len as usize]);
             request.auth_mode = network.auth_mode as u8;
             let mut pmk = [0; 32];
-            hisi_crypto::CryptoProvider::pbkdf2_hmac_sha1(
-                &crate::crypto::Ws63CryptoProvider,
+            hisi_crypto::Pbkdf2HmacSha1::derive_32(
+                &crate::crypto::WS63_CRYPTO,
                 &network.key[..network.key_len as usize],
                 network.ssid(),
                 4096,

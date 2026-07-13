@@ -5,6 +5,7 @@ members = [
     "crates/pac/bs2x-pac",
     "crates/hisi-alloc",
     "crates/hisi-crypto",
+    "crates/hisi-crypto-ws63",
     "crates/hisi-rom-sys",
     "crates/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
@@ -48,6 +49,7 @@ default-members = [
     "crates/pac/ws63-pac",
     "crates/hisi-alloc",
     "crates/hisi-crypto",
+    "crates/hisi-crypto-ws63",
     "crates/hisi-rom-sys",
     "crates/ws63-radio-sys/crates/ws63-radio-sys",
     "crates/hisi-hal",
@@ -85,6 +87,7 @@ repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 ws63-pac = { path = "crates/pac/ws63-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
+hisi-crypto-ws63 = { path = "crates/hisi-crypto-ws63" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
 ws63-radio-sys = { path = "crates/ws63-radio-sys/crates/ws63-radio-sys" }
 hisi-hal = { path = "crates/hisi-hal" }
@@ -109,6 +112,7 @@ bs2x-pac = { path = "crates/pac/bs2x-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
+hisi-crypto-ws63 = { path = "crates/hisi-crypto-ws63" }
 # hisi-hal depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
 hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }
