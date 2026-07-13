@@ -106,14 +106,21 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 
 ### Crypto, Keys And TLS
 
+- `hisi-crypto` 是“芯片中立的密码能力契约 + RustCrypto 软件实现”，不是统一承包所有
+  算法、硬件和协议的 provider。模块边界固定为 `error`、`hash`、`mac`、`cipher`、
+  `aead`、`rng`、`kdf`、`signature`、`secret`、`key`、`software`；WS63 寄存器、ROM
+  UAPI、key slot 和硬件资源只进入 `hisi-crypto-ws63`。
 - `hisi-crypto` 优先直接采用生态 traits：`digest::{Digest, Update, FixedOutput, Mac}`、
-  `cipher::{KeyInit, BlockEncrypt, BlockDecrypt}`、`aead::{AeadCore, AeadInPlace}`、
-  `rand_core` 可失败 RNG、`signature::{Signer, Verifier}`，以及 `zeroize`、`subtle`、
-  `pbkdf2`、`hkdf`。只有硬件语义严格匹配时才直接实现这些 traits。
+  `cipher::{KeyInit, BlockEncrypt, BlockDecrypt}`、`aead::{AeadCore, AeadInPlace, KeyInit}`、
+  `rand_core::{TryRng, TryCryptoRng}`、`signature::{Signer, Verifier}`，以及 `zeroize`、
+  `subtle`、`pbkdf2`、`hkdf`。具体名称以锁定依赖版本为准；只有错误、阻塞和状态语义
+  严格匹配时才直接实现标准 trait。
 - 对 busy、clock、DMA/alignment、ROM UAPI、timeout、reset 等可失败能力，提供小粒度
   `TryHash`、`TryMac`、`TryBlockCipher`、`TryAeadInPlace`、`EntropySource`，不继续扩张
-  当前单体 `CryptoProvider`。协议层可定义窄的 `Wpa2Crypto`、`TlsCrypto`、
-  `VerifyCrypto` profile；具体能力由显式 `CryptoSuite<H, M, A, R>` 组合。
+  当前单体 `CryptoProvider`。标准 trait 无法表达硬件失败时，不允许用 panic、无限等待或
+  隐式状态掩盖错误；可在能力语义严格匹配后，从 `Try*` contract 提供标准 trait adapter。
+- 协议层可定义窄的 `Wpa2Crypto`、`TlsCrypto`、`VerifyCrypto` profile，只表达协议最小
+  能力集合，不取代底层通用 trait；具体 backend 由显式 `CryptoSuite<H, M, A, R>` 组合。
 - 第一阶段硬件契约是有界超时的同步 API：通过独占 token 管理引擎，不在 critical
   section 中等待，不在 IRQ/锁中调用用户逻辑。DMA/IRQ 证据成熟后再增加独立
   `AsyncTry*` 接口。
@@ -123,6 +130,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `KeyUsage` 的 `KeyHandle`/`KeyRef::Handle`，不提供读取字节的 API。
 - backend 只能在构造、feature 或资源注入时显式选择。`hisi-crypto-ws63` 操作失败后
   禁止透明切到 RustCrypto；混合 hash/AES/RNG suite 也必须由类型显式组合。
+- 推荐依赖链固定为 `protocol profile -> standard/fallible capability traits ->
+  RustCryptoBackend 或 hisi-crypto-ws63 -> ROM/cipher accelerator/TRNG`。协议 crate
+  不得越过 backend 直接调用 ROM UAPI，硬件 backend 也不得反向依赖 WPA/TLS。
 - `hisi-tls::TlsStream<T>` 对外实现 `embedded_io_async::{Read, Write}`；默认
   `hisi-tls-mbedtls`，可选 `hisi-tls-embedded`。transport 可接 `embassy-net`、
   `smoltcp` 或任意 `embedded-io-async` 流。
@@ -319,9 +329,23 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   patch 工具；父仓删除重复 Python 实现。迁移后 guarded link 与 WPA2/DHCP/ARP/ping
   真机 parity 通过，证据见
   [A1 radio sys/link migration](evidence/ws63-rf-a1-radio-sys-2026-07-13.md)。
-- [ ] A1 代码拆分已齐；仍需把父仓 shell 的 transform archive 清单改为读取
-  `ws63-radio-sys` machine profile，并完成 `hisi-crypto-ws63` crates.io release，之后
-  才能整体标为完成。
+- [x] 父仓 example/build/tool scripts 已统一读取 `ws63-radio-sys` machine profile；CI
+  drift check 禁止 operational scripts 重新维护 archive 名称、顺序或旧 payload 路径。
+- [ ] A1 代码与机器可检验边界已齐；`hisi-crypto-ws63` 仍需获得组织
+  `CRATES_IO_TOKEN` 权限并完成 crates.io release，之后才能整体标为完成。
+
+#### Crypto migration gates
+
+- [x] 通用 crate 已从“大 `CryptoProvider`”方向转为小能力 trait 与显式
+  `CryptoSuite`；旧 provider 仅作为迁移兼容面，不再增加算法。
+- [x] 当前 WS63 backend 只实现已验证的 PBKDF2/TRNG 能力；SHA/HMAC/AES 保持显式
+  RustCrypto backend，不因硬件 timeout 自动回退。
+- [ ] 为 `SecretBytes`、`KeyUsage`、`KeyHandle` 和 `KeyRef` 固化 zeroize、不可导出和用途
+  权限测试；在此之前不公开稳定硬件 key-slot API。
+- [ ] 将 raw `EntropySource` 与 DRBG 分层，补重播种、连续健康检查和故障传播测试；TLS
+  backend 不得把每次随机读取直接映射为同步 TRNG 调用。
+- [ ] 每个新增硬件 hash/MAC/AES/AEAD 能力必须同时具备标准向量、错误注入、timeout、
+  独占冲突和真机 HIL；只有语义严格匹配时才提供对应 RustCrypto trait adapter。
 
 ### B0-B3 -- BLE Vendor Host First
 
