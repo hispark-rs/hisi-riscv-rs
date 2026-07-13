@@ -45,18 +45,10 @@ FEATURES="${WS63_RF_FEATURES:-full-init}"
 LAYOUT_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$LAYOUT_MAP"
 FINAL_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
 
-LIBS=(
-  "$RF_DIR/lib/libwifi_driver_hmac.a"
-  "$RF_DIR/lib/libwifi_driver_dmac.a"
-  "$RF_DIR/lib/libwifi_driver_tcm.a"
-  "$RF_DIR/lib/libbg_common.a"
-  "$RF_DIR/lib/libwifi_alg_anti_interference.a"
-  "$RF_DIR/lib/libwifi_alg_cca_opt.a"
-  "$RF_DIR/lib/libwifi_alg_edca_opt.a"
-  "$RF_DIR/lib/libwifi_alg_temp_protect.a"
-  "$RF_DIR/lib/libwifi_alg_txbf.a"
-  "$RF_DIR/lib/libwifi_rom_data.a"
-)
+LIBS=()
+while IFS= read -r archive; do
+  LIBS+=("$archive")
+done < <("$RF_LINK" archive-paths wifi "$RF_DIR")
 WPA_ARCHIVE=""
 
 case ",$FEATURES," in
@@ -65,7 +57,7 @@ case ",$FEATURES," in
     WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-}"
     test -n "$WPA_ARCHIVE" || {
       echo "ERROR: wpa requires the explicit WPA2 profile archive" >&2
-      echo "Set WS63_WPA_ARCHIVE=/path/to/libwpa_supplicant_wpa2_personal.a" >&2
+      echo "Set WS63_WPA_ARCHIVE to the WPA archive selected by the radio profile" >&2
       echo "Build it with chips/ws63/rf/tools/build-wpa2-personal.py" >&2
       exit 1
     }
@@ -73,13 +65,9 @@ case ",$FEATURES," in
       echo "ERROR: WPA archive not found: $WPA_ARCHIVE" >&2
       exit 1
     }
-    LIBS+=(
-      "$WPA_ARCHIVE"
-      "$SDK_APP_OUT/driver/security_unified/libdrv_security_unified.a"
-      "$SDK_APP_OUT/hal/security_unified/libhal_security_unified.a"
-      "$SDK_APP_OUT/liteos/libs/libc.a"
-      "$SDK_APP_OUT/liteos/libs/libm.a"
-    )
+    while IFS= read -r archive; do
+      LIBS+=("$archive")
+    done < <("$RF_LINK" archive-paths wpa "$SDK_APP_OUT" "$WPA_ARCHIVE")
     ;;
 esac
 

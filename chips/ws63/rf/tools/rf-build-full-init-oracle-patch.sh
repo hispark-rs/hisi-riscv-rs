@@ -39,18 +39,10 @@ FINAL_MAP="${WS63_RF_FINAL_MAP:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-final.map}"
 MANIFEST="${WS63_RF_PATCH_MANIFEST:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-patched-relocs.jsonl}"
 FEATURES="${WS63_RF_FEATURES:-full-init}"
 
-LIBS=(
-  "$RF_DIR/lib/libwifi_driver_hmac.a"
-  "$RF_DIR/lib/libwifi_driver_dmac.a"
-  "$RF_DIR/lib/libwifi_driver_tcm.a"
-  "$RF_DIR/lib/libbg_common.a"
-  "$RF_DIR/lib/libwifi_alg_anti_interference.a"
-  "$RF_DIR/lib/libwifi_alg_cca_opt.a"
-  "$RF_DIR/lib/libwifi_alg_edca_opt.a"
-  "$RF_DIR/lib/libwifi_alg_temp_protect.a"
-  "$RF_DIR/lib/libwifi_alg_txbf.a"
-  "$RF_DIR/lib/libwifi_rom_data.a"
-)
+LIBS=()
+while IFS= read -r archive; do
+  LIBS+=("$archive")
+done < <("$RF_LINK" archive-paths wifi "$RF_DIR")
 
 cd "$ROOT"
 

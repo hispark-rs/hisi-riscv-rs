@@ -30,6 +30,12 @@ set -u
 here="$(cd "$(dirname "$0")/.." && pwd)"          # ws63-rf-rs/
 root="$(cd "$here/../../.." && pwd)"               # repo root
 rf="$root/crates/ws63-radio-sys/ws63-RF"           # owned by ws63-radio-sys
+radio_sys="$root/crates/ws63-radio-sys"
+host="$(rustc -vV | sed -n 's/^host: //p')"
+rf_link_target="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
+cargo build --manifest-path "$radio_sys/Cargo.toml" \
+  -p hisi-rf-link --target "$host" --target-dir "$rf_link_target"
+rf_link="$rf_link_target/$host/debug/hisi-rf-link"
 if [ -n "${RUSTUP_TOOLCHAIN:-}" ]; then
   sysroot="$(rustc +"$RUSTUP_TOOLCHAIN" --print sysroot 2>/dev/null || rustc --print sysroot)"
 else
@@ -50,13 +56,9 @@ for v in LLD NM RFRS BUILTINS; do
 done
 
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
-BLOBS=(
-  "$rf/lib/libwifi_driver_hmac.a" "$rf/lib/libwifi_driver_dmac.a"
-  "$rf/lib/libwifi_driver_tcm.a"  "$rf/lib/libbg_common.a"
-  "$rf/lib/libwifi_alg_anti_interference.a" "$rf/lib/libwifi_alg_cca_opt.a"
-  "$rf/lib/libwifi_alg_edca_opt.a" "$rf/lib/libwifi_alg_temp_protect.a"
-  "$rf/lib/libwifi_alg_txbf.a"    "$rf/lib/libwifi_rom_data.a"
-)
+BLOBS=()
+while IFS= read -r archive; do BLOBS+=("$archive"); done \
+  < <("$rf_link" archive-paths wifi "$rf")
 
 # ROM symbol names (name = addr;) and a filter for non-C-contract leftovers
 # (Rust-internal lang items that resolve when linked into a real hisi-riscv-rt binary).

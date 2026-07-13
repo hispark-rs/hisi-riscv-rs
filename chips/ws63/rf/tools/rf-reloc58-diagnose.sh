@@ -17,6 +17,15 @@ set -eu
 here="$(cd "$(dirname "$0")/.." && pwd)"
 repo="$(cd "$here/../../.." && pwd)"
 rf="$repo/crates/ws63-radio-sys/ws63-RF"
+radio_sys="$repo/crates/ws63-radio-sys"
+host="$(rustc -vV | sed -n 's/^host: //p')"
+rf_link_target="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
+cargo build --manifest-path "$radio_sys/Cargo.toml" \
+  -p hisi-rf-link --target "$host" --target-dir "$rf_link_target"
+rf_link="$rf_link_target/$host/debug/hisi-rf-link"
+blobs=()
+while IFS= read -r archive; do blobs+=("$archive"); done \
+  < <("$rf_link" archive-paths wifi "$rf")
 obj_dir="${TMPDIR:-/tmp}/ws63-rf-reloc58"
 
 sysroot="$(rustc --print sysroot)"
@@ -62,11 +71,7 @@ out="$obj_dir/vendor-final.elf"
   --defsym=__wifi_pkt_ram_begin__=0x00A00000 \
   --defsym=__wifi_pkt_ram_end__=0x00A0C000 \
   -u uapi_wifi_init \
-  "$rf/lib/libwifi_driver_hmac.a" "$rf/lib/libwifi_driver_dmac.a" \
-  "$rf/lib/libwifi_driver_tcm.a" "$rf/lib/libbg_common.a" \
-  "$rf/lib/libwifi_alg_anti_interference.a" "$rf/lib/libwifi_alg_cca_opt.a" \
-  "$rf/lib/libwifi_alg_edca_opt.a" "$rf/lib/libwifi_alg_temp_protect.a" \
-  "$rf/lib/libwifi_alg_txbf.a" "$rf/lib/libwifi_rom_data.a" \
+  "${blobs[@]}" \
   -o "$out"
 echo
 echo "Vendor final-link OK: $out"
