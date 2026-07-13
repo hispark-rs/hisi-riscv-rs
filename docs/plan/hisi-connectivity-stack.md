@@ -415,24 +415,30 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 #### A3 progress
 
-- [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.2` release unit；其 contract
+- [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.3` release unit；其 contract
   包含可失败 task/semaphore、validated stack/timeout/wait 类型和 exactly-one runtime
   注册，不依赖 WS63、RF、scheduler、allocator 或网络栈。
 - [x] 真实 vendor `osal_kthread_create`、`osal_msleep`、current-task、semaphore、mutex、
   wait/message queue 和 event-group 路径已穿过 driver contract；opaque handle 的销毁也由
   contract 显式完成，不是空 facade。
-- [x] 已建立独立 `hisi-rtos 0.1.0-alpha.1` release unit；task slots、task stacks、context
+- [x] 已建立独立 `hisi-rtos 0.1.0-alpha.2` release unit；task slots、task stacks、context
   switch 和 cooperative scheduler ownership 已从 RF crate 移出。应用显式注入 allocator、
   deallocator 和 monotonic clock resources 后启动唯一 runtime。
 - [x] scheduler 的 allocation/free 和 monotonic clock 读取已移出 critical section；临界区只
   更新 task state、ready/sleep metadata 和当前 task bookkeeping。
+- [x] task priority 已穿过 driver/OSAL contract，退出栈由另一 task 延迟回收。对抗 HIL
+  证明当前 cooperative RF backend 直接启用严格优先级会饿死初始化路径，因此默认显式保持
+  `SchedulingPolicy::Cooperative`；priority state machine 与 FIFO policy 均有 host tests，
+  但不能被描述为 preemption evidence。
 - [x] Guarded link 仍验证 1,486 section、5,335 relocation 和 37 ROM patch；WS63 HIL
   已复现 init/scan/WPA2 connect/DHCP/ARP/ping。driver contract 的首次证据见
   [A3 driver contract](evidence/ws63-rf-a3-driver-contract-2026-07-13.md)，scheduler ownership
-  迁移证据见 [A3 hisi-rtos extraction](evidence/ws63-rf-a3-hisi-rtos-2026-07-13.md)。
-- [ ] priority scheduling、TIMER_INT0 + software-interrupt preemption、deferred stack
-  reclamation、FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些
-  gate 全部通过前，A3 不得标记完成。
+  迁移证据见 [A3 hisi-rtos extraction](evidence/ws63-rf-a3-hisi-rtos-2026-07-13.md)，策略
+  收窄与最新真机 parity 见
+  [A3 scheduling policy](evidence/ws63-rf-a3-scheduling-policy-2026-07-13.md)。
+- [ ] TIMER_INT0 + software-interrupt preemption、task lock、priority inheritance、
+  FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些 gate 全部
+  通过前，A3 不得标记完成。
 
 ### B0-B3 -- BLE Vendor Host First
 
