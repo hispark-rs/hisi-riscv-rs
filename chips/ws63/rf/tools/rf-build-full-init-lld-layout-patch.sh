@@ -24,6 +24,7 @@ LLVM_NM="$(find "$(rustc --print sysroot)" -name llvm-nm -type f | head -1)"
 LLVM_OBJCOPY="$(find "$(rustc --print sysroot)" -name llvm-objcopy -type f | head -1)"
 LLVM_AR="$(find "$(rustc --print sysroot)" -name llvm-ar -type f | head -1)"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
+PYTHON="${PYTHON:-python3}"
 HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
 RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
 
@@ -68,7 +69,7 @@ case ",$FEATURES," in
       exit 1
     }
     EXPECTED_WPA_SHA="$({
-      python3 - "$TASK_PROFILE" <<'PY'
+      "$PYTHON" - "$TASK_PROFILE" <<'PY'
 import pathlib
 import sys
 import tomllib
