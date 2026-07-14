@@ -11,18 +11,20 @@ use core::num::NonZeroU32;
 use core::ptr::NonNull;
 
 use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
-use portable_atomic::{AtomicU8, Ordering};
+use portable_atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
 use ws63_radio_sys::supplicant::{
     ABI_VERSION, Context, DriverHooks, Event, Key, OsHooks, PollResult, cipher,
     hisi_wpa_context_align, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
-    hisi_wpa_driver_install, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
-    hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
+    hisi_wpa_driver_install, hisi_wpa_feed_eapol, hisi_wpa_feed_mgmt, hisi_wpa_init,
+    hisi_wpa_next_event, hisi_wpa_os_install, hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
 };
 
 static RUNNER_WAKE: Semaphore = Semaphore::new(0);
 static PORT_IDENTITY: u8 = 0;
 static DRIVER_CONTEXT: DriverContext = DriverContext::new();
 static PORT_STATE: AtomicU8 = AtomicU8::new(PORT_FREE);
+static EAPOL_PENDING: AtomicBool = AtomicBool::new(false);
+static MGMT_RX_QUEUE: MgmtRxQueue = MgmtRxQueue::new();
 
 const PORT_FREE: u8 = 0;
 const PORT_INSTALLING: u8 = 1;
@@ -34,6 +36,9 @@ const EAPOL_ETHERTYPE: [u8; 2] = [0x88, 0x8e];
 // The Personal-only vendor profile uses EAPOL_PKT_BUF_SIZE=800. Enterprise is
 // a separate future profile and must raise this bound explicitly.
 const MAX_EAPOL_PAYLOAD_LEN: usize = 800;
+const MAX_EAPOL_RX_FRAME_LEN: usize = 800;
+const MAX_MGMT_FRAME_LEN: usize = 768;
+const MGMT_RX_QUEUE_DEPTH: usize = 8;
 const IFNAME_CAPACITY: usize = 17;
 
 const IOCTL_NEW_KEY: u32 = 1;
@@ -41,7 +46,166 @@ const IOCTL_DEL_KEY: u32 = 2;
 const IOCTL_SET_KEY: u32 = 3;
 const IOCTL_SEND_MLME: u32 = 4;
 const IOCTL_SEND_EAPOL: u32 = 5;
+const IOCTL_RECEIVE_EAPOL: u32 = 6;
+const IOCTL_ENABLE_EAPOL: u32 = 7;
+const IOCTL_DISABLE_EAPOL: u32 = 8;
 const IOCTL_GET_ADDRESS: u32 = 9;
+
+const SLOT_FREE: u8 = 0;
+const SLOT_WRITING: u8 = 1;
+const SLOT_READY: u8 = 2;
+const SLOT_READING: u8 = 3;
+
+#[derive(Clone, Copy)]
+struct MgmtMeta {
+    frequency_mhz: u32,
+    rssi_dbm: i32,
+    frame_len: usize,
+}
+
+struct MgmtSlot {
+    state: AtomicU8,
+    sequence: AtomicU32,
+    meta: UnsafeCell<MgmtMeta>,
+    frame: UnsafeCell<[u8; MAX_MGMT_FRAME_LEN]>,
+}
+
+// SAFETY: ownership of both UnsafeCell values is transferred through the slot
+// state with Acquire/Release ordering. WRITING and READING are exclusive.
+unsafe impl Sync for MgmtSlot {}
+
+impl MgmtSlot {
+    const fn new() -> Self {
+        Self {
+            state: AtomicU8::new(SLOT_FREE),
+            sequence: AtomicU32::new(0),
+            meta: UnsafeCell::new(MgmtMeta {
+                frequency_mhz: 0,
+                rssi_dbm: 0,
+                frame_len: 0,
+            }),
+            frame: UnsafeCell::new([0; MAX_MGMT_FRAME_LEN]),
+        }
+    }
+}
+
+struct MgmtRxQueue {
+    next_sequence: AtomicU32,
+    dropped: AtomicU32,
+    slots: [MgmtSlot; MGMT_RX_QUEUE_DEPTH],
+}
+
+impl MgmtRxQueue {
+    const fn new() -> Self {
+        Self {
+            next_sequence: AtomicU32::new(0),
+            dropped: AtomicU32::new(0),
+            slots: [const { MgmtSlot::new() }; MGMT_RX_QUEUE_DEPTH],
+        }
+    }
+
+    fn enqueue(&self, frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -> bool {
+        if frame.is_empty() || frame.len() > MAX_MGMT_FRAME_LEN {
+            self.dropped.fetch_add(1, Ordering::Relaxed);
+            return false;
+        }
+        // Allocate ordering before claiming storage so a nested producer cannot
+        // overtake an earlier callback. Gaps from a full queue are harmless.
+        let sequence = self.next_sequence.fetch_add(1, Ordering::Relaxed);
+        for slot in &self.slots {
+            if slot
+                .state
+                .compare_exchange(SLOT_FREE, SLOT_WRITING, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
+                continue;
+            }
+            // SAFETY: WRITING gives this producer exclusive ownership. The
+            // potentially large copy intentionally happens outside a critical
+            // section; READY publishes all writes to the runner.
+            unsafe {
+                slot.meta.get().write(MgmtMeta {
+                    frequency_mhz,
+                    rssi_dbm,
+                    frame_len: frame.len(),
+                });
+                (&mut *slot.frame.get())[..frame.len()].copy_from_slice(frame);
+            }
+            slot.sequence.store(sequence, Ordering::Relaxed);
+            slot.state.store(SLOT_READY, Ordering::Release);
+            return true;
+        }
+        self.dropped.fetch_add(1, Ordering::Relaxed);
+        false
+    }
+
+    fn take_oldest(&self) -> Option<MgmtFrame<'_>> {
+        // Do not overtake a producer that already owns an earlier sequence.
+        if self
+            .slots
+            .iter()
+            .any(|slot| slot.state.load(Ordering::Acquire) == SLOT_WRITING)
+        {
+            return None;
+        }
+        let mut oldest: Option<(usize, u32)> = None;
+        for (index, slot) in self.slots.iter().enumerate() {
+            if slot.state.load(Ordering::Acquire) != SLOT_READY {
+                continue;
+            }
+            let sequence = slot.sequence.load(Ordering::Relaxed);
+            if oldest.is_none_or(|(_, current)| sequence_before(sequence, current)) {
+                oldest = Some((index, sequence));
+            }
+        }
+        let (index, _) = oldest?;
+        let slot = &self.slots[index];
+        slot.state
+            .compare_exchange(
+                SLOT_READY,
+                SLOT_READING,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
+            .ok()?;
+        Some(MgmtFrame { slot })
+    }
+
+    fn has_pending(&self) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
+    }
+}
+
+const fn sequence_before(candidate: u32, current: u32) -> bool {
+    (candidate.wrapping_sub(current) as i32) < 0
+}
+
+struct MgmtFrame<'a> {
+    slot: &'a MgmtSlot,
+}
+
+impl MgmtFrame<'_> {
+    fn meta(&self) -> MgmtMeta {
+        // SAFETY: READING gives this guard exclusive immutable access and the
+        // Acquire transition observed the producer's complete metadata.
+        unsafe { *self.slot.meta.get() }
+    }
+
+    fn bytes(&self) -> &[u8] {
+        let len = self.meta().frame_len;
+        // SAFETY: the producer validated len and published the initialized
+        // prefix before READY. This slot cannot be reused until Drop.
+        unsafe { &(&*self.slot.frame.get())[..len] }
+    }
+}
+
+impl Drop for MgmtFrame<'_> {
+    fn drop(&mut self) {
+        self.slot.state.store(SLOT_FREE, Ordering::Release);
+    }
+}
 
 const KEY_TYPE_GROUP: i32 = 0;
 const KEY_TYPE_PAIRWISE: i32 = 1;
@@ -105,6 +269,20 @@ struct TxEapol {
 }
 
 #[repr(C)]
+struct RxEapol {
+    buffer: *mut u8,
+    length: u32,
+}
+
+type EapolNotify = unsafe extern "C" fn(*mut c_void, *mut c_void);
+
+#[repr(C)]
+struct EnableEapol {
+    callback: Option<EapolNotify>,
+    context: *mut c_void,
+}
+
+#[repr(C)]
 struct MlmeData {
     frequency_mhz: u32,
     data_len: u32,
@@ -131,6 +309,8 @@ struct KeyExtension {
 #[cfg(target_pointer_width = "32")]
 const _: () = {
     assert!(core::mem::size_of::<TxEapol>() == 8);
+    assert!(core::mem::size_of::<RxEapol>() == 8);
+    assert!(core::mem::size_of::<EnableEapol>() == 8);
     assert!(core::mem::size_of::<MlmeData>() == 16);
     assert!(core::mem::size_of::<KeyExtension>() == 36);
     assert!(core::mem::offset_of!(KeyExtension, address) == 20);
@@ -169,6 +349,14 @@ pub(crate) enum NativeSupplicantError {
     CreateFailed,
     /// Upstream hostap initialization failed.
     InitializeFailed(i32),
+    /// The WS63 driver rejected EAPOL receive notification registration.
+    EnableEapolFailed(i32),
+    /// One queued management frame could not be delivered to hostap.
+    FeedMgmtFailed(i32),
+    /// One or more management frames could not fit the bounded RX queue.
+    MgmtQueueOverflow(u32),
+    /// The WS63 EAPOL receive ioctl or hostap feed rejected a frame.
+    FeedEapolFailed(i32),
     /// One event or poll result violated the versioned C ABI.
     InvalidResult,
     /// The upstream event loop reported a runtime failure.
@@ -184,6 +372,7 @@ pub(crate) enum NativeSupplicantError {
 pub(crate) struct NativeSupplicant {
     context: NonNull<Context>,
     storage: NonNull<c_void>,
+    mgmt_dropped_seen: u32,
 }
 
 #[allow(dead_code)]
@@ -217,7 +406,28 @@ impl NativeSupplicant {
             crate::alloc::osal_kfree(storage.as_ptr());
             return Err(NativeSupplicantError::InitializeFailed(initialized));
         }
-        Ok(Self { context, storage })
+        EAPOL_PENDING.store(false, Ordering::Release);
+        let mut enable = EnableEapol {
+            callback: Some(eapol_notify),
+            context: context.as_ptr().cast(),
+        };
+        let enabled = crate::wal::ioctl(
+            DRIVER_CONTEXT.ifname(),
+            IOCTL_ENABLE_EAPOL,
+            (&mut enable as *mut EnableEapol).cast(),
+        );
+        if enabled != 0 {
+            // SAFETY: context is still exclusively owned and may be destroyed
+            // after a failed transport registration.
+            unsafe { hisi_wpa_destroy(context.as_ptr()) };
+            crate::alloc::osal_kfree(storage.as_ptr());
+            return Err(NativeSupplicantError::EnableEapolFailed(enabled));
+        }
+        Ok(Self {
+            context,
+            storage,
+            mgmt_dropped_seen: MGMT_RX_QUEUE.dropped.load(Ordering::Acquire),
+        })
     }
 
     /// Advance bounded hostap work from the owning radio runner.
@@ -225,8 +435,42 @@ impl NativeSupplicant {
         &mut self,
         work_budget: NonZeroU32,
     ) -> Result<PollResult, NativeSupplicantError> {
+        let dropped = MGMT_RX_QUEUE.dropped.load(Ordering::Acquire);
+        if dropped != self.mgmt_dropped_seen {
+            let delta = dropped.wrapping_sub(self.mgmt_dropped_seen);
+            self.mgmt_dropped_seen = dropped;
+            return Err(NativeSupplicantError::MgmtQueueOverflow(delta));
+        }
+        let mut rx_work = false;
+        let mut rx_budget = work_budget.get();
+        while rx_budget != 0 {
+            let Some(frame) = MGMT_RX_QUEUE.take_oldest() else {
+                break;
+            };
+            let meta = frame.meta();
+            let bytes = frame.bytes();
+            // SAFETY: the frame guard keeps the queue slot immutable for the
+            // complete synchronous hostap event call.
+            let status = unsafe {
+                hisi_wpa_feed_mgmt(
+                    self.context.as_ptr(),
+                    meta.frequency_mhz,
+                    meta.rssi_dbm,
+                    bytes.as_ptr(),
+                    bytes.len(),
+                )
+            };
+            if status != 0 {
+                return Err(NativeSupplicantError::FeedMgmtFailed(status));
+            }
+            rx_work = true;
+            rx_budget -= 1;
+        }
+        if rx_budget != 0 && EAPOL_PENDING.swap(false, Ordering::AcqRel) {
+            rx_work |= self.drain_eapol(&mut rx_budget)?;
+        }
         // SAFETY: the unique owner serializes all context calls.
-        let result = unsafe {
+        let mut result = unsafe {
             hisi_wpa_poll(
                 self.context.as_ptr(),
                 crate::uapi::monotonic_ms(),
@@ -236,7 +480,60 @@ impl NativeSupplicant {
         if result.status != 0 {
             return Err(NativeSupplicantError::PollFailed(result.status));
         }
+        if rx_work || MGMT_RX_QUEUE.has_pending() || EAPOL_PENDING.load(Ordering::Acquire) {
+            result.work_pending = 1;
+        }
         Ok(result)
+    }
+
+    fn drain_eapol(&mut self, budget: &mut u32) -> Result<bool, NativeSupplicantError> {
+        let mut did_work = false;
+        while *budget != 0 {
+            let mut frame = [0_u8; MAX_EAPOL_RX_FRAME_LEN];
+            let mut receive = RxEapol {
+                buffer: frame.as_mut_ptr(),
+                length: frame.len() as u32,
+            };
+            let status = crate::wal::ioctl(
+                DRIVER_CONTEXT.ifname(),
+                IOCTL_RECEIVE_EAPOL,
+                (&mut receive as *mut RxEapol).cast(),
+            );
+            if status == -22 {
+                break;
+            }
+            if status != 0 {
+                return Err(NativeSupplicantError::FeedEapolFailed(status));
+            }
+            let len = receive.length as usize;
+            if len <= ETHERNET_HEADER_LEN
+                || len > frame.len()
+                || frame[12..ETHERNET_HEADER_LEN] != EAPOL_ETHERTYPE
+            {
+                return Err(NativeSupplicantError::InvalidResult);
+            }
+            let source = &frame[6..12];
+            let payload = &frame[ETHERNET_HEADER_LEN..len];
+            // SAFETY: source and payload remain live for the synchronous feed;
+            // the unique owner prevents concurrent access to the C context.
+            let fed = unsafe {
+                hisi_wpa_feed_eapol(
+                    self.context.as_ptr(),
+                    source.as_ptr(),
+                    payload.as_ptr(),
+                    payload.len(),
+                )
+            };
+            if fed != 0 {
+                return Err(NativeSupplicantError::FeedEapolFailed(fed));
+            }
+            did_work = true;
+            *budget -= 1;
+        }
+        if *budget == 0 {
+            EAPOL_PENDING.store(true, Ordering::Release);
+        }
+        Ok(did_work)
     }
 
     /// Drain one bounded event after [`Self::poll`].
@@ -268,11 +565,35 @@ const fn valid_context_layout(size: usize, alignment: usize) -> bool {
 
 impl Drop for NativeSupplicant {
     fn drop(&mut self) {
+        let _ = crate::wal::ioctl(
+            DRIVER_CONTEXT.ifname(),
+            IOCTL_DISABLE_EAPOL,
+            DRIVER_CONTEXT.ifname().as_ptr().cast_mut().cast(),
+        );
+        EAPOL_PENDING.store(false, Ordering::Release);
         // SAFETY: this value is the unique owner and destroys the C context
         // before releasing its exact backing allocation.
         unsafe { hisi_wpa_destroy(self.context.as_ptr()) };
         crate::alloc::osal_kfree(self.storage.as_ptr());
     }
+}
+
+/// Copy one transient WS63 management RX event into the runner-owned queue.
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_mgmt_rx(frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY {
+        return false;
+    }
+    let queued = MGMT_RX_QUEUE.enqueue(frequency_mhz, rssi_dbm, frame);
+    if queued {
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
+unsafe extern "C" fn eapol_notify(_: *mut c_void, _: *mut c_void) {
+    EAPOL_PENDING.store(true, Ordering::Release);
+    let _ = RUNNER_WAKE.up();
 }
 
 /// Install the native OS/eloop hooks after `hisi-rtos` has installed its RF
@@ -752,6 +1073,31 @@ mod tests {
             )
             .is_none()
         );
+    }
+
+    #[test]
+    fn management_queue_is_bounded_and_fifo() {
+        let queue = MgmtRxQueue::new();
+        for index in 0..MGMT_RX_QUEUE_DEPTH {
+            assert!(queue.enqueue(2412 + index as u32, -30, &[index as u8; 4]));
+        }
+        assert!(!queue.enqueue(5200, -40, &[0xaa; 4]));
+        assert_eq!(queue.dropped.load(Ordering::Relaxed), 1);
+        for index in 0..MGMT_RX_QUEUE_DEPTH {
+            let frame = queue.take_oldest().unwrap();
+            assert_eq!(frame.meta().frequency_mhz, 2412 + index as u32);
+            assert_eq!(frame.bytes(), &[index as u8; 4]);
+        }
+        assert!(!queue.has_pending());
+    }
+
+    #[test]
+    fn management_queue_rejects_invalid_lengths() {
+        let queue = MgmtRxQueue::new();
+        assert!(!queue.enqueue(2412, -30, &[]));
+        assert!(!queue.enqueue(2412, -30, &[0; MAX_MGMT_FRAME_LEN + 1]));
+        assert_eq!(queue.dropped.load(Ordering::Relaxed), 2);
+        assert!(queue.take_oldest().is_none());
     }
 
     #[test]

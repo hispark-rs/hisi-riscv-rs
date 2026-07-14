@@ -252,8 +252,12 @@ fn map_native_error(error: NativeSupplicantError) -> BackendError {
         NativeSupplicantError::AllocationFailed => 3,
         NativeSupplicantError::CreateFailed => 4,
         NativeSupplicantError::InitializeFailed(status) => 0x1000 | status as u32 & 0xfff,
+        NativeSupplicantError::EnableEapolFailed(status) => 0x2000 | status as u32 & 0xfff,
+        NativeSupplicantError::FeedMgmtFailed(status) => 0x3000 | status as u32 & 0xfff,
+        NativeSupplicantError::FeedEapolFailed(status) => 0x4000 | status as u32 & 0xfff,
+        NativeSupplicantError::MgmtQueueOverflow(count) => 0x6000 | count.min(0xfff),
         NativeSupplicantError::InvalidResult => 5,
-        NativeSupplicantError::PollFailed(status) => 0x2000 | status as u32 & 0xfff,
+        NativeSupplicantError::PollFailed(status) => 0x5000 | status as u32 & 0xfff,
     };
     BackendError {
         class: BackendErrorClass::Initialize,

@@ -7,10 +7,13 @@
 
 #[cfg(target_arch = "riscv32")]
 pub(crate) use hisi_crypto::CryptoError;
+#[cfg(all(
+    target_arch = "riscv32",
+    any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
+))]
+use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto::{
-    EntropySource, Pbkdf2HmacSha1, RustCryptoProvider, TryBlockCipher, TryHash, TryMac,
-};
+use hisi_crypto::{EntropySource, RustCryptoProvider, TryBlockCipher, TryHash, TryMac};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::Ws63Crypto;
 
@@ -374,10 +377,14 @@ extern "C" fn pbkdf2_sha1(
     let password = unsafe { core::slice::from_raw_parts(password.cast(), password_len) };
     let salt = unsafe { core::slice::from_raw_parts(salt, salt_len) };
     let output = unsafe { &mut *output.cast::<[u8; 32]>() };
-    WS63_CRYPTO
-        .derive_32(password, salt, iterations as u32, output)
-        .map(|()| 0)
-        .unwrap_or(-1)
+    #[cfg(feature = "wifi-wpa2-personal")]
+    let result = WS63_CRYPTO.derive_32(password, salt, iterations as u32, output);
+    // The pinned upstream profile explicitly selects the portable PBKDF2
+    // backend. It does not depend on the vendor WPA archive that owns the WS63
+    // unified-cipher PBKDF2 service initialization and exported UAPI symbol.
+    #[cfg(feature = "upstream-supplicant-port")]
+    let result = RustCryptoProvider.derive_32(password, salt, iterations as u32, output);
+    result.map(|()| 0).unwrap_or(-1)
 }
 
 #[cfg(target_arch = "riscv32")]

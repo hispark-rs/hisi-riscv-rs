@@ -28,11 +28,25 @@ const WPA_KEY_CAPACITY: usize = 64;
 #[cfg(target_arch = "riscv32")]
 const MAX_IE_LENGTH: usize = 2304;
 
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+#[repr(C)]
+struct VendorRxMgmt {
+    frame: *const u8,
+    frame_len: u32,
+    signal_mbm: i32,
+    frequency_mhz: i32,
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+const _: () = assert!(core::mem::size_of::<VendorRxMgmt>() == 16);
+
 /// Maximum number of access points retained from one scan.
 pub const MAX_SCAN_RESULTS: usize = 32;
 
 #[cfg(target_arch = "riscv32")]
 const EVENT_SCAN_DONE: c_int = 4;
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+const EVENT_RX_MGMT: c_int = 2;
 #[cfg(target_arch = "riscv32")]
 const EVENT_SCAN_RESULT: c_int = 5;
 #[cfg(target_arch = "riscv32")]
@@ -1291,6 +1305,27 @@ unsafe extern "C" fn scan_event(
     data: *mut u8,
     length: c_uint,
 ) -> c_int {
+    #[cfg(feature = "upstream-supplicant-port")]
+    if event == EVENT_RX_MGMT
+        && !data.is_null()
+        && length as usize == core::mem::size_of::<VendorRxMgmt>()
+    {
+        // SAFETY: the vendor callback owns the descriptor and frame for this
+        // call. enqueue_mgmt_rx deep-copies the complete frame before return.
+        let rx = unsafe { &*data.cast::<VendorRxMgmt>() };
+        if !rx.frame.is_null() && rx.frame_len != 0 && rx.frequency_mhz > 0 {
+            // SAFETY: the descriptor promises frame_len readable bytes for
+            // this callback. The queue copies them before this function exits.
+            let frame = unsafe { core::slice::from_raw_parts(rx.frame, rx.frame_len as usize) };
+            let _ = crate::upstream_supplicant::enqueue_mgmt_rx(
+                rx.frequency_mhz as u32,
+                rx.signal_mbm / 100,
+                frame,
+            );
+        }
+        return 0;
+    }
+
     if event == EVENT_SCAN_RESULT
         && !data.is_null()
         && length as usize == core::mem::size_of::<VendorScanResult>()
