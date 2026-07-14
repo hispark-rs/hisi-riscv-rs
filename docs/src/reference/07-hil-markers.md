@@ -14,6 +14,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 |------|------|----------|
 | `hil/embedded-test-runner.sh` | `hisi-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
+| `hil/ws63-connectivity-smoke.sh` | WS63 A4 WPA2/connectivity gate | guarded RF link + planned-bin download + J-Link nRST + UART markers |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
 | `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | hisi-fwpkg plan + probe-rs bin download，可选 UART stream |
@@ -64,6 +65,26 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 
 `blinky`（GPIO 翻转无 UART，需 LED/逻辑分析仪）与 `semihost_selftest`（需 debugger 半主机）在裸 HIL 跳过。
 总结果：全过打印 `HIL SMOKE: PASS`，否则 `HIL SMOKE: FAIL` 并 `exit 1`。
+
+## A4 connectivity marker contract
+
+`hil/ws63-connectivity-smoke.sh` 是连接性 marker 的可执行事实源。它与普通外设 smoke
+分开，因为需要受控 WPA2 AP、secret、固定派生 archive 和更长的 UART 窗口。脚本从公开
+`ws63-RF` release 下载 archive（或接受 `WS63_WPA_ARCHIVE`），先校验固定 SHA-256，再走
+guarded link、`hisi-fwpkg plan`、probe-rs bin download 和 J-Link nRST。
+
+成功必须同时出现：`RF2_INIT_OK ifname=hisi-rf`、initialized/scan-completed/connected
+三个 `A4_RADIO_EVENT`、`RF5B_WPA_CONNECT_OK`、`RF5A_DHCP_OK`、smoltcp neighbor-cache
+`RF5A_ARP_OK`、公共 ICMP 非零回复、零 RX queue drop、`A4_NET_RUNNER_STEADY` 和
+`A4_DHCP_RENEW_OK`。脚本打印 `WS63 CONNECTIVITY SMOKE: PASS` 才算通过。
+
+| 变量 | 默认 | 说明 |
+|------|------|------|
+| `PORT` | 必填 | WS63 UART0 |
+| `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
+| `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
+| `PROBE_SPEED` | `1000` | 已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败 |
+| `MONITOR` | `60` | 覆盖 connect、ping 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口 |
 
 ## 环境变量
 

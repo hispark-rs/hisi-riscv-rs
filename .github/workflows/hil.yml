@@ -27,7 +27,7 @@ on:
         options: [ws63]
         default: ws63
       example:
-        description: Single example (blank = tutorial HIL smoke suite via hil/hil-smoke.sh)
+        description: Single example; use wifi_init_smoke for the A4 connectivity gate (blank = tutorial smoke suite)
         type: string
         default: ""
   # schedule:
@@ -59,7 +59,15 @@ jobs:
           PORT: ${{ vars.HIL_PORT }}
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
-        run: bash .agents/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
+          PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
+          WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
+          WS63_WPA_ARCHIVE: ${{ vars.HIL_WPA_ARCHIVE }}
+        run: |
+          if [ "${{ github.event.inputs.example }}" = wifi_init_smoke ]; then
+            bash hil/ws63-connectivity-smoke.sh --preflight
+          else
+            bash .agents/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
+          fi
 
       - name: Check tutorial HIL contract
         run: |
@@ -72,8 +80,16 @@ jobs:
           PORT: ${{ vars.HIL_PORT }}
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
+          PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
+          PROBE_SPEED: "1000"
+          WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
+          WS63_WPA_ARCHIVE: ${{ vars.HIL_WPA_ARCHIVE }}
           HIL_CONFIRM: "1"   # deliberate hardware write (see the flash-guard hook)
         run: |
           chip="${{ github.event.inputs.chip || 'ws63' }}"
           ex="${{ github.event.inputs.example }}"
-          bash .agents/skills/hil-smoke/hil.sh "$chip" $ex
+          if [ "$ex" = wifi_init_smoke ]; then
+            bash hil/ws63-connectivity-smoke.sh
+          else
+            bash .agents/skills/hil-smoke/hil.sh "$chip" $ex
+          fi
