@@ -122,11 +122,13 @@ impl WifiBackend for Ws63WifiBackend<'_> {
             supplicant.configure(config).map_err(map_native_error)?;
             supplicant.connect().map_err(map_native_error)?;
             let started_at = crate::uapi::monotonic_ms();
+            let mut last_event_kind = 0_u8;
             loop {
                 supplicant
                     .poll(core::num::NonZeroU32::new(32).unwrap())
                     .map_err(map_native_error)?;
                 while let Some(event) = supplicant.next_event().map_err(map_native_error)? {
+                    last_event_kind = event.kind;
                     match event.kind {
                         NATIVE_EVENT_AUTHORIZED => {
                             return Ok(ConnectionInfo {
@@ -149,7 +151,12 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                     let _ = supplicant.disconnect();
                     return Err(BackendError {
                         class: BackendErrorClass::Timeout,
-                        code: 1,
+                        code: 0x8000_0000
+                            | ((last_event_kind as u32 & 0x7) << 28)
+                            | ((crate::upstream_supplicant::diagnostic_last_ioctl_status()
+                                & 0x0fff)
+                                << 16)
+                            | crate::upstream_supplicant::diagnostic_word(),
                     });
                 }
                 hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(

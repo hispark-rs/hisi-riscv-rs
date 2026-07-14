@@ -32,6 +32,15 @@ static MGMT_RX_QUEUE: MgmtRxQueue = MgmtRxQueue::new();
 static NATIVE_SCAN_ACTIVE: AtomicBool = AtomicBool::new(false);
 static SCAN_EVENT_QUEUE: ScanEventQueue = ScanEventQueue::new();
 static LINK_EVENT_QUEUE: LinkEventQueue = LinkEventQueue::new();
+static DIAG_SCAN_STARTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_SCAN_RESULTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_SCAN_DONE: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_CALLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_EVENTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_MGMT_EVENTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_EVENTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_KEY_INSTALLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_LAST_IOCTL_STATUS: AtomicU32 = AtomicU32::new(0);
 
 const PORT_FREE: u8 = 0;
 const PORT_INSTALLING: u8 = 1;
@@ -1182,6 +1191,7 @@ pub(crate) fn enqueue_mgmt_rx(frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -
     }
     let queued = MGMT_RX_QUEUE.enqueue(frequency_mhz, rssi_dbm, frame);
     if queued {
+        DIAG_MGMT_EVENTS.fetch_add(1, Ordering::Relaxed);
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1225,6 +1235,7 @@ pub(crate) fn enqueue_scan_result(
         ies,
     );
     if queued {
+        DIAG_SCAN_RESULTS.fetch_add(1, Ordering::Relaxed);
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1239,6 +1250,7 @@ pub(crate) fn enqueue_scan_done(status: i32) -> bool {
     }
     let queued = SCAN_EVENT_QUEUE.enqueue_done(status);
     if queued {
+        DIAG_SCAN_DONE.fetch_add(1, Ordering::Relaxed);
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1268,6 +1280,7 @@ pub(crate) fn enqueue_associate_result(
         response_ies,
     );
     if queued {
+        DIAG_ASSOCIATE_EVENTS.fetch_add(1, Ordering::Relaxed);
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1297,6 +1310,7 @@ pub(crate) fn enqueue_disconnect(reason: u16, ies: &[u8]) -> bool {
 }
 
 unsafe extern "C" fn eapol_notify(_: *mut c_void, _: *mut c_void) {
+    DIAG_EAPOL_EVENTS.fetch_add(1, Ordering::Relaxed);
     EAPOL_PENDING.store(true, Ordering::Release);
     let _ = RUNNER_WAKE.up();
 }
@@ -1521,6 +1535,7 @@ unsafe extern "C" fn install_key(
     let Some(mut request) = key_request(key, material.cast_mut(), material_len) else {
         return -1;
     };
+    DIAG_KEY_INSTALLS.fetch_add(1, Ordering::Relaxed);
     let install = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_NEW_KEY,
@@ -1584,11 +1599,10 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
         ssid_len: ssid_len as u32,
     };
     let mut scan = VendorScanRequest {
-        ssids: if ssid_len == 0 {
-            core::ptr::null_mut()
-        } else {
-            &mut ssid
-        },
+        // The WS63 ioctl models wildcard scan as one descriptor whose
+        // ssid_len is zero. Passing zero descriptors is rejected, even though
+        // upstream hostap uses an empty SSID to express the same wildcard.
+        ssids: &mut ssid,
         frequencies: if frequency_count == 0 {
             core::ptr::null_mut()
         } else {
@@ -1600,13 +1614,14 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
         } else {
             request.bssid.as_ptr().cast_mut()
         },
-        num_ssids: u8::from(ssid_len != 0),
+        num_ssids: 1,
         num_frequencies: request.num_frequencies,
         prefix_ssid_scan: 0,
         fast_connect: 0,
         extra_ies_len: request.extra_ies_len as u32,
         acs_scan: 0,
     };
+    DIAG_SCAN_STARTS.fetch_add(1, Ordering::Relaxed);
     NATIVE_SCAN_ACTIVE.store(true, Ordering::Release);
     let status = crate::wal::ioctl(
         driver.ifname(),
@@ -1616,6 +1631,7 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
     if status != 0 {
         NATIVE_SCAN_ACTIVE.store(false, Ordering::Release);
     }
+    DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
     status
 }
 
@@ -1674,11 +1690,37 @@ unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateReq
         ies_len: request.association_ies_len as u32,
         crypto: &mut crypto,
     };
-    crate::wal::ioctl(
+    DIAG_ASSOCIATE_CALLS.fetch_add(1, Ordering::Relaxed);
+    let status = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_ASSOCIATE,
         (&mut association as *mut VendorAssociateRequest).cast(),
-    )
+    );
+    DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
+    status
+}
+
+pub(crate) fn diagnostic_word() -> u32 {
+    let starts = DIAG_SCAN_STARTS.load(Ordering::Relaxed).min(0x0f);
+    let results = DIAG_SCAN_RESULTS.load(Ordering::Relaxed).min(0x1f);
+    let done = u32::from(DIAG_SCAN_DONE.load(Ordering::Relaxed) != 0);
+    let associate = u32::from(DIAG_ASSOCIATE_CALLS.load(Ordering::Relaxed) != 0);
+    let associate_event = u32::from(DIAG_ASSOCIATE_EVENTS.load(Ordering::Relaxed) != 0);
+    let mgmt = u32::from(DIAG_MGMT_EVENTS.load(Ordering::Relaxed) != 0);
+    let eapol = u32::from(DIAG_EAPOL_EVENTS.load(Ordering::Relaxed) != 0);
+    let key = u32::from(DIAG_KEY_INSTALLS.load(Ordering::Relaxed) != 0);
+    starts
+        | (results << 4)
+        | (done << 9)
+        | (associate << 10)
+        | (associate_event << 11)
+        | (mgmt << 12)
+        | (eapol << 13)
+        | (key << 14)
+}
+
+pub(crate) fn diagnostic_last_ioctl_status() -> u32 {
+    DIAG_LAST_IOCTL_STATUS.load(Ordering::Acquire)
 }
 
 unsafe extern "C" fn deauthenticate(driver: *mut c_void, reason: u16) -> c_int {
