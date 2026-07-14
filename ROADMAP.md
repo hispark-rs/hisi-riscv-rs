@@ -44,6 +44,12 @@ A4 delivers one coherent Wi-Fi path:
 - parity with the frozen init/scan/connect/ping markers and A0/A3 link/image
   evidence.
 
+The first complete slice now passes on WS63: WPA2 connect, a long-lived smoltcp
+runner, DHCP, neighbor discovery, repeated public ICMP, zero RX-queue drops, and
+an observed DHCP renew REQUEST/ACK. Current work is limited to release,
+compatibility-window, and automated-HIL closeout. Evidence:
+[A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
+
 A4 does not run BLE, SLE, TLS, SoftAP, or another architecture extraction in
 parallel.
 

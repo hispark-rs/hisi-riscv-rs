@@ -2,8 +2,9 @@
 
 ## Summary
 
-先沿当前 `ws63-rf-rs` 路径完成 **Wi-Fi connect → ping**，避免架构迁移打断
-连接性北极星；ping 通过真机 HIL 后冻结行为基线，再拆成独立 release unit。
+A0-A3 的 **Wi-Fi connect → ping** 基线已经冻结；当前 A4 正把该基线迁到独立
+`hisi-rf` release unit。迁移按 vertical slice 推进，每一步都必须保留真实硅片
+连接性证据，不能为了分层整洁打断北极星。
 
 目标架构参考 esp-rs 的
 `esp-radio → esp-radio-rtos-driver ← esp-rtos`、`esp-rom-sys` 和
@@ -48,10 +49,12 @@ milestone 已从完成的 A3 切换到 A4 Wi-Fi vertical slice。
 
 ### NOW -- A4 Wi-Fi Vertical Slice
 
-A4 只交付 `RadioController`/`RadioRunner`、`WifiController`/`WifiDevice`、bounded event
-queue，以及长生命周期 smoltcp 或 embassy-net runner。它必须覆盖 lease renew、
-ARP/neighbor cache 和重复 ICMP，并保持 A0/A3 init/scan/connect/ping 与 link/image parity。
-A4 期间不并行推进 BLE、SLE、TLS、SoftAP 或其他协议面。
+A4 的第一条完整 vertical slice 已在 WS63 上运行：`RadioController`/`RadioRunner`、
+`WifiController`/`WifiDevice`、bounded event queue 和应用持有的长生命周期 smoltcp
+runner 已完成 init/scan/WPA2 connect、DHCP、neighbor discovery、重复 ICMP 和 lease
+renew。当前只做发布、兼容窗口与自动 HIL 收口；A4 期间不并行推进 BLE、SLE、TLS、
+SoftAP 或其他协议面。证据见
+[A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
 ### Triggered After A4
 
@@ -394,6 +397,29 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   才迁下一平面。兼容 facade 保留一个 release，并明确弃用窗口。
 - `hisi-rf-link` 继续唯一拥有 radio relocation/layout；`hisi-fwpkg` 继续唯一拥有
   header/hash/body/image semantics。任何 backend 或私有 blob 分发都不得复制这两类事实。
+
+#### A4 progress
+
+- [x] 独立公开 `hisi-rf` repository 已建立；公共 crate 为 `no_std`，不依赖 WS63 PAC、
+  blob、ROM、NVS format、scheduler 或 IP stack。host tests 覆盖 runner-only backend
+  execution、bounded queue overflow、future cancellation 后的 sequence 隔离和 typed config。
+- [x] 第一条 vertical slice 同时交付 `RadioController`/`RadioParts`、唯一
+  `RadioRunner`、`WifiController`/`WifiDevice` 和 bounded `WifiEvent` queue；不是空 facade。
+- [x] WS63 backend 隐藏 vendor auth/pairwise/scan cache，`ws63-rf-rs::radio` 仅作为迁移
+  facade re-export chip-neutral API。只有 runner 调用 backend，用户逻辑不在 ISR、critical
+  section 或 vendor callback 中运行。
+- [x] `wifi_init_smoke` 已通过 ported runtime 运行 A4 控制面。首次 HIL 暴露
+  `mstatus.MIE=0` 导致 ported yield 返回 `InvalidContext`；应用按 `start_with_port` contract
+  显式启用 global MIE 后，init/scan/connect 全部恢复，未用优先级改动掩盖根因。
+- [x] 应用层长生命周期 smoltcp runner 独占 `WifiDevice`、Interface、DHCP/ICMP sockets 和
+  neighbor cache；首次租约后持续 poll，处理 deconfigure/renew，不把 TCP/IP 放入 `hisi-rf`。
+- [x] 真机复现 A0/A3 marker，公共 ICMP 5/5、RX queue drop 0，并以首次租约后的 L2
+  DHCP REQUEST/ACK 增量证明 renew。guarded link 仍为 1,486 sections、5,337 relocations、
+  37 ROM patches。完整证据见
+  [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
+- [ ] 发布首个 `hisi-rf` alpha，固定 package/API 文档与 release lockfile。
+- [ ] 为 `ws63-rf-rs::radio` 固定一个 migration release 的兼容/弃用窗口，并把 A4 markers
+  纳入自动 HIL gate；完成后才将 A4 标为 frozen。
 
 #### A1 progress
 

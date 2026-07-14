@@ -12,8 +12,12 @@ runnable **without hardware** on the sister project
 [`hisi-riscv-qemu`](https://github.com/hispark-rs/hisi-riscv-qemu) (machines
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
-> **North star: connectivity.** Everything here is aimed at eventually bringing
-> up Wi-Fi/BLE on the WS63 in Rust. **Current status (2026-07):** WS63 Wi-Fi RF porting layer + netif→smoltcp complete but pending real blob TX/RX and connectivity HIL (connectivity milestones C1-C5). BS2X BLE is deferred: the radio interface is a closed blob boundary (`0x59000000` write-only PHY regs + IRQ-26 event wall); current priorities are in [`ROADMAP.md`](ROADMAP.md), and the historical feasibility/remediation ledger is archived under [`docs/archive/`](docs/archive/). Full QEMU bring-up done for both chips; the WS63 HAL driver-level HIL evidence is tracked in [`docs/src/reference/10-stable-api.md`](docs/src/reference/10-stable-api.md), while example smoke and connectivity HIL continue separately. See [`docs/`](docs/) for the architecture (Chinese).
+> **North star: connectivity.** The WS63 path now completes real WPA2 scan,
+> connect, DHCP, smoltcp neighbor discovery, public ICMP and DHCP renewal on
+> silicon. The active A4 work is release and compatibility/HIL closeout for the
+> new chip-neutral `hisi-rf` vertical slice; BLE/SLE and BS2X connectivity remain
+> deferred. Current priorities are in [`ROADMAP.md`](ROADMAP.md), and dated
+> evidence lives under [`docs/plan/evidence/`](docs/plan/evidence/).
 
 ## Crates
 
@@ -27,8 +31,11 @@ in-tree and are not published.
 | [`bs2x-pac`](crates/chips/bs2x/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
 | [`hisi-hal`](crates/hisi-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-hal`](https://crates.io/crates/hisi-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
+| [`hisi-rf`](crates/hisi-rf/) | Chip-neutral radio controller/runner, typed Wi-Fi config, bounded events and L2 device contracts | pending first alpha |
+| [`hisi-rf-rtos-driver`](crates/hisi-rf-rtos-driver/) | Runtime-neutral task/IPC contract used by radio adapters | [`hisi-rf-rtos-driver`](https://crates.io/crates/hisi-rf-rtos-driver) |
+| [`hisi-rtos`](crates/hisi-rtos/) | Single-hart scheduler, IPC and Embassy integration backend | [`hisi-rtos`](https://crates.io/crates/hisi-rtos) |
 | [`ws63-radio-sys`](crates/chips/ws63/ws63-radio-sys/) | WS63 blob ABI/archive profile and versioned `hisi-rf-link` post-link tooling; nests the language-neutral vendor payload | GitHub/submodule |
-| [`ws63-rf-rs`](chips/ws63/rf/) | Porting layer + FFI for the closed Wi-Fi/BLE blobs (OSAL/OAL/FRW/HCC, scheduler, netif→smoltcp). In-tree, `publish = false` | — |
+| [`ws63-rf-rs`](chips/ws63/rf/) | Transitional WS63 blob ABI/OSAL/netif adapter and `hisi-rf` backend. In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
 | [`ws63-examples`](examples/ws63/) | Runnable WS63 examples (blinky, uart_hello, timer_irq, gpio_irq, dma_loopback, …) | — |
 | [`bs21-examples`](examples/bs21/) | BS21 isolated workspace; current member list is in [`docs/src/reference/02-examples.md`](docs/src/reference/02-examples.md) | — |
@@ -36,21 +43,24 @@ in-tree and are not published.
 
 ## Repository layout
 
-The repo uses git submodules extensively. Two are **nested under the crate that
-owns them**, so generation inputs / vendor blobs are not reached into laterally:
+The repo uses git submodules extensively. Generation inputs and vendor payloads
+are **nested under the crate that owns them**, so sibling crates do not reach
+into them laterally:
 
 ```
 hisi-riscv-rs/
 ├── crates/                    # core publishable library crates
-│   ├── pac/
-│   │   ├── ws63-pac/          # submodule
-│   │   │   └── ws63-svd/      # submodule of ws63-pac — svd2rust source (WS63.svd)
-│   │   └── bs2x-pac/          # submodule
-│   │       └── bs2x-svd/      # submodule of bs2x-pac — svd2rust source (BS2X.svd)
+│   ├── chips/
+│   │   ├── ws63/              # WS63 PAC, ROM/crypto backends, radio-sys
+│   │   │   ├── ws63-pac/ws63-svd/       # PAC generation source
+│   │   │   └── ws63-radio-sys/ws63-RF/ # vendor payload
+│   │   ├── bs2x/              # BS2X PAC (nests bs2x-svd)
+│   │   └── hi3322/            # planned-family PAC work (nests SVD)
 │   ├── hisi-hal/              # submodule (multi-chip: chip-ws63 / chip-bs21)
+│   ├── hisi-rf/               # chip-neutral radio API/runner
+│   ├── hisi-rf-rtos-driver/   # runtime-neutral radio OS contract
+│   ├── hisi-rtos/             # native scheduler/IPC/Embassy runtime
 │   ├── hisi-riscv-rt/         # submodule
-│   └── ws63-radio-sys/        # submodule: ABI/link tools
-│       └── ws63-RF/           # nested vendor blob payload
 ├── examples/                  # application examples
 │   ├── ws63/                  # submodule (blinky, uart_hello, …)
 │   ├── bs21/                  # in-tree, isolated workspace (10+ examples: SPI, GADC, I2C, KEYSCAN, QDEC, RTC, WDT, DMA, USB, PDM)
