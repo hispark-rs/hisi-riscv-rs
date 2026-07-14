@@ -1179,6 +1179,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1376b15f3ff160e9b1e8ea564ce427f2f6fcf77528cc0a8bf405cb476f9cea7"
 
 [[package]]
+name = "rtos_preemption"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "hisi-alloc",
+ "hisi-hal",
+ "hisi-panic-handler",
+ "hisi-rf-rtos-driver",
+ "hisi-riscv-rt",
+ "hisi-rtos",
+]
+
+[[package]]
 name = "rustix"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
