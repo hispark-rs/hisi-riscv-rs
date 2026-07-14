@@ -47,12 +47,19 @@ The final run removed the private trap and used the named `SOFT_INT0` handler
 through `ws63-pac/device.x` and both `hisi-riscv-rt` WS63 interrupt tables. Two
 consecutive nRST boots produced the same successful marker.
 
+The application was then moved from direct PAC writes to the unstable
+`hisi_hal::software_interrupt::SoftwareInterrupt0` owner. Its constructor clears
+stale state and enables IRQ 36; `pend`, `is_pending`, ISR clear, and `Drop`
+encapsulate the source lifecycle. The same two-boot HIL marker remained green.
+
 ## Commits
 
 - `ws63-svd 47d269e` -- model IRQ 36..39 and register access directions.
 - `ws63-pac a436ba8` -- regenerate PAC and expose named `device.x` symbols.
 - `hisi-riscv-rt ed25121` -- route IRQ 36..39 in both startup implementations.
 - `ws63-examples 882e50a` -- permanent `software_irq` silicon diagnostic.
+- `hisi-hal 30cde32` -- typed, unstable software-interrupt source owner.
+- `ws63-examples f1d5973` -- use the HAL owner instead of direct PAC writes.
 
 ## Remaining A3 Gates
 
