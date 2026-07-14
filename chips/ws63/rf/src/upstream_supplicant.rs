@@ -79,7 +79,10 @@ const SCAN_EVENT_DONE: u8 = 2;
 const LINK_EVENT_ASSOCIATE: u8 = 1;
 const LINK_EVENT_DISCONNECT: u8 = 2;
 
-const SCAN_EVENT_QUEUE_DEPTH: usize = 8;
+// The vendor worker emits a complete scan batch without yielding. Match the
+// hostap driver cache (32 BSS entries) plus the terminal scan-done event so the
+// callback boundary remains lossless even under a cooperative scheduler.
+const SCAN_EVENT_QUEUE_DEPTH: usize = 33;
 const LINK_EVENT_QUEUE_DEPTH: usize = 4;
 const MAX_ASSOCIATION_IE_LEN: usize = 768;
 
