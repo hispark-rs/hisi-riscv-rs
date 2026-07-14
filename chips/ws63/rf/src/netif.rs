@@ -36,6 +36,7 @@ const PBUF_ZERO_COPY_TAILROOM: usize = 4;
 // The delivered lwIP configuration sets ETH_PAD_SIZE=2. The SDK RX adapter
 // exposes those two alignment bytes before calling `driverif_input`; smoltcp's
 // Ethernet device contract starts at the destination MAC and must not see them.
+#[cfg(feature = "net")]
 const ETH_PAD_SIZE: usize = 2;
 
 /// Frames handed up by [`driverif_input`] and dropped (until smoltcp is wired).

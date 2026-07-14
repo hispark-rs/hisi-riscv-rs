@@ -22,16 +22,18 @@ struct FreeTraceSlot {
 }
 
 impl FreeTraceSlot {
-    const EMPTY: Self = Self {
-        sequence: AtomicU32::new(0),
-        pointer: AtomicUsize::new(0),
-        caller: AtomicUsize::new(0),
-    };
+    const fn new() -> Self {
+        Self {
+            sequence: AtomicU32::new(0),
+            pointer: AtomicUsize::new(0),
+            caller: AtomicUsize::new(0),
+        }
+    }
 }
 
 static FREE_TRACE_SEQUENCE: AtomicU32 = AtomicU32::new(0);
 static FREE_TRACE: [FreeTraceSlot; FREE_TRACE_CAPACITY] =
-    [const { FreeTraceSlot::EMPTY }; FREE_TRACE_CAPACITY];
+    [const { FreeTraceSlot::new() }; FREE_TRACE_CAPACITY];
 
 struct AllocationTraceSlot {
     sequence: AtomicU32,
@@ -41,17 +43,19 @@ struct AllocationTraceSlot {
 }
 
 impl AllocationTraceSlot {
-    const EMPTY: Self = Self {
-        sequence: AtomicU32::new(0),
-        pointer: AtomicUsize::new(0),
-        size: AtomicUsize::new(0),
-        caller: AtomicUsize::new(0),
-    };
+    const fn new() -> Self {
+        Self {
+            sequence: AtomicU32::new(0),
+            pointer: AtomicUsize::new(0),
+            size: AtomicUsize::new(0),
+            caller: AtomicUsize::new(0),
+        }
+    }
 }
 
 static ALLOCATION_TRACE_SEQUENCE: AtomicU32 = AtomicU32::new(0);
 static ALLOCATION_TRACE: [AllocationTraceSlot; ALLOCATION_TRACE_CAPACITY] =
-    [const { AllocationTraceSlot::EMPTY }; ALLOCATION_TRACE_CAPACITY];
+    [const { AllocationTraceSlot::new() }; ALLOCATION_TRACE_CAPACITY];
 
 /// One allocator free event captured without synchronous logging.
 #[doc(hidden)]
