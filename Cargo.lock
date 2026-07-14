@@ -1841,6 +1841,7 @@ dependencies = [
  "hisi-riscv-rt",
  "hisi-rom-sys",
  "hisi-rtos",
+ "smoltcp",
  "static_cell",
  "ws63-radio-sys",
  "ws63-rf-rs",
