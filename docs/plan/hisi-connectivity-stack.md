@@ -506,6 +506,11 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   critical/worker/background/unknown，再以 Q2 数据决定 per-thread/group quota。完成前
   不引入或承诺 Reservation。当前公网 ping 为 18/20，作为独立数据面可靠性风险继续
   跟踪，不回写成认证失败。
+- [ ] Q3 的机器事实源已开始落地：`ws63-radio-sys` 的
+  `profiles/ws63-scheduling.toml` 以 payload revision、archive/ROM SHA-256、entry symbol
+  和 vendor priority 记录 observed task role，未匹配 entry 必须为 `unknown`。当前 profile
+  不改变 runtime policy；消费端外部 archive hash gate、角色到 policy 的显式映射和 HIL
+  parity 完成前，Q3 仍保持未完成。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。
@@ -516,6 +521,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   `Budgeted` 不提供最低 CPU 服务保证；是否引入独立 Reservation 只按
   [Quota Closure And Guaranteed Service Evolution](hisi-rtos-semantics-and-verification.md#quota-closure-and-guaranteed-service-evolution)
   的 G0 gate 决定，不阻塞当前 init/scan/connect/ping parity。
+- ported switch 的长期 ticket/generation 强化是独立 deferred correctness 轨道，唯一排期见
+  [Ported Switch Intent/Ticket Protocol](hisi-rtos-semantics-and-verification.md#ported-switch-intentticket-protocol-deferred)。
+  当前已验证的 stale-request recovery 在该轨道完成 100-reset HIL 前不得删除；它不属于
+  Q4 group quota 或 Reservation。
 
 ### B0-B3 -- BLE Vendor Host First
 

@@ -152,6 +152,40 @@ Wi-Fi/BLE/SLE/Embassy 出现可归因 deadline miss，或产品明确需要响�
 自动变成全抢占系统；最低服务保证只属于显式 admitted、ported、preemptive 的少数
 critical thread。
 
+### Ported Switch Intent/Ticket Protocol (Deferred)
+
+当前 `recover_completed_switch_request` 已修复并通过真机证明“thread mode 选出 target
+后、提交 SWI 前，IRQ 已完成切换并又恢复 previous”的高频竞态。它是近期正确性修复，
+在下述 ticket protocol 完成全部 parity/HIL 前不得删除。长期强化使用显式 intent、
+identity generation 和单次消费协议替代裸 `(previous, target)` 与 state inference；该工作
+不改变公开 API、`RunPolicy`、`Budgeted` quota、RF archive profile 或 Reservation。
+
+此项排在 A3/ping 行为基线冻结后，可与 Q3 profile 并行，但不阻塞当前 connect/ping；
+也不得与 Q4 group quota 或 G0-G5 guaranteed-service 扩展合并实施。
+
+1. **T0 Spec freeze**：定义 `SwitchIntent`/`PendingSwitch` 状态机。冻结唯一 `Running`、
+   `current` 一致、ready queue/live intent 唯一归属、intent 单次 Commit/Cancel、pending
+   单次消费、`TaskRef` generation、idle 不入普通队列、cancel 恢复 detached target。
+2. **T1 Internal ticket**：引入 `#[must_use] SwitchIntent { sequence, previous:
+   TaskRef, target: SwitchTarget, previous_resume_generation }`；`prepare_yield/block/exit`
+   在同一 critical section 返回 intent，`execute_switch` 只接受 intent。
+3. **T2 Generation validation**：intent 创建时记录 slot identity generation 和 resume
+   generation；提交时变化必须显式分类为 stale/identity mismatch，cancel 并恢复 target。
+   FFI/unsafe 边界继续保留运行时防御。
+4. **T3 Structured pending**：用 `PendingSwitch { sequence, previous, target }` 替换
+   `forced_next: usize`，trap 只能按 sequence 消费一次。
+5. **T4 Detached ownership**：分阶段引入 `ReadyQueued` / `ReadyDetached {
+   intent_sequence }`；先保留当前 `ready_contains` 防御，只有 membership 已显式建模且
+   parity 通过后才删除 bounded scan。
+6. **T5 Verification**：覆盖 host interleaving、TLA+ A/B/C 状态机与 Kani；诊断记录
+   created/committed/cancelled-stale/cancelled-identity/completed/max-age。旧
+   `switch_race_recoveries` 至少保留一个迁移周期。
+7. **T6 HIL**：Cooperative/Budgeted/Preemptive/Embassy 加 RF 压力，至少 100 次 reset；
+   不得出现多 `Running`、task 遗失、永久 pending 或 `0xdeadbeef`。静止点必须满足
+   `created = committed + cancelled` 与 `committed = completed + pending`。
+8. **T7 Cleanup**：只有 ticket parity、形式化检查和 T6 真机门槛全部通过后，才能移除
+   当前 state-inference recovery；删除必须是独立提交并保留迁移证据。
+
 ### Scheduler Lock And Interrupts
 
 规范必须区分 interrupt masking、per-hart preemption guard 和 global kernel lock。
