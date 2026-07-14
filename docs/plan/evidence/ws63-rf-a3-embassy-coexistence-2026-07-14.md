@@ -11,7 +11,8 @@ or per-thread budget policy is complete.
 
 - `hisi-rtos` owns the only `embassy-time-driver` when its `embassy` feature is
   enabled.
-- `Resources::monotonic_ms` is the 1 kHz Embassy clock.
+- `Resources::monotonic_ms` supplies 1 ms resolution; the driver scales it to
+  the ecosystem-wide 1 MHz Embassy tick ABI.
 - RTOS sleep, round-robin slice and Embassy deadlines are merged before the
   application-provided `SchedulerPort` arms TIMER_INT0.
 - The time-slice deadline is persistent: scheduling or changing an Embassy
@@ -51,7 +52,7 @@ Three consecutive WS63 nRST runs produced the same counters:
 
 ```text
 A3 RTOS Embassy coexist diagnostic
-native_ticks=17 embassy_ticks=10 timer_irqs=27 context_switches=34
+native_ticks=17 embassy_ticks=10 timer_irqs=26 context_switches=34
 
 A3_RTOS_EMBASSY_COEXIST_OK
 ```

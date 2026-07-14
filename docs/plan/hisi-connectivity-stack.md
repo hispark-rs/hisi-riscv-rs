@@ -485,7 +485,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [A3 scheduler stress](evidence/ws63-rf-a3-scheduler-stress-2026-07-14.md)。
 - [x] `hisi-rtos` 的可选 Embassy time driver 已与 scheduler sleep/time-slice 共享同一
   TIMER_INT0 port；`rtos_embassy_coexist` 连续三次真机得到
-  `native_ticks=17`、`embassy_ticks=10`、`timer_irqs=27`、`context_switches=34`。
+  `native_ticks=17`、`embassy_ticks=10`、`timer_irqs=26`、`context_switches=34`。
   持久 time-slice deadline 同时防止 Embassy timer re-arm 延后同优先级轮转；证据见
   [A3 Embassy coexistence](evidence/ws63-rf-a3-embassy-coexistence-2026-07-14.md)。
 - [ ] per-thread budget enforcement 必须先完成
