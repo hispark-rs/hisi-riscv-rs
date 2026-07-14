@@ -7,6 +7,10 @@ use hisi_rf::{
 };
 
 #[cfg(feature = "upstream-supplicant-port")]
+const NATIVE_EVENT_AUTHENTICATING: u8 = 1;
+#[cfg(feature = "upstream-supplicant-port")]
+const NATIVE_EVENT_ASSOCIATED: u8 = 2;
+#[cfg(feature = "upstream-supplicant-port")]
 const NATIVE_EVENT_AUTHORIZED: u8 = 3;
 #[cfg(feature = "upstream-supplicant-port")]
 const NATIVE_EVENT_DISCONNECTED: u8 = 4;
@@ -123,6 +127,7 @@ impl WifiBackend for Ws63WifiBackend<'_> {
             supplicant.connect().map_err(map_native_error)?;
             let started_at = crate::uapi::monotonic_ms();
             let mut last_event_kind = 0_u8;
+            let mut connection_progress = false;
             loop {
                 supplicant
                     .poll(core::num::NonZeroU32::new(32).unwrap())
@@ -130,13 +135,22 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 while let Some(event) = supplicant.next_event().map_err(map_native_error)? {
                     last_event_kind = event.kind;
                     match event.kind {
+                        NATIVE_EVENT_AUTHENTICATING | NATIVE_EVENT_ASSOCIATED => {
+                            connection_progress = true;
+                        }
                         NATIVE_EVENT_AUTHORIZED => {
                             return Ok(ConnectionInfo {
                                 bssid: config.bssid,
                                 frequency_mhz: channel_to_frequency(config.channel),
                             });
                         }
-                        NATIVE_EVENT_DISCONNECTED | NATIVE_EVENT_FAILED => {
+                        NATIVE_EVENT_DISCONNECTED if connection_progress => {
+                            return Err(BackendError {
+                                class: BackendErrorClass::Connect,
+                                code: event.status as u32,
+                            });
+                        }
+                        NATIVE_EVENT_FAILED => {
                             return Err(BackendError {
                                 class: BackendErrorClass::Connect,
                                 code: event.status as u32,
