@@ -270,6 +270,8 @@ impl ScanSlot {
 struct ScanEventQueue {
     next_sequence: AtomicU32,
     dropped: AtomicU32,
+    accepted_results: AtomicU32,
+    truncated_results: AtomicU32,
     slots: [ScanSlot; SCAN_EVENT_QUEUE_DEPTH],
 }
 
@@ -278,8 +280,14 @@ impl ScanEventQueue {
         Self {
             next_sequence: AtomicU32::new(0),
             dropped: AtomicU32::new(0),
+            accepted_results: AtomicU32::new(0),
+            truncated_results: AtomicU32::new(0),
             slots: [const { ScanSlot::new() }; SCAN_EVENT_QUEUE_DEPTH],
         }
+    }
+
+    fn begin_transaction(&self) {
+        self.accepted_results.store(0, Ordering::Release);
     }
 
     fn enqueue_result(&self, meta: ScanMeta, ies: &[u8]) -> bool {
@@ -289,6 +297,20 @@ impl ScanEventQueue {
         {
             self.dropped.fetch_add(1, Ordering::Relaxed);
             return false;
+        }
+        if self
+            .accepted_results
+            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |count| {
+                (count < crate::wifi::MAX_SCAN_RESULTS as u32).then_some(count + 1)
+            })
+            .is_err()
+        {
+            // The C driver cache intentionally exposes at most MAX_SCAN_RESULTS
+            // BSS entries. Preserve the terminal scan-done slot and report this
+            // as bounded truncation, not as a queue failure that can leak into a
+            // later connect transaction.
+            self.truncated_results.fetch_add(1, Ordering::Relaxed);
+            return true;
         }
         self.enqueue(meta, ies)
     }
@@ -1107,12 +1129,15 @@ impl NativeSupplicant {
                 IOCTL_RECEIVE_EAPOL,
                 (&mut receive as *mut RxEapol).cast(),
             );
-            if status == -22 {
-                break;
+            match classify_eapol_receive(status) {
+                Ok(false) => break,
+                Ok(true) => {}
+                Err(status) => return Err(NativeSupplicantError::FeedEapolFailed(status)),
             }
-            if status != 0 {
-                return Err(NativeSupplicantError::FeedEapolFailed(status));
-            }
+            // Do not insert critical-section-backed diagnostics between an FFI
+            // return and its decision point. On RV32IMFC, an interrupt-driven
+            // task switch may occur when such a store restores MIE.
+            DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
             let len = receive.length as usize;
             if len <= ETHERNET_HEADER_LEN
                 || len > frame.len()
@@ -1164,6 +1189,18 @@ impl NativeSupplicant {
             }
             status => Err(NativeSupplicantError::PollFailed(status)),
         }
+    }
+}
+
+fn classify_eapol_receive(status: c_int) -> Result<bool, c_int> {
+    match status {
+        0 => Ok(true),
+        // The delivered WS63 `uapi_ioctl_receive_eapol` returns the positive
+        // 16-bit sentinel 0xffff when its skb queue is empty. The vendor
+        // LiteOS port treats this final empty receive as normal batch
+        // termination; all other non-zero statuses remain real errors.
+        0xffff => Ok(false),
+        status => Err(status),
     }
 }
 
@@ -1625,6 +1662,7 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
         acs_scan: 0,
     };
     DIAG_SCAN_STARTS.fetch_add(1, Ordering::Relaxed);
+    SCAN_EVENT_QUEUE.begin_transaction();
     NATIVE_SCAN_ACTIVE.store(true, Ordering::Release);
     let status = crate::wal::ioctl(
         driver.ifname(),
@@ -1961,6 +1999,15 @@ mod tests {
     }
 
     #[test]
+    fn ws63_empty_eapol_sentinel_ends_the_current_drain_batch() {
+        assert_eq!(classify_eapol_receive(0), Ok(true));
+        assert_eq!(classify_eapol_receive(0xffff), Ok(false));
+        assert_eq!(classify_eapol_receive(-1), Err(-1));
+        assert_eq!(classify_eapol_receive(-22), Err(-22));
+        assert_eq!(classify_eapol_receive(1), Err(1));
+    }
+
+    #[test]
     fn management_queue_is_bounded_and_fifo() {
         let queue = MgmtRxQueue::new();
         for index in 0..MGMT_RX_QUEUE_DEPTH {
@@ -2015,6 +2062,44 @@ mod tests {
         let done = queue.take_oldest().unwrap();
         assert_eq!(done.meta().kind, SCAN_EVENT_DONE);
         assert_eq!(done.meta().status, 2);
+    }
+
+    #[test]
+    fn scan_queue_reserves_done_slot_when_results_are_truncated() {
+        let queue = ScanEventQueue::new();
+        queue.begin_transaction();
+        for index in 0..crate::wifi::MAX_SCAN_RESULTS + 1 {
+            assert!(queue.enqueue_result(
+                ScanMeta {
+                    kind: SCAN_EVENT_RESULT,
+                    capabilities: 0,
+                    flags: 0,
+                    bssid: [index as u8; 6],
+                    frequency_mhz: 2412,
+                    beacon_interval: 100,
+                    quality: 0,
+                    level_mbm: -4000,
+                    age_ms: 0,
+                    ie_len: 0,
+                    beacon_ie_len: 0,
+                    status: 0,
+                },
+                &[],
+            ));
+        }
+        assert_eq!(queue.truncated_results.load(Ordering::Relaxed), 1);
+        assert_eq!(queue.dropped.load(Ordering::Relaxed), 0);
+        assert!(queue.enqueue_done(0));
+
+        let mut results = 0;
+        while let Some(event) = queue.take_oldest() {
+            if event.meta().kind == SCAN_EVENT_RESULT {
+                results += 1;
+            } else {
+                assert_eq!(event.meta().kind, SCAN_EVENT_DONE);
+            }
+        }
+        assert_eq!(results, crate::wifi::MAX_SCAN_RESULTS);
     }
 
     #[test]
