@@ -105,7 +105,7 @@ pub mod eloop_diag;
 pub mod error;
 pub mod frw;
 pub mod hcc;
-#[cfg(feature = "wifi-personal")]
+#[cfg(any(feature = "wifi-personal", feature = "upstream-supplicant-port"))]
 pub mod hisi_rf_backend;
 pub mod libc;
 pub mod litos;
@@ -145,7 +145,7 @@ pub use upstream_supplicant::{UpstreamSupplicantPortError, prepare_upstream_supp
 /// Use the `hisi-rf` crate directly for chip-neutral types. This facade remains
 /// available through the parent repository's 0.7.x release train and is removed
 /// no earlier than 0.8.0.
-#[cfg(feature = "wifi-personal")]
+#[cfg(any(feature = "wifi-personal", feature = "upstream-supplicant-port"))]
 #[deprecated(
     since = "0.1.0",
     note = "depend on hisi-rf directly; ws63-rf-rs::radio is removed no earlier than parent v0.8.0"
