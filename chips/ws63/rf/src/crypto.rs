@@ -23,7 +23,7 @@ pub(crate) static WS63_CRYPTO: Ws63Crypto = {
     unsafe { Ws63Crypto::assume_exclusive() }
 };
 
-#[cfg(target_arch = "riscv32")]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
 pub(crate) fn ws63_security_self_test() -> Result<(), CryptoError> {
     const KEY: [u8; 16] = [
         0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f,

@@ -187,11 +187,16 @@ fn ensure_heap() -> bool {
 /// Allocate `size` zero-initialized bytes. Returns null on failure or zero size.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
+    allocate_zeroed(size, DEFAULT_ALIGNMENT)
+}
+
+pub(crate) fn allocate_zeroed(size: usize, alignment: usize) -> *mut c_void {
     let caller = caller_address();
-    if !ensure_heap() {
+    if alignment < core::mem::align_of::<usize>() || !alignment.is_power_of_two() || !ensure_heap()
+    {
         return core::ptr::null_mut();
     }
-    let pointer = HEAP.allocate_zeroed(size, DEFAULT_ALIGNMENT);
+    let pointer = HEAP.allocate_zeroed(size, alignment);
     record_allocation(pointer as usize, size, caller);
     pointer.cast()
 }
@@ -199,14 +204,11 @@ pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
 /// Allocate memory with the alignment required by crypto/DMA buffers.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc_align(size: u32, _flags: u32, boundary: u32) -> *mut c_void {
-    let caller = caller_address();
     let alignment = boundary as usize;
-    if alignment < DEFAULT_ALIGNMENT || !alignment.is_power_of_two() || !ensure_heap() {
+    if alignment < DEFAULT_ALIGNMENT {
         return core::ptr::null_mut();
     }
-    let pointer = HEAP.allocate_zeroed(size as usize, alignment);
-    record_allocation(pointer as usize, size as usize, caller);
-    pointer.cast()
+    allocate_zeroed(size as usize, alignment)
 }
 
 /// Free memory returned by [`osal_kmalloc`]. Null is a no-op.
@@ -231,15 +233,25 @@ pub extern "C" fn osal_kfree(ptr: *mut c_void) {
 
 /// Resize an owned allocation, preserving the common prefix.
 pub(crate) fn realloc_owned(ptr: *mut c_void, size: usize) -> *mut c_void {
+    // SAFETY: this compatibility helper is used only with CHeap-owned pointers.
+    unsafe { reallocate_zeroed(ptr, size, DEFAULT_ALIGNMENT) }
+}
+
+/// Resize an owned allocation using an explicit power-of-two alignment.
+pub(crate) unsafe fn reallocate_zeroed(
+    ptr: *mut c_void,
+    size: usize,
+    alignment: usize,
+) -> *mut c_void {
+    if alignment < core::mem::align_of::<usize>() || !alignment.is_power_of_two() {
+        return core::ptr::null_mut();
+    }
     if !ensure_heap() {
         return core::ptr::null_mut();
     }
     // SAFETY: the compatibility callers use only pointers returned by the
     // allocator. Foreign pointers fail validation and produce null.
-    unsafe {
-        HEAP.reallocate_zeroed(ptr.cast(), size, DEFAULT_ALIGNMENT)
-            .cast()
-    }
+    unsafe { HEAP.reallocate_zeroed(ptr.cast(), size, alignment).cast() }
 }
 
 #[inline(always)]

@@ -14,7 +14,7 @@ hisi-alloc = "0.1.0-alpha.1"
 hisi-storage = "0.1.0-alpha.1"
 hisi-nvs = "0.1.0-alpha.1"
 hisi-rf = "0.1.0-alpha.1"
-hisi-rf-rtos-driver = "0.1.0-alpha.4"
+hisi-rf-rtos-driver = "0.1.0-alpha.6"
 hisi-crypto = { version = "0.1.0-alpha.3", optional = true }
 hisi-crypto-ws63 = { version = "0.1.0-alpha.1", optional = true }
 ws63-radio-sys = { path = "../../../crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys", default-features = false }
@@ -42,6 +42,13 @@ wifi-wpa2-personal = ["wifi-personal", "dep:hisi-crypto", "dep:hisi-crypto-ws63"
 # reuses the existing vendor supplicant compatibility surface while the pinned
 # upstream hostap 2.11 port is brought up on the native hisi-rtos contracts.
 wifi-wpa3-personal = ["wifi-personal"]
+# Build the pinned upstream hostap native OS/eloop seam. This remains opt-in
+# until driver_ws63, l2_packet_ws63 and full WPA2 parity are closed.
+upstream-supplicant-port = [
+    "ws63-radio-sys/upstream-supplicant-port",
+    "dep:hisi-crypto",
+    "dep:hisi-crypto-ws63",
+]
 # Portable provider and host oracle. WS63 firmware defaults to unified-cipher.
 wifi-security-rustcrypto = ["wifi-wpa2-personal"]
 # Compatibility alias for the pre-profile bring-up feature.

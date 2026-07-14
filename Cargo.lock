@@ -1919,6 +1919,7 @@ dependencies = [
 name = "ws63-radio-sys"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "cc",
  "serde",
  "sha2",
  "toml 0.9.12+spec-1.1.0",

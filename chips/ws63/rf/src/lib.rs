@@ -97,7 +97,7 @@ use critical_section::Mutex;
 
 pub mod alloc;
 mod compiler_rt;
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
 mod crypto;
 #[cfg(feature = "rf-eloop-diag")]
 #[doc(hidden)]
@@ -128,11 +128,16 @@ mod pmp;
 pub mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
+#[cfg(feature = "upstream-supplicant-port")]
+mod upstream_supplicant;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]
 mod wpa_compat;
 
 pub use pmp::prepare_vendor_memory;
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub use upstream_supplicant::{UpstreamSupplicantPortError, prepare_upstream_supplicant_port};
 
 /// Compatibility facade for the first `hisi-rf` migration release.
 ///
