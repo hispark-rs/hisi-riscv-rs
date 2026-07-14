@@ -8,12 +8,15 @@
 use core::cell::UnsafeCell;
 use core::ffi::{c_int, c_void};
 use core::num::NonZeroU32;
+use core::ptr::NonNull;
 
 use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 use portable_atomic::{AtomicU8, Ordering};
 use ws63_radio_sys::supplicant::{
-    ABI_VERSION, DriverHooks, Key, OsHooks, cipher, hisi_wpa_driver_install, hisi_wpa_os_install,
-    hisi_wpa_os_uninstall, key_flag,
+    ABI_VERSION, Context, DriverHooks, Event, Key, OsHooks, PollResult, cipher,
+    hisi_wpa_context_align, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
+    hisi_wpa_driver_install, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
+    hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
 };
 
 static RUNNER_WAKE: Semaphore = Semaphore::new(0);
@@ -153,6 +156,125 @@ pub enum UpstreamSupplicantPortError {
     Rollback { install: i32, rollback: i32 },
 }
 
+/// Failure while owning or advancing the opaque upstream supplicant context.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum NativeSupplicantError {
+    /// The native OS/driver seam could not be installed.
+    Port(UpstreamSupplicantPortError),
+    /// The C implementation reported an invalid opaque-context layout.
+    InvalidContextLayout,
+    /// The RF heap could not provide context storage.
+    AllocationFailed,
+    /// The C implementation rejected the supplied storage or driver hooks.
+    CreateFailed,
+    /// Upstream hostap initialization failed.
+    InitializeFailed(i32),
+    /// One event or poll result violated the versioned C ABI.
+    InvalidResult,
+    /// The upstream event loop reported a runtime failure.
+    PollFailed(i32),
+}
+
+/// Exclusive owner of one opaque upstream hostap context.
+///
+/// The owner is intentionally crate-private until W2D closes the complete
+/// scan/auth/assoc and RX event path. It is moved into the single radio runner;
+/// callbacks only queue data and wake that runner.
+#[allow(dead_code)]
+pub(crate) struct NativeSupplicant {
+    context: NonNull<Context>,
+    storage: NonNull<c_void>,
+}
+
+#[allow(dead_code)]
+impl NativeSupplicant {
+    pub(crate) fn create(ifname: &[u8]) -> Result<Self, NativeSupplicantError> {
+        prepare_upstream_supplicant_port(ifname).map_err(NativeSupplicantError::Port)?;
+
+        // SAFETY: these two pure queries expose the layout of the matching C
+        // implementation linked by ws63-radio-sys.
+        let (size, alignment) = unsafe { (hisi_wpa_context_size(), hisi_wpa_context_align()) };
+        if !valid_context_layout(size, alignment) {
+            return Err(NativeSupplicantError::InvalidContextLayout);
+        }
+        let storage = NonNull::new(crate::alloc::allocate_zeroed(size, alignment))
+            .ok_or(NativeSupplicantError::AllocationFailed)?;
+        let hooks = driver_hooks();
+        // SAFETY: `storage` is live, zeroed and has the exact queried layout;
+        // the hook table is copied synchronously by the C boundary.
+        let context = unsafe { hisi_wpa_create(storage.as_ptr(), size, &raw const hooks) };
+        let Some(context) = NonNull::new(context) else {
+            crate::alloc::osal_kfree(storage.as_ptr());
+            return Err(NativeSupplicantError::CreateFailed);
+        };
+        // SAFETY: `context` was returned by hisi_wpa_create and remains owned
+        // by this value until Drop.
+        let initialized = unsafe { hisi_wpa_init(context.as_ptr()) };
+        if initialized != 0 {
+            // The C destroy path handles partial wpa_supplicant_init state and
+            // releases its driver user before the backing storage is freed.
+            unsafe { hisi_wpa_destroy(context.as_ptr()) };
+            crate::alloc::osal_kfree(storage.as_ptr());
+            return Err(NativeSupplicantError::InitializeFailed(initialized));
+        }
+        Ok(Self { context, storage })
+    }
+
+    /// Advance bounded hostap work from the owning radio runner.
+    pub(crate) fn poll(
+        &mut self,
+        work_budget: NonZeroU32,
+    ) -> Result<PollResult, NativeSupplicantError> {
+        // SAFETY: the unique owner serializes all context calls.
+        let result = unsafe {
+            hisi_wpa_poll(
+                self.context.as_ptr(),
+                crate::uapi::monotonic_ms(),
+                work_budget.get(),
+            )
+        };
+        if result.status != 0 {
+            return Err(NativeSupplicantError::PollFailed(result.status));
+        }
+        Ok(result)
+    }
+
+    /// Drain one bounded event after [`Self::poll`].
+    pub(crate) fn next_event(&mut self) -> Result<Option<Event>, NativeSupplicantError> {
+        let mut event = core::mem::MaybeUninit::<Event>::uninit();
+        // SAFETY: C writes the complete event when it returns one. The unique
+        // owner prevents concurrent queue consumption.
+        let result = unsafe { hisi_wpa_next_event(self.context.as_ptr(), event.as_mut_ptr()) };
+        match result {
+            0 => Ok(None),
+            1 => {
+                // SAFETY: a return value of one is the ABI promise that the
+                // output was initialized completely.
+                let event = unsafe { event.assume_init() };
+                if event.abi_version != ABI_VERSION || event.data_len as usize > event.data.len() {
+                    Err(NativeSupplicantError::InvalidResult)
+                } else {
+                    Ok(Some(event))
+                }
+            }
+            status => Err(NativeSupplicantError::PollFailed(status)),
+        }
+    }
+}
+
+const fn valid_context_layout(size: usize, alignment: usize) -> bool {
+    size != 0 && alignment >= core::mem::align_of::<usize>() && alignment.is_power_of_two()
+}
+
+impl Drop for NativeSupplicant {
+    fn drop(&mut self) {
+        // SAFETY: this value is the unique owner and destroys the C context
+        // before releasing its exact backing allocation.
+        unsafe { hisi_wpa_destroy(self.context.as_ptr()) };
+        crate::alloc::osal_kfree(self.storage.as_ptr());
+    }
+}
+
 /// Install the native OS/eloop hooks after `hisi-rtos` has installed its RF
 /// runtime contract and after the WS63 ROM timebases are initialized.
 ///
@@ -202,16 +324,7 @@ pub fn prepare_upstream_supplicant_port(ifname: &[u8]) -> Result<(), UpstreamSup
         wait_for_work: Some(wait_for_work),
         wake_runner: Some(wake_runner),
     };
-    let driver_hooks = DriverHooks {
-        abi_version: ABI_VERSION,
-        reserved: 0,
-        driver: core::ptr::addr_of!(DRIVER_CONTEXT).cast_mut().cast(),
-        get_own_address: Some(get_own_address),
-        send_eapol: Some(send_eapol),
-        send_mgmt: Some(send_mgmt),
-        install_key: Some(install_key),
-        remove_key: Some(remove_key),
-    };
+    let driver_hooks = driver_hooks();
     // SAFETY: `os_hooks` matches ABI_VERSION and the C function copies the table
     // before returning. Every callback has C ABI and static backing state.
     let os_result = unsafe { hisi_wpa_os_install(&raw const os_hooks) };
@@ -239,6 +352,19 @@ pub fn prepare_upstream_supplicant_port(ifname: &[u8]) -> Result<(), UpstreamSup
             install: driver_result,
             rollback,
         })
+    }
+}
+
+fn driver_hooks() -> DriverHooks {
+    DriverHooks {
+        abi_version: ABI_VERSION,
+        reserved: 0,
+        driver: core::ptr::addr_of!(DRIVER_CONTEXT).cast_mut().cast(),
+        get_own_address: Some(get_own_address),
+        send_eapol: Some(send_eapol),
+        send_mgmt: Some(send_mgmt),
+        install_key: Some(install_key),
+        remove_key: Some(remove_key),
     }
 }
 
@@ -589,6 +715,15 @@ mod tests {
                 hisi_rf_rtos_driver::Error::NotInstalled
             ))
         );
+    }
+
+    #[test]
+    fn rejects_invalid_opaque_context_layouts() {
+        let natural = core::mem::align_of::<usize>();
+        assert!(valid_context_layout(1, natural));
+        assert!(!valid_context_layout(0, natural));
+        assert!(!valid_context_layout(1, natural.saturating_sub(1)));
+        assert!(!valid_context_layout(1, natural + 1));
     }
 
     #[test]
