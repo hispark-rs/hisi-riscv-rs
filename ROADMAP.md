@@ -8,39 +8,32 @@ that goal. This ecosystem is still moving quickly: when roadmap text, docs,
 examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
-**WIP limit:** one major milestone at a time. The active milestone is A3; A4
-starts only after the A3 closeout evidence is frozen.
+**WIP limit:** one major milestone at a time. A3 is frozen; the active milestone
+is now A4.
 
-## NOW -- Close A3
+## Completed -- A3 Runtime And Connectivity Baseline
+
+The frozen A3 evidence establishes:
+
+- the 20-reset matrix completed association, DHCP and ARP 20/20 with no
+  `0x1451` authentication timeout or scheduler corruption;
+- Q3 binds observed vendor tasks to the pinned archive and Q4 keeps them
+  Cooperative without group quota or Reservation;
+- the bounded Rust RX ring had zero queue-full drops and at most one of four
+  slots occupied in the diagnostic matrix;
+- a Mac forced through the same Guest AP reproduced gateway silence and the
+  exact public `88/100` (12% loss) result, giving the capability proof a
+  quantified environmental boundary.
+
+Evidence: [task profile and multi-ping](docs/plan/evidence/ws63-rf-a3-task-profile-multiping-2026-07-14.md)
+and [network attribution](docs/plan/evidence/ws63-rf-a3-network-attribution-2026-07-14.md).
+Changed payloads, APs, routes or task sets must be measured again rather than
+inheriting this boundary.
+
+## NOW -- A4 Wi-Fi Vertical Slice
 
 The single active execution source is the
-[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-a3-next-a4).
-Current work is limited to four outcomes:
-
-1. **Network reliability attribution:** run 3-5 pings per reset, record TX/RX,
-   RTT, drops, and loss rate, and compare gateway behavior with a reference host.
-   The current 20-reset matrix completed association/DHCP/ARP 20/20 and returned
-   88/100 public replies, but the 12% loss and gateway 0/100 remain a data-plane
-   reliability risk, not an authentication regression. The next diagnostic is
-   RX queue-full accounting; the available host is not on the AP's L2 network.
-2. **Q3 archive-bound task profile (complete for the pinned payload):** record
-   only tasks created by the pinned archive, including archive hash, entry
-   symbol, vendor priority, Q2 metrics, and
-   `critical`/`worker`/`background`/`unknown` role. Classification does not imply
-   a policy change.
-3. **Q4 decision (complete for the pinned payload):** Q2 found no runaway vendor
-   task, so all current tasks remain Cooperative and no group quota is added.
-   Reservation is not implemented without a measured service guarantee
-   requirement. A payload or task-set change reopens this decision.
-4. **Freeze A3:** preserve reset statistics, scheduler invariants, versions,
-   submodule pointers, profile revision, and the resulting quota decision.
-
-A3 is complete only when scheduler invariants and the RF connection matrix are
-stable, the task profile has machine-readable facts, and the quota decision is
-explicit.
-
-## NEXT -- A4 Wi-Fi Vertical Slice
-
+[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-a4).
 A4 delivers one coherent Wi-Fi path:
 
 - `RadioController` / `RadioRunner`;

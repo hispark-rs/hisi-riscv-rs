@@ -4,8 +4,8 @@
 
 **Completed / historical evidence.** Init、scan、connect、WPA2-Personal、DHCP、ARP 和
 ping capability 已完成真机证明；本文保留 RF0-RF5 的 bring-up 事实，不再承载当前
-TODO。A3 closeout 与 A4 Wi-Fi vertical slice 的唯一当前入口是
-[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a3-next-a4)。
+TODO。A3 已冻结；A4 Wi-Fi vertical slice 的唯一当前入口是
+[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a4)。
 
 ## Summary
 
@@ -152,8 +152,13 @@ storage/NVS 与 RTOS ownership 拆分，再按
   [A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
 - 同日把单次 ping 扩为每目标 5 次并重复 20 次 nRST：WPA2/DHCP/ARP 仍为 20/20，
   公网为 `88/100`、每轮至少收到一个 reply，gateway 为 `0/100`，认证超时和 TX error
-  都为 0。该结果闭合 Q3/Q4，但 12% loss 与 RX queue-full 盲区仍由 A3 跟踪；见
+  都为 0。该结果闭合 Q3/Q4；见
   [A3 task profile and multi-ping](evidence/ws63-rf-a3-task-profile-multiping-2026-07-14.md)。
+- 后续在 RF seam 增加 Echo Reply、queue drop 与 high-water 统计：当前镜像 5 次 nRST
+  中应用与 seam 逐包一致、queue drop 为 0、high-water 为 1/4。Mac 强制经同一 Guest AP
+  的 `en0` 发送后，同样得到 gateway `0/20` 和公网 `88/100`（12% loss），从而为 A3
+  建立量化环境边界并关闭该里程碑；见
+  [A3 network attribution](evidence/ws63-rf-a3-network-attribution-2026-07-14.md)。
 - WPA2-Personal oracle 的独立真机记录见
   [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
 - WPA2-only supplicant 已从原厂 Ninja 编译图独立重建，并在删除 SAE/AP/EAP-TLS/WPS/WAPI

@@ -22,16 +22,19 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
-## Active Window: NOW A3, NEXT A4
+## Active Window: NOW A4
 
 本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。唯一 active
-milestone 是 A3 closeout；A3 冻结后才切换到 A4 Wi-Fi vertical slice。
+milestone 已从完成的 A3 切换到 A4 Wi-Fi vertical slice。
 
-### NOW -- A3 Closeout
+### Completed -- A3 Closeout
 
 1. 已将每轮单次 ping 扩为每个目标 5 次；20 次 nRST 得到 WPA2/DHCP/ARP 20/20、
-   公网 `88/100`、gateway `0/100`。当前主机不在 AP 的 L2 网络，gateway 行为尚不能归因；
-   下一步先补 RX queue-full/drop 统计，再重复矩阵。该风险不回写成认证失败。
+   公网 `88/100`、gateway `0/100`。后续 RF seam 矩阵证明 queue-full drop 为 0、
+   high-water 为 1/4，应用收到的 Echo Reply 与 `driverif_input` 逐包一致。
+   同一 Guest AP 上的 Mac 通过 `-b en0 -S 192.168.155.9` 强制 Wi-Fi 路径后，
+   gateway 同样 `0/20`、公网同样 `88/100`，因此剩余现象已有量化环境边界，
+   不回写成认证、RTOS 或 Rust RX queue 回归。
 2. Q3 archive-bound task profile 已对当前 payload 闭合：只记录真实生成的 vendor task，
    以 archive hash、entry symbol、vendor priority、Q2 metrics 和
    `critical`/`worker`/`background`/`unknown` 角色绑定事实。角色未知时必须保持
@@ -39,11 +42,11 @@ milestone 是 A3 closeout；A3 冻结后才切换到 A4 Wi-Fi vertical slice。
 3. Q4 已按 Q2 数据作出当前 payload 的显式决策：所有 vendor task 保持 Cooperative，
    不启用 per-thread `Budgeted` 或 group quota；没有 measured minimum-service demand，
    因此不实施 Reservation。payload/task-set 变化时必须重开 Q3/Q4。
-4. 冻结 reset matrix、调度不变量、版本、submodule pointer、profile revision 和 quota
-   decision。完成定义只有四项：调度不变量稳定、RF 连接矩阵稳定、task profile 有事实
-   记录、quota 是否需要已有明确结论。
+4. reset matrix、调度不变量、版本、submodule pointer、profile revision、quota decision
+   和网络归因已经冻结。完整收口见
+   [A3 network attribution](evidence/ws63-rf-a3-network-attribution-2026-07-14.md)。
 
-### NEXT -- A4 Wi-Fi Vertical Slice
+### NOW -- A4 Wi-Fi Vertical Slice
 
 A4 只交付 `RadioController`/`RadioRunner`、`WifiController`/`WifiDevice`、bounded event
 queue，以及长生命周期 smoltcp 或 embassy-net runner。它必须覆盖 lease renew、
@@ -550,9 +553,11 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   不改变 runtime policy；`hisi-rf-link task-profile` 已把 final ELF SHA/symbol 与可选 Q2
   UART metrics 合并为 versioned JSON，guarded link 自动生成报告。当前四个 vendor task
   已在 20/20 报告中精确匹配；profile 角色不自动映射为 policy。
-- [ ] A3 连接可靠性仍未闭合：当前矩阵为公网 `88/100`（12% loss）、gateway `0/100`，
-  且 RX ring 满时仍会静默丢帧。先补 queue drop/high-water 诊断并重复 HIL；没有同 L2
-  reference host 前，不把 gateway 行为归因给 AP。
+- [x] A3 连接可靠性归因已闭合：20-reset baseline 的公网 `88/100`（12% loss）由同一
+  Guest AP、强制 `en0` 的 Mac 精确复现，gateway silence 也由 Mac 复现；当前实现的
+  RF seam/app Echo Reply 计数一致，RX queue drop 为 0、high-water 为 1/4。该结论是
+  当前 AP/route/payload 的环境边界，不是跨环境零丢包承诺。证据见
+  [A3 network attribution](evidence/ws63-rf-a3-network-attribution-2026-07-14.md)。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。

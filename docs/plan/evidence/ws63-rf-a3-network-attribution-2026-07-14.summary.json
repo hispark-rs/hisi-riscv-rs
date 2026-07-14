@@ -1,0 +1,50 @@
+{
+  "schema": "hisi-riscv-rs/ws63-rf-a3-network-attribution/v1",
+  "date": "2026-07-14",
+  "board": {
+    "resets": 5,
+    "init_scan_wpa2_dhcp_arp_passes": 5,
+    "auth_rsp2_timeouts": 0,
+    "gateway": {
+      "tx": 25,
+      "rx": 0
+    },
+    "public": {
+      "target": "1.1.1.1",
+      "tx": 25,
+      "rx": 21
+    },
+    "rx_seam": {
+      "queue_depth": 4,
+      "max_high_watermark": 1,
+      "queue_full_drops": 0,
+      "app_without_seam": 0,
+      "seam_without_app": 0
+    }
+  },
+  "reference_host": {
+    "interface": "en0",
+    "source_ipv4": "192.168.155.9",
+    "binding": "ping -b en0 -S 192.168.155.9",
+    "gateway": {
+      "target": "192.168.155.1",
+      "tx": 20,
+      "rx": 0
+    },
+    "public": {
+      "target": "1.1.1.1",
+      "tx": 100,
+      "rx": 88,
+      "loss_percent": 12.0,
+      "rtt_min_ms": 151.005,
+      "rtt_avg_ms": 159.936,
+      "rtt_max_ms": 210.852
+    }
+  },
+  "baseline_20_reset_public": {
+    "tx": 100,
+    "rx": 88,
+    "loss_percent": 12.0
+  },
+  "decision": "a3_closed_environmental_boundary_quantified"
+}

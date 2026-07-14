@@ -6,10 +6,12 @@ This evidence closes Q3 archive-bound task classification and records the Q4
 quota decision for the current WS63 radio payload. It also replaces the earlier
 single-ping observation with a 20-reset, five-ping-per-target matrix.
 
-It does **not** close A3 as a whole. Public ICMP still loses packets, gateway
-ICMP cannot yet be compared with a valid same-L2 reference host, and the current
-RX ring silently drops queue-full frames without counting them. Those are
-data-path risks, not authentication regressions.
+At capture time it did **not** close A3 as a whole: public ICMP still lost
+packets, no same-L2 reference host was available, and queue-full loss was not
+observable. The follow-up
+[network-attribution evidence](ws63-rf-a3-network-attribution-2026-07-14.md)
+adds RF-seam counters and a same-AP reference host, quantifies the environmental
+boundary, and closes the remaining A3 gate.
 
 ## Frozen Inputs
 
@@ -102,11 +104,9 @@ This is an archive- and evidence-bound decision, not a permanent claim that RF
 tasks should always be Cooperative. A new payload hash, a changed task set, or
 new Q2 latency evidence must reopen Q3/Q4.
 
-## Remaining A3 Gate
+## Follow-Up A3 Gate
 
-Q3 and Q4 are complete for the frozen payload. A3 remains active until the RX
-queue-full path is counted, the multi-ping matrix is repeated with that
-instrumentation, and the public loss/gateway behavior is either fixed or given
-a quantified environmental boundary. A4 must still replace the bring-up-only
-DHCP/ARP/ping helper with a long-lived network runner; this evidence does not
-claim sustained-IP readiness.
+Q3 and Q4 are complete for the frozen payload. The follow-up seam and same-AP
+comparison closed the queue-loss and attribution requirements without changing
+runtime policy. A4 must still replace the bring-up-only DHCP/ARP/ping helper with
+a long-lived network runner; neither evidence set claims sustained-IP readiness.
