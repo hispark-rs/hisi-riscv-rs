@@ -429,7 +429,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 #### A3 progress
 
-- [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.4` release unit；其 contract
+- [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.6` release unit；其 contract
   包含可失败 task/semaphore、validated stack/timeout/wait 类型和 exactly-one runtime
   注册，不依赖 WS63、RF、scheduler、allocator 或网络栈。
 - [x] 真实 vendor `osal_kthread_create`、`osal_msleep`、current-task、semaphore、mutex、
@@ -438,13 +438,18 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] 已建立独立 `hisi-rtos 0.1.0-alpha.3` release unit；task slots、task stacks、context
   switch 和 cooperative scheduler ownership 已从 RF crate 移出。应用显式注入 allocator、
   deallocator 和 monotonic clock resources 后启动唯一 runtime。
+- [x] 当前兼容基线恢复为 1 adopted main + 1 internal idle + 15 dynamic task slots；host
+  回归、RV32 build 和 Cooperative/Budgeted/Preemptive/Embassy/RF HIL 已闭合，证据见
+  [A3 task-capacity compatibility](evidence/ws63-rf-a3-task-capacity-2026-07-14.md)。
+  17-slot 实现不是长期上限。`SchedulerStorage<N>`、profile、reservation/quota 与 TaskId
+  编码演进只在 A3/RF parity 冻结后实施，唯一计划见
+  [`hisi-rtos` Task Capacity And Static Storage Evolution](hisi-rtos-future-architecture.md#task-capacity-and-static-storage-evolution)。
 - [x] scheduler 的 allocation/free 和 monotonic clock 读取已移出 critical section；临界区只
   更新 task state、ready/sleep metadata 和当前 task bookkeeping。
-- [x] task priority 已穿过 driver/OSAL contract，退出栈由另一 task 延迟回收。早期仅启用严格
-  优先级、尚无 IRQ epilogue 时曾饿死初始化路径；现在 RF smoke 显式选择
-  `SchedulingPolicy::Priority`，ISR 唤醒高优先级 task 后由 runtime 在恢复任务栈、弹出 trap
-  frame 之前执行 deferred context switch。`Config::default()` 仍为 Cooperative，避免未选择
-  Priority 的普通应用隐式改变调度语义。
+- [x] task priority 已穿过 driver/OSAL contract，退出栈由另一 task 延迟回收。所有
+  `RunPolicy` 都按 effective priority + FIFO 选择下一个 eligible task；policy 只决定当前
+  task 何时允许被强制切换。RF smoke 使用 `PortedConfig`，ISR wake 由统一 trap epilogue
+  处理；portless 路径只能通过 `start_cooperative` 启动，不能表达 Budgeted/Preemptive。
 - [x] scheduler lock/unlock 已穿过 driver/OSAL contract；`hisi-rtos` 按 task 跟踪嵌套深度，
   拒绝不平衡 unlock，host test 覆盖嵌套与错误路径。该能力不冒充抢占或优先级继承。
 - [x] Guarded link 仍验证 1,486 section、5,335 relocation 和 37 ROM patch；WS63 HIL
@@ -488,12 +493,22 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   `native_ticks=17`、`embassy_ticks=10`、`timer_irqs=26`、`context_switches=34`。
   持久 time-slice deadline 同时防止 Embassy timer re-arm 延后同优先级轮转；证据见
   [A3 Embassy coexistence](evidence/ws63-rf-a3-embassy-coexistence-2026-07-14.md)。
-- [ ] per-thread budget enforcement 必须先完成
-  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) V0-V4；该 gate
-  通过前，A3 不得标记完成。
+- [x] Q0-Q1 已闭合：`Budgeted` 实现周期 CPU quota 上限，timer 强制 throttle/replenish；
+  typed `CooperativeOnly`/`Ported` capability、scheduler-lock fail-stop 上界、stale timer
+  re-arm 线性化、MIE/SWI delivery guard 已有 host/UI/Kani/TLA+ 与真机 marker。
+- [ ] Q2-Q4 仍是 A3 gate：补 per-thread 低扰动 observability，按 archive hash 将 vendor
+  task 分类为 critical/worker/background/unknown，再以数据决定 per-thread/group quota。
+  完成前不引入或承诺 Reservation。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。
+- A3 baseline 冻结后，RF adapter 必须以观测数据把 vendor task 分为 critical、worker、
+  background 和 unknown，并按 archive hash 维护 scheduling profile；不得把一个
+  `radio_task_policy` 永久应用到所有 task。critical 候选可使用高优先级 Preemptive，
+  worker/background 使用 per-thread quota，并在分类完成后评估 aggregate group quota。
+  `Budgeted` 不提供最低 CPU 服务保证；是否引入独立 Reservation 只按
+  [Quota Closure And Guaranteed Service Evolution](hisi-rtos-semantics-and-verification.md#quota-closure-and-guaranteed-service-evolution)
+  的 G0 gate 决定，不阻塞当前 init/scan/connect/ping parity。
 
 ### B0-B3 -- BLE Vendor Host First
 
@@ -544,7 +559,8 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - `hisi-rtos` 只维护一个统一的 single-hart scheduler backend，不分叉维护
   “协作式内核”和“抢占式内核”。同一 backend 按 thread 支持
   `RunPolicy::{Cooperative, Budgeted, Preemptive}`：普通 Rust/Embassy 执行路径
-  以协作为主，vendor blob 默认使用带预算的 `Budgeted` 策略作为抢占兜底，
-  只有需要确定响应上界的 thread 才使用 `Preemptive`。
+  以协作为主，vendor worker/background 使用带 quota 上限的 `Budgeted` 作为失控保护，
+  只有经观测确认需要确定响应上界的 critical thread 才使用 `Preemptive`。未来最低服务
+  Reservation 是独立 admitted capability，不改变 `Budgeted` 语义。
 - 初期不创建 `hisi-sync` 或 `hisi-phy`：同步继续使用 `critical-section` / 
   `portable-atomic`，PHY policy 在出现可复用、非 blob-owned 行为前留在 radio adapter。

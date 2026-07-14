@@ -51,8 +51,8 @@ contract；本文只管理它如何产生、证明和演进。规范中每条要
 priority 决定从 eligible ready set 中选谁；`RunPolicy` 决定当前 thread 在什么
 条件下可被强制切换。规范必须固定：
 
-- `Cooperative`：显式 yield/block/exit 调度；更高优先级 ready 可抢占；不因
-  同优先级普通 time slice 切换；
+- `Cooperative`：只在显式 yield/block/exit 或明确 handoff 时调度；更高优先级 ready
+  只记录 pending，不立即抢占；不因同优先级普通 time slice 切换；
 - `Budgeted`：保留 cooperative 路径，但执行资格受预算限制；
 - `Preemptive`：更高优先级 ready 立即请求切换，同优先级可按时间片
   round-robin；
@@ -65,11 +65,12 @@ priority 决定从 eligible ready set 中选谁；`RunPolicy` 决定当前 threa
 调度一次”：
 
 1. 最大连续执行 burst；或
-2. `BudgetSpec { capacity, replenishment_period }` 的周期性 CPU reservation。
+2. `BudgetSpec { capacity, replenishment_period }` 的周期性 CPU quota 上限；
+   它不承诺每周期获得最低 CPU 服务量。
 
 当高优先级 vendor thread 在预算耗尽后仍 ready 时，仅把它放回 ready queue 可能
 立即再次选中，无法保护低优先级 Embassy executor。因此初始 normative candidate
-采用周期性 reservation：耗尽后 thread 进入 `Throttled`，在 replenishment
+采用周期性 quota：耗尽后 thread 进入 `Throttled`，在 replenishment
 deadline 前不进入 eligible ready set。最终决策必须经 TLA+ 反例搜索和 RF
 workload 数据评审后冻结。
 
@@ -78,9 +79,72 @@ workload 数据评审后冻结。
 - 是否只计 thread-mode CPU time，IRQ 时间如何归属；
 - 被更高优先级抢占后剩余预算是否保留；
 - yield/block 是否补充预算；
-- scheduler lock 内耗尽时只记录 pending，还是触发其他约束；
+- scheduler lock 内耗尽先记录 pending；若连续持锁超过 ported config 的非零
+  上界，则通过 port 的 non-returning contract-violation handler fail-stop；
 - 无其他 eligible thread 时是否允许借用空闲 CPU；
 - deadline 滚动、时钟 wrap、多次过期和迁移 hart 后的计费。
+
+### Quota Closure And Guaranteed Service Evolution
+
+`Budgeted` 的名称和语义在当前 alpha API 中保持稳定：它是周期 CPU quota 上限，
+用于限制不合作 thread 的最大 CPU 消耗，不保证 runnable thread 每周期获得最低服务量。
+后续若 RF 或其他系统服务需要可证明的最低 CPU 时间，必须新增独立
+`ReservationSpec`/reservation contract；不得通过修改 `Budgeted` 的既有语义隐式引入。
+
+实施分为两个连续但相互独立的阶段。当前 connectivity/A3 只阻塞于 Q0-Q4，G0-G5
+是完成 RF baseline 后按测量证据启动的可选扩展。
+
+#### Q0-Q4 -- Quota And Observability Closure
+
+1. **Q0 Semantic freeze**：保持一个 scheduler backend；所有 ready thread 始终按
+   effective priority 排队，`RunPolicy` 只控制当前 thread 何时允许被强制切换。
+   `Cooperative`、`Budgeted` 和 `Preemptive` 不形成三套 ready-queue 语义。
+2. **Q1 Ported capability**：`start_cooperative` 只产生 `CooperativeOnly` handle；带
+   timer/SWI 的启动产生 `Ported` handle，只有后者可配置 `Budgeted`/`Preemptive`。
+   Ported config 必须提供非零 scheduler-lock 上限和 non-returning
+   `contract_violation` handler；timer re-arm、MIE/SWI handoff、stale event 和时间回绕
+   必须有独立回归。
+3. **Q2 Per-thread evidence**：为 CPU time、dispatch、budget exhaustion、最长连续执行、
+   ready latency、scheduler-lock latency 和 IRQ interference 建立低扰动 trace。只有这些
+   数据能决定哪个 thread 真正需要抢占或最低服务保证。
+4. **Q3 Scheduling profiles**：芯片/blob adapter 按 archive hash 和任务角色维护兼容
+   profile；time-critical、worker、background 和 unknown thread 不得长期共用一个
+   无差别的默认策略。通用 kernel 不编码 WS63 task 名称或 vendor priority policy。
+5. **Q4 Group quota gate**：先统计 subsystem aggregate CPU，再决定是否为 worker/
+   background group 执行总 quota。不得在尚未区分 critical thread 时对全部 radio task
+   粗暴 throttle；per-thread quota 与 group quota 分别解决单任务失控和子系统总占用。
+
+#### G0-G5 -- Optional Guaranteed-Service Extension
+
+G0 只在 Q0-Q4 的压力 HIL 仍显示 critical ready latency 接近协议 timeout、并发
+Wi-Fi/BLE/SLE/Embassy 出现可归因 deadline miss，或产品明确需要响应时间承诺时启动。
+
+1. **G0 Internal normalization**：内部将策略归一化为 `DispatchMode` 与 `CpuControl`；
+   旧 API 映射为 `Cooperative + Unlimited`、`Cooperative + Quota` 和
+   `Preemptive + Unlimited`，不立即破坏 `RunPolicy` 公共入口。
+2. **G1 Reservation contract**：新增 validated
+   `ReservationSpec { capacity, period, deadline }`，固定
+   `capacity <= deadline <= period`。其唯一承诺是 thread 持续 runnable 时，从 release
+   到 deadline 至少获得 capacity CPU 时间；blocked 时间、额度结转、miss handling 和
+   IRQ accounting 必须规范化。
+3. **G2 Admission control**：静态 RTOS manifest 汇总 reservation、优先级、IRQ、最大
+   scheduler-lock/mutex blocking 和 context-switch 开销。只有分析通过后生成的
+   `ReservationToken` 才能创建 guaranteed thread；动态创建不得绕过 admission。
+4. **G3 Fixed-priority server**：第一版 reservation 复用现有 fixed-priority scheduler、
+   priority inheritance 和 ported preemption，不同时引入 EDF。RF 只给经证据识别的
+   authentication/RX-management/protocol-timer 等 critical thread 或 reservation group
+   提供保证，worker/background 继续使用 quota。
+5. **G4 Proof and HIL**：TLA+/Kani/host model 证明 admitted reservation 的服务下界、
+   quota 上界、lock/IRQ blocking 和 replenishment 状态；真机覆盖 CPU hog、IRQ storm、
+   mutex inversion、Embassy 共存和多轮 connectivity reset matrix。
+6. **G5 Cooperative reservation decision**：初始不公开硬保证的
+   `Cooperative + Reservation`。只有所有干扰 thread 的最大 non-yield、Future 单次 poll、
+   scheduler lock 和 IRQ mask 时间均有可信上界，且 response-time analysis 通过后，才可
+   作为独立 experimental contract 评估。
+
+这一演进保持原始的 cooperative-first 目标：普通 Rust/Embassy 路径不因未来实时能力
+自动变成全抢占系统；最低服务保证只属于显式 admitted、ported、preemptive 的少数
+critical thread。
 
 ### Scheduler Lock And Interrupts
 
@@ -131,7 +195,8 @@ reschedule IPI、memory ordering、跨 hart donation 和 budget accounting。平
 
 活性性质至少包括：获得 grant 的 waiter 最终可运行，outermost unlock/IRQ
 exit 后 pending reschedule 最终处理，预算补充后 throttled thread 最终恢复
-eligible，以及在公平性假设下更高优先级 ready thread 不被无限延迟。
+eligible，以及在 Preemptive policy 或 Cooperative 显式 handoff 的公平性假设下，
+更高优先级 ready thread 不被无限延迟。
 
 ## Verification Layers
 
@@ -193,8 +258,9 @@ CI 最终分为：
    Preemptive、scheduler lock 和 IRQ epilogue。
 3. **V2 Wait and mutex spec**：冻结 signal-timeout race、semaphore grant、recursive
    mutex 和 transitive priority inheritance；补齐 TLA+ 与 Kani。
-4. **V3 Budget design freeze**：用反例和 RF trace 选择 budget/replenishment 模型，
-   冻结 `BudgetSpec` 后才实现 `RunPolicy::Budgeted`。
+4. **V3 Budget design freeze**：已冻结 `Budgeted` 为周期 CPU quota 上限，并实现
+   throttle/replenishment、scheduler-lock fail-stop 上界与可执行模型；后续不改变其为
+   最低服务保证。
 5. **V4 Implementation conformance**：抽出 pure core，建立 differential model、Kani harness
    和 requirement manifest PR gate。
 6. **V5 Mechanism closure**：QEMU/HIL 闭环 GPR/FPR/FCSR、timer、SOFT_INT、IRQ
@@ -206,10 +272,11 @@ CI 最终分为：
 
 ## Current Evidence Mapping
 
-已完成的 unified context、IRQ epilogue、software interrupt、priority inheritance 和
-scheduler stress HIL 是 V0/V1/V2/V5 的输入，不需要推倒重做。它们目前证明
-实例场景，还没有证明所有可能事件排列。`Budgeted` 尚无实现和证据，
-必须从 V3 语义冻结开始，不得从当前 time-slice 逻辑直接演化出隐式契约。
+已完成的 unified context、IRQ epilogue、software interrupt、priority inheritance、
+scheduler stress 和 Budgeted HIL 是 V0/V1/V2/V3/V5 的输入，不需要推倒重做。
+`Budgeted` 已有 host tests、Kani harness、TLA+ model 和 WS63 quota marker，但这些证据
+仍只覆盖已列出的性质与场景，不证明所有事件排列。Q2-Q4 的观测、archive profile 和
+group-quota gate 仍未完成；不得从现有 quota 逻辑隐式演化出 Reservation 契约。
 
 ## Non-Goals
 
