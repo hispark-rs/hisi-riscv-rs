@@ -1,7 +1,9 @@
 //! Thin calls into the runtime selected by the application.
 
 use core::ffi::c_void;
-use core::num::{NonZeroU32, NonZeroUsize};
+#[cfg(target_arch = "riscv32")]
+use core::num::NonZeroU32;
+use core::num::NonZeroUsize;
 use hisi_rf_rtos_driver::{TaskConfig, TaskEntry};
 
 pub fn spawn(entry: TaskEntry, arg: *mut c_void, stack_size: usize) -> Option<usize> {
@@ -31,6 +33,7 @@ pub fn yield_now() {
     let _ = hisi_rf_rtos_driver::yield_now();
 }
 
+#[cfg(target_arch = "riscv32")]
 pub fn sleep_ms(milliseconds: u32) {
     if let Some(milliseconds) = NonZeroU32::new(milliseconds) {
         let _ = hisi_rf_rtos_driver::sleep_ms(milliseconds);

@@ -5,7 +5,7 @@ use core::cell::RefCell;
 use core::ffi::c_void;
 use critical_section::Mutex;
 
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 unsafe extern "C" {
     fn __ws63_vendor_eloop_post_event(
         event: *mut c_void,
@@ -362,7 +362,7 @@ pub unsafe extern "C" fn __ws63_diag_hwal_netif_rx(
     unsafe { hwal_netif_rx(netdev, netbuf) }
 }
 
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 fn update(event: usize, apply: impl FnOnce(&mut EloopDiagnostic)) {
     critical_section::with(|cs| {
         let mut diagnostics = DIAGNOSTICS.borrow_ref_mut(cs);
@@ -379,7 +379,7 @@ fn update(event: usize, apply: impl FnOnce(&mut EloopDiagnostic)) {
     });
 }
 
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 fn record_driver_event(command: u32, length: u32, payload0: u32) {
     critical_section::with(|cs| {
         let mut history = DRIVER_EVENTS.borrow_ref_mut(cs);
@@ -517,7 +517,7 @@ unsafe fn message_netbuf(message: *mut c_void) -> *const u8 {
     }
 }
 
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 #[inline(always)]
 fn return_address() -> usize {
     let caller: usize;
@@ -528,7 +528,7 @@ fn return_address() -> usize {
     caller
 }
 
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 fn is_driver_event_consumer(caller: usize) -> bool {
     let start = drv_soc_driver_event_process as *const () as usize;
     let end = drv_soc_driver_ap_event_process as *const () as usize;
@@ -536,7 +536,7 @@ fn is_driver_event_consumer(caller: usize) -> bool {
 }
 
 /// Records the live dispatcher registers without changing vendor control flow.
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 pub(crate) fn record_dispatch_registers(caller: usize, command: usize, length: usize) {
     if !is_driver_event_consumer(caller) {
         return;
@@ -550,11 +550,11 @@ pub(crate) fn record_dispatch_registers(caller: usize, command: usize, length: u
     });
 }
 
-#[cfg(all(target_arch = "riscv32", not(feature = "wifi-wpa2-personal")))]
+#[cfg(all(target_arch = "riscv32", not(feature = "wifi-personal")))]
 pub(crate) fn record_dispatch_registers(_: usize, _: usize, _: usize) {}
 
 /// Preserve vendor queueing while counting event-loop producers.
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub unsafe extern "C" fn eloop_post_event(
@@ -576,7 +576,7 @@ pub unsafe extern "C" fn eloop_post_event(
 }
 
 /// Preserve vendor dequeueing while counting event-loop consumers.
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub unsafe extern "C" fn eloop_read_event(event: *mut c_void, timeout: i32) -> *mut c_void {
@@ -612,7 +612,7 @@ pub unsafe extern "C" fn eloop_read_event(event: *mut c_void, timeout: i32) -> *
 }
 
 /// Preserve the vendor dispatcher while recording its two early-return gates.
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
+#[cfg(all(target_arch = "riscv32", feature = "wifi-personal"))]
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub unsafe extern "C" fn wpa_supplicant_event(ctx: *mut c_void, event: i32, data: *mut c_void) {

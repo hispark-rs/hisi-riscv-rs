@@ -105,7 +105,7 @@ pub mod eloop_diag;
 pub mod error;
 pub mod frw;
 pub mod hcc;
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 pub mod hisi_rf_backend;
 pub mod libc;
 pub mod litos;
@@ -129,7 +129,7 @@ pub mod rf_init_diag;
 pub mod timer;
 pub mod uapi;
 pub mod wifi;
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 mod wpa_compat;
 
 pub use pmp::prepare_vendor_memory;
@@ -139,7 +139,7 @@ pub use pmp::prepare_vendor_memory;
 /// Use the `hisi-rf` crate directly for chip-neutral types. This facade remains
 /// available through the parent repository's 0.7.x release train and is removed
 /// no earlier than 0.8.0.
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 #[deprecated(
     since = "0.1.0",
     note = "depend on hisi-rf directly; ws63-rf-rs::radio is removed no earlier than parent v0.8.0"
@@ -407,7 +407,7 @@ pub fn force_link_contract() {
     keep!(uapi::uapi_drv_cipher_trng_get_random_bytes as extern "C" fn(*mut u8, u32) -> u32);
     keep!(uapi::get_dev_addr as extern "C" fn(*mut u8, u8, u8) -> u32);
     keep!(uapi::get_tcxo_freq as extern "C" fn() -> u32);
-    #[cfg(not(feature = "wifi-wpa2-personal"))]
+    #[cfg(not(feature = "wifi-personal"))]
     {
         keep!(uapi::uapi_wifi_softap_stop as extern "C" fn() -> i32);
         keep!(uapi::uapi_wifi_sta_stop as extern "C" fn() -> i32);

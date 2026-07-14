@@ -73,6 +73,10 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 rssi_dbm: scan.rssi_dbm,
                 security: match scan.security() {
                     ScanSecurity::Open => Security::Open,
+                    #[cfg(feature = "wifi-wpa3-personal")]
+                    ScanSecurity::Protected if scan.supports_wpa3_personal() => {
+                        Security::Wpa3Personal
+                    }
                     ScanSecurity::Protected if scan.supports_wpa2_personal() => {
                         Security::Wpa2Personal
                     }
@@ -101,8 +105,12 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 class: BackendErrorClass::Connect,
                 code: 0x1000_0002,
             })?;
-        let network = PersonalNetwork::from_scan(scan, config.passphrase.expose_secret())
-            .map_err(map_error)?;
+        let network = PersonalNetwork::from_scan_with_security(
+            scan,
+            config.passphrase.expose_secret(),
+            config.security(),
+        )
+        .map_err(map_error)?;
         wifi.connect(&network, config.timeout_ms())
             .map(to_connection_info)
             .map_err(map_error)
@@ -129,7 +137,7 @@ pub fn resources(efuse: Efuse<'static>) -> RadioResources<Ws63WifiBackend<'stati
 /// Convenience type for the WS63 Wi-Fi-only controller state.
 pub type Ws63RadioState<const EVENTS: usize> = RadioState<EVENTS>;
 
-/// Default radio configuration for the verified WS63 WPA2-Personal path.
+/// Default radio configuration for the WS63 Personal-mode station path.
 pub fn config() -> RadioConfig {
     RadioConfig::default()
 }
@@ -158,9 +166,9 @@ fn map_error(error: Ws63Error) -> BackendError {
         }
         Ws63Error::ConnectFailed(status) => (BackendErrorClass::Connect, status as u32),
         Ws63Error::Disconnected(reason) => (BackendErrorClass::Connect, reason as u32),
-        Ws63Error::StartConnect(code) | Ws63Error::StartDisconnect(code) => {
-            (BackendErrorClass::Connect, code as u32)
-        }
+        Ws63Error::ConfigureSecurity(code)
+        | Ws63Error::StartConnect(code)
+        | Ws63Error::StartDisconnect(code) => (BackendErrorClass::Connect, code as u32),
         Ws63Error::Runtime(code) => (BackendErrorClass::Other, 0x2000_0000 | runtime_code(code)),
         Ws63Error::AlreadyInitialized => (BackendErrorClass::Initialize, 2),
         Ws63Error::CreateStation(code)

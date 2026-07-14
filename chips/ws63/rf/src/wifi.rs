@@ -7,6 +7,10 @@
 
 use core::ffi::c_int;
 use hisi_hal::peripherals::Efuse;
+#[cfg(feature = "wifi-personal")]
+use hisi_rf::PersonalSecurity;
+#[cfg(all(feature = "wifi-wpa3-personal", target_arch = "riscv32"))]
+use hisi_rf::SaePwe;
 
 #[cfg(target_arch = "riscv32")]
 use core::cell::{Cell, UnsafeCell};
@@ -19,7 +23,7 @@ use portable_atomic::{AtomicBool, Ordering};
 
 const IFNAME_CAPACITY: usize = 17;
 const SSID_CAPACITY: usize = 32;
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 const WPA_KEY_CAPACITY: usize = 64;
 #[cfg(target_arch = "riscv32")]
 const MAX_IE_LENGTH: usize = 2304;
@@ -111,8 +115,8 @@ pub struct OpenNetwork {
     frequency_mhz: u16,
 }
 
-/// A discovered WPA2-Personal/CCMP network and validated ASCII passphrase.
-#[cfg(feature = "wifi-wpa2-personal")]
+/// A discovered WPA2/WPA3-Personal network and validated ASCII passphrase.
+#[cfg(feature = "wifi-personal")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PersonalNetwork {
     ssid: [u8; SSID_CAPACITY],
@@ -121,23 +125,38 @@ pub struct PersonalNetwork {
     auth_mode: i32,
     pairwise: i32,
     channel: u8,
+    security: PersonalSecurity,
     key: [u8; WPA_KEY_CAPACITY + 1],
     key_len: u8,
 }
 
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 impl PersonalNetwork {
     /// Select a WPA2-Personal/CCMP AP and validate an ASCII passphrase.
     pub fn from_scan(result: &ScanResult, passphrase: &[u8]) -> Result<Self, Error> {
+        Self::from_scan_with_security(result, passphrase, PersonalSecurity::Wpa2)
+    }
+
+    pub(crate) fn from_scan_with_security(
+        result: &ScanResult,
+        passphrase: &[u8],
+        security: PersonalSecurity,
+    ) -> Result<Self, Error> {
         if result.ssid_len == 0 {
             return Err(Error::InvalidSsid);
         }
         if result.security != ScanSecurity::Protected {
             return Err(Error::OpenNetwork);
         }
-        // Delivered SDK enums: WPA2PSK=2 and AES/CCMP=1. WPA1 mixed mode,
-        // SAE/transition mode, Enterprise and TKIP remain separate gates.
-        if result.auth_mode != 2 || result.pairwise != 1 {
+        let supported = match security {
+            PersonalSecurity::Wpa2 => result.auth_mode == 2 && result.pairwise == 1,
+            PersonalSecurity::Wpa3 { .. } => {
+                cfg!(feature = "wifi-wpa3-personal")
+                    && result.auth_mode == 7
+                    && result.pairwise == 1
+            }
+        };
+        if !supported {
             return Err(Error::UnsupportedSecurity(result.auth_mode));
         }
         if !(8..=63).contains(&passphrase.len())
@@ -154,6 +173,7 @@ impl PersonalNetwork {
             auth_mode: result.auth_mode,
             pairwise: result.pairwise,
             channel: result.channel,
+            security,
             key,
             key_len: passphrase.len() as u8,
         })
@@ -200,7 +220,7 @@ pub struct ConnectionInfo {
 /// Low-disturbance state captured at the vendor WPA event callback boundary.
 #[cfg(all(
     feature = "rf-eloop-diag",
-    feature = "wifi-wpa2-personal",
+    feature = "wifi-personal",
     target_arch = "riscv32"
 ))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -253,6 +273,13 @@ impl ScanResult {
             && self.auth_mode == 2
             && self.pairwise == 1
     }
+
+    /// Whether this result matches the vendor-oracle WPA3-Personal/SAE profile.
+    pub const fn supports_wpa3_personal(&self) -> bool {
+        matches!(self.security, ScanSecurity::Protected)
+            && self.auth_mode == 7
+            && self.pairwise == 1
+    }
 }
 
 /// Error returned by the thin Wi-Fi adapter.
@@ -290,6 +317,8 @@ pub enum Error {
     StartScan(c_int),
     /// The scan finished with a non-success vendor status.
     ScanFailed(ScanStatus),
+    /// The vendor rejected PMF or SAE policy before association.
+    ConfigureSecurity(c_int),
     /// The vendor refused to start the association.
     StartConnect(c_int),
     /// The vendor refused to disconnect the station.
@@ -311,13 +340,13 @@ pub struct Wifi<'d> {
 }
 
 /// Exclusive station handle backed by the vendor WPA supplicant.
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 pub struct WpaWifi<'d> {
     ifname: [u8; IFNAME_CAPACITY],
     _efuse: Efuse<'d>,
 }
 
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(feature = "wifi-personal")]
 impl<'d> WpaWifi<'d> {
     /// Initialize the RF runtime, start the STA interface and its supplicant task.
     pub fn initialize(efuse: Efuse<'d>) -> Result<Self, Error> {
@@ -342,8 +371,8 @@ impl<'d> WpaWifi<'d> {
                 return Err(Error::Timebase(timebase));
             }
             crate::uapi::enable_efuse_reads();
-            // The cropped WPA2 profile uses unified-cipher for its verified
-            // PBKDF2/TRNG paths and RustCrypto for SHA/HMAC/AES.
+            // The vendor-oracle WPA profiles initialize their shared cipher
+            // environment before either WPA2-PSK or SAE starts.
             unsafe { uapi_drv_cipher_env_init() };
             let init = unsafe { uapi_wifi_init(2, 7) };
             if init != 0 {
@@ -454,8 +483,6 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
-            crate::crypto::ws63_security_self_test()
-                .map_err(|error| Error::Crypto(error.code()))?;
             let started = critical_section::with(|cs| {
                 let state = CONNECTION_STATE.borrow(cs);
                 if state.active.get() {
@@ -473,16 +500,61 @@ impl<'d> WpaWifi<'d> {
             request.ssid[..network.ssid_len as usize]
                 .copy_from_slice(&network.ssid[..network.ssid_len as usize]);
             request.auth_mode = network.auth_mode as u8;
-            let mut pmk = [0; 32];
-            hisi_crypto::Pbkdf2HmacSha1::derive_32(
-                &crate::crypto::WS63_CRYPTO,
-                &network.key[..network.key_len as usize],
-                network.ssid(),
-                4096,
-                &mut pmk,
-            )
-            .map_err(|error| Error::Crypto(error.code()))?;
-            encode_hex(&pmk, &mut request.key[..64]);
+            match network.security {
+                PersonalSecurity::Wpa2 => {
+                    #[cfg(not(feature = "wifi-wpa2-personal"))]
+                    {
+                        finish_connection();
+                        return Err(Error::UnsupportedSecurity(network.auth_mode));
+                    }
+                    #[cfg(feature = "wifi-wpa2-personal")]
+                    {
+                        if let Err(error) = crate::crypto::ws63_security_self_test() {
+                            finish_connection();
+                            return Err(Error::Crypto(error.code()));
+                        }
+                        let mut pmk = [0; 32];
+                        if let Err(error) = hisi_crypto::Pbkdf2HmacSha1::derive_32(
+                            &crate::crypto::WS63_CRYPTO,
+                            &network.key[..network.key_len as usize],
+                            network.ssid(),
+                            4096,
+                            &mut pmk,
+                        ) {
+                            finish_connection();
+                            return Err(Error::Crypto(error.code()));
+                        }
+                        encode_hex(&pmk, &mut request.key[..64]);
+                    }
+                }
+                PersonalSecurity::Wpa3 { .. } => {
+                    #[cfg(not(feature = "wifi-wpa3-personal"))]
+                    return Err(Error::UnsupportedSecurity(network.auth_mode));
+                    #[cfg(feature = "wifi-wpa3-personal")]
+                    {
+                        let PersonalSecurity::Wpa3 { sae_pwe } = network.security else {
+                            unreachable!()
+                        };
+                        let pmf = unsafe { uapi_wifi_set_pmf(2) };
+                        if pmf != 0 {
+                            finish_connection();
+                            return Err(Error::ConfigureSecurity(pmf));
+                        }
+                        let pwe = match sae_pwe {
+                            SaePwe::HuntAndPeck => 1,
+                            SaePwe::HashToElement => 2,
+                            SaePwe::Both => 3,
+                        };
+                        let configured = unsafe { wifi_sta_set_sae_pwe(pwe) };
+                        if configured != 0 {
+                            finish_connection();
+                            return Err(Error::ConfigureSecurity(configured));
+                        }
+                        request.key[..network.key_len as usize]
+                            .copy_from_slice(&network.key[..network.key_len as usize]);
+                    }
+                }
+            }
             // Pin the exact BSS selected by the immediately preceding scan.
             // The vendor `uapi_wifi_sta_connect` consumes these six raw bytes
             // directly and uses them as a scan-selection constraint; no C
@@ -585,7 +657,7 @@ impl<'d> WpaWifi<'d> {
     }
 }
 
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(all(feature = "wifi-wpa2-personal", any(target_arch = "riscv32", test)))]
 fn encode_hex(input: &[u8], output: &mut [u8]) {
     const HEX: &[u8; 16] = b"0123456789abcdef";
     debug_assert_eq!(output.len(), input.len() * 2);
@@ -595,7 +667,7 @@ fn encode_hex(input: &[u8], output: &mut [u8]) {
     }
 }
 
-#[cfg(feature = "wifi-wpa2-personal")]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 const fn channel_to_frequency(channel: u8) -> u16 {
     if channel == 14 {
         2484
@@ -1009,7 +1081,7 @@ struct VendorDisconnect {
     ie_len: u32,
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct VendorWpaApInfo {
@@ -1023,7 +1095,7 @@ struct VendorWpaApInfo {
     tail_padding: [u8; 2],
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 impl VendorWpaApInfo {
     const fn zeroed() -> Self {
         Self {
@@ -1039,7 +1111,7 @@ impl VendorWpaApInfo {
     }
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 #[repr(C)]
 struct VendorWpaAssoc {
     ssid: [u8; SSID_CAPACITY + 1],
@@ -1053,7 +1125,7 @@ struct VendorWpaAssoc {
     reserved: [u8; 2],
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 impl VendorWpaAssoc {
     const fn zeroed() -> Self {
         Self {
@@ -1070,7 +1142,7 @@ impl VendorWpaAssoc {
     }
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 #[repr(C)]
 struct VendorWpaEvent {
     kind: u8,
@@ -1088,7 +1160,7 @@ const _: () = {
     assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
     assert!(core::mem::size_of::<VendorConnectResult>() == 28);
     assert!(core::mem::size_of::<VendorDisconnect>() == 12);
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     {
         // The vendor SDK compiles these public C structs with -fshort-enums.
         // Keep these values in sync with tools/wifi-abi-probe.c.
@@ -1152,7 +1224,7 @@ static CONNECTION_STATE: Mutex<ConnectionState> = Mutex::new(ConnectionState {
     outcome: Cell::new(ConnectionOutcome::Pending),
 });
 
-#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-wpa2-personal"))]
+#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-personal"))]
 struct WpaEventState {
     calls: Cell<u32>,
     last_kind: Cell<u8>,
@@ -1161,7 +1233,7 @@ struct WpaEventState {
     scan_done_published: Cell<bool>,
 }
 
-#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-wpa2-personal"))]
+#[cfg(all(feature = "rf-eloop-diag", feature = "wifi-personal"))]
 static WPA_EVENT_STATE: Mutex<WpaEventState> = Mutex::new(WpaEventState {
     calls: Cell::new(0),
     last_kind: Cell::new(0),
@@ -1173,7 +1245,7 @@ static WPA_EVENT_STATE: Mutex<WpaEventState> = Mutex::new(WpaEventState {
 /// Returns a snapshot of the vendor WPA callback boundary.
 #[cfg(all(
     feature = "rf-eloop-diag",
-    feature = "wifi-wpa2-personal",
+    feature = "wifi-personal",
     target_arch = "riscv32"
 ))]
 pub fn wpa_event_diagnostics() -> WpaEventDiagnostic {
@@ -1320,7 +1392,7 @@ unsafe extern "C" fn scan_event(
     0
 }
 
-#[cfg(all(feature = "wifi-wpa2-personal", target_arch = "riscv32"))]
+#[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]
 unsafe extern "C" fn wpa_event(event: *const VendorWpaEvent) {
     if event.is_null() {
         return;
@@ -1388,26 +1460,30 @@ unsafe extern "C" {
     ) -> c_int;
     fn drv_soc_hwal_wpa_ioctl(ifname: *mut c_char, command: *const VendorIoctl) -> c_int;
     fn uapi_ioctl_assoc(ifname: *const c_char, params: *mut c_void) -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_start(ifname: *mut c_char, length: *mut c_int) -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_scan() -> c_int;
-    #[cfg(all(feature = "wifi-wpa2-personal", feature = "rf-eloop-diag"))]
+    #[cfg(all(feature = "wifi-personal", feature = "rf-eloop-diag"))]
     static g_scan_flag: c_int;
-    #[cfg(all(feature = "wifi-wpa2-personal", feature = "rf-eloop-diag"))]
+    #[cfg(all(feature = "wifi-personal", feature = "rf-eloop-diag"))]
     static g_wpa_event_cb: usize;
-    #[cfg(feature = "wifi-wpa2-personal")]
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_drv_cipher_env_init();
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-wpa3-personal")]
+    fn uapi_wifi_set_pmf(pmf: c_int) -> c_int;
+    #[cfg(feature = "wifi-wpa3-personal")]
+    fn wifi_sta_set_sae_pwe(pwe: c_int) -> c_int;
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_disconnect() -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_config_callback(mode: u8, task_priority: u8, stack_size: u16) -> c_int;
-    #[cfg(feature = "wifi-wpa2-personal")]
+    #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_register_event_callback(
         callback: Option<unsafe extern "C" fn(*const VendorWpaEvent)>,
     ) -> c_int;
@@ -1415,9 +1491,13 @@ unsafe extern "C" {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "wifi-wpa3-personal")]
+    use super::PersonalNetwork;
     #[cfg(feature = "wifi-wpa2-personal")]
     use super::encode_hex;
     use super::{Error, OpenNetwork, ScanResult, ScanSecurity, ssid_from_ies};
+    #[cfg(feature = "wifi-wpa3-personal")]
+    use hisi_rf::{PersonalSecurity, SaePwe};
 
     #[test]
     #[cfg(feature = "wifi-wpa2-personal")]
@@ -1425,6 +1505,39 @@ mod tests {
         let mut output = [0; 8];
         encode_hex(&[0x00, 0x19, 0xa5, 0xff], &mut output);
         assert_eq!(&output, b"0019a5ff");
+    }
+
+    #[test]
+    #[cfg(feature = "wifi-wpa3-personal")]
+    fn accepts_only_sae_scan_for_wpa3_profile() {
+        let mut result = ScanResult::empty();
+        result.ssid[..4].copy_from_slice(b"sae3");
+        result.ssid_len = 4;
+        result.security = ScanSecurity::Protected;
+        result.auth_mode = 7;
+        result.pairwise = 1;
+
+        assert!(result.supports_wpa3_personal());
+        let network = PersonalNetwork::from_scan_with_security(
+            &result,
+            b"testtest",
+            PersonalSecurity::Wpa3 {
+                sae_pwe: SaePwe::Both,
+            },
+        )
+        .unwrap();
+        assert_eq!(network.auth_mode, 7);
+        assert_eq!(
+            network.security,
+            PersonalSecurity::Wpa3 {
+                sae_pwe: SaePwe::Both
+            }
+        );
+
+        assert_eq!(
+            PersonalNetwork::from_scan(&result, b"testtest"),
+            Err(Error::UnsupportedSecurity(7))
+        );
     }
 
     #[test]

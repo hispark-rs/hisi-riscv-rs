@@ -33,8 +33,15 @@ smoltcp = { version = "0.13", default-features = false, features = [
 
 [features]
 net = ["dep:smoltcp", "hisi-rf/smoltcp"]
+# Common vendor-oracle station control surface. Concrete WPA profiles select
+# exactly one crypto implementation on top of it.
+wifi-personal = []
 # Link and expose the WPA2-Personal/CCMP supplicant runtime.
-wifi-wpa2-personal = ["dep:hisi-crypto", "dep:hisi-crypto-ws63"]
+wifi-wpa2-personal = ["wifi-personal", "dep:hisi-crypto", "dep:hisi-crypto-ws63"]
+# Transitional vendor-oracle path for WPA3-Personal/SAE. This intentionally
+# reuses the existing vendor supplicant compatibility surface while the pinned
+# upstream hostap 2.11 port is brought up on the native hisi-rtos contracts.
+wifi-wpa3-personal = ["wifi-personal"]
 # Portable provider and host oracle. WS63 firmware defaults to unified-cipher.
 wifi-security-rustcrypto = ["wifi-wpa2-personal"]
 # Compatibility alias for the pre-profile bring-up feature.
