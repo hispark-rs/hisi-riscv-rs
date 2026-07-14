@@ -354,23 +354,29 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      calling convention、required symbols 和 archive/profile drift；禁止 bindgen 暴露 hostap
      内部结构、全局状态或要求构建机安装 libclang。
    - **W2C Native OS and event loop（部分完成）**：`ws63-radio-sys` commits `310db49`、
-     `7ffd946`
+     `7ffd946`、`701b1c3`
      已实现 `os_hisi_rtos`、`eloop_hisi_rtos` 和版本化 OS hook table；host 行为测试与
      freestanding RV32 编译覆盖 allocator、sleep、单调/墙钟时间、entropy、timeout
      排序/取消/重设、runner wake/wait，以及重复/冲突注册。native C objects 显式使用
      `rv32imfc + ilp32f`，最终 ELF 不再混入 clang 默认的 soft-float `ilp32`。父仓 adapter
      将 allocator、WS63 time/entropy 和 wake semaphore 接到
-     `hisi-rf-rtos-driver -> hisi-rtos`，未安装 runtime 时 fail closed。仍需用 upstream
-     实际对象闭合所需最小 libc/formatter，
-     并让唯一 `RadioRunner` 推进 event loop；不得新增 `LOS_*`、LiteOS daemon/backend、
+     `hisi-rf-rtos-driver -> hisi-rtos`，未安装 runtime 时 fail closed。当前
+     `hostap-2.11-personal-v1` profile 已将 42 个 upstream/port 源文件编译为真实
+     RV32IMFC ILP32F 对象；私有 freestanding formatter/libc contract、受限 `sscanf`
+     format 集和 18-symbol external ABI 均由 CI fail-closed 校验。仍需让唯一
+     `RadioRunner` 推进 event loop；不得新增 `LOS_*`、LiteOS daemon/backend、
      OS thread 或完整 POSIX 模拟。
    - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
-     `ws63-radio-sys` commits `a7cf71e`、`58c267a`、`e668776` 已完成 EAPOL-only
+     `ws63-radio-sys` commits `a7cf71e`、`58c267a`、`e668776`、`701b1c3` 已完成
+     EAPOL-only
      `l2_packet_ws63`、版本化 driver-hook 生命周期、upstream `wpa_driver_ops` 的
      init/deinit、MAC、management TX 与 key 参数归一化；host 行为测试、freestanding RV32
-     编译和 exact object-symbol manifest 均通过。父仓 commit `35f706295` 已把 hook 注册接入
+     编译和 exact object-symbol manifest 均通过。当前窄 C lifecycle 已真实调用 upstream
+     `wpa_supplicant_init/add_iface/select_network/deauthenticate/event`，并显式报告 bounded
+     event queue overflow；这证明 source/lifecycle closure，不证明 driver path 已可连接。
+     父仓 commit `35f706295` 已把 hook 注册接入
      scan-only `Wifi::initialize`，并以统一 WAL boundary 实现 live netif MAC（fallback command
      9）、EAPOL TX（command 5）、management TX（command 4）和 new/set/delete key
      （commands 1/3/2）；未知 cipher、PMK/MODIFY、歧义 key flags、错误 ABI 和越界 payload
