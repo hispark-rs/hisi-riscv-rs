@@ -30,6 +30,8 @@ struct Bridge {
     rx_len: [usize; RX_DEPTH],
     rx_head: usize,
     rx_count: usize,
+    rx_dropped: u32,
+    rx_high_watermark: usize,
     last_rx_prefix: [u8; FRAME_PREFIX],
     last_rx_len: usize,
     tx_buf: [u8; MTU],
@@ -47,6 +49,8 @@ static BRIDGE: BridgeCell = BridgeCell(UnsafeCell::new(Bridge {
     rx_len: [0; RX_DEPTH],
     rx_head: 0,
     rx_count: 0,
+    rx_dropped: 0,
+    rx_high_watermark: 0,
     last_rx_prefix: [0; FRAME_PREFIX],
     last_rx_len: 0,
     tx_buf: [0; MTU],
@@ -83,12 +87,48 @@ pub fn rx_push(frame: &[u8]) {
         b.last_rx_prefix[..prefix_len].copy_from_slice(&frame[..prefix_len]);
         b.last_rx_len = frame.len();
         if b.rx_count >= RX_DEPTH {
+            b.rx_dropped = b.rx_dropped.saturating_add(1);
             return;
         }
         let slot = (b.rx_head + b.rx_count) % RX_DEPTH;
         b.rx[slot][..frame.len()].copy_from_slice(frame);
         b.rx_len[slot] = frame.len();
         b.rx_count += 1;
+        b.rx_high_watermark = b.rx_high_watermark.max(b.rx_count);
+    });
+}
+
+/// Snapshot of the bounded RX queue used by the bring-up network path.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[doc(hidden)]
+pub struct RxQueueDiagnostics {
+    /// Fixed queue capacity in Ethernet frames.
+    pub depth: usize,
+    /// Frames waiting for the consumer now.
+    pub pending: usize,
+    /// Largest number of simultaneously queued frames in this window.
+    pub high_watermark: usize,
+    /// Frames rejected because all queue slots were occupied in this window.
+    pub dropped: u32,
+}
+
+/// Return bounded RX queue occupancy and queue-full loss counters.
+#[doc(hidden)]
+pub fn rx_queue_diagnostics() -> RxQueueDiagnostics {
+    with_bridge(|b| RxQueueDiagnostics {
+        depth: RX_DEPTH,
+        pending: b.rx_count,
+        high_watermark: b.rx_high_watermark,
+        dropped: b.rx_dropped,
+    })
+}
+
+/// Start a new RX queue diagnostic window without discarding pending frames.
+#[doc(hidden)]
+pub fn reset_rx_queue_diagnostics() {
+    with_bridge(|b| {
+        b.rx_dropped = 0;
+        b.rx_high_watermark = b.rx_count;
     });
 }
 
@@ -349,6 +389,8 @@ pub fn netif_smoltcp_selftest() -> [u32; 3] {
         b.tx_len = 0;
         b.rx_count = 0;
         b.rx_head = 0;
+        b.rx_dropped = 0;
+        b.rx_high_watermark = 0;
     });
 
     let our_mac = EthernetAddress([0x02, 0, 0, 0, 0, 1]);
@@ -412,11 +454,40 @@ pub fn netif_smoltcp_selftest() -> [u32; 3] {
 
 #[cfg(test)]
 mod stack_tests {
-    use super::{RxFrame, TxBuf};
+    use super::{MTU, RX_DEPTH, RxFrame, TxBuf, rx_push, rx_queue_diagnostics};
 
     #[test]
     fn device_tokens_do_not_embed_mtu_sized_stack_buffers() {
         assert!(core::mem::size_of::<RxFrame>() <= 16);
         assert_eq!(core::mem::size_of::<TxBuf>(), 0);
+    }
+
+    #[test]
+    fn full_rx_queue_counts_loss_and_high_watermark() {
+        super::with_bridge(|bridge| {
+            bridge.rx_head = 0;
+            bridge.rx_count = 0;
+            bridge.rx_dropped = 0;
+            bridge.rx_high_watermark = 0;
+        });
+
+        let frame = [0_u8; MTU];
+        for _ in 0..RX_DEPTH {
+            rx_push(&frame);
+        }
+        rx_push(&frame);
+
+        let diagnostics = rx_queue_diagnostics();
+        assert_eq!(diagnostics.depth, RX_DEPTH);
+        assert_eq!(diagnostics.pending, RX_DEPTH);
+        assert_eq!(diagnostics.high_watermark, RX_DEPTH);
+        assert_eq!(diagnostics.dropped, 1);
+
+        super::with_bridge(|bridge| {
+            bridge.rx_head = 0;
+            bridge.rx_count = 0;
+            bridge.rx_dropped = 0;
+            bridge.rx_high_watermark = 0;
+        });
     }
 }
