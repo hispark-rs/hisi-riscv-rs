@@ -353,7 +353,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      poll/event 与 key-install hooks。CI 校验 source pin/hash、ABI size/offset、callback
      calling convention、required symbols 和 archive/profile drift；禁止 bindgen 暴露 hostap
      内部结构、全局状态或要求构建机安装 libclang。
-   - **W2C Native OS and event loop（部分完成）**：`ws63-radio-sys` commits `310db49`、
+   - **W2C Native OS and event loop（已完成）**：`ws63-radio-sys` commits `310db49`、
      `7ffd946`、`701b1c3`
      已实现 `os_hisi_rtos`、`eloop_hisi_rtos` 和版本化 OS hook table；host 行为测试与
      freestanding RV32 编译覆盖 allocator、sleep、单调/墙钟时间、entropy、timeout
@@ -363,9 +363,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      `hisi-rf-rtos-driver -> hisi-rtos`，未安装 runtime 时 fail closed。当前
      `hostap-2.11-personal-v1` profile 已将 42 个 upstream/port 源文件编译为真实
      RV32IMFC ILP32F 对象；私有 freestanding formatter/libc contract、受限 `sscanf`
-     format 集和 18-symbol external ABI 均由 CI fail-closed 校验。仍需让唯一
-     `RadioRunner` 推进 event loop；不得新增 `LOS_*`、LiteOS daemon/backend、
-     OS thread 或完整 POSIX 模拟。
+     format 集和 18-symbol external ABI 均由 CI fail-closed 校验。父仓 commit
+     `7e67f145d` 已让唯一 `RadioRunner` 在真机推进 event loop；实现没有新增 `LOS_*`、
+     LiteOS daemon/backend、OS thread 或完整 POSIX 模拟。
    - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
@@ -381,22 +381,29 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      失败和正常 Drop 都按 `destroy -> free` 顺序回收。`hisi-rf` commit `b357aff` 与父仓
      commit `6dd01ba43` 又增加默认兼容的 backend `poll` contract：WS63 upstream backend
      在 initialize 时创建 owner，并只由唯一 `RadioRunner::run_once` 推进 bounded work。
-     当前 `wifi_init_smoke --features upstream-supplicant` 仍选择 scan-only 分支，尚未在真机
-     实例化该 backend，因此这里算 ownership/runner code closure，不算 runtime/event-loop gate。
+     父仓 commit `7e67f145d` 与 examples commit `0b8d3dc` 已让
+     `wifi_init_smoke --features upstream-supplicant` 走真实 `hisi-rf` backend；真机完成
+     context create/init、EAPOL receive registration、runner poll 与 17-AP scan，输出
+     `W2D_NATIVE_RUNNER_RX_READY`。
      父仓 commit `35f706295` 已把 hook 注册接入
      scan-only `Wifi::initialize`，并以统一 WAL boundary 实现 live netif MAC（fallback command
      9）、EAPOL TX（command 5）、management TX（command 4）和 new/set/delete key
      （commands 1/3/2）；未知 cipher、PMK/MODIFY、歧义 key flags、错误 ABI 和越界 payload
-     全部 fail closed。`wifi_init_smoke --features upstream-supplicant` 不链接旧 supplicant
-     archive，最终两遍 link 验证 1157 个 layout sections、4127 个 patched relocations、37 个
-     ROM patches，且 `drv_soc_hwal_wpa_ioctl` 由 HMAC/WAL archive 解析。scan/auth/assoc、
-     management RX、EAPOL RX 有界队列、driver event bridge 和 upstream context 的安全
-     所有权包装仍未完成。vendor callback/IRQ 不得直接调用 supplicant，只有 `RadioRunner`
-     从有界队列取出事件后才能 feed。
+     全部 fail closed。父仓 commit `7e67f145d` 又闭合 management RX 与 EAPOL RX：管理帧
+     callback 深拷贝到 8 槽、768-byte 上限的 FIFO，EAPOL callback 只置 pending/wake，runner
+     通过 commands 6/7/8 有预算地排空；queue overflow 作为明确 backend error 上报，任何
+     callback/IRQ 都不直接调用 hostap 或用户逻辑。`hisi-crypto-ws63` commit `b8d11db`
+     把 PBKDF2/TRNG 变成显式 capability；upstream profile 明确选择 RustCrypto PBKDF2 + WS63
+     TRNG，不依赖 vendor WPA archive 导出的 PBKDF2 UAPI，也不在硬件失败后静默回退。
+     该 profile 的两遍 link 验证 1157 个 layout sections、4127 个 patched relocations、37 个
+     ROM patches，且 `drv_soc_hwal_wpa_ioctl` 由 HMAC/WAL archive 解析。当前尚未完成的是
+     `driver_ws63` 的 auth/assoc control + event mapping 和 protected-network connect；因此
+     W2D 仍为部分完成，不能把 native scan 证据写成 WPA2/WPA3 parity。
      `hisi-rf::wifi::security` 已有 typed WPA3-Personal/PMF/SAE-PWE config，过渡 vendor
      candidate 已通过真实 link closure：1568 sections、5612 relocations、37 ROM patches，
      ELF SHA-256 `ed7cd91357ddb981d8fe599f8ebd8d4eed658d525ec72c60fc2b0745fe6dc024`；
-     这不等于 upstream native `driver_ws63` 已完成。
+     这不等于 upstream native `driver_ws63` 已完成。当前 native owner/RX/runner HIL 证据见
+     [W2D native runner and RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)。
    - **W2E Parity HIL（未完成）**：先让 upstream-native path 重现 A4 WPA2 connect、DHCP、
      ARP、重复 ping 和 lease-renew marker，再在受控 WPA3-only AP 完成 SAE+PMF，最后验证
      WPA2/WPA3 transition mode。host gate 覆盖 EAPOL/RSNE/SAE/PMF golden vectors 或 pcap
