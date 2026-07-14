@@ -48,13 +48,16 @@ an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
 committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
 
-## NOW -- W2 WPA3-Personal/SAE
+## NOW -- W2 Upstream Supplicant And WPA3-Personal
 
 The single active execution source is the
 [Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-w2-wpa3-personal).
-W2 restores only the SAE/H2E, PMF and required crypto closure needed for a
-WPA3-Personal STA. It must preserve the WPA2-only archive and A4 HIL gate, prove
-pure WPA3 on a controlled AP first, then cover WPA2/WPA3 transition mode.
+W2 is migrating the STA security path to pinned upstream hostap 2.11 source,
+native `hisi-rtos` OS/event-loop ports, a minimal WS63 driver/L2 port, and a
+versioned narrow C/Rust ABI. W2A source pinning and W2B ABI gates are complete;
+the native runtime/driver path and WPA3-only plus transition-mode HIL remain
+open. Vendor archives, LiteOS glue, and the vendor compiler are migration
+oracles only. The WPA2-only archive and A4 HIL gate must remain green throughout.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 

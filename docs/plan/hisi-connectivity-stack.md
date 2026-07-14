@@ -57,13 +57,19 @@ renew。`hisi-rf 0.1.0-alpha.1` 已发布，迁移 facade 有明确删除窗口�
 `ws63-hil` workflow 已 PASS。冻结证据见
 [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
-### NOW -- W2 WPA3-Personal/SAE
+### NOW -- W2 Upstream Supplicant And WPA3-Personal
 
 A4 product gate 选择 WPA3-Personal，因为它直接扩展当前已经稳定的 STA vertical slice，
-且不要求同时引入 IP/TLS、第二块板或 SoftAP。W2 先固定 SAE/H2E、PMF、ECC/HKDF/
-AES-SIV 的原厂 oracle 与 archive closure，再在支持 WPA3-Personal 的受控 AP 上完成
-scan、SAE authentication、association、DHCP 和 public ICMP。WPA2/WPA3 transition mode
-在纯 WPA3 通过后验证；W0B WPA2-only archive 和 A4 gate 必须持续回归。
+且不要求同时引入 IP/TLS、第二块板或 SoftAP。W2 的长期正式路径已经收敛为固定版本的
+upstream hostap 2.11 源码、HiSilicon 原生 OS/driver port、窄 C ABI shim 和
+`hisi-rf::wifi::security` 安全包装；原厂 supplicant archive、LiteOS glue 和 compiler
+只作为 oracle，不是默认产品依赖。
+
+W2A 的 upstream pin/source hash 和 W2B 的窄 C/Rust ABI gate 已落地；typed WPA3 config、
+过渡 vendor archive profile 和真实 WPA3 link closure 也已完成。W2C native
+`os_hisi_rtos`/`eloop_hisi_rtos`、W2D upstream `driver_ws63`/`l2_packet_ws63`，以及 W2E
+pure WPA3/transition-mode HIL 尚未完成。当前 `HUAWEI-HLJ_Guest` 是 WPA2-Personal AP，
+不能被写成 pure WPA3 证据。W0B WPA2-only archive 和 A4 gate 必须在迁移期间持续回归。
 
 W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1 fast
 path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
@@ -108,7 +114,7 @@ HAL；RF 不实现 IP stack；examples 不直接列 vendor archives 或 ROM 地�
 | `ws63-RF` | Language-neutral blobs、headers、ROM symbol/patch lists；不放 Rust 实现。 |
 | `hisi-rom-sys` | 芯片中立的显式 chip-selection facade；统一 re-export ROM facts，并转发 backend Cargo metadata。 |
 | `hisi-rom-sys-ws63` | WS63 固定 ROM 地址、生成 symbol/callback/patch metadata 与同步工具；位于 `crates/chips/ws63/`。 |
-| `ws63-radio-sys` | WS63 Wi-Fi/BLE/SLE raw FFI、archive selection、ABI/layout assertions 和 relocation 规则。仓库同时发布 host CLI `hisi-rf-link`。 |
+| `ws63-radio-sys` | WS63 Wi-Fi/BLE/SLE raw FFI、archive selection、ABI/layout assertions 和 relocation 规则；拥有 pinned hostap source metadata、最小 supplicant raw ABI 与 WS63 driver/L2 integration。仓库同时发布 host CLI `hisi-rf-link`。 |
 | `hisi-rf-rtos-driver` | runtime-neutral scheduler、semaphore、queue、timer、wait 和 ISR-wakeup contract；每个 firmware 只能注册一个实现。 |
 | `hisi-rtos` | 默认单-hart、优先级抢占、tickless scheduler，以及 IPC、Embassy executor/time integration；不依赖 RF。 |
 | `hisi-alloc` | 用户提供 SRAM arenas、对齐分配，以及可选 C/global allocator adapter；移出 RF heap 所有权。 |
@@ -246,6 +252,12 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 - `hisi-rf` 的公共概念保持芯片中立；WS63 FFI/blob/ABI 只存在于
   `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
+- 新 supplicant 路径固定为 `hostap 2.11 pinned source -> os_hisi_rtos /
+  eloop_hisi_rtos -> driver_ws63 / l2_packet_ws63 -> versioned narrow C shim ->
+  Rust FFI safety wrapper -> hisi-rf::wifi::security -> RadioController/RadioRunner`。
+  运行时只经 `hisi-rf-rtos-driver -> hisi-rtos`；不得新增 LiteOS backend、LOS shim
+  daemon 或完整 POSIX 仿真。callback/IRQ 只复制有界事件并 wake `RadioRunner`，用户逻辑
+  只能在普通任务上下文运行。
 
 ### TLS
 
@@ -328,9 +340,56 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
    clock/IRQ/wait HIL 后再启用。该单体 trait 只作为迁移基线，后续由小能力 traits、
    显式 `CryptoSuite` 和 `hisi-crypto-ws63` 取代。证据见
    [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
-4. **W2 WPA3/SAE**：单独恢复 SAE/H2E、PMF 和所需 ECC/HKDF/AES-SIV primitives；先做
-   WPA3-Personal，再做 WPA2/WPA3 transition mode。优先复用 unified-cipher PKE/ECC 与
-   hash/HKDF UAPI，RustCrypto 继续作为向量 oracle；不得让 W2 扩大 W0B 的默认体积。
+4. **W2 upstream supplicant + WPA3/SAE（进行中）**：正式路径从固定 upstream hostap
+   源码用标准跨平台 RISC-V 工具链可复现构建，不依赖原厂 compiler、预编译 supplicant
+   archive 或 LiteOS backend。分阶段 gate 如下；WIP 始终只有 W2：
+
+   - **W2A Source pin and oracle（已完成）**：固定 upstream hostap 2.11 tag
+     `hostap_2_11`、commit `d945ddd368085f255e68328f2d3b020ceea359af` 和 tarball
+     SHA-256 `912ea06f74e30a8e36fbb68064d6cdff218d8d591db0fc5d75dee6c81ac7fc0a`；
+     vendor 2.10 fork、原厂 compiler 和 WPA2/WPA3 archives 只用于差分、WS63 driver ABI
+     与真机 HIL oracle。安全更新/CVE radar 必须能独立升级 hostap pin，而不迫使
+     `hisi-rf` 公共 API 改版。
+   - **W2B Narrow ABI（已完成）**：`ws63-radio-sys` 拥有窄、版本化 C shim 和预生成/手写
+     Rust FFI，只暴露 create/init/configure/connect/disconnect、management/EAPOL 输入、
+     poll/event 与 key-install hooks。CI 校验 source pin/hash、ABI size/offset、callback
+     calling convention、required symbols 和 archive/profile drift；禁止 bindgen 暴露 hostap
+     内部结构、全局状态或要求构建机安装 libclang。
+   - **W2C Native OS and event loop（未完成）**：实现 `os_hisi_rtos` 与
+     `eloop_hisi_rtos`，仅提供当前 WPA2/WPA3-Personal 所需 heap、sleep、单调时间、随机数、
+     timer/wake/queue/lock 和最小 libc 语义。它们通过
+     `hisi-rf-rtos-driver -> hisi-rtos` native backend 运行，由一个 `RadioRunner` 推进
+     event loop；不得新增 `LOS_*`、LiteOS daemon/backend 或模拟完整 POSIX。
+   - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
+     `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
+     allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
+     `hisi-rf::wifi::security` 已有 typed WPA3-Personal/PMF/SAE-PWE config，过渡 vendor
+     candidate 已通过真实 link closure：1568 sections、5612 relocations、37 ROM patches，
+     ELF SHA-256 `ed7cd91357ddb981d8fe599f8ebd8d4eed658d525ec72c60fc2b0745fe6dc024`；
+     这不等于 upstream native `driver_ws63` 已完成。
+   - **W2E Parity HIL（未完成）**：先让 upstream-native path 重现 A4 WPA2 connect、DHCP、
+     ARP、重复 ping 和 lease-renew marker，再在受控 WPA3-only AP 完成 SAE+PMF，最后验证
+     WPA2/WPA3 transition mode。host gate 覆盖 EAPOL/RSNE/SAE/PMF golden vectors 或 pcap
+     replay。当前 Guest AP 仅能提供 WPA2 parity，不能替代 pure WPA3 HIL。
+   - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 LiteOS glue
+     保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认路径并删除
+     `litos.rs`/`wpa_compat.rs`。之后按既定兼容窗口退役 `ws63-rf-rs` facade，但不得因架构
+     迁移破坏 A4 gate。
+
+   **参考实现与取舍：**
+
+   - Zephyr hostap 是 C port 的首要实现参考：研究 `os_zephyr.c`、`driver_zephyr.c`、
+     `l2_packet_zephyr.c` 和 `supp_main.c` 的 OS、driver、L2 与 lifecycle seam；不照搬其
+     大而全 Wi-Fi management ABI，也不模拟完整 POSIX。
+   - Embassy `cyw43` 只用于校准 Rust 用户 API 与执行模型：controller/runner/device 分层、
+     bounded event queue 和 async join/scan/leave；WS63 的 host-side supplicant 不能假定
+     CYW43 那样由固件 offload WPA/SAE。
+   - ESP bare-metal Rust 用于校准 `hisi-rf -> hisi-rf-rtos-driver -> hisi-rtos` 以及
+     per-chip sys crate 边界；不采用预编译 `libwpa_supplicant.a` 作为长期默认。
+   - Fuchsia Rust WLAN 只作为 RSNE/AKM/cipher/PMF/transition compatibility 的协议建模、
+     golden-vector 与状态机性质 oracle；不移植其 FIDL、`std` 或 heap architecture。
+   - 纯 Rust supplicant 当前不进入产品临界路径。未来 backend 可以替换，但不得为此发明
+     巨大 provider trait；`hisi-rf` 公共 API 只依赖协议最小的内部 shim/capability contract。
 5. **W3 SoftAP**：分别验证 open AP、WPA2-Personal authenticator、WPA3-SAE AP；覆盖
    beacon、STA join/leave、GTK rekey、多客户端和 Wi-Fi/BT coexistence。AP authenticator
    与 STA supplicant 使用独立 feature 和任务资源预算，不能为了 SoftAP 把 hostapd/EAP
