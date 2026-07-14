@@ -4,8 +4,9 @@
 
 This evidence covers the WS63 TIMER_INT0 one-shot scheduler source, SOFT_INT0
 deferred rescheduling, equal-priority round-robin preemption, and complete
-floating-point trap preservation. It does not claim priority inheritance,
-nested-interrupt stress, Embassy integration, or A3 completion.
+floating-point trap preservation. Priority inheritance is proven separately;
+this document does not claim nested-interrupt stress, Embassy integration, or
+A3 completion.
 
 ## Oracle And ABI
 
@@ -73,6 +74,7 @@ and HIL oracle outside the product dependency graph.
 
 ## Remaining A3 Gates
 
-- priority inheritance with inversion HIL;
+- priority inheritance with inversion HIL is complete; see
+  [A3 priority-inheritance evidence](ws63-rf-a3-priority-inheritance-2026-07-14.md);
 - nested-interrupt, timeout, and mixed vendor-task scheduler stress;
 - Embassy executor/time integration without dual ownership of TIMER0.

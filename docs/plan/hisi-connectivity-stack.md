@@ -466,9 +466,17 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   callee-saved 槽，所有 restore 统一走 `mret`。`rtos_preemption` 连续三次真机得到
   `timer_irqs=101`、`slice_preemptions=101`、`software_irqs=2`、`fp_failures=0`。
   证据见 [A3 unified task-context preemption](evidence/ws63-rf-a3-unified-context-2026-07-14.md)。
-- [ ] budget enforcement、priority inheritance、nested-IRQ/timeout stress HIL 与 Embassy
+- [x] Recursive mutex 已从 WS63 ABI shim 下沉到 runtime-neutral contract；`hisi-rtos`
+  实现 priority-ordered waiters、direct handoff、timeout cleanup 和 transitive priority
+  inheritance。19/19 host tests 通过，经典 low/medium/high inversion HIL 连续三次输出
+  `A3_PRIORITY_INHERITANCE_OK`；证据见
+  [A3 priority inheritance](evidence/ws63-rf-a3-priority-inheritance-2026-07-14.md)。
+- [ ] budget enforcement、nested-IRQ/timeout stress HIL 与 Embassy
   time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
+- WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
+  计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
+  绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。
 
 ### B0-B3 -- BLE Vendor Host First
 

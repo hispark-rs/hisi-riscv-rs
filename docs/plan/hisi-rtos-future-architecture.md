@@ -64,7 +64,9 @@ enum RunPolicy {
 - mutex 必须支持 priority inheritance，不能让高优先级 radio task 被低优先级 owner
   无限反转。
 - IRQ top half 只 ack/record/wake；用户 callback、复杂协议和回收进入 deferred thread。
-- 当前 cooperative RF backend 是迁移基线，不等价于以上最终策略。
+- 当前 WS63 flat backend 已具备显式 priority scheduling、TIMER/SOFT interrupt
+  preemption、同优先级 time slicing 与 priority inheritance；budget enforcement、trace
+  和 Embassy coexistence 仍未闭合。
 
 ## Workspace Shape
 
