@@ -428,10 +428,11 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   deallocator 和 monotonic clock resources 后启动唯一 runtime。
 - [x] scheduler 的 allocation/free 和 monotonic clock 读取已移出 critical section；临界区只
   更新 task state、ready/sleep metadata 和当前 task bookkeeping。
-- [x] task priority 已穿过 driver/OSAL contract，退出栈由另一 task 延迟回收。对抗 HIL
-  证明当前 cooperative RF backend 直接启用严格优先级会饿死初始化路径，因此默认显式保持
-  `SchedulingPolicy::Cooperative`；priority state machine 与 FIFO policy 均有 host tests，
-  但不能被描述为 preemption evidence。
+- [x] task priority 已穿过 driver/OSAL contract，退出栈由另一 task 延迟回收。早期仅启用严格
+  优先级、尚无 IRQ epilogue 时曾饿死初始化路径；现在 RF smoke 显式选择
+  `SchedulingPolicy::Priority`，ISR 唤醒高优先级 task 后由 runtime 在恢复任务栈、弹出 trap
+  frame 之前执行 deferred context switch。`Config::default()` 仍为 Cooperative，避免未选择
+  Priority 的普通应用隐式改变调度语义。
 - [x] scheduler lock/unlock 已穿过 driver/OSAL contract；`hisi-rtos` 按 task 跟踪嵌套深度，
   拒绝不平衡 unlock，host test 覆盖嵌套与错误路径。该能力不冒充抢占或优先级继承。
 - [x] Guarded link 仍验证 1,486 section、5,335 relocation 和 37 ROM patch；WS63 HIL
@@ -446,7 +447,12 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   瞬态”；`rf-vendor-log` 仅保留为显式诊断 feature，统计型连接回归继续作为 HIL gate。
   完整矩阵和 summary hash 见
   [A3 scheduling policy](evidence/ws63-rf-a3-scheduling-policy-2026-07-13.md)。
-- [ ] TIMER_INT0 + software-interrupt preemption、priority inheritance、
+- [x] `hisi-riscv-rt` 已为 DIRECT/MIE/local IRQ 提供 linker-overridable epilogue hook；
+  `hisi-rtos` 的 Priority backend 仅在 outermost IRQ、scheduler unlocked 且更高优先级 task
+  ready 时切换。11/11 host tests 通过；真机 RF 全链路通过且
+  `irq_preemptions=0x00000289`。证据见
+  [A3 IRQ epilogue preemption](evidence/ws63-rf-a3-irq-preemption-2026-07-14.md)。
+- [ ] TIMER_INT0 + software-interrupt time slicing/budget enforcement、priority inheritance、
   FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
 
