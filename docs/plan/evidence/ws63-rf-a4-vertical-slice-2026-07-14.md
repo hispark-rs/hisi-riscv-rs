@@ -15,7 +15,7 @@ This evidence closes the first on-silicon A4 vertical slice:
 
 Pinned revisions:
 
-- parent: `fc95e7d0f08d83bb961eee744d3575ad1173d381`;
+- parent gate revision: `3c2db43e971bb21d7565035179a7fee63d7861d1`;
 - `hisi-rf`: `44f581387eb82fc6d2df98329faeb37b97ccd53a`;
 - `ws63-examples`: `5a900f78c281f6e5abb3f18101f4de5ba202f7a4`;
 - WPA2-only archive SHA-256:
@@ -88,7 +88,7 @@ The interface-scoped route resolved through `192.168.155.1` on `en0`. The frozen
 A3 100-packet comparison remains the statistical environment boundary; this A4
 run proves architectural parity, not a new universal packet-loss claim.
 
-## Remaining A4 Closeout
+## Committed HIL Gate
 
 `hisi-rf 0.1.0-alpha.1` is published on crates.io. The transitional
 `ws63-rf-rs::radio` facade is deprecated through the parent 0.7.x train and is
@@ -103,5 +103,26 @@ GitHub workflow dispatch
 [29326512586](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29326512586)
 was cancelled while queued because the repository currently has no registered
 `ws63-hil` self-hosted runner. This is an infrastructure gap, not firmware
-evidence. A4 remains open until that runner executes the same committed script
-and records the first CI PASS URL.
+evidence. An ephemeral `ws63-hil` runner was subsequently registered on the
+same Mac and board.
+
+The first runner execution exposed that macOS system Python did not provide
+`tomllib`; the workflow and RF post-link path now resolve Python >=3.11 through
+`uv`. A second execution reached the board but recorded a probe-rs page-program
+timeout at `0x00240000`. The hardware runner now restores the target with J-Link
+nRST before a bounded retry at a lower debug speed, while retaining complete
+erase/program/readback verification.
+
+The committed gate then passed on its first verified download attempt:
+
+- workflow: [29328000891](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29328000891);
+- parent revision: `3c2db43e971bb21d7565035179a7fee63d7861d1`;
+- job duration: 2m25s;
+- probe speed: 1,000 kHz, attempt 1/2;
+- public ICMP: 5/5, 268--284 ms;
+- RX queue drops: 0;
+- DHCP renewal: one client request and one server response;
+- final assertion: `WS63 CONNECTIVITY SMOKE: PASS`.
+
+The runner was ephemeral and unregistered itself after the job. The workflow
+run is the durable committed-state evidence. A4 is frozen at this revision.

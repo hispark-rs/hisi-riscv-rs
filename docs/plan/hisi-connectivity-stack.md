@@ -2,9 +2,9 @@
 
 ## Summary
 
-A0-A3 的 **Wi-Fi connect → ping** 基线已经冻结；当前 A4 正把该基线迁到独立
-`hisi-rf` release unit。迁移按 vertical slice 推进，每一步都必须保留真实硅片
-连接性证据，不能为了分层整洁打断北极星。
+A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` vertical slice
+已经通过提交态真机 HIL。当前唯一 active milestone 是 W2 WPA3-Personal/SAE；每一步
+都必须保留 A4 的真实硅片连接性证据，不能为了增加安全模式打断北极星。
 
 目标架构参考 esp-rs 的
 `esp-radio → esp-radio-rtos-driver ← esp-rtos`、`esp-rom-sys` 和
@@ -23,10 +23,11 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
-## Active Window: NOW A4
+## Active Window: NOW W2 WPA3-Personal
 
-本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。唯一 active
-milestone 已从完成的 A3 切换到 A4 Wi-Fi vertical slice。
+本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。A4 已冻结，
+A4 product gate 按默认建议选择 W2 WPA3-Personal/SAE；BLE、SLE、TLS、SoftAP、
+Enterprise 和其他架构抽取不与 W2 并行。
 
 ### Completed -- A3 Closeout
 
@@ -47,21 +48,25 @@ milestone 已从完成的 A3 切换到 A4 Wi-Fi vertical slice。
    和网络归因已经冻结。完整收口见
    [A3 network attribution](evidence/ws63-rf-a3-network-attribution-2026-07-14.md)。
 
-### NOW -- A4 Wi-Fi Vertical Slice
+### Completed -- A4 Wi-Fi Vertical Slice
 
 A4 的第一条完整 vertical slice 已在 WS63 上运行：`RadioController`/`RadioRunner`、
 `WifiController`/`WifiDevice`、bounded event queue 和应用持有的长生命周期 smoltcp
 runner 已完成 init/scan/WPA2 connect、DHCP、neighbor discovery、重复 ICMP 和 lease
-renew。当前只做发布、兼容窗口与自动 HIL 收口；A4 期间不并行推进 BLE、SLE、TLS、
-SoftAP 或其他协议面。证据见
+renew。`hisi-rf 0.1.0-alpha.1` 已发布，迁移 facade 有明确删除窗口，提交态
+`ws63-hil` workflow 已 PASS。冻结证据见
 [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
-### Triggered After A4
+### NOW -- W2 WPA3-Personal/SAE
 
-A4 完成后按产品需求只选择一个方向：WPA3/SAE、BLE、NVS N0-N3、TLS 或 SLE。默认建议
-优先评估 WPA3-Personal，但必须经过 A4 product gate。W2-W4、B/S/X、NVS/RTOS future、
-ported switch ticket、group Reservation、AP1 fast path、i18n、BSP 和 Hi3322 均为
-deferred/triggered backlog，不是当前 TODO。
+A4 product gate 选择 WPA3-Personal，因为它直接扩展当前已经稳定的 STA vertical slice，
+且不要求同时引入 IP/TLS、第二块板或 SoftAP。W2 先固定 SAE/H2E、PMF、ECC/HKDF/
+AES-SIV 的原厂 oracle 与 archive closure，再在支持 WPA3-Personal 的受控 AP 上完成
+scan、SAE authentication、association、DHCP 和 public ICMP。WPA2/WPA3 transition mode
+在纯 WPA3 通过后验证；W0B WPA2-only archive 和 A4 gate 必须持续回归。
+
+W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1 fast
+path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
 
 ## Target Architecture
 
@@ -424,9 +429,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] `hil/ws63-connectivity-smoke.sh` 固定 WPA2 archive hash，复用 guarded link、FlashPlan
   bin download、J-Link nRST 与 UART capture，并对 A4 control/L2/IP/renew markers 建立
   self-hosted HIL gate；该提交入口已在本地实板完整 PASS。
-- [ ] 注册带 `ws63-hil` label 的 self-hosted runner，再触发 `wifi_init_smoke` gate 并保存
-  首个 CI PASS URL。首次 dispatch 因仓库 runner 数量为 0 而在 queued 状态取消；通过后才将
-  A4 标为 frozen。
+- [x] ephemeral `ws63-hil` runner 执行提交态 `wifi_init_smoke` gate；workflow
+  [29328000891](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29328000891)
+  在 revision `3c2db43e971bb21d7565035179a7fee63d7861d1` 完整 PASS，A4 已冻结。
 
 #### A1 progress
 

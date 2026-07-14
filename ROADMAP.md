@@ -8,8 +8,8 @@ that goal. This ecosystem is still moving quickly: when roadmap text, docs,
 examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
-**WIP limit:** one major milestone at a time. A3 is frozen; the active milestone
-is now A4.
+**WIP limit:** one major milestone at a time. A0-A4 are frozen; the active
+milestone is now W2 WPA3-Personal/SAE.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -30,11 +30,9 @@ and [network attribution](docs/plan/evidence/ws63-rf-a3-network-attribution-2026
 Changed payloads, APs, routes or task sets must be measured again rather than
 inheriting this boundary.
 
-## NOW -- A4 Wi-Fi Vertical Slice
+## Completed -- A4 Wi-Fi Vertical Slice
 
-The single active execution source is the
-[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-a4).
-A4 delivers one coherent Wi-Fi path:
+A4 delivered one coherent Wi-Fi path:
 
 - `RadioController` / `RadioRunner`;
 - separate `WifiController` and `WifiDevice`;
@@ -44,28 +42,34 @@ A4 delivers one coherent Wi-Fi path:
 - parity with the frozen init/scan/connect/ping markers and A0/A3 link/image
   evidence.
 
-The first complete slice now passes on WS63: WPA2 connect, a long-lived smoltcp
+The complete slice passes on WS63: WPA2 connect, a long-lived smoltcp
 runner, DHCP, neighbor discovery, repeated public ICMP, zero RX-queue drops, and
-an observed DHCP renew REQUEST/ACK. Current work is limited to release,
-compatibility-window, and automated-HIL closeout. Evidence:
+an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
+committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
 
-A4 does not run BLE, SLE, TLS, SoftAP, or another architecture extraction in
-parallel.
+## NOW -- W2 WPA3-Personal/SAE
 
-## LATER -- One Product Direction
+The single active execution source is the
+[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-w2-wpa3-personal).
+W2 restores only the SAE/H2E, PMF and required crypto closure needed for a
+WPA3-Personal STA. It must preserve the WPA2-only archive and A4 HIL gate, prove
+pure WPA3 on a controlled AP first, then cover WPA2/WPA3 transition mode.
 
-After A4, choose exactly one direction from measured product demand:
+BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
-- WPA3-Personal/SAE for modern Wi-Fi security;
+## LATER -- Triggered Product Directions
+
+After W2, choose exactly one direction from measured product demand:
+
 - BLE for a concrete peripheral or central scenario;
 - NVS N0-N3 when the release image must stop depending on the vendor NV
   generator;
 - TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;
 - SLE after a second WS63 rig and a concrete interconnect scenario exist.
 
-The default recommendation is WPA3-Personal, but that choice is made at the A4
-product gate rather than pre-booked as concurrent work.
+WPA3-Personal was selected at the A4 product gate; the remaining choices stay
+triggered rather than pre-booked as concurrent work.
 
 ## DEFERRED -- Triggered Backlog
 
