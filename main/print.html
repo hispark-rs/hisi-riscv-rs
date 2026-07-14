@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e8b7a5ec.js";
+            window.path_to_searchindex_js = "searchindex-487d562e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -2508,6 +2508,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 <tbody>
 <tr><td><code>hil/embedded-test-runner.sh</code></td><td><code>hisi-hal --test hil</code> 与 <code>tests-hil</code> 的 on-target test runner</td><td><code>probe-rs run</code> + RISC-V semihosting，libtest 兼容输出</td></tr>
 <tr><td><code>hil/hil-smoke.sh</code></td><td>WS63 示例级 UART smoke</td><td>UART0 grep 标记串</td></tr>
+<tr><td><code>hil/ws63-connectivity-smoke.sh</code></td><td>WS63 A4 WPA2/connectivity gate</td><td>guarded RF link + planned-bin download + J-Link nRST + UART markers</td></tr>
 <tr><td><code>.agents/skills/hil-smoke/hil.sh</code></td><td>CI/agent wrapper：preflight、chip 封装；WS63 全套委托 <code>hil/hil-smoke.sh</code></td><td>UART0 grep 标记串</td></tr>
 <tr><td><code>hil/flash.sh</code></td><td>示例/固件烧录封装</td><td>hisi-fwpkg plan + probe-rs bin download，或 hisiflash</td></tr>
 <tr><td><code>hil/cargo-run-hw.sh</code></td><td>把单次 <code>cargo run</code> 改成烧真机</td><td>hisi-fwpkg plan + probe-rs bin download，可选 UART stream</td></tr>
@@ -2570,6 +2571,29 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 </div>
 <p><code>blinky</code>（GPIO 翻转无 UART，需 LED/逻辑分析仪）与 <code>semihost_selftest</code>（需 debugger 半主机）在裸 HIL 跳过。
 总结果：全过打印 <code>HIL SMOKE: PASS</code>，否则 <code>HIL SMOKE: FAIL</code> 并 <code>exit 1</code>。</p>
+<h2 id="a4-connectivity-marker-contract"><a class="header" href="#a4-connectivity-marker-contract">A4 connectivity marker contract</a></h2>
+<p><code>hil/ws63-connectivity-smoke.sh</code> 是连接性 marker 的可执行事实源。它与普通外设 smoke
+分开，因为需要受控 WPA2 AP、secret、固定派生 archive 和更长的 UART 窗口。脚本从公开
+<code>ws63-RF</code> release 下载 archive（或接受 <code>WS63_WPA_ARCHIVE</code>），先校验固定 SHA-256，再走
+guarded link、<code>hisi-fwpkg plan</code>、probe-rs bin download 和 J-Link nRST。</p>
+<p>成功必须同时出现：<code>RF2_INIT_OK ifname=hisi-rf</code>、initialized/scan-completed/connected
+三个 <code>A4_RADIO_EVENT</code>、<code>RF5B_WPA_CONNECT_OK</code>、<code>RF5A_DHCP_OK</code>、smoltcp neighbor-cache
+<code>RF5A_ARP_OK</code>、公共 ICMP 非零回复、零 RX queue drop、<code>A4_NET_RUNNER_STEADY</code> 和
+<code>A4_DHCP_RENEW_OK</code>。脚本打印 <code>WS63 CONNECTIVITY SMOKE: PASS</code> 才算通过。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>变量</th><th>默认</th><th>说明</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PORT</code></td><td>必填</td><td>WS63 UART0</td></tr>
+<tr><td><code>WS63_WIFI_PASSPHRASE</code></td><td>必填</td><td>仅由 self-hosted secret 注入，不写入仓库或日志</td></tr>
+<tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td><code>1000</code></td><td>已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败</td></tr>
+<tr><td><code>MONITOR</code></td><td><code>60</code></td><td>覆盖 connect、ping 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口</td></tr>
+</tbody>
+</table>
+</div>
 <h2 id="环境变量-1"><a class="header" href="#环境变量-1">环境变量</a></h2>
 <h3 id="flashsh"><a class="header" href="#flashsh"><code>flash.sh</code></a></h3>
 <p>烧录方式选 <code>METHOD=</code>（默认 <code>probe-rs</code>）。</p>
