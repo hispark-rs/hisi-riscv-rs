@@ -55,10 +55,12 @@ The single active execution source is the
 W2 is migrating the STA security path to pinned upstream hostap 2.11 source,
 native `hisi-rtos` OS/event-loop ports, a minimal WS63 driver/L2 port, and a
 versioned narrow C/Rust ABI. W2A source pinning and W2B ABI gates are complete;
-W2C now has a tested native OS-hook and timeout-loop seam, while its full hostap
-closure, the WS63 driver/L2 path, and WPA3-only plus transition-mode HIL remain
-open. Vendor archives, LiteOS glue, and the vendor compiler are migration oracles
-only. The WPA2-only archive and A4 HIL gate must remain green throughout.
+W2C now has a tested native OS-hook and timeout-loop seam, and W2D has an
+EAPOL-only L2 port with runner-owned RX delivery. The full hostap closure,
+scan/auth/assoc/management/key-install driver path, Rust safety wrapper, and
+WPA3-only plus transition-mode HIL remain open. Vendor archives, LiteOS glue,
+and the vendor compiler are migration oracles only. The WPA2-only archive and
+A4 HIL gate must remain green throughout.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 

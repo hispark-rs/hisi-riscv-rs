@@ -367,6 +367,12 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
    - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
+     `ws63-radio-sys` commit `a7cf71e` 已完成 EAPOL-only `l2_packet_ws63`、driver hook
+     生命周期和单 runner RX endpoint：vendor callback/IRQ 不能直接调用 supplicant，只有
+     `RadioRunner` 从有界队列取出事件后才能 feed；活动 RX endpoint 存在时 driver hooks
+     不能卸载。host 行为测试覆盖 TX/RX、地址查询、重复 endpoint 和生命周期，且整套 port
+     已通过 freestanding RV32 编译。scan/auth/assoc、management RX/TX、set-key 和
+     `hisi-rf::wifi::security` 对 upstream context 的安全所有权包装仍未完成。
      `hisi-rf::wifi::security` 已有 typed WPA3-Personal/PMF/SAE-PWE config，过渡 vendor
      candidate 已通过真实 link closure：1568 sections、5612 relocations、37 ROM patches，
      ELF SHA-256 `ed7cd91357ddb981d8fe599f8ebd8d4eed658d525ec72c60fc2b0745fe6dc024`；
@@ -392,7 +398,8 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      [`l2_packet_zephyr.c`](https://github.com/zephyrproject-rtos/hostap/blob/main/src/l2_packet/l2_packet_zephyr.c)
      和 [`supp_main.c`](https://github.com/zephyrproject-rtos/zephyr/blob/main/modules/hostap/src/supp_main.c)
      的 OS、driver、L2 与 lifecycle seam；不照搬其大而全 Wi-Fi management ABI，也不模拟
-     完整 POSIX。
+     完整 POSIX。当前 `l2_packet_ws63` 因此只承载 EAPOL，不承载 IP socket 或通用 packet
+     filter；WS63 management frame 继续走窄 driver/event contract。
    - Embassy [`cyw43`](https://github.com/embassy-rs/embassy/tree/main/cyw43) 只用于校准 Rust 用户 API 与执行模型：controller/runner/device 分层、
      bounded event queue 和 async join/scan/leave；WS63 的 host-side supplicant 不能假定
      CYW43 那样由固件 offload WPA/SAE。
