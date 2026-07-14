@@ -1,6 +1,6 @@
 # Stable API 清单与门控状态
 
-本页是 `hisi-hal 0.7.0-alpha.1` 当前默认公开面的**唯一事实源**。该版本仅把
+本页是 `hisi-hal 0.7.0-alpha.2` 当前默认公开面的**唯一事实源**。该版本仅把
 `hisi-riscv-hal 0.6.0` 改名为新 package/repository，下面的 API 与门控边界保持
 等价。判定规则与门控机制见
 [稳定 / 不稳定 API 门控政策](../explanation/policies/02-stable-unstable.md)；历史评审文件只记录当时状态，

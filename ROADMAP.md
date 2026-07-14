@@ -35,7 +35,7 @@ This ecosystem is still moving quickly. If roadmap text, docs, examples, or loca
 
 ## Maintenance Tracks
 
-**HAL 0.6.0 stabilization (complete):** the stable release is published. The renamed `hisi-hal 0.7.0-alpha.1` preserves that stable surface; DMA, embassy, BS2X, and unproven helper surfaces remain behind `unstable` until their invariants and HIL evidence are closed.
+**HAL 0.6.0 stabilization (complete):** the stable release is published. The renamed `hisi-hal 0.7.0-alpha.2` preserves that stable surface; DMA, embassy, BS2X, and unproven helper surfaces remain behind `unstable` until their invariants and HIL evidence are closed.
 
 The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](docs/plan/hal-0.6.0-release.md). RF/Connectivity may drive HAL bug fixes, but does not block HAL 0.6.0 unless it exposes a bug in an already-stable HAL API.
 

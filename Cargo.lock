@@ -662,7 +662,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-riscv-rt"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "bs2x-pac",
  "critical-section",
@@ -1763,7 +1763,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-pac"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "critical-section",
  "riscv",

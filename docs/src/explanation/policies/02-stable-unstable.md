@@ -52,15 +52,15 @@ WS63 HAL 有大量驱动：有些在真实硅片上跑过 HIL 测试（GPIO/SPI/
 ```toml
 # 想用实验性接口（DMA、interrupt/waker async、embassy 等）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63", "unstable"] }
 
 # 想构建实验性的 BS2X target：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-bs21", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-bs21", "unstable"] }
 
 # 只用稳定接口（默认）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63"] }
 ```
 
 实验性接口的签名**可能在小版本中变**；开 `unstable` = 同意承担 breakage。
