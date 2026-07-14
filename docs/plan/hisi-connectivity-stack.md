@@ -452,6 +452,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   ready 时切换。11/11 host tests 通过；真机 RF 全链路通过且
   `irq_preemptions=0x00000289`。证据见
   [A3 IRQ epilogue preemption](evidence/ws63-rf-a3-irq-preemption-2026-07-14.md)。
+- [x] WS63 `SYS_CTL1.SOFT_INT0` 已按原厂定义和真机验证为 custom local IRQ 36，而非标准
+  RISC-V MachineSoft。SVD/PAC `device.x`、默认与实验 runtime 向量表、命名 handler 均已
+  对齐；两次 nRST 都得到 `mcause=0x80000024` 且清中断后状态归零。证据见
+  [A3 software interrupt routing](evidence/ws63-rf-a3-software-interrupt-2026-07-14.md)。
 - [ ] TIMER_INT0 + software-interrupt time slicing/budget enforcement、priority inheritance、
   FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
