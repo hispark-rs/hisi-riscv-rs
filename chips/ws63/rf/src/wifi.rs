@@ -825,6 +825,7 @@ impl<'d> Wifi<'d> {
                 prefix_ssid: 0,
                 fast_connect: 0,
                 extra_ies_len: 0,
+                acs_scan: 0,
             };
             // The official code also frees scan parameters immediately after
             // this synchronous ioctl returns.
@@ -998,6 +999,7 @@ struct VendorScan {
     prefix_ssid: u8,
     fast_connect: u8,
     extra_ies_len: u32,
+    acs_scan: u32,
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -1159,7 +1161,7 @@ struct VendorWpaEvent {
 #[cfg(target_arch = "riscv32")]
 const _: () = {
     assert!(core::mem::size_of::<VendorScanSsid>() == 36);
-    assert!(core::mem::size_of::<VendorScan>() == 24);
+    assert!(core::mem::size_of::<VendorScan>() == 28);
     assert!(core::mem::size_of::<VendorScanResult>() == 44);
     assert!(core::mem::size_of::<VendorCryptoSettings>() == 48);
     assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
@@ -1330,6 +1332,34 @@ unsafe extern "C" fn scan_event(
         && !data.is_null()
         && length as usize == core::mem::size_of::<VendorScanResult>()
     {
+        // SAFETY: exact event size above establishes the descriptor layout.
+        let vendor = unsafe { &*data.cast::<VendorScanResult>() };
+        #[cfg(feature = "upstream-supplicant-port")]
+        if let Some(total_len) = (vendor.ie_len as usize).checked_add(vendor.beacon_ie_len as usize)
+            && total_len <= MAX_IE_LENGTH
+            && (total_len == 0 || !vendor.variable.is_null())
+        {
+            // SAFETY: the vendor owns this exact payload for the callback;
+            // enqueue_scan_result deep-copies it before returning.
+            let ies = if total_len == 0 {
+                &[]
+            } else {
+                unsafe { core::slice::from_raw_parts(vendor.variable, total_len) }
+            };
+            let _ = crate::upstream_supplicant::enqueue_scan_result(
+                vendor.capabilities as u16,
+                vendor.flags as u32,
+                vendor.bssid,
+                vendor.frequency,
+                vendor.beacon_interval as u16,
+                vendor.quality,
+                vendor.level,
+                vendor.age,
+                vendor.ie_len as usize,
+                vendor.beacon_ie_len as usize,
+                ies,
+            );
+        }
         let slot = critical_section::with(|cs| {
             let state = SCAN_STATE.borrow(cs);
             if !state.active.get() || state.count.get() >= MAX_SCAN_RESULTS {
@@ -1342,7 +1372,6 @@ unsafe extern "C" fn scan_event(
         if let Some(slot) = slot {
             // SAFETY: the callback ABI guarantees a live, aligned result for
             // the duration of this call; pointer fields are copied immediately.
-            let vendor = unsafe { &*data.cast::<VendorScanResult>() };
             let mut result = ScanResult::EMPTY;
             result.bssid = vendor.bssid;
             result.frequency_mhz = vendor.frequency.clamp(0, u16::MAX as i32) as u16;
@@ -1370,6 +1399,8 @@ unsafe extern "C" fn scan_event(
         // reports a one-byte payload (`-fshort-enums` vendor ABI).
         // SAFETY: the callback reports at least one readable status byte.
         let raw = unsafe { data.read() } as u32;
+        #[cfg(feature = "upstream-supplicant-port")]
+        let _ = crate::upstream_supplicant::enqueue_scan_done(raw as i32);
         critical_section::with(|cs| {
             let state = SCAN_STATE.borrow(cs);
             if state.active.get() {
@@ -1384,6 +1415,20 @@ unsafe extern "C" fn scan_event(
         // SAFETY: the vendor callback reports the exact connect-result layout
         // and the value is copied before the callback returns.
         let result = unsafe { &*data.cast::<VendorConnectResult>() };
+        #[cfg(feature = "upstream-supplicant-port")]
+        if let (Some(request_ies), Some(response_ies)) = (
+            // SAFETY: the callback descriptor owns both payloads until return.
+            unsafe { transient_event_bytes(result.request_ie, result.request_ie_len) },
+            unsafe { transient_event_bytes(result.response_ie, result.response_ie_len) },
+        ) {
+            let _ = crate::upstream_supplicant::enqueue_associate_result(
+                result.status,
+                result.frequency_mhz,
+                result.bssid,
+                request_ies,
+                response_ies,
+            );
+        }
         let outcome = if result.status == 0 {
             ConnectionOutcome::Connected(ConnectionInfo {
                 bssid: result.bssid,
@@ -1405,6 +1450,13 @@ unsafe extern "C" fn scan_event(
     {
         // SAFETY: the callback length was checked against the vendor layout.
         let disconnect = unsafe { &*data.cast::<VendorDisconnect>() };
+        #[cfg(feature = "upstream-supplicant-port")]
+        if let Some(ies) =
+            // SAFETY: the callback descriptor owns the payload until return.
+            unsafe { transient_event_bytes(disconnect.ie, disconnect.ie_len) }
+        {
+            let _ = crate::upstream_supplicant::enqueue_disconnect(disconnect.reason, ies);
+        }
         critical_section::with(|cs| {
             let state = CONNECTION_STATE.borrow(cs);
             if state.active.get() {
@@ -1416,6 +1468,20 @@ unsafe extern "C" fn scan_event(
         });
     }
     0
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+unsafe fn transient_event_bytes<'a>(pointer: *const u8, len: u32) -> Option<&'a [u8]> {
+    let len = len as usize;
+    if len > MAX_IE_LENGTH || (len != 0 && pointer.is_null()) {
+        return None;
+    }
+    if len == 0 {
+        return Some(&[]);
+    }
+    // SAFETY: the caller checked that the vendor descriptor owns len readable
+    // bytes for the complete enclosing callback.
+    Some(unsafe { core::slice::from_raw_parts(pointer, len) })
 }
 
 #[cfg(all(feature = "wifi-personal", target_arch = "riscv32"))]

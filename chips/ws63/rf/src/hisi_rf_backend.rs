@@ -6,6 +6,13 @@ use hisi_rf::{
     ScanOutcome, ScanResult, Security, Ssid, StationConfig, WifiBackend,
 };
 
+#[cfg(feature = "upstream-supplicant-port")]
+const NATIVE_EVENT_AUTHORIZED: u8 = 3;
+#[cfg(feature = "upstream-supplicant-port")]
+const NATIVE_EVENT_DISCONNECTED: u8 = 4;
+#[cfg(feature = "upstream-supplicant-port")]
+const NATIVE_EVENT_FAILED: u8 = 5;
+
 #[cfg(feature = "net")]
 use crate::netif_smoltcp::Ws63Device;
 #[cfg(not(feature = "upstream-supplicant-port"))]
@@ -111,11 +118,47 @@ impl WifiBackend for Ws63WifiBackend<'_> {
     fn connect(&mut self, config: &StationConfig) -> Result<ConnectionInfo, BackendError> {
         #[cfg(feature = "upstream-supplicant-port")]
         {
-            let _ = config;
-            Err(BackendError {
-                class: BackendErrorClass::UnsupportedSecurity,
-                code: 0x5732_0001,
-            })
+            let supplicant = self.supplicant.as_mut().ok_or(not_initialized())?;
+            supplicant.configure(config).map_err(map_native_error)?;
+            supplicant.connect().map_err(map_native_error)?;
+            let started_at = crate::uapi::monotonic_ms();
+            loop {
+                supplicant
+                    .poll(core::num::NonZeroU32::new(32).unwrap())
+                    .map_err(map_native_error)?;
+                while let Some(event) = supplicant.next_event().map_err(map_native_error)? {
+                    match event.kind {
+                        NATIVE_EVENT_AUTHORIZED => {
+                            return Ok(ConnectionInfo {
+                                bssid: config.bssid,
+                                frequency_mhz: channel_to_frequency(config.channel),
+                            });
+                        }
+                        NATIVE_EVENT_DISCONNECTED | NATIVE_EVENT_FAILED => {
+                            return Err(BackendError {
+                                class: BackendErrorClass::Connect,
+                                code: event.status as u32,
+                            });
+                        }
+                        _ => {}
+                    }
+                }
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at)
+                    >= config.timeout_ms() as u64
+                {
+                    let _ = supplicant.disconnect();
+                    return Err(BackendError {
+                        class: BackendErrorClass::Timeout,
+                        code: 1,
+                    });
+                }
+                hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
+                    |error| BackendError {
+                        class: BackendErrorClass::Other,
+                        code: 0x5732_e000 | runtime_code(error),
+                    },
+                )?;
+            }
         }
         #[cfg(not(feature = "upstream-supplicant-port"))]
         {
@@ -146,11 +189,40 @@ impl WifiBackend for Ws63WifiBackend<'_> {
     fn disconnect(&mut self, config: &hisi_rf::WifiConfig) -> Result<(), BackendError> {
         #[cfg(feature = "upstream-supplicant-port")]
         {
-            let _ = config;
-            Err(BackendError {
-                class: BackendErrorClass::UnsupportedSecurity,
-                code: 0x5732_0002,
-            })
+            let supplicant = self.supplicant.as_mut().ok_or(not_initialized())?;
+            supplicant.disconnect().map_err(map_native_error)?;
+            let started_at = crate::uapi::monotonic_ms();
+            loop {
+                supplicant
+                    .poll(core::num::NonZeroU32::new(32).unwrap())
+                    .map_err(map_native_error)?;
+                while let Some(event) = supplicant.next_event().map_err(map_native_error)? {
+                    match event.kind {
+                        NATIVE_EVENT_DISCONNECTED => return Ok(()),
+                        NATIVE_EVENT_FAILED => {
+                            return Err(BackendError {
+                                class: BackendErrorClass::Connect,
+                                code: event.status as u32,
+                            });
+                        }
+                        _ => {}
+                    }
+                }
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at)
+                    >= config.disconnect_timeout_ms as u64
+                {
+                    return Err(BackendError {
+                        class: BackendErrorClass::Timeout,
+                        code: 2,
+                    });
+                }
+                hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
+                    |error| BackendError {
+                        class: BackendErrorClass::Other,
+                        code: 0x5732_e000 | runtime_code(error),
+                    },
+                )?;
+            }
         }
         #[cfg(not(feature = "upstream-supplicant-port"))]
         {
@@ -246,22 +318,68 @@ fn map_error(error: Ws63Error) -> BackendError {
 
 #[cfg(feature = "upstream-supplicant-port")]
 fn map_native_error(error: NativeSupplicantError) -> BackendError {
-    let code = match error {
-        NativeSupplicantError::Port(_) => 1,
-        NativeSupplicantError::InvalidContextLayout => 2,
-        NativeSupplicantError::AllocationFailed => 3,
-        NativeSupplicantError::CreateFailed => 4,
-        NativeSupplicantError::InitializeFailed(status) => 0x1000 | status as u32 & 0xfff,
-        NativeSupplicantError::EnableEapolFailed(status) => 0x2000 | status as u32 & 0xfff,
-        NativeSupplicantError::FeedMgmtFailed(status) => 0x3000 | status as u32 & 0xfff,
-        NativeSupplicantError::FeedEapolFailed(status) => 0x4000 | status as u32 & 0xfff,
-        NativeSupplicantError::MgmtQueueOverflow(count) => 0x6000 | count.min(0xfff),
-        NativeSupplicantError::InvalidResult => 5,
-        NativeSupplicantError::PollFailed(status) => 0x5000 | status as u32 & 0xfff,
+    let (class, code) = match error {
+        NativeSupplicantError::Port(_) => (BackendErrorClass::Initialize, 1),
+        NativeSupplicantError::InvalidContextLayout => (BackendErrorClass::Initialize, 2),
+        NativeSupplicantError::AllocationFailed => (BackendErrorClass::Initialize, 3),
+        NativeSupplicantError::CreateFailed => (BackendErrorClass::Initialize, 4),
+        NativeSupplicantError::InitializeFailed(status) => (
+            BackendErrorClass::Initialize,
+            0x1000 | status as u32 & 0xfff,
+        ),
+        NativeSupplicantError::EnableEapolFailed(status) => (
+            BackendErrorClass::Initialize,
+            0x2000 | status as u32 & 0xfff,
+        ),
+        NativeSupplicantError::FeedMgmtFailed(status) => {
+            (BackendErrorClass::Other, 0x3000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::FeedEapolFailed(status) => {
+            (BackendErrorClass::Other, 0x4000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::MgmtQueueOverflow(count) => {
+            (BackendErrorClass::Other, 0x6000 | count.min(0xfff))
+        }
+        NativeSupplicantError::FeedScanFailed(status) => {
+            (BackendErrorClass::Other, 0x7000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::ScanQueueOverflow(count) => {
+            (BackendErrorClass::Other, 0x8000 | count.min(0xfff))
+        }
+        NativeSupplicantError::FeedLinkFailed(status) => {
+            (BackendErrorClass::Connect, 0x9000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::LinkQueueOverflow(count) => {
+            (BackendErrorClass::Connect, 0xa000 | count.min(0xfff))
+        }
+        NativeSupplicantError::ConfigureFailed(status) => {
+            (BackendErrorClass::Connect, 0xb000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::ConnectFailed(status) => {
+            (BackendErrorClass::Connect, 0xc000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::DisconnectFailed(status) => {
+            (BackendErrorClass::Connect, 0xd000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::InvalidResult => (BackendErrorClass::Other, 5),
+        NativeSupplicantError::PollFailed(status) => {
+            (BackendErrorClass::Other, 0x5000 | status as u32 & 0xfff)
+        }
     };
     BackendError {
-        class: BackendErrorClass::Initialize,
+        class,
         code: 0x5732_0000 | code,
+    }
+}
+
+#[cfg(feature = "upstream-supplicant-port")]
+const fn channel_to_frequency(channel: u8) -> u16 {
+    if channel == 14 {
+        2484
+    } else if channel >= 1 && channel <= 13 {
+        2407 + channel as u16 * 5
+    } else {
+        0
     }
 }
 

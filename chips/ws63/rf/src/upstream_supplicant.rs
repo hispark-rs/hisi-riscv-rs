@@ -13,10 +13,14 @@ use core::ptr::NonNull;
 use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 use portable_atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
 use ws63_radio_sys::supplicant::{
-    ABI_VERSION, Context, DriverHooks, Event, Key, OsHooks, PollResult, cipher,
+    ABI_VERSION, AssociateRequest, AssociateResult, Context, DisconnectEvent, DriverHooks, Event,
+    Key, MAX_SCAN_FREQUENCIES, MAX_SCAN_IE_LEN, NativeScanResult, NetworkConfig, OsHooks, Pmf,
+    PollResult, SaePwe, ScanRequest, Security, cipher, hisi_wpa_configure, hisi_wpa_connect,
     hisi_wpa_context_align, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
-    hisi_wpa_driver_install, hisi_wpa_feed_eapol, hisi_wpa_feed_mgmt, hisi_wpa_init,
-    hisi_wpa_next_event, hisi_wpa_os_install, hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
+    hisi_wpa_disconnect, hisi_wpa_driver_install, hisi_wpa_feed_associate_result,
+    hisi_wpa_feed_disconnect, hisi_wpa_feed_eapol, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
+    hisi_wpa_feed_scan_result, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
+    hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
 };
 
 static RUNNER_WAKE: Semaphore = Semaphore::new(0);
@@ -25,6 +29,9 @@ static DRIVER_CONTEXT: DriverContext = DriverContext::new();
 static PORT_STATE: AtomicU8 = AtomicU8::new(PORT_FREE);
 static EAPOL_PENDING: AtomicBool = AtomicBool::new(false);
 static MGMT_RX_QUEUE: MgmtRxQueue = MgmtRxQueue::new();
+static NATIVE_SCAN_ACTIVE: AtomicBool = AtomicBool::new(false);
+static SCAN_EVENT_QUEUE: ScanEventQueue = ScanEventQueue::new();
+static LINK_EVENT_QUEUE: LinkEventQueue = LinkEventQueue::new();
 
 const PORT_FREE: u8 = 0;
 const PORT_INSTALLING: u8 = 1;
@@ -50,11 +57,22 @@ const IOCTL_RECEIVE_EAPOL: u32 = 6;
 const IOCTL_ENABLE_EAPOL: u32 = 7;
 const IOCTL_DISABLE_EAPOL: u32 = 8;
 const IOCTL_GET_ADDRESS: u32 = 9;
+const IOCTL_SCAN: u32 = 14;
+const IOCTL_DISCONNECT: u32 = 15;
+const IOCTL_ASSOCIATE: u32 = 16;
 
 const SLOT_FREE: u8 = 0;
 const SLOT_WRITING: u8 = 1;
 const SLOT_READY: u8 = 2;
 const SLOT_READING: u8 = 3;
+const SCAN_EVENT_RESULT: u8 = 1;
+const SCAN_EVENT_DONE: u8 = 2;
+const LINK_EVENT_ASSOCIATE: u8 = 1;
+const LINK_EVENT_DISCONNECT: u8 = 2;
+
+const SCAN_EVENT_QUEUE_DEPTH: usize = 8;
+const LINK_EVENT_QUEUE_DEPTH: usize = 4;
+const MAX_ASSOCIATION_IE_LEN: usize = 768;
 
 #[derive(Clone, Copy)]
 struct MgmtMeta {
@@ -186,6 +204,341 @@ struct MgmtFrame<'a> {
     slot: &'a MgmtSlot,
 }
 
+#[derive(Clone, Copy)]
+struct ScanMeta {
+    kind: u8,
+    capabilities: u16,
+    flags: u32,
+    bssid: [u8; 6],
+    frequency_mhz: i32,
+    beacon_interval: u16,
+    quality: i32,
+    level_mbm: i32,
+    age_ms: u32,
+    ie_len: usize,
+    beacon_ie_len: usize,
+    status: i32,
+}
+
+struct ScanSlot {
+    state: AtomicU8,
+    sequence: AtomicU32,
+    meta: UnsafeCell<ScanMeta>,
+    ies: UnsafeCell<[u8; MAX_SCAN_IE_LEN]>,
+}
+
+// SAFETY: WRITING/READING are exclusive ownership states and READY publishes
+// the complete deep copy with Release ordering.
+unsafe impl Sync for ScanSlot {}
+
+impl ScanSlot {
+    const fn new() -> Self {
+        Self {
+            state: AtomicU8::new(SLOT_FREE),
+            sequence: AtomicU32::new(0),
+            meta: UnsafeCell::new(ScanMeta {
+                kind: 0,
+                capabilities: 0,
+                flags: 0,
+                bssid: [0; 6],
+                frequency_mhz: 0,
+                beacon_interval: 0,
+                quality: 0,
+                level_mbm: 0,
+                age_ms: 0,
+                ie_len: 0,
+                beacon_ie_len: 0,
+                status: 0,
+            }),
+            ies: UnsafeCell::new([0; MAX_SCAN_IE_LEN]),
+        }
+    }
+}
+
+struct ScanEventQueue {
+    next_sequence: AtomicU32,
+    dropped: AtomicU32,
+    slots: [ScanSlot; SCAN_EVENT_QUEUE_DEPTH],
+}
+
+impl ScanEventQueue {
+    const fn new() -> Self {
+        Self {
+            next_sequence: AtomicU32::new(0),
+            dropped: AtomicU32::new(0),
+            slots: [const { ScanSlot::new() }; SCAN_EVENT_QUEUE_DEPTH],
+        }
+    }
+
+    fn enqueue_result(&self, meta: ScanMeta, ies: &[u8]) -> bool {
+        if meta.kind != SCAN_EVENT_RESULT
+            || meta.ie_len.saturating_add(meta.beacon_ie_len) != ies.len()
+            || ies.len() > MAX_SCAN_IE_LEN
+        {
+            self.dropped.fetch_add(1, Ordering::Relaxed);
+            return false;
+        }
+        self.enqueue(meta, ies)
+    }
+
+    fn enqueue_done(&self, status: i32) -> bool {
+        self.enqueue(
+            ScanMeta {
+                kind: SCAN_EVENT_DONE,
+                capabilities: 0,
+                flags: 0,
+                bssid: [0; 6],
+                frequency_mhz: 0,
+                beacon_interval: 0,
+                quality: 0,
+                level_mbm: 0,
+                age_ms: 0,
+                ie_len: 0,
+                beacon_ie_len: 0,
+                status,
+            },
+            &[],
+        )
+    }
+
+    fn enqueue(&self, meta: ScanMeta, ies: &[u8]) -> bool {
+        let sequence = self.next_sequence.fetch_add(1, Ordering::Relaxed);
+        for slot in &self.slots {
+            if slot
+                .state
+                .compare_exchange(SLOT_FREE, SLOT_WRITING, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
+                continue;
+            }
+            // SAFETY: WRITING exclusively owns both cells. The large copy is
+            // deliberately outside any interrupt-disabled critical section.
+            unsafe {
+                slot.meta.get().write(meta);
+                (&mut *slot.ies.get())[..ies.len()].copy_from_slice(ies);
+            }
+            slot.sequence.store(sequence, Ordering::Relaxed);
+            slot.state.store(SLOT_READY, Ordering::Release);
+            return true;
+        }
+        self.dropped.fetch_add(1, Ordering::Relaxed);
+        false
+    }
+
+    fn take_oldest(&self) -> Option<ScanEvent<'_>> {
+        take_oldest_slot(&self.slots).map(|slot| ScanEvent { slot })
+    }
+
+    fn has_pending(&self) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
+    }
+}
+
+struct ScanEvent<'a> {
+    slot: &'a ScanSlot,
+}
+
+impl ScanEvent<'_> {
+    fn meta(&self) -> ScanMeta {
+        // SAFETY: READING owns the initialized metadata.
+        unsafe { *self.slot.meta.get() }
+    }
+
+    fn ies(&self) -> &[u8] {
+        let meta = self.meta();
+        let len = meta.ie_len + meta.beacon_ie_len;
+        // SAFETY: the producer checked and initialized exactly this prefix.
+        unsafe { &(&*self.slot.ies.get())[..len] }
+    }
+}
+
+impl Drop for ScanEvent<'_> {
+    fn drop(&mut self) {
+        self.slot.state.store(SLOT_FREE, Ordering::Release);
+    }
+}
+
+#[derive(Clone, Copy)]
+struct LinkMeta {
+    kind: u8,
+    status_or_reason: u16,
+    frequency_mhz: u16,
+    bssid: [u8; 6],
+    first_len: usize,
+    second_len: usize,
+}
+
+struct LinkSlot {
+    state: AtomicU8,
+    sequence: AtomicU32,
+    meta: UnsafeCell<LinkMeta>,
+    first: UnsafeCell<[u8; MAX_ASSOCIATION_IE_LEN]>,
+    second: UnsafeCell<[u8; MAX_ASSOCIATION_IE_LEN]>,
+}
+
+// SAFETY: slot state transfers exclusive ownership of all cells.
+unsafe impl Sync for LinkSlot {}
+
+impl LinkSlot {
+    const fn new() -> Self {
+        Self {
+            state: AtomicU8::new(SLOT_FREE),
+            sequence: AtomicU32::new(0),
+            meta: UnsafeCell::new(LinkMeta {
+                kind: 0,
+                status_or_reason: 0,
+                frequency_mhz: 0,
+                bssid: [0; 6],
+                first_len: 0,
+                second_len: 0,
+            }),
+            first: UnsafeCell::new([0; MAX_ASSOCIATION_IE_LEN]),
+            second: UnsafeCell::new([0; MAX_ASSOCIATION_IE_LEN]),
+        }
+    }
+}
+
+struct LinkEventQueue {
+    next_sequence: AtomicU32,
+    dropped: AtomicU32,
+    slots: [LinkSlot; LINK_EVENT_QUEUE_DEPTH],
+}
+
+impl LinkEventQueue {
+    const fn new() -> Self {
+        Self {
+            next_sequence: AtomicU32::new(0),
+            dropped: AtomicU32::new(0),
+            slots: [const { LinkSlot::new() }; LINK_EVENT_QUEUE_DEPTH],
+        }
+    }
+
+    fn enqueue(&self, meta: LinkMeta, first: &[u8], second: &[u8]) -> bool {
+        if first.len() != meta.first_len
+            || second.len() != meta.second_len
+            || first.len() > MAX_ASSOCIATION_IE_LEN
+            || second.len() > MAX_ASSOCIATION_IE_LEN
+        {
+            self.dropped.fetch_add(1, Ordering::Relaxed);
+            return false;
+        }
+        let sequence = self.next_sequence.fetch_add(1, Ordering::Relaxed);
+        for slot in &self.slots {
+            if slot
+                .state
+                .compare_exchange(SLOT_FREE, SLOT_WRITING, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
+                continue;
+            }
+            // SAFETY: WRITING exclusively owns all payload cells until READY.
+            unsafe {
+                slot.meta.get().write(meta);
+                (&mut *slot.first.get())[..first.len()].copy_from_slice(first);
+                (&mut *slot.second.get())[..second.len()].copy_from_slice(second);
+            }
+            slot.sequence.store(sequence, Ordering::Relaxed);
+            slot.state.store(SLOT_READY, Ordering::Release);
+            return true;
+        }
+        self.dropped.fetch_add(1, Ordering::Relaxed);
+        false
+    }
+
+    fn take_oldest(&self) -> Option<LinkEvent<'_>> {
+        take_oldest_slot(&self.slots).map(|slot| LinkEvent { slot })
+    }
+
+    fn has_pending(&self) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
+    }
+}
+
+struct LinkEvent<'a> {
+    slot: &'a LinkSlot,
+}
+
+impl LinkEvent<'_> {
+    fn meta(&self) -> LinkMeta {
+        // SAFETY: READING owns the initialized metadata.
+        unsafe { *self.slot.meta.get() }
+    }
+
+    fn first(&self) -> &[u8] {
+        let len = self.meta().first_len;
+        // SAFETY: the producer initialized this checked prefix.
+        unsafe { &(&*self.slot.first.get())[..len] }
+    }
+
+    fn second(&self) -> &[u8] {
+        let len = self.meta().second_len;
+        // SAFETY: the producer initialized this checked prefix.
+        unsafe { &(&*self.slot.second.get())[..len] }
+    }
+}
+
+impl Drop for LinkEvent<'_> {
+    fn drop(&mut self) {
+        self.slot.state.store(SLOT_FREE, Ordering::Release);
+    }
+}
+
+trait SequencedSlot {
+    fn state(&self) -> &AtomicU8;
+    fn sequence(&self) -> &AtomicU32;
+}
+
+impl SequencedSlot for ScanSlot {
+    fn state(&self) -> &AtomicU8 {
+        &self.state
+    }
+    fn sequence(&self) -> &AtomicU32 {
+        &self.sequence
+    }
+}
+
+impl SequencedSlot for LinkSlot {
+    fn state(&self) -> &AtomicU8 {
+        &self.state
+    }
+    fn sequence(&self) -> &AtomicU32 {
+        &self.sequence
+    }
+}
+
+fn take_oldest_slot<T: SequencedSlot>(slots: &[T]) -> Option<&T> {
+    if slots
+        .iter()
+        .any(|slot| slot.state().load(Ordering::Acquire) == SLOT_WRITING)
+    {
+        return None;
+    }
+    let mut oldest: Option<(usize, u32)> = None;
+    for (index, slot) in slots.iter().enumerate() {
+        if slot.state().load(Ordering::Acquire) != SLOT_READY {
+            continue;
+        }
+        let sequence = slot.sequence().load(Ordering::Relaxed);
+        if oldest.is_none_or(|(_, current)| sequence_before(sequence, current)) {
+            oldest = Some((index, sequence));
+        }
+    }
+    let slot = &slots[oldest?.0];
+    slot.state()
+        .compare_exchange(
+            SLOT_READY,
+            SLOT_READING,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+        .ok()?;
+    Some(slot)
+}
+
 impl MgmtFrame<'_> {
     fn meta(&self) -> MgmtMeta {
         // SAFETY: READING gives this guard exclusive immutable access and the
@@ -306,6 +659,57 @@ struct KeyExtension {
     reserved: u8,
 }
 
+#[repr(C)]
+struct VendorScanSsid {
+    ssid: [u8; 32],
+    ssid_len: u32,
+}
+
+#[repr(C)]
+struct VendorScanRequest {
+    ssids: *mut VendorScanSsid,
+    frequencies: *mut i32,
+    extra_ies: *mut u8,
+    bssid: *mut u8,
+    num_ssids: u8,
+    num_frequencies: u8,
+    prefix_ssid_scan: u8,
+    fast_connect: u8,
+    extra_ies_len: u32,
+    acs_scan: u32,
+}
+
+#[repr(C)]
+struct VendorCryptoSettings {
+    wpa_versions: u32,
+    cipher_group: u32,
+    num_pairwise: i32,
+    pairwise: [u32; 5],
+    num_akm: i32,
+    akm: [u32; 2],
+    sae_pwe: u8,
+    reserved: [u8; 3],
+}
+
+#[repr(C)]
+struct VendorAssociateRequest {
+    bssid: *mut u8,
+    ssid: *mut u8,
+    ies: *mut u8,
+    key: *mut u8,
+    auth_type: u8,
+    privacy: u8,
+    key_len: u8,
+    key_index: u8,
+    pmf: u8,
+    auto_connect: u8,
+    reserved: [u8; 2],
+    frequency_mhz: u32,
+    ssid_len: u32,
+    ies_len: u32,
+    crypto: *mut VendorCryptoSettings,
+}
+
 #[cfg(target_pointer_width = "32")]
 const _: () = {
     assert!(core::mem::size_of::<TxEapol>() == 8);
@@ -315,6 +719,20 @@ const _: () = {
     assert!(core::mem::size_of::<KeyExtension>() == 36);
     assert!(core::mem::offset_of!(KeyExtension, address) == 20);
     assert!(core::mem::offset_of!(KeyExtension, default_data) == 32);
+    assert!(core::mem::size_of::<VendorScanSsid>() == 36);
+    assert!(core::mem::size_of::<VendorScanRequest>() == 28);
+    assert!(core::mem::offset_of!(VendorScanRequest, frequencies) == 4);
+    assert!(core::mem::offset_of!(VendorScanRequest, num_ssids) == 16);
+    assert!(core::mem::offset_of!(VendorScanRequest, extra_ies_len) == 20);
+    assert!(core::mem::size_of::<VendorCryptoSettings>() == 48);
+    assert!(core::mem::offset_of!(VendorCryptoSettings, pairwise) == 12);
+    assert!(core::mem::offset_of!(VendorCryptoSettings, num_akm) == 32);
+    assert!(core::mem::offset_of!(VendorCryptoSettings, akm) == 36);
+    assert!(core::mem::offset_of!(VendorCryptoSettings, sae_pwe) == 44);
+    assert!(core::mem::size_of::<VendorAssociateRequest>() == 40);
+    assert!(core::mem::offset_of!(VendorAssociateRequest, auth_type) == 16);
+    assert!(core::mem::offset_of!(VendorAssociateRequest, frequency_mhz) == 24);
+    assert!(core::mem::offset_of!(VendorAssociateRequest, crypto) == 36);
 };
 
 /// Failure while registering the upstream supplicant native runtime seam.
@@ -355,8 +773,22 @@ pub(crate) enum NativeSupplicantError {
     FeedMgmtFailed(i32),
     /// One or more management frames could not fit the bounded RX queue.
     MgmtQueueOverflow(u32),
+    /// One queued scan event could not be delivered to hostap.
+    FeedScanFailed(i32),
+    /// One or more scan events could not fit the bounded RX queue.
+    ScanQueueOverflow(u32),
+    /// One queued association/disconnect event could not be delivered.
+    FeedLinkFailed(i32),
+    /// One or more association/disconnect events overflowed the queue.
+    LinkQueueOverflow(u32),
     /// The WS63 EAPOL receive ioctl or hostap feed rejected a frame.
     FeedEapolFailed(i32),
+    /// The typed station configuration was rejected by the native context.
+    ConfigureFailed(i32),
+    /// Starting association was rejected by the native context.
+    ConnectFailed(i32),
+    /// Starting deauthentication was rejected by the native context.
+    DisconnectFailed(i32),
     /// One event or poll result violated the versioned C ABI.
     InvalidResult,
     /// The upstream event loop reported a runtime failure.
@@ -373,6 +805,8 @@ pub(crate) struct NativeSupplicant {
     context: NonNull<Context>,
     storage: NonNull<c_void>,
     mgmt_dropped_seen: u32,
+    scan_dropped_seen: u32,
+    link_dropped_seen: u32,
 }
 
 #[allow(dead_code)]
@@ -427,7 +861,73 @@ impl NativeSupplicant {
             context,
             storage,
             mgmt_dropped_seen: MGMT_RX_QUEUE.dropped.load(Ordering::Acquire),
+            scan_dropped_seen: SCAN_EVENT_QUEUE.dropped.load(Ordering::Acquire),
+            link_dropped_seen: LINK_EVENT_QUEUE.dropped.load(Ordering::Acquire),
         })
+    }
+
+    pub(crate) fn configure(
+        &mut self,
+        config: &hisi_rf::StationConfig,
+    ) -> Result<(), NativeSupplicantError> {
+        let mut network = NetworkConfig {
+            abi_version: ABI_VERSION,
+            security: 0,
+            pmf: 0,
+            ssid_len: config.ssid.as_bytes().len() as u8,
+            sae_pwe: 0,
+            channel: config.channel,
+            reserved0: 0,
+            ssid: [0; 32],
+            bssid: config.bssid,
+            reserved1: [0; 2],
+        };
+        network.ssid[..config.ssid.as_bytes().len()].copy_from_slice(config.ssid.as_bytes());
+        match config.security() {
+            hisi_rf::PersonalSecurity::Wpa2 => {
+                network.security = Security::Wpa2Psk as u8;
+                network.pmf = Pmf::Optional as u8;
+            }
+            hisi_rf::PersonalSecurity::Wpa3 { sae_pwe } => {
+                network.security = Security::Wpa3Sae as u8;
+                network.pmf = Pmf::Required as u8;
+                network.sae_pwe = match sae_pwe {
+                    hisi_rf::SaePwe::HuntAndPeck => SaePwe::HuntAndPeck as u8,
+                    hisi_rf::SaePwe::HashToElement => SaePwe::HashToElement as u8,
+                    hisi_rf::SaePwe::Both => SaePwe::Both as u8,
+                };
+            }
+        }
+        let passphrase = config.passphrase.expose_secret();
+        // SAFETY: the unique owner serializes context access; all borrowed
+        // config/passphrase bytes remain live for this synchronous call.
+        let status = unsafe {
+            hisi_wpa_configure(
+                self.context.as_ptr(),
+                &raw const network,
+                passphrase.as_ptr(),
+                passphrase.len(),
+            )
+        };
+        (status == 0)
+            .then_some(())
+            .ok_or(NativeSupplicantError::ConfigureFailed(status))
+    }
+
+    pub(crate) fn connect(&mut self) -> Result<(), NativeSupplicantError> {
+        // SAFETY: the unique owner serializes all context calls.
+        let status = unsafe { hisi_wpa_connect(self.context.as_ptr()) };
+        (status == 0)
+            .then_some(())
+            .ok_or(NativeSupplicantError::ConnectFailed(status))
+    }
+
+    pub(crate) fn disconnect(&mut self) -> Result<(), NativeSupplicantError> {
+        // SAFETY: the unique owner serializes all context calls.
+        let status = unsafe { hisi_wpa_disconnect(self.context.as_ptr()) };
+        (status == 0)
+            .then_some(())
+            .ok_or(NativeSupplicantError::DisconnectFailed(status))
     }
 
     /// Advance bounded hostap work from the owning radio runner.
@@ -441,8 +941,99 @@ impl NativeSupplicant {
             self.mgmt_dropped_seen = dropped;
             return Err(NativeSupplicantError::MgmtQueueOverflow(delta));
         }
+        let dropped = SCAN_EVENT_QUEUE.dropped.load(Ordering::Acquire);
+        if dropped != self.scan_dropped_seen {
+            let delta = dropped.wrapping_sub(self.scan_dropped_seen);
+            self.scan_dropped_seen = dropped;
+            return Err(NativeSupplicantError::ScanQueueOverflow(delta));
+        }
+        let dropped = LINK_EVENT_QUEUE.dropped.load(Ordering::Acquire);
+        if dropped != self.link_dropped_seen {
+            let delta = dropped.wrapping_sub(self.link_dropped_seen);
+            self.link_dropped_seen = dropped;
+            return Err(NativeSupplicantError::LinkQueueOverflow(delta));
+        }
         let mut rx_work = false;
-        let mut rx_budget = work_budget.get();
+        let mut rx_budget = work_budget.get().saturating_sub(1);
+        while rx_budget != 0 {
+            let Some(event) = SCAN_EVENT_QUEUE.take_oldest() else {
+                break;
+            };
+            let meta = event.meta();
+            let status = if meta.kind == SCAN_EVENT_RESULT {
+                let ies = event.ies();
+                let result = NativeScanResult {
+                    abi_version: ABI_VERSION,
+                    capabilities: meta.capabilities,
+                    flags: meta.flags,
+                    bssid: meta.bssid,
+                    reserved0: [0; 2],
+                    frequency_mhz: meta.frequency_mhz,
+                    beacon_interval: meta.beacon_interval,
+                    reserved1: 0,
+                    quality: meta.quality,
+                    level_mbm: meta.level_mbm,
+                    age_ms: meta.age_ms,
+                    ie_len: meta.ie_len as u32,
+                    beacon_ie_len: meta.beacon_ie_len as u32,
+                    ies: ies.as_ptr(),
+                };
+                // SAFETY: the queue guard keeps the deep-copied IE payload live
+                // for this synchronous context call.
+                unsafe { hisi_wpa_feed_scan_result(self.context.as_ptr(), &raw const result) }
+            } else if meta.kind == SCAN_EVENT_DONE {
+                // SAFETY: the unique owner serializes context calls.
+                unsafe { hisi_wpa_feed_scan_done(self.context.as_ptr(), meta.status) }
+            } else {
+                return Err(NativeSupplicantError::InvalidResult);
+            };
+            if status != 0 {
+                return Err(NativeSupplicantError::FeedScanFailed(status));
+            }
+            rx_work = true;
+            rx_budget -= 1;
+        }
+        while rx_budget != 0 {
+            let Some(event) = LINK_EVENT_QUEUE.take_oldest() else {
+                break;
+            };
+            let meta = event.meta();
+            let status = if meta.kind == LINK_EVENT_ASSOCIATE {
+                let first = event.first();
+                let second = event.second();
+                let result = AssociateResult {
+                    abi_version: ABI_VERSION,
+                    status: meta.status_or_reason,
+                    frequency_mhz: meta.frequency_mhz,
+                    reserved: 0,
+                    bssid: meta.bssid,
+                    reserved1: [0; 2],
+                    request_ies: first.as_ptr(),
+                    request_ies_len: first.len(),
+                    response_ies: second.as_ptr(),
+                    response_ies_len: second.len(),
+                };
+                // SAFETY: both queue payload guards live for the synchronous call.
+                unsafe { hisi_wpa_feed_associate_result(self.context.as_ptr(), &raw const result) }
+            } else if meta.kind == LINK_EVENT_DISCONNECT {
+                let ies = event.first();
+                let event = DisconnectEvent {
+                    abi_version: ABI_VERSION,
+                    reason: meta.status_or_reason,
+                    ies: ies.as_ptr(),
+                    ies_len: ies.len(),
+                };
+                // SAFETY: the queue payload remains live for the synchronous call.
+                unsafe { hisi_wpa_feed_disconnect(self.context.as_ptr(), &raw const event) }
+            } else {
+                return Err(NativeSupplicantError::InvalidResult);
+            };
+            if status != 0 {
+                return Err(NativeSupplicantError::FeedLinkFailed(status));
+            }
+            rx_work = true;
+            rx_budget -= 1;
+        }
         while rx_budget != 0 {
             let Some(frame) = MGMT_RX_QUEUE.take_oldest() else {
                 break;
@@ -474,13 +1065,18 @@ impl NativeSupplicant {
             hisi_wpa_poll(
                 self.context.as_ptr(),
                 crate::uapi::monotonic_ms(),
-                work_budget.get(),
+                rx_budget.max(1),
             )
         };
         if result.status != 0 {
             return Err(NativeSupplicantError::PollFailed(result.status));
         }
-        if rx_work || MGMT_RX_QUEUE.has_pending() || EAPOL_PENDING.load(Ordering::Acquire) {
+        if rx_work
+            || SCAN_EVENT_QUEUE.has_pending()
+            || LINK_EVENT_QUEUE.has_pending()
+            || MGMT_RX_QUEUE.has_pending()
+            || EAPOL_PENDING.load(Ordering::Acquire)
+        {
             result.work_pending = 1;
         }
         Ok(result)
@@ -591,6 +1187,115 @@ pub(crate) fn enqueue_mgmt_rx(frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -
     queued
 }
 
+#[allow(clippy::too_many_arguments)]
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_scan_result(
+    capabilities: u16,
+    flags: u32,
+    bssid: [u8; 6],
+    frequency_mhz: i32,
+    beacon_interval: u16,
+    quality: i32,
+    level_mbm: i32,
+    age_ms: u32,
+    ie_len: usize,
+    beacon_ie_len: usize,
+    ies: &[u8],
+) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY
+        || !NATIVE_SCAN_ACTIVE.load(Ordering::Acquire)
+    {
+        return false;
+    }
+    let queued = SCAN_EVENT_QUEUE.enqueue_result(
+        ScanMeta {
+            kind: SCAN_EVENT_RESULT,
+            capabilities,
+            flags,
+            bssid,
+            frequency_mhz,
+            beacon_interval,
+            quality,
+            level_mbm,
+            age_ms,
+            ie_len,
+            beacon_ie_len,
+            status: 0,
+        },
+        ies,
+    );
+    if queued {
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_scan_done(status: i32) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY
+        || !NATIVE_SCAN_ACTIVE.swap(false, Ordering::AcqRel)
+    {
+        return false;
+    }
+    let queued = SCAN_EVENT_QUEUE.enqueue_done(status);
+    if queued {
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_associate_result(
+    status: u16,
+    frequency_mhz: u16,
+    bssid: [u8; 6],
+    request_ies: &[u8],
+    response_ies: &[u8],
+) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY {
+        return false;
+    }
+    let queued = LINK_EVENT_QUEUE.enqueue(
+        LinkMeta {
+            kind: LINK_EVENT_ASSOCIATE,
+            status_or_reason: status,
+            frequency_mhz,
+            bssid,
+            first_len: request_ies.len(),
+            second_len: response_ies.len(),
+        },
+        request_ies,
+        response_ies,
+    );
+    if queued {
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_disconnect(reason: u16, ies: &[u8]) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY {
+        return false;
+    }
+    let queued = LINK_EVENT_QUEUE.enqueue(
+        LinkMeta {
+            kind: LINK_EVENT_DISCONNECT,
+            status_or_reason: reason,
+            frequency_mhz: 0,
+            bssid: [0; 6],
+            first_len: ies.len(),
+            second_len: 0,
+        },
+        ies,
+        &[],
+    );
+    if queued {
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
 unsafe extern "C" fn eapol_notify(_: *mut c_void, _: *mut c_void) {
     EAPOL_PENDING.store(true, Ordering::Release);
     let _ = RUNNER_WAKE.up();
@@ -686,6 +1391,9 @@ fn driver_hooks() -> DriverHooks {
         send_mgmt: Some(send_mgmt),
         install_key: Some(install_key),
         remove_key: Some(remove_key),
+        start_scan: Some(start_scan),
+        associate: Some(associate),
+        deauthenticate: Some(deauthenticate),
     }
 }
 
@@ -850,6 +1558,138 @@ unsafe extern "C" fn remove_key(driver: *mut c_void, key: *const Key) -> c_int {
         driver.ifname(),
         IOCTL_DEL_KEY,
         (&mut request as *mut KeyExtension).cast(),
+    )
+}
+
+unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest) -> c_int {
+    let Some(driver) = driver_context(driver) else {
+        return -1;
+    };
+    let Some(request) = (unsafe { request.as_ref() }) else {
+        return -1;
+    };
+    let ssid_len = request.ssid_len as usize;
+    let frequency_count = request.num_frequencies as usize;
+    if request.abi_version != ABI_VERSION
+        || ssid_len > request.ssid.len()
+        || frequency_count > MAX_SCAN_FREQUENCIES
+        || request.bssid_present > 1
+        || request.extra_ies_len > MAX_SCAN_IE_LEN
+        || (request.extra_ies_len != 0 && request.extra_ies.is_null())
+    {
+        return -1;
+    }
+    let mut ssid = VendorScanSsid {
+        ssid: request.ssid,
+        ssid_len: ssid_len as u32,
+    };
+    let mut scan = VendorScanRequest {
+        ssids: if ssid_len == 0 {
+            core::ptr::null_mut()
+        } else {
+            &mut ssid
+        },
+        frequencies: if frequency_count == 0 {
+            core::ptr::null_mut()
+        } else {
+            request.frequencies.as_ptr().cast_mut()
+        },
+        extra_ies: request.extra_ies.cast_mut(),
+        bssid: if request.bssid_present == 0 {
+            core::ptr::null_mut()
+        } else {
+            request.bssid.as_ptr().cast_mut()
+        },
+        num_ssids: u8::from(ssid_len != 0),
+        num_frequencies: request.num_frequencies,
+        prefix_ssid_scan: 0,
+        fast_connect: 0,
+        extra_ies_len: request.extra_ies_len as u32,
+        acs_scan: 0,
+    };
+    NATIVE_SCAN_ACTIVE.store(true, Ordering::Release);
+    let status = crate::wal::ioctl(
+        driver.ifname(),
+        IOCTL_SCAN,
+        (&mut scan as *mut VendorScanRequest).cast(),
+    );
+    if status != 0 {
+        NATIVE_SCAN_ACTIVE.store(false, Ordering::Release);
+    }
+    status
+}
+
+unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateRequest) -> c_int {
+    let Some(driver) = driver_context(driver) else {
+        return -1;
+    };
+    let Some(request) = (unsafe { request.as_ref() }) else {
+        return -1;
+    };
+    let ssid_len = request.ssid_len as usize;
+    if request.abi_version != ABI_VERSION
+        || ssid_len == 0
+        || ssid_len > request.ssid.len()
+        || request.bssid_present > 1
+        || request.pmf > Pmf::Required as u8
+        || request.sae_pwe > SaePwe::Both as u8
+        || !matches!(request.auth_type, 0 | 3)
+        || request.frequency_mhz == 0
+        || request.pairwise_suite == 0
+        || request.group_suite == 0
+        || request.key_mgmt_suite == 0
+        || request.association_ies_len > MAX_ASSOCIATION_IE_LEN
+        || (request.association_ies_len != 0 && request.association_ies.is_null())
+    {
+        return -1;
+    }
+    let mut crypto = VendorCryptoSettings {
+        wpa_versions: request.wpa_versions,
+        cipher_group: request.group_suite,
+        num_pairwise: 1,
+        pairwise: [request.pairwise_suite, 0, 0, 0, 0],
+        num_akm: 1,
+        akm: [request.key_mgmt_suite, 0],
+        sae_pwe: request.sae_pwe,
+        reserved: [0; 3],
+    };
+    let mut association = VendorAssociateRequest {
+        bssid: if request.bssid_present == 0 {
+            core::ptr::null_mut()
+        } else {
+            request.bssid.as_ptr().cast_mut()
+        },
+        ssid: request.ssid.as_ptr().cast_mut(),
+        ies: request.association_ies.cast_mut(),
+        key: core::ptr::null_mut(),
+        auth_type: request.auth_type,
+        privacy: request.privacy,
+        key_len: 0,
+        key_index: 0,
+        pmf: request.pmf,
+        auto_connect: 0,
+        reserved: [0; 2],
+        frequency_mhz: request.frequency_mhz,
+        ssid_len: ssid_len as u32,
+        ies_len: request.association_ies_len as u32,
+        crypto: &mut crypto,
+    };
+    crate::wal::ioctl(
+        driver.ifname(),
+        IOCTL_ASSOCIATE,
+        (&mut association as *mut VendorAssociateRequest).cast(),
+    )
+}
+
+unsafe extern "C" fn deauthenticate(driver: *mut c_void, reason: u16) -> c_int {
+    let Some(driver) = driver_context(driver) else {
+        return -1;
+    };
+    let mut reason = reason;
+    crate::wal::ioctl(
+        driver.ifname(),
+        IOCTL_DISCONNECT,
+        (&mut reason as *mut u16).cast(),
     )
 }
 
@@ -1098,6 +1938,74 @@ mod tests {
         assert!(!queue.enqueue(2412, -30, &[0; MAX_MGMT_FRAME_LEN + 1]));
         assert_eq!(queue.dropped.load(Ordering::Relaxed), 2);
         assert!(queue.take_oldest().is_none());
+    }
+
+    #[test]
+    fn scan_queue_preserves_event_order_and_deep_copies() {
+        let queue = ScanEventQueue::new();
+        let mut ies = [1, 2, 3, 4];
+        assert!(queue.enqueue_result(
+            ScanMeta {
+                kind: SCAN_EVENT_RESULT,
+                capabilities: 0x10,
+                flags: 7,
+                bssid: [1, 2, 3, 4, 5, 6],
+                frequency_mhz: 2412,
+                beacon_interval: 100,
+                quality: 20,
+                level_mbm: -4200,
+                age_ms: 3,
+                ie_len: 3,
+                beacon_ie_len: 1,
+                status: 0,
+            },
+            &ies,
+        ));
+        ies.fill(0xff);
+        assert!(queue.enqueue_done(2));
+        let result = queue.take_oldest().unwrap();
+        assert_eq!(result.meta().frequency_mhz, 2412);
+        assert_eq!(result.ies(), &[1, 2, 3, 4]);
+        drop(result);
+        let done = queue.take_oldest().unwrap();
+        assert_eq!(done.meta().kind, SCAN_EVENT_DONE);
+        assert_eq!(done.meta().status, 2);
+    }
+
+    #[test]
+    fn link_queue_is_bounded_and_keeps_both_ie_sets() {
+        let queue = LinkEventQueue::new();
+        for index in 0..LINK_EVENT_QUEUE_DEPTH {
+            assert!(queue.enqueue(
+                LinkMeta {
+                    kind: LINK_EVENT_ASSOCIATE,
+                    status_or_reason: index as u16,
+                    frequency_mhz: 2437,
+                    bssid: [index as u8; 6],
+                    first_len: 2,
+                    second_len: 3,
+                },
+                &[1, 2],
+                &[3, 4, 5],
+            ));
+        }
+        assert!(!queue.enqueue(
+            LinkMeta {
+                kind: LINK_EVENT_DISCONNECT,
+                status_or_reason: 3,
+                frequency_mhz: 0,
+                bssid: [0; 6],
+                first_len: 0,
+                second_len: 0,
+            },
+            &[],
+            &[],
+        ));
+        assert_eq!(queue.dropped.load(Ordering::Relaxed), 1);
+        let event = queue.take_oldest().unwrap();
+        assert_eq!(event.meta().status_or_reason, 0);
+        assert_eq!(event.first(), &[1, 2]);
+        assert_eq!(event.second(), &[3, 4, 5]);
     }
 
     #[test]
