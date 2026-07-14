@@ -3,6 +3,7 @@
 # checker fails if a forbidden source family or define enters the result.
 
 name = "wifi-wpa2-personal"
+archive_name = "libwpa_supplicant_wpa2_personal.a"
 sdk_component = "build/cmake/open_source/wpa_supplicant.cmake"
 
 required_defines = [

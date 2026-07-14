@@ -50,6 +50,35 @@ class CommandRewriteTest(unittest.TestCase):
             MODULE.remove_stale_archive(archive)
             self.assertFalse(archive.exists())
 
+    def test_profile_archive_name_is_not_implicitly_fixed_to_wpa2(self):
+        self.assertEqual(
+            MODULE.profile_basename(
+                {"archive_name": "libwpa_supplicant_wpa3_personal.a"},
+                "archive_name",
+                "libwpa_supplicant_wpa2_personal.a",
+                ".a",
+            ),
+            "libwpa_supplicant_wpa3_personal.a",
+        )
+
+    def test_profile_archive_name_rejects_path_escape(self):
+        with self.assertRaisesRegex(ValueError, "invalid profile archive_name"):
+            MODULE.profile_basename(
+                {"archive_name": "../libwpa_supplicant.a"},
+                "archive_name",
+                "libwpa_supplicant_wpa2_personal.a",
+                ".a",
+            )
+
+    def test_profile_archive_name_rejects_wrong_extension(self):
+        with self.assertRaisesRegex(ValueError, "invalid profile archive_name"):
+            MODULE.profile_basename(
+                {"archive_name": "libwpa_supplicant.o"},
+                "archive_name",
+                "libwpa_supplicant_wpa2_personal.a",
+                ".a",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

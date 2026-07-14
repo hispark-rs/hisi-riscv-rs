@@ -1,0 +1,96 @@
+# WS63 STA-only WPA3-Personal source-selection contract.
+#
+# The vendor CMake/Ninja graph is the compile-command oracle. This profile keeps
+# SAE, PMF and the single P-256 curve path while excluding AP, Enterprise,
+# WPS, WAPI, OWE, FT, MBO and TLS protocol code. It is a build/ABI candidate
+# until a controlled WPA3-Personal AP completes the W2 HIL gate.
+
+name = "wifi-wpa3-personal"
+archive_name = "libwpa_supplicant_wpa3_personal.a"
+sdk_component = "build/cmake/open_source/wpa_supplicant.cmake"
+
+required_defines = [
+  "WPA_SUPPLICANT",
+  "CONFIG_WPA",
+  "CONFIG_SHA256",
+  "CONFIG_DRIVER_SOC",
+  "CONFIG_OS_OSAL",
+  "IEEE8021X_EAPOL",
+  "CONFIG_WPA3",
+  "CONFIG_HOSTAPD_WPA3",
+  "CONFIG_IEEE80211W",
+  "CONFIG_SME",
+  "CONFIG_SAE",
+  "CONFIG_ECC",
+]
+
+forbidden_defines = [
+  "HOSTAPD",
+  "SOFTAP_MODE",
+  "CONFIG_OWE",
+  "CONFIG_WPS",
+  "CONFIG_WPS_AP",
+  "EAP_WSC",
+  "EAP_SERVER",
+  "EAP_SERVER_WSC",
+  "LOS_CONFIG_WPA_ENTERPRISE",
+  "LOS_CONFIG_EAP_TLS",
+  "EAP_TLS",
+  "CONFIG_WAPI",
+  "CONFIG_IEEE80211R",
+  "CONFIG_MBO",
+  "CONFIG_WNM",
+  "CONFIG_SHA384",
+  "CONFIG_SHA512",
+]
+
+# Keep common/sae.c, common/dragonfly.c, crypto/dh_groups.c,
+# crypto/crypto_internal-modexp.c and liteos_wpa_src/crypto_mbedtls.c. They are
+# the vendor STA SAE/P-256 oracle. Everything below is outside WPA3-Personal STA.
+forbidden_source_fragments = [
+  "/src/ap/",
+  "/src/eap_server/",
+  "/src/eapol_auth/",
+  "/src/eap_common/eap_wsc_common.c",
+  "/src/eap_peer/eap_tls.c",
+  "/src/eap_peer/eap_tls_common.c",
+  "/src/eap_peer/eap_wsc.c",
+  "/src/wps/",
+  "/src/crypto/md5.c",
+  "/src/crypto/sha384-",
+  "/src/crypto/sha512-",
+  "/wpa_supplicant/ap.c",
+  "/wpa_supplicant/wps_supplicant.c",
+  "/wpa_supplicant/mbo.c",
+  "/wpa_supplicant/wnm_sta.c",
+  "/liteos_wpa_src/tls_mbedtls.c",
+  "/hostapd/",
+  "/wapi/",
+  "/wifi_softap_api.c",
+  "/wapi_api.c",
+  "/wpa_ft.c",
+]
+
+stub_sources = [
+  "wpa2-personal-compat.c",
+  "wpa3-personal-unsupported.c",
+]
+
+[crypto]
+required = [
+  "sha256",
+  "hmac-sha256",
+  "hkdf-sha256",
+  "aes-128",
+  "aes-cmac",
+  "trng",
+  "p256-field-and-scalar",
+]
+vendor_oracle = [
+  "liteos_wpa_src/crypto_mbedtls.c",
+  "libmbedtls_v3.6.0.a",
+]
+rust_or_hardware_replacement = [
+  "hisi-crypto",
+  "hisi-crypto-ws63",
+]
