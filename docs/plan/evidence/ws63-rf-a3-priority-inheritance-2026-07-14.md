@@ -60,6 +60,7 @@ this board and did not prevent verified image execution.
 ## Remaining A3 Gates
 
 - execution-budget enforcement;
-- nested-interrupt, timeout, and mixed vendor-task scheduler stress HIL;
+- nested runtime IRQ-bracket and timeout HIL is complete; mixed vendor-task
+  scheduler stress remains;
 - Embassy executor/time integration without a second scheduler or TIMER0 owner;
 - pinned-blob ABI and semantic compatibility suite.

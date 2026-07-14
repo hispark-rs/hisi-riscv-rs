@@ -76,5 +76,6 @@ and HIL oracle outside the product dependency graph.
 
 - priority inheritance with inversion HIL is complete; see
   [A3 priority-inheritance evidence](ws63-rf-a3-priority-inheritance-2026-07-14.md);
-- nested-interrupt, timeout, and mixed vendor-task scheduler stress;
+- nested runtime IRQ-bracket and timeout HIL is complete; mixed vendor-task
+  scheduler stress remains;
 - Embassy executor/time integration without dual ownership of TIMER0.

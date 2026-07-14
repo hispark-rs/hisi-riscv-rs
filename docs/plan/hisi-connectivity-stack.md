@@ -471,8 +471,12 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   inheritance。19/19 host tests 通过，经典 low/medium/high inversion HIL 连续三次输出
   `A3_PRIORITY_INHERITANCE_OK`；证据见
   [A3 priority inheritance](evidence/ws63-rf-a3-priority-inheritance-2026-07-14.md)。
-- [ ] budget enforcement、nested-IRQ/timeout stress HIL 与 Embassy
-  time/executor integration 尚未完成；这些 gate 全部
+- [x] TIMER timeout removal、nested runtime IRQ bracket 与 ISR semaphore wake 已由
+  `rtos_scheduler_stress` 连续三次真机验证：任务只在 outermost IRQ exit 后运行，诊断为
+  `timeout_count=1`、`wake_count=1`、`ran_in_handler=0`。WS63 trap 默认关闭 MIE 且当前
+  使用单一 IRQ stack，因此不宣称物理 nested IRQ；证据见
+  [A3 scheduler stress](evidence/ws63-rf-a3-scheduler-stress-2026-07-14.md)。
+- [ ] budget enforcement 与 Embassy time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
@@ -524,6 +528,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - 每个新底座是独立仓库和 release unit，父仓通过 submodule 集成。
 - BLE vendor host 先行；TrouBLE/raw HCI 后置。
 - NVS 稳定面只读；写入保持 experimental。
-- `hisi-rtos` 只维护抢占式单-hart backend；现 cooperative scheduler 是迁移材料。
+- `hisi-rtos` 只维护一个统一的 single-hart scheduler backend，不分叉维护
+  “协作式内核”和“抢占式内核”。同一 backend 按 thread 支持
+  `RunPolicy::{Cooperative, Budgeted, Preemptive}`：普通 Rust/Embassy 执行路径
+  以协作为主，vendor blob 默认使用带预算的 `Budgeted` 策略作为抢占兜底，
+  只有需要确定响应上界的 thread 才使用 `Preemptive`。
 - 初期不创建 `hisi-sync` 或 `hisi-phy`：同步继续使用 `critical-section` / 
   `portable-atomic`，PHY policy 在出现可复用、非 blob-owned 行为前留在 radio adapter。
