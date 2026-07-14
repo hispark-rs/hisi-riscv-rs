@@ -3,8 +3,12 @@
 # requires-python = ">=3.10"
 # dependencies = ["pyserial"]
 # ///
-"""Pulse the J-Link hardware reset pin, then capture UART."""
-import sys, os, time, subprocess
+"""Pulse the J-Link hardware reset pin, then optionally capture UART."""
+import argparse
+import os
+import subprocess
+import sys
+import time
 import serial
 
 PORT = os.environ.get("PORT", "/dev/cu.wchusbserial120")
@@ -26,12 +30,15 @@ def nrst_jlink():
         f.write("sleep 100\n")
         f.write("q\n")
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["JLinkExe", "-NoGui", "1", "-CommandFile", JLINK_CMD],
-            timeout=10, capture_output=True
+            timeout=10,
+            capture_output=True,
+            text=True,
         )
-    except Exception:
-        pass
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            raise RuntimeError(f"J-Link nRST failed with {result.returncode}: {detail}")
     finally:
         if os.path.exists(JLINK_CMD):
             os.unlink(JLINK_CMD)
@@ -50,5 +57,9 @@ def capture_uart():
     ser.close()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reset-only", action="store_true")
+    args = parser.parse_args()
     nrst_jlink()
-    capture_uart()
+    if not args.reset_only:
+        capture_uart()

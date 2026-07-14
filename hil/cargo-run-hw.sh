@@ -11,6 +11,8 @@
 #   PROBE_CHIP   probe-rs --chip value              (default WS63)
 #   PROBE_YAML   --chip-description-path YAML       (default: empty = built-in DB)
 #   PROBE_SPEED  debug transport speed in kHz       (default 2000)
+#   PROBE_DOWNLOAD_ATTEMPTS                          (default 2)
+#   PROBE_RETRY_SPEED retry transport speed in kHz   (default 500)
 #   HISI_FWPKG   hisi-fwpkg binary                  (default: `hisi-fwpkg` in PATH)
 #   PORT         board UART0 to capture             (default: none = don't capture)
 #   UART_BAUD    UART baud                          (default 115200)
@@ -22,6 +24,8 @@ ELF="${1:?cargo passes the built ELF path as \$1}"
 PROBE_RS="${PROBE_RS:-probe-rs}"
 PROBE_CHIP="${PROBE_CHIP:-WS63}"
 PROBE_SPEED="${PROBE_SPEED:-2000}"
+PROBE_DOWNLOAD_ATTEMPTS="${PROBE_DOWNLOAD_ATTEMPTS:-2}"
+PROBE_RETRY_SPEED="${PROBE_RETRY_SPEED:-500}"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
 UART_BAUD="${UART_BAUD:-115200}"
 MONITOR="${MONITOR:-10}"
@@ -52,9 +56,34 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
 
-echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS (${PROBE_SPEED} kHz)"
-"$PROBE_RS" download --chip "$PROBE_CHIP" --speed "$PROBE_SPEED" "${yaml_args[@]}" \
-    --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"
+case "$PROBE_DOWNLOAD_ATTEMPTS" in
+    ''|*[!0-9]*|0)
+        echo "run-hw: PROBE_DOWNLOAD_ATTEMPTS must be a positive integer" >&2
+        exit 2
+        ;;
+esac
+
+download_ok=0
+for ((attempt = 1; attempt <= PROBE_DOWNLOAD_ATTEMPTS; attempt++)); do
+    speed="$PROBE_SPEED"
+    [ "$attempt" -eq 1 ] || speed="$PROBE_RETRY_SPEED"
+    echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS (${speed} kHz, attempt ${attempt}/${PROBE_DOWNLOAD_ATTEMPTS})"
+    if "$PROBE_RS" download --chip "$PROBE_CHIP" --speed "$speed" "${yaml_args[@]}" \
+        --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"; then
+        download_ok=1
+        break
+    fi
+    if [ "$attempt" -lt "$PROBE_DOWNLOAD_ATTEMPTS" ]; then
+        echo "run-hw: download failed; restoring target with hardware nRST before retry" >&2
+        uv run "$SCRIPT_DIR/nrst-and-capture.py" --reset-only
+        sleep 1
+    fi
+done
+
+if [ "$download_ok" -ne 1 ]; then
+    echo "run-hw: download failed after ${PROBE_DOWNLOAD_ATTEMPTS} verified attempts" >&2
+    exit 1
+fi
 
 if [ -n "${PORT:-}" ]; then
     echo "run-hw: nRST + capturing $PORT @ ${UART_BAUD} for ${MONITOR}s"
