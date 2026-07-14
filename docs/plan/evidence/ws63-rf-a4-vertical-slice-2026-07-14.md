@@ -125,4 +125,9 @@ The committed gate then passed on its first verified download attempt:
 - final assertion: `WS63 CONNECTIVITY SMOKE: PASS`.
 
 The runner was ephemeral and unregistered itself after the job. The workflow
-run is the durable committed-state evidence. A4 is frozen at this revision.
+run is the durable committed-state evidence. After evidence capture, the local
+Actions runner installation at `/private/tmp/hisi-riscv-rs-ws63-runner`, its
+Mac-specific repository variables and the temporary Wi-Fi secret were removed;
+the repository runner count returned to zero. This one-shot use of the user's
+daily Mac is not the long-term HIL architecture. Any persistent gate must run on
+a dedicated, controlled and maintainable host. A4 is frozen at this revision.
