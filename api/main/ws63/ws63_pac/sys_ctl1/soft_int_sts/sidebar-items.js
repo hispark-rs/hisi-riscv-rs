@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SoftIntStsSpec"],"type":["R","SoftInt0StsR","SoftInt1StsR","SoftInt2StsR","SoftInt3StsR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SoftIntStsSpec"],"type":["R","SoftInt0StsR","SoftInt1StsR","SoftInt2StsR","SoftInt3StsR"]};
