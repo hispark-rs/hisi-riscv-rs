@@ -50,17 +50,10 @@ committed self-hosted workflow is green. Evidence:
 
 ## NOW -- W2 Upstream Supplicant And WPA3-Personal
 
-The single active execution source is the
-[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-w2-wpa3-personal).
-W2 is migrating the STA security path to pinned upstream hostap 2.11 source,
-native `hisi-rtos` OS/event-loop ports, a minimal WS63 driver/L2 port, and a
-versioned narrow C/Rust ABI. W2A source pinning and W2B ABI gates are complete;
-W2C now has a tested native OS-hook and timeout-loop seam, and W2D has an
-EAPOL-only L2 port with runner-owned RX delivery. The full hostap closure,
-scan/auth/assoc/management/key-install driver path, Rust safety wrapper, and
-WPA3-only plus transition-mode HIL remain open. Vendor archives, LiteOS glue,
-and the vendor compiler are migration oracles only. The WPA2-only archive and
-A4 HIL gate must remain green throughout.
+The single execution ledger, current evidence, and W2A-W2F gates live in
+[Connectivity stack W2](docs/plan/hisi-connectivity-stack.md#w2-upstream-supplicant-and-wpa3personal).
+The active-window policy keeps the WPA2-only archive and A4 HIL gate green while
+the upstream-native WPA3 path is introduced.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
