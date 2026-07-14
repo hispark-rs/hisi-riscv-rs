@@ -417,9 +417,15 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   DHCP REQUEST/ACK 增量证明 renew。guarded link 仍为 1,486 sections、5,337 relocations、
   37 ROM patches。完整证据见
   [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
-- [ ] 发布首个 `hisi-rf` alpha，固定 package/API 文档与 release lockfile。
-- [ ] 为 `ws63-rf-rs::radio` 固定一个 migration release 的兼容/弃用窗口，并把 A4 markers
-  纳入自动 HIL gate；完成后才将 A4 标为 frozen。
+- [x] `hisi-rf 0.1.0-alpha.1` 已发布到 crates.io；tag-triggered publish、独立 lockfile、
+  host tests、RV32 build-std、clippy 与 package gate 均通过。
+- [x] `ws63-rf-rs::radio` 已标记 deprecated，并固定为父仓 0.7.x 的 migration facade，
+  不早于父仓 v0.8.0 删除。
+- [x] `hil/ws63-connectivity-smoke.sh` 固定 WPA2 archive hash，复用 guarded link、FlashPlan
+  bin download、J-Link nRST 与 UART capture，并对 A4 control/L2/IP/renew markers 建立
+  self-hosted HIL gate。
+- [ ] 在 self-hosted runner 上触发新的 `wifi_init_smoke` gate 并保存首个 CI run URL；通过后
+  将 A4 标为 frozen。
 
 #### A1 progress
 

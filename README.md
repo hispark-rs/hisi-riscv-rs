@@ -31,7 +31,7 @@ in-tree and are not published.
 | [`bs2x-pac`](crates/chips/bs2x/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
 | [`hisi-hal`](crates/hisi-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-hal`](https://crates.io/crates/hisi-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
-| [`hisi-rf`](crates/hisi-rf/) | Chip-neutral radio controller/runner, typed Wi-Fi config, bounded events and L2 device contracts | pending first alpha |
+| [`hisi-rf`](crates/hisi-rf/) | Chip-neutral radio controller/runner, typed Wi-Fi config, bounded events and L2 device contracts | [`hisi-rf`](https://crates.io/crates/hisi-rf) |
 | [`hisi-rf-rtos-driver`](crates/hisi-rf-rtos-driver/) | Runtime-neutral task/IPC contract used by radio adapters | [`hisi-rf-rtos-driver`](https://crates.io/crates/hisi-rf-rtos-driver) |
 | [`hisi-rtos`](crates/hisi-rtos/) | Single-hart scheduler, IPC and Embassy integration backend | [`hisi-rtos`](https://crates.io/crates/hisi-rtos) |
 | [`ws63-radio-sys`](crates/chips/ws63/ws63-radio-sys/) | WS63 blob ABI/archive profile and versioned `hisi-rf-link` post-link tooling; nests the language-neutral vendor payload | GitHub/submodule |
