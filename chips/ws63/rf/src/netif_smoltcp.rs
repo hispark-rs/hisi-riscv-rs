@@ -35,11 +35,13 @@ struct Bridge {
     rx_high_watermark: usize,
     rx_icmp_echo_replies: u32,
     rx_icmp_sequence_mask: u32,
+    rx_dhcp_server_packets: u32,
     last_rx_prefix: [u8; FRAME_PREFIX],
     last_rx_len: usize,
     tx_buf: [u8; MTU],
     tx_len: usize,
     tx_count: u32,
+    tx_dhcp_client_packets: u32,
     tx_sink: Option<fn(&[u8])>,
 }
 
@@ -56,11 +58,13 @@ static BRIDGE: BridgeCell = BridgeCell(UnsafeCell::new(Bridge {
     rx_high_watermark: 0,
     rx_icmp_echo_replies: 0,
     rx_icmp_sequence_mask: 0,
+    rx_dhcp_server_packets: 0,
     last_rx_prefix: [0; FRAME_PREFIX],
     last_rx_len: 0,
     tx_buf: [0; MTU],
     tx_len: 0,
     tx_count: 0,
+    tx_dhcp_client_packets: 0,
     tx_sink: None,
 }));
 
@@ -98,6 +102,9 @@ pub fn rx_push(frame: &[u8]) {
                 b.rx_icmp_sequence_mask |= 1 << sequence;
             }
         }
+        if has_udp_ports(frame, 67, 68) {
+            b.rx_dhcp_server_packets = b.rx_dhcp_server_packets.saturating_add(1);
+        }
         if b.rx_count >= RX_DEPTH {
             b.rx_dropped = b.rx_dropped.saturating_add(1);
             return;
@@ -108,6 +115,27 @@ pub fn rx_push(frame: &[u8]) {
         b.rx_count += 1;
         b.rx_high_watermark = b.rx_high_watermark.max(b.rx_count);
     });
+}
+
+fn has_udp_ports(frame: &[u8], source_port: u16, destination_port: u16) -> bool {
+    const ETHERNET_HEADER_LEN: usize = 14;
+    const IPV4_MIN_HEADER_LEN: usize = 20;
+    const UDP_HEADER_LEN: usize = 8;
+
+    if frame.len() < ETHERNET_HEADER_LEN + IPV4_MIN_HEADER_LEN + UDP_HEADER_LEN
+        || frame[12..14] != [0x08, 0x00]
+        || frame[14] >> 4 != 4
+        || frame[23] != 17
+    {
+        return false;
+    }
+    let ipv4_header_len = usize::from(frame[14] & 0x0f) * 4;
+    let Some(udp) = ETHERNET_HEADER_LEN.checked_add(ipv4_header_len) else {
+        return false;
+    };
+    frame.len() >= udp + UDP_HEADER_LEN
+        && frame[udp..udp + 2] == source_port.to_be_bytes()
+        && frame[udp + 2..udp + 4] == destination_port.to_be_bytes()
 }
 
 fn diagnostic_echo_reply_sequence(frame: &[u8]) -> Option<u16> {
@@ -178,6 +206,25 @@ pub fn reset_rx_queue_diagnostics() {
         b.rx_icmp_echo_replies = 0;
         b.rx_icmp_sequence_mask = 0;
     });
+}
+
+/// DHCP packet counts observed at the Rust-visible L2 seam.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[doc(hidden)]
+pub struct DhcpDiagnostics {
+    /// Client-to-server UDP packets (port 68 to 67).
+    pub client_packets: u32,
+    /// Server-to-client UDP packets (port 67 to 68).
+    pub server_packets: u32,
+}
+
+/// Snapshot DHCP traffic without changing the counters.
+#[doc(hidden)]
+pub fn dhcp_diagnostics() -> DhcpDiagnostics {
+    with_bridge(|bridge| DhcpDiagnostics {
+        client_packets: bridge.tx_dhcp_client_packets,
+        server_packets: bridge.rx_dhcp_server_packets,
+    })
 }
 
 /// Copy the prefix of the most recently received frame and return its full length.
@@ -281,6 +328,9 @@ fn tx_emit(frame: &[u8]) {
         b.tx_buf[..n].copy_from_slice(&frame[..n]);
         b.tx_len = n;
         b.tx_count = b.tx_count.wrapping_add(1);
+        if has_udp_ports(frame, 68, 67) {
+            b.tx_dhcp_client_packets = b.tx_dhcp_client_packets.saturating_add(1);
+        }
         b.tx_sink
     });
     // Call the sink OUTSIDE the lock (it may re-enter the bridge / driver).
@@ -510,6 +560,22 @@ mod stack_tests {
     fn device_tokens_do_not_embed_mtu_sized_stack_buffers() {
         assert!(core::mem::size_of::<RxFrame>() <= 16);
         assert_eq!(core::mem::size_of::<TxBuf>(), 0);
+    }
+
+    #[test]
+    fn dhcp_diagnostics_match_only_ipv4_udp_port_direction() {
+        let mut frame = [0_u8; 42];
+        frame[12..14].copy_from_slice(&[0x08, 0x00]);
+        frame[14] = 0x45;
+        frame[23] = 17;
+        frame[34..36].copy_from_slice(&68_u16.to_be_bytes());
+        frame[36..38].copy_from_slice(&67_u16.to_be_bytes());
+        assert!(super::has_udp_ports(&frame, 68, 67));
+        assert!(!super::has_udp_ports(&frame, 67, 68));
+
+        frame[23] = 1;
+        assert!(!super::has_udp_ports(&frame, 68, 67));
+        assert!(!super::has_udp_ports(&frame[..20], 68, 67));
     }
 
     #[test]
