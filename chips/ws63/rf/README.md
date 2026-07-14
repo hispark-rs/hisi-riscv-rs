@@ -12,6 +12,13 @@ implementations.
 > language-neutral so the blobs can be ported to *any* runtime. This crate is
 > the ws63-rs runtime's implementation of `ws63-RF`'s C contract.
 
+Application-facing radio types now come from the independent
+[`hisi-rf`](https://crates.io/crates/hisi-rf) crate. The
+`ws63_rf_rs::radio` module is only a deprecated migration facade: it remains
+through the parent 0.7.x release train and is removed no earlier than parent
+v0.8.0. New code should import `hisi_rf` directly and use this crate only for
+the WS63 backend/ABI adapter.
+
 ## Status: Wi-Fi init, scan, WPA2 connect, and ping verified on silicon
 
 **Project context:** ws63-rs is now focused on the connectivity milestones in

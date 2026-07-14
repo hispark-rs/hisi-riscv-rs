@@ -135,7 +135,15 @@ mod wpa_compat;
 pub use pmp::prepare_vendor_memory;
 
 /// Compatibility facade for the first `hisi-rf` migration release.
+///
+/// Use the `hisi-rf` crate directly for chip-neutral types. This facade remains
+/// available through the parent repository's 0.7.x release train and is removed
+/// no earlier than 0.8.0.
 #[cfg(feature = "wifi-wpa2-personal")]
+#[deprecated(
+    since = "0.1.0",
+    note = "depend on hisi-rf directly; ws63-rf-rs::radio is removed no earlier than parent v0.8.0"
+)]
 pub mod radio {
     pub use hisi_rf::*;
 

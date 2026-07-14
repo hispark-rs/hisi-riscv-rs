@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Deprecated
+
+- The `ws63_rf_rs::radio` re-export facade now has a bounded migration window:
+  applications should depend on `hisi-rf` directly. The facade remains through
+  the parent 0.7.x release train and is removed no earlier than parent v0.8.0.
+
 ### Added
 - Read-only WS63 ACPU NV parser with page/key/CRC validation and host tests.
 - App-owned PMP/memory-attribute setup matching the official Wi-Fi layout.
