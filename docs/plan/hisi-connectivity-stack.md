@@ -496,9 +496,16 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] Q0-Q1 已闭合：`Budgeted` 实现周期 CPU quota 上限，timer 强制 throttle/replenish；
   typed `CooperativeOnly`/`Ported` capability、scheduler-lock fail-stop 上界、stale timer
   re-arm 线性化、MIE/SWI delivery guard 已有 host/UI/Kani/TLA+ 与真机 marker。
-- [ ] Q2-Q4 仍是 A3 gate：补 per-thread 低扰动 observability，按 archive hash 将 vendor
-  task 分类为 critical/worker/background/unknown，再以数据决定 per-thread/group quota。
-  完成前不引入或承诺 Reservation。
+- [x] Q2 per-thread 低扰动 observability 已闭合：CPU/IRQ time、dispatch、budget
+  exhaustion、最长连续运行、ready/lock/IRQ latency 均可按 task 快照。它捕获并修复了
+  IRQ 已完成 handoff 后线程重放 stale switch request、造成多个 task 同时 `Running` 的
+  竞态；20 次 unchanged-image nRST 得到 scan/connect/DHCP 20/20、`0x1451` 0/20、
+  exception 0/20，且每轮都实际命中 6--16 次恢复路径。证据见
+  [A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
+- [ ] Q3-Q4 仍是 A3 gate：按 archive hash 将 vendor task 分类为
+  critical/worker/background/unknown，再以 Q2 数据决定 per-thread/group quota。完成前
+  不引入或承诺 Reservation。当前公网 ping 为 18/20，作为独立数据面可靠性风险继续
+  跟踪，不回写成认证失败。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。

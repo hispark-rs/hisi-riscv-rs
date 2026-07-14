@@ -139,6 +139,10 @@ storage/NVS 与 RTOS ownership 拆分，再按
   `1.1.1.1` ICMP echo。该次诊断同时证明正式 A4 网络路径必须持久化 smoltcp/Embassy-net
   interface：一次性 DHCP helper 返回后不会继续回答邻居 ARP；bring-up example 的有界 ARP
   responder 只用于冻结 RF5C 数据面证据，不是正式 IP runner。
+- 2026-07-14 在修复 RTOS ported switch handoff 竞态后，同一镜像连续 20 次 J-Link
+  nRST 得到 scan/WPA2 connect/DHCP 20/20、`WLAN_AUTH_RSP2_TIMEOUT` 0/20、异常 0/20；
+  公网 `1.1.1.1` ping 为 18/20，继续作为独立数据面可靠性风险跟踪。完整证据见
+  [A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
 - WPA2-Personal oracle 的独立真机记录见
   [WS63 WPA2-Personal evidence](evidence/ws63-wpa2-personal-2026-07-12.md)。
 - WPA2-only supplicant 已从原厂 Ninja 编译图独立重建，并在删除 SAE/AP/EAP-TLS/WPS/WAPI

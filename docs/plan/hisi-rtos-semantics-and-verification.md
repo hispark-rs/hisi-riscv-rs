@@ -114,6 +114,12 @@ workload 数据评审后冻结。
    background group 执行总 quota。不得在尚未区分 critical thread 时对全部 radio task
    粗暴 throttle；per-thread quota 与 group quota 分别解决单任务失控和子系统总占用。
 
+当前状态：Q0-Q2 已闭合，Q3-Q4 仍是 A3 gate。Q2 的低扰动 task metrics 在真实 RF
+workload 中捕获了 ported switch handoff 竞态，并通过 20 次 unchanged-image nRST
+验证修复路径；证据见
+[A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
+Q3 前不得凭单次样本固化 task policy，Q4 前不得实现 group quota。
+
 #### G0-G5 -- Optional Guaranteed-Service Extension
 
 G0 只在 Q0-Q4 的压力 HIL 仍显示 critical ready latency 接近协议 timeout、并发
