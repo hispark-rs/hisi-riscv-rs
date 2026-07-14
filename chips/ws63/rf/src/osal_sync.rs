@@ -4,9 +4,8 @@
 //! documented `ws63-RF/port_*.h` contract). Signatures + the `{ void* }` handle
 //! structs are from fbb_ws63 `kernel/osal/include/semaphore/osal_semaphore.h`
 //! and `.../lock/osal_mutex.h`. Semaphores wrap a heap driver-level
-//! [`Semaphore`]. Mutexes additionally preserve LiteOS recursive ownership:
-//! the same task may lock repeatedly and only the outermost unlock releases
-//! the backing binary semaphore.
+//! [`Semaphore`]. Recursive mutex ownership and priority inheritance belong to
+//! the installed runtime rather than this WS63 ABI shim.
 
 // These are C-ABI entry points: the vendor blob passes valid `osal_semaphore*`
 // / `osal_mutex*` handles, so the raw-pointer derefs are sound by the contract
@@ -15,10 +14,9 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use crate::{OSAL_NOK, OSAL_OK};
-use core::cell::Cell;
 use core::ffi::{c_int, c_uint, c_void};
-use critical_section::Mutex;
-use hisi_rf_rtos_driver::{Semaphore, TaskId, WaitOutcome, WaitTimeout};
+use core::num::NonZeroUsize;
+use hisi_rf_rtos_driver::{MutexHandle, Semaphore, WaitOutcome, WaitTimeout};
 
 /// Mirrors C `osal_semaphore { void *sem; }` (caller-provided).
 #[repr(C)]
@@ -52,99 +50,11 @@ fn handle<'a>(h: *mut c_void) -> Option<&'a Semaphore> {
     }
 }
 
-#[derive(Clone, Copy)]
-struct MutexState {
-    owner: Option<TaskId>,
-    depth: u32,
-}
-
-struct RecursiveMutex {
-    available: Semaphore,
-    state: Mutex<Cell<MutexState>>,
-}
-
-impl RecursiveMutex {
-    const fn new() -> Self {
-        Self {
-            available: Semaphore::new(1),
-            state: Mutex::new(Cell::new(MutexState {
-                owner: None,
-                depth: 0,
-            })),
-        }
-    }
-
-    fn reenter(&self, task: TaskId) -> bool {
-        critical_section::with(|cs| {
-            let state = self.state.borrow(cs);
-            let mut value = state.get();
-            if value.owner != Some(task) {
-                return false;
-            }
-            let Some(depth) = value.depth.checked_add(1) else {
-                return false;
-            };
-            value.depth = depth;
-            state.set(value);
-            true
-        })
-    }
-
-    fn acquired(&self, task: TaskId) {
-        critical_section::with(|cs| {
-            self.state.borrow(cs).set(MutexState {
-                owner: Some(task),
-                depth: 1,
-            });
-        });
-    }
-
-    fn release(&self, task: TaskId) -> MutexRelease {
-        critical_section::with(|cs| {
-            let state = self.state.borrow(cs);
-            let mut value = state.get();
-            if value.owner != Some(task) || value.depth == 0 {
-                return MutexRelease::NotOwner;
-            }
-            value.depth -= 1;
-            if value.depth == 0 {
-                value.owner = None;
-                state.set(value);
-                MutexRelease::Available
-            } else {
-                state.set(value);
-                MutexRelease::StillOwned
-            }
-        })
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum MutexRelease {
-    NotOwner,
-    StillOwned,
-    Available,
-}
-
-fn new_mutex() -> *mut c_void {
-    let pointer =
-        crate::alloc::osal_kmalloc(core::mem::size_of::<RecursiveMutex>()) as *mut RecursiveMutex;
-    if !pointer.is_null() {
-        // SAFETY: freshly allocated and aligned for RecursiveMutex.
-        unsafe { pointer.write(RecursiveMutex::new()) };
-    }
-    pointer.cast()
-}
-
-fn mutex_handle<'a>(handle: *mut c_void) -> Option<&'a RecursiveMutex> {
-    let pointer = handle.cast_const().cast::<RecursiveMutex>();
-    if pointer.is_null() {
-        None
-    } else {
-        // SAFETY: the pointer was allocated by new_mutex and remains live
-        // until osal_mutex_destroy.
-        Some(unsafe { &*pointer })
-    }
+fn mutex_handle(raw: *mut c_void) -> Option<MutexHandle> {
+    let raw = NonZeroUsize::new(raw as usize)?;
+    // SAFETY: OSAL publishes only handles returned by mutex_create and clears
+    // the field when the matching destroy operation completes.
+    Some(unsafe { MutexHandle::from_raw(raw) })
 }
 
 // ── Semaphores ──────────────────────────────────────────────────────────────
@@ -241,12 +151,13 @@ pub extern "C" fn osal_mutex_init(mutex: *mut OsalMutex) -> c_int {
     if mutex.is_null() {
         return OSAL_NOK;
     }
-    let h = new_mutex();
-    if h.is_null() {
-        return OSAL_NOK;
+    match hisi_rf_rtos_driver::mutex_create() {
+        Ok(handle) => {
+            unsafe { (*mutex).mutex = handle.into_raw().get() as *mut c_void };
+            OSAL_OK
+        }
+        Err(_) => OSAL_NOK,
     }
-    unsafe { (*mutex).mutex = h };
-    OSAL_OK
 }
 
 /// Lock (blocks until free).
@@ -255,17 +166,11 @@ pub extern "C" fn osal_mutex_lock(mutex: *mut OsalMutex) -> c_int {
     if mutex.is_null() {
         return OSAL_NOK;
     }
-    let Ok(task) = hisi_rf_rtos_driver::current_task() else {
-        return OSAL_NOK;
-    };
-    match mutex_handle(unsafe { (*mutex).mutex }) {
-        Some(lock) if lock.reenter(task) => OSAL_OK,
-        Some(lock) if lock.available.down().is_ok() => {
-            lock.acquired(task);
-            OSAL_OK
-        }
-        None => OSAL_NOK,
-        Some(_) => OSAL_NOK,
+    match mutex_handle(unsafe { (*mutex).mutex })
+        .and_then(|handle| hisi_rf_rtos_driver::mutex_lock(handle, WaitTimeout::Forever).ok())
+    {
+        Some(WaitOutcome::Acquired) => OSAL_OK,
+        _ => OSAL_NOK,
     }
 }
 
@@ -276,21 +181,10 @@ pub extern "C" fn osal_mutex_lock_timeout(mutex: *mut OsalMutex, timeout: c_uint
     if mutex.is_null() {
         return OSAL_NOK;
     }
-    let Ok(task) = hisi_rf_rtos_driver::current_task() else {
-        return OSAL_NOK;
-    };
-    match mutex_handle(unsafe { (*mutex).mutex }) {
-        Some(lock) if lock.reenter(task) => OSAL_OK,
-        Some(lock)
-            if matches!(
-                lock.available
-                    .down_timeout(WaitTimeout::from_millis(timeout)),
-                Ok(WaitOutcome::Acquired)
-            ) =>
-        {
-            lock.acquired(task);
-            OSAL_OK
-        }
+    match mutex_handle(unsafe { (*mutex).mutex }).and_then(|handle| {
+        hisi_rf_rtos_driver::mutex_lock(handle, WaitTimeout::from_millis(timeout)).ok()
+    }) {
+        Some(WaitOutcome::Acquired) => OSAL_OK,
         _ => OSAL_NOK,
     }
 }
@@ -301,13 +195,8 @@ pub extern "C" fn osal_mutex_unlock(mutex: *mut OsalMutex) {
     if mutex.is_null() {
         return;
     }
-    let Ok(task) = hisi_rf_rtos_driver::current_task() else {
-        return;
-    };
-    if let Some(lock) = mutex_handle(unsafe { (*mutex).mutex })
-        && lock.release(task) == MutexRelease::Available
-    {
-        let _ = lock.available.up();
+    if let Some(handle) = mutex_handle(unsafe { (*mutex).mutex }) {
+        let _ = hisi_rf_rtos_driver::mutex_unlock(handle);
     }
 }
 
@@ -319,31 +208,11 @@ pub extern "C" fn osal_mutex_destroy(mutex: *mut OsalMutex) {
     }
     let h = unsafe { (*mutex).mutex };
     if !h.is_null() {
-        // SAFETY: destroy requires no mutex owner or waiter.
-        let lock = unsafe { &*h.cast::<RecursiveMutex>() };
-        let _ = unsafe { lock.available.destroy() };
-        crate::alloc::osal_kfree(h);
-        unsafe { (*mutex).mutex = core::ptr::null_mut() };
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn recursive_owner_releases_only_at_outermost_depth() {
-        let lock = RecursiveMutex::new();
-        let owner = TaskId::from_raw(7);
-        let other = TaskId::from_raw(8);
-
-        lock.acquired(owner);
-        assert!(lock.reenter(owner));
-        assert!(!lock.reenter(other));
-        assert_eq!(lock.release(other), MutexRelease::NotOwner);
-        assert_eq!(lock.release(owner), MutexRelease::StillOwned);
-        assert_eq!(lock.release(owner), MutexRelease::Available);
-        assert_eq!(lock.release(owner), MutexRelease::NotOwner);
+        let handle = mutex_handle(h).expect("non-null mutex handle");
+        // SAFETY: the OSAL destroy contract requires no owner or waiter.
+        if unsafe { hisi_rf_rtos_driver::mutex_destroy(handle) }.is_ok() {
+            unsafe { (*mutex).mutex = core::ptr::null_mut() };
+        }
     }
 }
 

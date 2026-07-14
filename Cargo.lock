@@ -1192,6 +1192,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rtos_priority_inheritance"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "hisi-alloc",
+ "hisi-hal",
+ "hisi-panic-handler",
+ "hisi-rf-rtos-driver",
+ "hisi-riscv-rt",
+ "hisi-rtos",
+]
+
+[[package]]
 name = "rustix"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
