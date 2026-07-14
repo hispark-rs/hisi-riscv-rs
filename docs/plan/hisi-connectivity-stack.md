@@ -423,9 +423,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   不早于父仓 v0.8.0 删除。
 - [x] `hil/ws63-connectivity-smoke.sh` 固定 WPA2 archive hash，复用 guarded link、FlashPlan
   bin download、J-Link nRST 与 UART capture，并对 A4 control/L2/IP/renew markers 建立
-  self-hosted HIL gate。
-- [ ] 在 self-hosted runner 上触发新的 `wifi_init_smoke` gate 并保存首个 CI run URL；通过后
-  将 A4 标为 frozen。
+  self-hosted HIL gate；该提交入口已在本地实板完整 PASS。
+- [ ] 注册带 `ws63-hil` label 的 self-hosted runner，再触发 `wifi_init_smoke` gate 并保存
+  首个 CI PASS URL。首次 dispatch 因仓库 runner 数量为 0 而在 queued 状态取消；通过后才将
+  A4 标为 frozen。
 
 #### A1 progress
 

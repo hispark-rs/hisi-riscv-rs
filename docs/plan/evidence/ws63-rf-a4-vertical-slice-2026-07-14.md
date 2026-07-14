@@ -90,8 +90,18 @@ run proves architectural parity, not a new universal packet-loss claim.
 
 ## Remaining A4 Closeout
 
-- publish/tag the first `hisi-rf` alpha release after API/package preflight;
-- document the one-release compatibility/deprecation window for
-  `ws63-rf-rs::radio`;
-- add the A4 marker contract to automated HIL so future control/L2/IP drift fails
-  before release.
+`hisi-rf 0.1.0-alpha.1` is published on crates.io. The transitional
+`ws63-rf-rs::radio` facade is deprecated through the parent 0.7.x train and is
+removed no earlier than parent v0.8.0.
+
+The new `hil/ws63-connectivity-smoke.sh` entry was then run locally against the
+same board and AP. It rebuilt the guarded image, downloaded and verified it in
+32.74 seconds at 1,000 kHz, captured UART after J-Link nRST, passed every
+control/L2/IP/renew assertion, and printed `WS63 CONNECTIVITY SMOKE: PASS`.
+
+GitHub workflow dispatch
+[29326512586](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29326512586)
+was cancelled while queued because the repository currently has no registered
+`ws63-hil` self-hosted runner. This is an infrastructure gap, not firmware
+evidence. A4 remains open until that runner executes the same committed script
+and records the first CI PASS URL.
