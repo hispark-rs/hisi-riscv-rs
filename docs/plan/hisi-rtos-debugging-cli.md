@@ -5,6 +5,9 @@
 这是 [RTOS 未来架构](hisi-rtos-future-architecture.md) 的调测事实源，属于 ping baseline
 之后的 deferred work，不阻塞当前 WS63 RF 路径。调测是 kernel contract 的一等能力，
 不是后加文本日志；Host、QEMU 和真实芯片必须共享协议、CLI 与状态模型。
+其中 thread state、wake reason、switch reason、budget event 和 invariant ID 不由本文
+重新定义，统一来自
+[RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md)。
 
 ## Layers And Ownership
 
@@ -97,7 +100,8 @@ capability、可选认证和 CLI 显式 `--allow-control`；read-only attach 不
 
 ## Deferred Milestones
 
-1. **D0 Schema**：snapshot/trace/build-id/protocol schema 与 golden vectors。
+1. **D0 Schema**：在 RTOS 调度语义与验证 V0/V1 的 state/event/reason ID 基础上
+   生成 snapshot/trace/build-id/protocol schema 与 golden vectors。
 2. **D1 CLI host mock**：`hisi-rtos-cli` 完成 info/ps/trace/waits。
 3. **D2 WS63 UART**：framed serial transport 与 read-only agent。
 4. **D3 Probe/RTT**：通用 probe transport，不魔改 probe-rs format。
@@ -109,4 +113,3 @@ capability、可选认证和 CLI 显式 `--allow-control`；read-only attach 不
 10. **D9 UX adapters**：TUI、DAP、IDE。
 
 D0-D9 只能在 connectivity baseline 后排期，不插入当前 RF 临界路径。
-

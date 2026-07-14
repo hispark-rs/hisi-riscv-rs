@@ -13,6 +13,9 @@ NVS 格式、ROM symbols、镜像格式、HAL 或应用框架。
 
 调测是这一架构的一等能力；协议、CLI、transport 和 D0-D9 的唯一详细计划见
 [RTOS observability 与 CLI 计划](hisi-rtos-debugging-cli.md)。
+调度策略、timeout/IRQ 竞态、priority inheritance、budget 补充与 SMP
+扩展的规范和证明 gate 唯一详细计划见
+[RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md)。
 
 ## Ecosystem Position
 
@@ -65,8 +68,15 @@ enum RunPolicy {
   无限反转。
 - IRQ top half 只 ack/record/wake；用户 callback、复杂协议和回收进入 deferred thread。
 - 当前 WS63 flat backend 已具备显式 priority scheduling、TIMER/SOFT interrupt
-  preemption、同优先级 time slicing 与 priority inheritance；budget enforcement、trace
-  和 Embassy coexistence 仍未闭合。
+  preemption、同优先级 time slicing、priority inheritance，以及共享 TIMER_INT0 的
+  Embassy time/executor 真机共存；budget enforcement 与 trace 仍未闭合。当前共存证据见
+  [A3 Embassy coexistence](evidence/ws63-rf-a3-embassy-coexistence-2026-07-14.md)，F3 仍负责
+  把已验证行为收敛成正式 adapter/component boundary。
+
+`RunPolicy` 的 normative 定义不由本文复制；尤其 `Budgeted` 的 capacity、
+replenishment、IRQ 计费和 throttle 语义必须在
+[RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) V3 冻结并通过
+反例搜索后才实现。
 
 ## Workspace Shape
 
@@ -135,8 +145,10 @@ supervisor/debug agent。
 1. **F0 Baseline freeze**：保留当前 RF5/ping marker、layout 和 HIL 证据。
 2. **F1 Pure core**：抽取无硬件状态机，在 host deterministic backend 验证。
 3. **F2 WS63 flat port**：context/timer/software IRQ 进入明确 port。
-4. **F3 Embassy coexistence**：executor thread、time driver 与 vendor thread 共存。
-5. **F4 Scheduling closure**：budget preemption、priority inheritance、trace。
+4. **F3 Embassy coexistence**：把当前 flat-backend HIL fixture 收敛为正式 executor/time
+   adapter，并保持 vendor thread parity。
+5. **F4 Scheduling closure**：先通过调度语义与验证计划 V0-V4，再闭环
+   budget preemption、priority inheritance 与 trace。
 6. **F5 RF backend migration**：保持 init/scan/connect/ping parity。
 7. **F6 Logical domains**：fault supervisor、generation、dump/restart。
 8. **F7 Hi3322 PMP**：真实 domain isolation 与 fault evidence。

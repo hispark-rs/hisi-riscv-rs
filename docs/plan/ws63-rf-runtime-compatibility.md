@@ -9,6 +9,7 @@ and does not add a LiteOS backend.
 The facts are deliberately separated:
 
 - `hisi-rtos` behavior comes from its Rust API, Embassy and embedded-Rust needs,
+  the [RTOS scheduling semantics and verification plan](hisi-rtos-semantics-and-verification.md),
   host-deterministic tests, and future cross-chip runtime architecture.
 - WS63 RF compatibility comes from the blob ABI, its exact archive hash, the
   matching fbb_ws63 LiteOS behavior/disassembly, and RF HIL.
@@ -57,6 +58,11 @@ Differences are absorbed by typed adapter state: `VendorPriority`, tick-to-durat
 conversion, deferred callback workers, and ABI return-code mapping. A mismatch is
 first fixed in the adapter; generic runtime behavior changes only when it is a
 sound cross-platform capability.
+
+These scenarios are compatibility assertions, not the normative scheduler model.
+Every generic invariant they rely on references a requirement owned by the
+[RTOS scheduling semantics and verification plan](hisi-rtos-semantics-and-verification.md);
+vendor-only behavior remains local to this profile and its pinned archive hash.
 
 ### Silicon Contract
 

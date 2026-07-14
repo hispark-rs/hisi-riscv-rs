@@ -41,7 +41,7 @@ The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](doc
 
 Init/scan evidence and RF5 are tracked in [docs/plan/ws63-rf-init-scan.md](docs/plan/ws63-rf-init-scan.md). The post-ping component architecture, RTOS/NVS split, BLE/SLE and coexistence sequence are tracked in [docs/plan/hisi-connectivity-stack.md](docs/plan/hisi-connectivity-stack.md).
 
-Deferred after the connectivity baseline: the portable/protected RTOS and CLI-first debugging outlook is tracked in [docs/plan/hisi-rtos-future-architecture.md](docs/plan/hisi-rtos-future-architecture.md); it does not block current RF milestones.
+Deferred after the connectivity baseline: the portable/protected RTOS and CLI-first debugging outlook is tracked in [docs/plan/hisi-rtos-future-architecture.md](docs/plan/hisi-rtos-future-architecture.md). Strict scheduling semantics, proof obligations, and implementation-conformance gates are tracked separately in [docs/plan/hisi-rtos-semantics-and-verification.md](docs/plan/hisi-rtos-semantics-and-verification.md); neither plan blocks current RF parity, but unproven new scheduling policies do not enter the default path.
 
 **Probe, fwpkg, and toolchain:** make only the changes required to keep connectivity work reproducible. `hisi-fwpkg` remains the image-format fact source; probe-rs should stay a generic transport/debug path and avoid HiSilicon image-format parsing.
 

@@ -15,6 +15,9 @@ init/scan/connect/ping marker、Rust-visible L2 和真机 HIL 为 parity contrac
 storage/NVS 与 RTOS ownership 拆分，再按
 [Connectivity 全栈重构计划](hisi-connectivity-stack.md#a4-extraction-gates)建立统一
 `RadioController`/`RadioRunner`，不提前并行维护第二条 RF 主路径。
+迁移中使用的 scheduler/IPC 通用语义不由 RF 计划定义，统一引用
+[RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；LiteOS/blob
+特有行为则由 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md) 管理。
 
 ## Key Milestones
 

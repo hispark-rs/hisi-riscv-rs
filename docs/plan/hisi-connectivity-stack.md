@@ -18,6 +18,9 @@ Embassy executor/time 运行环境。
 更长期的 protection domain、跨芯片 port、host runtime 与 CLI-first observability
 架构已作为 deferred outlook 记录在
 [`hisi-rtos` 未来架构](hisi-rtos-future-architecture.md)；它不属于当前 A3/A4 gate。
+通用 scheduler 语义、形式化模型与实现一致性 gate 另见
+[RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
+兼容 profile 不得反向改写通用 RTOS 语义。
 
 ## Target Architecture
 
@@ -104,6 +107,10 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   未满足符号必须使 CI 失败。
 - scheduler/IPC 对 blob 的入口只通过 `hisi-rf-rtos-driver` 注册宏导出的固定
   Rust ABI；链接到零个或多个实现都必须失败。
+- scheduler state、RunPolicy、IRQ epilogue、timeout race、priority inheritance
+  和 budget replenishment 的通用 contract 以
+  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一计划事实源；
+  A3 evidence 只证明已列出的实现/真机场景。
 
 ### Storage And NVS
 
@@ -476,7 +483,13 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   `timeout_count=1`、`wake_count=1`、`ran_in_handler=0`。WS63 trap 默认关闭 MIE 且当前
   使用单一 IRQ stack，因此不宣称物理 nested IRQ；证据见
   [A3 scheduler stress](evidence/ws63-rf-a3-scheduler-stress-2026-07-14.md)。
-- [ ] budget enforcement 与 Embassy time/executor integration 尚未完成；这些 gate 全部
+- [x] `hisi-rtos` 的可选 Embassy time driver 已与 scheduler sleep/time-slice 共享同一
+  TIMER_INT0 port；`rtos_embassy_coexist` 连续三次真机得到
+  `native_ticks=17`、`embassy_ticks=10`、`timer_irqs=27`、`context_switches=34`。
+  持久 time-slice deadline 同时防止 Embassy timer re-arm 延后同优先级轮转；证据见
+  [A3 Embassy coexistence](evidence/ws63-rf-a3-embassy-coexistence-2026-07-14.md)。
+- [ ] per-thread budget enforcement 必须先完成
+  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) V0-V4；该 gate
   通过前，A3 不得标记完成。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
