@@ -700,7 +700,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "critical-section",
 ]
@@ -732,6 +732,8 @@ name = "hisi-rtos"
 version = "0.1.0-alpha.3"
 dependencies = [
  "critical-section",
+ "embassy-time-driver",
+ "embassy-time-queue-utils",
  "hisi-rf-rtos-driver",
 ]
 
@@ -1177,6 +1179,22 @@ name = "riscv-target-parser"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1376b15f3ff160e9b1e8ea564ce427f2f6fcf77528cc0a8bf405cb476f9cea7"
+
+[[package]]
+name = "rtos_embassy_coexist"
+version = "0.1.0"
+dependencies = [
+ "critical-section",
+ "embassy-executor",
+ "embassy-time",
+ "hisi-alloc",
+ "hisi-hal",
+ "hisi-panic-handler",
+ "hisi-rf-rtos-driver",
+ "hisi-riscv-rt",
+ "hisi-rtos",
+ "static_cell",
+]
 
 [[package]]
 name = "rtos_preemption"
