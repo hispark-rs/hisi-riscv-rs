@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import time
@@ -19,8 +20,7 @@ import serial
 
 
 RUST_TERMINAL_MARKERS = (
-    b"RF5C_PING_OK",
-    b"RF5C_PING_TIMEOUT",
+    b"RF5C_CONNECTIVITY_SUMMARY",
     b"RF5B_WPA_CONNECT_ERR:",
     b"RF5B_CONNECT_ERR:",
     b"RF5B_AP_NOT_FOUND",
@@ -37,8 +37,9 @@ RUST_TIMED_MARKERS = (
     b"RF5B_WPA_CONNECT_OK",
     b"RF5A_DHCP_OK",
     b"RF5A_ARP_OK",
-    b"RF5C_PING_BEGIN",
+    b"RF5C_PING_SERIES_BEGIN",
     b"RF5C_PING_OK",
+    b"RF5C_CONNECTIVITY_SUMMARY",
 )
 
 # fbb_ws63 log_def_wifi.h maps file 0x13 to hmac_sme_sta.c; line 0x44f
@@ -64,6 +65,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baud", type=int, default=115_200)
     parser.add_argument("--runs", type=int, default=20)
     parser.add_argument("--timeout", type=float, default=65.0)
+    parser.add_argument(
+        "--post-terminal-seconds",
+        type=float,
+        default=1.0,
+        help="continue capturing briefly after the terminal marker for trailing diagnostics",
+    )
     parser.add_argument("--profile", choices=("rust", "official-liteos"), default="rust")
     parser.add_argument(
         "--stage",
@@ -72,6 +79,11 @@ def parse_args() -> argparse.Namespace:
         help="stop after association or continue through the IP connectivity probe",
     )
     parser.add_argument("--jlink", default="JLinkExe")
+    parser.add_argument(
+        "--reference-target",
+        help="optional same-network target to ping once from the host (for example the AP gateway)",
+    )
+    parser.add_argument("--reference-count", type=int, default=5)
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
 
@@ -98,6 +110,57 @@ def pulse_nrst(jlink: str) -> None:
         command_path.unlink(missing_ok=True)
 
 
+def parse_ping_summaries(log: bytes) -> dict[str, dict[str, int | str]]:
+    summaries: dict[str, dict[str, int | str]] = {}
+    for line in log.splitlines():
+        if not line.startswith((b"RF5C_PING_OK ", b"RF5C_PING_TIMEOUT ")):
+            continue
+        fields: dict[str, int | str] = {
+            "status": "ok" if line.startswith(b"RF5C_PING_OK ") else "timeout"
+        }
+        for token in line.decode(errors="replace").split()[1:]:
+            if "=" not in token:
+                continue
+            key, value = token.split("=", 1)
+            if key == "target":
+                fields[key] = value
+            elif value.lower().startswith("0x"):
+                try:
+                    fields[key] = int(value, 16)
+                except ValueError:
+                    continue
+        target = fields.get("target")
+        if isinstance(target, str):
+            summaries[target] = fields
+    return summaries
+
+
+def run_reference_ping(target: str, count: int, output: Path) -> dict[str, object]:
+    result = subprocess.run(
+        ["ping", "-c", str(count), target],
+        capture_output=True,
+        text=True,
+        timeout=max(10, count * 3),
+        check=False,
+    )
+    text = result.stdout + result.stderr
+    output.write_text(text)
+    loss_match = re.search(r"([0-9.]+)% packet loss", text)
+    rtt_match = re.search(
+        r"(?:round-trip|rtt)[^=]*=\s*([0-9.]+)/([0-9.]+)/([0-9.]+)", text
+    )
+    return {
+        "target": target,
+        "count": count,
+        "exit_code": result.returncode,
+        "packet_loss_percent": float(loss_match.group(1)) if loss_match else None,
+        "rtt_min_ms": float(rtt_match.group(1)) if rtt_match else None,
+        "rtt_avg_ms": float(rtt_match.group(2)) if rtt_match else None,
+        "rtt_max_ms": float(rtt_match.group(3)) if rtt_match else None,
+        "log": output.name,
+    }
+
+
 def classify(log: bytes, profile: str, stage: str) -> str:
     if profile == "official-liteos":
         if stage == "connect" and b"+NOTICE:CONNECTED" in log:
@@ -112,9 +175,14 @@ def classify(log: bytes, profile: str, stage: str) -> str:
 
     if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
         return "pass"
-    if b"RF5C_PING_OK" in log:
-        return "pass"
-    if b"RF5C_PING_TIMEOUT" in log:
+    public_ping = parse_ping_summaries(log).get("1.1.1.1")
+    if public_ping is not None:
+        tx = int(public_ping.get("tx", 0))
+        rx = int(public_ping.get("rx", 0))
+        if tx > 0 and rx == tx:
+            return "pass"
+        if rx > 0:
+            return "ping_degraded"
         return "ping_timeout"
     if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
         return "auth_rsp2_timeout"
@@ -132,7 +200,12 @@ def classify(log: bytes, profile: str, stage: str) -> str:
 
 
 def capture_run(
-    port: serial.Serial, jlink: str, timeout: float, profile: str, stage: str
+    port: serial.Serial,
+    jlink: str,
+    timeout: float,
+    post_terminal_seconds: float,
+    profile: str,
+    stage: str,
 ) -> tuple[bytes, dict[str, float]]:
     port.reset_input_buffer()
     started = time.monotonic()
@@ -140,6 +213,7 @@ def capture_run(
     log = bytearray()
     marker_times: dict[str, float] = {}
     deadline = started + timeout
+    terminal_seen_at: float | None = None
 
     timed_markers = OFFICIAL_TIMED_MARKERS if profile == "official-liteos" else RUST_TIMED_MARKERS
     terminal_markers = (
@@ -163,7 +237,12 @@ def capture_run(
             name = marker.decode()
             if name not in marker_times and marker in log:
                 marker_times[name] = round(now, 3)
-        if any(marker in log for marker in terminal_markers):
+        if terminal_seen_at is None and any(marker in log for marker in terminal_markers):
+            terminal_seen_at = time.monotonic()
+        if (
+            terminal_seen_at is not None
+            and time.monotonic() - terminal_seen_at >= post_terminal_seconds
+        ):
             break
 
     return bytes(log), marker_times
@@ -171,20 +250,39 @@ def capture_run(
 
 def main() -> int:
     args = parse_args()
-    if args.runs <= 0 or args.timeout <= 0:
-        raise SystemExit("--runs and --timeout must be positive")
+    if (
+        args.runs <= 0
+        or args.timeout <= 0
+        or args.post_terminal_seconds < 0
+        or args.reference_count <= 0
+    ):
+        raise SystemExit(
+            "--runs, --timeout and --reference-count must be positive; "
+            "--post-terminal-seconds must be non-negative"
+        )
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     output = args.output or Path("/private/tmp") / f"ws63-connectivity-reset-matrix-{timestamp}"
     output.mkdir(parents=True, exist_ok=False)
     records: list[dict[str, object]] = []
+    reference_ping = None
+    if args.reference_target:
+        reference_ping = run_reference_ping(
+            args.reference_target, args.reference_count, output / "reference-ping.log"
+        )
+        print(f"reference ping: {json.dumps(reference_ping, sort_keys=True)}", flush=True)
 
     # Open UART before every reset pulse so boot and early failure markers are
     # observable. Keep the descriptor open across runs to avoid driver churn.
     with serial.Serial(args.port, args.baud, timeout=0.2) as port:
         for run in range(1, args.runs + 1):
             log, marker_times = capture_run(
-                port, args.jlink, args.timeout, args.profile, args.stage
+                port,
+                args.jlink,
+                args.timeout,
+                args.post_terminal_seconds,
+                args.profile,
+                args.stage,
             )
             result = classify(log, args.profile, args.stage)
             log_path = output / f"run-{run:02d}.uart.log"
@@ -195,6 +293,7 @@ def main() -> int:
                 "bytes": len(log),
                 "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
                 + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
+                "ping": parse_ping_summaries(log),
                 "marker_seconds": marker_times,
                 "log": log_path.name,
             }
@@ -209,6 +308,25 @@ def main() -> int:
     for record in records:
         result = str(record["result"])
         counts[result] = counts.get(result, 0) + 1
+    ping_totals: dict[str, dict[str, int]] = {}
+    for record in records:
+        ping = record.get("ping", {})
+        if not isinstance(ping, dict):
+            continue
+        for target, metrics in ping.items():
+            if not isinstance(metrics, dict):
+                continue
+            totals = ping_totals.setdefault(
+                str(target), {"tx": 0, "rx": 0, "drop": 0, "tx_error": 0}
+            )
+            for field in totals:
+                value = metrics.get(field, 0)
+                if isinstance(value, int):
+                    totals[field] += value
+    for totals in ping_totals.values():
+        totals["loss_pct"] = (
+            totals["drop"] * 100 // totals["tx"] if totals["tx"] else 100
+        )
     summary = {
         "port": args.port,
         "baud": args.baud,
@@ -216,8 +334,11 @@ def main() -> int:
         "stage": args.stage,
         "runs": args.runs,
         "timeout_seconds": args.timeout,
+        "post_terminal_seconds": args.post_terminal_seconds,
         "counts": counts,
+        "ping_totals": ping_totals,
         "auth_rsp2_timeouts": sum(int(record["auth_rsp2_timeouts"]) for record in records),
+        "reference_ping": reference_ping,
         "records": records,
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
