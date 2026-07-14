@@ -1,5 +1,11 @@
 # HiSilicon NVS 镜像工具链计划
 
+## Status
+
+**Deferred / triggered.** 当前只读 `hisi-nvs` baseline 已可服务 connectivity；N0-N3
+只在要求完全脱离原厂 NV generator 时启动，N4-N5 仍是更远期工作。本计划保留 NVS
+格式、oracle 和验收事实，但不属于当前 A3/A4 WIP。
+
 ## Summary
 
 本计划补齐主机端 NVS image 生成、检查和迁移能力，目标是最终不依赖

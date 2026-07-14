@@ -22,6 +22,41 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
+## Active Window: NOW A3, NEXT A4
+
+本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。唯一 active
+milestone 是 A3 closeout；A3 冻结后才切换到 A4 Wi-Fi vertical slice。
+
+### NOW -- A3 Closeout
+
+1. 将每轮单次 ping 扩为 3-5 次，记录 TX/RX/RTT/drop/loss，并用同网络 reference host
+   归因 gateway ICMP `0/20`。C5 已证明能力存在；公网 ping `18/20` 只作为数据面可靠性
+   风险，不回写成认证失败。
+2. 完成 Q3 archive-bound task profile：只记录当前真实生成的 vendor task，以 archive
+   hash、entry symbol、vendor priority、Q2 metrics 和
+   `critical`/`worker`/`background`/`unknown` 角色绑定事实。角色未知时必须保持
+   `unknown`；profile 第一阶段不改变 runtime policy。
+3. 输出 Q4 决策：按 Q2 数据判断是否需要 per-thread `Budgeted`。若 Cooperative 已稳定，
+   明确记录“当前不需要 group quota”；没有 measured minimum-service demand 时不实施
+   Reservation。
+4. 冻结 reset matrix、调度不变量、版本、submodule pointer、profile revision 和 quota
+   decision。完成定义只有四项：调度不变量稳定、RF 连接矩阵稳定、task profile 有事实
+   记录、quota 是否需要已有明确结论。
+
+### NEXT -- A4 Wi-Fi Vertical Slice
+
+A4 只交付 `RadioController`/`RadioRunner`、`WifiController`/`WifiDevice`、bounded event
+queue，以及长生命周期 smoltcp 或 embassy-net runner。它必须覆盖 lease renew、
+ARP/neighbor cache 和重复 ICMP，并保持 A0/A3 init/scan/connect/ping 与 link/image parity。
+A4 期间不并行推进 BLE、SLE、TLS、SoftAP 或其他协议面。
+
+### Triggered After A4
+
+A4 完成后按产品需求只选择一个方向：WPA3/SAE、BLE、NVS N0-N3、TLS 或 SLE。默认建议
+优先评估 WPA3-Personal，但必须经过 A4 product gate。W2-W4、B/S/X、NVS/RTOS future、
+ported switch ticket、group Reservation、AP1 fast path、i18n、BSP 和 Hi3322 均为
+deferred/triggered backlog，不是当前 TODO。
+
 ## Target Architecture
 
 ```mermaid

@@ -1,60 +1,104 @@
 # hisi-riscv-rs Roadmap
 
-**North Star:** run WS63 connectivity on real silicon: Wi-Fi scan, connect, then ping.
+**North Star:** run reliable WS63 connectivity on real silicon: Wi-Fi scan,
+connect, and sustained IP traffic through the Rust-visible data path.
 
-HAL, RT, PAC, QEMU, HIL, image tooling, probe support, and documentation are support systems for that connectivity goal, not goals by themselves.
+HAL, RT, PAC, QEMU, HIL, image tooling, probe support, and documentation serve
+that goal. This ecosystem is still moving quickly: when roadmap text, docs,
+examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
+the stable API reference, then fix the documentation.
 
-This ecosystem is still moving quickly. If roadmap text, docs, examples, or local behavior disagree, prefer the latest passing CI/HIL result and the stable API reference, then update the docs.
+**WIP limit:** one major milestone at a time. The active milestone is A3; A4
+starts only after the A3 closeout evidence is frozen.
 
-## Current State
+## NOW -- Close A3
 
-**Done and usable as the baseline:** official Rust nightly target path, `hisi-riscv-rt` chip adapters, HAL `0.6.0` stable/unstable gating, WS63 embedded-test HIL, QEMU smoke coverage, `hisi-fwpkg` image planning, and WS63 Wi-Fi init/scan/open/WPA2 connect/DHCP/ARP/ping through the Rust-visible L2 path.
+The single active execution source is the
+[Connectivity stack Active Window](docs/plan/hisi-connectivity-stack.md#active-window-now-a3-next-a4).
+Current work is limited to four outcomes:
 
-**Active focus:** preserve the frozen C5/A0 connectivity baseline while starting C6 ownership decomposition. HAL 0.6.0 stabilization and the H0 `hisi-hal` rename are complete; every extraction must reproduce the same scan/connect/ping markers and link/image evidence.
+1. **Network reliability attribution:** run 3-5 pings per reset, record TX/RX,
+   RTT, drops, and loss rate, and compare gateway behavior with a reference host.
+   C5 capability proof is complete; the current 18/20 public-ping result is a
+   data-plane reliability risk, not an authentication regression.
+2. **Q3 archive-bound task profile:** record only tasks created by the pinned
+   archive, including archive hash, entry symbol, vendor priority, Q2 metrics,
+   and `critical`/`worker`/`background`/`unknown` role. Classification does not
+   imply a policy change.
+3. **Q4 decision:** use Q2 evidence to decide whether any task needs a per-thread
+   `Budgeted` policy. If Cooperative remains stable, record that group quota is
+   currently unnecessary. Reservation is not implemented without a measured
+   service guarantee requirement.
+4. **Freeze A3:** preserve reset statistics, scheduler invariants, versions,
+   submodule pointers, profile revision, and the resulting quota decision.
 
-**Not a near-term target:** BSP/board-manager, BS2X BLE/SLE real-board connectivity, Hi3322 runtime implementation, DMA stable graduation, and embassy stable graduation. These are deferred until they serve the connectivity path or have hardware evidence.
+A3 is complete only when scheduler invariants and the RF connection matrix are
+stable, the task profile has machine-readable facts, and the quota decision is
+explicit.
 
-**Current plans live in:** [HAL 0.6.0 release plan](docs/plan/hal-0.6.0-release.md), [WS63 RF init+scan/RF5 plan](docs/plan/ws63-rf-init-scan.md), and the [HiSilicon Connectivity full-stack plan](docs/plan/hisi-connectivity-stack.md).
+## NEXT -- A4 Wi-Fi Vertical Slice
 
-**Current facts live in:** [Stable API 清单](docs/src/reference/10-stable-api.md), [`ws63-rf-rs` README](chips/ws63/rf/README.md), [ws63-RF 组件文档](docs/src/explanation/components/09-ws63-rf.md), and the archived [2026-05 to 2026-07 remediation roadmap](docs/archive/roadmap-2026-05-2026-07-remediation.md).
+A4 delivers one coherent Wi-Fi path:
 
-## Connectivity Milestones
+- `RadioController` / `RadioRunner`;
+- separate `WifiController` and `WifiDevice`;
+- a bounded event queue with no user callbacks in IRQ or critical sections;
+- a long-lived smoltcp or embassy-net runner covering lease renewal,
+  ARP/neighbor cache, and repeated ICMP;
+- parity with the frozen init/scan/connect/ping markers and A0/A3 link/image
+  evidence.
 
-| Milestone | Goal | Acceptance |
-| --- | --- | --- |
-| C0 Baseline locked | Keep the current toolchain, HAL alpha, RT, fwpkg, probe-rs baseline, QEMU smoke, and WS63 HIL path usable while connectivity work proceeds. | `uart_hello`/HIL smoke and docs happy path continue to pass; no widening of stable HAL surface without named HIL evidence. |
-| C1 RF runtime image (done) | Link `ws63-rf-rs` plus the real Wi-Fi blob set into a flashable WS63 image. Add the real `.wifi_pkt_ram` NOLOAD region instead of ad hoc symbol scaffolding. | Image builds, packages through `hisi-fwpkg`, boots far enough to print RF bring-up markers, and QEMU RF selftests remain green. |
-| C2 Wi-Fi init on silicon (done) | Call the minimal `wifi_init` path on a real board. Make failures distinguishable as ROM symbol, relocation, NV/eFuse, RF clock, IRQ, or memory-layout faults. | UART/HIL captures a deterministic `wifi_init` pass/fail marker with structured reason codes. |
-| C3 Scan (done) | Enable STA scan and return AP results or a precise RF/NV failure. | Add a `wifi_scan` example and HIL marker; scan either prints at least one AP in a controlled environment or reports a known categorized failure. |
-| C4 Connect (done) | Associate to a controlled open or WPA2 test AP. | Connection state transitions and failure codes are observable over UART/HIL. |
-| C5 Ping (done) | Complete an IP round trip over the Rust-visible network path, using smoltcp or the vendor netif boundary chosen by the bring-up evidence. | Connectivity HIL reproduced ICMP Echo to `1.1.1.1` on real WS63 silicon; see the [A0 baseline](docs/plan/evidence/ws63-rf-a0-2026-07-12.md). |
-| C6 Architecture baseline (H0 done) | The `hisi-riscv-hal` → `hisi-hal` rename is complete. Next split ROM, blob sys, allocator, storage/NVS, RTOS-driver, RTOS, and high-level RF ownership without regressing C5. | HAL rename checks show no API drift; frozen scan/connect/ping markers and link/image reports pass through the new dependency graph. |
-| C7 BLE | Bring up the vendor BLE host through the shared RTOS/storage/runtime contracts. | Advertising, scanning, and GATT client/server have bounded-event APIs and real-board evidence. |
-| C8 SLE and coexistence | Bring up SLE, then validate concurrent Wi-Fi plus BLE/SLE operation. | Two-board SLE data exchange passes; `coex` remains hidden until concurrent HIL passes. |
-| C9 Connectivity release | Turn the full stack into repeatable release units. | Compatibility/resource matrices, release notes, known issues, examples, docs, and HIL evidence are aligned. |
+A4 does not run BLE, SLE, TLS, SoftAP, or another architecture extraction in
+parallel.
 
-## Maintenance Tracks
+## LATER -- One Product Direction
 
-**HAL 0.6.0 stabilization (complete):** the stable release is published. The renamed `hisi-hal 0.7.0-alpha.2` preserves that stable surface; DMA, embassy, BS2X, and unproven helper surfaces remain behind `unstable` until their invariants and HIL evidence are closed.
+After A4, choose exactly one direction from measured product demand:
 
-The detailed HAL release gate is tracked in [docs/plan/hal-0.6.0-release.md](docs/plan/hal-0.6.0-release.md). RF/Connectivity may drive HAL bug fixes, but does not block HAL 0.6.0 unless it exposes a bug in an already-stable HAL API.
+- WPA3-Personal/SAE for modern Wi-Fi security;
+- BLE for a concrete peripheral or central scenario;
+- NVS N0-N3 when the release image must stop depending on the vendor NV
+  generator;
+- TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;
+- SLE after a second WS63 rig and a concrete interconnect scenario exist.
 
-Init/scan evidence and RF5 are tracked in [docs/plan/ws63-rf-init-scan.md](docs/plan/ws63-rf-init-scan.md). The post-ping component architecture, RTOS/NVS split, BLE/SLE and coexistence sequence are tracked in [docs/plan/hisi-connectivity-stack.md](docs/plan/hisi-connectivity-stack.md).
+The default recommendation is WPA3-Personal, but that choice is made at the A4
+product gate rather than pre-booked as concurrent work.
 
-Deferred after the connectivity baseline: the portable/protected RTOS and CLI-first debugging outlook is tracked in [docs/plan/hisi-rtos-future-architecture.md](docs/plan/hisi-rtos-future-architecture.md). Strict scheduling semantics, proof obligations, and implementation-conformance gates are tracked separately in [docs/plan/hisi-rtos-semantics-and-verification.md](docs/plan/hisi-rtos-semantics-and-verification.md); neither plan blocks current RF parity, but unproven new scheduling policies do not enter the default path.
+## DEFERRED -- Triggered Backlog
 
-**Probe, fwpkg, and toolchain:** make only the changes required to keep connectivity work reproducible. `hisi-fwpkg` remains the image-format fact source; probe-rs should stay a generic transport/debug path and avoid HiSilicon image-format parsing.
+These designs remain documented, but are not active TODO checklists:
 
-Deferred read-only investigation of additional WS63 system-memory debug paths is tracked in [docs/plan/ws63-debug-memory-access.md](docs/plan/ws63-debug-memory-access.md); it is not on the connectivity critical path.
+- ported switch ticket/generation protocol, after A3; keep the verified stale
+  switch recovery until its 100-reset parity gate passes;
+- group Reservation and guaranteed-service scheduling;
+- RTOS protection/PMP/TES/SMP, host replay, `hisi-rtos-cli`, and IDE support;
+- NVS factory/write/GC/encryption and complete hardware key-slot/crypto support;
+- Enterprise Wi-Fi, SoftAP, BLE, SLE, and coexistence;
+- BSP/board-manager, mdBook i18n, Hi3322 runtime, and AP1 probe-rs fast-path
+  integration.
 
-**Docs and CI:** preserve the happy path, stable API reference, and connectivity roadmap. Avoid expanding component documentation unless it prevents drift or directly supports C1-C6.
+Detailed deferred facts stay in their owning plans:
 
-Low-priority i18n track: integrate `mdbook-i18n-helpers` after the current Chinese handbook, chip selector, version selector, snippet preprocessor, and happy-path CI stay stable. The intended shape is gettext-style extraction/translation around the existing mdBook source, without forking the command snippets or reference facts into per-language copies. Acceptance: `mdbook-xgettext`/`mdbook-gettext` are wired into a documented script or CI check, translated pages reuse the same chip/version metadata and snippet contracts, and untranslated pages degrade back to the canonical Chinese source. This track must not block connectivity milestones C1-C6.
+- [RTOS semantics and verification](docs/plan/hisi-rtos-semantics-and-verification.md)
+- [RTOS future architecture](docs/plan/hisi-rtos-future-architecture.md)
+- [RTOS observability and CLI](docs/plan/hisi-rtos-debugging-cli.md)
+- [NVS image tooling](docs/plan/hisi-nvs-image.md)
+- [WS63 debug memory diagnosis](docs/plan/ws63-debug-memory-access.md)
 
-**BSP and board-manager:** deferred. Revisit after real connectivity works and after external boards or user projects create enough pressure for board manifests or board-selection tooling.
+Completed historical plans remain as evidence, not current work:
 
-## Historical Context
+- [HAL 0.6.0 release](docs/plan/hal-0.6.0-release.md)
+- [WS63 RF init/scan/RF5](docs/plan/ws63-rf-init-scan.md)
 
-The original roadmap was created from the 2026-05 architecture review and grew into a remediation ledger covering build integrity, HIL bring-up, runtime architecture, HAL API tightening, RF porting, docs, release, and tooling work. That record is archived at [`docs/archive/roadmap-2026-05-2026-07-remediation.md`](docs/archive/roadmap-2026-05-2026-07-remediation.md).
+## Fact Sources
 
-Review ledgers remain under [`docs/review/`](docs/review/). They preserve the evidence trail, but they do not override the current priority order above.
+- current execution and architecture: [Connectivity stack](docs/plan/hisi-connectivity-stack.md)
+- stable HAL surface: [Stable API reference](docs/src/reference/10-stable-api.md)
+- transitional RF implementation: [`ws63-rf-rs` README](chips/ws63/rf/README.md)
+- RF architecture explanation: [WS63 RF component](docs/src/explanation/components/09-ws63-rf.md)
+- historical remediation ledger:
+  [2026-05 to 2026-07 archive](docs/archive/roadmap-2026-05-2026-07-remediation.md)
+
+Review ledgers under [`docs/review/`](docs/review/) preserve dated evidence; they
+do not override the current priority order or current reference facts.

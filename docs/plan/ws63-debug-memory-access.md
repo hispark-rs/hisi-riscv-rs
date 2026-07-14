@@ -6,7 +6,8 @@ Diagnostic execution completed on 2026-07-13. AP1 is a proven direct
 system-memory path, while RISC-V SBA is not implemented. The AP1 path remains a
 diagnostic result rather than a download default: probe-rs still needs an
 explicit dual-AP transport contract before it can safely own AP0 for DMI and AP1
-for system memory at the same time.
+for system memory at the same time. The diagnosis is **completed**; AP1 product
+integration is a **triggered/deferred backlog**, not a current connectivity task.
 
 ## D0: enumerate the DAP
 

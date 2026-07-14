@@ -1,5 +1,11 @@
 # hisi-riscv-hal v0.6.0 正式版里程碑计划
 
+## Status
+
+**Completed / historical evidence.** `hisi-riscv-hal 0.6.0` 已于 2026-07-12 发布；
+本文保留 release gate 与证据，不再是当前执行计划。当前优先级见根
+[`ROADMAP.md`](../../ROADMAP.md)。
+
 ## Summary
 
 `hisi-riscv-hal v0.6.0` 是 HAL stable API stabilization release。它的发布门槛是

@@ -1,5 +1,12 @@
 # WS63 RF 推进计划：Init → Scan 优先
 
+## Status
+
+**Completed / historical evidence.** Init、scan、connect、WPA2-Personal、DHCP、ARP 和
+ping capability 已完成真机证明；本文保留 RF0-RF5 的 bring-up 事实，不再承载当前
+TODO。A3 closeout 与 A4 Wi-Fi vertical slice 的唯一当前入口是
+[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a3-next-a4)。
+
 ## Summary
 
 WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**；该目标现已
@@ -197,9 +204,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
 
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
-- Init、scan、RF5A-C 与 WPA2-PSK/CCMP W0-W1 已完成；当前优先级是按
-  [Connectivity 全栈重构计划](hisi-connectivity-stack.md) 抽取 `hisi-crypto` 等独立组件，
-  然后推进 WPA3/SAE、SoftAP 和 Enterprise，各阶段保持连接性 marker 不回归。
+- Init、scan、RF5A-C 与 WPA2-PSK/CCMP W0-W1 已完成。后续只按
+  [Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a3-next-a4)
+  收口 A3，再执行 A4；WPA3/SAE、SoftAP 和 Enterprise 不是当前并行任务。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。
