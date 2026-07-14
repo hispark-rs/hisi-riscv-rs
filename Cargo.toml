@@ -9,6 +9,7 @@ members = [
     "crates/hisi-rom-sys",
     "crates/hisi-storage",
     "crates/hisi-nvs",
+    "crates/hisi-rf",
     "crates/hisi-rf-rtos-driver",
     "crates/hisi-rtos",
     "crates/chips/ws63/hisi-rom-sys-ws63",
@@ -62,6 +63,7 @@ default-members = [
     "crates/chips/ws63/hisi-crypto-ws63",
     "crates/hisi-storage",
     "crates/hisi-nvs",
+    "crates/hisi-rf",
     "crates/hisi-rf-rtos-driver",
     "crates/hisi-rtos",
     "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys",
@@ -107,6 +109,7 @@ hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
 hisi-storage = { path = "crates/hisi-storage" }
 hisi-nvs = { path = "crates/hisi-nvs" }
+hisi-rf = { path = "crates/hisi-rf" }
 hisi-rf-rtos-driver = { path = "crates/hisi-rf-rtos-driver" }
 hisi-rtos = { path = "crates/hisi-rtos" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
@@ -135,6 +138,7 @@ hisi-crypto = { path = "crates/hisi-crypto" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
 hisi-storage = { path = "crates/hisi-storage" }
 hisi-nvs = { path = "crates/hisi-nvs" }
+hisi-rf = { path = "crates/hisi-rf" }
 hisi-rf-rtos-driver = { path = "crates/hisi-rf-rtos-driver" }
 hisi-rtos = { path = "crates/hisi-rtos" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
