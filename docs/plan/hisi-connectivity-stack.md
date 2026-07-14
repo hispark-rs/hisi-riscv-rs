@@ -353,12 +353,15 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      poll/event 与 key-install hooks。CI 校验 source pin/hash、ABI size/offset、callback
      calling convention、required symbols 和 archive/profile drift；禁止 bindgen 暴露 hostap
      内部结构、全局状态或要求构建机安装 libclang。
-   - **W2C Native OS and event loop（部分完成）**：`ws63-radio-sys` commit `310db49`
+   - **W2C Native OS and event loop（部分完成）**：`ws63-radio-sys` commits `310db49`、
+     `7ffd946`
      已实现 `os_hisi_rtos`、`eloop_hisi_rtos` 和版本化 OS hook table；host 行为测试与
      freestanding RV32 编译覆盖 allocator、sleep、单调/墙钟时间、entropy、timeout
-     排序/取消/重设、runner wake/wait，以及重复/冲突注册。父仓 adapter 将 allocator、
-     WS63 time/entropy 和 wake semaphore 接到 `hisi-rf-rtos-driver -> hisi-rtos`，未安装
-     runtime 时 fail closed。仍需用 upstream 实际对象闭合所需最小 libc/formatter，
+     排序/取消/重设、runner wake/wait，以及重复/冲突注册。native C objects 显式使用
+     `rv32imfc + ilp32f`，最终 ELF 不再混入 clang 默认的 soft-float `ilp32`。父仓 adapter
+     将 allocator、WS63 time/entropy 和 wake semaphore 接到
+     `hisi-rf-rtos-driver -> hisi-rtos`，未安装 runtime 时 fail closed。仍需用 upstream
+     实际对象闭合所需最小 libc/formatter，
      并让唯一 `RadioRunner` 推进 event loop；不得新增 `LOS_*`、LiteOS daemon/backend、
      OS thread 或完整 POSIX 模拟。
    - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
@@ -367,9 +370,13 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      `ws63-radio-sys` commits `a7cf71e`、`58c267a`、`e668776` 已完成 EAPOL-only
      `l2_packet_ws63`、版本化 driver-hook 生命周期、upstream `wpa_driver_ops` 的
      init/deinit、MAC、management TX 与 key 参数归一化；host 行为测试、freestanding RV32
-     编译和 exact object-symbol manifest 均通过。父仓 commit `4ae642aa9` 已把 MAC 获取和
-     EAPOL TX 接到真实 WS63 NVS/eFuse 与 vendor netif 路径，并对 800-byte Personal profile
-     做有界 Ethernet framing。management/key 的硅片 hook 仍 fail closed；scan/auth/assoc、
+     编译和 exact object-symbol manifest 均通过。父仓 commit `35f706295` 已把 hook 注册接入
+     scan-only `Wifi::initialize`，并以统一 WAL boundary 实现 live netif MAC（fallback command
+     9）、EAPOL TX（command 5）、management TX（command 4）和 new/set/delete key
+     （commands 1/3/2）；未知 cipher、PMK/MODIFY、歧义 key flags、错误 ABI 和越界 payload
+     全部 fail closed。`wifi_init_smoke --features upstream-supplicant` 不链接旧 supplicant
+     archive，最终两遍 link 验证 1157 个 layout sections、4127 个 patched relocations、37 个
+     ROM patches，且 `drv_soc_hwal_wpa_ioctl` 由 HMAC/WAL archive 解析。scan/auth/assoc、
      management RX、EAPOL RX 有界队列、driver event bridge 和 upstream context 的安全
      所有权包装仍未完成。vendor callback/IRQ 不得直接调用 supplicant，只有 `RadioRunner`
      从有界队列取出事件后才能 feed。
