@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 RADIO_SYS_DIR="$ROOT/crates/chips/ws63/ws63-radio-sys"
 RF_DIR="$RADIO_SYS_DIR/ws63-RF"
+TASK_PROFILE="$RADIO_SYS_DIR/crates/hisi-rf-link/profiles/ws63-scheduling.toml"
 ROM_SYMBOLS="$RF_DIR/rom/ws63_acore_rom.lds"
 ROM_PATCHES="$RF_DIR/rom/ws63_acore_wifi_patches.txt"
 LLVM_NM="$(find "$(rustc --print sysroot)" -name llvm-nm -type f | head -1)"
@@ -63,6 +64,31 @@ case ",$FEATURES," in
     }
     test -f "$WPA_ARCHIVE" || {
       echo "ERROR: WPA archive not found: $WPA_ARCHIVE" >&2
+      exit 1
+    }
+    EXPECTED_WPA_SHA="$({
+      python3 - "$TASK_PROFILE" <<'PY'
+import pathlib
+import sys
+import tomllib
+
+profile = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
+matches = [
+    artifact["sha256"]
+    for artifact in profile["artifacts"]
+    if artifact["id"] == "wpa2-personal-oracle"
+]
+if len(matches) != 1:
+    raise SystemExit("task profile must define exactly one wpa2-personal-oracle")
+print(matches[0])
+PY
+    })"
+    ACTUAL_WPA_SHA="$(shasum -a 256 "$WPA_ARCHIVE" | awk '{print $1}')"
+    test "$ACTUAL_WPA_SHA" = "$EXPECTED_WPA_SHA" || {
+      echo "ERROR: WPA archive does not match the selected task profile" >&2
+      echo "  expected: $EXPECTED_WPA_SHA" >&2
+      echo "  actual:   $ACTUAL_WPA_SHA" >&2
+      echo "  archive:  $WPA_ARCHIVE" >&2
       exit 1
     }
     while IFS= read -r archive; do
