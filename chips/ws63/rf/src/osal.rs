@@ -532,7 +532,7 @@ pub extern "C" fn osal_msleep(ms: u32) {
 /// Current task id ("pid"/"tid") — the scheduler slot index.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_get_current_pid() -> c_int {
-    hisi_rf_rtos_driver::current_task().map_or(-1, |task| task.into_raw() as c_int)
+    c_int::try_from(crate::runtime::current_id()).unwrap_or(-1)
 }
 /// Current task id (alias of [`osal_get_current_pid`]).
 #[unsafe(no_mangle)]

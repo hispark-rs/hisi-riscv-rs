@@ -40,5 +40,10 @@ pub fn sleep_ms(milliseconds: u32) {
 }
 
 pub fn current_id() -> usize {
-    hisi_rf_rtos_driver::current_task().map_or(usize::MAX, |task| task.into_raw() as usize)
+    hisi_rf_rtos_driver::current_task().map_or(usize::MAX, |task| {
+        // The WS63 LiteOS ABI exposes a small scheduler slot as pid/tid. The
+        // Rust runtime keeps a generation in the upper bits to reject stale
+        // handles; that internal generation must not leak into the blob ABI.
+        (task.into_raw() & 0xff) as usize
+    })
 }

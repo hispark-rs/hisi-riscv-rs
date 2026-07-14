@@ -33,8 +33,8 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     let uart = Uart::new_uart0(p.UART0, Config::default());
     uart.write(b"\r\nWS63 ws63-rf-rs scheduler self-test\r\n");
-    hisi_rtos::start(
-        hisi_rtos::Config::default(),
+    let _runtime = hisi_rtos::start_cooperative(
+        hisi_rtos::CooperativeConfig::default(),
         hisi_rtos::Resources {
             allocate: rtos_allocate,
             deallocate: rtos_deallocate,

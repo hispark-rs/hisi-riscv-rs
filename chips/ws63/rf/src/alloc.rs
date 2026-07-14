@@ -6,10 +6,142 @@
 use core::ffi::c_void;
 
 use hisi_alloc::{CHeap, FreeError};
+use portable_atomic::{AtomicU32, AtomicUsize, Ordering};
 
 const DEFAULT_ALIGNMENT: usize = 16;
 
 static HEAP: CHeap = CHeap::empty();
+
+const FREE_TRACE_CAPACITY: usize = 16;
+const ALLOCATION_TRACE_CAPACITY: usize = 16;
+
+struct FreeTraceSlot {
+    sequence: AtomicU32,
+    pointer: AtomicUsize,
+    caller: AtomicUsize,
+}
+
+impl FreeTraceSlot {
+    const EMPTY: Self = Self {
+        sequence: AtomicU32::new(0),
+        pointer: AtomicUsize::new(0),
+        caller: AtomicUsize::new(0),
+    };
+}
+
+static FREE_TRACE_SEQUENCE: AtomicU32 = AtomicU32::new(0);
+static FREE_TRACE: [FreeTraceSlot; FREE_TRACE_CAPACITY] =
+    [const { FreeTraceSlot::EMPTY }; FREE_TRACE_CAPACITY];
+
+struct AllocationTraceSlot {
+    sequence: AtomicU32,
+    pointer: AtomicUsize,
+    size: AtomicUsize,
+    caller: AtomicUsize,
+}
+
+impl AllocationTraceSlot {
+    const EMPTY: Self = Self {
+        sequence: AtomicU32::new(0),
+        pointer: AtomicUsize::new(0),
+        size: AtomicUsize::new(0),
+        caller: AtomicUsize::new(0),
+    };
+}
+
+static ALLOCATION_TRACE_SEQUENCE: AtomicU32 = AtomicU32::new(0);
+static ALLOCATION_TRACE: [AllocationTraceSlot; ALLOCATION_TRACE_CAPACITY] =
+    [const { AllocationTraceSlot::EMPTY }; ALLOCATION_TRACE_CAPACITY];
+
+/// One allocator free event captured without synchronous logging.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct FreeTraceRecord {
+    pub sequence: u32,
+    pub pointer: usize,
+    pub caller: usize,
+}
+
+/// One allocator allocation event captured without synchronous logging.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct AllocationTraceRecord {
+    pub sequence: u32,
+    pub pointer: usize,
+    pub size: usize,
+    pub caller: usize,
+}
+
+/// Copy recent free events into `output` for post-fault diagnostics.
+#[doc(hidden)]
+pub fn free_trace_snapshot(output: &mut [FreeTraceRecord]) -> usize {
+    let count = output.len().min(FREE_TRACE_CAPACITY);
+    for (output, slot) in output.iter_mut().zip(FREE_TRACE.iter()).take(count) {
+        loop {
+            let before = slot.sequence.load(Ordering::Acquire);
+            let pointer = slot.pointer.load(Ordering::Relaxed);
+            let caller = slot.caller.load(Ordering::Relaxed);
+            let after = slot.sequence.load(Ordering::Acquire);
+            if before == after {
+                *output = FreeTraceRecord {
+                    sequence: after,
+                    pointer,
+                    caller,
+                };
+                break;
+            }
+        }
+    }
+    count
+}
+
+/// Copy recent allocation events into `output` for post-fault diagnostics.
+#[doc(hidden)]
+pub fn allocation_trace_snapshot(output: &mut [AllocationTraceRecord]) -> usize {
+    let count = output.len().min(ALLOCATION_TRACE_CAPACITY);
+    for (output, slot) in output.iter_mut().zip(ALLOCATION_TRACE.iter()).take(count) {
+        loop {
+            let before = slot.sequence.load(Ordering::Acquire);
+            let pointer = slot.pointer.load(Ordering::Relaxed);
+            let size = slot.size.load(Ordering::Relaxed);
+            let caller = slot.caller.load(Ordering::Relaxed);
+            let after = slot.sequence.load(Ordering::Acquire);
+            if before == after {
+                *output = AllocationTraceRecord {
+                    sequence: after,
+                    pointer,
+                    size,
+                    caller,
+                };
+                break;
+            }
+        }
+    }
+    count
+}
+
+fn record_free(pointer: usize, caller: usize) {
+    let sequence = FREE_TRACE_SEQUENCE
+        .fetch_add(1, Ordering::Relaxed)
+        .wrapping_add(1);
+    let slot = &FREE_TRACE[(sequence.wrapping_sub(1) as usize) % FREE_TRACE_CAPACITY];
+    slot.sequence.store(0, Ordering::Relaxed);
+    slot.pointer.store(pointer, Ordering::Relaxed);
+    slot.caller.store(caller, Ordering::Relaxed);
+    slot.sequence.store(sequence, Ordering::Release);
+}
+
+fn record_allocation(pointer: usize, size: usize, caller: usize) {
+    let sequence = ALLOCATION_TRACE_SEQUENCE
+        .fetch_add(1, Ordering::Relaxed)
+        .wrapping_add(1);
+    let slot = &ALLOCATION_TRACE[(sequence.wrapping_sub(1) as usize) % ALLOCATION_TRACE_CAPACITY];
+    slot.sequence.store(0, Ordering::Relaxed);
+    slot.pointer.store(pointer, Ordering::Relaxed);
+    slot.size.store(size, Ordering::Relaxed);
+    slot.caller.store(caller, Ordering::Relaxed);
+    slot.sequence.store(sequence, Ordering::Release);
+}
 
 #[cfg(target_arch = "riscv32")]
 unsafe extern "C" {
@@ -51,20 +183,26 @@ fn ensure_heap() -> bool {
 /// Allocate `size` zero-initialized bytes. Returns null on failure or zero size.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
+    let caller = caller_address();
     if !ensure_heap() {
         return core::ptr::null_mut();
     }
-    HEAP.allocate_zeroed(size, DEFAULT_ALIGNMENT).cast()
+    let pointer = HEAP.allocate_zeroed(size, DEFAULT_ALIGNMENT);
+    record_allocation(pointer as usize, size, caller);
+    pointer.cast()
 }
 
 /// Allocate memory with the alignment required by crypto/DMA buffers.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc_align(size: u32, _flags: u32, boundary: u32) -> *mut c_void {
+    let caller = caller_address();
     let alignment = boundary as usize;
     if alignment < DEFAULT_ALIGNMENT || !alignment.is_power_of_two() || !ensure_heap() {
         return core::ptr::null_mut();
     }
-    HEAP.allocate_zeroed(size as usize, alignment).cast()
+    let pointer = HEAP.allocate_zeroed(size as usize, alignment);
+    record_allocation(pointer as usize, size as usize, caller);
+    pointer.cast()
 }
 
 /// Free memory returned by [`osal_kmalloc`]. Null is a no-op.
@@ -74,14 +212,16 @@ pub extern "C" fn osal_kfree(ptr: *mut c_void) {
     if ptr.is_null() {
         return;
     }
+    let caller = caller_address();
+    record_free(ptr as usize, caller);
     if !ensure_heap() {
-        trace_bad_free(ptr as usize, FreeError::Uninitialized, caller_address());
+        trace_bad_free(ptr as usize, FreeError::Uninitialized, caller);
         return;
     }
     // SAFETY: this C boundary cannot express provenance. `CHeap` validates the
     // complete ownership header and arena bounds before touching its free list.
     if let Err(error) = unsafe { HEAP.deallocate(ptr.cast()) } {
-        trace_bad_free(ptr as usize, error, caller_address());
+        trace_bad_free(ptr as usize, error, caller);
     }
 }
 
