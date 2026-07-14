@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-d0888dfe.js";
+            window.path_to_searchindex_js = "../../searchindex-e8b7a5ec.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -198,9 +198,16 @@
 <li>不实现 porting 层本身——<code>port_*.h</code> 只是接口声明，实现由下游 in-tree crate <strong><code>ws63-rf-rs</code></strong> 填充，<strong>现已实现</strong>（见下）。</li>
 <li>不提供链接脚本——<code>port_linker.h</code> 仅以 <code>extern</code> 声明 blob 期望的链接符号，实际的 <code>SECTIONS</code> / 内存区段需调用方在 linker script 中给出。</li>
 </ul>
-<p>子模块内自带 <code>ARCHITECTURE.md</code>。注意其“连接性 0% / 尚无 Rust 绑定“的旧结论<strong>已过时</strong>：in-tree crate <strong><code>ws63-rf-rs</code> 现已实现 porting 契约</strong>（osal/oal/log/uapi/frw/hcc + 协作调度器 + 软件计时器 + netif→smoltcp 桥）。完整 init closure 现在由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验 section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已通过 <code>wifi_init</code>，并由主动扫描返回 32 个 AP；当前边界是尚未完成关联与 IP 连通性。</p>
+<p>子模块内自带 <code>ARCHITECTURE.md</code>。其中早期“连接性 0% / 尚无 Rust 绑定”的结论已经
+过时：<code>ws63-rf-rs</code> 已实现 WS63 porting/ABI adapter，调度与 IPC 已下沉到
+<code>hisi-rf-rtos-driver</code> + <code>hisi-rtos</code>，芯片中立控制面位于独立 <code>hisi-rf</code>。完整 init closure
+由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验
+section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已完成主动扫描、
+WPA2-Personal 关联、DHCP、smoltcp neighbor discovery、公共 ICMP 和 DHCP renew。</p>
 <h2 id="在依赖链中的位置"><a class="header" href="#在依赖链中的位置">在依赖链中的位置</a></h2>
-<p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与 relocation，再由过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现 porting 契约：</p>
+<p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与
+relocation；过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现芯片 adapter，<code>hisi-rf</code> 提供用户控制面和
+L2 device，IP stack 由应用选择 smoltcp 或 Embassy Net：</p>
 <pre><code class="language-mermaid">graph TD
     subgraph 主链["已接入的 Rust 主链"]
         SVD[crates/chips/ws63/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
@@ -214,21 +221,31 @@
         PORT -.接口契约.-&gt; BLOB
     end
     SYS["ws63-radio-sys + hisi-rf-link&lt;br/&gt;ABI / archive / relocation contract"]
-    PLATFORM["ws63-rf-rs（已实现）&lt;br/&gt;osal/oal/log/uapi/frw/hcc + 调度器 + netif→smoltcp"]
+    PLATFORM["ws63-rf-rs&lt;br/&gt;WS63 ABI / OSAL / netif adapter"]
+    DRIVER["hisi-rf-rtos-driver"]
+    RTOS["hisi-rtos"]
+    API["hisi-rf&lt;br/&gt;controller / runner / L2 device"]
+    NET["Application IP stack&lt;br/&gt;smoltcp / Embassy Net"]
     HAL --&gt; PLATFORM
     PORT --&gt; SYS
     SYS --&gt; PLATFORM
+    PLATFORM --&gt; DRIVER
+    DRIVER --&gt; RTOS
+    API --&gt; PLATFORM
+    NET --&gt;|消费 L2 device| API
     PLATFORM --&gt;|实现契约 + 链接 blob| BLOB
     BLOB -.HIL:真机连接性示例.-&gt; EX
 
     classDef done fill:#d5f5d5,stroke:#2a2;
     classDef hil fill:#fff3cd,stroke:#cc9;
-    class SVD,PAC,HAL,EX,RT,PORT,PLATFORM done;
+    class SVD,PAC,HAL,EX,RT,PORT,PLATFORM,DRIVER,RTOS,API,NET done;
     class BLOB hil;
 </code></pre>
 <ul>
 <li><strong>上游</strong>：blob 由 vendor SDK（<code>fbb_ws63</code>，参考实现在 <code>src/drivers/chips/ws63/porting/</code>）编译而来，本仓库只做重分发。</li>
-<li><strong>下游</strong>：blob 的 Wi-Fi/BLE 公开 API 最终供连接性示例调用。中间两层桥<strong>已实现</strong>（<code>ws63-rf-rs</code> 的 porting + FRW/HCC 数据路径）；真正剩下的是真机 HIL（ROM 地址 + 自定义重定位只在硅片上成立）。</li>
+<li><strong>下游</strong>：Wi-Fi 用户入口已经迁到 <code>hisi-rf</code> 的 controller/runner/device vertical slice；
+<code>wifi_init_smoke</code> 在真机通过 WPA2 connect、DHCP、neighbor cache、ICMP 和 renew。
+BLE/SLE/coexistence 仍是后续里程碑，不能由 Wi-Fi 证据外推。</li>
 <li>架构上 WS63 是<strong>单核 RISC-V</strong>（一个自研应用核——核过 fbb_ws63：<code>ch2_system.md</code>「系统提供一个自研 RISC-V 处理器作为主控 CPU」、<code>platform_core.h</code> 标题 <em>Application Core</em>、<code>rom_config/</code> 仅 <code>acore</code>、全 SDK 无 <code>dcore</code>）。Wi-Fi 协议栈的 <strong>HMAC（上层/host MAC）与 DMAC（下层/device MAC）是链接进同一应用镜像的软件库</strong>（<code>libwifi_driver_hmac.a</code> / <code>libwifi_driver_dmac.a</code> 同在 <code>ws63-liteos-app/</code>），都跑在这一颗核上、驱动 Wi-Fi MAC/PHY 硬件。HCC 的 host/device-CPU 语义是 HiSilicon 跨产品线的<strong>通用框架模型</strong>——真正两颗 CPU 是「外接主控 MCU + WS63 模组」拓扑，<strong>不是 WS63 片内有第二颗 RISC-V 核</strong>。（更正：早期 README/本文曾写成「ACORE/DCORE 双核」，不准确。）</li>
 </ul>
 <h2 id="关键设计"><a class="header" href="#关键设计">关键设计</a></h2>
@@ -268,7 +285,9 @@
 <li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
 <li><strong>hisi-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
 </ul>
-<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP C1-C5</a>（WS63 北极星）与 <a href="01-overview.html">overview.md</a>。</p>
+<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">当前 ROADMAP</a>、
+<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/hisi-connectivity-stack.md">A4 connectivity plan</a>
+与 <a href="01-overview.html">overview.md</a>。</p>
 
                     </main>
 
