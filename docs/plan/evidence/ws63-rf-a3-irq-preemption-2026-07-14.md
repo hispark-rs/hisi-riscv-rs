@@ -9,8 +9,9 @@ Embassy integration.
 
 ## Runtime Contract
 
-- The WS63 startup paths call `__hisi_irq_epilogue` only after restoring the
-  interrupted task stack and before restoring its trap frame.
+- The WS63 startup paths call `__hisi_irq_epilogue` on the IRQ stack and pass
+  the interrupted task's saved frame pointer. The epilogue returns the frame
+  that the runtime must restore.
 - DIRECT, dedicated MIE, and local interrupt exits share the contract. NMI and
   exception exits do not invoke it.
 - `hisi-riscv-rt` supplies a linker `PROVIDE` alias to a no-op implementation.
@@ -19,7 +20,8 @@ Embassy integration.
 - `hisi-rtos` switches only when the scheduler is started in Priority mode,
   interrupt nesting depth is zero, the current task is unlocked, and a strictly
   higher-priority task is ready. Scheduler metadata changes occur inside a short
-  critical section; the context switch occurs after leaving it.
+  critical section; the runtime then restores the selected task frame and exits
+  through `mret`.
 
 The final RF ELF resolved the strong and fallback symbols separately:
 
@@ -69,9 +71,14 @@ run-hw: done.
 The WPA2 credential was injected through the build environment and is not
 stored in the repository or evidence record.
 
+## Superseding Evidence
+
+The later unified 272-byte context and timer-preemption implementation supersedes
+the original partial trap-frame mechanism. See
+[A3 unified task-context preemption](ws63-rf-a3-unified-context-2026-07-14.md).
+
 ## Remaining A3 Gates
 
-- TIMER_INT0 deadline/time-slice source and WS63 software-interrupt reschedule;
 - priority inheritance;
-- FP-context, nested-IRQ, timeout, and scheduler stress HIL;
+- nested-IRQ, timeout, and scheduler stress HIL;
 - Embassy thread-mode executor and unique time-driver integration.

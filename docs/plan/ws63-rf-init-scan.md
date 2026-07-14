@@ -72,8 +72,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
   linker 不再参与最终地址决定。长期仍应推动 LLVM/binutils 正式识别 vendor
   relocation，当前 lane 保留 manifest 与布局 fail-closed 保护。
 - 当前真机路径已越过 ROM veneer、cache、task ABI、PMP/shared-memory 和 NV 初始化，
-  UART 稳定输出 `RF2_INIT_OK ifname=wlan0`。任务切换按原厂 LiteOS 契约保存
-  `tp`、`mstatus` 和 `fcsr`，ROM FRW/HMAC 实现保持复用。
+  UART 稳定输出 `RF2_INIT_OK ifname=wlan0`。原厂 LiteOS 仅作为行为 oracle；当前
+  `hisi-rtos` 使用统一 272-byte context 保存 `tp`、`mstatus`、完整 GPR/FPR 和 `fcsr`，
+  不引入 LiteOS backend。ROM FRW/HMAC 实现保持复用。
 - C ABI 对抗审计还修正了两个会静默破坏 init 的问题：tsensor 改回
   `int8_t *` 输出参数 + status 返回；删除一参数 Rust `frw_rom_cb_register` stub，最终
   ELF 已校验该符号解析到官方 mask-ROM `0x128d4a`。完整构建脚本会持续检查该地址。

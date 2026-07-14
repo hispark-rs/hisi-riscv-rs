@@ -97,6 +97,11 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 - `hisi-rtos` 提供 thread-mode Embassy executor 和唯一的 Embassy time driver。
   HAL 现有 time driver 保留一个 minor 的 deprecated 迁移窗；外设 async traits
   继续属于 HAL。
+- 原厂 WS63 LiteOS 只作为 task-context、调度和 IRQ 行为 oracle，不进入产品依赖图，
+  也不建立或维护 LiteOS backend。`hisi-rtos` 是唯一 native backend；
+  `ws63-radio-sys`/WS63 ABI shim 只把 blob 实际引用的 `LOS_`/`osal_` 符号映射到
+  `hisi-rf-rtos-driver` 小能力契约。该符号集合由 `nm -u`/link manifest 固定，新增
+  未满足符号必须使 CI 失败。
 - scheduler/IPC 对 blob 的入口只通过 `hisi-rf-rtos-driver` 注册宏导出的固定
   Rust ABI；链接到零个或多个实现都必须失败。
 
@@ -456,8 +461,13 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   RISC-V MachineSoft。SVD/PAC `device.x`、默认与实验 runtime 向量表、命名 handler 均已
   对齐；两次 nRST 都得到 `mcause=0x80000024` 且清中断后状态归零。证据见
   [A3 software interrupt routing](evidence/ws63-rf-a3-software-interrupt-2026-07-14.md)。
-- [ ] TIMER_INT0 + software-interrupt time slicing/budget enforcement、priority inheritance、
-  FP/nested-IRQ stress HIL 与 Embassy time/executor integration 尚未完成；这些 gate 全部
+- [x] TIMER_INT0 one-shot deadline/time slice 与 SOFT_INT0 deferred reschedule 已使用统一
+  272-byte `TaskContext` ABI；interrupt 保存完整 GPR/FPR，cooperative 路径只刷新 ABI
+  callee-saved 槽，所有 restore 统一走 `mret`。`rtos_preemption` 连续三次真机得到
+  `timer_irqs=101`、`slice_preemptions=101`、`software_irqs=2`、`fp_failures=0`。
+  证据见 [A3 unified task-context preemption](evidence/ws63-rf-a3-unified-context-2026-07-14.md)。
+- [ ] budget enforcement、priority inheritance、nested-IRQ/timeout stress HIL 与 Embassy
+  time/executor integration 尚未完成；这些 gate 全部
   通过前，A3 不得标记完成。
 
 ### B0-B3 -- BLE Vendor Host First

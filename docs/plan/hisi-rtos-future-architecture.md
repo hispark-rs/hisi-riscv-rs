@@ -30,6 +30,11 @@ Embassy app    -> hisi-rtos-embassy -> Embassy executor
 通过 adapter 与 RTOS thread/time 共存，不重写 async executor。Ariel OS 作为上层 library
 OS、网络和跨 MCU 集成入口；本项目不重复建设它已有的通用网络、CoAP、传感器和应用生成体验。
 
+原厂 LiteOS 只提供芯片对应版本的行为/汇编 oracle，不是可替换 backend，也不进入产品
+依赖图。不同芯片的 LiteOS port、libc、allocator、IRQ 和 linker contract 不一致，维护
+完整兼容 backend 会无边界扩张。`hisi-rtos` 是唯一 native backend；芯片 ABI shim 只映射
+blob 实际引用且由未解析符号 manifest 固定的小集合。
+
 ## Execution Model
 
 必须分离三个概念：
@@ -72,7 +77,7 @@ enum RunPolicy {
 | `hisi-rtos-port-riscv` | RISC-V arch context/trap/syscall mechanism。 |
 | `hisi-rtos-port-ws63` | WS63 timer/software IRQ 和 flat platform policy。 |
 | `hisi-rtos-port-hi3322` | Hi3322 PMP/TES/TEE/SMP platform policy。 |
-| `hisi-rtos-embassy` | Embassy executor/time adapter，不重写 executor。 |
+| `hisi-rtos-embassy` | Embassy executor/time adapter，不重写 executor；HAL 只保留外设 async traits 与底层 timer/IRQ mechanism。 |
 | `hisi-rtos-host` | deterministic/native host backend。 |
 | `hisi-rtos-trace` | snapshot/trace schema 与 observation hooks。 |
 | `hisi-rtos-macros` | 静态 manifest/task/domain 声明的受控生成。 |
@@ -145,4 +150,3 @@ F1-F10 不进入当前 RF connectivity release gate。尤其不在 ping baseline
 - 不把 IP stack、TLS、NVS、ROM、image format 或 radio protocol 收进 kernel。
 - 不把 WS63 logical domain 描述为安全隔离。
 - 不因未来微内核规划扩大当前 RF 任务范围或阻塞 connectivity parity。
-
