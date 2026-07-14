@@ -378,8 +378,11 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      event queue overflow；这证明 source/lifecycle closure，不证明 driver path 已可连接。
      `ws63-radio-sys` commit `59d5ce0` 进一步把 opaque context 的 size 与 alignment 都纳入
      C/Rust ABI；父仓 commit `b7fc6df4e` 增加 fail-closed RAII owner，保证 create/init
-     失败和正常 Drop 都按 `destroy -> free` 顺序回收。该 owner 目前尚未由唯一
-     `RadioRunner` 实例化，因此这里只算 ownership closure，不算 runtime/event-loop gate。
+     失败和正常 Drop 都按 `destroy -> free` 顺序回收。`hisi-rf` commit `b357aff` 与父仓
+     commit `6dd01ba43` 又增加默认兼容的 backend `poll` contract：WS63 upstream backend
+     在 initialize 时创建 owner，并只由唯一 `RadioRunner::run_once` 推进 bounded work。
+     当前 `wifi_init_smoke --features upstream-supplicant` 仍选择 scan-only 分支，尚未在真机
+     实例化该 backend，因此这里算 ownership/runner code closure，不算 runtime/event-loop gate。
      父仓 commit `35f706295` 已把 hook 注册接入
      scan-only `Wifi::initialize`，并以统一 WAL boundary 实现 live netif MAC（fallback command
      9）、EAPOL TX（command 5）、management TX（command 4）和 new/set/delete key
