@@ -45,6 +45,7 @@ FINAL_MAP="${WS63_RF_FINAL_MAP:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-lld-final.map
 MANIFEST="${WS63_RF_PATCH_MANIFEST:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-lld-patched-relocs.jsonl}"
 TASK_PROFILE_REPORT="${WS63_RF_TASK_PROFILE_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-task-profile.json}"
 FEATURES="${WS63_RF_FEATURES:-full-init}"
+WPA_PROFILE=""
 LAYOUT_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$LAYOUT_MAP"
 FINAL_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
 
@@ -55,11 +56,20 @@ done < <("$RF_LINK" archive-paths wifi "$RF_DIR")
 WPA_ARCHIVE=""
 
 case ",$FEATURES," in
-  *,wpa,*)
+  *,wpa,*wpa3,*|*,wpa3,*wpa,*)
+    echo "ERROR: select exactly one of the wpa or wpa3 firmware features" >&2
+    exit 1
+    ;;
+  *,wpa3,*) WPA_PROFILE="wpa3-personal" ;;
+  *,wpa,*) WPA_PROFILE="wpa2-personal" ;;
+esac
+
+case "$WPA_PROFILE" in
+  wpa2-personal|wpa3-personal)
     SDK_APP_OUT="${WS63_SDK_APP_OUT:-/Users/sanchuan/Documents/hispark/fbb_ws63/src/output/ws63/acore/ws63-liteos-app}"
     WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-}"
     test -n "$WPA_ARCHIVE" || {
-      echo "ERROR: wpa requires the explicit WPA2 profile archive" >&2
+      echo "ERROR: $WPA_PROFILE requires its explicit profile archive" >&2
       echo "Set WS63_WPA_ARCHIVE to the WPA archive selected by the radio profile" >&2
       echo "Build it with chips/ws63/rf/tools/build-wpa2-personal.py" >&2
       exit 1
@@ -69,19 +79,24 @@ case ",$FEATURES," in
       exit 1
     }
     EXPECTED_WPA_SHA="$({
-      "$PYTHON" - "$TASK_PROFILE" <<'PY'
+      "$PYTHON" - "$TASK_PROFILE" "$WPA_PROFILE" <<'PY'
 import pathlib
 import sys
 import tomllib
 
 profile = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
+profile_name = sys.argv[2]
+artifact_id = {
+    "wpa2-personal": "wpa2-personal-oracle",
+    "wpa3-personal": "wpa3-personal-candidate",
+}[profile_name]
 matches = [
     artifact["sha256"]
     for artifact in profile["artifacts"]
-    if artifact["id"] == "wpa2-personal-oracle"
+    if artifact["id"] == artifact_id
 ]
 if len(matches) != 1:
-    raise SystemExit("task profile must define exactly one wpa2-personal-oracle")
+    raise SystemExit(f"task profile must define exactly one {artifact_id}")
 print(matches[0])
 PY
     })"
@@ -95,7 +110,7 @@ PY
     }
     while IFS= read -r archive; do
       LIBS+=("$archive")
-    done < <("$RF_LINK" archive-paths wpa "$SDK_APP_OUT" "$WPA_ARCHIVE")
+    done < <("$RF_LINK" archive-paths wpa "$SDK_APP_OUT" "$WPA_ARCHIVE" "$WPA_PROFILE")
     ;;
 esac
 
@@ -221,23 +236,32 @@ rename_wpa_diag_symbols() {
   (
     cd "$work"
     "$LLVM_AR" x "$archive"
-    test -f 007-eloop_rtos.o
+    local eloop
+    mapfile -t members < <(find . -maxdepth 1 -type f -name '*-eloop_rtos.o' -print)
+    test "${#members[@]}" -eq 1
+    eloop="${members[0]#./}"
     "$LLVM_OBJCOPY" \
       --redefine-sym eloop_post_event=__ws63_vendor_eloop_post_event \
       --redefine-sym eloop_read_event=__ws63_vendor_eloop_read_event \
-      007-eloop_rtos.o 007-eloop_rtos.o.rewritten
-    mv 007-eloop_rtos.o.rewritten 007-eloop_rtos.o
-    test -f 000-driver_soc.o
+      "$eloop" "$eloop.rewritten"
+    mv "$eloop.rewritten" "$eloop"
+    local driver_soc
+    mapfile -t members < <(find . -maxdepth 1 -type f -name '*-driver_soc.o' -print)
+    test "${#members[@]}" -eq 1
+    driver_soc="${members[0]#./}"
     "$LLVM_OBJCOPY" \
       --globalize-symbol drv_soc_driver_event_process \
       --globalize-symbol drv_soc_driver_ap_event_process \
-      000-driver_soc.o 000-driver_soc.o.rewritten
-    mv 000-driver_soc.o.rewritten 000-driver_soc.o
-    test -f 044-events.o
+      "$driver_soc" "$driver_soc.rewritten"
+    mv "$driver_soc.rewritten" "$driver_soc"
+    local events
+    mapfile -t members < <(find . -maxdepth 1 -type f -name '*-events.o' -print)
+    test "${#members[@]}" -eq 1
+    events="${members[0]#./}"
     "$LLVM_OBJCOPY" \
       --redefine-sym wpa_supplicant_event=__ws63_vendor_wpa_supplicant_event \
-      044-events.o 044-events.o.rewritten
-    mv 044-events.o.rewritten 044-events.o
+      "$events" "$events.rewritten"
+    mv "$events.rewritten" "$events"
     local members=()
     while IFS= read -r member; do members+=("$member"); done < members.txt
     "$LLVM_AR" rcs "$rewritten" "${members[@]}"
@@ -344,12 +368,12 @@ prepare_rf_diag_sources() {
     *,rf-init-diag,*) rename_rf_diag_symbol "$DIAG_SOURCE_DIR" ;;
   esac
   case ",$FEATURES," in
-    *,wpa,*) rename_wpa_libc_conflicts "$DIAG_SOURCE_DIR" ;;
+    *,wpa,*|*,wpa3,*) rename_wpa_libc_conflicts "$DIAG_SOURCE_DIR" ;;
   esac
   case ",$FEATURES," in
     *,rf-init-diag,*|*,rf-eloop-diag,*)
       case ",$FEATURES," in
-        *,wpa,*) rename_wpa_diag_symbols "$DIAG_SOURCE_DIR" ;;
+        *,wpa,*|*,wpa3,*) rename_wpa_diag_symbols "$DIAG_SOURCE_DIR" ;;
       esac
       ;;
   esac
@@ -454,6 +478,9 @@ verify_rom_symbol frw_rom_cb_register
 echo
 echo "== generate archive-bound task profile report =="
 TASK_PROFILE_ARGS=(--elf "$LAYOUT_ELF")
+if [ -n "$WPA_PROFILE" ]; then
+  TASK_PROFILE_ARGS+=(--wpa-profile "$WPA_PROFILE")
+fi
 if [ -n "${WS63_RF_TASK_LOG:-}" ]; then
   TASK_PROFILE_ARGS+=(--log "$WS63_RF_TASK_LOG")
 fi
