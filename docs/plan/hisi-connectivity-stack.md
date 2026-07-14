@@ -413,9 +413,26 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      WPA2 parity 收口见
      [W2E upstream WPA2 parity](evidence/ws63-rf-w2e-upstream-wpa2-parity-2026-07-14.md)。
    - **W2E Parity HIL（部分完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
-     ARP、重复 ping 和 lease-renew marker。剩余 gate 是 host EAPOL/RSNE/SAE/PMF golden
-     vectors 或 pcap replay、受控 WPA3-only AP 的 SAE+PMF，以及 WPA2/WPA3 transition
-     mode HIL。当前 Guest AP 仅提供 WPA2 parity，不能替代 pure WPA3 HIL。
+     ARP、重复 ping 和 lease-renew marker。host gate 已在固定 hostap 2.11 上覆盖 WPA2
+     PMK-to-PTK、EAPOL M2 MIC、WPA2/WPA3/transition RSNE 与 PMF、SAE group 19 HnP/H2E
+     双端 roundtrip，并重放 upstream 的 5 个 SAE corpus fixtures；证据见
+     [W2E host protocol vectors](evidence/ws63-rf-w2e-host-protocol-vectors-2026-07-15.md)。
+     剩余行为 gate 是受控 WPA3-only AP 的 SAE+PMF，以及 WPA2/WPA3 transition mode HIL。
+     当前 Guest AP 仅提供 WPA2 parity，不能替代 pure WPA3 HIL。
+   - **W2E-H Handshake crypto acceleration（未完成，WPA3 stable gate）**：当前
+     upstream-native profile 显式使用 RustCrypto SHA/HMAC/AES/PBKDF2 与 WS63 TRNG；它是
+     行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition
+     行为 HIL 可以先使用该显式软件/混合 profile，但 WPA3-SAE 进入 stable 前必须按
+     `PBKDF2-HMAC-SHA1 -> SHA/HMAC -> AES key-wrap/CMAC -> SAE P-256/Dragonfly` 的顺序逐项
+     迁移到 WS63 硬件能力。依赖固定为
+     `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
+     supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
+     backend 必须在构造、feature 或资源注入时显式选择 software、hardware 或准确标注的
+     mixed `CryptoSuite`，硬件失败后禁止静默回退 RustCrypto。硬件引擎由独占 token 管理，
+     每次操作有有界 timeout，且不得在 IRQ、critical section 或 scheduler lock 中等待。
+     CCMP 数据面继续由 MAC/DMAC 执行，禁止把逐包加解密搬到 CPU。每项迁移都必须具备
+     标准向量、RustCrypto/原厂差分、timeout 与错误恢复、重复握手 HIL，以及性能、栈和
+     代码尺寸对比；各项证据闭合前只能声明具体已加速能力，不能给出笼统硬件加速承诺。
    - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 LiteOS glue
      保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认路径并删除
      `litos.rs`/`wpa_compat.rs`。之后按既定兼容窗口退役 `ws63-rf-rs` facade，但不得因架构
@@ -599,6 +616,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   backend 不得把每次随机读取直接映射为同步 TRNG 调用。
 - [ ] 每个新增硬件 hash/MAC/AES/AEAD 能力必须同时具备标准向量、错误注入、timeout、
   独占冲突和真机 HIL；只有语义严格匹配时才提供对应 RustCrypto trait adapter。
+- [ ] WPA 握手按 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC、SAE P-256/Dragonfly
+  顺序迁移；每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码尺寸。CCMP
+  数据面保持 MAC/DMAC offload。该 gate 不阻塞 upstream 行为 parity，但阻塞 WPA3-SAE
+  stable 声明。
 
 #### A2 progress
 
@@ -752,14 +773,16 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 ## Verification
 
-W2 的六个 security/migration gate 按顺序为：
+W2 的七个 security/migration gate 按顺序为：
 
 1. upstream tag/commit/tarball hash 固定并通过 CVE/source radar；
 2. C/Rust shim 的 size/offset/calling-convention/required-symbol drift gate；
 3. host EAPOL/RSNE/SAE/PMF golden vectors 或 pcap replay；
 4. upstream-native WPA2 connect/DHCP/ARP/repeated-ping/lease-renew parity HIL；
 5. WPA3-only SAE+PMF 与 WPA2/WPA3 transition-mode HIL；
-6. old vendor archive/LiteOS glue 保留一个 migration release 后退出默认路径，且 hostap
+6. 按 W2E-H 顺序完成握手密码学硬件迁移；显式软件/mixed profile 可先用于行为验证，但
+   WPA3-SAE stable 前必须闭合对应硬件证据；
+7. old vendor archive/LiteOS glue 保留一个 migration release 后退出默认路径，且 hostap
    安全更新不要求修改 `hisi-rf` 公共 API。
 
 通用组件验证继续分为：
