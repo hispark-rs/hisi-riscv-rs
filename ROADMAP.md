@@ -19,16 +19,19 @@ Current work is limited to four outcomes:
 
 1. **Network reliability attribution:** run 3-5 pings per reset, record TX/RX,
    RTT, drops, and loss rate, and compare gateway behavior with a reference host.
-   C5 capability proof is complete; the current 18/20 public-ping result is a
-   data-plane reliability risk, not an authentication regression.
-2. **Q3 archive-bound task profile:** record only tasks created by the pinned
-   archive, including archive hash, entry symbol, vendor priority, Q2 metrics,
-   and `critical`/`worker`/`background`/`unknown` role. Classification does not
-   imply a policy change.
-3. **Q4 decision:** use Q2 evidence to decide whether any task needs a per-thread
-   `Budgeted` policy. If Cooperative remains stable, record that group quota is
-   currently unnecessary. Reservation is not implemented without a measured
-   service guarantee requirement.
+   The current 20-reset matrix completed association/DHCP/ARP 20/20 and returned
+   88/100 public replies, but the 12% loss and gateway 0/100 remain a data-plane
+   reliability risk, not an authentication regression. The next diagnostic is
+   RX queue-full accounting; the available host is not on the AP's L2 network.
+2. **Q3 archive-bound task profile (complete for the pinned payload):** record
+   only tasks created by the pinned archive, including archive hash, entry
+   symbol, vendor priority, Q2 metrics, and
+   `critical`/`worker`/`background`/`unknown` role. Classification does not imply
+   a policy change.
+3. **Q4 decision (complete for the pinned payload):** Q2 found no runaway vendor
+   task, so all current tasks remain Cooperative and no group quota is added.
+   Reservation is not implemented without a measured service guarantee
+   requirement. A payload or task-set change reopens this decision.
 4. **Freeze A3:** preserve reset statistics, scheduler invariants, versions,
    submodule pointers, profile revision, and the resulting quota decision.
 

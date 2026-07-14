@@ -29,16 +29,16 @@ milestone 是 A3 closeout；A3 冻结后才切换到 A4 Wi-Fi vertical slice。
 
 ### NOW -- A3 Closeout
 
-1. 将每轮单次 ping 扩为 3-5 次，记录 TX/RX/RTT/drop/loss，并用同网络 reference host
-   归因 gateway ICMP `0/20`。C5 已证明能力存在；公网 ping `18/20` 只作为数据面可靠性
-   风险，不回写成认证失败。
-2. 完成 Q3 archive-bound task profile：只记录当前真实生成的 vendor task，以 archive
-   hash、entry symbol、vendor priority、Q2 metrics 和
+1. 已将每轮单次 ping 扩为每个目标 5 次；20 次 nRST 得到 WPA2/DHCP/ARP 20/20、
+   公网 `88/100`、gateway `0/100`。当前主机不在 AP 的 L2 网络，gateway 行为尚不能归因；
+   下一步先补 RX queue-full/drop 统计，再重复矩阵。该风险不回写成认证失败。
+2. Q3 archive-bound task profile 已对当前 payload 闭合：只记录真实生成的 vendor task，
+   以 archive hash、entry symbol、vendor priority、Q2 metrics 和
    `critical`/`worker`/`background`/`unknown` 角色绑定事实。角色未知时必须保持
    `unknown`；profile 第一阶段不改变 runtime policy。
-3. 输出 Q4 决策：按 Q2 数据判断是否需要 per-thread `Budgeted`。若 Cooperative 已稳定，
-   明确记录“当前不需要 group quota”；没有 measured minimum-service demand 时不实施
-   Reservation。
+3. Q4 已按 Q2 数据作出当前 payload 的显式决策：所有 vendor task 保持 Cooperative，
+   不启用 per-thread `Budgeted` 或 group quota；没有 measured minimum-service demand，
+   因此不实施 Reservation。payload/task-set 变化时必须重开 Q3/Q4。
 4. 冻结 reset matrix、调度不变量、版本、submodule pointer、profile revision 和 quota
    decision。完成定义只有四项：调度不变量稳定、RF 连接矩阵稳定、task profile 有事实
    记录、quota 是否需要已有明确结论。
@@ -537,16 +537,22 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   竞态；20 次 unchanged-image nRST 得到 scan/connect/DHCP 20/20、`0x1451` 0/20、
   exception 0/20，且每轮都实际命中 6--16 次恢复路径。证据见
   [A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
-- [ ] Q3-Q4 仍是 A3 gate：按 archive hash 将 vendor task 分类为
-  critical/worker/background/unknown，再以 Q2 数据决定 per-thread/group quota。完成前
-  不引入或承诺 Reservation。当前公网 ping 为 18/20，作为独立数据面可靠性风险继续
-  跟踪，不回写成认证失败。
-- [ ] Q3 的机器事实源已开始落地：`ws63-radio-sys` 的
+- [x] Q3 已按 archive hash 将当前四个 vendor task 分类为 critical/worker；application
+  main、idle 和 Rust timer worker 因非 archive-owned 而保持 `unknown`。20 次 HIL 的
+  exact-symbol/address join、Q2 指标和 final ELF hash 均一致。证据见
+  [A3 task profile and multi-ping](evidence/ws63-rf-a3-task-profile-multiping-2026-07-14.md)。
+- [x] Q4 已完成当前 payload 决策：20 轮中 vendor task 最大连续运行 37 ms、最大 ready
+  latency 38 ms，没有证据要求 CPU cap；保持 Cooperative，不引入 per-thread Budgeted、
+  group quota 或 Reservation。payload/task-set/Q2 证据变化时重开。
+- [x] Q3 的机器事实源已落地：`ws63-radio-sys` 的
   `profiles/ws63-scheduling.toml` 以 payload revision、archive/ROM SHA-256、entry symbol
   和 vendor priority 记录 observed task role，未匹配 entry 必须为 `unknown`。当前 profile
   不改变 runtime policy；`hisi-rf-link task-profile` 已把 final ELF SHA/symbol 与可选 Q2
-  UART metrics 合并为 versioned JSON，guarded link 自动生成报告。角色到 policy 的显式
-  映射和 HIL parity 完成前，Q3 仍保持未完成。
+  UART metrics 合并为 versioned JSON，guarded link 自动生成报告。当前四个 vendor task
+  已在 20/20 报告中精确匹配；profile 角色不自动映射为 policy。
+- [ ] A3 连接可靠性仍未闭合：当前矩阵为公网 `88/100`（12% loss）、gateway `0/100`，
+  且 RX ring 满时仍会静默丢帧。先补 queue drop/high-water 诊断并重复 HIL；没有同 L2
+  reference host 前，不把 gateway 行为归因给 AP。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。

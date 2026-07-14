@@ -1,0 +1,933 @@
+{
+  "port": "/dev/cu.wchusbserial11130",
+  "baud": 115200,
+  "profile": "rust",
+  "stage": "connectivity",
+  "runs": 20,
+  "timeout_seconds": 35.0,
+  "post_terminal_seconds": 1.5,
+  "counts": {
+    "ping_degraded": 8,
+    "pass": 12
+  },
+  "ping_totals": {
+    "192.168.155.1": {
+      "tx": 100,
+      "rx": 0,
+      "drop": 100,
+      "tx_error": 0,
+      "loss_pct": 100
+    },
+    "1.1.1.1": {
+      "tx": 100,
+      "rx": 88,
+      "drop": 12,
+      "tx_error": 0,
+      "loss_pct": 12
+    }
+  },
+  "auth_rsp2_timeouts": 0,
+  "reference_ping": null,
+  "records": [
+    {
+      "run": 1,
+      "result": "ping_degraded",
+      "bytes": 10285,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 566,
+          "rtt_avg_ms": 672,
+          "rtt_max_ms": 734
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.722,
+        "RF2_INIT_OK": 0.926,
+        "RF3_SCAN_OK": 1.937,
+        "RF5B_CONNECT_BEGIN": 1.937,
+        "RF5B_WPA_CONNECT_OK": 2.142,
+        "RF5A_DHCP_OK": 2.142,
+        "RF5A_ARP_OK": 2.142,
+        "RF5C_PING_SERIES_BEGIN": 2.142,
+        "RF5C_PING_OK": 7.535,
+        "RF5C_CONNECTIVITY_SUMMARY": 7.535
+      },
+      "log": "run-01.uart.log"
+    },
+    {
+      "run": 2,
+      "result": "ping_degraded",
+      "bytes": 10253,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 3,
+          "drop": 2,
+          "tx_error": 0,
+          "loss_pct": 40,
+          "rtt_min_ms": 723,
+          "rtt_avg_ms": 732,
+          "rtt_max_ms": 740
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.778,
+        "RF2_INIT_OK": 0.778,
+        "RF3_SCAN_OK": 1.592,
+        "RF5B_CONNECT_BEGIN": 1.797,
+        "RF5B_WPA_CONNECT_OK": 1.999,
+        "RF5A_DHCP_OK": 1.999,
+        "RF5A_ARP_OK": 1.999,
+        "RF5C_PING_SERIES_BEGIN": 1.999,
+        "RF5C_PING_OK": 7.696,
+        "RF5C_CONNECTIVITY_SUMMARY": 7.696
+      },
+      "log": "run-02.uart.log"
+    },
+    {
+      "run": 3,
+      "result": "ping_degraded",
+      "bytes": 10172,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 1,
+          "drop": 4,
+          "tx_error": 0,
+          "loss_pct": 80,
+          "rtt_min_ms": 714,
+          "rtt_avg_ms": 714,
+          "rtt_max_ms": 714
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.616,
+        "RF2_INIT_OK": 0.821,
+        "RF3_SCAN_OK": 1.636,
+        "RF5B_CONNECT_BEGIN": 1.836,
+        "RF5B_WPA_CONNECT_OK": 1.836,
+        "RF5A_DHCP_OK": 2.038,
+        "RF5A_ARP_OK": 2.038,
+        "RF5C_PING_SERIES_BEGIN": 2.038,
+        "RF5C_PING_OK": 7.947,
+        "RF5C_CONNECTIVITY_SUMMARY": 8.148
+      },
+      "log": "run-03.uart.log"
+    },
+    {
+      "run": 4,
+      "result": "pass",
+      "bytes": 10586,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 259,
+          "rtt_avg_ms": 271,
+          "rtt_max_ms": 294
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.592,
+        "RF2_INIT_OK": 0.797,
+        "RF3_SCAN_OK": 1.815,
+        "RF5B_CONNECT_BEGIN": 1.815,
+        "RF5B_WPA_CONNECT_OK": 2.02,
+        "RF5A_DHCP_OK": 2.02,
+        "RF5A_ARP_OK": 2.02,
+        "RF5C_PING_SERIES_BEGIN": 2.02,
+        "RF5C_PING_OK": 6.113,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.113
+      },
+      "log": "run-04.uart.log"
+    },
+    {
+      "run": 5,
+      "result": "pass",
+      "bytes": 10431,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 258,
+          "rtt_avg_ms": 267,
+          "rtt_max_ms": 295
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.778,
+        "RF2_INIT_OK": 0.778,
+        "RF3_SCAN_OK": 1.799,
+        "RF5B_CONNECT_BEGIN": 1.799,
+        "RF5B_WPA_CONNECT_OK": 2.004,
+        "RF5A_DHCP_OK": 7.907,
+        "RF5A_ARP_OK": 8.111,
+        "RF5C_PING_SERIES_BEGIN": 8.111,
+        "RF5C_PING_OK": 11.964,
+        "RF5C_CONNECTIVITY_SUMMARY": 11.964
+      },
+      "log": "run-05.uart.log"
+    },
+    {
+      "run": 6,
+      "result": "pass",
+      "bytes": 10378,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 255,
+          "rtt_avg_ms": 304,
+          "rtt_max_ms": 447
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.602,
+        "RF2_INIT_OK": 0.803,
+        "RF3_SCAN_OK": 1.821,
+        "RF5B_CONNECT_BEGIN": 1.821,
+        "RF5B_WPA_CONNECT_OK": 2.027,
+        "RF5A_DHCP_OK": 2.027,
+        "RF5A_ARP_OK": 2.027,
+        "RF5C_PING_SERIES_BEGIN": 2.027,
+        "RF5C_PING_OK": 6.084,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.084
+      },
+      "log": "run-06.uart.log"
+    },
+    {
+      "run": 7,
+      "result": "pass",
+      "bytes": 10447,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 261,
+          "rtt_avg_ms": 269,
+          "rtt_max_ms": 279
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.785,
+        "RF2_INIT_OK": 0.785,
+        "RF3_SCAN_OK": 1.601,
+        "RF5B_CONNECT_BEGIN": 1.806,
+        "RF5B_WPA_CONNECT_OK": 2.009,
+        "RF5A_DHCP_OK": 2.009,
+        "RF5A_ARP_OK": 2.009,
+        "RF5C_PING_SERIES_BEGIN": 2.009,
+        "RF5C_PING_OK": 6.077,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.077
+      },
+      "log": "run-07.uart.log"
+    },
+    {
+      "run": 8,
+      "result": "ping_degraded",
+      "bytes": 10233,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 254,
+          "rtt_avg_ms": 266,
+          "rtt_max_ms": 274
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.569,
+        "RF2_INIT_OK": 0.774,
+        "RF3_SCAN_OK": 1.795,
+        "RF5B_CONNECT_BEGIN": 1.795,
+        "RF5B_WPA_CONNECT_OK": 2.0,
+        "RF5A_DHCP_OK": 2.0,
+        "RF5A_ARP_OK": 2.0,
+        "RF5C_PING_SERIES_BEGIN": 2.0,
+        "RF5C_PING_OK": 6.483,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.483
+      },
+      "log": "run-08.uart.log"
+    },
+    {
+      "run": 9,
+      "result": "ping_degraded",
+      "bytes": 10419,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 258,
+          "rtt_avg_ms": 263,
+          "rtt_max_ms": 270
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.781,
+        "RF2_INIT_OK": 0.781,
+        "RF3_SCAN_OK": 1.597,
+        "RF5B_CONNECT_BEGIN": 1.797,
+        "RF5B_WPA_CONNECT_OK": 1.797,
+        "RF5A_DHCP_OK": 1.999,
+        "RF5A_ARP_OK": 1.999,
+        "RF5C_PING_SERIES_BEGIN": 1.999,
+        "RF5C_PING_OK": 6.283,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.484
+      },
+      "log": "run-09.uart.log"
+    },
+    {
+      "run": 10,
+      "result": "pass",
+      "bytes": 10137,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 259,
+          "rtt_avg_ms": 267,
+          "rtt_max_ms": 274
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.773,
+        "RF2_INIT_OK": 0.773,
+        "RF3_SCAN_OK": 1.584,
+        "RF5B_CONNECT_BEGIN": 1.784,
+        "RF5B_WPA_CONNECT_OK": 1.784,
+        "RF5A_DHCP_OK": 1.989,
+        "RF5A_ARP_OK": 1.989,
+        "RF5C_PING_SERIES_BEGIN": 1.989,
+        "RF5C_PING_OK": 5.845,
+        "RF5C_CONNECTIVITY_SUMMARY": 5.845
+      },
+      "log": "run-10.uart.log"
+    },
+    {
+      "run": 11,
+      "result": "pass",
+      "bytes": 10299,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 261,
+          "rtt_avg_ms": 266,
+          "rtt_max_ms": 271
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.775,
+        "RF2_INIT_OK": 0.775,
+        "RF3_SCAN_OK": 1.793,
+        "RF5B_CONNECT_BEGIN": 1.793,
+        "RF5B_WPA_CONNECT_OK": 1.995,
+        "RF5A_DHCP_OK": 1.995,
+        "RF5A_ARP_OK": 1.995,
+        "RF5C_PING_SERIES_BEGIN": 1.995,
+        "RF5C_PING_OK": 6.057,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.057
+      },
+      "log": "run-11.uart.log"
+    },
+    {
+      "run": 12,
+      "result": "pass",
+      "bytes": 10595,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 257,
+          "rtt_avg_ms": 262,
+          "rtt_max_ms": 277
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.773,
+        "RF2_INIT_OK": 0.773,
+        "RF3_SCAN_OK": 1.797,
+        "RF5B_CONNECT_BEGIN": 1.797,
+        "RF5B_WPA_CONNECT_OK": 1.997,
+        "RF5A_DHCP_OK": 1.997,
+        "RF5A_ARP_OK": 1.997,
+        "RF5C_PING_SERIES_BEGIN": 1.997,
+        "RF5C_PING_OK": 6.05,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.05
+      },
+      "log": "run-12.uart.log"
+    },
+    {
+      "run": 13,
+      "result": "pass",
+      "bytes": 10279,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 259,
+          "rtt_avg_ms": 262,
+          "rtt_max_ms": 268
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.762,
+        "RF2_INIT_OK": 0.762,
+        "RF3_SCAN_OK": 1.576,
+        "RF5B_CONNECT_BEGIN": 1.779,
+        "RF5B_WPA_CONNECT_OK": 1.984,
+        "RF5A_DHCP_OK": 1.984,
+        "RF5A_ARP_OK": 1.984,
+        "RF5C_PING_SERIES_BEGIN": 1.984,
+        "RF5C_PING_OK": 5.838,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.038
+      },
+      "log": "run-13.uart.log"
+    },
+    {
+      "run": 14,
+      "result": "pass",
+      "bytes": 10808,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 261,
+          "rtt_avg_ms": 268,
+          "rtt_max_ms": 278
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.776,
+        "RF2_INIT_OK": 0.776,
+        "RF3_SCAN_OK": 1.59,
+        "RF5B_CONNECT_BEGIN": 1.793,
+        "RF5B_WPA_CONNECT_OK": 1.993,
+        "RF5A_DHCP_OK": 1.993,
+        "RF5A_ARP_OK": 1.993,
+        "RF5C_PING_SERIES_BEGIN": 1.993,
+        "RF5C_PING_OK": 6.068,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.068
+      },
+      "log": "run-14.uart.log"
+    },
+    {
+      "run": 15,
+      "result": "pass",
+      "bytes": 10282,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 269,
+          "rtt_avg_ms": 270,
+          "rtt_max_ms": 273
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.833,
+        "RF2_INIT_OK": 0.833,
+        "RF3_SCAN_OK": 1.645,
+        "RF5B_CONNECT_BEGIN": 1.847,
+        "RF5B_WPA_CONNECT_OK": 2.051,
+        "RF5A_DHCP_OK": 7.954,
+        "RF5A_ARP_OK": 8.159,
+        "RF5C_PING_SERIES_BEGIN": 8.159,
+        "RF5C_PING_OK": 12.018,
+        "RF5C_CONNECTIVITY_SUMMARY": 12.018
+      },
+      "log": "run-15.uart.log"
+    },
+    {
+      "run": 16,
+      "result": "pass",
+      "bytes": 10276,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 258,
+          "rtt_avg_ms": 270,
+          "rtt_max_ms": 306
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.806,
+        "RF2_INIT_OK": 0.806,
+        "RF3_SCAN_OK": 1.619,
+        "RF5B_CONNECT_BEGIN": 1.824,
+        "RF5B_WPA_CONNECT_OK": 2.029,
+        "RF5A_DHCP_OK": 7.935,
+        "RF5A_ARP_OK": 7.935,
+        "RF5C_PING_SERIES_BEGIN": 7.935,
+        "RF5C_PING_OK": 11.995,
+        "RF5C_CONNECTIVITY_SUMMARY": 11.995
+      },
+      "log": "run-16.uart.log"
+    },
+    {
+      "run": 17,
+      "result": "ping_degraded",
+      "bytes": 10217,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 258,
+          "rtt_avg_ms": 262,
+          "rtt_max_ms": 265
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.605,
+        "RF2_INIT_OK": 0.809,
+        "RF3_SCAN_OK": 1.624,
+        "RF5B_CONNECT_BEGIN": 1.827,
+        "RF5B_WPA_CONNECT_OK": 2.029,
+        "RF5A_DHCP_OK": 2.029,
+        "RF5A_ARP_OK": 2.029,
+        "RF5C_PING_SERIES_BEGIN": 2.029,
+        "RF5C_PING_OK": 6.296,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.496
+      },
+      "log": "run-17.uart.log"
+    },
+    {
+      "run": 18,
+      "result": "pass",
+      "bytes": 10147,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 5,
+          "drop": 0,
+          "tx_error": 0,
+          "loss_pct": 0,
+          "rtt_min_ms": 259,
+          "rtt_avg_ms": 264,
+          "rtt_max_ms": 279
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.602,
+        "RF2_INIT_OK": 0.807,
+        "RF3_SCAN_OK": 1.621,
+        "RF5B_CONNECT_BEGIN": 1.821,
+        "RF5B_WPA_CONNECT_OK": 1.821,
+        "RF5A_DHCP_OK": 2.022,
+        "RF5A_ARP_OK": 2.022,
+        "RF5C_PING_SERIES_BEGIN": 2.022,
+        "RF5C_PING_OK": 5.893,
+        "RF5C_CONNECTIVITY_SUMMARY": 5.893
+      },
+      "log": "run-18.uart.log"
+    },
+    {
+      "run": 19,
+      "result": "ping_degraded",
+      "bytes": 10130,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 257,
+          "rtt_avg_ms": 265,
+          "rtt_max_ms": 280
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.8,
+        "RF2_INIT_OK": 0.8,
+        "RF3_SCAN_OK": 1.611,
+        "RF5B_CONNECT_BEGIN": 1.812,
+        "RF5B_WPA_CONNECT_OK": 1.812,
+        "RF5A_DHCP_OK": 7.924,
+        "RF5A_ARP_OK": 7.924,
+        "RF5C_PING_SERIES_BEGIN": 7.924,
+        "RF5C_PING_OK": 12.388,
+        "RF5C_CONNECTIVITY_SUMMARY": 12.388
+      },
+      "log": "run-19.uart.log"
+    },
+    {
+      "run": 20,
+      "result": "ping_degraded",
+      "bytes": 10065,
+      "auth_rsp2_timeouts": 0,
+      "ping": {
+        "192.168.155.1": {
+          "status": "timeout",
+          "target": "192.168.155.1",
+          "tx": 5,
+          "rx": 0,
+          "drop": 5,
+          "tx_error": 0,
+          "loss_pct": 100,
+          "rtt_min_ms": 0,
+          "rtt_avg_ms": 0,
+          "rtt_max_ms": 0
+        },
+        "1.1.1.1": {
+          "status": "ok",
+          "target": "1.1.1.1",
+          "tx": 5,
+          "rx": 4,
+          "drop": 1,
+          "tx_error": 0,
+          "loss_pct": 20,
+          "rtt_min_ms": 262,
+          "rtt_avg_ms": 324,
+          "rtt_max_ms": 413
+        }
+      },
+      "marker_seconds": {
+        "RF1_IMAGE_OK": 0.799,
+        "RF2_INIT_OK": 0.799,
+        "RF3_SCAN_OK": 1.813,
+        "RF5B_CONNECT_BEGIN": 1.813,
+        "RF5B_WPA_CONNECT_OK": 2.018,
+        "RF5A_DHCP_OK": 2.018,
+        "RF5A_ARP_OK": 2.018,
+        "RF5C_PING_SERIES_BEGIN": 2.018,
+        "RF5C_PING_OK": 6.496,
+        "RF5C_CONNECTIVITY_SUMMARY": 6.496
+      },
+      "log": "run-20.uart.log"
+    }
+  ]
+}
