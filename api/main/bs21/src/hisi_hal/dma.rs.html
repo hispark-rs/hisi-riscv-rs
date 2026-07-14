@@ -1813,54 +1813,47 @@
 <a href=#1813 id=1813 data-nosnippet>1813</a>        interrupt::clear_pending(Interrupt::DMA_INT);
 <a href=#1814 id=1814 data-nosnippet>1814</a>    }
 <a href=#1815 id=1815 data-nosnippet>1815</a>
-<a href=#1816 id=1816 data-nosnippet>1816</a>    <span class="doccomment">/// Named device.x handler (DMA_INT = IRQ 59): the rt routes the DMA IRQ here by
-<a href=#1817 id=1817 data-nosnippet>1817</a>    /// number, so an async DMA app needs no `mcause` trap.
-<a href=#1818 id=1818 data-nosnippet>1818</a>    </span><span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
-<a href=#1819 id=1819 data-nosnippet>1819</a>    </span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>DMA_INT() {
-<a href=#1820 id=1820 data-nosnippet>1820</a>        on_interrupt();
-<a href=#1821 id=1821 data-nosnippet>1821</a>    }
-<a href=#1822 id=1822 data-nosnippet>1822</a>
-<a href=#1823 id=1823 data-nosnippet>1823</a>    <span class="doccomment">/// A future that resolves once `DMA_SIGNAL[ch]` fires (the ISR signals it when
-<a href=#1824 id=1824 data-nosnippet>1824</a>    /// channel `ch`'s transfer-done bit asserts).
-<a href=#1825 id=1825 data-nosnippet>1825</a>    </span><span class="kw">struct </span>DmaDoneFuture {
-<a href=#1826 id=1826 data-nosnippet>1826</a>        ch: u8,
-<a href=#1827 id=1827 data-nosnippet>1827</a>    }
-<a href=#1828 id=1828 data-nosnippet>1828</a>    <span class="kw">impl </span>Future <span class="kw">for </span>DmaDoneFuture {
-<a href=#1829 id=1829 data-nosnippet>1829</a>        <span class="kw">type </span>Output = ();
-<a href=#1830 id=1830 data-nosnippet>1830</a>        <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;()&gt; {
-<a href=#1831 id=1831 data-nosnippet>1831</a>            <span class="kw">let </span>sig = <span class="kw-2">&amp;</span>DMA_SIGNAL[(<span class="self">self</span>.ch <span class="kw">as </span>usize).min(<span class="number">3</span>)];
-<a href=#1832 id=1832 data-nosnippet>1832</a>            <span class="kw">if </span>sig.take_fired() {
-<a href=#1833 id=1833 data-nosnippet>1833</a>                Poll::Ready(())
-<a href=#1834 id=1834 data-nosnippet>1834</a>            } <span class="kw">else </span>{
-<a href=#1835 id=1835 data-nosnippet>1835</a>                sig.register(cx.waker());
-<a href=#1836 id=1836 data-nosnippet>1836</a>                Poll::Pending
-<a href=#1837 id=1837 data-nosnippet>1837</a>            }
-<a href=#1838 id=1838 data-nosnippet>1838</a>        }
-<a href=#1839 id=1839 data-nosnippet>1839</a>    }
-<a href=#1840 id=1840 data-nosnippet>1840</a>
-<a href=#1841 id=1841 data-nosnippet>1841</a>    <span class="kw">impl </span>DmaDriver&lt;<span class="lifetime">'_</span>, Dma0&gt; {
-<a href=#1842 id=1842 data-nosnippet>1842</a>        <span class="doccomment">/// Await transfer-complete for `channel` (after configuring + enabling it),
-<a href=#1843 id=1843 data-nosnippet>1843</a>        /// then clear its interrupt. Parks on the DMA IRQ (IRQ 59) on hardware; the
-<a href=#1844 id=1844 data-nosnippet>1844</a>        /// per-channel demux means a concurrent transfer on another channel won't
-<a href=#1845 id=1845 data-nosnippet>1845</a>        /// false-wake this one. Silicon-verified: IRQ 59 fires for both mem-to-mem
-<a href=#1846 id=1846 data-nosnippet>1846</a>        /// and peripheral-paced single-block completion (spi_dma_irq59 test).
-<a href=#1847 id=1847 data-nosnippet>1847</a>        </span><span class="kw">pub async fn </span>wait_transfer_done(<span class="kw-2">&amp;mut </span><span class="self">self</span>, channel: <span class="kw-2">&amp;</span><span class="kw">super</span>::DmaChannel) {
-<a href=#1848 id=1848 data-nosnippet>1848</a>            <span class="kw">let </span>channel = channel.logical;
-<a href=#1849 id=1849 data-nosnippet>1849</a>            <span class="kw">let </span>bit = <span class="number">1u8 </span>&lt;&lt; channel; <span class="comment">// Dma0: physical channel == logical channel
-<a href=#1850 id=1850 data-nosnippet>1850</a>            </span><span class="kw">if </span><span class="self">self</span>.raw_interrupt_status().<span class="number">0 </span>&amp; bit == <span class="number">0 </span>{
-<a href=#1851 id=1851 data-nosnippet>1851</a>                DMA_SIGNAL[(channel <span class="kw">as </span>usize).min(<span class="number">3</span>)].reset();
-<a href=#1852 id=1852 data-nosnippet>1852</a>                <span class="comment">// SAFETY: enabling a known, fixed WS63 IRQ line; enable() also raises
-<a href=#1853 id=1853 data-nosnippet>1853</a>                // its LOCIPRI above the reset-0 threshold so it is deliverable.
-<a href=#1854 id=1854 data-nosnippet>1854</a>                </span><span class="kw">unsafe </span>{ interrupt::enable(Interrupt::DMA_INT) };
-<a href=#1855 id=1855 data-nosnippet>1855</a>                <span class="kw">if </span><span class="self">self</span>.raw_interrupt_status().<span class="number">0 </span>&amp; bit == <span class="number">0 </span>{
-<a href=#1856 id=1856 data-nosnippet>1856</a>                    DmaDoneFuture { ch: channel }.<span class="kw">await</span>;
-<a href=#1857 id=1857 data-nosnippet>1857</a>                }
-<a href=#1858 id=1858 data-nosnippet>1858</a>            }
-<a href=#1859 id=1859 data-nosnippet>1859</a>            <span class="self">self</span>.clear_transfer_interrupt_raw(channel);
-<a href=#1860 id=1860 data-nosnippet>1860</a>        }
-<a href=#1861 id=1861 data-nosnippet>1861</a>    }
-<a href=#1862 id=1862 data-nosnippet>1862</a>}
-<a href=#1863 id=1863 data-nosnippet>1863</a>
-<a href=#1864 id=1864 data-nosnippet>1864</a><span class="attr">#[cfg(all(feature = <span class="string">"chip-ws63"</span>, feature = <span class="string">"async"</span>, feature = <span class="string">"unstable"</span>))]
-<a href=#1865 id=1865 data-nosnippet>1865</a></span><span class="kw">pub use </span>asynch_impl::on_interrupt;
+<a href=#1816 id=1816 data-nosnippet>1816</a>    <span class="doccomment">/// A future that resolves once `DMA_SIGNAL[ch]` fires (the ISR signals it when
+<a href=#1817 id=1817 data-nosnippet>1817</a>    /// channel `ch`'s transfer-done bit asserts).
+<a href=#1818 id=1818 data-nosnippet>1818</a>    </span><span class="kw">struct </span>DmaDoneFuture {
+<a href=#1819 id=1819 data-nosnippet>1819</a>        ch: u8,
+<a href=#1820 id=1820 data-nosnippet>1820</a>    }
+<a href=#1821 id=1821 data-nosnippet>1821</a>    <span class="kw">impl </span>Future <span class="kw">for </span>DmaDoneFuture {
+<a href=#1822 id=1822 data-nosnippet>1822</a>        <span class="kw">type </span>Output = ();
+<a href=#1823 id=1823 data-nosnippet>1823</a>        <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;()&gt; {
+<a href=#1824 id=1824 data-nosnippet>1824</a>            <span class="kw">let </span>sig = <span class="kw-2">&amp;</span>DMA_SIGNAL[(<span class="self">self</span>.ch <span class="kw">as </span>usize).min(<span class="number">3</span>)];
+<a href=#1825 id=1825 data-nosnippet>1825</a>            <span class="kw">if </span>sig.take_fired() {
+<a href=#1826 id=1826 data-nosnippet>1826</a>                Poll::Ready(())
+<a href=#1827 id=1827 data-nosnippet>1827</a>            } <span class="kw">else </span>{
+<a href=#1828 id=1828 data-nosnippet>1828</a>                sig.register(cx.waker());
+<a href=#1829 id=1829 data-nosnippet>1829</a>                Poll::Pending
+<a href=#1830 id=1830 data-nosnippet>1830</a>            }
+<a href=#1831 id=1831 data-nosnippet>1831</a>        }
+<a href=#1832 id=1832 data-nosnippet>1832</a>    }
+<a href=#1833 id=1833 data-nosnippet>1833</a>
+<a href=#1834 id=1834 data-nosnippet>1834</a>    <span class="kw">impl </span>DmaDriver&lt;<span class="lifetime">'_</span>, Dma0&gt; {
+<a href=#1835 id=1835 data-nosnippet>1835</a>        <span class="doccomment">/// Await transfer-complete for `channel` (after configuring + enabling it),
+<a href=#1836 id=1836 data-nosnippet>1836</a>        /// then clear its interrupt. Parks on the DMA IRQ (IRQ 59) on hardware; the
+<a href=#1837 id=1837 data-nosnippet>1837</a>        /// per-channel demux means a concurrent transfer on another channel won't
+<a href=#1838 id=1838 data-nosnippet>1838</a>        /// false-wake this one. Silicon-verified: IRQ 59 fires for both mem-to-mem
+<a href=#1839 id=1839 data-nosnippet>1839</a>        /// and peripheral-paced single-block completion (spi_dma_irq59 test).
+<a href=#1840 id=1840 data-nosnippet>1840</a>        </span><span class="kw">pub async fn </span>wait_transfer_done(<span class="kw-2">&amp;mut </span><span class="self">self</span>, channel: <span class="kw-2">&amp;</span><span class="kw">super</span>::DmaChannel) {
+<a href=#1841 id=1841 data-nosnippet>1841</a>            <span class="kw">let </span>channel = channel.logical;
+<a href=#1842 id=1842 data-nosnippet>1842</a>            <span class="kw">let </span>bit = <span class="number">1u8 </span>&lt;&lt; channel; <span class="comment">// Dma0: physical channel == logical channel
+<a href=#1843 id=1843 data-nosnippet>1843</a>            </span><span class="kw">if </span><span class="self">self</span>.raw_interrupt_status().<span class="number">0 </span>&amp; bit == <span class="number">0 </span>{
+<a href=#1844 id=1844 data-nosnippet>1844</a>                DMA_SIGNAL[(channel <span class="kw">as </span>usize).min(<span class="number">3</span>)].reset();
+<a href=#1845 id=1845 data-nosnippet>1845</a>                <span class="comment">// SAFETY: enabling a known, fixed WS63 IRQ line; enable() also raises
+<a href=#1846 id=1846 data-nosnippet>1846</a>                // its LOCIPRI above the reset-0 threshold so it is deliverable.
+<a href=#1847 id=1847 data-nosnippet>1847</a>                </span><span class="kw">unsafe </span>{ interrupt::enable(Interrupt::DMA_INT) };
+<a href=#1848 id=1848 data-nosnippet>1848</a>                <span class="kw">if </span><span class="self">self</span>.raw_interrupt_status().<span class="number">0 </span>&amp; bit == <span class="number">0 </span>{
+<a href=#1849 id=1849 data-nosnippet>1849</a>                    DmaDoneFuture { ch: channel }.<span class="kw">await</span>;
+<a href=#1850 id=1850 data-nosnippet>1850</a>                }
+<a href=#1851 id=1851 data-nosnippet>1851</a>            }
+<a href=#1852 id=1852 data-nosnippet>1852</a>            <span class="self">self</span>.clear_transfer_interrupt_raw(channel);
+<a href=#1853 id=1853 data-nosnippet>1853</a>        }
+<a href=#1854 id=1854 data-nosnippet>1854</a>    }
+<a href=#1855 id=1855 data-nosnippet>1855</a>}
+<a href=#1856 id=1856 data-nosnippet>1856</a>
+<a href=#1857 id=1857 data-nosnippet>1857</a><span class="attr">#[cfg(all(feature = <span class="string">"chip-ws63"</span>, feature = <span class="string">"async"</span>, feature = <span class="string">"unstable"</span>))]
+<a href=#1858 id=1858 data-nosnippet>1858</a></span><span class="kw">pub use </span>asynch_impl::on_interrupt;
 </code></pre></div></section></main></body></html>

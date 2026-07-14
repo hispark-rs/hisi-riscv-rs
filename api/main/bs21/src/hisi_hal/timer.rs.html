@@ -617,78 +617,59 @@
 <a href=#617 id=617 data-nosnippet>617</a>        TIMER_SIGNAL[ch.index()].signal();
 <a href=#618 id=618 data-nosnippet>618</a>    }
 <a href=#619 id=619 data-nosnippet>619</a>
-<a href=#620 id=620 data-nosnippet>620</a>    <span class="comment">// Named device.x handlers (TIMER_INT0..2 = IRQ 26..28). TIMER_INT0 is the
-<a href=#621 id=621 data-nosnippet>621</a>    // embassy-time alarm channel; when the `embassy` feature is on, embassy.rs owns
-<a href=#622 id=622 data-nosnippet>622</a>    // that symbol (routes to on_alarm_interrupt), so define it here only for
-<a href=#623 id=623 data-nosnippet>623</a>    // async-without-embassy. The rt routes these IRQs here by number — no app
-<a href=#624 id=624 data-nosnippet>624</a>    // `mcause` trap needed.
-<a href=#625 id=625 data-nosnippet>625</a>    </span><span class="attr">#[cfg(not(feature = <span class="string">"embassy"</span>))]
-<a href=#626 id=626 data-nosnippet>626</a>    #[<span class="kw">unsafe</span>(no_mangle)]
-<a href=#627 id=627 data-nosnippet>627</a>    </span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>TIMER_INT0() {
-<a href=#628 id=628 data-nosnippet>628</a>        on_interrupt(TimerChannel::Channel0);
+<a href=#620 id=620 data-nosnippet>620</a>    <span class="doccomment">/// Async delay backed by one WS63 TIMER channel (one-shot + completion IRQ).
+<a href=#621 id=621 data-nosnippet>621</a>    ///
+<a href=#622 id=622 data-nosnippet>622</a>    /// Implements [`embedded_hal_async::delay::DelayNs`]: each `delay_*().await`
+<a href=#623 id=623 data-nosnippet>623</a>    /// arms the channel one-shot, parks the task until the channel's IRQ fires,
+<a href=#624 id=624 data-nosnippet>624</a>    /// then returns. The app must route the timer trap to [`on_interrupt`] and
+<a href=#625 id=625 data-nosnippet>625</a>    /// have enabled global interrupts (see `ws63-examples/async_delay`).
+<a href=#626 id=626 data-nosnippet>626</a>    </span><span class="kw">pub struct </span>AsyncDelay&lt;<span class="lifetime">'d</span>&gt; {
+<a href=#627 id=627 data-nosnippet>627</a>        driver: TimerDriver&lt;<span class="lifetime">'d</span>&gt;,
+<a href=#628 id=628 data-nosnippet>628</a>        channel: TimerChannel,
 <a href=#629 id=629 data-nosnippet>629</a>    }
-<a href=#630 id=630 data-nosnippet>630</a>    <span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
-<a href=#631 id=631 data-nosnippet>631</a>    </span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>TIMER_INT1() {
-<a href=#632 id=632 data-nosnippet>632</a>        on_interrupt(TimerChannel::Channel1);
-<a href=#633 id=633 data-nosnippet>633</a>    }
-<a href=#634 id=634 data-nosnippet>634</a>    <span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
-<a href=#635 id=635 data-nosnippet>635</a>    </span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>TIMER_INT2() {
-<a href=#636 id=636 data-nosnippet>636</a>        on_interrupt(TimerChannel::Channel2);
-<a href=#637 id=637 data-nosnippet>637</a>    }
-<a href=#638 id=638 data-nosnippet>638</a>
-<a href=#639 id=639 data-nosnippet>639</a>    <span class="doccomment">/// Async delay backed by one WS63 TIMER channel (one-shot + completion IRQ).
-<a href=#640 id=640 data-nosnippet>640</a>    ///
-<a href=#641 id=641 data-nosnippet>641</a>    /// Implements [`embedded_hal_async::delay::DelayNs`]: each `delay_*().await`
-<a href=#642 id=642 data-nosnippet>642</a>    /// arms the channel one-shot, parks the task until the channel's IRQ fires,
-<a href=#643 id=643 data-nosnippet>643</a>    /// then returns. The app must route the timer trap to [`on_interrupt`] and
-<a href=#644 id=644 data-nosnippet>644</a>    /// have enabled global interrupts (see `ws63-examples/async_delay`).
-<a href=#645 id=645 data-nosnippet>645</a>    </span><span class="kw">pub struct </span>AsyncDelay&lt;<span class="lifetime">'d</span>&gt; {
-<a href=#646 id=646 data-nosnippet>646</a>        driver: TimerDriver&lt;<span class="lifetime">'d</span>&gt;,
-<a href=#647 id=647 data-nosnippet>647</a>        channel: TimerChannel,
-<a href=#648 id=648 data-nosnippet>648</a>    }
-<a href=#649 id=649 data-nosnippet>649</a>
-<a href=#650 id=650 data-nosnippet>650</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'d</span>&gt; AsyncDelay&lt;<span class="lifetime">'d</span>&gt; {
-<a href=#651 id=651 data-nosnippet>651</a>        <span class="doccomment">/// Create an async delay on `channel`.
-<a href=#652 id=652 data-nosnippet>652</a>        </span><span class="kw">pub fn </span>new(timer: Timer&lt;<span class="lifetime">'d</span>&gt;, channel: TimerChannel) -&gt; <span class="self">Self </span>{
-<a href=#653 id=653 data-nosnippet>653</a>            <span class="self">Self </span>{ driver: TimerDriver::new(timer), channel }
-<a href=#654 id=654 data-nosnippet>654</a>        }
-<a href=#655 id=655 data-nosnippet>655</a>
-<a href=#656 id=656 data-nosnippet>656</a>        <span class="kw">async fn </span>delay_ticks(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ticks: u32) {
-<a href=#657 id=657 data-nosnippet>657</a>            <span class="kw">let </span>ch = <span class="self">self</span>.channel;
-<a href=#658 id=658 data-nosnippet>658</a>            TIMER_SIGNAL[ch.index()].reset();
-<a href=#659 id=659 data-nosnippet>659</a>            <span class="self">self</span>.driver.clear_interrupt(ch);
-<a href=#660 id=660 data-nosnippet>660</a>            <span class="self">self</span>.driver.configure(ch, TimerMode::OneShot, ticks.max(<span class="number">1</span>));
-<a href=#661 id=661 data-nosnippet>661</a>            <span class="comment">// SAFETY: enabling a known, fixed WS63 timer IRQ line.
-<a href=#662 id=662 data-nosnippet>662</a>            </span><span class="kw">unsafe </span>{ interrupt::enable(ch_irq(ch)) };
-<a href=#663 id=663 data-nosnippet>663</a>            <span class="self">self</span>.driver.enable(ch);
-<a href=#664 id=664 data-nosnippet>664</a>            DelayFuture { ch }.<span class="kw">await</span>;
-<a href=#665 id=665 data-nosnippet>665</a>        }
-<a href=#666 id=666 data-nosnippet>666</a>    }
-<a href=#667 id=667 data-nosnippet>667</a>
-<a href=#668 id=668 data-nosnippet>668</a>    <span class="kw">struct </span>DelayFuture {
-<a href=#669 id=669 data-nosnippet>669</a>        ch: TimerChannel,
+<a href=#630 id=630 data-nosnippet>630</a>
+<a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'d</span>&gt; AsyncDelay&lt;<span class="lifetime">'d</span>&gt; {
+<a href=#632 id=632 data-nosnippet>632</a>        <span class="doccomment">/// Create an async delay on `channel`.
+<a href=#633 id=633 data-nosnippet>633</a>        </span><span class="kw">pub fn </span>new(timer: Timer&lt;<span class="lifetime">'d</span>&gt;, channel: TimerChannel) -&gt; <span class="self">Self </span>{
+<a href=#634 id=634 data-nosnippet>634</a>            <span class="self">Self </span>{ driver: TimerDriver::new(timer), channel }
+<a href=#635 id=635 data-nosnippet>635</a>        }
+<a href=#636 id=636 data-nosnippet>636</a>
+<a href=#637 id=637 data-nosnippet>637</a>        <span class="kw">async fn </span>delay_ticks(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ticks: u32) {
+<a href=#638 id=638 data-nosnippet>638</a>            <span class="kw">let </span>ch = <span class="self">self</span>.channel;
+<a href=#639 id=639 data-nosnippet>639</a>            TIMER_SIGNAL[ch.index()].reset();
+<a href=#640 id=640 data-nosnippet>640</a>            <span class="self">self</span>.driver.clear_interrupt(ch);
+<a href=#641 id=641 data-nosnippet>641</a>            <span class="self">self</span>.driver.configure(ch, TimerMode::OneShot, ticks.max(<span class="number">1</span>));
+<a href=#642 id=642 data-nosnippet>642</a>            <span class="comment">// SAFETY: enabling a known, fixed WS63 timer IRQ line.
+<a href=#643 id=643 data-nosnippet>643</a>            </span><span class="kw">unsafe </span>{ interrupt::enable(ch_irq(ch)) };
+<a href=#644 id=644 data-nosnippet>644</a>            <span class="self">self</span>.driver.enable(ch);
+<a href=#645 id=645 data-nosnippet>645</a>            DelayFuture { ch }.<span class="kw">await</span>;
+<a href=#646 id=646 data-nosnippet>646</a>        }
+<a href=#647 id=647 data-nosnippet>647</a>    }
+<a href=#648 id=648 data-nosnippet>648</a>
+<a href=#649 id=649 data-nosnippet>649</a>    <span class="kw">struct </span>DelayFuture {
+<a href=#650 id=650 data-nosnippet>650</a>        ch: TimerChannel,
+<a href=#651 id=651 data-nosnippet>651</a>    }
+<a href=#652 id=652 data-nosnippet>652</a>
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="kw">impl </span>Future <span class="kw">for </span>DelayFuture {
+<a href=#654 id=654 data-nosnippet>654</a>        <span class="kw">type </span>Output = ();
+<a href=#655 id=655 data-nosnippet>655</a>        <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;()&gt; {
+<a href=#656 id=656 data-nosnippet>656</a>            <span class="kw">if </span>TIMER_SIGNAL[<span class="self">self</span>.ch.index()].take_fired() {
+<a href=#657 id=657 data-nosnippet>657</a>                Poll::Ready(())
+<a href=#658 id=658 data-nosnippet>658</a>            } <span class="kw">else </span>{
+<a href=#659 id=659 data-nosnippet>659</a>                TIMER_SIGNAL[<span class="self">self</span>.ch.index()].register(cx.waker());
+<a href=#660 id=660 data-nosnippet>660</a>                Poll::Pending
+<a href=#661 id=661 data-nosnippet>661</a>            }
+<a href=#662 id=662 data-nosnippet>662</a>        }
+<a href=#663 id=663 data-nosnippet>663</a>    }
+<a href=#664 id=664 data-nosnippet>664</a>
+<a href=#665 id=665 data-nosnippet>665</a>    <span class="kw">impl </span>embedded_hal_async::delay::DelayNs <span class="kw">for </span>AsyncDelay&lt;<span class="lifetime">'_</span>&gt; {
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="kw">async fn </span>delay_ns(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ns: u32) {
+<a href=#667 id=667 data-nosnippet>667</a>            <span class="kw">let </span>ticks = (TIMER_CLOCK_HZ <span class="kw">as </span>u64 * ns <span class="kw">as </span>u64 / <span class="number">1_000_000_000</span>) <span class="kw">as </span>u32;
+<a href=#668 id=668 data-nosnippet>668</a>            <span class="self">self</span>.delay_ticks(ticks).<span class="kw">await</span>;
+<a href=#669 id=669 data-nosnippet>669</a>        }
 <a href=#670 id=670 data-nosnippet>670</a>    }
-<a href=#671 id=671 data-nosnippet>671</a>
-<a href=#672 id=672 data-nosnippet>672</a>    <span class="kw">impl </span>Future <span class="kw">for </span>DelayFuture {
-<a href=#673 id=673 data-nosnippet>673</a>        <span class="kw">type </span>Output = ();
-<a href=#674 id=674 data-nosnippet>674</a>        <span class="kw">fn </span>poll(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;()&gt; {
-<a href=#675 id=675 data-nosnippet>675</a>            <span class="kw">if </span>TIMER_SIGNAL[<span class="self">self</span>.ch.index()].take_fired() {
-<a href=#676 id=676 data-nosnippet>676</a>                Poll::Ready(())
-<a href=#677 id=677 data-nosnippet>677</a>            } <span class="kw">else </span>{
-<a href=#678 id=678 data-nosnippet>678</a>                TIMER_SIGNAL[<span class="self">self</span>.ch.index()].register(cx.waker());
-<a href=#679 id=679 data-nosnippet>679</a>                Poll::Pending
-<a href=#680 id=680 data-nosnippet>680</a>            }
-<a href=#681 id=681 data-nosnippet>681</a>        }
-<a href=#682 id=682 data-nosnippet>682</a>    }
-<a href=#683 id=683 data-nosnippet>683</a>
-<a href=#684 id=684 data-nosnippet>684</a>    <span class="kw">impl </span>embedded_hal_async::delay::DelayNs <span class="kw">for </span>AsyncDelay&lt;<span class="lifetime">'_</span>&gt; {
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">async fn </span>delay_ns(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ns: u32) {
-<a href=#686 id=686 data-nosnippet>686</a>            <span class="kw">let </span>ticks = (TIMER_CLOCK_HZ <span class="kw">as </span>u64 * ns <span class="kw">as </span>u64 / <span class="number">1_000_000_000</span>) <span class="kw">as </span>u32;
-<a href=#687 id=687 data-nosnippet>687</a>            <span class="self">self</span>.delay_ticks(ticks).<span class="kw">await</span>;
-<a href=#688 id=688 data-nosnippet>688</a>        }
-<a href=#689 id=689 data-nosnippet>689</a>    }
-<a href=#690 id=690 data-nosnippet>690</a>}
-<a href=#691 id=691 data-nosnippet>691</a>
-<a href=#692 id=692 data-nosnippet>692</a><span class="attr">#[cfg(all(feature = <span class="string">"chip-ws63"</span>, feature = <span class="string">"async"</span>, feature = <span class="string">"unstable"</span>))]
-<a href=#693 id=693 data-nosnippet>693</a></span><span class="kw">pub use </span>asynch_impl::{AsyncDelay, on_interrupt};
+<a href=#671 id=671 data-nosnippet>671</a>}
+<a href=#672 id=672 data-nosnippet>672</a>
+<a href=#673 id=673 data-nosnippet>673</a><span class="attr">#[cfg(all(feature = <span class="string">"chip-ws63"</span>, feature = <span class="string">"async"</span>, feature = <span class="string">"unstable"</span>))]
+<a href=#674 id=674 data-nosnippet>674</a></span><span class="kw">pub use </span>asynch_impl::{AsyncDelay, on_interrupt};
 </code></pre></div></section></main></body></html>
