@@ -24,6 +24,7 @@ use smoltcp::time::Instant;
 pub const MTU: usize = 1536;
 const RX_DEPTH: usize = 4;
 const FRAME_PREFIX: usize = 64;
+const DIAGNOSTIC_ECHO_IDENTIFIER: [u8; 2] = 0x5753_u16.to_be_bytes();
 
 struct Bridge {
     rx: [[u8; MTU]; RX_DEPTH],
@@ -32,6 +33,8 @@ struct Bridge {
     rx_count: usize,
     rx_dropped: u32,
     rx_high_watermark: usize,
+    rx_icmp_echo_replies: u32,
+    rx_icmp_sequence_mask: u32,
     last_rx_prefix: [u8; FRAME_PREFIX],
     last_rx_len: usize,
     tx_buf: [u8; MTU],
@@ -51,6 +54,8 @@ static BRIDGE: BridgeCell = BridgeCell(UnsafeCell::new(Bridge {
     rx_count: 0,
     rx_dropped: 0,
     rx_high_watermark: 0,
+    rx_icmp_echo_replies: 0,
+    rx_icmp_sequence_mask: 0,
     last_rx_prefix: [0; FRAME_PREFIX],
     last_rx_len: 0,
     tx_buf: [0; MTU],
@@ -86,6 +91,13 @@ pub fn rx_push(frame: &[u8]) {
         let prefix_len = frame.len().min(FRAME_PREFIX);
         b.last_rx_prefix[..prefix_len].copy_from_slice(&frame[..prefix_len]);
         b.last_rx_len = frame.len();
+        if let Some(sequence) = diagnostic_echo_reply_sequence(frame) {
+            b.rx_icmp_echo_replies = b.rx_icmp_echo_replies.saturating_add(1);
+            let sequence = u32::from(sequence);
+            if sequence < u32::BITS {
+                b.rx_icmp_sequence_mask |= 1 << sequence;
+            }
+        }
         if b.rx_count >= RX_DEPTH {
             b.rx_dropped = b.rx_dropped.saturating_add(1);
             return;
@@ -96,6 +108,34 @@ pub fn rx_push(frame: &[u8]) {
         b.rx_count += 1;
         b.rx_high_watermark = b.rx_high_watermark.max(b.rx_count);
     });
+}
+
+fn diagnostic_echo_reply_sequence(frame: &[u8]) -> Option<u16> {
+    const ETHERNET_HEADER_LEN: usize = 14;
+    const IPV4_MIN_HEADER_LEN: usize = 20;
+    const ICMP_ECHO_HEADER_LEN: usize = 8;
+
+    if frame.len() < ETHERNET_HEADER_LEN + IPV4_MIN_HEADER_LEN + ICMP_ECHO_HEADER_LEN
+        || frame[12..14] != [0x08, 0x00]
+        || frame[14] >> 4 != 4
+        || frame[23] != 1
+    {
+        return None;
+    }
+
+    let ipv4_header_len = usize::from(frame[14] & 0x0f) * 4;
+    if ipv4_header_len < IPV4_MIN_HEADER_LEN {
+        return None;
+    }
+    let icmp = ETHERNET_HEADER_LEN.checked_add(ipv4_header_len)?;
+    if frame.len() < icmp.checked_add(ICMP_ECHO_HEADER_LEN)?
+        || frame[icmp] != 0
+        || frame[icmp + 4..icmp + 6] != DIAGNOSTIC_ECHO_IDENTIFIER
+    {
+        return None;
+    }
+
+    Some(u16::from_be_bytes([frame[icmp + 6], frame[icmp + 7]]))
 }
 
 /// Snapshot of the bounded RX queue used by the bring-up network path.
@@ -110,6 +150,10 @@ pub struct RxQueueDiagnostics {
     pub high_watermark: usize,
     /// Frames rejected because all queue slots were occupied in this window.
     pub dropped: u32,
+    /// Matching ICMP echo replies observed at the vendor-to-Rust RX seam.
+    pub icmp_echo_replies: u32,
+    /// Bit `n` records that echo sequence `n` crossed the RX seam.
+    pub icmp_sequence_mask: u32,
 }
 
 /// Return bounded RX queue occupancy and queue-full loss counters.
@@ -120,6 +164,8 @@ pub fn rx_queue_diagnostics() -> RxQueueDiagnostics {
         pending: b.rx_count,
         high_watermark: b.rx_high_watermark,
         dropped: b.rx_dropped,
+        icmp_echo_replies: b.rx_icmp_echo_replies,
+        icmp_sequence_mask: b.rx_icmp_sequence_mask,
     })
 }
 
@@ -129,6 +175,8 @@ pub fn reset_rx_queue_diagnostics() {
     with_bridge(|b| {
         b.rx_dropped = 0;
         b.rx_high_watermark = b.rx_count;
+        b.rx_icmp_echo_replies = 0;
+        b.rx_icmp_sequence_mask = 0;
     });
 }
 
@@ -391,6 +439,8 @@ pub fn netif_smoltcp_selftest() -> [u32; 3] {
         b.rx_head = 0;
         b.rx_dropped = 0;
         b.rx_high_watermark = 0;
+        b.rx_icmp_echo_replies = 0;
+        b.rx_icmp_sequence_mask = 0;
     });
 
     let our_mac = EthernetAddress([0x02, 0, 0, 0, 0, 1]);
@@ -471,8 +521,16 @@ mod stack_tests {
             bridge.rx_high_watermark = 0;
         });
 
-        let frame = [0_u8; MTU];
-        for _ in 0..RX_DEPTH {
+        let mut frame = [0_u8; MTU];
+        frame[12..14].copy_from_slice(&[0x08, 0x00]);
+        frame[14] = 0x45;
+        frame[23] = 1;
+        frame[34] = 0;
+        frame[38..40].copy_from_slice(&super::DIAGNOSTIC_ECHO_IDENTIFIER);
+        frame[40..42].copy_from_slice(&3_u16.to_be_bytes());
+        rx_push(&frame);
+        frame.fill(0);
+        for _ in 1..RX_DEPTH {
             rx_push(&frame);
         }
         rx_push(&frame);
@@ -482,12 +540,16 @@ mod stack_tests {
         assert_eq!(diagnostics.pending, RX_DEPTH);
         assert_eq!(diagnostics.high_watermark, RX_DEPTH);
         assert_eq!(diagnostics.dropped, 1);
+        assert_eq!(diagnostics.icmp_echo_replies, 1);
+        assert_eq!(diagnostics.icmp_sequence_mask, 1 << 3);
 
         super::with_bridge(|bridge| {
             bridge.rx_head = 0;
             bridge.rx_count = 0;
             bridge.rx_dropped = 0;
             bridge.rx_high_watermark = 0;
+            bridge.rx_icmp_echo_replies = 0;
+            bridge.rx_icmp_sequence_mask = 0;
         });
     }
 }
