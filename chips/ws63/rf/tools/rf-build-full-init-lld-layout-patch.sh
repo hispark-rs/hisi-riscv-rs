@@ -42,6 +42,7 @@ DIAG_SOURCE_DIR="${WS63_RF_DIAG_SOURCE_OUT:-${TMPDIR:-/tmp}/ws63-rf-diag-source-
 LAYOUT_MAP="${WS63_RF_LAYOUT_MAP:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-lld-layout.map}"
 FINAL_MAP="${WS63_RF_FINAL_MAP:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-lld-final.map}"
 MANIFEST="${WS63_RF_PATCH_MANIFEST:-${TMPDIR:-/tmp}/wifi_init_smoke-rf-lld-patched-relocs.jsonl}"
+TASK_PROFILE_REPORT="${WS63_RF_TASK_PROFILE_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-task-profile.json}"
 FEATURES="${WS63_RF_FEATURES:-full-init}"
 LAYOUT_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$LAYOUT_MAP"
 FINAL_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
@@ -450,10 +451,19 @@ verify_rom_symbol() {
 verify_rom_symbol frw_rom_cb_register
 
 echo
+echo "== generate archive-bound task profile report =="
+TASK_PROFILE_ARGS=(--elf "$LAYOUT_ELF")
+if [ -n "${WS63_RF_TASK_LOG:-}" ]; then
+  TASK_PROFILE_ARGS+=(--log "$WS63_RF_TASK_LOG")
+fi
+"$RF_LINK" task-profile "${TASK_PROFILE_ARGS[@]}" > "$TASK_PROFILE_REPORT"
+
+echo
 echo "neutral RF libs: $NEUTRAL_DIR"
 echo "patched RF libs: $PATCHED_DIR"
 echo "layout map: $LAYOUT_MAP"
 echo "final map: $FINAL_MAP"
 echo "patch manifest: $MANIFEST"
 echo "ROM patch report: ${WS63_RF_ROM_PATCH_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-rom-patches.json}"
+echo "task profile report: $TASK_PROFILE_REPORT"
 echo "firmware ELF: $ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"

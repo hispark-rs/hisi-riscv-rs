@@ -544,8 +544,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [ ] Q3 的机器事实源已开始落地：`ws63-radio-sys` 的
   `profiles/ws63-scheduling.toml` 以 payload revision、archive/ROM SHA-256、entry symbol
   和 vendor priority 记录 observed task role，未匹配 entry 必须为 `unknown`。当前 profile
-  不改变 runtime policy；消费端外部 archive hash gate、角色到 policy 的显式映射和 HIL
-  parity 完成前，Q3 仍保持未完成。
+  不改变 runtime policy；`hisi-rf-link task-profile` 已把 final ELF SHA/symbol 与可选 Q2
+  UART metrics 合并为 versioned JSON，guarded link 自动生成报告。角色到 policy 的显式
+  映射和 HIL parity 完成前，Q3 仍保持未完成。
 - WS63 blob 的 ABI、LiteOS-derived semantic profile 与真机证据采用三层 gate，唯一详细
   计划见 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md)。该 profile
   绑定具体 archive hash，只约束 compatibility adapter，不定义 `hisi-rtos` 公共语义。
