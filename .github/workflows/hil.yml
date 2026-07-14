@@ -47,6 +47,8 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: astral-sh/setup-uv@v7
+
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
@@ -72,7 +74,7 @@ jobs:
       - name: Check tutorial HIL contract
         run: |
           test -x hil/hil-smoke.sh
-          python3 scripts/check-tutorial-snippets.py
+          uv run --python '>=3.11' python scripts/check-tutorial-snippets.py
 
       - name: Tutorial HIL smoke / single example
         env:
