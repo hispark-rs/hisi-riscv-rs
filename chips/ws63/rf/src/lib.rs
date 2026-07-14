@@ -105,6 +105,8 @@ pub mod eloop_diag;
 pub mod error;
 pub mod frw;
 pub mod hcc;
+#[cfg(feature = "wifi-wpa2-personal")]
+pub mod hisi_rf_backend;
 pub mod libc;
 pub mod litos;
 pub mod log;
@@ -131,6 +133,14 @@ pub mod wifi;
 mod wpa_compat;
 
 pub use pmp::prepare_vendor_memory;
+
+/// Compatibility facade for the first `hisi-rf` migration release.
+#[cfg(feature = "wifi-wpa2-personal")]
+pub mod radio {
+    pub use hisi_rf::*;
+
+    pub use crate::hisi_rf_backend::Ws63WifiBackend;
+}
 
 /// Terminal target for a mask-ROM callback not supplied by the current port.
 ///

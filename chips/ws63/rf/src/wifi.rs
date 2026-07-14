@@ -241,6 +241,18 @@ impl ScanResult {
     pub const fn security(&self) -> ScanSecurity {
         self.security
     }
+
+    /// Primary channel reported by the vendor scan result.
+    pub const fn channel(&self) -> u8 {
+        self.channel
+    }
+
+    /// Whether this result matches the verified WPA2-Personal/CCMP profile.
+    pub const fn supports_wpa2_personal(&self) -> bool {
+        matches!(self.security, ScanSecurity::Protected)
+            && self.auth_mode == 2
+            && self.pairwise == 1
+    }
 }
 
 /// Error returned by the thin Wi-Fi adapter.
@@ -280,6 +292,8 @@ pub enum Error {
     ScanFailed(ScanStatus),
     /// The vendor refused to start the association.
     StartConnect(c_int),
+    /// The vendor refused to disconnect the station.
+    StartDisconnect(c_int),
     /// Association completed with an IEEE 802.11 status other than success.
     ConnectFailed(u16),
     /// The station disconnected while association was pending.
@@ -497,6 +511,58 @@ impl<'d> WpaWifi<'d> {
                         ConnectionOutcome::Failed(status) => Err(Error::ConnectFailed(status)),
                         ConnectionOutcome::Disconnected(reason) => Err(Error::Disconnected(reason)),
                         ConnectionOutcome::Pending => Err(Error::Timeout),
+                    };
+                }
+                if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
+                    finish_connection();
+                    return Err(Error::Timeout);
+                }
+                crate::runtime::sleep_ms(10);
+            }
+        }
+    }
+
+    /// Disconnect and wait for the supplicant's station-disconnect event.
+    pub fn disconnect(&mut self, timeout_ms: u32) -> Result<(), Error> {
+        #[cfg(not(target_arch = "riscv32"))]
+        {
+            let _ = timeout_ms;
+            Err(Error::UnsupportedTarget)
+        }
+        #[cfg(target_arch = "riscv32")]
+        {
+            let started = critical_section::with(|cs| {
+                let state = CONNECTION_STATE.borrow(cs);
+                if state.active.get() {
+                    return false;
+                }
+                state.active.set(true);
+                state.done.set(false);
+                state.outcome.set(ConnectionOutcome::Pending);
+                true
+            });
+            if !started {
+                return Err(Error::Busy);
+            }
+            let result = unsafe { uapi_wifi_sta_disconnect() };
+            if result != 0 {
+                finish_connection();
+                return Err(Error::StartDisconnect(result));
+            }
+            let started_at = crate::uapi::monotonic_ms();
+            loop {
+                let (done, outcome) = critical_section::with(|cs| {
+                    let state = CONNECTION_STATE.borrow(cs);
+                    (state.done.get(), state.outcome.get())
+                });
+                if done {
+                    finish_connection();
+                    return match outcome {
+                        ConnectionOutcome::Disconnected(_) => Ok(()),
+                        ConnectionOutcome::Failed(status) => Err(Error::ConnectFailed(status)),
+                        ConnectionOutcome::Connected(_) | ConnectionOutcome::Pending => {
+                            Err(Error::Timeout)
+                        }
                     };
                 }
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at) >= timeout_ms as u64 {
@@ -1337,6 +1403,8 @@ unsafe extern "C" {
     fn uapi_drv_cipher_env_init();
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
+    #[cfg(feature = "wifi-wpa2-personal")]
+    fn uapi_wifi_sta_disconnect() -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]
     fn uapi_wifi_config_callback(mode: u8, task_priority: u8, stack_size: u16) -> c_int;
     #[cfg(feature = "wifi-wpa2-personal")]

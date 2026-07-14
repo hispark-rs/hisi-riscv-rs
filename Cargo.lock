@@ -1931,6 +1931,7 @@ dependencies = [
  "hisi-crypto-ws63",
  "hisi-hal",
  "hisi-nvs",
+ "hisi-rf",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rtos",
