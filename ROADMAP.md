@@ -53,7 +53,9 @@ committed self-hosted workflow is green. Evidence:
 The single execution ledger, current evidence, and W2A-W2F gates live in
 [Connectivity stack W2](docs/plan/hisi-connectivity-stack.md#w2-upstream-supplicant-and-wpa3personal).
 The active-window policy keeps the WPA2-only archive and A4 HIL gate green while
-the upstream-native WPA3 path is introduced.
+the upstream-native WPA3 path is introduced. The pinned upstream hostap path has
+closed WPA2 connect/DHCP/public-ping/lease-renew parity; pure WPA3 SAE+PMF,
+transition mode, protocol-vector gates and migration retirement remain open.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 

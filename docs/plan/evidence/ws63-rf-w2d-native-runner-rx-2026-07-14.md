@@ -6,6 +6,9 @@ Scope: prove that the pinned upstream hostap context is owned and advanced by
 the native `hisi-rf` / `RadioRunner` path on real WS63 silicon. This evidence
 does not claim protected-network association or WPA parity.
 
+Status: historical intermediate evidence. The remaining protected-connect gate
+was later closed by [W2E upstream WPA2 parity](ws63-rf-w2e-upstream-wpa2-parity-2026-07-14.md).
+
 ## Revisions
 
 - Parent: `7e67f145d` (`feat(rf): bridge native supplicant RX to runner`).

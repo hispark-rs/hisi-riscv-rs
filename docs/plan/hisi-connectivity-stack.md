@@ -366,7 +366,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      format 集和 18-symbol external ABI 均由 CI fail-closed 校验。父仓 commit
      `7e67f145d` 已让唯一 `RadioRunner` 在真机推进 event loop；实现没有新增 `LOS_*`、
      LiteOS daemon/backend、OS thread 或完整 POSIX 模拟。
-   - **W2D WS63 driver and safe wrapper（部分完成）**：实现最小 `driver_ws63` 与
+   - **W2D WS63 driver and safe wrapper（已完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
      `ws63-radio-sys` commits `a7cf71e`、`58c267a`、`e668776`、`701b1c3` 已完成
@@ -396,18 +396,26 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      把 PBKDF2/TRNG 变成显式 capability；upstream profile 明确选择 RustCrypto PBKDF2 + WS63
      TRNG，不依赖 vendor WPA archive 导出的 PBKDF2 UAPI，也不在硬件失败后静默回退。
      该 profile 的两遍 link 验证 1157 个 layout sections、4127 个 patched relocations、37 个
-     ROM patches，且 `drv_soc_hwal_wpa_ioctl` 由 HMAC/WAL archive 解析。当前尚未完成的是
-     `driver_ws63` 的 auth/assoc control + event mapping 和 protected-network connect；因此
-     W2D 仍为部分完成，不能把 native scan 证据写成 WPA2/WPA3 parity。
+     ROM patches，且 `drv_soc_hwal_wpa_ioctl` 由 HMAC/WAL archive 解析。父仓 commit
+     `1028114da` 又按原厂 ABI 把 EAPOL receive 的正值 `0xffff` 识别为 skb queue 已排空，
+     而不是把它误报为 feed failure；scan event queue 同时保留 terminal done slot，超出
+     C cache 容量的 BSS 结果被记录为 bounded truncation。`ws63-radio-sys` commit
+     `bd8069b` 为 null endpoint、invalid frame 和 uninitialized context 保留不同错误码；
+     `hisi-rf` commit `fac1fe0` 与 examples commit `145727f` 明确每个 bounded runner batch
+     后都要提供调度点。清理诊断代码后的同一镜像连续三次 nRST 均完成 upstream-native
+     WPA2 connect、DHCP、ARP neighbor discovery、5/5 public ICMP、零 RX queue drop 和
+     DHCP renew，因此 W2D 的 auth/assoc/event/key/L2/safe-wrapper vertical slice 已闭合。
      `hisi-rf::wifi::security` 已有 typed WPA3-Personal/PMF/SAE-PWE config，过渡 vendor
      candidate 已通过真实 link closure：1568 sections、5612 relocations、37 ROM patches，
      ELF SHA-256 `ed7cd91357ddb981d8fe599f8ebd8d4eed658d525ec72c60fc2b0745fe6dc024`；
-     这不等于 upstream native `driver_ws63` 已完成。当前 native owner/RX/runner HIL 证据见
-     [W2D native runner and RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)。
-   - **W2E Parity HIL（未完成）**：先让 upstream-native path 重现 A4 WPA2 connect、DHCP、
-     ARP、重复 ping 和 lease-renew marker，再在受控 WPA3-only AP 完成 SAE+PMF，最后验证
-     WPA2/WPA3 transition mode。host gate 覆盖 EAPOL/RSNE/SAE/PMF golden vectors 或 pcap
-     replay。当前 Guest AP 仅能提供 WPA2 parity，不能替代 pure WPA3 HIL。
+     这不等于 WPA3 已完成。早期 native owner/RX/runner 证据见
+     [W2D native runner and RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)，
+     WPA2 parity 收口见
+     [W2E upstream WPA2 parity](evidence/ws63-rf-w2e-upstream-wpa2-parity-2026-07-14.md)。
+   - **W2E Parity HIL（部分完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
+     ARP、重复 ping 和 lease-renew marker。剩余 gate 是 host EAPOL/RSNE/SAE/PMF golden
+     vectors 或 pcap replay、受控 WPA3-only AP 的 SAE+PMF，以及 WPA2/WPA3 transition
+     mode HIL。当前 Guest AP 仅提供 WPA2 parity，不能替代 pure WPA3 HIL。
    - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 LiteOS glue
      保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认路径并删除
      `litos.rs`/`wpa_compat.rs`。之后按既定兼容窗口退役 `ws63-rf-rs` facade，但不得因架构
