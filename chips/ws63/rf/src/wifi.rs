@@ -1300,6 +1300,65 @@ fn ssid_from_ies(ies: &[u8]) -> &[u8] {
     &[]
 }
 
+#[cfg(any(target_arch = "riscv32", test))]
+fn personal_security_from_ies(ies: &[u8]) -> (i32, i32) {
+    const RSN_OUI: [u8; 3] = [0x00, 0x0f, 0xac];
+    let mut offset = 0;
+    while offset + 2 <= ies.len() {
+        let id = ies[offset];
+        let len = ies[offset + 1] as usize;
+        let end = offset + 2 + len;
+        if end > ies.len() {
+            return (0, 0);
+        }
+        if id == 48 {
+            let body = &ies[offset + 2..end];
+            if body.len() < 8 || u16::from_le_bytes([body[0], body[1]]) != 1 {
+                return (0, 0);
+            }
+            let mut cursor = 6;
+            let pairwise_count = u16::from_le_bytes([body[cursor], body[cursor + 1]]) as usize;
+            cursor += 2;
+            let pairwise_end = cursor.saturating_add(pairwise_count.saturating_mul(4));
+            if pairwise_end + 2 > body.len() {
+                return (0, 0);
+            }
+            let ccmp = body[cursor..pairwise_end]
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .any(|suite| suite[..3] == RSN_OUI && suite[3] == 4);
+            cursor = pairwise_end;
+            let akm_count = u16::from_le_bytes([body[cursor], body[cursor + 1]]) as usize;
+            cursor += 2;
+            let akm_end = cursor.saturating_add(akm_count.saturating_mul(4));
+            if akm_end > body.len() {
+                return (0, 0);
+            }
+            let mut psk = false;
+            let mut sae = false;
+            for suite in body[cursor..akm_end].as_chunks::<4>().0 {
+                if suite[..3] == RSN_OUI {
+                    psk |= suite[3] == 2;
+                    sae |= suite[3] == 8;
+                }
+            }
+            // A transition BSS remains usable by the current WPA2-only native
+            // profile. Select SAE only when PSK is absent.
+            let auth_mode = if psk {
+                2
+            } else if sae {
+                7
+            } else {
+                0
+            };
+            return (auth_mode, i32::from(ccmp));
+        }
+        offset = end;
+    }
+    (0, 0)
+}
+
 #[cfg(target_arch = "riscv32")]
 unsafe extern "C" fn scan_event(
     _ifname: *const c_char,
@@ -1381,14 +1440,18 @@ unsafe extern "C" fn scan_event(
             } else {
                 ScanSecurity::Protected
             };
-            if !vendor.variable.is_null() && vendor.ie_len as usize <= MAX_IE_LENGTH {
+            if let Some(total_len) =
+                (vendor.ie_len as usize).checked_add(vendor.beacon_ie_len as usize)
+                && !vendor.variable.is_null()
+                && total_len <= MAX_IE_LENGTH
+            {
                 // SAFETY: the vendor event owns a readable IE buffer for this
                 // callback and reports its exact byte length.
-                let ies =
-                    unsafe { core::slice::from_raw_parts(vendor.variable, vendor.ie_len as usize) };
-                let ssid = ssid_from_ies(ies);
+                let ies = unsafe { core::slice::from_raw_parts(vendor.variable, total_len) };
+                let ssid = ssid_from_ies(&ies[..vendor.ie_len as usize]);
                 result.ssid[..ssid.len()].copy_from_slice(ssid);
                 result.ssid_len = ssid.len() as u8;
+                (result.auth_mode, result.pairwise) = personal_security_from_ies(ies);
             }
             // SAFETY: this callback exclusively owns the reserved slot until
             // scan-done; the waiter only reads after observing scan-done.
@@ -1586,7 +1649,9 @@ mod tests {
     use super::PersonalNetwork;
     #[cfg(feature = "wifi-wpa2-personal")]
     use super::encode_hex;
-    use super::{Error, OpenNetwork, ScanResult, ScanSecurity, ssid_from_ies};
+    use super::{
+        Error, OpenNetwork, ScanResult, ScanSecurity, personal_security_from_ies, ssid_from_ies,
+    };
     #[cfg(feature = "wifi-wpa3-personal")]
     use hisi_rf::{PersonalSecurity, SaePwe};
 
@@ -1634,6 +1699,24 @@ mod tests {
     #[test]
     fn finds_ssid_information_element() {
         assert_eq!(ssid_from_ies(&[1, 1, 0x82, 0, 3, b'a', b'p', b'1']), b"ap1");
+    }
+
+    #[test]
+    fn recognizes_wpa2_ccmp_from_rsn_information_element() {
+        let ies = [
+            48, 20, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac,
+            2, 0, 0,
+        ];
+        assert_eq!(personal_security_from_ies(&ies), (2, 1));
+    }
+
+    #[test]
+    fn transition_rsn_prefers_current_wpa2_profile() {
+        let ies = [
+            48, 24, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac, 4, 2, 0, 0x00, 0x0f, 0xac,
+            2, 0x00, 0x0f, 0xac, 8, 0, 0,
+        ];
+        assert_eq!(personal_security_from_ies(&ies), (2, 1));
     }
 
     #[test]
