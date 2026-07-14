@@ -1836,10 +1836,12 @@ version = "0.1.0"
 dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
+ "hisi-rf",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rom-sys",
  "hisi-rtos",
+ "static_cell",
  "ws63-radio-sys",
  "ws63-rf-rs",
 ]
