@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-1c02a1c4.js";
+            window.path_to_searchindex_js = "../../searchindex-d0888dfe.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-e7bf55d7.js"></script>
@@ -229,15 +229,15 @@
 <h2 id="用户怎么用"><a class="header" href="#用户怎么用">用户怎么用</a></h2>
 <pre><code class="language-toml"># 想用实验性接口（DMA、interrupt/waker async、embassy 等）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63", "unstable"] }
 
 # 想构建实验性的 BS2X target：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-bs21", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-bs21", "unstable"] }
 
 # 只用稳定接口（默认）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63"] }
 </code></pre>
 <p>实验性接口的签名<strong>可能在小版本中变</strong>；开 <code>unstable</code> = 同意承担 breakage。</p>
 <p>当前默认 stable 面与 <code>unstable</code> 门后的 API 清单见参考页：<a href="../../reference/10-stable-api.html">Stable API 清单与门控状态</a>。</p>

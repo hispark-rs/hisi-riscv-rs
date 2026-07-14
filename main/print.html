@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1c02a1c4.js";
+            window.path_to_searchindex_js = "searchindex-d0888dfe.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -1773,7 +1773,7 @@ git push origin vX.Y.Z
 <tr><td><a href="#hal-api-总览">HAL API 总览</a></td><td><code>hisi-hal</code> 公开 API 结构图：驱动模块、构造函数、单例/GPIO/多实例/sealed/特性</td></tr>
 <tr><td><a href="https://hispark-rs.github.io/hisi-riscv-rs/api/">完整 API 文档（rustdoc）↗</a></td><td>hal/pac/rt 的逐项 API；与本手册同站部署在 <code>/api/</code>，CI 自动构建</td></tr>
 <tr><td><a href="#外设清单与覆盖情况">外设清单与覆盖情况</a></td><td>全部 HAL 驱动模块、外设、基地址、示例覆盖、可否裸板自检</td></tr>
-<tr><td><a href="#stable-api-清单与门控状态">Stable API 清单与门控状态</a></td><td><code>hisi-hal 0.7.0-alpha.1</code> 默认 stable 面和 <code>unstable</code> feature 门后的 API</td></tr>
+<tr><td><a href="#stable-api-清单与门控状态">Stable API 清单与门控状态</a></td><td><code>hisi-hal 0.7.0-alpha.2</code> 默认 stable 面和 <code>unstable</code> feature 门后的 API</td></tr>
 <tr><td><a href="#工具链与编译目标">工具链与编译目标</a></td><td>官方 pinned nightly、目标三元组、build-std 状态、<code>rust-toolchain.toml</code>、<code>.cargo/config.toml</code></td></tr>
 <tr><td><a href="#应用镜像格式与签名">应用镜像格式与签名</a></td><td>0x300 镜像头字段布局、fwpkg V1 容器、CRC16</td></tr>
 <tr><td><a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a></td><td><code>embedded-test</code> runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源</td></tr>
@@ -2202,7 +2202,7 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="stable-api-清单与门控状态"><a class="header" href="#stable-api-清单与门控状态">Stable API 清单与门控状态</a></h1>
-<p>本页是 <code>hisi-hal 0.7.0-alpha.1</code> 当前默认公开面的<strong>唯一事实源</strong>。该版本仅把
+<p>本页是 <code>hisi-hal 0.7.0-alpha.2</code> 当前默认公开面的<strong>唯一事实源</strong>。该版本仅把
 <code>hisi-riscv-hal 0.6.0</code> 改名为新 package/repository，下面的 API 与门控边界保持
 等价。判定规则与门控机制见
 <a href="#稳定--不稳定-api-门控">稳定 / 不稳定 API 门控政策</a>；历史评审文件只记录当时状态，
@@ -3133,15 +3133,15 @@ Rust nightly 提供 builtin target。当前 rustup 还没有预编译 std 组件
 <h2 id="用户怎么用"><a class="header" href="#用户怎么用">用户怎么用</a></h2>
 <pre><code class="language-toml"># 想用实验性接口（DMA、interrupt/waker async、embassy 等）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63", "unstable"] }
 
 # 想构建实验性的 BS2X target：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-bs21", "unstable"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-bs21", "unstable"] }
 
 # 只用稳定接口（默认）：
 [dependencies]
-hisi-hal = { version = "0.7.0-alpha.1", features = ["chip-ws63"] }
+hisi-hal = { version = "0.7.0-alpha.2", features = ["chip-ws63"] }
 </code></pre>
 <p>实验性接口的签名<strong>可能在小版本中变</strong>；开 <code>unstable</code> = 同意承担 breakage。</p>
 <p>当前默认 stable 面与 <code>unstable</code> 门后的 API 清单见参考页：<a href="#stable-api-清单与门控状态">Stable API 清单与门控状态</a>。</p>
