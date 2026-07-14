@@ -297,6 +297,9 @@ pub enum Error {
     RegisterEvents(c_int),
     /// The vendor refused to open the station netdev.
     OpenStation(c_int),
+    /// The native upstream supplicant port could not claim the station.
+    #[cfg(feature = "upstream-supplicant-port")]
+    SupplicantPort(crate::UpstreamSupplicantPortError),
     /// The mask-ROM TCXO driver failed to initialize.
     Timebase(u32),
     /// A scan is already in progress.
@@ -748,16 +751,15 @@ impl<'d> Wifi<'d> {
             // `drv_soc_wpa_init` needed before scan. WPA/eloop/EAPOL stay out
             // of this scan-only adapter.
             let mut enabled = 1_u8;
-            let command = VendorIoctl {
-                command: IOCTL_SET_NETDEV,
-                buffer: (&mut enabled as *mut u8).cast(),
-            };
-            // SAFETY: the interface name and one-byte boolean remain valid for
-            // the synchronous vendor ioctl.
-            let open = unsafe { drv_soc_hwal_wpa_ioctl(ifname.as_mut_ptr().cast(), &command) };
+            let open =
+                crate::wal::ioctl(&ifname, IOCTL_SET_NETDEV, (&mut enabled as *mut u8).cast());
             if open != 0 {
                 return Err(Error::OpenStation(open));
             }
+
+            #[cfg(feature = "upstream-supplicant-port")]
+            crate::prepare_upstream_supplicant_port(&ifname[..length as usize])
+                .map_err(Error::SupplicantPort)?;
 
             #[cfg(feature = "net")]
             crate::netif_smoltcp::set_tx_sink(crate::netif::vendor_tx_sink);
@@ -810,16 +812,13 @@ impl<'d> Wifi<'d> {
                 fast_connect: 0,
                 extra_ies_len: 0,
             };
-            let command = VendorIoctl {
-                command: IOCTL_SCAN,
-                buffer: (&mut params as *mut VendorScan).cast(),
-            };
-
-            // SAFETY: the interface name is NUL-terminated and owned by self;
-            // official code also frees scan parameters immediately after this
-            // synchronous ioctl returns.
-            let result =
-                unsafe { drv_soc_hwal_wpa_ioctl(self.ifname.as_mut_ptr().cast(), &command) };
+            // The official code also frees scan parameters immediately after
+            // this synchronous ioctl returns.
+            let result = crate::wal::ioctl(
+                &self.ifname,
+                IOCTL_SCAN,
+                (&mut params as *mut VendorScan).cast(),
+            );
             if result != 0 {
                 finish_scan();
                 return Err(Error::StartScan(result));
@@ -989,13 +988,6 @@ struct VendorScan {
 
 #[cfg(target_arch = "riscv32")]
 #[repr(C)]
-struct VendorIoctl {
-    command: c_uint,
-    buffer: *mut c_void,
-}
-
-#[cfg(target_arch = "riscv32")]
-#[repr(C)]
 struct VendorScanResult {
     flags: i32,
     bssid: [u8; 6],
@@ -1154,7 +1146,6 @@ struct VendorWpaEvent {
 const _: () = {
     assert!(core::mem::size_of::<VendorScanSsid>() == 36);
     assert!(core::mem::size_of::<VendorScan>() == 24);
-    assert!(core::mem::size_of::<VendorIoctl>() == 8);
     assert!(core::mem::size_of::<VendorScanResult>() == 44);
     assert!(core::mem::size_of::<VendorCryptoSettings>() == 48);
     assert!(core::mem::size_of::<VendorAssociateParams>() == 40);
@@ -1458,7 +1449,6 @@ unsafe extern "C" {
     fn drv_soc_register_send_event_cb(
         callback: Option<unsafe extern "C" fn(*const c_char, c_int, *mut u8, c_uint) -> c_int>,
     ) -> c_int;
-    fn drv_soc_hwal_wpa_ioctl(ifname: *mut c_char, command: *const VendorIoctl) -> c_int;
     fn uapi_ioctl_assoc(ifname: *const c_char, params: *mut c_void) -> c_int;
     #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_start(ifname: *mut c_char, length: *mut c_int) -> c_int;

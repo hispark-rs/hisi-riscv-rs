@@ -130,6 +130,7 @@ pub mod timer;
 pub mod uapi;
 #[cfg(feature = "upstream-supplicant-port")]
 mod upstream_supplicant;
+mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]
 mod wpa_compat;
