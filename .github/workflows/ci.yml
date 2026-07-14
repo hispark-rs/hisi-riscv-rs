@@ -72,11 +72,15 @@ jobs:
       # Covers every member (incl. blinky + flashboot) at the type/codegen level.
       - name: Check workspace
         run: cargo check -Zbuild-std=core,alloc --workspace
-      # Real build (link) of the default-members: the libraries + the blinky example
-      # (blinky links via hisi-riscv-rt's exported linker scripts). The experimental
-      # flashboot binary is excluded from the default build. No `|| true` masking.
-      - name: Build default members (release, links blinky)
+      # Real link of the default members. Provider-specific legacy Embassy examples
+      # are linked separately because a firmware may contain exactly one global
+      # embassy-time driver and Cargo unifies dependency features across one build.
+      - name: Build default members (release)
         run: cargo build -Zbuild-std=core,alloc --release
+      - name: Build legacy HAL Embassy examples separately
+        run: |
+          cargo build -Zbuild-std=core,alloc --release -p embassy_multitask
+          cargo build -Zbuild-std=core,alloc --release -p embassy_async_io
 
   # ── Clippy (gating) ─────────────────────────────────────────────
   clippy:

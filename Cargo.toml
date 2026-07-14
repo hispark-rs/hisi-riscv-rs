@@ -83,8 +83,6 @@ default-members = [
     "examples/ws63/semihost_selftest",
     "examples/ws63/custom_memory",
     "examples/ws63/async_delay",
-    "examples/ws63/embassy_multitask",
-    "examples/ws63/embassy_async_io",
     "examples/ws63/async_bus",
     "examples/ws63/spi_loopback",
     "examples/ws63/i2c_scan",
