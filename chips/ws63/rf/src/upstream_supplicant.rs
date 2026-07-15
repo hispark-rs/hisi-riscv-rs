@@ -14,11 +14,13 @@ use hisi_rf_rtos_driver::{Semaphore, WaitOutcome, WaitTimeout};
 use portable_atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
 use ws63_radio_sys::supplicant::{
     ABI_VERSION, AssociateRequest, AssociateResult, Context, DisconnectEvent, DriverHooks, Event,
-    Key, MAX_SCAN_FREQUENCIES, MAX_SCAN_IE_LEN, NativeScanResult, NetworkConfig, OsHooks, Pmf,
-    PollResult, SaePwe, ScanRequest, Security, cipher, hisi_wpa_configure, hisi_wpa_connect,
-    hisi_wpa_context_align, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
-    hisi_wpa_disconnect, hisi_wpa_driver_install, hisi_wpa_feed_associate_result,
-    hisi_wpa_feed_disconnect, hisi_wpa_feed_eapol, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
+    ExternalAuthEvent, ExternalAuthStatus, Key, MAX_SCAN_FREQUENCIES, MAX_SCAN_IE_LEN,
+    NativeScanResult, NetworkConfig, OsHooks, Pmf, PollResult, SaePwe, ScanRequest, Security,
+    cipher, hisi_wpa_configure, hisi_wpa_connect, hisi_wpa_context_align,
+    hisi_wpa_context_diagnostic_word, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
+    hisi_wpa_disconnect, hisi_wpa_driver_diagnostic_word, hisi_wpa_driver_install,
+    hisi_wpa_eloop_diagnostic_flags, hisi_wpa_feed_associate_result, hisi_wpa_feed_disconnect,
+    hisi_wpa_feed_eapol, hisi_wpa_feed_external_auth, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
     hisi_wpa_feed_scan_result, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
     hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
 };
@@ -32,14 +34,24 @@ static MGMT_RX_QUEUE: MgmtRxQueue = MgmtRxQueue::new();
 static NATIVE_SCAN_ACTIVE: AtomicBool = AtomicBool::new(false);
 static SCAN_EVENT_QUEUE: ScanEventQueue = ScanEventQueue::new();
 static LINK_EVENT_QUEUE: LinkEventQueue = LinkEventQueue::new();
+static EXTERNAL_AUTH_QUEUE: ExternalAuthQueue = ExternalAuthQueue::new();
 static DIAG_SCAN_STARTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_SCAN_RESULTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_SCAN_DONE: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOCIATE_CALLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_RETRIES: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOCIATE_EVENTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_MGMT_EVENTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EAPOL_EVENTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_KEY_INSTALLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_DRIVER_FLAGS_STATUS: AtomicU32 = AtomicU32::new(u32::MAX);
+static DIAG_DRIVER_FLAGS_LO: AtomicU32 = AtomicU32::new(0);
+static DIAG_DRIVER_FLAGS_HI: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_STATUS: AtomicU32 = AtomicU32::new(u32::MAX);
+static DIAG_ASSOCIATE_AUTH: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_PMF: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_PWE: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOCIATE_AKM: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_IOCTL_STATUS: AtomicU32 = AtomicU32::new(0);
 
 const PORT_FREE: u8 = 0;
@@ -69,6 +81,9 @@ const IOCTL_GET_ADDRESS: u32 = 9;
 const IOCTL_SCAN: u32 = 14;
 const IOCTL_DISCONNECT: u32 = 15;
 const IOCTL_ASSOCIATE: u32 = 16;
+const IOCTL_GET_DRIVER_FLAGS: u32 = 35;
+const IOCTL_SEND_EXTERNAL_AUTH_STATUS: u32 = 38;
+const WLAN_REASON_PREV_AUTH_NOT_VALID: u16 = 2;
 
 const SLOT_FREE: u8 = 0;
 const SLOT_WRITING: u8 = 1;
@@ -78,6 +93,7 @@ const SCAN_EVENT_RESULT: u8 = 1;
 const SCAN_EVENT_DONE: u8 = 2;
 const LINK_EVENT_ASSOCIATE: u8 = 1;
 const LINK_EVENT_DISCONNECT: u8 = 2;
+const EXTERNAL_AUTH_QUEUE_DEPTH: usize = 2;
 
 // The vendor worker emits a complete scan batch without yielding. Match the
 // hostap driver cache (32 BSS entries) plus the terminal scan-done event so the
@@ -521,6 +537,101 @@ impl Drop for LinkEvent<'_> {
     }
 }
 
+struct ExternalAuthSlot {
+    state: AtomicU8,
+    sequence: AtomicU32,
+    event: UnsafeCell<ExternalAuthEvent>,
+}
+
+// SAFETY: slot state transfers exclusive ownership of the event cell from the
+// vendor callback to the single RadioRunner.
+unsafe impl Sync for ExternalAuthSlot {}
+
+impl ExternalAuthSlot {
+    const fn new() -> Self {
+        Self {
+            state: AtomicU8::new(SLOT_FREE),
+            sequence: AtomicU32::new(0),
+            event: UnsafeCell::new(ExternalAuthEvent {
+                abi_version: ABI_VERSION,
+                action: 0,
+                ssid_len: 0,
+                bssid: [0; 6],
+                status: 0,
+                key_mgmt_suite: 0,
+                pmkid_present: 0,
+                reserved: [0; 3],
+                ssid: [0; 32],
+                pmkid: [0; 16],
+            }),
+        }
+    }
+}
+
+struct ExternalAuthQueue {
+    next_sequence: AtomicU32,
+    dropped: AtomicU32,
+    slots: [ExternalAuthSlot; EXTERNAL_AUTH_QUEUE_DEPTH],
+}
+
+impl ExternalAuthQueue {
+    const fn new() -> Self {
+        Self {
+            next_sequence: AtomicU32::new(0),
+            dropped: AtomicU32::new(0),
+            slots: [const { ExternalAuthSlot::new() }; EXTERNAL_AUTH_QUEUE_DEPTH],
+        }
+    }
+
+    fn enqueue(&self, event: ExternalAuthEvent) -> bool {
+        let sequence = self.next_sequence.fetch_add(1, Ordering::Relaxed);
+        for slot in &self.slots {
+            if slot
+                .state
+                .compare_exchange(SLOT_FREE, SLOT_WRITING, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
+                continue;
+            }
+            // SAFETY: WRITING exclusively owns the cell until READY publishes
+            // the complete fixed-size deep copy.
+            unsafe { slot.event.get().write(event) };
+            slot.sequence.store(sequence, Ordering::Relaxed);
+            slot.state.store(SLOT_READY, Ordering::Release);
+            return true;
+        }
+        self.dropped.fetch_add(1, Ordering::Relaxed);
+        false
+    }
+
+    fn take_oldest(&self) -> Option<ExternalAuthGuard<'_>> {
+        take_oldest_slot(&self.slots).map(|slot| ExternalAuthGuard { slot })
+    }
+
+    fn has_pending(&self) -> bool {
+        self.slots
+            .iter()
+            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
+    }
+}
+
+struct ExternalAuthGuard<'a> {
+    slot: &'a ExternalAuthSlot,
+}
+
+impl ExternalAuthGuard<'_> {
+    fn event(&self) -> ExternalAuthEvent {
+        // SAFETY: READING owns the initialized fixed-size event.
+        unsafe { *self.slot.event.get() }
+    }
+}
+
+impl Drop for ExternalAuthGuard<'_> {
+    fn drop(&mut self) {
+        self.slot.state.store(SLOT_FREE, Ordering::Release);
+    }
+}
+
 trait SequencedSlot {
     fn state(&self) -> &AtomicU8;
     fn sequence(&self) -> &AtomicU32;
@@ -536,6 +647,15 @@ impl SequencedSlot for ScanSlot {
 }
 
 impl SequencedSlot for LinkSlot {
+    fn state(&self) -> &AtomicU8 {
+        &self.state
+    }
+    fn sequence(&self) -> &AtomicU32 {
+        &self.sequence
+    }
+}
+
+impl SequencedSlot for ExternalAuthSlot {
     fn state(&self) -> &AtomicU8 {
         &self.state
     }
@@ -678,6 +798,19 @@ struct MlmeData {
 }
 
 #[repr(C)]
+struct VendorExternalAuthStatus {
+    action: u32,
+    bssid: [u8; 6],
+    reserved0: [u8; 2],
+    ssid: *mut u8,
+    ssid_len: u32,
+    key_mgmt_suite: u32,
+    status: u16,
+    reserved1: [u8; 2],
+    pmkid: *mut u8,
+}
+
+#[repr(C)]
 struct KeyExtension {
     key_type: i32,
     key_index: u32,
@@ -721,8 +854,7 @@ struct VendorCryptoSettings {
     pairwise: [u32; 5],
     num_akm: i32,
     akm: [u32; 2],
-    sae_pwe: u8,
-    reserved: [u8; 3],
+    sae_pwe: i32,
 }
 
 #[repr(C)]
@@ -750,6 +882,9 @@ const _: () = {
     assert!(core::mem::size_of::<RxEapol>() == 8);
     assert!(core::mem::size_of::<EnableEapol>() == 8);
     assert!(core::mem::size_of::<MlmeData>() == 16);
+    assert!(core::mem::size_of::<VendorExternalAuthStatus>() == 32);
+    assert!(core::mem::offset_of!(VendorExternalAuthStatus, ssid) == 12);
+    assert!(core::mem::offset_of!(VendorExternalAuthStatus, pmkid) == 28);
     assert!(core::mem::size_of::<KeyExtension>() == 36);
     assert!(core::mem::offset_of!(KeyExtension, address) == 20);
     assert!(core::mem::offset_of!(KeyExtension, default_data) == 32);
@@ -815,6 +950,10 @@ pub(crate) enum NativeSupplicantError {
     FeedLinkFailed(i32),
     /// One or more association/disconnect events overflowed the queue.
     LinkQueueOverflow(u32),
+    /// One queued external-auth event could not be delivered to hostap.
+    FeedExternalAuthFailed(i32),
+    /// One or more external-auth events overflowed the queue.
+    ExternalAuthQueueOverflow(u32),
     /// The WS63 EAPOL receive ioctl or hostap feed rejected a frame.
     FeedEapolFailed(i32),
     /// The typed station configuration was rejected by the native context.
@@ -841,6 +980,7 @@ pub(crate) struct NativeSupplicant {
     mgmt_dropped_seen: u32,
     scan_dropped_seen: u32,
     link_dropped_seen: u32,
+    external_auth_dropped_seen: u32,
 }
 
 #[allow(dead_code)]
@@ -897,6 +1037,7 @@ impl NativeSupplicant {
             mgmt_dropped_seen: MGMT_RX_QUEUE.dropped.load(Ordering::Acquire),
             scan_dropped_seen: SCAN_EVENT_QUEUE.dropped.load(Ordering::Acquire),
             link_dropped_seen: LINK_EVENT_QUEUE.dropped.load(Ordering::Acquire),
+            external_auth_dropped_seen: EXTERNAL_AUTH_QUEUE.dropped.load(Ordering::Acquire),
         })
     }
 
@@ -964,6 +1105,12 @@ impl NativeSupplicant {
             .ok_or(NativeSupplicantError::DisconnectFailed(status))
     }
 
+    pub(crate) fn context_diagnostic_word(&self) -> u32 {
+        // SAFETY: the unique owner keeps the native context alive and
+        // serializes this read-only snapshot with all other context calls.
+        unsafe { hisi_wpa_context_diagnostic_word(self.context.as_ptr()) }
+    }
+
     /// Advance bounded hostap work from the owning radio runner.
     pub(crate) fn poll(
         &mut self,
@@ -986,6 +1133,12 @@ impl NativeSupplicant {
             let delta = dropped.wrapping_sub(self.link_dropped_seen);
             self.link_dropped_seen = dropped;
             return Err(NativeSupplicantError::LinkQueueOverflow(delta));
+        }
+        let dropped = EXTERNAL_AUTH_QUEUE.dropped.load(Ordering::Acquire);
+        if dropped != self.external_auth_dropped_seen {
+            let delta = dropped.wrapping_sub(self.external_auth_dropped_seen);
+            self.external_auth_dropped_seen = dropped;
+            return Err(NativeSupplicantError::ExternalAuthQueueOverflow(delta));
         }
         let mut rx_work = false;
         let mut rx_budget = work_budget.get().saturating_sub(1);
@@ -1069,6 +1222,21 @@ impl NativeSupplicant {
             rx_budget -= 1;
         }
         while rx_budget != 0 {
+            let Some(external) = EXTERNAL_AUTH_QUEUE.take_oldest() else {
+                break;
+            };
+            let event = external.event();
+            // SAFETY: the fixed-size event is a complete deep copy and the
+            // unique owner serializes this synchronous context call.
+            let status =
+                unsafe { hisi_wpa_feed_external_auth(self.context.as_ptr(), &raw const event) };
+            if status != 0 {
+                return Err(NativeSupplicantError::FeedExternalAuthFailed(status));
+            }
+            rx_work = true;
+            rx_budget -= 1;
+        }
+        while rx_budget != 0 {
             let Some(frame) = MGMT_RX_QUEUE.take_oldest() else {
                 break;
             };
@@ -1108,6 +1276,7 @@ impl NativeSupplicant {
         if rx_work
             || SCAN_EVENT_QUEUE.has_pending()
             || LINK_EVENT_QUEUE.has_pending()
+            || EXTERNAL_AUTH_QUEUE.has_pending()
             || MGMT_RX_QUEUE.has_pending()
             || EAPOL_PENDING.load(Ordering::Acquire)
         {
@@ -1232,6 +1401,46 @@ pub(crate) fn enqueue_mgmt_rx(frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -
     let queued = MGMT_RX_QUEUE.enqueue(frequency_mhz, rssi_dbm, frame);
     if queued {
         DIAG_MGMT_EVENTS.fetch_add(1, Ordering::Relaxed);
+        let _ = RUNNER_WAKE.up();
+    }
+    queued
+}
+
+/// Deep-copy one WS63 external-auth trigger for the owning RadioRunner.
+#[cfg_attr(not(target_arch = "riscv32"), allow(dead_code))]
+pub(crate) fn enqueue_external_auth(
+    action: u8,
+    bssid: [u8; 6],
+    ssid: &[u8],
+    key_mgmt_suite: u32,
+    status: u16,
+    pmkid: Option<&[u8; 16]>,
+) -> bool {
+    if PORT_STATE.load(Ordering::Acquire) != PORT_READY
+        || action > 1
+        || ssid.len() > 32
+        || (action == 0 && ssid.is_empty())
+    {
+        return false;
+    }
+    let mut event = ExternalAuthEvent {
+        abi_version: ABI_VERSION,
+        action,
+        ssid_len: ssid.len() as u8,
+        bssid,
+        status,
+        key_mgmt_suite,
+        pmkid_present: u8::from(pmkid.is_some()),
+        reserved: [0; 3],
+        ssid: [0; 32],
+        pmkid: [0; 16],
+    };
+    event.ssid[..ssid.len()].copy_from_slice(ssid);
+    if let Some(pmkid) = pmkid {
+        event.pmkid.copy_from_slice(pmkid);
+    }
+    let queued = EXTERNAL_AUTH_QUEUE.enqueue(event);
+    if queued {
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1441,6 +1650,7 @@ fn driver_hooks() -> DriverHooks {
         reserved: 0,
         driver: core::ptr::addr_of!(DRIVER_CONTEXT).cast_mut().cast(),
         get_own_address: Some(get_own_address),
+        get_driver_flags: Some(get_driver_flags),
         send_eapol: Some(send_eapol),
         send_mgmt: Some(send_mgmt),
         install_key: Some(install_key),
@@ -1448,6 +1658,7 @@ fn driver_hooks() -> DriverHooks {
         start_scan: Some(start_scan),
         associate: Some(associate),
         deauthenticate: Some(deauthenticate),
+        send_external_auth_status: Some(send_external_auth_status),
     }
 }
 
@@ -1485,6 +1696,24 @@ unsafe extern "C" fn get_own_address(driver: *mut c_void, address: *mut u8) -> c
     } else {
         crate::wal::ioctl(driver.ifname(), IOCTL_GET_ADDRESS, address.cast())
     }
+}
+
+unsafe extern "C" fn get_driver_flags(driver: *mut c_void, flags: *mut u64) -> c_int {
+    let Some(driver) = driver_context(driver) else {
+        return -1;
+    };
+    let Some(flags) = (unsafe { flags.as_mut() }) else {
+        return -1;
+    };
+    let status = crate::wal::ioctl(
+        driver.ifname(),
+        IOCTL_GET_DRIVER_FLAGS,
+        (flags as *mut u64).cast(),
+    );
+    DIAG_DRIVER_FLAGS_LO.store(*flags as u32, Ordering::Release);
+    DIAG_DRIVER_FLAGS_HI.store((*flags >> 32) as u32, Ordering::Release);
+    DIAG_DRIVER_FLAGS_STATUS.store(status as u32, Ordering::Release);
+    status
 }
 
 unsafe extern "C" fn send_eapol(
@@ -1550,11 +1779,89 @@ unsafe extern "C" fn send_mgmt(
         data: frame.cast_mut(),
         send_action_cookie: driver.send_action_cookie.get(),
     };
-    crate::wal::ioctl(
+    let status = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_SEND_MLME,
         (&mut request as *mut MlmeData).cast(),
-    )
+    );
+    DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
+    if status != 0 {
+        // Only the public 802.11/authentication header is emitted. The SAE
+        // scalar/element payload starts after this prefix and must never enter
+        // logs.
+        let header_len = frame_len.min(30);
+        // SAFETY: null and zero length were rejected above; header_len is
+        // bounded by the caller-provided frame length.
+        let header = unsafe { core::slice::from_raw_parts(frame, header_len) };
+        crate::log_emit(b"RFDBG_WPA_SEND_MGMT_ERR status=");
+        emit_diagnostic_hex(status as u32);
+        crate::log_emit(b" len=");
+        emit_diagnostic_hex(frame_len as u32);
+        crate::log_emit(b" header=");
+        emit_diagnostic_bytes(header);
+        crate::log_emit(b"\r\n");
+    }
+    status
+}
+
+pub(crate) fn emit_diagnostic_hex(value: u32) {
+    let mut output = *b"0x00000000";
+    for index in 0..8 {
+        let nibble = ((value >> ((7 - index) * 4)) & 0x0f) as u8;
+        output[index + 2] = if nibble < 10 {
+            b'0' + nibble
+        } else {
+            b'a' + nibble - 10
+        };
+    }
+    crate::log_emit(&output);
+}
+
+pub(crate) fn emit_diagnostic_bytes(bytes: &[u8]) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut encoded = [0_u8; 60];
+    for (index, byte) in bytes.iter().copied().enumerate() {
+        encoded[index * 2] = HEX[(byte >> 4) as usize];
+        encoded[index * 2 + 1] = HEX[(byte & 0x0f) as usize];
+    }
+    crate::log_emit(&encoded[..bytes.len() * 2]);
+}
+
+unsafe extern "C" fn send_external_auth_status(
+    driver: *mut c_void,
+    status: *const ExternalAuthStatus,
+) -> c_int {
+    let Some(driver) = driver_context(driver) else {
+        return -1;
+    };
+    let Some(status) = (unsafe { status.as_ref() }) else {
+        return -1;
+    };
+    if status.abi_version != ABI_VERSION || status.pmkid_present > 1 {
+        return -1;
+    }
+    let mut request = VendorExternalAuthStatus {
+        action: 0,
+        bssid: status.bssid,
+        reserved0: [0; 2],
+        ssid: core::ptr::null_mut(),
+        ssid_len: 0,
+        key_mgmt_suite: 0,
+        status: status.status,
+        reserved1: [0; 2],
+        pmkid: if status.pmkid_present == 0 {
+            core::ptr::null_mut()
+        } else {
+            status.pmkid.as_ptr().cast_mut()
+        },
+    };
+    let result = crate::wal::ioctl(
+        driver.ifname(),
+        IOCTL_SEND_EXTERNAL_AUTH_STATUS,
+        (&mut request as *mut VendorExternalAuthStatus).cast(),
+    );
+    DIAG_LAST_IOCTL_STATUS.store(result as u32, Ordering::Release);
+    result
 }
 
 unsafe extern "C" fn install_key(
@@ -1676,6 +1983,15 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
     status
 }
 
+const fn vendor_sae_pwe(value: u8) -> Option<i32> {
+    match value {
+        value if value == SaePwe::HuntAndPeck as u8 => Some(1),
+        value if value == SaePwe::HashToElement as u8 => Some(2),
+        value if value == SaePwe::Both as u8 => Some(3),
+        _ => None,
+    }
+}
+
 unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateRequest) -> c_int {
     let Some(driver) = driver_context(driver) else {
         return -1;
@@ -1700,6 +2016,9 @@ unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateReq
     {
         return -1;
     }
+    let Some(sae_pwe) = vendor_sae_pwe(request.sae_pwe) else {
+        return -1;
+    };
     let mut crypto = VendorCryptoSettings {
         wpa_versions: request.wpa_versions,
         cipher_group: request.group_suite,
@@ -1707,8 +2026,9 @@ unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateReq
         pairwise: [request.pairwise_suite, 0, 0, 0, 0],
         num_akm: 1,
         akm: [request.key_mgmt_suite, 0],
-        sae_pwe: request.sae_pwe,
-        reserved: [0; 3],
+        // hostap uses 0/1/2 for hunt-and-peck/H2E/both. The WS63 UAPI adds
+        // UNSPECIFIED at zero, so the firmware contract is 1/2/3.
+        sae_pwe,
     };
     let mut association = VendorAssociateRequest {
         bssid: if request.bssid_present == 0 {
@@ -1732,36 +2052,111 @@ unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateReq
         crypto: &mut crypto,
     };
     DIAG_ASSOCIATE_CALLS.fetch_add(1, Ordering::Relaxed);
-    let status = crate::wal::ioctl(
+    let first_status = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_ASSOCIATE,
         (&mut association as *mut VendorAssociateRequest).cast(),
     );
+    let mut status = first_status;
+    let mut disconnect_status = 0;
+    if status != 0 {
+        DIAG_ASSOCIATE_RETRIES.fetch_add(1, Ordering::Relaxed);
+        // Match the vendor driver_soc connection contract: firmware can retain
+        // stale station state after scan/previous attempts, so one failed
+        // association is recovered by an explicit disconnect and one retry.
+        // This is bounded and preserves the final ioctl status for diagnosis.
+        let mut reason = WLAN_REASON_PREV_AUTH_NOT_VALID;
+        disconnect_status = crate::wal::ioctl(
+            driver.ifname(),
+            IOCTL_DISCONNECT,
+            (&mut reason as *mut u16).cast(),
+        );
+        if disconnect_status == 0 {
+            status = crate::wal::ioctl(
+                driver.ifname(),
+                IOCTL_ASSOCIATE,
+                (&mut association as *mut VendorAssociateRequest).cast(),
+            );
+        }
+    }
+    if status != 0 {
+        crate::log_emit(b"RFDBG_WPA_ASSOC_ERR first=");
+        emit_diagnostic_hex(first_status as u32);
+        crate::log_emit(b" disconnect=");
+        emit_diagnostic_hex(disconnect_status as u32);
+        crate::log_emit(b" retry=");
+        emit_diagnostic_hex(status as u32);
+        crate::log_emit(b" auth=");
+        emit_diagnostic_hex(u32::from(association.auth_type));
+        crate::log_emit(b" pmf=");
+        emit_diagnostic_hex(u32::from(association.pmf));
+        crate::log_emit(b" pwe=");
+        emit_diagnostic_hex(crypto.sae_pwe as u32);
+        crate::log_emit(b" wpa=");
+        emit_diagnostic_hex(crypto.wpa_versions);
+        crate::log_emit(b" pairwise=");
+        emit_diagnostic_hex(crypto.pairwise[0]);
+        crate::log_emit(b" group=");
+        emit_diagnostic_hex(crypto.cipher_group);
+        crate::log_emit(b" akm=");
+        emit_diagnostic_hex(crypto.akm[0]);
+        crate::log_emit(b" freq=");
+        emit_diagnostic_hex(association.frequency_mhz);
+        crate::log_emit(b" ie_len=");
+        emit_diagnostic_hex(association.ies_len);
+        crate::log_emit(b"\r\n");
+    }
     DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
+    DIAG_ASSOCIATE_AUTH.store(u32::from(association.auth_type), Ordering::Release);
+    DIAG_ASSOCIATE_PMF.store(u32::from(association.pmf), Ordering::Release);
+    DIAG_ASSOCIATE_PWE.store(crypto.sae_pwe as u32, Ordering::Release);
+    DIAG_ASSOCIATE_AKM.store(crypto.akm[0], Ordering::Release);
+    DIAG_ASSOCIATE_STATUS.store(status as u32, Ordering::Release);
     status
 }
 
+pub(crate) fn diagnostic_snapshot() -> [u32; 8] {
+    [
+        DIAG_DRIVER_FLAGS_STATUS.load(Ordering::Acquire),
+        DIAG_DRIVER_FLAGS_LO.load(Ordering::Acquire),
+        DIAG_DRIVER_FLAGS_HI.load(Ordering::Acquire),
+        DIAG_ASSOCIATE_STATUS.load(Ordering::Acquire),
+        DIAG_ASSOCIATE_AUTH.load(Ordering::Acquire),
+        DIAG_ASSOCIATE_PMF.load(Ordering::Acquire),
+        DIAG_ASSOCIATE_PWE.load(Ordering::Acquire),
+        DIAG_ASSOCIATE_AKM.load(Ordering::Acquire),
+    ]
+}
+
 pub(crate) fn diagnostic_word() -> u32 {
-    let starts = DIAG_SCAN_STARTS.load(Ordering::Relaxed).min(0x0f);
-    let results = DIAG_SCAN_RESULTS.load(Ordering::Relaxed).min(0x1f);
+    let starts = u32::from(DIAG_SCAN_STARTS.load(Ordering::Relaxed) != 0);
+    let results = u32::from(DIAG_SCAN_RESULTS.load(Ordering::Relaxed) != 0);
     let done = u32::from(DIAG_SCAN_DONE.load(Ordering::Relaxed) != 0);
     let associate = u32::from(DIAG_ASSOCIATE_CALLS.load(Ordering::Relaxed) != 0);
     let associate_event = u32::from(DIAG_ASSOCIATE_EVENTS.load(Ordering::Relaxed) != 0);
     let mgmt = u32::from(DIAG_MGMT_EVENTS.load(Ordering::Relaxed) != 0);
     let eapol = u32::from(DIAG_EAPOL_EVENTS.load(Ordering::Relaxed) != 0);
     let key = u32::from(DIAG_KEY_INSTALLS.load(Ordering::Relaxed) != 0);
+    // SAFETY: the native supplicant owner serializes eloop access. This is a
+    // read-only snapshot used only after a bounded operation times out.
+    let eloop = unsafe { hisi_wpa_eloop_diagnostic_flags() } & 0x0f;
+    // SAFETY: the driver adapter exposes a read-only diagnostic nibble.
+    let mut driver = unsafe { hisi_wpa_driver_diagnostic_word() } & 0x0f;
+    if driver == 1 && DIAG_ASSOCIATE_RETRIES.load(Ordering::Relaxed) != 0 {
+        // Reserved stage: the C adapter accepted the request and the Rust WAL
+        // hook succeeded only after its bounded recovery retry.
+        driver = 0x0f;
+    }
     starts
-        | (results << 4)
-        | (done << 9)
-        | (associate << 10)
-        | (associate_event << 11)
-        | (mgmt << 12)
-        | (eapol << 13)
-        | (key << 14)
-}
-
-pub(crate) fn diagnostic_last_ioctl_status() -> u32 {
-    DIAG_LAST_IOCTL_STATUS.load(Ordering::Acquire)
+        | (results << 1)
+        | (done << 2)
+        | (associate << 3)
+        | (associate_event << 4)
+        | (mgmt << 5)
+        | (eapol << 6)
+        | (key << 7)
+        | (eloop << 8)
+        | (driver << 12)
 }
 
 unsafe extern "C" fn deauthenticate(driver: *mut c_void, reason: u16) -> c_int {
@@ -2136,6 +2531,57 @@ mod tests {
         assert_eq!(event.meta().status_or_reason, 0);
         assert_eq!(event.first(), &[1, 2]);
         assert_eq!(event.second(), &[3, 4, 5]);
+    }
+
+    #[test]
+    fn external_auth_queue_is_bounded_and_deep_copies_events() {
+        let queue = ExternalAuthQueue::new();
+        for index in 0..EXTERNAL_AUTH_QUEUE_DEPTH {
+            let mut event = ExternalAuthEvent {
+                abi_version: ABI_VERSION,
+                action: 0,
+                ssid_len: 4,
+                bssid: [index as u8; 6],
+                status: 0,
+                key_mgmt_suite: 0x000f_ac08,
+                pmkid_present: 1,
+                reserved: [0; 3],
+                ssid: [0; 32],
+                pmkid: [index as u8; 16],
+            };
+            event.ssid[..4].copy_from_slice(b"test");
+            assert!(queue.enqueue(event));
+        }
+        assert!(!queue.enqueue(ExternalAuthEvent {
+            abi_version: ABI_VERSION,
+            action: 1,
+            ssid_len: 0,
+            bssid: [0; 6],
+            status: 1,
+            key_mgmt_suite: 0,
+            pmkid_present: 0,
+            reserved: [0; 3],
+            ssid: [0; 32],
+            pmkid: [0; 16],
+        }));
+        assert_eq!(queue.dropped.load(Ordering::Relaxed), 1);
+
+        for index in 0..EXTERNAL_AUTH_QUEUE_DEPTH {
+            let event = queue.take_oldest().unwrap();
+            let event = event.event();
+            assert_eq!(event.bssid, [index as u8; 6]);
+            assert_eq!(&event.ssid[..event.ssid_len as usize], b"test");
+            assert_eq!(event.pmkid, [index as u8; 16]);
+        }
+        assert!(!queue.has_pending());
+    }
+
+    #[test]
+    fn maps_hostap_sae_pwe_to_ws63_uapi_values() {
+        assert_eq!(vendor_sae_pwe(SaePwe::HuntAndPeck as u8), Some(1));
+        assert_eq!(vendor_sae_pwe(SaePwe::HashToElement as u8), Some(2));
+        assert_eq!(vendor_sae_pwe(SaePwe::Both as u8), Some(3));
+        assert_eq!(vendor_sae_pwe(3), None);
     }
 
     #[test]

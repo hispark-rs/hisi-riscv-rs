@@ -423,8 +423,11 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      当前 Guest BSS 被 WS63 scan 判为 WPA2-only，因此没有发送 SAE Authentication frame；
      同一代码基线随后再次通过 upstream WPA2 connect、DHCP、5/5 public ping、零 RX drop
      和 DHCP renew。
-     剩余行为 gate 是受控 WPA3-only AP 的 SAE+PMF，以及 WPA2/WPA3 transition mode HIL。
-     当前 Guest AP 仅提供 WPA2 parity，不能替代 pure WPA3 HIL。
+     后续 vendor-oracle profile 已在受控 WPA2/WPA3 transition BSS 完成 SAE、PMF、四次
+     握手、DHCP 与重复 ping；缺失的 mbedTLS harden provider 注册是此前 status 15 的根因，
+     证据见 [W2 vendor WPA3 oracle](evidence/ws63-rf-w2-vendor-wpa3-oracle-2026-07-15.md)。
+     该结果只建立迁移 oracle：upstream-native transition HIL 与受控 WPA3-only SAE+PMF
+     仍是开放 gate。Guest AP 仍只提供 WPA2 parity，不能替代 pure WPA3 HIL。
    - **W2E-H Handshake crypto acceleration（未完成，WPA3 stable gate）**：当前
      upstream-native profile 显式使用 RustCrypto SHA/HMAC/AES/PBKDF2 与 WS63 TRNG；它是
      行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition

@@ -100,7 +100,10 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 rssi_dbm: scan.rssi_dbm,
                 security: match scan.security() {
                     ScanSecurity::Open => Security::Open,
-                    #[cfg(feature = "upstream-supplicant-wpa3")]
+                    #[cfg(any(
+                        feature = "wifi-wpa3-personal",
+                        feature = "upstream-supplicant-wpa3"
+                    ))]
                     ScanSecurity::Protected if scan.supports_wpa2_wpa3_transition() => {
                         Security::Wpa2Wpa3PersonalTransition
                     }
@@ -151,16 +154,18 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                                 frequency_mhz: channel_to_frequency(config.channel),
                             });
                         }
-                        NATIVE_EVENT_DISCONNECTED if connection_progress => {
+                        NATIVE_EVENT_DISCONNECTED if connection_progress || event.status != 0 => {
+                            let code = emit_backend_failure(supplicant, event.status);
                             return Err(BackendError {
                                 class: BackendErrorClass::Connect,
-                                code: event.status as u32,
+                                code,
                             });
                         }
                         NATIVE_EVENT_FAILED => {
+                            let code = emit_backend_failure(supplicant, event.status);
                             return Err(BackendError {
                                 class: BackendErrorClass::Connect,
-                                code: event.status as u32,
+                                code,
                             });
                         }
                         _ => {}
@@ -169,15 +174,15 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at)
                     >= config.timeout_ms() as u64
                 {
+                    let context_diagnostic = supplicant.context_diagnostic_word();
+                    let port_diagnostic = crate::upstream_supplicant::diagnostic_word();
                     let _ = supplicant.disconnect();
                     return Err(BackendError {
                         class: BackendErrorClass::Timeout,
                         code: 0x8000_0000
                             | ((last_event_kind as u32 & 0x7) << 28)
-                            | ((crate::upstream_supplicant::diagnostic_last_ioctl_status()
-                                & 0x0fff)
-                                << 16)
-                            | crate::upstream_supplicant::diagnostic_word(),
+                            | ((context_diagnostic & 0x0fff) << 16)
+                            | port_diagnostic,
                     });
                 }
                 hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
@@ -280,6 +285,24 @@ impl WifiBackend for Ws63WifiBackend<'_> {
     }
 }
 
+#[cfg(feature = "upstream-supplicant-port")]
+fn emit_backend_failure(supplicant: &NativeSupplicant, status: i32) -> u32 {
+    let context_diagnostic = supplicant.context_diagnostic_word();
+    let port_diagnostic = crate::upstream_supplicant::diagnostic_word();
+    crate::log_emit(b"RFDBG_WPA_BACKEND_ERR status=");
+    crate::upstream_supplicant::emit_diagnostic_hex(status as u32);
+    crate::log_emit(b" context=");
+    crate::upstream_supplicant::emit_diagnostic_hex(context_diagnostic);
+    crate::log_emit(b" port=");
+    crate::upstream_supplicant::emit_diagnostic_hex(port_diagnostic);
+    crate::log_emit(b"\r\n");
+    // The UART sink is best-effort while the radio runner and vendor workers
+    // are active. Preserve the same snapshot in the public error code so one
+    // terminal marker is sufficient to diagnose an early hostap rejection.
+    // The raw terminal status remains available in the log above.
+    0xd000_0000 | ((context_diagnostic & 0x0fff) << 16) | (port_diagnostic & 0xffff)
+}
+
 /// Build the WS63 resources consumed by `hisi_rf::init`.
 #[cfg(feature = "net")]
 pub fn resources(efuse: Efuse<'static>) -> RadioResources<Ws63WifiBackend<'static>, Ws63Device> {
@@ -333,6 +356,7 @@ fn map_error(error: Ws63Error) -> BackendError {
         | Ws63Error::RegisterEvents(code)
         | Ws63Error::OpenStation(code)
         | Ws63Error::StartScan(code) => (BackendErrorClass::Other, code as u32),
+        Ws63Error::CryptoInitialize(code) => (BackendErrorClass::Initialize, code as u32),
         Ws63Error::Timebase(code) | Ws63Error::Crypto(code) => (BackendErrorClass::Other, code),
         Ws63Error::ScanFailed(status) => (BackendErrorClass::Other, scan_status_code(status)),
         Ws63Error::InvalidSsid => (BackendErrorClass::Other, 0x100),
@@ -379,6 +403,12 @@ fn map_native_error(error: NativeSupplicantError) -> BackendError {
         }
         NativeSupplicantError::LinkQueueOverflow(count) => {
             (BackendErrorClass::Connect, 0xa000 | count.min(0xfff))
+        }
+        NativeSupplicantError::FeedExternalAuthFailed(status) => {
+            (BackendErrorClass::Connect, 0xe000 | status as u32 & 0xfff)
+        }
+        NativeSupplicantError::ExternalAuthQueueOverflow(count) => {
+            (BackendErrorClass::Connect, 0xf000 | count.min(0xfff))
         }
         NativeSupplicantError::ConfigureFailed(status) => {
             (BackendErrorClass::Connect, 0xb000 | status as u32 & 0xfff)

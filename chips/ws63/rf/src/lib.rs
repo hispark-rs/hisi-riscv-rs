@@ -133,6 +133,17 @@ pub mod timer;
 pub mod uapi;
 #[cfg(feature = "upstream-supplicant-port")]
 mod upstream_supplicant;
+
+/// Return the bounded upstream-supplicant bring-up snapshot.
+///
+/// This is a diagnostic contract for the WS63 connectivity smoke, not a user
+/// radio API. The caller emits it after the worker has returned so UART output
+/// cannot perturb RF scheduling.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_diagnostic_snapshot() -> [u32; 8] {
+    upstream_supplicant::diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

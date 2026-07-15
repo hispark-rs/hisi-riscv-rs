@@ -25,7 +25,9 @@ const IFNAME_CAPACITY: usize = 17;
 const SSID_CAPACITY: usize = 32;
 const AUTH_MODE_WPA2_PSK: i32 = 2;
 const AUTH_MODE_WPA3_SAE: i32 = 7;
-const AUTH_MODE_WPA2_WPA3_TRANSITION: i32 = 9;
+// `EXT_WIFI_SECURITY_WPA3_WPA2_PSK_MIX` in the WS63 `soc_wifi_api.h`.
+// Value 9 is WPA3-Enterprise and must not be accepted as Personal transition.
+const AUTH_MODE_WPA2_WPA3_TRANSITION: i32 = 8;
 const PAIRWISE_CCMP: i32 = 1;
 #[cfg(feature = "wifi-personal")]
 const WPA_KEY_CAPACITY: usize = 64;
@@ -42,7 +44,23 @@ struct VendorRxMgmt {
 }
 
 #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+#[repr(C)]
+struct VendorExternalAuth {
+    action: u32,
+    bssid: [u8; 6],
+    reserved0: [u8; 2],
+    ssid: *const u8,
+    ssid_len: u32,
+    key_mgmt_suite: u32,
+    status: u16,
+    reserved1: [u8; 2],
+    pmkid: *const u8,
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
 const _: () = assert!(core::mem::size_of::<VendorRxMgmt>() == 16);
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+const _: () = assert!(core::mem::size_of::<VendorExternalAuth>() == 32);
 
 /// Maximum number of access points retained from one scan.
 pub const MAX_SCAN_RESULTS: usize = 32;
@@ -51,6 +69,8 @@ pub const MAX_SCAN_RESULTS: usize = 32;
 const EVENT_SCAN_DONE: c_int = 4;
 #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
 const EVENT_RX_MGMT: c_int = 2;
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
+const EVENT_EXTERNAL_AUTH: c_int = 13;
 #[cfg(target_arch = "riscv32")]
 const EVENT_SCAN_RESULT: c_int = 5;
 #[cfg(target_arch = "riscv32")]
@@ -356,6 +376,8 @@ pub enum Error {
     UnsupportedSecurity(i32),
     /// WPA personal passphrases must be 8-63 printable ASCII bytes.
     InvalidPassphrase,
+    /// The vendor mbedTLS harden adapter failed to register its crypto providers.
+    CryptoInitialize(c_int),
     /// The WS63 unified-cipher provider failed while deriving the WPA2 PMK.
     Crypto(u32),
     /// The vendor scan ioctl failed.
@@ -419,6 +441,16 @@ impl<'d> WpaWifi<'d> {
             // The vendor-oracle WPA profiles initialize their shared cipher
             // environment before either WPA2-PSK or SAE starts.
             unsafe { uapi_drv_cipher_env_init() };
+            #[cfg(feature = "wifi-wpa3-personal")]
+            {
+                // The vendor SAE path enters mbedTLS through the harden-adapter
+                // function tables. Cipher environment initialization creates
+                // the engines, but does not populate those tables.
+                let registered = unsafe { mbedtls_adapt_register_func() };
+                if registered != 0 {
+                    return Err(Error::CryptoInitialize(registered));
+                }
+            }
             let init = unsafe { uapi_wifi_init(2, 7) };
             if init != 0 {
                 return Err(Error::Initialize(init));
@@ -580,11 +612,9 @@ impl<'d> WpaWifi<'d> {
                         let PersonalSecurity::Wpa3 { sae_pwe } = network.security else {
                             unreachable!()
                         };
-                        let pmf = unsafe { uapi_wifi_set_pmf(2) };
-                        if pmf != 0 {
-                            finish_connection();
-                            return Err(Error::ConfigureSecurity(pmf));
-                        }
+                        // `uapi_wifi_set_pmf` is a pre-start configuration API
+                        // and rejects calls after the station is running. The
+                        // vendor SAE setup below selects required PMF itself.
                         let pwe = match sae_pwe {
                             SaePwe::HuntAndPeck => 1,
                             SaePwe::HashToElement => 2,
@@ -1395,6 +1425,56 @@ unsafe extern "C" fn scan_event(
     length: c_uint,
 ) -> c_int {
     #[cfg(feature = "upstream-supplicant-port")]
+    if event == EVENT_EXTERNAL_AUTH
+        && !data.is_null()
+        && length as usize == core::mem::size_of::<VendorExternalAuth>()
+    {
+        // SAFETY: the vendor owns this exact descriptor for the callback. All
+        // pointer payloads are deep-copied before returning.
+        let external = unsafe { &*data.cast::<VendorExternalAuth>() };
+        let ssid_len = external.ssid_len as usize;
+        if external.action > 1
+            || ssid_len > 32
+            || (ssid_len != 0 && external.ssid.is_null())
+            || (external.action == 0 && ssid_len == 0)
+        {
+            return -1;
+        }
+        crate::log_emit(b"RFDBG_WPA_EXTERNAL_AUTH action=");
+        crate::upstream_supplicant::emit_diagnostic_hex(external.action);
+        crate::log_emit(b" status=");
+        crate::upstream_supplicant::emit_diagnostic_hex(u32::from(external.status));
+        crate::log_emit(b" akm=");
+        crate::upstream_supplicant::emit_diagnostic_hex(external.key_mgmt_suite);
+        crate::log_emit(b"\r\n");
+        let ssid = if ssid_len == 0 {
+            &[]
+        } else {
+            // SAFETY: the descriptor promises ssid_len readable bytes for the
+            // duration of this callback.
+            unsafe { core::slice::from_raw_parts(external.ssid, ssid_len) }
+        };
+        let pmkid = if external.pmkid.is_null() {
+            None
+        } else {
+            // SAFETY: the vendor external-auth ABI defines a 16-byte PMKID.
+            Some(unsafe { &*external.pmkid.cast::<[u8; 16]>() })
+        };
+        return if crate::upstream_supplicant::enqueue_external_auth(
+            external.action as u8,
+            external.bssid,
+            ssid,
+            external.key_mgmt_suite,
+            external.status,
+            pmkid,
+        ) {
+            0
+        } else {
+            -1
+        };
+    }
+
+    #[cfg(feature = "upstream-supplicant-port")]
     if event == EVENT_RX_MGMT
         && !data.is_null()
         && length as usize == core::mem::size_of::<VendorRxMgmt>()
@@ -1402,10 +1482,15 @@ unsafe extern "C" fn scan_event(
         // SAFETY: the vendor callback owns the descriptor and frame for this
         // call. enqueue_mgmt_rx deep-copies the complete frame before return.
         let rx = unsafe { &*data.cast::<VendorRxMgmt>() };
-        if !rx.frame.is_null() && rx.frame_len != 0 && rx.frequency_mhz > 0 {
+        if !rx.frame.is_null() && rx.frame_len != 0 {
             // SAFETY: the descriptor promises frame_len readable bytes for
             // this callback. The queue copies them before this function exits.
             let frame = unsafe { core::slice::from_raw_parts(rx.frame, rx.frame_len as usize) };
+            crate::log_emit(b"RFDBG_WPA_RX_MGMT len=");
+            crate::upstream_supplicant::emit_diagnostic_hex(rx.frame_len);
+            crate::log_emit(b" header=");
+            crate::upstream_supplicant::emit_diagnostic_bytes(&frame[..frame.len().min(30)]);
+            crate::log_emit(b"\r\n");
             let _ = crate::upstream_supplicant::enqueue_mgmt_rx(
                 rx.frequency_mhz as u32,
                 rx.signal_mbm / 100,
@@ -1542,6 +1627,12 @@ unsafe extern "C" fn scan_event(
         // SAFETY: the callback length was checked against the vendor layout.
         let disconnect = unsafe { &*data.cast::<VendorDisconnect>() };
         #[cfg(feature = "upstream-supplicant-port")]
+        {
+            crate::log_emit(b"RFDBG_WPA_DISCONNECT reason=");
+            crate::upstream_supplicant::emit_diagnostic_hex(u32::from(disconnect.reason));
+            crate::log_emit(b"\r\n");
+        }
+        #[cfg(feature = "upstream-supplicant-port")]
         if let Some(ies) =
             // SAFETY: the callback descriptor owns the payload until return.
             unsafe { transient_event_bytes(disconnect.ie, disconnect.ie_len) }
@@ -1655,10 +1746,10 @@ unsafe extern "C" {
     fn uapi_wifi_get_scan_results(results: *mut VendorWpaApInfo, count: *mut c_uint) -> c_int;
     #[cfg(feature = "wifi-personal")]
     fn uapi_drv_cipher_env_init();
+    #[cfg(feature = "wifi-wpa3-personal")]
+    fn mbedtls_adapt_register_func() -> c_int;
     #[cfg(feature = "wifi-personal")]
     fn uapi_wifi_sta_connect(request: *const VendorWpaAssoc) -> c_int;
-    #[cfg(feature = "wifi-wpa3-personal")]
-    fn uapi_wifi_set_pmf(pmf: c_int) -> c_int;
     #[cfg(feature = "wifi-wpa3-personal")]
     fn wifi_sta_set_sae_pwe(pwe: c_int) -> c_int;
     #[cfg(feature = "wifi-personal")]
@@ -1678,8 +1769,8 @@ mod tests {
     #[cfg(feature = "wifi-wpa2-personal")]
     use super::encode_hex;
     use super::{
-        AUTH_MODE_WPA2_PSK, AUTH_MODE_WPA2_WPA3_TRANSITION, Error, OpenNetwork, PAIRWISE_CCMP,
-        ScanResult, ScanSecurity, personal_security_from_ies, ssid_from_ies,
+        AUTH_MODE_WPA2_PSK, AUTH_MODE_WPA2_WPA3_TRANSITION, AUTH_MODE_WPA3_SAE, Error, OpenNetwork,
+        PAIRWISE_CCMP, ScanResult, ScanSecurity, personal_security_from_ies, ssid_from_ies,
     };
     #[cfg(feature = "wifi-wpa3-personal")]
     use hisi_rf::{PersonalSecurity, SaePwe};
@@ -1752,6 +1843,12 @@ mod tests {
             personal_security_from_ies(&ies),
             (AUTH_MODE_WPA2_WPA3_TRANSITION, PAIRWISE_CCMP)
         );
+    }
+
+    #[test]
+    fn vendor_transition_auth_mode_matches_soc_wifi_api() {
+        assert_eq!(AUTH_MODE_WPA3_SAE, 7);
+        assert_eq!(AUTH_MODE_WPA2_WPA3_TRANSITION, 8);
     }
 
     #[test]
