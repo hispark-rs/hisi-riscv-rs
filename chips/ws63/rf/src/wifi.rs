@@ -23,6 +23,10 @@ use portable_atomic::{AtomicBool, Ordering};
 
 const IFNAME_CAPACITY: usize = 17;
 const SSID_CAPACITY: usize = 32;
+const AUTH_MODE_WPA2_PSK: i32 = 2;
+const AUTH_MODE_WPA3_SAE: i32 = 7;
+const AUTH_MODE_WPA2_WPA3_TRANSITION: i32 = 9;
+const PAIRWISE_CCMP: i32 = 1;
 #[cfg(feature = "wifi-personal")]
 const WPA_KEY_CAPACITY: usize = 64;
 #[cfg(target_arch = "riscv32")]
@@ -163,11 +167,19 @@ impl PersonalNetwork {
             return Err(Error::OpenNetwork);
         }
         let supported = match security {
-            PersonalSecurity::Wpa2 => result.auth_mode == 2 && result.pairwise == 1,
+            PersonalSecurity::Wpa2 => {
+                matches!(
+                    result.auth_mode,
+                    AUTH_MODE_WPA2_PSK | AUTH_MODE_WPA2_WPA3_TRANSITION
+                ) && result.pairwise == PAIRWISE_CCMP
+            }
             PersonalSecurity::Wpa3 { .. } => {
                 cfg!(feature = "wifi-wpa3-personal")
-                    && result.auth_mode == 7
-                    && result.pairwise == 1
+                    && matches!(
+                        result.auth_mode,
+                        AUTH_MODE_WPA3_SAE | AUTH_MODE_WPA2_WPA3_TRANSITION
+                    )
+                    && result.pairwise == PAIRWISE_CCMP
             }
         };
         if !supported {
@@ -184,7 +196,10 @@ impl PersonalNetwork {
             ssid: result.ssid,
             ssid_len: result.ssid_len,
             bssid: result.bssid,
-            auth_mode: result.auth_mode,
+            auth_mode: match security {
+                PersonalSecurity::Wpa2 => AUTH_MODE_WPA2_PSK,
+                PersonalSecurity::Wpa3 { .. } => AUTH_MODE_WPA3_SAE,
+            },
             pairwise: result.pairwise,
             channel: result.channel,
             security,
@@ -284,15 +299,28 @@ impl ScanResult {
     /// Whether this result matches the verified WPA2-Personal/CCMP profile.
     pub const fn supports_wpa2_personal(&self) -> bool {
         matches!(self.security, ScanSecurity::Protected)
-            && self.auth_mode == 2
-            && self.pairwise == 1
+            && matches!(
+                self.auth_mode,
+                AUTH_MODE_WPA2_PSK | AUTH_MODE_WPA2_WPA3_TRANSITION
+            )
+            && self.pairwise == PAIRWISE_CCMP
     }
 
     /// Whether this result matches the vendor-oracle WPA3-Personal/SAE profile.
     pub const fn supports_wpa3_personal(&self) -> bool {
         matches!(self.security, ScanSecurity::Protected)
-            && self.auth_mode == 7
-            && self.pairwise == 1
+            && matches!(
+                self.auth_mode,
+                AUTH_MODE_WPA3_SAE | AUTH_MODE_WPA2_WPA3_TRANSITION
+            )
+            && self.pairwise == PAIRWISE_CCMP
+    }
+
+    /// Whether this result advertises both WPA2-PSK and WPA3-SAE.
+    pub const fn supports_wpa2_wpa3_transition(&self) -> bool {
+        matches!(self.security, ScanSecurity::Protected)
+            && self.auth_mode == AUTH_MODE_WPA2_WPA3_TRANSITION
+            && self.pairwise == PAIRWISE_CCMP
     }
 }
 
@@ -1343,12 +1371,12 @@ fn personal_security_from_ies(ies: &[u8]) -> (i32, i32) {
                     sae |= suite[3] == 8;
                 }
             }
-            // A transition BSS remains usable by the current WPA2-only native
-            // profile. Select SAE only when PSK is absent.
-            let auth_mode = if psk {
-                2
+            let auth_mode = if psk && sae {
+                AUTH_MODE_WPA2_WPA3_TRANSITION
+            } else if psk {
+                AUTH_MODE_WPA2_PSK
             } else if sae {
-                7
+                AUTH_MODE_WPA3_SAE
             } else {
                 0
             };
@@ -1650,7 +1678,8 @@ mod tests {
     #[cfg(feature = "wifi-wpa2-personal")]
     use super::encode_hex;
     use super::{
-        Error, OpenNetwork, ScanResult, ScanSecurity, personal_security_from_ies, ssid_from_ies,
+        AUTH_MODE_WPA2_PSK, AUTH_MODE_WPA2_WPA3_TRANSITION, Error, OpenNetwork, PAIRWISE_CCMP,
+        ScanResult, ScanSecurity, personal_security_from_ies, ssid_from_ies,
     };
     #[cfg(feature = "wifi-wpa3-personal")]
     use hisi_rf::{PersonalSecurity, SaePwe};
@@ -1707,16 +1736,22 @@ mod tests {
             48, 20, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac,
             2, 0, 0,
         ];
-        assert_eq!(personal_security_from_ies(&ies), (2, 1));
+        assert_eq!(
+            personal_security_from_ies(&ies),
+            (AUTH_MODE_WPA2_PSK, PAIRWISE_CCMP)
+        );
     }
 
     #[test]
-    fn transition_rsn_prefers_current_wpa2_profile() {
+    fn transition_rsn_preserves_both_personal_akms() {
         let ies = [
             48, 24, 1, 0, 0x00, 0x0f, 0xac, 4, 1, 0, 0x00, 0x0f, 0xac, 4, 2, 0, 0x00, 0x0f, 0xac,
             2, 0x00, 0x0f, 0xac, 8, 0, 0,
         ];
-        assert_eq!(personal_security_from_ies(&ies), (2, 1));
+        assert_eq!(
+            personal_security_from_ies(&ies),
+            (AUTH_MODE_WPA2_WPA3_TRANSITION, PAIRWISE_CCMP)
+        );
     }
 
     #[test]

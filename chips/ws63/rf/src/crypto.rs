@@ -17,6 +17,10 @@ use hisi_crypto::{EntropySource, RustCryptoProvider, TryBlockCipher, TryHash, Tr
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::Ws63Crypto;
 
+#[cfg(feature = "upstream-supplicant-wpa3")]
+#[path = "crypto_sae.rs"]
+mod crypto_sae;
+
 /// Explicit hardware capability selection for the vendor PBKDF2/TRNG ABI.
 #[cfg(target_arch = "riscv32")]
 pub(crate) static WS63_CRYPTO: Ws63Crypto = {

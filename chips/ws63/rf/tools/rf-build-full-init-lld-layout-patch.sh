@@ -27,6 +27,13 @@ HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
 PYTHON="${PYTHON:-python3}"
 HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
 RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
+TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target}"
+case "$TARGET_DIR" in
+  /*) ;;
+  *) TARGET_DIR="$ROOT/$TARGET_DIR" ;;
+esac
+FIRMWARE_DIR="$TARGET_DIR/riscv32imfc-unknown-none-elf/release"
+LAYOUT_ELF="$FIRMWARE_DIR/wifi_init_smoke"
 
 cargo build --manifest-path "$RADIO_SYS_DIR/Cargo.toml" \
   -p hisi-rf-link --target "$HOST_TRIPLE" --target-dir "$RF_LINK_TARGET"
@@ -394,8 +401,8 @@ cd "$ROOT"
 
 rm -rf "$NEUTRAL_DIR" "$PATCHED_DIR"
 rm -f "$LAYOUT_MAP" "$FINAL_MAP" "$MANIFEST"
-rm -f target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke
-rm -f target/riscv32imfc-unknown-none-elf/release/deps/wifi_init_smoke-*
+rm -f "$LAYOUT_ELF"
+rm -f "$FIRMWARE_DIR"/deps/wifi_init_smoke-*
 
 prepare_rf_diag_sources
 
@@ -409,9 +416,8 @@ echo
 echo "== stock rust-lld layout pass =="
 WS63_RF_LIB_DIR="$NEUTRAL_DIR" \
 CARGO_ENCODED_RUSTFLAGS="$LAYOUT_RUSTFLAGS" \
+CARGO_TARGET_DIR="$TARGET_DIR" \
 cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release --features "$FEATURES"
-
-LAYOUT_ELF="$ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 
 echo
 echo "== patch RF archives from rust-lld layout =="
@@ -424,13 +430,14 @@ echo "== patch RF archives from rust-lld layout =="
   --manifest "$MANIFEST" \
   "${DIAG_LIBS[@]}"
 
-rm -f target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke
-rm -f target/riscv32imfc-unknown-none-elf/release/deps/wifi_init_smoke-*
+rm -f "$LAYOUT_ELF"
+rm -f "$FIRMWARE_DIR"/deps/wifi_init_smoke-*
 
 echo
 echo "== stock rust-lld final link =="
 WS63_RF_LIB_DIR="$PATCHED_DIR" \
 CARGO_ENCODED_RUSTFLAGS="$FINAL_RUSTFLAGS" \
+CARGO_TARGET_DIR="$TARGET_DIR" \
 cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release --features "$FEATURES"
 
 echo
@@ -440,8 +447,8 @@ if ! "$RF_LINK" verify-layout \
   --final-map "$FINAL_MAP" \
   --final-elf "$LAYOUT_ELF"; then
   echo "ERROR: final rust-lld layout changed after patching; refusing burnable output" >&2
-  rm -f target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke
-  rm -f target/riscv32imfc-unknown-none-elf/release/deps/wifi_init_smoke-*
+  rm -f "$LAYOUT_ELF"
+  rm -f "$FIRMWARE_DIR"/deps/wifi_init_smoke-*
   exit 1
 fi
 
@@ -494,4 +501,4 @@ echo "final map: $FINAL_MAP"
 echo "patch manifest: $MANIFEST"
 echo "ROM patch report: ${WS63_RF_ROM_PATCH_REPORT:-${TMPDIR:-/tmp}/wifi_init_smoke-rom-patches.json}"
 echo "task profile report: $TASK_PROFILE_REPORT"
-echo "firmware ELF: $ROOT/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
+echo "firmware ELF: $LAYOUT_ELF"

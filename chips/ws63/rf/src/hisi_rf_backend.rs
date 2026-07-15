@@ -100,7 +100,14 @@ impl WifiBackend for Ws63WifiBackend<'_> {
                 rssi_dbm: scan.rssi_dbm,
                 security: match scan.security() {
                     ScanSecurity::Open => Security::Open,
-                    #[cfg(feature = "wifi-wpa3-personal")]
+                    #[cfg(feature = "upstream-supplicant-wpa3")]
+                    ScanSecurity::Protected if scan.supports_wpa2_wpa3_transition() => {
+                        Security::Wpa2Wpa3PersonalTransition
+                    }
+                    #[cfg(any(
+                        feature = "wifi-wpa3-personal",
+                        feature = "upstream-supplicant-wpa3"
+                    ))]
                     ScanSecurity::Protected if scan.supports_wpa3_personal() => {
                         Security::Wpa3Personal
                     }
