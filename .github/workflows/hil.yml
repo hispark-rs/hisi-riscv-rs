@@ -30,6 +30,11 @@ on:
         description: Single example; use wifi_init_smoke for the A4 connectivity gate (blank = tutorial smoke suite)
         type: string
         default: ""
+      connectivity_profile:
+        description: Supplicant path used by wifi_init_smoke
+        type: choice
+        options: [vendor-wpa2, upstream-wpa2, upstream-wpa3]
+        default: vendor-wpa2
   # schedule:
   #   - cron: "0 4 * * *"   # nightly once a board is permanently attached
 
@@ -62,6 +67,9 @@ jobs:
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
           PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
+          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'vendor-wpa2' }}
+          WS63_WIFI_AP_MODE: ${{ vars.HIL_WIFI_AP_MODE }}
+          WS63_WIFI_SSID: ${{ vars.HIL_WIFI_SSID }}
           WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
           WS63_WPA_ARCHIVE: ${{ vars.HIL_WPA_ARCHIVE }}
         run: |
@@ -84,6 +92,9 @@ jobs:
           ADDRESS: ${{ vars.HIL_ADDRESS }}
           PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
           PROBE_SPEED: "1000"
+          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'vendor-wpa2' }}
+          WS63_WIFI_AP_MODE: ${{ vars.HIL_WIFI_AP_MODE }}
+          WS63_WIFI_SSID: ${{ vars.HIL_WIFI_SSID }}
           WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
           WS63_WPA_ARCHIVE: ${{ vars.HIL_WPA_ARCHIVE }}
           HIL_CONFIRM: "1"   # deliberate hardware write (see the flash-guard hook)

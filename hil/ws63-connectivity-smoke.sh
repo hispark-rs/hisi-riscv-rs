@@ -2,8 +2,9 @@
 # Build, flash, and verify the WS63 A4 Wi-Fi vertical slice on real silicon.
 #
 # This is deliberately separate from hil-smoke.sh: it requires a controlled
-# WPA2 AP, a passphrase secret, the pinned derived supplicant archive, J-Link
-# nRST, and a longer UART observation window.
+# Personal-mode AP credentials, J-Link nRST, and a longer UART observation
+# window. The profile explicitly selects either the vendor oracle or the pinned
+# upstream hostap source path.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,19 +12,22 @@ WPA_TAG="wpa2-personal-2026-07-13"
 WPA_ASSET="libwpa_supplicant_wpa2_personal.a"
 WPA_SHA256="891c195279d768ce5664e16fecac95f353fd2217c4e3590315baa4cb6e7f25a2"
 WPA_URL="https://github.com/hispark-rs/ws63-RF/releases/download/$WPA_TAG/$WPA_ASSET"
-ELF="$HERE/target/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 MONITOR="${MONITOR:-60}"
 PROBE_SPEED="${PROBE_SPEED:-1000}"
 PORT="${PORT:-}"
 PYTHON="${PYTHON:-}"
+PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
 
 usage() {
     cat <<'EOF'
-Usage: PORT=/dev/ttyUSB0 WS63_WIFI_PASSPHRASE=... hil/ws63-connectivity-smoke.sh
+Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
+       hil/ws63-connectivity-smoke.sh
        hil/ws63-connectivity-smoke.sh --preflight
 
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
-          HISI_FWPKG, UART_BAUD, MONITOR.
+          HISI_FWPKG, UART_BAUD, MONITOR,
+          WS63_CONNECTIVITY_PROFILE={vendor-wpa2|upstream-wpa2|upstream-wpa3},
+          WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3.
 EOF
 }
 
@@ -81,7 +85,14 @@ resolve_archive() {
 
 preflight() {
     local failed=0 archive actual python
-    for command in cargo curl JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv riscv64-unknown-elf-gcc; do
+    case "$PROFILE" in
+        vendor-wpa2|upstream-wpa2|upstream-wpa3) ;;
+        *)
+            echo "ERROR: unsupported WS63_CONNECTIVITY_PROFILE: $PROFILE" >&2
+            failed=1
+            ;;
+    esac
+    for command in cargo JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv riscv64-unknown-elf-gcc; do
         require_command "$command" || failed=1
     done
     if [ -z "$PORT" ]; then
@@ -95,6 +106,15 @@ preflight() {
         echo "ERROR: set WS63_WIFI_PASSPHRASE through the HIL secret store" >&2
         failed=1
     fi
+    if [ -z "${WS63_WIFI_SSID:-}" ]; then
+        echo "ERROR: set WS63_WIFI_SSID to the controlled AP" >&2
+        failed=1
+    fi
+    if [ "$PROFILE" = upstream-wpa3 ] &&
+        ! [[ "${WS63_WIFI_AP_MODE:-}" =~ ^(pure-wpa3|transition)$ ]]; then
+        echo "ERROR: upstream-wpa3 requires WS63_WIFI_AP_MODE=pure-wpa3 or transition" >&2
+        failed=1
+    fi
     if [ -n "${PROBE_YAML:-}" ] && [ ! -f "$PROBE_YAML" ]; then
         echo "ERROR: PROBE_YAML not found: $PROBE_YAML" >&2
         failed=1
@@ -105,7 +125,8 @@ preflight() {
     else
         failed=1
     fi
-    if [ "$failed" -eq 0 ]; then
+    if [ "$failed" -eq 0 ] && [ "$PROFILE" = vendor-wpa2 ]; then
+        require_command curl || failed=1
         archive="$(resolve_archive)" || failed=1
         if [ "$failed" -eq 0 ]; then
             actual="$(sha256_file "$archive")"
@@ -118,7 +139,7 @@ preflight() {
         fi
     fi
     [ "$failed" -eq 0 ] || return 1
-    echo "connectivity-smoke: preflight PASS (probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
+    echo "connectivity-smoke: preflight PASS (profile=$PROFILE, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
 }
 
 assert_marker() {
@@ -149,17 +170,34 @@ case "${1:-}" in
 esac
 
 preflight
-ARCHIVE="$(resolve_archive)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 LOG="$TMP/uart.log"
+TARGET_DIR="$TMP/target"
+ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
+ARCHIVE=""
+FEATURES=""
+case "$PROFILE" in
+    vendor-wpa2)
+        ARCHIVE="$(resolve_archive)"
+        FEATURES="full-init,wpa"
+        ;;
+    upstream-wpa2)
+        FEATURES="full-init,upstream-supplicant"
+        ;;
+    upstream-wpa3)
+        FEATURES="full-init,upstream-supplicant,upstream-wpa3"
+        ;;
+esac
 
-echo "==> guarded A4 link (credentials remain in environment)"
+echo "==> guarded connectivity link (profile=$PROFILE; credentials use an ephemeral target dir)"
 (
     cd "$HERE"
     WS63_WPA_ARCHIVE="$ARCHIVE" \
+    WS63_WIFI_SSID="$WS63_WIFI_SSID" \
     WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
-    WS63_RF_FEATURES="full-init,wpa" \
+    WS63_RF_FEATURES="$FEATURES" \
+    CARGO_TARGET_DIR="$TARGET_DIR" \
         bash chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh
 )
 
@@ -175,14 +213,25 @@ assert_marker 'RF2_INIT_OK ifname=hisi-rf' 'chip-neutral radio initialized'
 assert_marker 'A4_RADIO_EVENT kind=initialized' 'initialized event delivered'
 assert_marker 'A4_RADIO_EVENT kind=scan-completed' 'scan event delivered'
 assert_marker 'A4_RADIO_EVENT kind=connected' 'connect event delivered'
-assert_marker 'RF5B_WPA_CONNECT_OK' 'WPA2 association completed'
+case "$PROFILE" in
+    vendor-wpa2)
+        assert_marker 'RF5B_WPA_CONNECT_OK' 'vendor-oracle WPA2 association completed'
+        ;;
+    upstream-wpa2)
+        assert_marker 'W2D_WPA2_CONNECT_OK' 'upstream hostap WPA2 association completed'
+        ;;
+    upstream-wpa3)
+        assert_marker "W2E_AP_SECURITY mode=${WS63_WIFI_AP_MODE}" 'scan RSNE matches the controlled WPA3 AP mode'
+        assert_marker 'W2E_WPA3_CONNECT_OK pmf=required' 'upstream hostap SAE association completed with required PMF'
+        ;;
+esac
 assert_marker 'RF5A_DHCP_OK addr=' 'DHCP lease acquired'
 assert_marker 'RF5A_ARP_OK mode=smoltcp-neighbor-cache' 'neighbor cache resolved L2 peer'
 assert_marker 'RF5C_PING_OK target=1\.1\.1\.1 .*rx=0x0*[1-9a-fA-F]' 'public ICMP received replies'
 assert_marker 'RF5C_CONNECTIVITY_SUMMARY .*rx_queue_drop=0x0+([^0-9a-fA-F]|$)' 'bounded RX queue had no drops'
 assert_marker 'A4_NET_RUNNER_STEADY' 'long-lived network runner entered steady state'
 assert_marker 'A4_DHCP_RENEW_OK client=0x0*[1-9a-fA-F].*server=0x0*[1-9a-fA-F]' 'DHCP renewal request and response observed'
-assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|panicked at' 'no fatal connectivity marker'
+assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|W2D_.*ERR|W2E_.*ERR|panicked at' 'no fatal connectivity marker'
 
 if [ "$fail" -ne 0 ]; then
     echo "WS63 CONNECTIVITY SMOKE: FAIL" >&2
