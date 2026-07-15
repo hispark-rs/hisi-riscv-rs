@@ -42,9 +42,6 @@ command -v "$PROBE_RS" >/dev/null 2>&1 || {
     exit 1
 }
 
-yaml_args=()
-[ -n "${PROBE_YAML:-}" ] && yaml_args=(--chip-description-path "$PROBE_YAML")
-
 IMAGE="${ELF}.hisi.img"
 PLAN="${ELF}.hisi-plan.json"
 echo "run-hw: planning complete flash image: $(basename "$ELF") -> $(basename "$IMAGE")"
@@ -68,8 +65,10 @@ for ((attempt = 1; attempt <= PROBE_DOWNLOAD_ATTEMPTS; attempt++)); do
     speed="$PROBE_SPEED"
     [ "$attempt" -eq 1 ] || speed="$PROBE_RETRY_SPEED"
     echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS (${speed} kHz, attempt ${attempt}/${PROBE_DOWNLOAD_ATTEMPTS})"
-    if "$PROBE_RS" download --chip "$PROBE_CHIP" --speed "$speed" "${yaml_args[@]}" \
-        --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE"; then
+    probe_args=(download --chip "$PROBE_CHIP" --speed "$speed")
+    [ -z "${PROBE_YAML:-}" ] || probe_args+=(--chip-description-path "$PROBE_YAML")
+    probe_args+=(--verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE")
+    if "$PROBE_RS" "${probe_args[@]}"; then
         download_ok=1
         break
     fi
