@@ -23,8 +23,11 @@ RUST_TERMINAL_MARKERS = (
     b"RF5C_CONNECTIVITY_SUMMARY",
     b"RF5B_WPA_CONNECT_ERR:",
     b"RF5B_CONNECT_ERR:",
+    b"W2D_WPA2_CONNECT_ERR",
+    b"W2E_WPA3_CONNECT_ERR",
+    b"A4_NET_ERR",
     b"RF5B_AP_NOT_FOUND",
-    b"RF3_SCAN_ERR:",
+    b"RF3_SCAN_ERR",
     b"RF2_INIT_ERR:",
     b"RFDBG_EXCEPTION",
 )
@@ -35,6 +38,8 @@ RUST_TIMED_MARKERS = (
     b"RF3_SCAN_OK",
     b"RF5B_CONNECT_BEGIN",
     b"RF5B_WPA_CONNECT_OK",
+    b"W2D_WPA2_CONNECT_OK",
+    b"W2E_WPA3_CONNECT_OK",
     b"RF5A_DHCP_OK",
     b"RF5A_ARP_OK",
     b"RF5C_PING_SERIES_BEGIN",
@@ -175,6 +180,10 @@ def classify(log: bytes, profile: str, stage: str) -> str:
 
     if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
         return "pass"
+    if stage == "connect" and (
+        b"W2D_WPA2_CONNECT_OK" in log or b"W2E_WPA3_CONNECT_OK" in log
+    ):
+        return "pass"
     public_ping = parse_ping_summaries(log).get("1.1.1.1")
     if public_ping is not None:
         tx = int(public_ping.get("tx", 0))
@@ -186,11 +195,17 @@ def classify(log: bytes, profile: str, stage: str) -> str:
         return "ping_timeout"
     if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
         return "auth_rsp2_timeout"
-    if b"RF5B_WPA_CONNECT_ERR:" in log or b"RF5B_CONNECT_ERR:" in log:
+    if (
+        b"RF5B_WPA_CONNECT_ERR:" in log
+        or b"RF5B_CONNECT_ERR:" in log
+        or b"W2D_WPA2_CONNECT_ERR" in log
+        or b"W2E_WPA3_CONNECT_ERR" in log
+        or b"A4_NET_ERR" in log
+    ):
         return "connect_error"
     if b"RF5B_AP_NOT_FOUND" in log:
         return "ap_not_found"
-    if b"RF3_SCAN_ERR:" in log:
+    if b"RF3_SCAN_ERR" in log:
         return "scan_error"
     if b"RF2_INIT_ERR:" in log:
         return "init_error"
@@ -223,9 +238,16 @@ def capture_run(
         success_marker = (
             b"+NOTICE:CONNECTED"
             if profile == "official-liteos"
-            else b"RF5B_WPA_CONNECT_OK"
+            else (
+                b"RF5B_WPA_CONNECT_OK",
+                b"W2D_WPA2_CONNECT_OK",
+                b"W2E_WPA3_CONNECT_OK",
+            )
         )
-        terminal_markers = (*terminal_markers, success_marker)
+        if isinstance(success_marker, tuple):
+            terminal_markers = (*terminal_markers, *success_marker)
+        else:
+            terminal_markers = (*terminal_markers, success_marker)
 
     while time.monotonic() < deadline:
         chunk = port.read(4096)
