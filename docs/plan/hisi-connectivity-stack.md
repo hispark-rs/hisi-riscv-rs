@@ -417,6 +417,12 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      PMK-to-PTK、EAPOL M2 MIC、WPA2/WPA3/transition RSNE 与 PMF、SAE group 19 HnP/H2E
      双端 roundtrip，并重放 upstream 的 5 个 SAE corpus fixtures；证据见
      [W2E host protocol vectors](evidence/ws63-rf-w2e-host-protocol-vectors-2026-07-15.md)。
+     `personal-wpa3` profile 的 41 个 SAE bignum/P-256 ABI、1157-section 最终链接与
+     fail-closed 真机探测见
+     [W2E upstream WPA3 readiness](evidence/ws63-rf-w2e-upstream-wpa3-readiness-2026-07-15.md)：
+     当前 Guest BSS 被 WS63 scan 判为 WPA2-only，因此没有发送 SAE Authentication frame；
+     同一代码基线随后再次通过 upstream WPA2 connect、DHCP、5/5 public ping、零 RX drop
+     和 DHCP renew。
      剩余行为 gate 是受控 WPA3-only AP 的 SAE+PMF，以及 WPA2/WPA3 transition mode HIL。
      当前 Guest AP 仅提供 WPA2 parity，不能替代 pure WPA3 HIL。
    - **W2E-H Handshake crypto acceleration（未完成，WPA3 stable gate）**：当前
