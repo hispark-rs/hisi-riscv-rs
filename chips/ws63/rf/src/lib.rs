@@ -141,7 +141,7 @@ mod upstream_supplicant;
 /// cannot perturb RF scheduling.
 #[cfg(feature = "upstream-supplicant-port")]
 #[doc(hidden)]
-pub fn upstream_supplicant_diagnostic_snapshot() -> [u32; 8] {
+pub fn upstream_supplicant_diagnostic_snapshot() -> [u32; 11] {
     upstream_supplicant::diagnostic_snapshot()
 }
 mod wal;

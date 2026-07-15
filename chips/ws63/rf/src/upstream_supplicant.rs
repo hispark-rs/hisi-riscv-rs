@@ -53,6 +53,9 @@ static DIAG_ASSOCIATE_PMF: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOCIATE_PWE: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOCIATE_AKM: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_IOCTL_STATUS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EXTERNAL_AUTH_CALLBACKS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EXTERNAL_AUTH_REJECTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EXTERNAL_AUTH_LENGTH: AtomicU32 = AtomicU32::new(0);
 
 const PORT_FREE: u8 = 0;
 const PORT_INSTALLING: u8 = 1;
@@ -799,9 +802,9 @@ struct MlmeData {
 
 #[repr(C)]
 struct VendorExternalAuthStatus {
-    action: u32,
+    action: u8,
     bssid: [u8; 6],
-    reserved0: [u8; 2],
+    reserved0: u8,
     ssid: *mut u8,
     ssid_len: u32,
     key_mgmt_suite: u32,
@@ -882,9 +885,10 @@ const _: () = {
     assert!(core::mem::size_of::<RxEapol>() == 8);
     assert!(core::mem::size_of::<EnableEapol>() == 8);
     assert!(core::mem::size_of::<MlmeData>() == 16);
-    assert!(core::mem::size_of::<VendorExternalAuthStatus>() == 32);
-    assert!(core::mem::offset_of!(VendorExternalAuthStatus, ssid) == 12);
-    assert!(core::mem::offset_of!(VendorExternalAuthStatus, pmkid) == 28);
+    assert!(core::mem::size_of::<VendorExternalAuthStatus>() == 28);
+    assert!(core::mem::offset_of!(VendorExternalAuthStatus, bssid) == 1);
+    assert!(core::mem::offset_of!(VendorExternalAuthStatus, ssid) == 8);
+    assert!(core::mem::offset_of!(VendorExternalAuthStatus, pmkid) == 24);
     assert!(core::mem::size_of::<KeyExtension>() == 36);
     assert!(core::mem::offset_of!(KeyExtension, address) == 20);
     assert!(core::mem::offset_of!(KeyExtension, default_data) == 32);
@@ -1843,7 +1847,7 @@ unsafe extern "C" fn send_external_auth_status(
     let mut request = VendorExternalAuthStatus {
         action: 0,
         bssid: status.bssid,
-        reserved0: [0; 2],
+        reserved0: 0,
         ssid: core::ptr::null_mut(),
         ssid_len: 0,
         key_mgmt_suite: 0,
@@ -2115,7 +2119,7 @@ unsafe extern "C" fn associate(driver: *mut c_void, request: *const AssociateReq
     status
 }
 
-pub(crate) fn diagnostic_snapshot() -> [u32; 8] {
+pub(crate) fn diagnostic_snapshot() -> [u32; 11] {
     [
         DIAG_DRIVER_FLAGS_STATUS.load(Ordering::Acquire),
         DIAG_DRIVER_FLAGS_LO.load(Ordering::Acquire),
@@ -2125,7 +2129,21 @@ pub(crate) fn diagnostic_snapshot() -> [u32; 8] {
         DIAG_ASSOCIATE_PMF.load(Ordering::Acquire),
         DIAG_ASSOCIATE_PWE.load(Ordering::Acquire),
         DIAG_ASSOCIATE_AKM.load(Ordering::Acquire),
+        DIAG_EXTERNAL_AUTH_CALLBACKS.load(Ordering::Acquire),
+        DIAG_EXTERNAL_AUTH_REJECTS.load(Ordering::Acquire),
+        DIAG_EXTERNAL_AUTH_LENGTH.load(Ordering::Acquire),
     ]
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn observe_external_auth_callback(length: u32) {
+    DIAG_EXTERNAL_AUTH_CALLBACKS.fetch_add(1, Ordering::Relaxed);
+    DIAG_EXTERNAL_AUTH_LENGTH.store(length, Ordering::Release);
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn reject_external_auth_callback() {
+    DIAG_EXTERNAL_AUTH_REJECTS.fetch_add(1, Ordering::Relaxed);
 }
 
 pub(crate) fn diagnostic_word() -> u32 {

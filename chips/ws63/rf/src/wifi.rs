@@ -46,9 +46,9 @@ struct VendorRxMgmt {
 #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
 #[repr(C)]
 struct VendorExternalAuth {
-    action: u32,
+    action: u8,
     bssid: [u8; 6],
-    reserved0: [u8; 2],
+    reserved0: u8,
     ssid: *const u8,
     ssid_len: u32,
     key_mgmt_suite: u32,
@@ -60,7 +60,14 @@ struct VendorExternalAuth {
 #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
 const _: () = assert!(core::mem::size_of::<VendorRxMgmt>() == 16);
 #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-port"))]
-const _: () = assert!(core::mem::size_of::<VendorExternalAuth>() == 32);
+const _: () = {
+    // The vendor toolchain builds ext_external_auth_stru with short enums.
+    // The final SDK image passes exactly 28 bytes to event 13.
+    assert!(core::mem::size_of::<VendorExternalAuth>() == 28);
+    assert!(core::mem::offset_of!(VendorExternalAuth, bssid) == 1);
+    assert!(core::mem::offset_of!(VendorExternalAuth, ssid) == 8);
+    assert!(core::mem::offset_of!(VendorExternalAuth, pmkid) == 24);
+};
 
 /// Maximum number of access points retained from one scan.
 pub const MAX_SCAN_RESULTS: usize = 32;
@@ -1425,10 +1432,12 @@ unsafe extern "C" fn scan_event(
     length: c_uint,
 ) -> c_int {
     #[cfg(feature = "upstream-supplicant-port")]
-    if event == EVENT_EXTERNAL_AUTH
-        && !data.is_null()
-        && length as usize == core::mem::size_of::<VendorExternalAuth>()
-    {
+    if event == EVENT_EXTERNAL_AUTH {
+        crate::upstream_supplicant::observe_external_auth_callback(length);
+        if data.is_null() || length as usize != core::mem::size_of::<VendorExternalAuth>() {
+            crate::upstream_supplicant::reject_external_auth_callback();
+            return -1;
+        }
         // SAFETY: the vendor owns this exact descriptor for the callback. All
         // pointer payloads are deep-copied before returning.
         let external = unsafe { &*data.cast::<VendorExternalAuth>() };
@@ -1438,15 +1447,9 @@ unsafe extern "C" fn scan_event(
             || (ssid_len != 0 && external.ssid.is_null())
             || (external.action == 0 && ssid_len == 0)
         {
+            crate::upstream_supplicant::reject_external_auth_callback();
             return -1;
         }
-        crate::log_emit(b"RFDBG_WPA_EXTERNAL_AUTH action=");
-        crate::upstream_supplicant::emit_diagnostic_hex(external.action);
-        crate::log_emit(b" status=");
-        crate::upstream_supplicant::emit_diagnostic_hex(u32::from(external.status));
-        crate::log_emit(b" akm=");
-        crate::upstream_supplicant::emit_diagnostic_hex(external.key_mgmt_suite);
-        crate::log_emit(b"\r\n");
         let ssid = if ssid_len == 0 {
             &[]
         } else {
@@ -1461,7 +1464,7 @@ unsafe extern "C" fn scan_event(
             Some(unsafe { &*external.pmkid.cast::<[u8; 16]>() })
         };
         return if crate::upstream_supplicant::enqueue_external_auth(
-            external.action as u8,
+            external.action,
             external.bssid,
             ssid,
             external.key_mgmt_suite,
@@ -1470,6 +1473,7 @@ unsafe extern "C" fn scan_event(
         ) {
             0
         } else {
+            crate::upstream_supplicant::reject_external_auth_callback();
             -1
         };
     }
