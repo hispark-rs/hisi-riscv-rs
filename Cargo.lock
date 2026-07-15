@@ -1959,6 +1959,7 @@ dependencies = [
 name = "wifi_init_smoke"
 version = "0.1.0"
 dependencies = [
+ "critical-section",
  "hisi-hal",
  "hisi-panic-handler",
  "hisi-rf",
