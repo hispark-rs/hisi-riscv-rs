@@ -188,6 +188,13 @@ pub fn upstream_supplicant_event_diagnostic_snapshot() -> [u32; 6] {
     upstream_supplicant::event_diagnostic_snapshot()
 }
 
+/// Return first-EAPOL timeout and reassociation recovery counters.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_recovery_diagnostic_word() -> u32 {
+    upstream_supplicant::recovery_diagnostic_word()
+}
+
 /// Return non-secret hardware entropy health counters.
 #[cfg(all(feature = "upstream-supplicant-port", target_arch = "riscv32"))]
 #[doc(hidden)]

@@ -23,7 +23,7 @@ use ws63_radio_sys::supplicant::{
     hisi_wpa_feed_associate_result, hisi_wpa_feed_disconnect, hisi_wpa_feed_eapol,
     hisi_wpa_feed_external_auth, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
     hisi_wpa_feed_scan_result, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
-    hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
+    hisi_wpa_os_uninstall, hisi_wpa_poll, hisi_wpa_recovery_diagnostic_word, key_flag,
 };
 
 static RUNNER_WAKE: Semaphore = Semaphore::new(0);
@@ -52,6 +52,7 @@ static DIAG_KEY_INSTALLS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EAPOL_FALLBACK_POLLS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EAPOL_FALLBACK_HITS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EVENT_RING: AtomicU32 = AtomicU32::new(0);
+static DIAG_RECOVERY: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_NATIVE_EVENT_KIND: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_NATIVE_EVENT_STATUS: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOC_RESULT_RAW_STATUS: AtomicU32 = AtomicU32::new(0);
@@ -1564,6 +1565,12 @@ impl NativeSupplicant {
                 rx_budget.max(1),
             )
         };
+        // SAFETY: the unique owner serializes this read-only snapshot with
+        // every other access to the native context.
+        DIAG_RECOVERY.store(
+            unsafe { hisi_wpa_recovery_diagnostic_word(self.context.as_ptr()) },
+            Ordering::Release,
+        );
         if result.status != 0 {
             return Err(NativeSupplicantError::PollFailed(result.status));
         }
@@ -2546,6 +2553,10 @@ pub(crate) fn event_diagnostic_snapshot() -> [u32; 6] {
         DIAG_ASSOC_RESULT_STATUS.load(Ordering::Acquire),
         DIAG_ASSOC_RESULT_RESPONSE_IE_LEN.load(Ordering::Acquire),
     ]
+}
+
+pub(crate) fn recovery_diagnostic_word() -> u32 {
+    DIAG_RECOVERY.load(Ordering::Acquire)
 }
 
 #[cfg(target_arch = "riscv32")]
