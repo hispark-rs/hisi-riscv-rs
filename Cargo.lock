@@ -783,6 +783,7 @@ dependencies = [
  "critical-section",
  "hisi-crypto",
  "hisi-hal",
+ "hisi-rom-sys",
  "ws63-pac",
  "zeroize",
 ]

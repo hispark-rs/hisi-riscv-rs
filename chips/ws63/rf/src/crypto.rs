@@ -12,10 +12,13 @@ pub(crate) use hisi_crypto::CryptoError;
 ))]
 use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto::{EntropySource, TryBlockCipher, TryHash, TryMac};
+use hisi_crypto::{
+    EntropySource, TryBlockCipher, TryHash, TryMac,
+    sae::{P256AffinePoint, TryP256PointMul},
+};
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto_ws63::Ws63Crypto;
-use hisi_hal::peripherals::{Km, Spacc, Trng};
+use hisi_crypto_ws63::{Ws63Crypto, Ws63P256};
+use hisi_hal::peripherals::{Km, Pke, Spacc, Trng};
 #[cfg(target_arch = "riscv32")]
 use hisi_rf_rtos_driver::{MutexHandle, WaitOutcome, WaitTimeout};
 #[cfg(target_arch = "riscv32")]
@@ -32,6 +35,7 @@ mod crypto_sae;
 #[cfg(target_arch = "riscv32")]
 struct CryptoService {
     backend: Ws63Crypto<'static>,
+    p256: Ws63P256<'static>,
     mutex: MutexHandle,
 }
 
@@ -85,18 +89,28 @@ static CIPHER_MAX_MS: AtomicU32 = AtomicU32::new(0);
 static CIPHER_RECOVERY_TESTS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static CIPHER_RECOVERY_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_MAX_MS: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn install_hardware_crypto(
     km: Km<'static>,
     spacc: Spacc<'static>,
+    pke: Pke<'static>,
     trng: Trng<'static>,
 ) -> Result<(), CryptoError> {
     let mutex =
         hisi_rf_rtos_driver::mutex_create().map_err(|_| CryptoError::Backend(0xffff_1002))?;
     let Some(service) = CRYPTO_CELL.try_init(CryptoService {
         backend: Ws63Crypto::new(km, spacc, trng),
+        p256: Ws63P256::new(pke),
         mutex,
     }) else {
         // SAFETY: this handle was just created above and has not escaped.
@@ -108,8 +122,8 @@ pub(crate) fn install_hardware_crypto(
 }
 
 #[cfg(target_arch = "riscv32")]
-fn with_hardware_crypto<T>(
-    operation: impl FnOnce(&Ws63Crypto<'static>) -> Result<T, CryptoError>,
+fn with_crypto_service<T>(
+    operation: impl FnOnce(&CryptoService) -> Result<T, CryptoError>,
 ) -> Result<T, CryptoError> {
     let service = CRYPTO_SERVICE.load(Ordering::Acquire);
     let service = if service.is_null() {
@@ -127,13 +141,44 @@ fn with_hardware_crypto<T>(
         Ok(WaitOutcome::Acquired) => {}
         Ok(WaitOutcome::TimedOut) => return Err(CryptoError::Backend(0xffff_1004)),
     }
-    let result = operation(&service.backend);
+    let result = operation(service);
     let unlock = hisi_rf_rtos_driver::mutex_unlock(service.mutex)
         .map_err(|_| CryptoError::Backend(0xffff_1005));
     match (result, unlock) {
         (Ok(value), Ok(())) => Ok(value),
         (Err(error), _) | (Ok(_), Err(error)) => Err(error),
     }
+}
+
+#[cfg(target_arch = "riscv32")]
+fn with_hardware_crypto<T>(
+    operation: impl FnOnce(&Ws63Crypto<'static>) -> Result<T, CryptoError>,
+) -> Result<T, CryptoError> {
+    with_crypto_service(|service| operation(&service.backend))
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_point_mul_hardware(
+    point: &P256AffinePoint,
+    scalar: &[u8; 32],
+    output: &mut P256AffinePoint,
+) -> Result<(), CryptoError> {
+    P256_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .point_mul(point, scalar, output)
+    });
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    P256_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    P256_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        P256_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
 }
 
 /// Fill bytes from the installed hardware TRNG without software fallback.
@@ -293,10 +338,22 @@ pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     ]
 }
 
+/// Return non-secret PKE P-256 point-multiplication counters.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
+    [
+        P256_REQUESTS.load(Ordering::Relaxed),
+        P256_FAILURES.load(Ordering::Relaxed),
+        P256_TOTAL_MS.load(Ordering::Relaxed),
+        P256_MAX_MS.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
     _spacc: Spacc<'static>,
+    _pke: Pke<'static>,
     _trng: Trng<'static>,
 ) -> Result<(), CryptoError> {
     Err(CryptoError::Unsupported)
@@ -330,6 +387,11 @@ pub(crate) fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     [0; 6]
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
+    [0; 4]
 }
 
 #[cfg(all(
@@ -394,6 +456,35 @@ pub(crate) fn ws63_hash_self_test() -> Result<(), CryptoError> {
     if sha256 != HMAC_SHA256_EXPECTED {
         return Err(CryptoError::Backend(0xffff_0114));
     }
+    Ok(())
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-wpa3"))]
+pub(crate) fn ws63_p256_self_test() -> Result<(), CryptoError> {
+    const GENERATOR: P256AffinePoint = P256AffinePoint::new(
+        [
+            0x6b, 0x17, 0xd1, 0xf2, 0xe1, 0x2c, 0x42, 0x47, 0xf8, 0xbc, 0xe6, 0xe5, 0x63, 0xa4,
+            0x40, 0xf2, 0x77, 0x03, 0x7d, 0x81, 0x2d, 0xeb, 0x33, 0xa0, 0xf4, 0xa1, 0x39, 0x45,
+            0xd8, 0x98, 0xc2, 0x96,
+        ],
+        [
+            0x4f, 0xe3, 0x42, 0xe2, 0xfe, 0x1a, 0x7f, 0x9b, 0x8e, 0xe7, 0xeb, 0x4a, 0x7c, 0x0f,
+            0x9e, 0x16, 0x2b, 0xce, 0x33, 0x57, 0x6b, 0x31, 0x5e, 0xce, 0xcb, 0xb6, 0x40, 0x68,
+            0x37, 0xbf, 0x51, 0xf5,
+        ],
+    );
+    let mut scalar = [0u8; 32];
+    scalar[31] = 1;
+    let mut output = P256AffinePoint::new([0; 32], [0; 32]);
+    p256_point_mul_hardware(&GENERATOR, &scalar, &mut output)?;
+    scalar.zeroize();
+    if output != GENERATOR {
+        output.x.zeroize();
+        output.y.zeroize();
+        return Err(CryptoError::Backend(0xffff_0301));
+    }
+    output.x.zeroize();
+    output.y.zeroize();
     Ok(())
 }
 

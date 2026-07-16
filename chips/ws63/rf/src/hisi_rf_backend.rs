@@ -1,6 +1,6 @@
 //! WS63 implementation of the chip-neutral `hisi-rf` control contract.
 
-use hisi_hal::peripherals::{Efuse, Km, Spacc, Trng};
+use hisi_hal::peripherals::{Efuse, Km, Pke, Spacc, Trng};
 use hisi_rf::{
     BackendError, BackendErrorClass, ConnectionInfo, RadioConfig, RadioState, ScanConfig,
     ScanOutcome, ScanResult, Security, Ssid, StationConfig, WifiBackend,
@@ -52,6 +52,7 @@ pub struct Ws63WifiBackend<'d> {
     efuse: Option<Efuse<'d>>,
     km: Option<Km<'d>>,
     spacc: Option<Spacc<'d>>,
+    pke: Option<Pke<'d>>,
     trng: Option<Trng<'d>>,
     wifi: Option<ActiveWifi<'d>>,
     #[cfg(feature = "upstream-supplicant-port")]
@@ -62,11 +63,18 @@ pub struct Ws63WifiBackend<'d> {
 
 impl<'d> Ws63WifiBackend<'d> {
     /// Bind the one-shot eFuse token needed by the WS63 vendor runtime.
-    pub fn new(efuse: Efuse<'d>, km: Km<'d>, spacc: Spacc<'d>, trng: Trng<'d>) -> Self {
+    pub fn new(
+        efuse: Efuse<'d>,
+        km: Km<'d>,
+        spacc: Spacc<'d>,
+        pke: Pke<'d>,
+        trng: Trng<'d>,
+    ) -> Self {
         Self {
             efuse: Some(efuse),
             km: Some(km),
             spacc: Some(spacc),
+            pke: Some(pke),
             trng: Some(trng),
             wifi: None,
             #[cfg(feature = "upstream-supplicant-port")]
@@ -98,9 +106,15 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             class: BackendErrorClass::Initialize,
             code: 0x1000_0006,
         })?;
-        crate::crypto::install_hardware_crypto(km, spacc, trng).map_err(|error| BackendError {
+        let pke = self.pke.take().ok_or(BackendError {
             class: BackendErrorClass::Initialize,
-            code: error.code(),
+            code: 0x1000_0007,
+        })?;
+        crate::crypto::install_hardware_crypto(km, spacc, pke, trng).map_err(|error| {
+            BackendError {
+                class: BackendErrorClass::Initialize,
+                code: error.code(),
+            }
         })?;
         #[cfg(target_arch = "riscv32")]
         crate::crypto::ws63_pbkdf2_self_test().map_err(|error| BackendError {
@@ -109,6 +123,11 @@ impl WifiBackend for Ws63WifiBackend<'static> {
         })?;
         #[cfg(target_arch = "riscv32")]
         crate::crypto::ws63_hash_self_test().map_err(|error| BackendError {
+            class: BackendErrorClass::Initialize,
+            code: error.code(),
+        })?;
+        #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-wpa3"))]
+        crate::crypto::ws63_p256_self_test().map_err(|error| BackendError {
             class: BackendErrorClass::Initialize,
             code: error.code(),
         })?;
@@ -406,10 +425,11 @@ pub fn resources(
     efuse: Efuse<'static>,
     km: Km<'static>,
     spacc: Spacc<'static>,
+    pke: Pke<'static>,
     trng: Trng<'static>,
 ) -> RadioResources<Ws63WifiBackend<'static>, Ws63Device> {
     RadioResources {
-        backend: Ws63WifiBackend::new(efuse, km, spacc, trng),
+        backend: Ws63WifiBackend::new(efuse, km, spacc, pke, trng),
         device: Ws63Device,
     }
 }

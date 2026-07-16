@@ -18,7 +18,7 @@ use hisi_crypto::sae::{GROUP_19, Group19, RustCryptoGroup19};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
     CryptoError,
-    sae::{P256_ELEMENT_BYTES, SaeBignum, SaeP256Point},
+    sae::{P256_ELEMENT_BYTES, P256AffinePoint, SaeBignum, SaeP256Point},
 };
 
 #[cfg(target_arch = "riscv32")]
@@ -805,9 +805,37 @@ unsafe extern "C" fn crypto_ec_point_mul(
     }) else {
         return -1;
     };
-    let Ok(value) = group.point_mul(&point, &scalar) else {
+    let Ok((x, y)) = group.point_to_xy(&point) else {
         return -1;
     };
+    let mut scalar_bytes = [0u8; P256_ELEMENT_BYTES];
+    if RustCryptoBignum
+        .write_be(&scalar, &mut scalar_bytes, P256_ELEMENT_BYTES)
+        .ok()
+        != Some(P256_ELEMENT_BYTES)
+    {
+        clear_bytes(&mut scalar_bytes);
+        return -1;
+    }
+    let mut output = P256AffinePoint::new([0; P256_ELEMENT_BYTES], [0; P256_ELEMENT_BYTES]);
+    let hardware_result =
+        super::p256_point_mul_hardware(&P256AffinePoint::new(x, y), &scalar_bytes, &mut output);
+    clear_bytes(&mut scalar_bytes);
+    if hardware_result.is_err() {
+        clear_bytes(&mut output.x);
+        clear_bytes(&mut output.y);
+        return -1;
+    }
+    let value = match group.point_from_xy(&output.x, &output.y) {
+        Ok(value) => value,
+        Err(_) => {
+            clear_bytes(&mut output.x);
+            clear_bytes(&mut output.y);
+            return -1;
+        }
+    };
+    clear_bytes(&mut output.x);
+    clear_bytes(&mut output.y);
     unsafe { point_store(result, value) }.map_or(-1, |()| 0)
 }
 

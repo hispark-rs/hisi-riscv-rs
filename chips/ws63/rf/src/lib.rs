@@ -211,6 +211,11 @@ pub fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
 pub fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     crypto::hardware_cipher_diagnostic_snapshot()
 }
+
+/// Return non-secret WS63 PKE P-256 point-multiplication counters.
+pub fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
+    crypto::hardware_p256_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]
