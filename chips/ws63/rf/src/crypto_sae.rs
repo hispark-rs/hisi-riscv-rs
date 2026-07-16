@@ -18,7 +18,7 @@ use hisi_crypto::sae::{GROUP_19, Group19, RustCryptoGroup19};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
     CryptoError,
-    sae::{P256_ELEMENT_BYTES, P256AffinePoint, SaeBignum, SaeP256Point},
+    sae::{P256_ELEMENT_BYTES, P256AffinePoint, P256PointResult, SaeBignum, SaeP256Point},
 };
 
 #[cfg(target_arch = "riscv32")]
@@ -764,7 +764,40 @@ unsafe extern "C" fn crypto_ec_point_add(
     let (Some(a), Some(b)) = (unsafe { point_clone(a) }, unsafe { point_clone(b) }) else {
         return -1;
     };
-    unsafe { point_store(result, group.point_add(&a, &b)) }.map_or(-1, |()| 0)
+    if group.point_is_infinity(&a) {
+        return unsafe { point_store(result, b) }.map_or(-1, |()| 0);
+    }
+    if group.point_is_infinity(&b) {
+        return unsafe { point_store(result, a) }.map_or(-1, |()| 0);
+    }
+
+    let (Ok((a_x, a_y)), Ok((b_x, b_y))) = (group.point_to_xy(&a), group.point_to_xy(&b)) else {
+        return -1;
+    };
+    let mut a_affine = P256AffinePoint::new(a_x, a_y);
+    let mut b_affine = P256AffinePoint::new(b_x, b_y);
+    let mut output = P256PointResult::Infinity;
+    let hardware_result = super::p256_point_add_hardware(&a_affine, &b_affine, &mut output);
+    clear_bytes(&mut a_affine.x);
+    clear_bytes(&mut a_affine.y);
+    clear_bytes(&mut b_affine.x);
+    clear_bytes(&mut b_affine.y);
+    if hardware_result.is_err() {
+        return -1;
+    }
+    let value = match output {
+        P256PointResult::Infinity => group.identity(),
+        P256PointResult::Affine(mut point) => {
+            let value = group.point_from_xy(&point.x, &point.y);
+            clear_bytes(&mut point.x);
+            clear_bytes(&mut point.y);
+            let Ok(value) = value else {
+                return -1;
+            };
+            value
+        }
+    };
+    unsafe { point_store(result, value) }.map_or(-1, |()| 0)
 }
 
 #[cfg(target_arch = "riscv32")]

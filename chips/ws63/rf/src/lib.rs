@@ -226,8 +226,8 @@ pub fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     crypto::hardware_cipher_diagnostic_snapshot()
 }
 
-/// Return non-secret WS63 PKE P-256 point-multiplication counters.
-pub fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
+/// Return non-secret WS63 PKE P-256 point-operation counters.
+pub fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
     crypto::hardware_p256_diagnostic_snapshot()
 }
 mod wal;

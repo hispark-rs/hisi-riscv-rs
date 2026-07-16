@@ -14,7 +14,7 @@ use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
     EntropySource, TryBlockCipher, TryHash, TryMac,
-    sae::{P256AffinePoint, TryP256PointMul},
+    sae::{P256AffinePoint, P256PointResult, TryP256PointAdd, TryP256PointMul},
 };
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::{Ws63Crypto, Ws63P256};
@@ -97,6 +97,14 @@ static P256_FAILURES: AtomicU32 = AtomicU32::new(0);
 static P256_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_ADD_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_ADD_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_ADD_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_ADD_MAX_MS: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -177,6 +185,34 @@ pub(super) fn p256_point_mul_hardware(
     P256_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
     if result.is_err() {
         P256_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_point_add_hardware(
+    a: &P256AffinePoint,
+    b: &P256AffinePoint,
+    output: &mut P256PointResult,
+) -> Result<(), CryptoError> {
+    P256_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_ADD_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .point_add(a, b, output)
+    });
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    P256_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    P256_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    P256_ADD_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    P256_ADD_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        P256_FAILURES.fetch_add(1, Ordering::Relaxed);
+        P256_ADD_FAILURES.fetch_add(1, Ordering::Relaxed);
     }
     result
 }
@@ -338,14 +374,18 @@ pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     ]
 }
 
-/// Return non-secret PKE P-256 point-multiplication counters.
+/// Return non-secret PKE P-256 point-operation counters.
 #[cfg(target_arch = "riscv32")]
-pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
+pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
     [
         P256_REQUESTS.load(Ordering::Relaxed),
         P256_FAILURES.load(Ordering::Relaxed),
         P256_TOTAL_MS.load(Ordering::Relaxed),
         P256_MAX_MS.load(Ordering::Relaxed),
+        P256_ADD_REQUESTS.load(Ordering::Relaxed),
+        P256_ADD_FAILURES.load(Ordering::Relaxed),
+        P256_ADD_TOTAL_MS.load(Ordering::Relaxed),
+        P256_ADD_MAX_MS.load(Ordering::Relaxed),
     ]
 }
 
@@ -390,8 +430,8 @@ pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
 }
 
 #[cfg(not(target_arch = "riscv32"))]
-pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 4] {
-    [0; 4]
+pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
+    [0; 8]
 }
 
 #[cfg(all(
@@ -485,6 +525,54 @@ pub(crate) fn ws63_p256_self_test() -> Result<(), CryptoError> {
     }
     output.x.zeroize();
     output.y.zeroize();
+
+    const DOUBLE_GENERATOR: P256AffinePoint = P256AffinePoint::new(
+        [
+            0x7c, 0xf2, 0x7b, 0x18, 0x8d, 0x03, 0x4f, 0x7e, 0x8a, 0x52, 0x38, 0x03, 0x04, 0xb5,
+            0x1a, 0xc3, 0xc0, 0x89, 0x69, 0xe2, 0x77, 0xf2, 0x1b, 0x35, 0xa6, 0x0b, 0x48, 0xfc,
+            0x47, 0x66, 0x99, 0x78,
+        ],
+        [
+            0x07, 0x77, 0x55, 0x10, 0xdb, 0x8e, 0xd0, 0x40, 0x29, 0x3d, 0x9a, 0xc6, 0x9f, 0x74,
+            0x30, 0xdb, 0xba, 0x7d, 0xad, 0xe6, 0x3c, 0xe9, 0x82, 0x29, 0x9e, 0x04, 0xb7, 0x9d,
+            0x22, 0x78, 0x73, 0xd1,
+        ],
+    );
+    let mut sum = P256PointResult::Infinity;
+    p256_point_add_hardware(&GENERATOR, &GENERATOR, &mut sum)?;
+    if sum != P256PointResult::Affine(DOUBLE_GENERATOR) {
+        return Err(CryptoError::Backend(0xffff_0302));
+    }
+
+    const TRIPLE_GENERATOR: P256AffinePoint = P256AffinePoint::new(
+        [
+            0x5e, 0xcb, 0xe4, 0xd1, 0xa6, 0x33, 0x0a, 0x44, 0xc8, 0xf7, 0xef, 0x95, 0x1d, 0x4b,
+            0xf1, 0x65, 0xe6, 0xc6, 0xb7, 0x21, 0xef, 0xad, 0xa9, 0x85, 0xfb, 0x41, 0x66, 0x1b,
+            0xc6, 0xe7, 0xfd, 0x6c,
+        ],
+        [
+            0x87, 0x34, 0x64, 0x0c, 0x49, 0x98, 0xff, 0x7e, 0x37, 0x4b, 0x06, 0xce, 0x1a, 0x64,
+            0xa2, 0xec, 0xd8, 0x2a, 0xb0, 0x36, 0x38, 0x4f, 0xb8, 0x3d, 0x9a, 0x79, 0xb1, 0x27,
+            0xa2, 0x7d, 0x50, 0x32,
+        ],
+    );
+    p256_point_add_hardware(&GENERATOR, &DOUBLE_GENERATOR, &mut sum)?;
+    if sum != P256PointResult::Affine(TRIPLE_GENERATOR) {
+        return Err(CryptoError::Backend(0xffff_0303));
+    }
+
+    const NEGATIVE_GENERATOR: P256AffinePoint = P256AffinePoint::new(
+        GENERATOR.x,
+        [
+            0xb0, 0x1c, 0xbd, 0x1c, 0x01, 0xe5, 0x80, 0x65, 0x71, 0x18, 0x14, 0xb5, 0x83, 0xf0,
+            0x61, 0xe9, 0xd4, 0x31, 0xcc, 0xa9, 0x94, 0xce, 0xa1, 0x31, 0x34, 0x49, 0xbf, 0x97,
+            0xc8, 0x40, 0xae, 0x0a,
+        ],
+    );
+    p256_point_add_hardware(&GENERATOR, &NEGATIVE_GENERATOR, &mut sum)?;
+    if sum != P256PointResult::Infinity {
+        return Err(CryptoError::Backend(0xffff_0304));
+    }
     Ok(())
 }
 
