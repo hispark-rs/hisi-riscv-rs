@@ -432,8 +432,16 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      修复后，受控 transition BSS 已完成 SAE、required PMF、DHCP、网关/公网各 5/5 ping、
      零 RX drop 与 DHCP renew，完整 smoke PASS。证据见
      [W2E upstream WPA3 transition](evidence/ws63-rf-w2e-upstream-wpa3-transition-2026-07-15.md)。
-     该单次通过闭合 transition capability proof，但重复 reset 统计与受控 WPA3-only
-     SAE+PMF 仍是开放 gate。Guest AP 仍只提供 WPA2 parity，不能替代 pure WPA3 HIL。
+     该单次通过闭合 transition capability proof。随后针对原先 `18/20` 的非确定性失败，
+     将两条尾部路径分别定位为“status 30 后缺少 comeback 信息”和“association success 后
+     首个 EAPOL 未进入 host”。最终修复让 firmware scan 同时填充 hostap BSS cache，并在
+     首个 EAPOL 超时时执行 bounded asynchronous disconnect + cached-BSS reassociation；HAL
+     TRNG 也改为由唯一 peripheral token 持有，消除全局发布竞态。同一已提交镜像连续
+     20 次 nRST 得到 transition association `20/20`、`WLAN_AUTH_RSP2_TIMEOUT=0`，capture
+     窗口内 gateway ICMP `70/70`。证据见
+     [W2E WPA3 reset reliability](evidence/ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md)。
+     transition reset gate 已闭合；受控 WPA3-only SAE+PMF 仍是开放 gate。Guest AP 仍只
+     提供 WPA2 parity，不能替代 pure WPA3 HIL。
    - **W2E-H Handshake crypto acceleration（未完成，WPA3 stable gate）**：当前
      upstream-native profile 显式使用 RustCrypto SHA/HMAC/AES/PBKDF2 与 WS63 TRNG；它是
      行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition

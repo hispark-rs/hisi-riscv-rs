@@ -231,6 +231,7 @@ def capture_run(
     terminal_seen_at: float | None = None
     boot_seen = False
     boot_marker = b"boot.\r\n"
+    reconnects = 0
 
     timed_markers = OFFICIAL_TIMED_MARKERS if profile == "official-liteos" else RUST_TIMED_MARKERS
     terminal_markers = (
@@ -252,7 +253,34 @@ def capture_run(
             terminal_markers = (*terminal_markers, success_marker)
 
     while time.monotonic() < deadline:
-        chunk = port.read(4096)
+        try:
+            chunk = port.read(4096)
+        except serial.SerialException:
+            reconnects += 1
+            if reconnects > 3:
+                raise
+            port.close()
+            reopen_deadline = time.monotonic() + 2.0
+            while True:
+                try:
+                    port.open()
+                    port.reset_input_buffer()
+                    break
+                except (OSError, serial.SerialException):
+                    if time.monotonic() >= reopen_deadline:
+                        raise
+                    time.sleep(0.05)
+            # The disconnect can lose the first bytes after nRST. Restart this
+            # uncounted attempt only after the serial transport is stable, so a
+            # host USB transient is neither a firmware failure nor a false pass.
+            started = time.monotonic()
+            deadline = started + timeout
+            terminal_seen_at = None
+            boot_seen = False
+            log.clear()
+            marker_times.clear()
+            pulse_nrst(jlink)
+            continue
         if not chunk:
             continue
         log.extend(chunk)

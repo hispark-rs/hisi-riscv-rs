@@ -72,8 +72,8 @@ The real-silicon run produced the required markers for:
 
 ## Remaining Gate
 
-- repeat transition-mode HIL across the reset matrix and quantify failures;
+- keep the completed 20/20 transition reset matrix as a regression gate; see
+  [W2E WPA3 reset reliability](ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md);
 - run SAE plus required PMF against a controlled WPA3-only BSS;
 - retain the vendor path as an oracle for one migration release only;
 - close the W2E-H per-capability hardware-crypto gate before stabilizing WPA3.
-
