@@ -461,8 +461,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      覆盖三种 key length 的 encrypt/decrypt；同一 upstream WPA2 镜像 20 次 nRST 均完成
      association，每轮 36 次 AES 请求、0 失败，bounded timeout recovery 同样 20/20。
      证据见 [W2E-H SPACC AES](evidence/ws63-rf-w2e-h-spacc-aes-2026-07-16.md)。
-     第四项 P-256 affine point multiplication 已迁入 WS63 PKE：hostap SAE 仍拥有协议和
-     Dragonfly 状态机，只经 `TryP256PointMul` 调用硬件；标量、点坐标和临时输出均在返回前
+     第四项 P-256 affine point multiplication 与 point addition 已迁入 WS63 PKE：hostap
+     SAE 仍拥有协议和 Dragonfly 状态机，只经 `TryP256PointMul`/`TryP256PointAdd` 调用
+     硬件；标量、点坐标和临时输出均在返回前
      清零，PKE timeout/fault 直接使握手失败，不回退软件。首次真机运行还证明 stateful PKE
      ROM helper 会读取与 standalone Rust 镜像冲突的固定 ROM-RAM；实现因此只复用无状态
      ROM RAM-copy/curve-parameter entry，并以 PAC 明确完成 lock、work length、instruction、
@@ -477,14 +478,19 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      清理均返回成功，20 次 cached-BSS retry、0 次 scan retry，PKE/TRNG 均零失败，且
      `WLAN_AUTH_RSP2_TIMEOUT=0`。证据见
      [W2E-H PKE P-256](evidence/ws63-rf-w2e-h-pke-p256-2026-07-17.md)。
+     后续 point-add 实现又将无穷点建模为显式结果；真机证明原厂 affine-add 指令不覆盖
+     `P == Q` doubling，因此等点相加明确走已验证的 hardware scalar-mul-by-2，distinct
+     `G + 2G = 3G` 才验证真实 add 指令，逆点返回 infinity。修复镜像单次 smoke 的 5 次
+     point-add 零失败；同一镜像 20 次 nRST 全部 association 通过，累计 344 次 PKE point
+     operation 与 141 次 point-add 均零失败，point-add 最大 2 ms，gateway ICMP 100/100。
      因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES + PKE P-256
-     point multiplication 的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件
+     point multiplication/addition 的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件
      失败后的 fallback。transition-mode 的 status-30 与 association-success/no-first-EAPOL
      重复连接门槛已经闭合。同一已提交、未重烧镜像在整板断电上电后，UART 只读监听连续
      观察到 `A4_NET_RUNNER_ALIVE lease=up`，证明 cold start 最终进入持有 DHCP lease 的
      长生命周期 network runner；由于监听在启动后接入，该样本不包含逐阶段 cold-boot 时序。
      WPA3-SAE 进入 stable 前仍须补受控 WPA3-only SAE+PMF，以及剩余 Dragonfly 算术边界。
-     不得把“point multiplication 已硬件化”
+     不得把“point multiplication/addition 已硬件化”
      扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
@@ -693,7 +699,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。真实跨 owner contention
   injection 和调用方注入 DMA storage 仍是稳定化前 gate。
 - [ ] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC 和 SAE P-256 point
-  multiplication 已完成硬件迁移；剩余 Dragonfly 算术范围必须按实际 backend 能力逐项列出，
+  multiplication/addition 已完成硬件迁移；剩余 Dragonfly 算术范围必须按实际 backend 能力逐项列出，
   不能由 point-mul 证明替代。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码
   尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
