@@ -206,6 +206,11 @@ pub fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
 pub fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
     crypto::hardware_hash_diagnostic_snapshot()
 }
+
+/// Return non-secret SPACC AES request, failure, timing, and recovery counters.
+pub fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
+    crypto::hardware_cipher_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

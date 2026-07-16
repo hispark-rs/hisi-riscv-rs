@@ -2074,6 +2074,7 @@ dependencies = [
  "smoltcp",
  "static_cell",
  "ws63-radio-sys",
+ "zeroize",
 ]
 
 [[package]]

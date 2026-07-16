@@ -22,6 +22,7 @@ hisi-hal = { path = "../../../crates/hisi-hal", features = ["chip-ws63", "unstab
 critical-section = "1"
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
 static_cell = "2"
+zeroize = { version = "1", default-features = false }
 # The netif->smoltcp bridge (feature `net`): a no_std/no-alloc TCP/IP stack to
 # replace the C SDK's lwip behind the netif seam. Optional so the bare porting
 # layer (which links the vendor blobs) stays lean.
@@ -42,6 +43,7 @@ wifi-wpa2-personal = [
     "wifi-personal",
     "dep:hisi-crypto",
     "dep:hisi-crypto-ws63",
+    "hisi-crypto-ws63/cipher",
     "hisi-crypto-ws63/hash",
     "hisi-crypto-ws63/pbkdf2",
     "hisi-crypto-ws63/hal-trng",
@@ -56,6 +58,7 @@ upstream-supplicant-port = [
     "ws63-radio-sys/upstream-supplicant-port",
     "dep:hisi-crypto",
     "dep:hisi-crypto-ws63",
+    "hisi-crypto-ws63/cipher",
     "hisi-crypto-ws63/hash",
     "hisi-crypto-ws63/pbkdf2",
     "hisi-crypto-ws63/hal-trng",

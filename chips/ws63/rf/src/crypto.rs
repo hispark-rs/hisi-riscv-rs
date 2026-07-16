@@ -2,7 +2,7 @@
 //!
 //! The C supplicant must not make mbedTLS contexts part of the Rust API. WS63
 //! uses token-owned WS63 RKP/SPACC capabilities where proven on silicon and
-//! RustCrypto for the remaining portable AES primitive. `hisi-crypto` owns the
+//! SPACC AES primitives where proven on silicon. `hisi-crypto` owns the
 //! capability contract; RF owns only this WS63 service and C ABI shim.
 
 pub(crate) use hisi_crypto::CryptoError;
@@ -12,7 +12,7 @@ pub(crate) use hisi_crypto::CryptoError;
 ))]
 use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto::{EntropySource, RustCryptoProvider, TryBlockCipher, TryHash, TryMac};
+use hisi_crypto::{EntropySource, TryBlockCipher, TryHash, TryMac};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::Ws63Crypto;
 use hisi_hal::peripherals::{Km, Spacc, Trng};
@@ -22,6 +22,8 @@ use hisi_rf_rtos_driver::{MutexHandle, WaitOutcome, WaitTimeout};
 use portable_atomic::{AtomicPtr, AtomicU32, Ordering};
 #[cfg(target_arch = "riscv32")]
 use static_cell::StaticCell;
+#[cfg(target_arch = "riscv32")]
+use zeroize::Zeroize;
 
 #[cfg(feature = "upstream-supplicant-wpa3")]
 #[path = "crypto_sae.rs"]
@@ -71,6 +73,18 @@ static MAC_MAX_MS: AtomicU32 = AtomicU32::new(0);
 static HASH_RECOVERY_TESTS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static HASH_RECOVERY_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_RECOVERY_TESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static CIPHER_RECOVERY_FAILURES: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -200,6 +214,32 @@ where
     result
 }
 
+#[cfg(target_arch = "riscv32")]
+fn cipher_hardware(
+    key: &[u8],
+    input: &[u8; 16],
+    output: &mut [u8; 16],
+    decrypt: bool,
+) -> Result<(), CryptoError> {
+    CIPHER_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_hardware_crypto(|backend| {
+        if decrypt {
+            backend.decrypt_block(key, input, output)
+        } else {
+            backend.encrypt_block(key, input, output)
+        }
+    });
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    CIPHER_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    CIPHER_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        CIPHER_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
 /// Return non-secret hardware entropy health counters for HIL diagnostics.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
@@ -240,6 +280,19 @@ pub(crate) fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
     ]
 }
 
+/// Return non-secret SPACC AES and recovery counters for HIL diagnostics.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
+    [
+        CIPHER_REQUESTS.load(Ordering::Relaxed),
+        CIPHER_FAILURES.load(Ordering::Relaxed),
+        CIPHER_TOTAL_MS.load(Ordering::Relaxed),
+        CIPHER_MAX_MS.load(Ordering::Relaxed),
+        CIPHER_RECOVERY_TESTS.load(Ordering::Relaxed),
+        CIPHER_RECOVERY_FAILURES.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
@@ -272,6 +325,11 @@ pub(crate) fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
     [0; 10]
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
+    [0; 6]
 }
 
 #[cfg(all(
@@ -349,6 +407,20 @@ pub(crate) fn ws63_hash_fault_recovery_self_test() -> Result<(), CryptoError> {
     let result = with_hardware_crypto(|backend| backend.diagnostic_lock_timeout_recovery());
     if result.is_err() {
         HASH_RECOVERY_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
+#[cfg(all(
+    target_arch = "riscv32",
+    feature = "rf-eloop-diag",
+    any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
+))]
+pub(crate) fn ws63_cipher_fault_recovery_self_test() -> Result<(), CryptoError> {
+    CIPHER_RECOVERY_TESTS.fetch_add(1, Ordering::Relaxed);
+    let result = with_hardware_crypto(|backend| backend.diagnostic_cipher_recovery());
+    if result.is_err() {
+        CIPHER_RECOVERY_FAILURES.fetch_add(1, Ordering::Relaxed);
     }
     result
 }
@@ -438,6 +510,7 @@ unsafe fn aes_context_new(key: *const u8, key_len: usize) -> *mut core::ffi::c_v
             key_len,
         });
     }
+    material.zeroize();
     context.cast()
 }
 
@@ -455,11 +528,7 @@ unsafe fn aes_block(
     let input = unsafe { &*input.cast::<[u8; 16]>() };
     let output = unsafe { &mut *output.cast::<[u8; 16]>() };
     let key = &context.key[..context.key_len];
-    let result = if decrypt {
-        RustCryptoProvider.decrypt_block(key, input, output)
-    } else {
-        RustCryptoProvider.encrypt_block(key, input, output)
-    };
+    let result = cipher_hardware(key, input, output, decrypt);
     result.map(|()| 0).unwrap_or(-1)
 }
 
@@ -483,6 +552,8 @@ unsafe extern "C" fn aes_encrypt(
 #[unsafe(no_mangle)]
 unsafe extern "C" fn aes_encrypt_deinit(context: *mut core::ffi::c_void) {
     if !context.is_null() {
+        // SAFETY: the pointer was allocated and initialized by `aes_context_new`.
+        unsafe { &mut *context.cast::<AesContext>() }.key.zeroize();
         unsafe { os_free(context) };
     }
 }
@@ -507,6 +578,8 @@ unsafe extern "C" fn aes_decrypt(
 #[unsafe(no_mangle)]
 unsafe extern "C" fn aes_decrypt_deinit(context: *mut core::ffi::c_void) {
     if !context.is_null() {
+        // SAFETY: the pointer was allocated and initialized by `aes_context_new`.
+        unsafe { &mut *context.cast::<AesContext>() }.key.zeroize();
         unsafe { os_free(context) };
     }
 }
