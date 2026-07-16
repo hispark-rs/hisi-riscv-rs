@@ -442,12 +442,22 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      [W2E WPA3 reset reliability](evidence/ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md)。
      transition reset gate 已闭合；受控 WPA3-only SAE+PMF 仍是开放 gate。Guest AP 仍只
      提供 WPA2 parity，不能替代 pure WPA3 HIL。
-   - **W2E-H Handshake crypto acceleration（未完成，WPA3 stable gate）**：当前
-     upstream-native profile 显式使用 RustCrypto SHA/HMAC/AES/PBKDF2 与 WS63 TRNG；它是
+   - **W2E-H Handshake crypto acceleration（进行中，WPA3 stable gate）**：第一项
+     PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
+     唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立
+     资源与失败契约。upstream WPA2 同一镜像 20 次 nRST 均完成 association/DHCP，40 次
+     hardware PBKDF2 请求零失败；相对 RustCrypto 基线总 ELF 占用减少 732 bytes，观察到的
+     PBKDF2 调用路径最大栈帧约减少 256 bytes。证据见
+     [W2E-H RKP PBKDF2](evidence/ws63-rf-w2e-h-rkp-pbkdf2-2026-07-16.md)。
+     第二项 SHA-1/SHA-256 与 HMAC-SHA1/HMAC-SHA256 已迁入 token-owned SPACC
+     backend；同一 upstream WPA2 镜像 20 次 nRST 均完成 association/DHCP，40 次 hash
+     与 160 次 MAC 请求零失败。证据见
+     [W2E-H SPACC hash/HMAC](evidence/ws63-rf-w2e-h-spacc-hash-2026-07-16.md)。
+     当前 upstream-native profile 仍显式使用 RustCrypto AES；它是
      行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition
      行为 HIL 可以先使用该显式软件/混合 profile，但 WPA3-SAE 进入 stable 前必须按
      `PBKDF2-HMAC-SHA1 -> SHA/HMAC -> AES key-wrap/CMAC -> SAE P-256/Dragonfly` 的顺序逐项
-     迁移到 WS63 硬件能力。依赖固定为
+     迁移到 WS63 硬件能力；当前下一项是 SPACC AES/key-wrap/CMAC。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
      backend 必须在构造、feature 或资源注入时显式选择 software、hardware 或准确标注的
@@ -456,6 +466,20 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      CCMP 数据面继续由 MAC/DMAC 执行，禁止把逐包加解密搬到 CPU。每项迁移都必须具备
      标准向量、RustCrypto/原厂差分、timeout 与错误恢复、重复握手 HIL，以及性能、栈和
      代码尺寸对比；各项证据闭合前只能声明具体已加速能力，不能给出笼统硬件加速承诺。
+     HAL 只拥有 `Spacc`/`Pke`/`Km`/`Trng` token 与 clock/reset/IRQ/cache/DMA 基础机制；
+     算法、channel/descriptor、keyslot、清零和错误恢复只归 `hisi-crypto-ws63`。当前 HAL
+     中无消费者的 SPACC/PKE stub 应在本 slice HIL 后作为独立结构提交删除或明确退役，不能
+     形成第二套驱动事实源。当前 backend 内置 scratch 是过渡实现，后续改为调用方注入的
+     `StaticCell`/静态 storage；`Ws63Crypto::new` 也应收敛为 typed resources/builder，避免
+     随能力增长形成巨大构造器。RF 外层 mutex 加内部 busy guard 同样是迁移边界，长期以
+     `&mut self`/`CryptoSession` 表达独占，并保留 unsafe/FFI 防御。
+     国密能力复用同一细粒度 fallible contract：SM3 对应 SPACC hash/HMAC，SM4 对应 SPACC
+     symmetric 加 KM/keyslot，SM2 对应 PKE；算法必须由 typed algorithm/profile 区分，不能
+     仅凭输出长度选择。当前没有 SM9 硬件支持证据。原厂 `security_unified` driver 只作为
+     Apache-2.0 oracle，派生实现必须保留 attribution、修改说明和相应专利条款。
+     发布顺序固定为：先将新增寄存器发布为 `ws63-pac 0.3.1`，再把
+     `hisi-crypto-ws63` 的最低 PAC 依赖与 standalone lock 提升到 `0.3.1`；开发期由父仓
+     `[patch]` 绑定当前 PAC checkout，禁止发布仍可解析到缺少 SPACC 字段的 `0.3.0` 组合。
    - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 LiteOS glue
      保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认路径并删除
      `litos.rs`/`wpa_compat.rs`。之后按既定兼容窗口退役 `ws63-rf-rs` facade，但不得因架构
