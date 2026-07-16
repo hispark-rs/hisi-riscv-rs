@@ -19,8 +19,8 @@ use hisi_crypto::sae::{
 };
 #[cfg(all(test, not(target_arch = "riscv32")))]
 use hisi_crypto::sae::{
-    BignumEncoding, GROUP_19, Group19, P256_ELEMENT_BYTES, P256_FIELD_PRIME, P256FieldElement,
-    RustCryptoBignum, RustCryptoGroup19, SaeBignum,
+    BignumEncoding, GROUP_19, Group19, LegendreSymbol, P256_ELEMENT_BYTES, P256_FIELD_PRIME,
+    P256FieldElement, RustCryptoBignum, RustCryptoGroup19, SaeBignum,
 };
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
@@ -43,6 +43,26 @@ const OWNED: u32 = 1;
 const BORROWED: u32 = 0;
 #[cfg(target_arch = "riscv32")]
 const MAX_RANDOM_REJECTIONS: usize = 128;
+
+#[cfg(target_arch = "riscv32")]
+const P256_INVERSE_EXPONENT: [u8; P256_ELEMENT_BYTES] = [
+    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd,
+];
+#[cfg(target_arch = "riscv32")]
+const P256_LEGENDRE_EXPONENT: [u8; P256_ELEMENT_BYTES] = [
+    0x7f, 0xff, 0xff, 0xff, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+];
+#[cfg(any(test, target_arch = "riscv32"))]
+const P256_FIELD_ONE: [u8; P256_ELEMENT_BYTES] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+];
+#[cfg(any(test, target_arch = "riscv32"))]
+const P256_FIELD_MINUS_ONE: [u8; P256_ELEMENT_BYTES] = [
+    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+];
 
 #[cfg(target_arch = "riscv32")]
 #[repr(C)]
@@ -200,6 +220,27 @@ fn bignum_to_p256_field(value: &SaeBignum) -> Option<P256FieldElement> {
 #[cfg(any(test, target_arch = "riscv32"))]
 fn p256_field_to_bignum(value: &P256FieldElement) -> Result<SaeBignum, CryptoError> {
     RustCryptoBignum.init_set(value.as_be_bytes())
+}
+
+#[cfg(any(test, target_arch = "riscv32"))]
+fn bignum_to_p256_exponent(value: &SaeBignum) -> Option<[u8; P256_ELEMENT_BYTES]> {
+    let mut encoded = [0u8; P256_ELEMENT_BYTES];
+    if RustCryptoBignum.write_be(value, &mut encoded, P256_ELEMENT_BYTES) != Ok(P256_ELEMENT_BYTES)
+    {
+        clear_bytes(&mut encoded);
+        return None;
+    }
+    Some(encoded)
+}
+
+#[cfg(any(test, target_arch = "riscv32"))]
+fn p256_legendre_result(value: &P256FieldElement) -> Result<LegendreSymbol, CryptoError> {
+    match value.as_be_bytes() {
+        bytes if bytes.iter().all(|byte| *byte == 0) => Ok(LegendreSymbol::Zero),
+        &P256_FIELD_ONE => Ok(LegendreSymbol::Residue),
+        &P256_FIELD_MINUS_ONE => Ok(LegendreSymbol::NonResidue),
+        _ => Err(CryptoError::InvalidValue),
+    }
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -448,7 +489,46 @@ bignum_binary_abi!(crypto_bignum_add, add);
 bignum_binary_abi!(crypto_bignum_sub, sub);
 bignum_binary_abi!(crypto_bignum_div, div);
 bignum_binary_abi!(crypto_bignum_mod, modulo);
-bignum_binary_abi!(crypto_bignum_inverse, inverse);
+
+#[cfg(target_arch = "riscv32")]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn crypto_bignum_inverse(
+    value: *const BignumObject,
+    modulus: *const BignumObject,
+    result: *mut BignumObject,
+) -> c_int {
+    if !bignum_aliases(result, [value, modulus]) {
+        return -1;
+    }
+    let (Some(value), Some(modulus)) = (unsafe { bignum_clone(value) }, unsafe {
+        bignum_clone(modulus)
+    }) else {
+        return -1;
+    };
+
+    let result_value = if bignum_is_p256_prime(&modulus) {
+        if let Some(field_value) = bignum_to_p256_field(&value) {
+            if field_value == P256FieldElement::ZERO {
+                return -1;
+            }
+            let mut output = P256FieldElement::ZERO;
+            if super::p256_field_pow_hardware(&field_value, &P256_INVERSE_EXPONENT, &mut output)
+                .is_err()
+            {
+                return -1;
+            }
+            p256_field_to_bignum(&output)
+        } else {
+            RustCryptoBignum.inverse(&value, &modulus)
+        }
+    } else {
+        RustCryptoBignum.inverse(&value, &modulus)
+    };
+    let Ok(result_value) = result_value else {
+        return -1;
+    };
+    unsafe { bignum_store(result, result_value) }.map_or(-1, |()| 0)
+}
 
 #[cfg(target_arch = "riscv32")]
 #[unsafe(no_mangle)]
@@ -505,7 +585,51 @@ macro_rules! bignum_ternary_abi {
 }
 
 bignum_ternary_abi!(crypto_bignum_addmod, add_mod);
-bignum_ternary_abi!(crypto_bignum_exptmod, exp_mod);
+
+#[cfg(target_arch = "riscv32")]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn crypto_bignum_exptmod(
+    base: *const BignumObject,
+    exponent: *const BignumObject,
+    modulus: *const BignumObject,
+    result: *mut BignumObject,
+) -> c_int {
+    if !bignum_aliases(result, [base, exponent, modulus]) {
+        return -1;
+    }
+    let (Some(base), Some(exponent), Some(modulus)) = (
+        unsafe { bignum_clone(base) },
+        unsafe { bignum_clone(exponent) },
+        unsafe { bignum_clone(modulus) },
+    ) else {
+        return -1;
+    };
+
+    let result_value = if bignum_is_p256_prime(&modulus) {
+        match (
+            bignum_to_p256_field(&base),
+            bignum_to_p256_exponent(&exponent),
+        ) {
+            (Some(field_base), Some(mut exponent)) => {
+                let mut output = P256FieldElement::ZERO;
+                let hardware_result =
+                    super::p256_field_pow_hardware(&field_base, &exponent, &mut output);
+                clear_bytes(&mut exponent);
+                if hardware_result.is_err() {
+                    return -1;
+                }
+                p256_field_to_bignum(&output)
+            }
+            _ => RustCryptoBignum.exp_mod(&base, &exponent, &modulus),
+        }
+    } else {
+        RustCryptoBignum.exp_mod(&base, &exponent, &modulus)
+    };
+    let Ok(result_value) = result_value else {
+        return -1;
+    };
+    unsafe { bignum_store(result, result_value) }.map_or(-1, |()| 0)
+}
 
 #[cfg(target_arch = "riscv32")]
 #[unsafe(no_mangle)]
@@ -619,7 +743,22 @@ unsafe extern "C" fn crypto_bignum_legendre(
     }) else {
         return -2;
     };
-    match RustCryptoBignum.legendre(&value, &prime) {
+    let result = if bignum_is_p256_prime(&prime) {
+        if let Some(field_value) = bignum_to_p256_field(&value) {
+            let mut output = P256FieldElement::ZERO;
+            if super::p256_field_pow_hardware(&field_value, &P256_LEGENDRE_EXPONENT, &mut output)
+                .is_err()
+            {
+                return -2;
+            }
+            p256_legendre_result(&output)
+        } else {
+            RustCryptoBignum.legendre(&value, &prime)
+        }
+    } else {
+        RustCryptoBignum.legendre(&value, &prime)
+    };
+    match result {
         Ok(LegendreSymbol::NonResidue) => -1,
         Ok(LegendreSymbol::Zero) => 0,
         Ok(LegendreSymbol::Residue) => 1,
@@ -1122,5 +1261,37 @@ mod tests {
 
         let wrong_modulus = RustCryptoBignum.init_u32(23);
         assert!(!bignum_is_p256_prime(&wrong_modulus));
+
+        let exponent = RustCryptoBignum.init_u32(3);
+        let exponent = bignum_to_p256_exponent(&exponent).unwrap();
+        assert_eq!(exponent[31], 3);
+
+        let oversized = RustCryptoBignum
+            .init_set(&[1; P256_ELEMENT_BYTES + 1])
+            .unwrap();
+        assert!(bignum_to_p256_exponent(&oversized).is_none());
+    }
+
+    #[test]
+    fn p256_legendre_result_accepts_only_euler_outputs() {
+        assert_eq!(
+            p256_legendre_result(&P256FieldElement::ZERO),
+            Ok(LegendreSymbol::Zero)
+        );
+        assert_eq!(
+            p256_legendre_result(&P256FieldElement::try_from_be_bytes(P256_FIELD_ONE).unwrap()),
+            Ok(LegendreSymbol::Residue)
+        );
+        assert_eq!(
+            p256_legendre_result(
+                &P256FieldElement::try_from_be_bytes(P256_FIELD_MINUS_ONE).unwrap()
+            ),
+            Ok(LegendreSymbol::NonResidue)
+        );
+        let invalid = P256FieldElement::try_from_be_bytes([2; P256_ELEMENT_BYTES]).unwrap();
+        assert_eq!(
+            p256_legendre_result(&invalid),
+            Err(CryptoError::InvalidValue)
+        );
     }
 }

@@ -232,7 +232,7 @@ pub fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
 }
 
 /// Return non-secret WS63 PKE P-256 fixed-field-operation counters.
-pub fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
+pub fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
     crypto::hardware_p256_field_diagnostic_snapshot()
 }
 mod wal;

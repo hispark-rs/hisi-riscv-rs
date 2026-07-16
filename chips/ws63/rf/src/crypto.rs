@@ -15,8 +15,8 @@ use hisi_crypto::Pbkdf2HmacSha1;
 use hisi_crypto::{
     EntropySource, TryBlockCipher, TryHash, TryMac,
     sae::{
-        P256AffinePoint, P256FieldElement, P256PointResult, TryP256FieldMul, TryP256PointAdd,
-        TryP256PointMul,
+        P256AffinePoint, P256FieldElement, P256PointResult, TryP256FieldMul, TryP256FieldPow,
+        TryP256PointAdd, TryP256PointMul,
     },
 };
 #[cfg(target_arch = "riscv32")]
@@ -121,9 +121,13 @@ static P256_FIELD_MUL_REQUESTS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_FIELD_SQUARE_REQUESTS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
+static P256_FIELD_POW_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
 static P256_FIELD_MUL_FAILURES: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_FIELD_SQUARE_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_POW_FAILURES: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -237,17 +241,34 @@ pub(super) fn p256_point_add_hardware(
 }
 
 #[cfg(target_arch = "riscv32")]
-fn record_p256_field_result(started: u64, multiply: bool, result: &Result<(), CryptoError>) {
+enum P256FieldOperation {
+    Multiply,
+    Square,
+    Pow,
+}
+
+#[cfg(target_arch = "riscv32")]
+fn record_p256_field_result(
+    started: u64,
+    operation: P256FieldOperation,
+    result: &Result<(), CryptoError>,
+) {
     let elapsed =
         u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
     P256_FIELD_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
     P256_FIELD_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
     if result.is_err() {
         P256_FIELD_FAILURES.fetch_add(1, Ordering::Relaxed);
-        if multiply {
-            P256_FIELD_MUL_FAILURES.fetch_add(1, Ordering::Relaxed);
-        } else {
-            P256_FIELD_SQUARE_FAILURES.fetch_add(1, Ordering::Relaxed);
+        match operation {
+            P256FieldOperation::Multiply => {
+                P256_FIELD_MUL_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
+            P256FieldOperation::Square => {
+                P256_FIELD_SQUARE_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
+            P256FieldOperation::Pow => {
+                P256_FIELD_POW_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
         }
     }
 }
@@ -267,7 +288,7 @@ pub(super) fn p256_field_mul_hardware(
             .session(&service.backend)
             .field_mul(a, b, output)
     });
-    record_p256_field_result(started, true, &result);
+    record_p256_field_result(started, P256FieldOperation::Multiply, &result);
     result
 }
 
@@ -285,7 +306,26 @@ pub(super) fn p256_field_square_hardware(
             .session(&service.backend)
             .field_square(value, output)
     });
-    record_p256_field_result(started, false, &result);
+    record_p256_field_result(started, P256FieldOperation::Square, &result);
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_field_pow_hardware(
+    base: &P256FieldElement,
+    exponent: &[u8; 32],
+    output: &mut P256FieldElement,
+) -> Result<(), CryptoError> {
+    P256_FIELD_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_FIELD_POW_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .field_pow(base, exponent, output)
+    });
+    record_p256_field_result(started, P256FieldOperation::Pow, &result);
     result
 }
 
@@ -463,7 +503,7 @@ pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
 
 /// Return non-secret PKE P-256 fixed-field-operation counters.
 #[cfg(target_arch = "riscv32")]
-pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
+pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
     [
         P256_FIELD_REQUESTS.load(Ordering::Relaxed),
         P256_FIELD_FAILURES.load(Ordering::Relaxed),
@@ -471,8 +511,10 @@ pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
         P256_FIELD_MAX_MS.load(Ordering::Relaxed),
         P256_FIELD_MUL_REQUESTS.load(Ordering::Relaxed),
         P256_FIELD_SQUARE_REQUESTS.load(Ordering::Relaxed),
+        P256_FIELD_POW_REQUESTS.load(Ordering::Relaxed),
         P256_FIELD_MUL_FAILURES.load(Ordering::Relaxed),
         P256_FIELD_SQUARE_FAILURES.load(Ordering::Relaxed),
+        P256_FIELD_POW_FAILURES.load(Ordering::Relaxed),
     ]
 }
 
@@ -522,8 +564,8 @@ pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
 }
 
 #[cfg(not(target_arch = "riscv32"))]
-pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
-    [0; 8]
+pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
+    [0; 10]
 }
 
 #[cfg(all(
@@ -688,6 +730,21 @@ pub(crate) fn ws63_p256_self_test() -> Result<(), CryptoError> {
         ]
     {
         return Err(CryptoError::Backend(0xffff_0306));
+    }
+    const INVERSE_EXPONENT: [u8; 32] = [
+        0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xfd,
+    ];
+    p256_field_pow_hardware(&field_x, &INVERSE_EXPONENT, &mut field_output)?;
+    if field_output.as_be_bytes()
+        != &[
+            0xe0, 0x60, 0xcb, 0xb0, 0x88, 0x70, 0x6d, 0x5d, 0x24, 0x93, 0x69, 0x33, 0xb6, 0x9b,
+            0x16, 0xab, 0x70, 0x7d, 0x65, 0x62, 0x73, 0x74, 0x4b, 0x65, 0x66, 0x4c, 0x49, 0xe5,
+            0x77, 0xf3, 0x52, 0x38,
+        ]
+    {
+        return Err(CryptoError::Backend(0xffff_0307));
     }
     Ok(())
 }
