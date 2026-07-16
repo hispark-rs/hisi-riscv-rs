@@ -780,6 +780,7 @@ dependencies = [
 name = "hisi-crypto-ws63"
 version = "0.1.0-alpha.1"
 dependencies = [
+ "critical-section",
  "hisi-crypto",
  "hisi-hal",
  "ws63-pac",

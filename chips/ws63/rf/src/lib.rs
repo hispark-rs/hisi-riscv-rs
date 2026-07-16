@@ -200,6 +200,12 @@ pub fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
 pub fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
     crypto::hardware_pbkdf2_diagnostic_snapshot()
 }
+/// Return non-secret SPACC hash and HMAC health counters.
+#[cfg(all(feature = "upstream-supplicant-port", target_arch = "riscv32"))]
+#[doc(hidden)]
+pub fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
+    crypto::hardware_hash_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

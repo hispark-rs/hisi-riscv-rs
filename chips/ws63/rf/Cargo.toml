@@ -42,6 +42,7 @@ wifi-wpa2-personal = [
     "wifi-personal",
     "dep:hisi-crypto",
     "dep:hisi-crypto-ws63",
+    "hisi-crypto-ws63/hash",
     "hisi-crypto-ws63/pbkdf2",
     "hisi-crypto-ws63/hal-trng",
 ]
@@ -55,6 +56,7 @@ upstream-supplicant-port = [
     "ws63-radio-sys/upstream-supplicant-port",
     "dep:hisi-crypto",
     "dep:hisi-crypto-ws63",
+    "hisi-crypto-ws63/hash",
     "hisi-crypto-ws63/pbkdf2",
     "hisi-crypto-ws63/hal-trng",
 ]
@@ -73,7 +75,7 @@ wpa = ["wifi-wpa2-personal"]
 rf-init-diag = []
 # Low-disturbance in-memory WPA event-loop counters. Unlike `rf-init-diag`,
 # this does not emit synchronous UART traces from hot paths.
-rf-eloop-diag = []
+rf-eloop-diag = ["hisi-crypto-ws63?/diagnostics"]
 # Diagnostic-only differential: use the vendor scan RX filter while waiting
 # for Authentication seq2. This intentionally changes receive policy.
 rf-auth-scan-filter = ["rf-eloop-diag"]

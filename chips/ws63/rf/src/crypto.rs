@@ -1,9 +1,9 @@
 //! Internal Wi-Fi security provider boundary.
 //!
 //! The C supplicant must not make mbedTLS contexts part of the Rust API. WS63
-//! uses the published unified-cipher UAPI where it is proven on silicon and
-//! RustCrypto for portable SHA/HMAC/AES primitives. `hisi-crypto` owns that
-//! contract and implementation; RF owns only this WS63 backend and C ABI shim.
+//! uses token-owned WS63 RKP/SPACC capabilities where proven on silicon and
+//! RustCrypto for the remaining portable AES primitive. `hisi-crypto` owns the
+//! capability contract; RF owns only this WS63 service and C ABI shim.
 
 pub(crate) use hisi_crypto::CryptoError;
 #[cfg(all(
@@ -15,7 +15,7 @@ use hisi_crypto::Pbkdf2HmacSha1;
 use hisi_crypto::{EntropySource, RustCryptoProvider, TryBlockCipher, TryHash, TryMac};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::Ws63Crypto;
-use hisi_hal::peripherals::{Km, Trng};
+use hisi_hal::peripherals::{Km, Spacc, Trng};
 #[cfg(target_arch = "riscv32")]
 use hisi_rf_rtos_driver::{MutexHandle, WaitOutcome, WaitTimeout};
 #[cfg(target_arch = "riscv32")]
@@ -51,17 +51,38 @@ static PBKDF2_FAILURES: AtomicU32 = AtomicU32::new(0);
 static PBKDF2_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static PBKDF2_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static MAC_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static MAC_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static MAC_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static MAC_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_RECOVERY_TESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static HASH_RECOVERY_FAILURES: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn install_hardware_crypto(
     km: Km<'static>,
+    spacc: Spacc<'static>,
     trng: Trng<'static>,
 ) -> Result<(), CryptoError> {
     let mutex =
         hisi_rf_rtos_driver::mutex_create().map_err(|_| CryptoError::Backend(0xffff_1002))?;
     let Some(service) = CRYPTO_CELL.try_init(CryptoService {
-        backend: Ws63Crypto::new(km, trng),
+        backend: Ws63Crypto::new(km, spacc, trng),
         mutex,
     }) else {
         // SAFETY: this handle was just created above and has not escaped.
@@ -88,15 +109,9 @@ fn with_hardware_crypto<T>(
     let lock = hisi_rf_rtos_driver::mutex_lock(service.mutex, WaitTimeout::from_millis(100))
         .map_err(|_| CryptoError::Backend(0xffff_1003));
     match lock {
-        Err(error) => {
-            ENTROPY_FAILURES.fetch_add(1, Ordering::Relaxed);
-            return Err(error);
-        }
+        Err(error) => return Err(error),
         Ok(WaitOutcome::Acquired) => {}
-        Ok(WaitOutcome::TimedOut) => {
-            ENTROPY_FAILURES.fetch_add(1, Ordering::Relaxed);
-            return Err(CryptoError::Backend(0xffff_1004));
-        }
+        Ok(WaitOutcome::TimedOut) => return Err(CryptoError::Backend(0xffff_1004)),
     }
     let result = operation(&service.backend);
     let unlock = hisi_rf_rtos_driver::mutex_unlock(service.mutex)
@@ -145,6 +160,46 @@ pub(crate) fn derive_hardware_pbkdf2(
     result
 }
 
+#[cfg(target_arch = "riscv32")]
+fn hash_hardware<const N: usize>(parts: &[&[u8]], output: &mut [u8; N]) -> Result<(), CryptoError>
+where
+    Ws63Crypto<'static>: TryHash<N>,
+{
+    HASH_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_hardware_crypto(|backend| TryHash::<N>::hash(backend, parts, output));
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    HASH_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    HASH_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        HASH_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+fn mac_hardware<const N: usize>(
+    key: &[u8],
+    parts: &[&[u8]],
+    output: &mut [u8; N],
+) -> Result<(), CryptoError>
+where
+    Ws63Crypto<'static>: TryMac<N>,
+{
+    MAC_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_hardware_crypto(|backend| TryMac::<N>::mac(backend, key, parts, output));
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    MAC_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    MAC_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        MAC_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
 /// Return non-secret hardware entropy health counters for HIL diagnostics.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
@@ -168,9 +223,27 @@ pub(crate) fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
     ]
 }
 
+/// Return non-secret SPACC hash, HMAC, and recovery counters for HIL diagnostics.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
+    [
+        HASH_REQUESTS.load(Ordering::Relaxed),
+        HASH_FAILURES.load(Ordering::Relaxed),
+        HASH_TOTAL_MS.load(Ordering::Relaxed),
+        HASH_MAX_MS.load(Ordering::Relaxed),
+        MAC_REQUESTS.load(Ordering::Relaxed),
+        MAC_FAILURES.load(Ordering::Relaxed),
+        MAC_TOTAL_MS.load(Ordering::Relaxed),
+        MAC_MAX_MS.load(Ordering::Relaxed),
+        HASH_RECOVERY_TESTS.load(Ordering::Relaxed),
+        HASH_RECOVERY_FAILURES.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
+    _spacc: Spacc<'static>,
     _trng: Trng<'static>,
 ) -> Result<(), CryptoError> {
     Err(CryptoError::Unsupported)
@@ -196,6 +269,11 @@ pub(crate) fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
     [0; 5]
 }
 
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
+    [0; 10]
+}
+
 #[cfg(all(
     target_arch = "riscv32",
     any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
@@ -212,6 +290,67 @@ pub(crate) fn ws63_pbkdf2_self_test() -> Result<(), CryptoError> {
         return Err(CryptoError::Backend(0xffff_0103));
     }
     Ok(())
+}
+
+#[cfg(all(
+    target_arch = "riscv32",
+    any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
+))]
+pub(crate) fn ws63_hash_self_test() -> Result<(), CryptoError> {
+    const SHA1_EXPECTED: [u8; 20] = [
+        0xa9, 0x99, 0x3e, 0x36, 0x47, 0x06, 0x81, 0x6a, 0xba, 0x3e, 0x25, 0x71, 0x78, 0x50, 0xc2,
+        0x6c, 0x9c, 0xd0, 0xd8, 0x9d,
+    ];
+    const SHA256_EXPECTED: [u8; 32] = [
+        0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea, 0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22,
+        0x23, 0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c, 0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00,
+        0x15, 0xad,
+    ];
+    const HMAC_SHA1_EXPECTED: [u8; 20] = [
+        0xb6, 0x17, 0x31, 0x86, 0x55, 0x05, 0x72, 0x64, 0xe2, 0x8b, 0xc0, 0xb6, 0xfb, 0x37, 0x8c,
+        0x8e, 0xf1, 0x46, 0xbe, 0x00,
+    ];
+    const HMAC_SHA256_EXPECTED: [u8; 32] = [
+        0xb0, 0x34, 0x4c, 0x61, 0xd8, 0xdb, 0x38, 0x53, 0x5c, 0xa8, 0xaf, 0xce, 0xaf, 0x0b, 0xf1,
+        0x2b, 0x88, 0x1d, 0xc2, 0x00, 0xc9, 0x83, 0x3d, 0xa7, 0x26, 0xe9, 0x37, 0x6c, 0x2e, 0x32,
+        0xcf, 0xf7,
+    ];
+
+    let abc = [&b"abc"[..]];
+    let mut sha1 = [0; 20];
+    hash_hardware(&abc, &mut sha1)?;
+    if sha1 != SHA1_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0111));
+    }
+    let mut sha256 = [0; 32];
+    hash_hardware(&abc, &mut sha256)?;
+    if sha256 != SHA256_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0112));
+    }
+    let parts = [&b"Hi There"[..]];
+    mac_hardware(&[0x0b; 20], &parts, &mut sha1)?;
+    if sha1 != HMAC_SHA1_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0113));
+    }
+    mac_hardware(&[0x0b; 20], &parts, &mut sha256)?;
+    if sha256 != HMAC_SHA256_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0114));
+    }
+    Ok(())
+}
+
+#[cfg(all(
+    target_arch = "riscv32",
+    feature = "rf-eloop-diag",
+    any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
+))]
+pub(crate) fn ws63_hash_fault_recovery_self_test() -> Result<(), CryptoError> {
+    HASH_RECOVERY_TESTS.fetch_add(1, Ordering::Relaxed);
+    let result = with_hardware_crypto(|backend| backend.diagnostic_lock_timeout_recovery());
+    if result.is_err() {
+        HASH_RECOVERY_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
 }
 
 #[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
@@ -241,12 +380,12 @@ pub(crate) fn ws63_security_self_test() -> Result<(), CryptoError> {
 
     let parts = [&b"Hi There"[..]];
     let mut sha1 = [0; 20];
-    TryMac::<20>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha1)?;
+    mac_hardware(&[0x0b; 20], &parts, &mut sha1)?;
     if sha1 != HMAC_SHA1_EXPECTED {
         return Err(CryptoError::Backend(0xffff_0101));
     }
     let mut sha256 = [0; 32];
-    TryMac::<32>::mac(&RustCryptoProvider, &[0x0b; 20], &parts, &mut sha256)?;
+    mac_hardware(&[0x0b; 20], &parts, &mut sha256)?;
     if sha256 != HMAC_SHA256_EXPECTED {
         return Err(CryptoError::Backend(0xffff_0102));
     }
@@ -451,7 +590,7 @@ extern "C" fn hmac_sha1_vector(
         addresses,
         lengths,
         output,
-        |key, parts, output| TryMac::<20>::mac(&RustCryptoProvider, key, parts, output),
+        mac_hardware,
     )
 }
 
@@ -484,7 +623,7 @@ extern "C" fn hmac_sha256_vector(
         addresses,
         lengths,
         output,
-        |key, parts, output| TryMac::<32>::mac(&RustCryptoProvider, key, parts, output),
+        mac_hardware,
     )
 }
 
@@ -508,9 +647,7 @@ extern "C" fn sha1_vector(
     lengths: *const usize,
     output: *mut u8,
 ) -> i32 {
-    ffi_digest::<20>(count, addresses, lengths, output, |parts, output| {
-        TryHash::<20>::hash(&RustCryptoProvider, parts, output)
-    })
+    ffi_digest::<20>(count, addresses, lengths, output, hash_hardware)
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -521,9 +658,7 @@ extern "C" fn sha256_vector(
     lengths: *const usize,
     output: *mut u8,
 ) -> i32 {
-    ffi_digest::<32>(count, addresses, lengths, output, |parts, output| {
-        TryHash::<32>::hash(&RustCryptoProvider, parts, output)
-    })
+    ffi_digest::<32>(count, addresses, lengths, output, hash_hardware)
 }
 
 #[cfg(target_arch = "riscv32")]
