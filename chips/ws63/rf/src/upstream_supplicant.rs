@@ -53,6 +53,9 @@ static DIAG_EAPOL_FALLBACK_POLLS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EAPOL_FALLBACK_HITS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EVENT_RING: AtomicU32 = AtomicU32::new(0);
 static DIAG_RECOVERY: AtomicU32 = AtomicU32::new(0);
+static DIAG_TEMP_REJECT_CLEARS: AtomicU32 = AtomicU32::new(0);
+static DIAG_TEMP_REJECT_CLEAR_FAILURES: AtomicU32 = AtomicU32::new(0);
+static DIAG_TEMP_REJECT_CLEAR_STATUS: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_NATIVE_EVENT_KIND: AtomicU32 = AtomicU32::new(0);
 static DIAG_LAST_NATIVE_EVENT_STATUS: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOC_RESULT_RAW_STATUS: AtomicU32 = AtomicU32::new(0);
@@ -131,6 +134,7 @@ const LINK_EVENT_QUEUE_DEPTH: usize = 4;
 const MAX_ASSOCIATION_IE_LEN: usize = 768;
 const VENDOR_ASSOC_STATUS_OFFSET: u16 = 8_000;
 const MAX_STANDARD_IEEE_STATUS: u16 = u8::MAX as u16;
+const WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY: u16 = 30;
 const ASSOCIATION_ATTEMPT_CAPACITY: usize = 8;
 const EAPOL_FALLBACK_POLL_WINDOW: u16 = 2_000;
 const WLAN_EID_TIMEOUT_INTERVAL: u8 = 56;
@@ -139,6 +143,10 @@ const NO_COMEBACK_INTERVAL: u32 = u32::MAX;
 const VENDOR_AUTH_STATUS_OFFSET: u16 = 7_000;
 const WLAN_STATUS_AUTH_TIMEOUT: u16 = 16;
 const WLAN_STATUS_INVALID_PMKID: u16 = 53;
+
+const fn vendor_result_requires_stale_state_clear(raw_status: u16) -> bool {
+    raw_status == VENDOR_ASSOC_STATUS_OFFSET + WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY
+}
 
 const fn normalize_vendor_association_status(status: u16) -> u16 {
     match status.checked_sub(VENDOR_ASSOC_STATUS_OFFSET) {
@@ -1488,6 +1496,25 @@ impl NativeSupplicant {
                 }
                 status
             } else if meta.kind == LINK_EVENT_DISCONNECT {
+                if vendor_result_requires_stale_state_clear(meta.status_or_reason) {
+                    // The WS63 MAC reports status 8030 after the AP rejects a
+                    // stale PMF association. Clear that station state from the
+                    // runner before hostap starts its next association cycle.
+                    // The vendor callback remains enqueue-only; this bounded
+                    // ioctl runs in normal thread context.
+                    let mut reason = WLAN_REASON_PREV_AUTH_NOT_VALID;
+                    DIAG_TEMP_REJECT_CLEARS.fetch_add(1, Ordering::Relaxed);
+                    let clear_status = crate::wal::ioctl(
+                        DRIVER_CONTEXT.ifname(),
+                        IOCTL_DISCONNECT,
+                        (&mut reason as *mut u16).cast(),
+                    );
+                    DIAG_TEMP_REJECT_CLEAR_STATUS.store(clear_status as u32, Ordering::Release);
+                    if clear_status != 0 {
+                        DIAG_TEMP_REJECT_CLEAR_FAILURES.fetch_add(1, Ordering::Relaxed);
+                        return Err(NativeSupplicantError::DisconnectFailed(clear_status));
+                    }
+                }
                 let ies = event.first();
                 let event = DisconnectEvent {
                     abi_version: ABI_VERSION,
@@ -2559,6 +2586,14 @@ pub(crate) fn recovery_diagnostic_word() -> u32 {
     DIAG_RECOVERY.load(Ordering::Acquire)
 }
 
+pub(crate) fn temporary_reject_recovery_diagnostic_snapshot() -> [u32; 3] {
+    [
+        DIAG_TEMP_REJECT_CLEARS.load(Ordering::Acquire),
+        DIAG_TEMP_REJECT_CLEAR_FAILURES.load(Ordering::Acquire),
+        DIAG_TEMP_REJECT_CLEAR_STATUS.load(Ordering::Acquire),
+    ]
+}
+
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn observe_external_auth_callback(length: u32) {
     DIAG_EXTERNAL_AUTH_CALLBACKS.fetch_add(1, Ordering::Relaxed);
@@ -2904,6 +2939,9 @@ mod tests {
         assert_eq!(association_comeback_interval(&response), Some(0x1234));
         assert_eq!(association_comeback_interval(&[]), None);
         assert!(!vendor_result_uses_association_reject(8_030));
+        assert!(vendor_result_requires_stale_state_clear(8_030));
+        assert!(!vendor_result_requires_stale_state_clear(30));
+        assert!(!vendor_result_requires_stale_state_clear(8_053));
         assert!(vendor_result_uses_disconnect(8_030));
         assert!(vendor_result_uses_disconnect(30));
         assert!(!vendor_result_uses_disconnect(8_053));

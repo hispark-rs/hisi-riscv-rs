@@ -195,6 +195,13 @@ pub fn upstream_supplicant_recovery_diagnostic_word() -> u32 {
     upstream_supplicant::recovery_diagnostic_word()
 }
 
+/// Return status-30 stale-association clear counters.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_temporary_reject_recovery_diagnostic_snapshot() -> [u32; 3] {
+    upstream_supplicant::temporary_reject_recovery_diagnostic_snapshot()
+}
+
 /// Return non-secret hardware entropy health counters.
 #[cfg(all(feature = "upstream-supplicant-port", target_arch = "riscv32"))]
 #[doc(hidden)]
