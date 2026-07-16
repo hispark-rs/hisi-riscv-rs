@@ -598,8 +598,7 @@ impl<'d> WpaWifi<'d> {
                             return Err(Error::Crypto(error.code()));
                         }
                         let mut pmk = [0; 32];
-                        if let Err(error) = hisi_crypto::Pbkdf2HmacSha1::derive_32(
-                            &crate::crypto::WS63_CRYPTO,
+                        if let Err(error) = crate::crypto::derive_hardware_pbkdf2(
                             &network.key[..network.key_len as usize],
                             network.ssid(),
                             4096,

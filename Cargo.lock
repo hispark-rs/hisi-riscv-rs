@@ -782,6 +782,8 @@ version = "0.1.0-alpha.1"
 dependencies = [
  "hisi-crypto",
  "hisi-hal",
+ "ws63-pac",
+ "zeroize",
 ]
 
 [[package]]

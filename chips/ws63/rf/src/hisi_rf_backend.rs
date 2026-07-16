@@ -1,6 +1,6 @@
 //! WS63 implementation of the chip-neutral `hisi-rf` control contract.
 
-use hisi_hal::peripherals::{Efuse, Trng};
+use hisi_hal::peripherals::{Efuse, Km, Trng};
 use hisi_rf::{
     BackendError, BackendErrorClass, ConnectionInfo, RadioConfig, RadioState, ScanConfig,
     ScanOutcome, ScanResult, Security, Ssid, StationConfig, WifiBackend,
@@ -50,6 +50,7 @@ use hisi_rf::RadioResources;
 /// WS63 control-plane resources before the vendor runtime is initialized.
 pub struct Ws63WifiBackend<'d> {
     efuse: Option<Efuse<'d>>,
+    km: Option<Km<'d>>,
     trng: Option<Trng<'d>>,
     wifi: Option<ActiveWifi<'d>>,
     #[cfg(feature = "upstream-supplicant-port")]
@@ -60,9 +61,10 @@ pub struct Ws63WifiBackend<'d> {
 
 impl<'d> Ws63WifiBackend<'d> {
     /// Bind the one-shot eFuse token needed by the WS63 vendor runtime.
-    pub fn new(efuse: Efuse<'d>, trng: Trng<'d>) -> Self {
+    pub fn new(efuse: Efuse<'d>, km: Km<'d>, trng: Trng<'d>) -> Self {
         Self {
             efuse: Some(efuse),
+            km: Some(km),
             trng: Some(trng),
             wifi: None,
             #[cfg(feature = "upstream-supplicant-port")]
@@ -86,7 +88,16 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             class: BackendErrorClass::Initialize,
             code: 0x1000_0004,
         })?;
-        crate::crypto::install_hardware_entropy(trng).map_err(|error| BackendError {
+        let km = self.km.take().ok_or(BackendError {
+            class: BackendErrorClass::Initialize,
+            code: 0x1000_0005,
+        })?;
+        crate::crypto::install_hardware_crypto(km, trng).map_err(|error| BackendError {
+            class: BackendErrorClass::Initialize,
+            code: error.code(),
+        })?;
+        #[cfg(target_arch = "riscv32")]
+        crate::crypto::ws63_pbkdf2_self_test().map_err(|error| BackendError {
             class: BackendErrorClass::Initialize,
             code: error.code(),
         })?;
@@ -372,10 +383,11 @@ fn emit_backend_failure(supplicant: &NativeSupplicant, status: i32) -> u32 {
 #[cfg(feature = "net")]
 pub fn resources(
     efuse: Efuse<'static>,
+    km: Km<'static>,
     trng: Trng<'static>,
 ) -> RadioResources<Ws63WifiBackend<'static>, Ws63Device> {
     RadioResources {
-        backend: Ws63WifiBackend::new(efuse, trng),
+        backend: Ws63WifiBackend::new(efuse, km, trng),
         device: Ws63Device,
     }
 }

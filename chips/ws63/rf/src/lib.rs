@@ -194,6 +194,12 @@ pub fn upstream_supplicant_event_diagnostic_snapshot() -> [u32; 6] {
 pub fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
     crypto::hardware_entropy_diagnostic_snapshot()
 }
+/// Return non-secret hardware PBKDF2 health counters.
+#[cfg(all(feature = "upstream-supplicant-port", target_arch = "riscv32"))]
+#[doc(hidden)]
+pub fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
+    crypto::hardware_pbkdf2_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

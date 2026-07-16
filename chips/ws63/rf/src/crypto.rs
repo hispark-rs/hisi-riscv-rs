@@ -13,11 +13,9 @@ pub(crate) use hisi_crypto::CryptoError;
 use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{EntropySource, RustCryptoProvider, TryBlockCipher, TryHash, TryMac};
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
-use hisi_crypto_ws63::Ws63Crypto;
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto_ws63::Ws63Entropy;
-use hisi_hal::peripherals::Trng;
+use hisi_crypto_ws63::Ws63Crypto;
+use hisi_hal::peripherals::{Km, Trng};
 #[cfg(target_arch = "riscv32")]
 use hisi_rf_rtos_driver::{MutexHandle, WaitOutcome, WaitTimeout};
 #[cfg(target_arch = "riscv32")]
@@ -29,63 +27,62 @@ use static_cell::StaticCell;
 #[path = "crypto_sae.rs"]
 mod crypto_sae;
 
-/// Explicit hardware capability selection for the vendor PBKDF2/TRNG ABI.
-#[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
-pub(crate) static WS63_CRYPTO: Ws63Crypto = {
-    // SAFETY: this is the sole `Ws63Crypto` value in the firmware. The vendor
-    // security service serializes its synchronous UAPI calls; no fallback
-    // backend is selected if an operation fails.
-    unsafe { Ws63Crypto::assume_exclusive() }
-};
-
 #[cfg(target_arch = "riscv32")]
-struct EntropyService {
-    source: Ws63Entropy<'static>,
+struct CryptoService {
+    backend: Ws63Crypto<'static>,
     mutex: MutexHandle,
 }
 
 #[cfg(target_arch = "riscv32")]
-static ENTROPY_CELL: StaticCell<EntropyService> = StaticCell::new();
+static CRYPTO_CELL: StaticCell<CryptoService> = StaticCell::new();
 #[cfg(target_arch = "riscv32")]
-static ENTROPY_SERVICE: AtomicPtr<EntropyService> = AtomicPtr::new(core::ptr::null_mut());
+static CRYPTO_SERVICE: AtomicPtr<CryptoService> = AtomicPtr::new(core::ptr::null_mut());
 #[cfg(target_arch = "riscv32")]
 static ENTROPY_REQUESTS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static ENTROPY_BYTES: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static ENTROPY_FAILURES: AtomicU32 = AtomicU32::new(0);
-
-/// Install the unique HAL-owned TRNG capability before radio initialization.
 #[cfg(target_arch = "riscv32")]
-pub(crate) fn install_hardware_entropy(trng: Trng<'static>) -> Result<(), CryptoError> {
+static PBKDF2_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static PBKDF2_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static PBKDF2_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static PBKDF2_MAX_MS: AtomicU32 = AtomicU32::new(0);
+
+/// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn install_hardware_crypto(
+    km: Km<'static>,
+    trng: Trng<'static>,
+) -> Result<(), CryptoError> {
     let mutex =
         hisi_rf_rtos_driver::mutex_create().map_err(|_| CryptoError::Backend(0xffff_1002))?;
-    let Some(service) = ENTROPY_CELL.try_init(EntropyService {
-        source: Ws63Entropy::new(trng),
+    let Some(service) = CRYPTO_CELL.try_init(CryptoService {
+        backend: Ws63Crypto::new(km, trng),
         mutex,
     }) else {
         // SAFETY: this handle was just created above and has not escaped.
         let _ = unsafe { hisi_rf_rtos_driver::mutex_destroy(mutex) };
         return Err(CryptoError::InvalidValue);
     };
-    ENTROPY_SERVICE.store(service, Ordering::Release);
+    CRYPTO_SERVICE.store(service, Ordering::Release);
     Ok(())
 }
 
-/// Fill bytes from the installed hardware TRNG without software fallback.
 #[cfg(target_arch = "riscv32")]
-pub(crate) fn fill_hardware_entropy(output: &mut [u8]) -> Result<(), CryptoError> {
-    if output.is_empty() {
-        return Ok(());
-    }
-    ENTROPY_REQUESTS.fetch_add(1, Ordering::Relaxed);
-    let service = ENTROPY_SERVICE.load(Ordering::Acquire);
+fn with_hardware_crypto<T>(
+    operation: impl FnOnce(&Ws63Crypto<'static>) -> Result<T, CryptoError>,
+) -> Result<T, CryptoError> {
+    let service = CRYPTO_SERVICE.load(Ordering::Acquire);
     let service = if service.is_null() {
-        ENTROPY_FAILURES.fetch_add(1, Ordering::Relaxed);
         return Err(CryptoError::Unsupported);
     } else {
         // SAFETY: Acquire observed a pointer published only after StaticCell
-        // initialization. StaticCell owns the service for the firmware lifetime.
+        // initialization. The runtime mutex below serializes the backend's
+        // intentionally !Sync hardware state for the firmware lifetime.
         unsafe { &*service }
     };
     let lock = hisi_rf_rtos_driver::mutex_lock(service.mutex, WaitTimeout::from_millis(100))
@@ -101,10 +98,23 @@ pub(crate) fn fill_hardware_entropy(output: &mut [u8]) -> Result<(), CryptoError
             return Err(CryptoError::Backend(0xffff_1004));
         }
     }
-    let result = service.source.fill_entropy(output);
+    let result = operation(&service.backend);
     let unlock = hisi_rf_rtos_driver::mutex_unlock(service.mutex)
         .map_err(|_| CryptoError::Backend(0xffff_1005));
-    let result = result.and(unlock);
+    match (result, unlock) {
+        (Ok(value), Ok(())) => Ok(value),
+        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
+    }
+}
+
+/// Fill bytes from the installed hardware TRNG without software fallback.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn fill_hardware_entropy(output: &mut [u8]) -> Result<(), CryptoError> {
+    if output.is_empty() {
+        return Ok(());
+    }
+    ENTROPY_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let result = with_hardware_crypto(|backend| backend.fill_entropy(output));
     if result.is_ok() {
         ENTROPY_BYTES.fetch_add(output.len() as u32, Ordering::Relaxed);
     } else {
@@ -113,25 +123,95 @@ pub(crate) fn fill_hardware_entropy(output: &mut [u8]) -> Result<(), CryptoError
     result
 }
 
+/// Derive a WPA PMK through the explicitly selected WS63 RKP backend.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn derive_hardware_pbkdf2(
+    password: &[u8],
+    salt: &[u8],
+    iterations: u32,
+    output: &mut [u8; 32],
+) -> Result<(), CryptoError> {
+    PBKDF2_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result =
+        with_hardware_crypto(|backend| backend.derive_32(password, salt, iterations, output));
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    PBKDF2_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    PBKDF2_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        PBKDF2_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
 /// Return non-secret hardware entropy health counters for HIL diagnostics.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
     [
-        u32::from(!ENTROPY_SERVICE.load(Ordering::Acquire).is_null()),
+        u32::from(!CRYPTO_SERVICE.load(Ordering::Acquire).is_null()),
         ENTROPY_REQUESTS.load(Ordering::Relaxed),
         ENTROPY_BYTES.load(Ordering::Relaxed),
         ENTROPY_FAILURES.load(Ordering::Relaxed),
     ]
 }
 
+/// Return non-secret hardware PBKDF2 health counters for HIL diagnostics.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
+    [
+        u32::from(!CRYPTO_SERVICE.load(Ordering::Acquire).is_null()),
+        PBKDF2_REQUESTS.load(Ordering::Relaxed),
+        PBKDF2_FAILURES.load(Ordering::Relaxed),
+        PBKDF2_TOTAL_MS.load(Ordering::Relaxed),
+        PBKDF2_MAX_MS.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
-pub(crate) fn install_hardware_entropy(_trng: Trng<'static>) -> Result<(), CryptoError> {
+pub(crate) fn install_hardware_crypto(
+    _km: Km<'static>,
+    _trng: Trng<'static>,
+) -> Result<(), CryptoError> {
     Err(CryptoError::Unsupported)
 }
 
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn fill_hardware_entropy(_output: &mut [u8]) -> Result<(), CryptoError> {
     Err(CryptoError::Unsupported)
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn derive_hardware_pbkdf2(
+    _password: &[u8],
+    _salt: &[u8],
+    _iterations: u32,
+    _output: &mut [u8; 32],
+) -> Result<(), CryptoError> {
+    Err(CryptoError::Unsupported)
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_pbkdf2_diagnostic_snapshot() -> [u32; 5] {
+    [0; 5]
+}
+
+#[cfg(all(
+    target_arch = "riscv32",
+    any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port")
+))]
+pub(crate) fn ws63_pbkdf2_self_test() -> Result<(), CryptoError> {
+    const PBKDF2_EXPECTED: [u8; 32] = [
+        0xf4, 0x2c, 0x6f, 0xc5, 0x2d, 0xf0, 0xeb, 0xef, 0x9e, 0xbb, 0x4b, 0x90, 0xb3, 0x8a, 0x5f,
+        0x90, 0x2e, 0x83, 0xfe, 0x1b, 0x13, 0x5a, 0x70, 0xe2, 0x3a, 0xed, 0x76, 0x2e, 0x97, 0x10,
+        0xa1, 0x2e,
+    ];
+    let mut pmk = [0; 32];
+    derive_hardware_pbkdf2(b"password", b"IEEE", 4096, &mut pmk)?;
+    if pmk != PBKDF2_EXPECTED {
+        return Err(CryptoError::Backend(0xffff_0103));
+    }
+    Ok(())
 }
 
 #[cfg(all(target_arch = "riscv32", feature = "wifi-wpa2-personal"))]
@@ -157,17 +237,7 @@ pub(crate) fn ws63_security_self_test() -> Result<(), CryptoError> {
         0x2b, 0x88, 0x1d, 0xc2, 0x00, 0xc9, 0x83, 0x3d, 0xa7, 0x26, 0xe9, 0x37, 0x6c, 0x2e, 0x32,
         0xcf, 0xf7,
     ];
-    const PBKDF2_EXPECTED: [u8; 32] = [
-        0xf4, 0x2c, 0x6f, 0xc5, 0x2d, 0xf0, 0xeb, 0xef, 0x9e, 0xbb, 0x4b, 0x90, 0xb3, 0x8a, 0x5f,
-        0x90, 0x2e, 0x83, 0xfe, 0x1b, 0x13, 0x5a, 0x70, 0xe2, 0x3a, 0xed, 0x76, 0x2e, 0x97, 0x10,
-        0xa1, 0x2e,
-    ];
-
-    let mut pmk = [0; 32];
-    WS63_CRYPTO.derive_32(b"password", b"IEEE", 4096, &mut pmk)?;
-    if pmk != PBKDF2_EXPECTED {
-        return Err(CryptoError::Backend(0xffff_0103));
-    }
+    ws63_pbkdf2_self_test()?;
 
     let parts = [&b"Hi There"[..]];
     let mut sha1 = [0; 20];
@@ -485,13 +555,7 @@ extern "C" fn pbkdf2_sha1(
     let password = unsafe { core::slice::from_raw_parts(password.cast(), password_len) };
     let salt = unsafe { core::slice::from_raw_parts(salt, salt_len) };
     let output = unsafe { &mut *output.cast::<[u8; 32]>() };
-    #[cfg(feature = "wifi-wpa2-personal")]
-    let result = WS63_CRYPTO.derive_32(password, salt, iterations as u32, output);
-    // The pinned upstream profile explicitly selects the portable PBKDF2
-    // backend. It does not depend on the vendor WPA archive that owns the WS63
-    // unified-cipher PBKDF2 service initialization and exported UAPI symbol.
-    #[cfg(feature = "upstream-supplicant-port")]
-    let result = RustCryptoProvider.derive_32(password, salt, iterations as u32, output);
+    let result = derive_hardware_pbkdf2(password, salt, iterations as u32, output);
     result.map(|()| 0).unwrap_or(-1)
 }
 
