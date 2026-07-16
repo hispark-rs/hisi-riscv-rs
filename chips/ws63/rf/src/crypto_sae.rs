@@ -1136,7 +1136,29 @@ unsafe extern "C" fn crypto_ec_point_invert(
     let Some(value) = (unsafe { point_clone(point) }) else {
         return -1;
     };
-    unsafe { point_store(point, group.point_invert(&value)) }.map_or(-1, |()| 0)
+    if group.point_is_infinity(&value) {
+        return 0;
+    }
+    let Ok((x, y)) = group.point_to_xy(&value) else {
+        return -1;
+    };
+    let mut output = P256AffinePoint::new([0; P256_ELEMENT_BYTES], [0; P256_ELEMENT_BYTES]);
+    if super::p256_point_invert_hardware(&P256AffinePoint::new(x, y), &mut output).is_err() {
+        clear_bytes(&mut output.x);
+        clear_bytes(&mut output.y);
+        return -1;
+    }
+    let value = match group.point_from_xy(&output.x, &output.y) {
+        Ok(value) => value,
+        Err(_) => {
+            clear_bytes(&mut output.x);
+            clear_bytes(&mut output.y);
+            return -1;
+        }
+    };
+    clear_bytes(&mut output.x);
+    clear_bytes(&mut output.y);
+    unsafe { point_store(point, value) }.map_or(-1, |()| 0)
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -1151,8 +1173,20 @@ unsafe extern "C" fn crypto_ec_point_compute_y_sqr(
     let Some(x) = (unsafe { bignum_clone(x) }) else {
         return ptr::null_mut();
     };
-    let Ok(value) = group.compute_y_squared(&x) else {
-        return ptr::null_mut();
+    let value = if let Some(x) = bignum_to_p256_field(&x) {
+        let mut output = P256FieldElement::ZERO;
+        if super::p256_compute_y_squared_hardware(&x, &mut output).is_err() {
+            return ptr::null_mut();
+        }
+        match RustCryptoBignum.init_set(output.as_be_bytes()) {
+            Ok(value) => value,
+            Err(_) => return ptr::null_mut(),
+        }
+    } else {
+        match group.compute_y_squared(&x) {
+            Ok(value) => value,
+            Err(_) => return ptr::null_mut(),
+        }
     };
     unsafe { allocate(BignumObject::owned(value)) }
 }
@@ -1180,8 +1214,17 @@ unsafe extern "C" fn crypto_ec_point_is_on_curve(
     let Some(group) = (unsafe { ec_group(context) }) else {
         return 0;
     };
-    unsafe { point_clone(point) }
-        .is_some_and(|point| group.point_is_on_curve(&point))
+    let Some(point) = (unsafe { point_clone(point) }) else {
+        return 0;
+    };
+    if group.point_is_infinity(&point) {
+        return 1;
+    }
+    let Ok((x, y)) = group.point_to_xy(&point) else {
+        return 0;
+    };
+    super::p256_point_validate_hardware(&P256AffinePoint::new(x, y))
+        .unwrap_or(false)
         .into()
 }
 

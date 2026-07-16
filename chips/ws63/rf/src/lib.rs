@@ -222,18 +222,27 @@ pub fn hardware_hash_diagnostic_snapshot() -> [u32; 10] {
 }
 
 /// Return non-secret SPACC AES request, failure, timing, and recovery counters.
+#[cfg(any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
 pub fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
     crypto::hardware_cipher_diagnostic_snapshot()
 }
 
 /// Return non-secret WS63 PKE P-256 point-operation counters.
+#[cfg(any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
 pub fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
     crypto::hardware_p256_diagnostic_snapshot()
 }
 
 /// Return non-secret WS63 PKE P-256 fixed-field-operation counters.
+#[cfg(any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
 pub fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
     crypto::hardware_p256_field_diagnostic_snapshot()
+}
+
+/// Return non-secret fixed P-256 curve-composition counters.
+#[cfg(any(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
+pub fn hardware_p256_curve_diagnostic_snapshot() -> [u32; 10] {
+    crypto::hardware_p256_curve_diagnostic_snapshot()
 }
 mod wal;
 pub mod wifi;

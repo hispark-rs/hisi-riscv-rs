@@ -15,8 +15,9 @@ use hisi_crypto::Pbkdf2HmacSha1;
 use hisi_crypto::{
     EntropySource, TryBlockCipher, TryHash, TryMac,
     sae::{
-        P256AffinePoint, P256FieldElement, P256PointResult, TryP256FieldMul, TryP256FieldPow,
-        TryP256PointAdd, TryP256PointMul,
+        P256AffinePoint, P256FieldElement, P256PointResult, TryP256ComputeYSquared,
+        TryP256FieldMul, TryP256FieldPow, TryP256PointAdd, TryP256PointInvert, TryP256PointMul,
+        TryP256PointValidate,
     },
 };
 #[cfg(target_arch = "riscv32")]
@@ -128,6 +129,26 @@ static P256_FIELD_MUL_FAILURES: AtomicU32 = AtomicU32::new(0);
 static P256_FIELD_SQUARE_FAILURES: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_FIELD_POW_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_INVERT_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_VALIDATE_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_Y2_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_INVERT_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_VALIDATE_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_CURVE_Y2_FAILURES: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -329,6 +350,86 @@ pub(super) fn p256_field_pow_hardware(
     result
 }
 
+#[cfg(target_arch = "riscv32")]
+enum P256CurveOperation {
+    Invert,
+    Validate,
+    YSquared,
+}
+
+#[cfg(target_arch = "riscv32")]
+fn record_p256_curve_result(started: u64, operation: P256CurveOperation, failed: bool) {
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    P256_CURVE_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    P256_CURVE_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if failed {
+        P256_CURVE_FAILURES.fetch_add(1, Ordering::Relaxed);
+        match operation {
+            P256CurveOperation::Invert => {
+                P256_CURVE_INVERT_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
+            P256CurveOperation::Validate => {
+                P256_CURVE_VALIDATE_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
+            P256CurveOperation::YSquared => {
+                P256_CURVE_Y2_FAILURES.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    }
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_compute_y_squared_hardware(
+    x: &P256FieldElement,
+    output: &mut P256FieldElement,
+) -> Result<(), CryptoError> {
+    P256_CURVE_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_CURVE_Y2_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .try_compute_y_squared(x, output)
+    });
+    record_p256_curve_result(started, P256CurveOperation::YSquared, result.is_err());
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_point_validate_hardware(point: &P256AffinePoint) -> Result<bool, CryptoError> {
+    P256_CURVE_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_CURVE_VALIDATE_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .try_point_is_on_curve(point)
+    });
+    record_p256_curve_result(started, P256CurveOperation::Validate, result.is_err());
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_point_invert_hardware(
+    point: &P256AffinePoint,
+    output: &mut P256AffinePoint,
+) -> Result<(), CryptoError> {
+    P256_CURVE_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_CURVE_INVERT_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .try_point_invert(point, output)
+    });
+    record_p256_curve_result(started, P256CurveOperation::Invert, result.is_err());
+    result
+}
+
 /// Fill bytes from the installed hardware TRNG without software fallback.
 #[cfg(target_arch = "riscv32")]
 pub(crate) fn fill_hardware_entropy(output: &mut [u8]) -> Result<(), CryptoError> {
@@ -518,6 +619,23 @@ pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
     ]
 }
 
+/// Return non-secret fixed P-256 curve-composition counters.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_p256_curve_diagnostic_snapshot() -> [u32; 10] {
+    [
+        P256_CURVE_REQUESTS.load(Ordering::Relaxed),
+        P256_CURVE_FAILURES.load(Ordering::Relaxed),
+        P256_CURVE_TOTAL_MS.load(Ordering::Relaxed),
+        P256_CURVE_MAX_MS.load(Ordering::Relaxed),
+        P256_CURVE_INVERT_REQUESTS.load(Ordering::Relaxed),
+        P256_CURVE_VALIDATE_REQUESTS.load(Ordering::Relaxed),
+        P256_CURVE_Y2_REQUESTS.load(Ordering::Relaxed),
+        P256_CURVE_INVERT_FAILURES.load(Ordering::Relaxed),
+        P256_CURVE_VALIDATE_FAILURES.load(Ordering::Relaxed),
+        P256_CURVE_Y2_FAILURES.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
@@ -565,6 +683,11 @@ pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
 
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
+    [0; 10]
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_p256_curve_diagnostic_snapshot() -> [u32; 10] {
     [0; 10]
 }
 
@@ -745,6 +868,27 @@ pub(crate) fn ws63_p256_self_test() -> Result<(), CryptoError> {
         ]
     {
         return Err(CryptoError::Backend(0xffff_0307));
+    }
+    if !p256_point_validate_hardware(&GENERATOR)? {
+        return Err(CryptoError::Backend(0xffff_0308));
+    }
+    let mut y_squared = P256FieldElement::ZERO;
+    p256_compute_y_squared_hardware(&field_x, &mut y_squared)?;
+    p256_field_square_hardware(&field_y, &mut field_output)?;
+    if y_squared != field_output {
+        return Err(CryptoError::Backend(0xffff_0309));
+    }
+    let mut inverted = P256AffinePoint::new([0; 32], [0; 32]);
+    p256_point_invert_hardware(&GENERATOR, &mut inverted)?;
+    if inverted != NEGATIVE_GENERATOR {
+        inverted.x.zeroize();
+        inverted.y.zeroize();
+        return Err(CryptoError::Backend(0xffff_030a));
+    }
+    inverted.x.zeroize();
+    inverted.y.zeroize();
+    if p256_point_validate_hardware(&P256AffinePoint::new([0; 32], [0; 32]))? {
+        return Err(CryptoError::Backend(0xffff_030b));
     }
     Ok(())
 }
