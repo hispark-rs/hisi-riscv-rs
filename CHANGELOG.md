@@ -23,6 +23,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.2`.
 - **Async IRQ ownership** — HAL async drivers expose ISR hooks without exporting
   strong device handlers. Firmware or RTOS trap routing owns every vector, so
   Cargo feature unification cannot inject handlers into unrelated binaries.
+- **WPA handshake hardware crypto** — move SHA/HMAC and AES block operations to
+  the token-owned WS63 SPACC/KM backend. Upstream hostap key unwrap and CMAC keep
+  their protocol implementation while using fallible hardware capabilities; no
+  hardware error silently falls back to RustCrypto.
 
 ### Verification
 
@@ -31,6 +35,9 @@ Release train anchor: `hisi-hal 0.7.0-alpha.2`.
   ELF linking pass under the new package name.
 - Template CI generates and links WS63 blinky, WS63 `uart_hello`, and BS21
   blinky from crates.io; both WS63 projects also generate FlashPlan images.
+- SPACC AES standard vectors and recovery checks pass on silicon; an unchanged
+  upstream WPA2 image completed 20/20 nRST associations with 720/720 AES block
+  operations and no hardware failures.
 
 ---
 

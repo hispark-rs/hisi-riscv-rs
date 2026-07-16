@@ -233,9 +233,10 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 - `coex` 初始始终 unstable；只有 Wi-Fi traffic 与 BLE/SLE 并发 HIL 通过后才允许稳定。
 - 所有 blob callback 只把 bounded event 写入队列并 wake task；不得在 ISR、critical
   section 或 scheduler lock 中调用用户 callback。
-- Wi-Fi security 采用 `hisi-crypto` provider 边界。当前已验证组合是 WS63
-  unified-cipher PBKDF2/TRNG + RustCrypto SHA/HMAC/AES；SPACC hash/SYMC 只有在独立
-  clock/IRQ/wait HIL 通过后才能成为默认 backend。RF 不公开密码实现 context。
+- Wi-Fi security 采用 `hisi-crypto` capability 边界。当前已验证组合是 WS63
+  KM/RKP PBKDF2、TRNG、SPACC SHA/HMAC/AES；RustCrypto 保留为 host oracle 和显式软件
+  profile，不作为硬件错误后的回退。RF 不公开密码实现 context，CCMP 数据面仍由 MAC/DMAC
+  完成。
 - 初始稳定候选仅为 WPA2-Personal/CCMP。WPA3-SAE、SoftAP authenticator 和 Enterprise
   分别使用独立 feature 与 HIL gate；编译进完整原厂 archive 不等于 API 已支持。
 - `hisi-rf` 的依赖边界固定为 `hisi-rf-rtos-driver`、`hisi-crypto`、`hisi-nvs`、HAL
@@ -328,9 +329,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
    `check-wpa-profile.py` 对原厂 CMake source/define 集执行 fail-closed 检查。
    2026-07-12 真机复现 connect、DHCP、ARP、ping；构建闭包、SDK compatibility define
    陷阱和资源差异见 [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
-3. **W1 crypto baseline（已完成）**：过渡 `CryptoProvider` 已覆盖 PBKDF2-HMAC-SHA1、
+3. **W1 crypto baseline（已完成，已由 W2E-H 演进）**：过渡 `CryptoProvider` 已覆盖 PBKDF2-HMAC-SHA1、
    SHA-1/SHA-256、HMAC-SHA1/HMAC-SHA256、AES 和 TRNG。WS63 当前使用已验证的
-   unified-cipher PBKDF2/TRNG，SHA/HMAC/AES 使用 RustCrypto；最终 ELF 无 `mbedtls_*`
+   unified-cipher PBKDF2/TRNG，最初 SHA/HMAC/AES 使用 RustCrypto；最终 ELF 无 `mbedtls_*`
    supplicant 符号，并在真机 KAT 后完成 WPA2 connect/DHCP/ARP/ping。SPACC HMAC/SYMC
    因 transitional runtime 下的 calc timeout 保持 experimental，待 `hisi-crypto` 独立
    clock/IRQ/wait HIL 后再启用。该单体 trait 只作为迁移基线，后续由小能力 traits、
@@ -454,11 +455,16 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      与 160 次 MAC 请求零失败；diagnostic profile 的 bounded timeout 后恢复检查同样
      20/20 零失败，但不冒充真实跨 owner contention injection。证据见
      [W2E-H SPACC hash/HMAC](evidence/ws63-rf-w2e-h-spacc-hash-2026-07-16.md)。
-     当前 upstream-native profile 仍显式使用 RustCrypto AES；它是
-     行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition
-     行为 HIL 可以先使用该显式软件/混合 profile，但 WPA3-SAE 进入 stable 前必须按
-     `PBKDF2-HMAC-SHA1 -> SHA/HMAC -> AES key-wrap/CMAC -> SAE P-256/Dragonfly` 的顺序逐项
-     迁移到 WS63 硬件能力；当前下一项是 SPACC AES/key-wrap/CMAC。依赖固定为
+     第三项 AES-128/192/256 单块加解密已迁入 SPACC symmetric channel 1 + KM/KLAD
+     MCipher keyslot；hostap 的 RFC3394 key unwrap 与 AES-CMAC 继续复用其上游状态机，只通过
+     窄 `aes_encrypt/decrypt` ABI 落到 `TryBlockCipher`，没有在 Rust 侧复制协议。标准 KAT
+     覆盖三种 key length 的 encrypt/decrypt；同一 upstream WPA2 镜像 20 次 nRST 均完成
+     association，每轮 36 次 AES 请求、0 失败，bounded timeout recovery 同样 20/20。
+     证据见 [W2E-H SPACC AES](evidence/ws63-rf-w2e-h-spacc-aes-2026-07-16.md)。
+     因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES 的显式硬件
+     profile；RustCrypto 仍是 host oracle，不得被描述为硬件失败后的 fallback。WPA3-SAE
+     进入 stable 前仍须按 `PBKDF2-HMAC-SHA1 -> SHA/HMAC -> AES key-wrap/CMAC ->
+     SAE P-256/Dragonfly` 的顺序闭合；当前下一项是 PKE P-256/Dragonfly。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
      backend 必须在构造、feature 或资源注入时显式选择 software、hardware 或准确标注的
@@ -468,9 +474,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      标准向量、RustCrypto/原厂差分、timeout 与错误恢复、重复握手 HIL，以及性能、栈和
      代码尺寸对比；各项证据闭合前只能声明具体已加速能力，不能给出笼统硬件加速承诺。
      HAL 只拥有 `Spacc`/`Pke`/`Km`/`Trng` token 与 clock/reset/IRQ/cache/DMA 基础机制；
-     算法、channel/descriptor、keyslot、清零和错误恢复只归 `hisi-crypto-ws63`。当前 HAL
-     中无消费者的 SPACC/PKE stub 应在本 slice HIL 后作为独立结构提交删除或明确退役，不能
-     形成第二套驱动事实源。当前 backend 内置 scratch 是过渡实现，后续改为调用方注入的
+     算法、channel/descriptor、keyslot、清零和错误恢复只归 `hisi-crypto-ws63`。HAL 中原有
+     无消费者的 SPACC/PKE no-op stub 已删除，不再形成第二套驱动事实源。当前 backend 内置
+     scratch 是过渡实现，后续改为调用方注入的
      `StaticCell`/静态 storage；`Ws63Crypto::new` 也应收敛为 typed resources/builder，避免
      随能力增长形成巨大构造器。RF 外层 mutex 加内部 busy guard 同样是迁移边界，长期以
      `&mut self`/`CryptoSession` 表达独占，并保留 unsafe/FFI 防御。
@@ -631,10 +637,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [A1 ROM metadata migration](evidence/ws63-rf-a1-rom-sys-2026-07-13.md)。
 - [x] `hisi-crypto` 已抽为独立 repository/release unit。当前过渡 trait 覆盖
   PBKDF2/SHA/HMAC/AES/entropy，RustCrypto backend 作为软件实现与 KAT oracle。
-- [x] WS63 unified-cipher PBKDF2/TRNG backend 已抽入独立 `hisi-crypto-ws63`；
-  `hisi-crypto 0.1.0-alpha.3` 新增小能力 traits 与显式 suite。RF 分别注入硬件
-  PBKDF2/TRNG 和软件 SHA/HMAC/AES，禁止失败后静默回退。host、guarded link、硬件
-  PBKDF2 KAT 与 WPA2/DHCP/ARP/ping 通过，证据见
+- [x] WS63 unified-cipher backend 已抽入独立 `hisi-crypto-ws63`；
+  `hisi-crypto 0.1.0-alpha.3` 新增小能力 traits 与显式 suite。RF 已显式注入硬件
+  PBKDF2/TRNG、SPACC SHA/HMAC/AES，禁止失败后静默回退。host、guarded link、标准 KAT、
+  timeout recovery 与 WPA2 repeated-connect HIL 通过，证据链见
   [A1 WS63 crypto backend](evidence/ws63-rf-a1-crypto-ws63-2026-07-13.md)。
 - [x] RF 已移除对 `aes`、`hmac`、`sha1`、`sha2`、`pbkdf2` 的直接依赖；迁移后的
   guarded link 与真机 WPA2/DHCP/ARP/ping 均通过。证据见
@@ -656,16 +662,17 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 
 - [x] 通用 crate 已从“大 `CryptoProvider`”方向转为小能力 trait 与显式
   `CryptoSuite`；旧 provider 仅作为迁移兼容面，不再增加算法。
-- [x] 当前 WS63 backend 只实现已验证的 PBKDF2/TRNG 能力；SHA/HMAC/AES 保持显式
-  RustCrypto backend，不因硬件 timeout 自动回退。
+- [x] 当前 WS63 backend 已实现并验证 PBKDF2/TRNG、SPACC SHA/HMAC/AES；RustCrypto
+  保持 host oracle 和显式 software profile，不因硬件 timeout 自动回退。
 - [ ] 为 `SecretBytes`、`KeyUsage`、`KeyHandle` 和 `KeyRef` 固化 zeroize、不可导出和用途
   权限测试；在此之前不公开稳定硬件 key-slot API。
 - [ ] 将 raw `EntropySource` 与 DRBG 分层，补重播种、连续健康检查和故障传播测试；TLS
   backend 不得把每次随机读取直接映射为同步 TRNG 调用。
-- [ ] 每个新增硬件 hash/MAC/AES/AEAD 能力必须同时具备标准向量、错误注入、timeout、
-  独占冲突和真机 HIL；只有语义严格匹配时才提供对应 RustCrypto trait adapter。
-- [ ] WPA 握手按 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC、SAE P-256/Dragonfly
-  顺序迁移；每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码尺寸。CCMP
+- [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
+  真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。真实跨 owner contention
+  injection 和调用方注入 DMA storage 仍是稳定化前 gate。
+- [ ] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC 已完成硬件迁移；下一项
+  是 SAE P-256/Dragonfly。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码尺寸。CCMP
   数据面保持 MAC/DMAC offload。该 gate 不阻塞 upstream 行为 parity，但阻塞 WPA3-SAE
   stable 声明。
 
