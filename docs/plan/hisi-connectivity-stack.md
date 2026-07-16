@@ -467,14 +467,21 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      ROM helper 会读取与 standalone Rust 镜像冲突的固定 ROM-RAM；实现因此只复用无状态
      ROM RAM-copy/curve-parameter entry，并以 PAC 明确完成 lock、work length、instruction、
      batch、finish、Montgomery parameter 和 DRAM clear。generator-by-one KAT 和 WPA3-SAE
-     smoke 均通过。随后同一镜像 20 次 nRST 中，PKE 请求全部零失败、无 exception，观察到
-     的单次最大耗时 8 ms；association 19/20，剩余一轮是 association success 后首个 EAPOL
-     未到的既有恢复尾部，不归因于 PKE。证据见
+     smoke 均通过。首轮同一镜像 20 次 nRST 中，PKE 请求全部零失败、无 exception，观察到
+     的单次最大耗时 8 ms；association 19/20。失败轮证明 raw `8030`/IEEE status 30 后的
+     全量重扫仍可能停滞，而不是 PKE 失败。父仓 commit `e7da74d62` 随后在唯一
+     RadioRunner 中对 raw `8030` 执行一次有界、fail-closed 的 WS63 disconnect ioctl，清理
+     nRST 后 AP/MAC 残留的 PMF/STA 状态，再按原厂 `driver_soc` 语义把 disconnect 事件交给
+     hostap；first-EAPOL watchdog 则继续等待异步 disconnect 后直接复用 cached BSS，缓存
+     缺失时才允许扫描。修复镜像 20 次 nRST 全部 association/DHCP/ping 通过：19 次 status 30
+     清理均返回成功，20 次 cached-BSS retry、0 次 scan retry，PKE/TRNG 均零失败，且
+     `WLAN_AUTH_RSP2_TIMEOUT=0`。证据见
      [W2E-H PKE P-256](evidence/ws63-rf-w2e-h-pke-p256-2026-07-17.md)。
      因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES + PKE P-256
      point multiplication 的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件
-     失败后的 fallback。WPA3-SAE 进入 stable 前仍须闭合剩余 Dragonfly 算术边界和
-     association-success/no-first-EAPOL 的重复连接可靠性；不得把“point multiplication 已硬件化”
+     失败后的 fallback。transition-mode 的 status-30 与 association-success/no-first-EAPOL
+     重复连接门槛已经闭合；WPA3-SAE 进入 stable 前仍须补真正断电冷启动样本、受控
+     WPA3-only SAE+PMF，以及剩余 Dragonfly 算术边界。不得把“point multiplication 已硬件化”
      扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
@@ -685,8 +692,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [ ] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC 和 SAE P-256 point
   multiplication 已完成硬件迁移；剩余 Dragonfly 算术范围必须按实际 backend 能力逐项列出，
   不能由 point-mul 证明替代。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码
-  尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身的同镜像 20 次 nRST 零失败已证明；
-  association 可靠性仍是 19/20，该 gate 因 no-first-EAPOL 尾部继续阻塞 WPA3-SAE stable 声明。
+  尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
+  20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
+  真正断电冷启动、WPA3-only 和剩余 Dragonfly 算术仍阻塞 WPA3-SAE stable 声明。
 
 #### A2 progress
 

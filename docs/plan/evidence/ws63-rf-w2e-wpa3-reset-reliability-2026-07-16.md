@@ -82,6 +82,21 @@ cleanup alone, or EAPOL polling alone was insufficient. Reliability reached
 first-EAPOL recovery could reassociate that exact BSS after asynchronous
 disconnect completion.
 
+## PKE-profile regression follow-up
+
+The later PKE-backed SAE profile re-exposed a separate status-30 edge: after raw
+`8030`, the vendor-compatible disconnect path could start a full scan which did
+not always produce another association. Parent commit `e7da74d62` adds one
+runner-context disconnect ioctl to clear the stale PMF/STA state before hostap
+handles that event. The first-EAPOL cached-BSS recovery remains unchanged.
+
+The resulting immutable image passed 20/20 nRST cycles. Nineteen runs observed
+raw `8030`; every corresponding clear returned success. All 20 runs used the
+cached-BSS first-EAPOL recovery, none fell back to scan, and PKE/TRNG reported no
+failure. Gateway ICMP returned 99/100 replies. See the
+[PKE P-256 evidence](ws63-rf-w2e-h-pke-p256-2026-07-17.md) for the complete
+per-capability boundary and remaining gates.
+
 ## Remaining Gate
 
 - run SAE plus required PMF against a controlled WPA3-only BSS;
