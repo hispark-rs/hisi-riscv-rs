@@ -451,7 +451,8 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      [W2E-H RKP PBKDF2](evidence/ws63-rf-w2e-h-rkp-pbkdf2-2026-07-16.md)。
      第二项 SHA-1/SHA-256 与 HMAC-SHA1/HMAC-SHA256 已迁入 token-owned SPACC
      backend；同一 upstream WPA2 镜像 20 次 nRST 均完成 association/DHCP，40 次 hash
-     与 160 次 MAC 请求零失败。证据见
+     与 160 次 MAC 请求零失败；diagnostic profile 的 bounded timeout 后恢复检查同样
+     20/20 零失败，但不冒充真实跨 owner contention injection。证据见
      [W2E-H SPACC hash/HMAC](evidence/ws63-rf-w2e-h-spacc-hash-2026-07-16.md)。
      当前 upstream-native profile 仍显式使用 RustCrypto AES；它是
      行为 parity 和 host oracle，不得被描述为“WPA 已完全硬件加速”。纯 WPA3/transition

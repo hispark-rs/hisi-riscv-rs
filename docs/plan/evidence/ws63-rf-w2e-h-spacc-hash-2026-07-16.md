@@ -46,10 +46,11 @@ returned and never selects a software fallback.
 | Upstream WPA2 association and DHCP | 20/20 nRST |
 | Hardware hash requests | 40, zero failures |
 | Hardware MAC requests | 160, zero failures |
+| Bounded timeout then successful SHA-1 recovery check | 20/20 nRST |
 | Authentication response-2 timeouts | 0 |
 
 The same image was flashed once and exercised for 20 consecutive nRST cycles.
-Every boot reached association and DHCP. Public ICMP was 78/100 and gateway
+Every boot reached association and DHCP. Public ICMP was 76/100 and gateway
 ICMP was 0/100 in that capture window; this remains a separately tracked
 AP/network reliability boundary, not a hash/HMAC failure.
 
@@ -57,10 +58,12 @@ At millisecond resolution the eight WPA HMAC requests per boot took 2-5 ms in
 total and at most 1 ms per request. The two startup hash requests completed
 below the one-millisecond resolution of the diagnostic timer.
 
-The diagnostic timeout-recovery image was built and passed linker-layout, ROM
-patch, and image-hash validation. Its final repeated-silicon recovery matrix is
-still pending; therefore this page does not yet claim a real contended-channel
-fault-injection proof.
+The diagnostic timeout-recovery image passed linker-layout, ROM-patch, and
+image-hash validation, then completed 20/20 nRST cycles with exactly one
+bounded lock-timeout branch followed by one successful SHA-1 known-answer
+operation per boot. This proves fail-closed recovery from the synthetic
+zero-attempt budget used by the diagnostic feature. It does not claim a real
+concurrent-owner or cross-security-domain contention injection.
 
 ## Resource Delta
 
@@ -84,11 +87,9 @@ an observed build result, not a stable ABI guarantee.
 
 ## Remaining W2E-H Gate
 
-1. Run the final diagnostic image on silicon and repeat the bounded timeout then
-   successful-hash recovery check across the reset matrix.
-2. Implement AES block operations, key-wrap, and CMAC through SPACC with explicit
+1. Implement AES block operations, key-wrap, and CMAC through SPACC with explicit
    keyslot ownership.
-3. Implement SAE group 19 P-256/Dragonfly through a fallible PKE capability.
-4. Keep standard vectors, software/original-SDK differential evidence, timeout
+2. Implement SAE group 19 P-256/Dragonfly through a fallible PKE capability.
+3. Keep standard vectors, software/original-SDK differential evidence, timeout
    and recovery tests, repeated WPA2/WPA3 HIL, and resource measurements for
    every capability.
