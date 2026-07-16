@@ -69,6 +69,13 @@ storage, a newly linked and fully verified image again completed association,
 EAPOL, DHCP, lease renewal, and public ICMP. Cipher diagnostics remained 36/36
 successful with the recovery test passing and a 1 ms observed maximum.
 
+The committed implementation also passed the controlled upstream WPA3
+transition smoke using ephemeral credential injection and a temporary target
+directory. SAE completed with required PMF, EAPOL completed, DHCP renewed, and
+both gateway and public ICMP returned 5/5 replies. SPACC AES handled 91/91 block
+operations with zero failures and a 1 ms observed maximum. The script removed
+the credential file and temporary build tree after the run.
+
 The matrix artifacts were written to
 `/private/tmp/ws63-spacc-aes-wpa2-matrix`; this path is local evidence, not a
 checked-in artifact or long-term HIL runner.
