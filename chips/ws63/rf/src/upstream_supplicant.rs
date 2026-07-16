@@ -19,8 +19,9 @@ use ws63_radio_sys::supplicant::{
     cipher, hisi_wpa_configure, hisi_wpa_connect, hisi_wpa_context_align,
     hisi_wpa_context_diagnostic_word, hisi_wpa_context_size, hisi_wpa_create, hisi_wpa_destroy,
     hisi_wpa_disconnect, hisi_wpa_driver_diagnostic_word, hisi_wpa_driver_install,
-    hisi_wpa_eloop_diagnostic_flags, hisi_wpa_feed_associate_result, hisi_wpa_feed_disconnect,
-    hisi_wpa_feed_eapol, hisi_wpa_feed_external_auth, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
+    hisi_wpa_eloop_diagnostic_flags, hisi_wpa_event_ring_diagnostic_word,
+    hisi_wpa_feed_associate_result, hisi_wpa_feed_disconnect, hisi_wpa_feed_eapol,
+    hisi_wpa_feed_external_auth, hisi_wpa_feed_mgmt, hisi_wpa_feed_scan_done,
     hisi_wpa_feed_scan_result, hisi_wpa_init, hisi_wpa_next_event, hisi_wpa_os_install,
     hisi_wpa_os_uninstall, hisi_wpa_poll, key_flag,
 };
@@ -43,7 +44,19 @@ static DIAG_ASSOCIATE_RETRIES: AtomicU32 = AtomicU32::new(0);
 static DIAG_ASSOCIATE_EVENTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_MGMT_EVENTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EAPOL_EVENTS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_RECEIVE_POLLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_RECEIVED: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_FED: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_SENDS: AtomicU32 = AtomicU32::new(0);
 static DIAG_KEY_INSTALLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_FALLBACK_POLLS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EAPOL_FALLBACK_HITS: AtomicU32 = AtomicU32::new(0);
+static DIAG_EVENT_RING: AtomicU32 = AtomicU32::new(0);
+static DIAG_LAST_NATIVE_EVENT_KIND: AtomicU32 = AtomicU32::new(0);
+static DIAG_LAST_NATIVE_EVENT_STATUS: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOC_RESULT_RAW_STATUS: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOC_RESULT_STATUS: AtomicU32 = AtomicU32::new(0);
+static DIAG_ASSOC_RESULT_RESPONSE_IE_LEN: AtomicU32 = AtomicU32::new(0);
 static DIAG_DRIVER_FLAGS_STATUS: AtomicU32 = AtomicU32::new(u32::MAX);
 static DIAG_DRIVER_FLAGS_LO: AtomicU32 = AtomicU32::new(0);
 static DIAG_DRIVER_FLAGS_HI: AtomicU32 = AtomicU32::new(0);
@@ -56,6 +69,17 @@ static DIAG_LAST_IOCTL_STATUS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EXTERNAL_AUTH_CALLBACKS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EXTERNAL_AUTH_REJECTS: AtomicU32 = AtomicU32::new(0);
 static DIAG_EXTERNAL_AUTH_LENGTH: AtomicU32 = AtomicU32::new(0);
+static DIAG_TX_AUTH: AuthenticationDiagnostic = AuthenticationDiagnostic::new();
+static DIAG_RX_AUTH: AuthenticationDiagnostic = AuthenticationDiagnostic::new();
+static DIAG_AUTH_EVENT_SEQUENCE: AtomicU32 = AtomicU32::new(1);
+static DIAG_EXTERNAL_AUTH_STARTED: AuthenticationProgress = AuthenticationProgress::new();
+static DIAG_AUTH_TX_LAST: AuthenticationProgress = AuthenticationProgress::new();
+static DIAG_AUTH_RX_LAST: AuthenticationProgress = AuthenticationProgress::new();
+static DIAG_EXTERNAL_AUTH_STATUS_SENT: AuthenticationProgress = AuthenticationProgress::new();
+static DIAG_ASSOCIATION_EVENT: AuthenticationProgress = AuthenticationProgress::new();
+static DIAG_ASSOCIATION_SEQUENCE: AtomicU32 = AtomicU32::new(1);
+static DIAG_ASSOCIATION_ATTEMPTS: [AssociationAttempt; ASSOCIATION_ATTEMPT_CAPACITY] =
+    [const { AssociationAttempt::new() }; ASSOCIATION_ATTEMPT_CAPACITY];
 
 const PORT_FREE: u8 = 0;
 const PORT_INSTALLING: u8 = 1;
@@ -104,6 +128,209 @@ const EXTERNAL_AUTH_QUEUE_DEPTH: usize = 2;
 const SCAN_EVENT_QUEUE_DEPTH: usize = 33;
 const LINK_EVENT_QUEUE_DEPTH: usize = 4;
 const MAX_ASSOCIATION_IE_LEN: usize = 768;
+const VENDOR_ASSOC_STATUS_OFFSET: u16 = 8_000;
+const MAX_STANDARD_IEEE_STATUS: u16 = u8::MAX as u16;
+const ASSOCIATION_ATTEMPT_CAPACITY: usize = 8;
+const EAPOL_FALLBACK_POLL_WINDOW: u16 = 2_000;
+const WLAN_EID_TIMEOUT_INTERVAL: u8 = 56;
+const WLAN_TIMEOUT_ASSOC_COMEBACK: u8 = 3;
+const NO_COMEBACK_INTERVAL: u32 = u32::MAX;
+const VENDOR_AUTH_STATUS_OFFSET: u16 = 7_000;
+const WLAN_STATUS_AUTH_TIMEOUT: u16 = 16;
+const WLAN_STATUS_INVALID_PMKID: u16 = 53;
+
+const fn normalize_vendor_association_status(status: u16) -> u16 {
+    match status.checked_sub(VENDOR_ASSOC_STATUS_OFFSET) {
+        Some(standard) if standard != 0 && standard <= MAX_STANDARD_IEEE_STATUS => standard,
+        _ => status,
+    }
+}
+
+/// One non-secret association-result entry retained by the HIL diagnostic ring.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct AssociationAttemptDiagnostic {
+    pub sequence: u32,
+    pub timestamp_ms: u32,
+    pub raw_status: u32,
+    pub status: u32,
+    pub response_ie_len: u32,
+    /// Association comeback interval in TUs, or `u32::MAX` when absent.
+    pub comeback_tu: u32,
+}
+
+struct AssociationAttempt {
+    sequence: AtomicU32,
+    timestamp_ms: AtomicU32,
+    raw_status: AtomicU32,
+    status: AtomicU32,
+    response_ie_len: AtomicU32,
+    comeback_tu: AtomicU32,
+}
+
+impl AssociationAttempt {
+    const fn new() -> Self {
+        Self {
+            sequence: AtomicU32::new(0),
+            timestamp_ms: AtomicU32::new(0),
+            raw_status: AtomicU32::new(0),
+            status: AtomicU32::new(0),
+            response_ie_len: AtomicU32::new(0),
+            comeback_tu: AtomicU32::new(NO_COMEBACK_INTERVAL),
+        }
+    }
+
+    fn record(&self, sequence: u32, raw_status: u16, status: u16, response_ies: &[u8]) {
+        self.timestamp_ms
+            .store(crate::uapi::monotonic_ms() as u32, Ordering::Relaxed);
+        self.raw_status
+            .store(u32::from(raw_status), Ordering::Relaxed);
+        self.status.store(u32::from(status), Ordering::Relaxed);
+        self.response_ie_len
+            .store(response_ies.len() as u32, Ordering::Relaxed);
+        self.comeback_tu.store(
+            association_comeback_interval(response_ies).unwrap_or(NO_COMEBACK_INTERVAL),
+            Ordering::Relaxed,
+        );
+        self.sequence.store(sequence, Ordering::Release);
+    }
+
+    fn snapshot(&self) -> AssociationAttemptDiagnostic {
+        let sequence = self.sequence.load(Ordering::Acquire);
+        AssociationAttemptDiagnostic {
+            sequence,
+            timestamp_ms: self.timestamp_ms.load(Ordering::Relaxed),
+            raw_status: self.raw_status.load(Ordering::Relaxed),
+            status: self.status.load(Ordering::Relaxed),
+            response_ie_len: self.response_ie_len.load(Ordering::Relaxed),
+            comeback_tu: self.comeback_tu.load(Ordering::Relaxed),
+        }
+    }
+}
+
+fn association_comeback_interval(mut ies: &[u8]) -> Option<u32> {
+    while ies.len() >= 2 {
+        let length = ies[1] as usize;
+        let total = length.checked_add(2)?;
+        if total > ies.len() {
+            return None;
+        }
+        if ies[0] == WLAN_EID_TIMEOUT_INTERVAL
+            && length == 5
+            && ies[2] == WLAN_TIMEOUT_ASSOC_COMEBACK
+        {
+            return Some(u32::from_le_bytes([ies[3], ies[4], ies[5], ies[6]]));
+        }
+        ies = &ies[total..];
+    }
+    None
+}
+
+const fn vendor_result_uses_association_reject(raw_status: u16) -> bool {
+    raw_status == VENDOR_ASSOC_STATUS_OFFSET + WLAN_STATUS_INVALID_PMKID
+        || raw_status == VENDOR_AUTH_STATUS_OFFSET + WLAN_STATUS_AUTH_TIMEOUT
+}
+
+const fn vendor_result_uses_disconnect(raw_status: u16) -> bool {
+    raw_status != 0 && !vendor_result_uses_association_reject(raw_status)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AuthenticationHeader {
+    algorithm: u16,
+    transaction: u16,
+    status: u16,
+}
+
+struct AuthenticationDiagnostic {
+    count: AtomicU32,
+    frequency: AtomicU32,
+    length: AtomicU32,
+    algorithm: AtomicU32,
+    transaction: AtomicU32,
+    status: AtomicU32,
+}
+
+struct AuthenticationProgress {
+    sequence: AtomicU32,
+    timestamp_ms: AtomicU32,
+}
+
+impl AuthenticationProgress {
+    const fn new() -> Self {
+        Self {
+            sequence: AtomicU32::new(0),
+            timestamp_ms: AtomicU32::new(0),
+        }
+    }
+
+    fn observe(&self) {
+        let sequence = DIAG_AUTH_EVENT_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        self.timestamp_ms
+            .store(crate::uapi::monotonic_ms() as u32, Ordering::Relaxed);
+        self.sequence.store(sequence, Ordering::Release);
+    }
+
+    fn snapshot(&self) -> [u32; 2] {
+        [
+            self.sequence.load(Ordering::Acquire),
+            self.timestamp_ms.load(Ordering::Relaxed),
+        ]
+    }
+}
+
+impl AuthenticationDiagnostic {
+    const fn new() -> Self {
+        Self {
+            count: AtomicU32::new(0),
+            frequency: AtomicU32::new(0),
+            length: AtomicU32::new(0),
+            algorithm: AtomicU32::new(0),
+            transaction: AtomicU32::new(0),
+            status: AtomicU32::new(0),
+        }
+    }
+
+    fn observe(&self, frame: &[u8], frequency_mhz: u32) -> bool {
+        let Some(header) = authentication_header(frame) else {
+            return false;
+        };
+        self.frequency.store(frequency_mhz, Ordering::Relaxed);
+        self.length.store(frame.len() as u32, Ordering::Relaxed);
+        self.algorithm
+            .store(u32::from(header.algorithm), Ordering::Relaxed);
+        self.transaction
+            .store(u32::from(header.transaction), Ordering::Relaxed);
+        self.status
+            .store(u32::from(header.status), Ordering::Relaxed);
+        self.count.fetch_add(1, Ordering::Release);
+        true
+    }
+
+    fn snapshot(&self) -> [u32; 6] {
+        [
+            self.count.load(Ordering::Acquire),
+            self.frequency.load(Ordering::Relaxed),
+            self.length.load(Ordering::Relaxed),
+            self.algorithm.load(Ordering::Relaxed),
+            self.transaction.load(Ordering::Relaxed),
+            self.status.load(Ordering::Relaxed),
+        ]
+    }
+}
+
+fn authentication_header(frame: &[u8]) -> Option<AuthenticationHeader> {
+    const AUTHENTICATION_HEADER_LEN: usize = 30;
+    const AUTHENTICATION_FRAME_CONTROL: u8 = 0xb0;
+
+    if frame.len() < AUTHENTICATION_HEADER_LEN || frame[0] != AUTHENTICATION_FRAME_CONTROL {
+        return None;
+    }
+    Some(AuthenticationHeader {
+        algorithm: u16::from_le_bytes([frame[24], frame[25]]),
+        transaction: u16::from_le_bytes([frame[26], frame[27]]),
+        status: u16::from_le_bytes([frame[28], frame[29]]),
+    })
+}
 
 #[derive(Clone, Copy)]
 struct MgmtMeta {
@@ -386,6 +613,10 @@ impl ScanEventQueue {
         self.slots
             .iter()
             .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
+    }
+
+    fn discard_pending(&self) {
+        while self.take_oldest().is_some() {}
     }
 }
 
@@ -985,6 +1216,7 @@ pub(crate) struct NativeSupplicant {
     scan_dropped_seen: u32,
     link_dropped_seen: u32,
     external_auth_dropped_seen: u32,
+    eapol_fallback_polls_remaining: u16,
 }
 
 #[allow(dead_code)]
@@ -1042,6 +1274,7 @@ impl NativeSupplicant {
             scan_dropped_seen: SCAN_EVENT_QUEUE.dropped.load(Ordering::Acquire),
             link_dropped_seen: LINK_EVENT_QUEUE.dropped.load(Ordering::Acquire),
             external_auth_dropped_seen: EXTERNAL_AUTH_QUEUE.dropped.load(Ordering::Acquire),
+            eapol_fallback_polls_remaining: 0,
         })
     }
 
@@ -1109,10 +1342,51 @@ impl NativeSupplicant {
             .ok_or(NativeSupplicantError::DisconnectFailed(status))
     }
 
+    /// Capture the next vendor scan into hostap's BSS cache.
+    ///
+    /// The public Wi-Fi controller already scans before selecting a network.
+    /// Reusing those exact raw scan events avoids starting a second firmware
+    /// scan from `wpa_supplicant_select_network` and keeps one scan transaction
+    /// as the source of both the Rust result list and hostap's BSS cache.
+    pub(crate) fn begin_scan_cache_capture(&mut self) -> Result<(), NativeSupplicantError> {
+        if PORT_STATE.load(Ordering::Acquire) != PORT_READY
+            || NATIVE_SCAN_ACTIVE
+                .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+        {
+            return Err(NativeSupplicantError::InvalidResult);
+        }
+        SCAN_EVENT_QUEUE.begin_transaction();
+        Ok(())
+    }
+
+    /// Finish a completed scan capture and update hostap's BSS cache.
+    pub(crate) fn finish_scan_cache_capture(&mut self) -> Result<(), NativeSupplicantError> {
+        if NATIVE_SCAN_ACTIVE.load(Ordering::Acquire) {
+            return Err(NativeSupplicantError::InvalidResult);
+        }
+        while SCAN_EVENT_QUEUE.has_pending() {
+            self.poll(NonZeroU32::new(64).unwrap())?;
+        }
+        Ok(())
+    }
+
+    /// Abort a failed vendor scan without leaking events into the next scan.
+    pub(crate) fn cancel_scan_cache_capture(&mut self) {
+        NATIVE_SCAN_ACTIVE.store(false, Ordering::Release);
+        SCAN_EVENT_QUEUE.discard_pending();
+    }
+
     pub(crate) fn context_diagnostic_word(&self) -> u32 {
         // SAFETY: the unique owner keeps the native context alive and
         // serializes this read-only snapshot with all other context calls.
         unsafe { hisi_wpa_context_diagnostic_word(self.context.as_ptr()) }
+    }
+
+    fn event_ring_diagnostic_word(&self) -> u32 {
+        // SAFETY: the unique owner keeps the native context alive and
+        // serializes this read-only snapshot with all other context calls.
+        unsafe { hisi_wpa_event_ring_diagnostic_word(self.context.as_ptr()) }
     }
 
     /// Advance bounded hostap work from the owning radio runner.
@@ -1205,7 +1479,13 @@ impl NativeSupplicant {
                     response_ies_len: second.len(),
                 };
                 // SAFETY: both queue payload guards live for the synchronous call.
-                unsafe { hisi_wpa_feed_associate_result(self.context.as_ptr(), &raw const result) }
+                let status = unsafe {
+                    hisi_wpa_feed_associate_result(self.context.as_ptr(), &raw const result)
+                };
+                if status == 0 && meta.status_or_reason == 0 {
+                    self.eapol_fallback_polls_remaining = EAPOL_FALLBACK_POLL_WINDOW;
+                }
+                status
             } else if meta.kind == LINK_EVENT_DISCONNECT {
                 let ies = event.first();
                 let event = DisconnectEvent {
@@ -1263,8 +1543,18 @@ impl NativeSupplicant {
             rx_work = true;
             rx_budget -= 1;
         }
-        if rx_budget != 0 && EAPOL_PENDING.swap(false, Ordering::AcqRel) {
+        let notified = EAPOL_PENDING.swap(false, Ordering::AcqRel);
+        let fallback = !notified && self.eapol_fallback_polls_remaining != 0;
+        if rx_budget != 0 && (notified || fallback) {
+            if fallback {
+                self.eapol_fallback_polls_remaining -= 1;
+                DIAG_EAPOL_FALLBACK_POLLS.fetch_add(1, Ordering::Relaxed);
+            }
+            let received_before = DIAG_EAPOL_RECEIVED.load(Ordering::Relaxed);
             rx_work |= self.drain_eapol(&mut rx_budget)?;
+            if fallback && DIAG_EAPOL_RECEIVED.load(Ordering::Relaxed) != received_before {
+                DIAG_EAPOL_FALLBACK_HITS.fetch_add(1, Ordering::Relaxed);
+            }
         }
         // SAFETY: the unique owner serializes all context calls.
         let mut result = unsafe {
@@ -1302,6 +1592,7 @@ impl NativeSupplicant {
                 IOCTL_RECEIVE_EAPOL,
                 (&mut receive as *mut RxEapol).cast(),
             );
+            DIAG_EAPOL_RECEIVE_POLLS.fetch_add(1, Ordering::Relaxed);
             match classify_eapol_receive(status) {
                 Ok(false) => break,
                 Ok(true) => {}
@@ -1318,6 +1609,7 @@ impl NativeSupplicant {
             {
                 return Err(NativeSupplicantError::InvalidResult);
             }
+            DIAG_EAPOL_RECEIVED.fetch_add(1, Ordering::Relaxed);
             let source = &frame[6..12];
             let payload = &frame[ETHERNET_HEADER_LEN..len];
             // SAFETY: source and payload remain live for the synchronous feed;
@@ -1333,6 +1625,7 @@ impl NativeSupplicant {
             if fed != 0 {
                 return Err(NativeSupplicantError::FeedEapolFailed(fed));
             }
+            DIAG_EAPOL_FED.fetch_add(1, Ordering::Relaxed);
             did_work = true;
             *budget -= 1;
         }
@@ -1348,6 +1641,7 @@ impl NativeSupplicant {
         // SAFETY: C writes the complete event when it returns one. The unique
         // owner prevents concurrent queue consumption.
         let result = unsafe { hisi_wpa_next_event(self.context.as_ptr(), event.as_mut_ptr()) };
+        DIAG_EVENT_RING.store(self.event_ring_diagnostic_word(), Ordering::Release);
         match result {
             0 => Ok(None),
             1 => {
@@ -1357,6 +1651,8 @@ impl NativeSupplicant {
                 if event.abi_version != ABI_VERSION || event.data_len as usize > event.data.len() {
                     Err(NativeSupplicantError::InvalidResult)
                 } else {
+                    DIAG_LAST_NATIVE_EVENT_KIND.store(u32::from(event.kind), Ordering::Release);
+                    DIAG_LAST_NATIVE_EVENT_STATUS.store(event.status as u32, Ordering::Release);
                     Ok(Some(event))
                 }
             }
@@ -1404,6 +1700,9 @@ pub(crate) fn enqueue_mgmt_rx(frequency_mhz: u32, rssi_dbm: i32, frame: &[u8]) -
     }
     let queued = MGMT_RX_QUEUE.enqueue(frequency_mhz, rssi_dbm, frame);
     if queued {
+        if DIAG_RX_AUTH.observe(frame, frequency_mhz) {
+            DIAG_AUTH_RX_LAST.observe();
+        }
         DIAG_MGMT_EVENTS.fetch_add(1, Ordering::Relaxed);
         let _ = RUNNER_WAKE.up();
     }
@@ -1445,6 +1744,9 @@ pub(crate) fn enqueue_external_auth(
     }
     let queued = EXTERNAL_AUTH_QUEUE.enqueue(event);
     if queued {
+        if action == 0 {
+            DIAG_EXTERNAL_AUTH_STARTED.observe();
+        }
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1520,20 +1822,42 @@ pub(crate) fn enqueue_associate_result(
     if PORT_STATE.load(Ordering::Acquire) != PORT_READY {
         return false;
     }
+    let normalized_status = normalize_vendor_association_status(status);
+    DIAG_ASSOC_RESULT_RAW_STATUS.store(u32::from(status), Ordering::Relaxed);
+    DIAG_ASSOC_RESULT_STATUS.store(u32::from(normalized_status), Ordering::Relaxed);
+    DIAG_ASSOC_RESULT_RESPONSE_IE_LEN.store(response_ies.len() as u32, Ordering::Relaxed);
+    let sequence = DIAG_ASSOCIATION_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    DIAG_ASSOCIATION_ATTEMPTS[(sequence.wrapping_sub(1) as usize) % ASSOCIATION_ATTEMPT_CAPACITY]
+        .record(sequence, status, normalized_status, response_ies);
+    let deliver_as_disconnect = vendor_result_uses_disconnect(status);
+    let (first, second) = if deliver_as_disconnect {
+        (&[][..], &[][..])
+    } else {
+        (request_ies, response_ies)
+    };
     let queued = LINK_EVENT_QUEUE.enqueue(
         LinkMeta {
-            kind: LINK_EVENT_ASSOCIATE,
-            status_or_reason: status,
+            kind: if deliver_as_disconnect {
+                LINK_EVENT_DISCONNECT
+            } else {
+                LINK_EVENT_ASSOCIATE
+            },
+            status_or_reason: if deliver_as_disconnect {
+                status
+            } else {
+                normalized_status
+            },
             frequency_mhz,
             bssid,
-            first_len: request_ies.len(),
-            second_len: response_ies.len(),
+            first_len: first.len(),
+            second_len: second.len(),
         },
-        request_ies,
-        response_ies,
+        first,
+        second,
     );
     if queued {
         DIAG_ASSOCIATE_EVENTS.fetch_add(1, Ordering::Relaxed);
+        DIAG_ASSOCIATION_EVENT.observe();
         let _ = RUNNER_WAKE.up();
     }
     queued
@@ -1758,11 +2082,15 @@ unsafe extern "C" fn send_eapol(
         buffer: frame.as_ptr().cast_mut(),
         length: frame.len() as u32,
     };
-    crate::wal::ioctl(
+    let status = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_SEND_EAPOL,
         (&mut request as *mut TxEapol).cast(),
-    )
+    );
+    if status == 0 {
+        DIAG_EAPOL_SENDS.fetch_add(1, Ordering::Relaxed);
+    }
+    status
 }
 
 unsafe extern "C" fn send_mgmt(
@@ -1777,6 +2105,10 @@ unsafe extern "C" fn send_mgmt(
     if frame.is_null() || frame_len == 0 || frame_len > u32::MAX as usize {
         return -1;
     }
+    // SAFETY: null and zero length were rejected above. The callback contract
+    // supplies `frame_len` readable bytes for this synchronous call.
+    let frame_bytes = unsafe { core::slice::from_raw_parts(frame, frame_len) };
+    let authentication_frame = DIAG_TX_AUTH.observe(frame_bytes, frequency_mhz);
     let mut request = MlmeData {
         frequency_mhz,
         data_len: frame_len as u32,
@@ -1789,6 +2121,9 @@ unsafe extern "C" fn send_mgmt(
         (&mut request as *mut MlmeData).cast(),
     );
     DIAG_LAST_IOCTL_STATUS.store(status as u32, Ordering::Release);
+    if authentication_frame && status == 0 {
+        DIAG_AUTH_TX_LAST.observe();
+    }
     if status != 0 {
         // Only the public 802.11/authentication header is emitted. The SAE
         // scalar/element payload starts after this prefix and must never enter
@@ -1865,6 +2200,9 @@ unsafe extern "C" fn send_external_auth_status(
         (&mut request as *mut VendorExternalAuthStatus).cast(),
     );
     DIAG_LAST_IOCTL_STATUS.store(result as u32, Ordering::Release);
+    if result == 0 {
+        DIAG_EXTERNAL_AUTH_STATUS_SENT.observe();
+    }
     result
 }
 
@@ -1972,9 +2310,14 @@ unsafe extern "C" fn start_scan(driver: *mut c_void, request: *const ScanRequest
         extra_ies_len: request.extra_ies_len as u32,
         acs_scan: 0,
     };
+    if NATIVE_SCAN_ACTIVE
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        return -1;
+    }
     DIAG_SCAN_STARTS.fetch_add(1, Ordering::Relaxed);
     SCAN_EVENT_QUEUE.begin_transaction();
-    NATIVE_SCAN_ACTIVE.store(true, Ordering::Release);
     let status = crate::wal::ioctl(
         driver.ifname(),
         IOCTL_SCAN,
@@ -2132,6 +2475,76 @@ pub(crate) fn diagnostic_snapshot() -> [u32; 11] {
         DIAG_EXTERNAL_AUTH_CALLBACKS.load(Ordering::Acquire),
         DIAG_EXTERNAL_AUTH_REJECTS.load(Ordering::Acquire),
         DIAG_EXTERNAL_AUTH_LENGTH.load(Ordering::Acquire),
+    ]
+}
+
+pub(crate) fn authentication_diagnostic_snapshot() -> [u32; 12] {
+    let tx = DIAG_TX_AUTH.snapshot();
+    let rx = DIAG_RX_AUTH.snapshot();
+    [
+        tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], rx[0], rx[1], rx[2], rx[3], rx[4], rx[5],
+    ]
+}
+
+pub(crate) fn authentication_progress_snapshot() -> [u32; 10] {
+    let started = DIAG_EXTERNAL_AUTH_STARTED.snapshot();
+    let tx = DIAG_AUTH_TX_LAST.snapshot();
+    let rx = DIAG_AUTH_RX_LAST.snapshot();
+    let status = DIAG_EXTERNAL_AUTH_STATUS_SENT.snapshot();
+    let association = DIAG_ASSOCIATION_EVENT.snapshot();
+    [
+        started[0],
+        started[1],
+        tx[0],
+        tx[1],
+        rx[0],
+        rx[1],
+        status[0],
+        status[1],
+        association[0],
+        association[1],
+    ]
+}
+
+pub(crate) fn eapol_diagnostic_snapshot() -> [u32; 8] {
+    [
+        DIAG_EAPOL_EVENTS.load(Ordering::Acquire),
+        DIAG_EAPOL_RECEIVE_POLLS.load(Ordering::Acquire),
+        DIAG_EAPOL_RECEIVED.load(Ordering::Acquire),
+        DIAG_EAPOL_FED.load(Ordering::Acquire),
+        DIAG_EAPOL_SENDS.load(Ordering::Acquire),
+        DIAG_KEY_INSTALLS.load(Ordering::Acquire),
+        DIAG_EAPOL_FALLBACK_POLLS.load(Ordering::Acquire),
+        DIAG_EAPOL_FALLBACK_HITS.load(Ordering::Acquire),
+    ]
+}
+
+pub(crate) fn association_attempt_diagnostics(
+    output: &mut [AssociationAttemptDiagnostic],
+) -> usize {
+    let mut retained = [AssociationAttemptDiagnostic::default(); ASSOCIATION_ATTEMPT_CAPACITY];
+    let mut count = 0;
+    for attempt in &DIAG_ASSOCIATION_ATTEMPTS {
+        let snapshot = attempt.snapshot();
+        if snapshot.sequence != 0 {
+            retained[count] = snapshot;
+            count += 1;
+        }
+    }
+    retained[..count].sort_unstable_by_key(|attempt| attempt.sequence);
+    let copied = usize::min(count, output.len());
+    output[..copied].copy_from_slice(&retained[..copied]);
+    copied
+}
+
+pub(crate) fn event_diagnostic_snapshot() -> [u32; 6] {
+    [
+        DIAG_EVENT_RING.load(Ordering::Acquire),
+        DIAG_LAST_NATIVE_EVENT_KIND.load(Ordering::Acquire),
+        DIAG_LAST_NATIVE_EVENT_STATUS.load(Ordering::Acquire),
+        DIAG_ASSOC_RESULT_RAW_STATUS.load(Ordering::Acquire),
+        DIAG_ASSOC_RESULT_STATUS.load(Ordering::Acquire),
+        DIAG_ASSOC_RESULT_RESPONSE_IE_LEN.load(Ordering::Acquire),
     ]
 }
 
@@ -2332,13 +2745,10 @@ unsafe extern "C" fn fill_entropy(_: *mut c_void, output: *mut u8, output_len: u
     }
     #[cfg(target_arch = "riscv32")]
     {
-        use hisi_crypto::EntropySource;
-
         // SAFETY: null was rejected and the C ABI promises `output_len`
         // writable bytes for the duration of this call.
         let output = unsafe { core::slice::from_raw_parts_mut(output, output_len) };
-        crate::crypto::WS63_CRYPTO
-            .fill_entropy(output)
+        crate::crypto::fill_hardware_entropy(output)
             .map(|()| 0)
             .unwrap_or(-1)
     }
@@ -2443,6 +2853,52 @@ mod tests {
         assert!(!queue.enqueue(2412, -30, &[0; MAX_MGMT_FRAME_LEN + 1]));
         assert_eq!(queue.dropped.load(Ordering::Relaxed), 2);
         assert!(queue.take_oldest().is_none());
+    }
+
+    #[test]
+    fn parses_only_public_authentication_header_fields() {
+        let mut frame = [0xa5; 64];
+        frame[0] = 0xb0;
+        frame[1] = 0;
+        frame[24..26].copy_from_slice(&3_u16.to_le_bytes());
+        frame[26..28].copy_from_slice(&2_u16.to_le_bytes());
+        frame[28..30].copy_from_slice(&76_u16.to_le_bytes());
+        assert_eq!(
+            authentication_header(&frame),
+            Some(AuthenticationHeader {
+                algorithm: 3,
+                transaction: 2,
+                status: 76,
+            })
+        );
+
+        frame[0] = 0xd0;
+        assert_eq!(authentication_header(&frame), None);
+        assert_eq!(authentication_header(&frame[..29]), None);
+    }
+
+    #[test]
+    fn normalizes_only_vendor_offset_association_status_codes() {
+        assert_eq!(normalize_vendor_association_status(0), 0);
+        assert_eq!(normalize_vendor_association_status(30), 30);
+        assert_eq!(normalize_vendor_association_status(8_030), 30);
+        assert_eq!(normalize_vendor_association_status(8_053), 53);
+        assert_eq!(normalize_vendor_association_status(5_203), 5_203);
+        assert_eq!(normalize_vendor_association_status(8_256), 8_256);
+    }
+
+    #[test]
+    fn parses_temporary_reject_interval_and_matches_vendor_event_oracle() {
+        let response = [1, 1, 0xaa, 56, 5, 3, 0x34, 0x12, 0, 0];
+        assert_eq!(association_comeback_interval(&response), Some(0x1234));
+        assert_eq!(association_comeback_interval(&[]), None);
+        assert!(!vendor_result_uses_association_reject(8_030));
+        assert!(vendor_result_uses_disconnect(8_030));
+        assert!(vendor_result_uses_disconnect(30));
+        assert!(!vendor_result_uses_disconnect(8_053));
+        assert!(vendor_result_uses_association_reject(8_053));
+        assert!(vendor_result_uses_association_reject(7_016));
+        assert!(!vendor_result_uses_disconnect(0));
     }
 
     #[test]

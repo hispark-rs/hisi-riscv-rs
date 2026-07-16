@@ -781,6 +781,7 @@ name = "hisi-crypto-ws63"
 version = "0.1.0-alpha.1"
 dependencies = [
  "hisi-crypto",
+ "hisi-hal",
 ]
 
 [[package]]
@@ -2068,6 +2069,7 @@ dependencies = [
  "hisi-storage",
  "portable-atomic",
  "smoltcp",
+ "static_cell",
  "ws63-radio-sys",
 ]
 

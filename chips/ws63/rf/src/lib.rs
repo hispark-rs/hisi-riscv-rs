@@ -144,6 +144,56 @@ mod upstream_supplicant;
 pub fn upstream_supplicant_diagnostic_snapshot() -> [u32; 11] {
     upstream_supplicant::diagnostic_snapshot()
 }
+
+/// Return public IEEE 802.11 Authentication header diagnostics.
+///
+/// The snapshot intentionally excludes frame bodies and cryptographic payloads.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_authentication_diagnostic_snapshot() -> [u32; 12] {
+    upstream_supplicant::authentication_diagnostic_snapshot()
+}
+
+/// Return sequence/timing diagnostics for the external-auth transaction.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_authentication_progress_snapshot() -> [u32; 10] {
+    upstream_supplicant::authentication_progress_snapshot()
+}
+
+/// Return notification, receive, transmit, and key-install EAPOL counters.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_eapol_diagnostic_snapshot() -> [u32; 8] {
+    upstream_supplicant::eapol_diagnostic_snapshot()
+}
+
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub use upstream_supplicant::AssociationAttemptDiagnostic;
+
+/// Copy the retained association-result timeline into `output`.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_association_attempt_diagnostics(
+    output: &mut [AssociationAttemptDiagnostic],
+) -> usize {
+    upstream_supplicant::association_attempt_diagnostics(output)
+}
+
+/// Return native event-ring and last-event diagnostics.
+#[cfg(feature = "upstream-supplicant-port")]
+#[doc(hidden)]
+pub fn upstream_supplicant_event_diagnostic_snapshot() -> [u32; 6] {
+    upstream_supplicant::event_diagnostic_snapshot()
+}
+
+/// Return non-secret hardware entropy health counters.
+#[cfg(all(feature = "upstream-supplicant-port", target_arch = "riscv32"))]
+#[doc(hidden)]
+pub fn hardware_entropy_diagnostic_snapshot() -> [u32; 4] {
+    crypto::hardware_entropy_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

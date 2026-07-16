@@ -17,7 +17,7 @@ use hisi_crypto::sae::{
 use hisi_crypto::sae::{GROUP_19, Group19, RustCryptoGroup19};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
-    CryptoError, EntropySource,
+    CryptoError,
     sae::{P256_ELEMENT_BYTES, SaeBignum, SaeP256Point},
 };
 
@@ -371,10 +371,7 @@ unsafe extern "C" fn crypto_bignum_rand(
     };
     let mut entropy = [0u8; BIGNUM_BYTES];
     for _ in 0..MAX_RANDOM_REJECTIONS {
-        if super::WS63_CRYPTO
-            .fill_entropy(&mut entropy[..width])
-            .is_err()
-        {
+        if super::fill_hardware_entropy(&mut entropy[..width]).is_err() {
             clear_bytes(&mut entropy);
             return -1;
         }

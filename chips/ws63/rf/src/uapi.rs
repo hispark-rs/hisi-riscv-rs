@@ -125,28 +125,6 @@ pub(crate) fn delay_us(usec: u32) {
     let _ = usec;
 }
 
-#[cfg(target_arch = "riscv32")]
-fn read_mcycle() -> u64 {
-    loop {
-        let hi1: u32;
-        let lo: u32;
-        let hi2: u32;
-        // SAFETY: reading performance CSRs; re-read hi to guard the low rollover.
-        unsafe {
-            core::arch::asm!("csrr {0}, mcycleh", out(reg) hi1, options(nomem, nostack));
-            core::arch::asm!("csrr {0}, mcycle",  out(reg) lo,  options(nomem, nostack));
-            core::arch::asm!("csrr {0}, mcycleh", out(reg) hi2, options(nomem, nostack));
-        }
-        if hi1 == hi2 {
-            return ((hi1 as u64) << 32) | (lo as u64);
-        }
-    }
-}
-#[cfg(not(target_arch = "riscv32"))]
-fn read_mcycle() -> u64 {
-    0
-}
-
 /// Current chip temperature in °C.
 ///
 /// SCAFFOLD: writes a conservative 25 °C. The pointer/result ABI matches the
@@ -300,23 +278,20 @@ pub extern "C" fn uapi_efuse_read_buffer(buffer: *mut u8, byte: u32, length: u16
     crate::OSAL_OK as u32
 }
 
-/// Random bytes. SCAFFOLD: a tiny `mcycle`-seeded xorshift (NOT cryptographically
-/// secure — a hardware run must use the real TRNG via hisi-hal).
+/// Fill random bytes through the uniquely owned WS63 hardware TRNG.
 #[unsafe(no_mangle)]
 pub extern "C" fn uapi_drv_cipher_trng_get_random_bytes(randnum: *mut u8, size: u32) -> u32 {
-    if randnum.is_null() {
+    if randnum.is_null() && size != 0 {
         return crate::OSAL_NOK as u32;
     }
-    let mut state = read_mcycle() | 1;
-    for i in 0..size as usize {
-        // xorshift64
-        state ^= state << 13;
-        state ^= state >> 7;
-        state ^= state << 17;
-        // SAFETY: caller guarantees `size` bytes.
-        unsafe { *randnum.add(i) = (state & 0xff) as u8 };
+    if size == 0 {
+        return crate::OSAL_OK as u32;
     }
-    crate::OSAL_OK as u32
+    // SAFETY: null was rejected and the C ABI promises `size` writable bytes.
+    let output = unsafe { core::slice::from_raw_parts_mut(randnum, size as usize) };
+    crate::crypto::fill_hardware_entropy(output)
+        .map(|()| crate::OSAL_OK as u32)
+        .unwrap_or(crate::OSAL_NOK as u32)
 }
 
 const NV_ID_SYSTEM_FACTORY_MAC: u16 = 0x0005;

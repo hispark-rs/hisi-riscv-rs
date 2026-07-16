@@ -143,6 +143,7 @@ hisi-rf-rtos-driver = { path = "crates/hisi-rf-rtos-driver" }
 hisi-rtos = { path = "crates/hisi-rtos" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
 hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
+hisi-hal = { path = "crates/hisi-hal" }
 # hisi-hal depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).
 hisi-riscv-rt = { path = "crates/hisi-riscv-rt" }

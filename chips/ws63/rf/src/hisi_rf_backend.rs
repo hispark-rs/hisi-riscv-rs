@@ -1,21 +1,36 @@
 //! WS63 implementation of the chip-neutral `hisi-rf` control contract.
 
-use hisi_hal::peripherals::Efuse;
+use hisi_hal::peripherals::{Efuse, Trng};
 use hisi_rf::{
     BackendError, BackendErrorClass, ConnectionInfo, RadioConfig, RadioState, ScanConfig,
     ScanOutcome, ScanResult, Security, Ssid, StationConfig, WifiBackend,
 };
 
 #[cfg(feature = "upstream-supplicant-port")]
-const NATIVE_EVENT_AUTHENTICATING: u8 = 1;
-#[cfg(feature = "upstream-supplicant-port")]
-const NATIVE_EVENT_ASSOCIATED: u8 = 2;
-#[cfg(feature = "upstream-supplicant-port")]
 const NATIVE_EVENT_AUTHORIZED: u8 = 3;
 #[cfg(feature = "upstream-supplicant-port")]
 const NATIVE_EVENT_DISCONNECTED: u8 = 4;
 #[cfg(feature = "upstream-supplicant-port")]
 const NATIVE_EVENT_FAILED: u8 = 5;
+
+#[cfg(feature = "upstream-supplicant-port")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum NativeConnectEvent {
+    Progress,
+    Authorized,
+    Disconnected,
+    Failed,
+}
+
+#[cfg(feature = "upstream-supplicant-port")]
+const fn classify_native_connect_event(kind: u8) -> NativeConnectEvent {
+    match kind {
+        NATIVE_EVENT_AUTHORIZED => NativeConnectEvent::Authorized,
+        NATIVE_EVENT_DISCONNECTED => NativeConnectEvent::Disconnected,
+        NATIVE_EVENT_FAILED => NativeConnectEvent::Failed,
+        _ => NativeConnectEvent::Progress,
+    }
+}
 
 #[cfg(feature = "net")]
 use crate::netif_smoltcp::Ws63Device;
@@ -35,6 +50,7 @@ use hisi_rf::RadioResources;
 /// WS63 control-plane resources before the vendor runtime is initialized.
 pub struct Ws63WifiBackend<'d> {
     efuse: Option<Efuse<'d>>,
+    trng: Option<Trng<'d>>,
     wifi: Option<ActiveWifi<'d>>,
     #[cfg(feature = "upstream-supplicant-port")]
     supplicant: Option<NativeSupplicant>,
@@ -44,9 +60,10 @@ pub struct Ws63WifiBackend<'d> {
 
 impl<'d> Ws63WifiBackend<'d> {
     /// Bind the one-shot eFuse token needed by the WS63 vendor runtime.
-    pub fn new(efuse: Efuse<'d>) -> Self {
+    pub fn new(efuse: Efuse<'d>, trng: Trng<'d>) -> Self {
         Self {
             efuse: Some(efuse),
+            trng: Some(trng),
             wifi: None,
             #[cfg(feature = "upstream-supplicant-port")]
             supplicant: None,
@@ -56,7 +73,7 @@ impl<'d> Ws63WifiBackend<'d> {
     }
 }
 
-impl WifiBackend for Ws63WifiBackend<'_> {
+impl WifiBackend for Ws63WifiBackend<'static> {
     fn initialize(&mut self, _: &hisi_rf::WifiConfig) -> Result<(), BackendError> {
         if self.wifi.is_some() {
             return Ok(());
@@ -64,6 +81,14 @@ impl WifiBackend for Ws63WifiBackend<'_> {
         let efuse = self.efuse.take().ok_or(BackendError {
             class: BackendErrorClass::Initialize,
             code: 0x1000_0001,
+        })?;
+        let trng = self.trng.take().ok_or(BackendError {
+            class: BackendErrorClass::Initialize,
+            code: 0x1000_0004,
+        })?;
+        crate::crypto::install_hardware_entropy(trng).map_err(|error| BackendError {
+            class: BackendErrorClass::Initialize,
+            code: error.code(),
         })?;
         let wifi = ActiveWifi::initialize(efuse).map_err(map_error)?;
         #[cfg(feature = "upstream-supplicant-port")]
@@ -80,10 +105,41 @@ impl WifiBackend for Ws63WifiBackend<'_> {
         config: ScanConfig,
         output: &mut [ScanResult],
     ) -> Result<ScanOutcome, BackendError> {
-        let wifi = self.wifi.as_mut().ok_or(not_initialized())?;
-        self.scan_count = wifi
-            .scan(&mut self.scans, config.timeout_ms())
-            .map_err(map_error)?;
+        #[cfg(feature = "upstream-supplicant-port")]
+        self.supplicant
+            .as_mut()
+            .ok_or(not_initialized())?
+            .begin_scan_cache_capture()
+            .map_err(map_native_error)?;
+
+        let scan = match self.wifi.as_mut() {
+            Some(wifi) => wifi.scan(&mut self.scans, config.timeout_ms()),
+            None => {
+                #[cfg(feature = "upstream-supplicant-port")]
+                if let Some(supplicant) = self.supplicant.as_mut() {
+                    supplicant.cancel_scan_cache_capture();
+                }
+                return Err(not_initialized());
+            }
+        };
+        self.scan_count = match scan {
+            Ok(count) => count,
+            Err(error) => {
+                #[cfg(feature = "upstream-supplicant-port")]
+                if let Some(supplicant) = self.supplicant.as_mut() {
+                    supplicant.cancel_scan_cache_capture();
+                }
+                return Err(map_error(error));
+            }
+        };
+
+        #[cfg(feature = "upstream-supplicant-port")]
+        match self.supplicant.as_mut() {
+            Some(supplicant) => supplicant
+                .finish_scan_cache_capture()
+                .map_err(map_native_error)?,
+            None => return Err(not_initialized()),
+        }
 
         let mut written = 0;
         for scan in &self.scans[..self.scan_count] {
@@ -137,43 +193,52 @@ impl WifiBackend for Ws63WifiBackend<'_> {
             supplicant.connect().map_err(map_native_error)?;
             let started_at = crate::uapi::monotonic_ms();
             let mut last_event_kind = 0_u8;
-            let mut connection_progress = false;
+            let mut last_disconnect_status = None;
             loop {
                 supplicant
                     .poll(core::num::NonZeroU32::new(32).unwrap())
                     .map_err(map_native_error)?;
                 while let Some(event) = supplicant.next_event().map_err(map_native_error)? {
                     last_event_kind = event.kind;
-                    match event.kind {
-                        NATIVE_EVENT_AUTHENTICATING | NATIVE_EVENT_ASSOCIATED => {
-                            connection_progress = true;
-                        }
-                        NATIVE_EVENT_AUTHORIZED => {
+                    match classify_native_connect_event(event.kind) {
+                        NativeConnectEvent::Progress => {}
+                        NativeConnectEvent::Authorized => {
                             return Ok(ConnectionInfo {
                                 bssid: config.bssid,
                                 frequency_mhz: channel_to_frequency(config.channel),
                             });
                         }
-                        NATIVE_EVENT_DISCONNECTED if connection_progress || event.status != 0 => {
+                        NativeConnectEvent::Disconnected => {
+                            // DISCONNECTED is an intermediate supplicant state,
+                            // not a terminal connect result. In particular,
+                            // hostap retries association after temporary PMF
+                            // rejection and other recoverable driver failures.
+                            // Keep driving its event loop until AUTHORIZED or
+                            // the caller's overall connect deadline expires.
+                            if event.status != 0 {
+                                last_disconnect_status = Some(event.status);
+                            }
+                        }
+                        NativeConnectEvent::Failed => {
                             let code = emit_backend_failure(supplicant, event.status);
                             return Err(BackendError {
                                 class: BackendErrorClass::Connect,
                                 code,
                             });
                         }
-                        NATIVE_EVENT_FAILED => {
-                            let code = emit_backend_failure(supplicant, event.status);
-                            return Err(BackendError {
-                                class: BackendErrorClass::Connect,
-                                code,
-                            });
-                        }
-                        _ => {}
                     }
                 }
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at)
                     >= config.timeout_ms() as u64
                 {
+                    if let Some(status) = last_disconnect_status {
+                        let code = emit_backend_failure(supplicant, status);
+                        let _ = supplicant.disconnect();
+                        return Err(BackendError {
+                            class: BackendErrorClass::Connect,
+                            code,
+                        });
+                    }
                     let context_diagnostic = supplicant.context_diagnostic_word();
                     let port_diagnostic = crate::upstream_supplicant::diagnostic_word();
                     let _ = supplicant.disconnect();
@@ -305,9 +370,12 @@ fn emit_backend_failure(supplicant: &NativeSupplicant, status: i32) -> u32 {
 
 /// Build the WS63 resources consumed by `hisi_rf::init`.
 #[cfg(feature = "net")]
-pub fn resources(efuse: Efuse<'static>) -> RadioResources<Ws63WifiBackend<'static>, Ws63Device> {
+pub fn resources(
+    efuse: Efuse<'static>,
+    trng: Trng<'static>,
+) -> RadioResources<Ws63WifiBackend<'static>, Ws63Device> {
     RadioResources {
-        backend: Ws63WifiBackend::new(efuse),
+        backend: Ws63WifiBackend::new(efuse, trng),
         device: Ws63Device,
     }
 }
@@ -463,5 +531,37 @@ fn scan_status_code(status: crate::wifi::ScanStatus) -> u32 {
         ScanStatus::Refused => 2,
         ScanStatus::Timeout => 3,
         ScanStatus::Unknown(code) => code,
+    }
+}
+
+#[cfg(all(test, feature = "upstream-supplicant-port"))]
+mod tests {
+    use super::{
+        NATIVE_EVENT_AUTHORIZED, NATIVE_EVENT_DISCONNECTED, NATIVE_EVENT_FAILED,
+        NativeConnectEvent, classify_native_connect_event,
+    };
+
+    #[test]
+    fn disconnected_is_recoverable_until_the_overall_connect_deadline() {
+        assert_eq!(
+            classify_native_connect_event(NATIVE_EVENT_DISCONNECTED),
+            NativeConnectEvent::Disconnected
+        );
+        assert_eq!(
+            classify_native_connect_event(NATIVE_EVENT_FAILED),
+            NativeConnectEvent::Failed
+        );
+        assert_eq!(
+            classify_native_connect_event(NATIVE_EVENT_AUTHORIZED),
+            NativeConnectEvent::Authorized
+        );
+        assert_eq!(
+            classify_native_connect_event(1),
+            NativeConnectEvent::Progress
+        );
+        assert_eq!(
+            classify_native_connect_event(2),
+            NativeConnectEvent::Progress
+        );
     }
 }

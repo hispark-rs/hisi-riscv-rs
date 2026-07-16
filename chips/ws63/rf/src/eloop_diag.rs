@@ -201,8 +201,11 @@ pub struct AuthDiagnostic {
     pub bridge_xmit_result: i32,
     pub bridge_xmit_skb: usize,
     pub netif_rx_calls: u32,
+    pub netif_rx_eapol_frames: u32,
     pub netif_rx_length: u32,
     pub netif_rx_prefix: [u8; TX_FRAME_PREFIX_BYTES],
+    pub netif_rx_eapol_length: u32,
+    pub netif_rx_eapol_prefix: [u8; TX_FRAME_PREFIX_BYTES],
     pub auth_tx_complete_calls: u32,
     pub auth_tx_status: u8,
     pub auth_tx_data_counts: u16,
@@ -274,8 +277,11 @@ static AUTH: Mutex<RefCell<AuthDiagnostic>> = Mutex::new(RefCell::new(AuthDiagno
     bridge_xmit_result: 0,
     bridge_xmit_skb: 0,
     netif_rx_calls: 0,
+    netif_rx_eapol_frames: 0,
     netif_rx_length: 0,
     netif_rx_prefix: [0; TX_FRAME_PREFIX_BYTES],
+    netif_rx_eapol_length: 0,
+    netif_rx_eapol_prefix: [0; TX_FRAME_PREFIX_BYTES],
     auth_tx_complete_calls: 0,
     auth_tx_status: 0,
     auth_tx_data_counts: 0,
@@ -358,6 +364,11 @@ pub unsafe extern "C" fn __ws63_diag_hwal_netif_rx(
         diagnostic.netif_rx_calls = diagnostic.netif_rx_calls.saturating_add(1);
         diagnostic.netif_rx_length = length;
         diagnostic.netif_rx_prefix = prefix;
+        if length >= 14 && prefix[12..14] == [0x88, 0x8e] {
+            diagnostic.netif_rx_eapol_frames = diagnostic.netif_rx_eapol_frames.saturating_add(1);
+            diagnostic.netif_rx_eapol_length = length;
+            diagnostic.netif_rx_eapol_prefix = prefix;
+        }
     });
     unsafe { hwal_netif_rx(netdev, netbuf) }
 }
