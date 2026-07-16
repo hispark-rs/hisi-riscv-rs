@@ -480,8 +480,11 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES + PKE P-256
      point multiplication 的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件
      失败后的 fallback。transition-mode 的 status-30 与 association-success/no-first-EAPOL
-     重复连接门槛已经闭合；WPA3-SAE 进入 stable 前仍须补真正断电冷启动样本、受控
-     WPA3-only SAE+PMF，以及剩余 Dragonfly 算术边界。不得把“point multiplication 已硬件化”
+     重复连接门槛已经闭合。同一已提交、未重烧镜像在整板断电上电后，UART 只读监听连续
+     观察到 `A4_NET_RUNNER_ALIVE lease=up`，证明 cold start 最终进入持有 DHCP lease 的
+     长生命周期 network runner；由于监听在启动后接入，该样本不包含逐阶段 cold-boot 时序。
+     WPA3-SAE 进入 stable 前仍须补受控 WPA3-only SAE+PMF，以及剩余 Dragonfly 算术边界。
+     不得把“point multiplication 已硬件化”
      扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
@@ -694,7 +697,8 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   不能由 point-mul 证明替代。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码
   尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
-  真正断电冷启动、WPA3-only 和剩余 Dragonfly 算术仍阻塞 WPA3-SAE stable 声明。
+  断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；WPA3-only 和剩余
+  Dragonfly 算术仍阻塞 WPA3-SAE stable 声明。
 
 #### A2 progress
 
