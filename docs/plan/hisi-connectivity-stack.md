@@ -462,8 +462,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      association，每轮 36 次 AES 请求、0 失败，bounded timeout recovery 同样 20/20。
      证据见 [W2E-H SPACC AES](evidence/ws63-rf-w2e-h-spacc-aes-2026-07-16.md)。
      第四项 P-256 affine point multiplication、point addition 与固定素数域
-     multiplication/squaring 已迁入 WS63 PKE：hostap SAE 仍拥有协议和 Dragonfly
-     状态机，只经 `TryP256PointMul`/`TryP256PointAdd`/`TryP256FieldMul` 调用硬件；
+     multiplication/squaring/exponentiation 已迁入 WS63 PKE：hostap SAE 仍拥有协议和
+     Dragonfly 状态机，只经
+     `TryP256PointMul`/`TryP256PointAdd`/`TryP256FieldMul`/`TryP256FieldPow` 调用硬件；
      标量、点坐标、canonical field element 和临时输出均在返回前
      清零，PKE timeout/fault 直接使握手失败，不回退软件。首次真机运行还证明 stateful PKE
      ROM helper 会读取与 standalone Rust 镜像冲突的固定 ROM-RAM；实现因此只复用无状态
@@ -491,9 +492,16 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      20 次 nRST 全部 association 通过，累计 7,680 次 field operation（7,580 mul、
      100 square）、340 次 point operation 与 140 次 point-add 均零失败，field 最大
      1 ms、point 最大 8 ms、point-add 最大 2 ms。
+     固定素数幂运算继续复用原厂 Apache-2.0 PKE ROM 的 RSA modular-exponentiation
+     microcode，但 contract 固定 P-256 modulus、canonical base 和 256-bit exponent，
+     不暴露 generic RSA provider。hostap 的 exact-P256 `exptmod`、非零 `inverse` 与
+     `Legendre` 现经过这一 fallible capability；过宽 exponent、非 canonical base 或
+     非 P-256 modulus 在硬件启动前保留既有 RustCrypto 语义。最终同镜像 20 次 nRST
+     association 20/20、EAPOL notify/receive/feed/send 40/40/40/40，累计 2,947 次 pow、
+     10,627 次全部 field operation 均零失败，pow/field 观察最大值均为 1 ms。
      因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES + PKE P-256
-     point multiplication/addition + fixed-prime field multiplication/squaring 的显式硬件
-     profile；RustCrypto 仍是 host oracle，不得被描述为硬件失败后的 fallback。
+     point multiplication/addition + fixed-prime field multiplication/squaring/exponentiation
+     的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件失败后的 fallback。
      最后一条 association-success/no-first-EAPOL 竞态也已收敛：confirmed disconnect
      callback 不再在同一 hostap event stack 内直接发起 association，而是注册 zero-delay
      eloop owner work，待当前 `EVENT_DISASSOC` 状态迁移完成后再复用 cached BSS。最终
@@ -504,9 +512,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      重复连接门槛已经闭合。同一已提交、未重烧镜像在整板断电上电后，UART 只读监听连续
      观察到 `A4_NET_RUNNER_ALIVE lease=up`，证明 cold start 最终进入持有 DHCP lease 的
      长生命周期 network runner；由于监听在启动后接入，该样本不包含逐阶段 cold-boot 时序。
-     WPA3-SAE 进入 stable 前仍须补受控 WPA3-only SAE+PMF，以及剩余 Dragonfly 算术边界。
-     不得把“point multiplication/addition 已硬件化”
-     扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
+     WPA3-SAE 进入 stable 前仍须补受控 WPA3-only SAE+PMF，以及剩余 point inversion、
+     curve validation 与 `y^2` composition 等 Dragonfly 算术边界。不得把这些已验证的
+     小能力扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
      backend 必须在构造、feature 或资源注入时显式选择 software、hardware 或准确标注的
@@ -714,9 +722,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。真实跨 owner contention
   injection 和调用方注入 DMA storage 仍是稳定化前 gate。
 - [ ] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC，以及 SAE P-256 point
-  multiplication/addition 和 fixed-prime field multiplication/squaring 已完成硬件迁移；
-  剩余 Dragonfly exponentiation/inversion/Legendre、point inversion、curve validation 与
-  `y^2` composition 必须按实际 backend 能力逐项列出，
+  multiplication/addition 和 fixed-prime field multiplication/squaring/exponentiation 已完成
+  硬件迁移；exact-P256 inverse/Legendre 已复用同一 pow capability。剩余 point inversion、
+  curve validation 与 `y^2` composition 必须按实际 backend 能力逐项列出，
   不能由 point-mul 证明替代。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码
   尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
