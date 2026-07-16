@@ -229,6 +229,8 @@ def capture_run(
     marker_times: dict[str, float] = {}
     deadline = started + timeout
     terminal_seen_at: float | None = None
+    boot_seen = False
+    boot_marker = b"boot.\r\n"
 
     timed_markers = OFFICIAL_TIMED_MARKERS if profile == "official-liteos" else RUST_TIMED_MARKERS
     terminal_markers = (
@@ -254,6 +256,16 @@ def capture_run(
         if not chunk:
             continue
         log.extend(chunk)
+        if not boot_seen:
+            boot_start = log.find(boot_marker)
+            if boot_start < 0:
+                continue
+            # Bytes can still arrive from the previous firmware after the UART
+            # input buffer is reset but before nRST reaches the target.  Keep
+            # only this boot so stale success markers cannot terminate or pass
+            # the next run.
+            del log[:boot_start]
+            boot_seen = True
         now = time.monotonic() - started
         for marker in timed_markers:
             name = marker.decode()
