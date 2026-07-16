@@ -14,7 +14,10 @@ use hisi_crypto::Pbkdf2HmacSha1;
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
     EntropySource, TryBlockCipher, TryHash, TryMac,
-    sae::{P256AffinePoint, P256PointResult, TryP256PointAdd, TryP256PointMul},
+    sae::{
+        P256AffinePoint, P256FieldElement, P256PointResult, TryP256FieldMul, TryP256PointAdd,
+        TryP256PointMul,
+    },
 };
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto_ws63::{Ws63Crypto, Ws63P256};
@@ -105,6 +108,22 @@ static P256_ADD_FAILURES: AtomicU32 = AtomicU32::new(0);
 static P256_ADD_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_ADD_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_TOTAL_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_MAX_MS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_MUL_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_SQUARE_REQUESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_MUL_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_arch = "riscv32")]
+static P256_FIELD_SQUARE_FAILURES: AtomicU32 = AtomicU32::new(0);
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -214,6 +233,59 @@ pub(super) fn p256_point_add_hardware(
         P256_FAILURES.fetch_add(1, Ordering::Relaxed);
         P256_ADD_FAILURES.fetch_add(1, Ordering::Relaxed);
     }
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+fn record_p256_field_result(started: u64, multiply: bool, result: &Result<(), CryptoError>) {
+    let elapsed =
+        u32::try_from(crate::uapi::monotonic_ms().wrapping_sub(started)).unwrap_or(u32::MAX);
+    P256_FIELD_TOTAL_MS.fetch_add(elapsed, Ordering::Relaxed);
+    P256_FIELD_MAX_MS.fetch_max(elapsed, Ordering::Relaxed);
+    if result.is_err() {
+        P256_FIELD_FAILURES.fetch_add(1, Ordering::Relaxed);
+        if multiply {
+            P256_FIELD_MUL_FAILURES.fetch_add(1, Ordering::Relaxed);
+        } else {
+            P256_FIELD_SQUARE_FAILURES.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_field_mul_hardware(
+    a: &P256FieldElement,
+    b: &P256FieldElement,
+    output: &mut P256FieldElement,
+) -> Result<(), CryptoError> {
+    P256_FIELD_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_FIELD_MUL_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .field_mul(a, b, output)
+    });
+    record_p256_field_result(started, true, &result);
+    result
+}
+
+#[cfg(target_arch = "riscv32")]
+pub(super) fn p256_field_square_hardware(
+    value: &P256FieldElement,
+    output: &mut P256FieldElement,
+) -> Result<(), CryptoError> {
+    P256_FIELD_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    P256_FIELD_SQUARE_REQUESTS.fetch_add(1, Ordering::Relaxed);
+    let started = crate::uapi::monotonic_ms();
+    let result = with_crypto_service(|service| {
+        service
+            .p256
+            .session(&service.backend)
+            .field_square(value, output)
+    });
+    record_p256_field_result(started, false, &result);
     result
 }
 
@@ -389,6 +461,21 @@ pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
     ]
 }
 
+/// Return non-secret PKE P-256 fixed-field-operation counters.
+#[cfg(target_arch = "riscv32")]
+pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
+    [
+        P256_FIELD_REQUESTS.load(Ordering::Relaxed),
+        P256_FIELD_FAILURES.load(Ordering::Relaxed),
+        P256_FIELD_TOTAL_MS.load(Ordering::Relaxed),
+        P256_FIELD_MAX_MS.load(Ordering::Relaxed),
+        P256_FIELD_MUL_REQUESTS.load(Ordering::Relaxed),
+        P256_FIELD_SQUARE_REQUESTS.load(Ordering::Relaxed),
+        P256_FIELD_MUL_FAILURES.load(Ordering::Relaxed),
+        P256_FIELD_SQUARE_FAILURES.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
@@ -431,6 +518,11 @@ pub(crate) fn hardware_cipher_diagnostic_snapshot() -> [u32; 6] {
 
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn hardware_p256_diagnostic_snapshot() -> [u32; 8] {
+    [0; 8]
+}
+
+#[cfg(not(target_arch = "riscv32"))]
+pub(crate) fn hardware_p256_field_diagnostic_snapshot() -> [u32; 8] {
     [0; 8]
 }
 
@@ -572,6 +664,30 @@ pub(crate) fn ws63_p256_self_test() -> Result<(), CryptoError> {
     p256_point_add_hardware(&GENERATOR, &NEGATIVE_GENERATOR, &mut sum)?;
     if sum != P256PointResult::Infinity {
         return Err(CryptoError::Backend(0xffff_0304));
+    }
+
+    let field_x = P256FieldElement::try_from_be_bytes(GENERATOR.x)?;
+    let field_y = P256FieldElement::try_from_be_bytes(GENERATOR.y)?;
+    let mut field_output = P256FieldElement::ZERO;
+    p256_field_mul_hardware(&field_x, &field_y, &mut field_output)?;
+    if field_output.as_be_bytes()
+        != &[
+            0x82, 0x3c, 0xd1, 0x5f, 0x6d, 0xd3, 0xc7, 0x19, 0x33, 0x56, 0x50, 0x64, 0x51, 0x3a,
+            0x6b, 0x2b, 0xd1, 0x83, 0xe5, 0x54, 0xc6, 0xa0, 0x86, 0x22, 0xf7, 0x13, 0xeb, 0xbb,
+            0xfa, 0xce, 0x98, 0xbe,
+        ]
+    {
+        return Err(CryptoError::Backend(0xffff_0305));
+    }
+    p256_field_square_hardware(&field_x, &mut field_output)?;
+    if field_output.as_be_bytes()
+        != &[
+            0x98, 0xf6, 0xb8, 0x4d, 0x29, 0xbe, 0xf2, 0xb2, 0x81, 0x81, 0x9a, 0x5e, 0x0e, 0x36,
+            0x90, 0xd8, 0x33, 0xb6, 0x99, 0x49, 0x5d, 0x69, 0x4d, 0xd1, 0x00, 0x2a, 0xe5, 0x6c,
+            0x42, 0x6b, 0x3f, 0x8c,
+        ]
+    {
+        return Err(CryptoError::Backend(0xffff_0306));
     }
     Ok(())
 }

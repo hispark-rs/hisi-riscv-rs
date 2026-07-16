@@ -1,5 +1,7 @@
 //! Native hostap 2.11 SAE bignum and group 19 ABI.
 
+#[cfg(all(test, not(target_arch = "riscv32")))]
+use core::ptr;
 #[cfg(target_arch = "riscv32")]
 use core::{
     cmp::Ordering,
@@ -8,17 +10,25 @@ use core::{
     ptr,
 };
 
+#[cfg(all(test, not(target_arch = "riscv32")))]
+use hisi_crypto::CryptoError;
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::sae::{
     BIGNUM_BYTES, BignumArithmetic, BignumEncoding, BignumRandom, GROUP_19, Group19,
     LegendreSymbol, RustCryptoBignum, RustCryptoGroup19,
 };
 #[cfg(all(test, not(target_arch = "riscv32")))]
-use hisi_crypto::sae::{GROUP_19, Group19, RustCryptoGroup19};
+use hisi_crypto::sae::{
+    BignumEncoding, GROUP_19, Group19, P256_ELEMENT_BYTES, P256_FIELD_PRIME, P256FieldElement,
+    RustCryptoBignum, RustCryptoGroup19, SaeBignum,
+};
 #[cfg(target_arch = "riscv32")]
 use hisi_crypto::{
     CryptoError,
-    sae::{P256_ELEMENT_BYTES, P256AffinePoint, P256PointResult, SaeBignum, SaeP256Point},
+    sae::{
+        P256_ELEMENT_BYTES, P256_FIELD_PRIME, P256AffinePoint, P256FieldElement, P256PointResult,
+        SaeBignum, SaeP256Point,
+    },
 };
 
 #[cfg(target_arch = "riscv32")]
@@ -101,7 +111,7 @@ fn entropy_top_mask(first_modulus_byte: u8) -> Option<u8> {
     (first_modulus_byte != 0).then(|| u8::MAX >> first_modulus_byte.leading_zeros())
 }
 
-#[cfg(target_arch = "riscv32")]
+#[cfg(any(test, target_arch = "riscv32"))]
 fn clear_bytes(bytes: &mut [u8]) {
     for byte in bytes {
         unsafe { ptr::write_volatile(byte, 0) };
@@ -162,6 +172,34 @@ unsafe fn bignum_store(pointer: *mut BignumObject, value: SaeBignum) -> Result<(
     }
     object.value = value;
     Ok(())
+}
+
+#[cfg(any(test, target_arch = "riscv32"))]
+fn bignum_is_p256_prime(value: &SaeBignum) -> bool {
+    let mut encoded = [0u8; P256_ELEMENT_BYTES];
+    let result = RustCryptoBignum.write_be(value, &mut encoded, P256_ELEMENT_BYTES)
+        == Ok(P256_ELEMENT_BYTES)
+        && encoded == P256_FIELD_PRIME;
+    clear_bytes(&mut encoded);
+    result
+}
+
+#[cfg(any(test, target_arch = "riscv32"))]
+fn bignum_to_p256_field(value: &SaeBignum) -> Option<P256FieldElement> {
+    let mut encoded = [0u8; P256_ELEMENT_BYTES];
+    if RustCryptoBignum.write_be(value, &mut encoded, P256_ELEMENT_BYTES) != Ok(P256_ELEMENT_BYTES)
+    {
+        clear_bytes(&mut encoded);
+        return None;
+    }
+    let result = P256FieldElement::try_from_be_bytes(encoded).ok();
+    clear_bytes(&mut encoded);
+    result
+}
+
+#[cfg(any(test, target_arch = "riscv32"))]
+fn p256_field_to_bignum(value: &P256FieldElement) -> Result<SaeBignum, CryptoError> {
+    RustCryptoBignum.init_set(value.as_be_bytes())
 }
 
 #[cfg(target_arch = "riscv32")]
@@ -411,7 +449,41 @@ bignum_binary_abi!(crypto_bignum_sub, sub);
 bignum_binary_abi!(crypto_bignum_div, div);
 bignum_binary_abi!(crypto_bignum_mod, modulo);
 bignum_binary_abi!(crypto_bignum_inverse, inverse);
-bignum_binary_abi!(crypto_bignum_sqrmod, square_mod);
+
+#[cfg(target_arch = "riscv32")]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn crypto_bignum_sqrmod(
+    value: *const BignumObject,
+    modulus: *const BignumObject,
+    result: *mut BignumObject,
+) -> c_int {
+    if !bignum_aliases(result, [value, modulus]) {
+        return -1;
+    }
+    let (Some(value), Some(modulus)) = (unsafe { bignum_clone(value) }, unsafe {
+        bignum_clone(modulus)
+    }) else {
+        return -1;
+    };
+
+    let result_value = if bignum_is_p256_prime(&modulus) {
+        if let Some(field_value) = bignum_to_p256_field(&value) {
+            let mut output = P256FieldElement::ZERO;
+            if super::p256_field_square_hardware(&field_value, &mut output).is_err() {
+                return -1;
+            }
+            p256_field_to_bignum(&output)
+        } else {
+            RustCryptoBignum.square_mod(&value, &modulus)
+        }
+    } else {
+        RustCryptoBignum.square_mod(&value, &modulus)
+    };
+    let Ok(result_value) = result_value else {
+        return -1;
+    };
+    unsafe { bignum_store(result, result_value) }.map_or(-1, |()| 0)
+}
 
 macro_rules! bignum_ternary_abi {
     ($name:ident, $method:ident) => {
@@ -433,8 +505,46 @@ macro_rules! bignum_ternary_abi {
 }
 
 bignum_ternary_abi!(crypto_bignum_addmod, add_mod);
-bignum_ternary_abi!(crypto_bignum_mulmod, mul_mod);
 bignum_ternary_abi!(crypto_bignum_exptmod, exp_mod);
+
+#[cfg(target_arch = "riscv32")]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn crypto_bignum_mulmod(
+    a: *const BignumObject,
+    b: *const BignumObject,
+    modulus: *const BignumObject,
+    result: *mut BignumObject,
+) -> c_int {
+    if !bignum_aliases(result, [a, b, modulus]) {
+        return -1;
+    }
+    let (Some(a), Some(b), Some(modulus)) = (
+        unsafe { bignum_clone(a) },
+        unsafe { bignum_clone(b) },
+        unsafe { bignum_clone(modulus) },
+    ) else {
+        return -1;
+    };
+
+    let result_value = if bignum_is_p256_prime(&modulus) {
+        match (bignum_to_p256_field(&a), bignum_to_p256_field(&b)) {
+            (Some(a), Some(b)) => {
+                let mut output = P256FieldElement::ZERO;
+                if super::p256_field_mul_hardware(&a, &b, &mut output).is_err() {
+                    return -1;
+                }
+                p256_field_to_bignum(&output)
+            }
+            _ => RustCryptoBignum.mul_mod(&a, &b, &modulus),
+        }
+    } else {
+        RustCryptoBignum.mul_mod(&a, &b, &modulus)
+    };
+    let Ok(result_value) = result_value else {
+        return -1;
+    };
+    unsafe { bignum_store(result, result_value) }.map_or(-1, |()| 0)
+}
 
 #[cfg(target_arch = "riscv32")]
 #[unsafe(no_mangle)]
@@ -991,5 +1101,26 @@ mod tests {
         assert!(group.point_eq(&generator, &decoded));
         assert_eq!(x.len(), 32);
         assert_eq!(y.len(), 32);
+    }
+
+    #[test]
+    fn field_hardware_dispatch_requires_exact_prime_and_canonical_operands() {
+        let prime = RustCryptoBignum.init_set(&P256_FIELD_PRIME).unwrap();
+        assert!(bignum_is_p256_prime(&prime));
+        assert!(bignum_to_p256_field(&prime).is_none());
+
+        let mut below_prime = P256_FIELD_PRIME;
+        below_prime[31] -= 1;
+        let below_prime = RustCryptoBignum.init_set(&below_prime).unwrap();
+        let field = bignum_to_p256_field(&below_prime).unwrap();
+        let round_trip = p256_field_to_bignum(&field).unwrap();
+        let mut encoded = [0u8; P256_ELEMENT_BYTES];
+        RustCryptoBignum
+            .write_be(&round_trip, &mut encoded, P256_ELEMENT_BYTES)
+            .unwrap();
+        assert_eq!(encoded[31], 0xfe);
+
+        let wrong_modulus = RustCryptoBignum.init_u32(23);
+        assert!(!bignum_is_p256_prime(&wrong_modulus));
     }
 }
