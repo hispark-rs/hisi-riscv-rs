@@ -62,7 +62,10 @@ UART / I2C / SPI / DMA 用 `PhantomData<&'d T>` 区分实例，构造函数按�
 
 ## 单外设驱动（`new()` 模式）
 
-多数驱动遵循 `DriverName::new(peripheral)`：`Watchdog::new`、`TimerDriver::new`、`TcxoDriver::new`、`RtcDriver::new`、`LsAdc::new`、`I2sDriver::new`、`PwmChannel::new(&Pwm, channel)`、`SfcDriver::new`、`PkeDriver::new`、`SpaccDriver::new`、`KmDriver::new`、`TrngDriver::new`、`TempSensor::new`、`EfuseDriver`、`System::new(SysCtl0, GlbCtlM, CldoCrg)`。其中未上板或 soundness 未闭合的模块/方法会被 `unstable` 门控；完整签名见各模块 rustdoc。
+多数驱动遵循 `DriverName::new(peripheral)`：`Watchdog::new`、`TimerDriver::new`、`TcxoDriver::new`、`RtcDriver::new`、`LsAdc::new`、`I2sDriver::new`、`PwmChannel::new(&Pwm, channel)`、`SfcDriver::new`、`KmDriver::new`、`TrngDriver::new`、`TempSensor::new`、`EfuseDriver`、`System::new(SysCtl0, GlbCtlM, CldoCrg)`。其中未上板或 soundness 未闭合的模块/方法会被 `unstable` 门控；完整签名见各模块 rustdoc。
+
+`Spacc` 与 `Pke` 只作为唯一外设 token 暴露，不在 HAL 提供算法式 driver。SPACC/PKE 的
+fallible channel、descriptor、keyslot、timeout 和密码能力实现归芯片 crypto backend。
 
 ## 时钟（`clock.rs` / `clock_init.rs`，仅 `chip-ws63`）
 

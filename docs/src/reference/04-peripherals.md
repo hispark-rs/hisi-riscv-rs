@@ -33,8 +33,6 @@
 | `sfc` | SPI Flash 控制器 | WS63 | `0x4800_0000`（safety.rs） | `SfcDriver`（`BusConfig`） | 无 | ✅ |
 | `efuse` | eFuse / OTP v151 | WS63 | STS+0x2C / CTL+0x30 / data+0x800 | `EfuseDriver` | 无 | ✅（只读） |
 | `km` | 密钥管理 KLAD/RKP | WS63 | —（KEYSLOT_COUNT=8） | `KmDriver` | 无 | ✅ |
-| `pke` | 公钥引擎（RSA/ECC/SM2） | WS63 | — | `PkeDriver` | 无 | ✅ |
-| `spacc` | 安全加速器（AES/SM4/HASH） | WS63 | Crypto `0x4410_0000`（safety.rs） | `SpaccDriver` | 无 | ✅ |
 | `trng` | TRNG（FRO 熵源） | WS63 | — | `TrngDriver`（`TrngError`） | 无 | ✅ |
 | `trng_v1` | TRNG v1 | BS21 | `0x5200_9000` | `Trng`（`TrngError`） | 无 | ✅ |
 | `system` | 系统控制（时钟/复位/电源） | WS63 | CHIP_RESET `0x4000_2110` 等 | `System`、`ResetReason` | `reset_demo` | ✅ |
@@ -48,6 +46,10 @@
 | `embassy` | embassy-time `Driver` | 两者 (`embassy`) | TCXO + TIMER | — | `embassy_*` | ✅ |
 
 裸板自检：✅ 可在裸板上自验（无需外接器件）；⚠️ 需外接器件/接线/从机；n/a 非外设驱动。
+
+WS63 `Peripherals` 仍包含唯一 `Spacc` 与 `Pke` token，但 HAL 不提供对应算法 driver
+模块。已验证的 SPACC/KM/TRNG 密码能力由 `hisi-crypto-ws63` 消费这些 token 实现；PKE
+能力仍待后续 backend 与 HIL 证据。
 
 ## DMA 控制器
 
