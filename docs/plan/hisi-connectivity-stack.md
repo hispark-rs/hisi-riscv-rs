@@ -367,6 +367,11 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      format 集和 18-symbol external ABI 均由 CI fail-closed 校验。父仓 commit
      `7e67f145d` 已让唯一 `RadioRunner` 在真机推进 event loop；实现没有新增 `LOS_*`、
      LiteOS daemon/backend、OS thread 或完整 POSIX 模拟。
+     WS63 blob 仍实际引用的有界 `LOS_`/`osal_` ABI 只是 compatibility
+     adapter：`LOS_TaskLock`/`LOS_TaskUnlock` 与 `osal_kthread_lock`/`unlock` 现均委托
+     `hisi-rf-rtos-driver` 的可嵌套 scheduler-lock contract，不再依赖“Cooperative
+     所以 no-op”的旧假设。该符号集合必须继续受 archive hash 与 required-symbol
+     manifest 限定，不得扩张为 LiteOS backend。
    - **W2D WS63 driver and safe wrapper（已完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
@@ -569,10 +574,13 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      发布顺序固定为：先将新增寄存器发布为 `ws63-pac 0.3.1`，再把
      `hisi-crypto-ws63` 的最低 PAC 依赖与 standalone lock 提升到 `0.3.1`；开发期由父仓
      `[patch]` 绑定当前 PAC checkout，禁止发布仍可解析到缺少 SPACC 字段的 `0.3.0` 组合。
-   - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 LiteOS glue
-     保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认路径并删除
-     `litos.rs`/`wpa_compat.rs`。之后按既定兼容窗口退役 `ws63-rf-rs` facade，但不得因架构
-     迁移破坏 A4 gate。
+   - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 supplicant-only
+     LiteOS glue 保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认
+     路径并删除 `wpa_compat.rs` 及其独占符号。`litos.rs` 不作为文件名或 LiteOS
+     语义长期保留：必须按 required-symbol manifest 拆出/重命名为有界 WS63 runtime
+     compatibility adapter，只保留非 supplicant radio blob 仍可达符号；不可为了删文件
+     而伪造符号闭包，也不可建立 LiteOS backend。之后按既定兼容窗口退役
+     `ws63-rf-rs` facade，但不得因架构迁移破坏 A4 gate。
 
    **参考实现与取舍：**
 
