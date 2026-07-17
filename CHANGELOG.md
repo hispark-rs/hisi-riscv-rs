@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Release train anchor: `hisi-hal 0.7.0-alpha.2`.
+Release train anchor: `hisi-hal 0.7.0-alpha.3`.
 
 ### Changed
 
@@ -15,10 +15,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.2`.
   `hisi_riscv_hal` / `crates/hisi-riscv-hal` to `hisi-hal` / `hisi_hal` /
   `crates/hisi-hal`. The old `0.6.x` package remains on its maintenance branch.
 - **Consumer closure** — migrated WS63 and BS2X examples, RF, HIL runners,
-  template `v0.7.0-alpha.2`, CI, skills, chip metadata, mdBook, and multi-chip
+  template `v0.7.0-alpha.3`, CI, skills, chip metadata, mdBook, and multi-chip
   rustdoc publishing to the new package without relying on GitHub redirects.
-- **Single-PAC dependency closure** — published `ws63-pac 0.3.0`,
-  `hisi-riscv-rt 0.5.4`, and `hisi-hal 0.7.0-alpha.2`; runtime, HAL, examples,
+- **Single-PAC dependency closure** — published `ws63-pac 0.4.0`,
+  `hisi-riscv-rt 0.5.5`, and `hisi-hal 0.7.0-alpha.3`; runtime, HAL, examples,
   HIL, and generated projects now resolve the same corrected PAC major.
 - **Async IRQ ownership** — HAL async drivers expose ISR hooks without exporting
   strong device handlers. Firmware or RTOS trap routing owns every vector, so
@@ -27,6 +27,9 @@ Release train anchor: `hisi-hal 0.7.0-alpha.2`.
   the token-owned WS63 SPACC/KM backend. Upstream hostap key unwrap and CMAC keep
   their protocol implementation while using fallible hardware capabilities; no
   hardware error silently falls back to RustCrypto.
+- **Crypto release units** — publish `hisi-crypto 0.1.0-alpha.4` and
+  `hisi-crypto-ws63 0.1.0-alpha.2` with the P-256, SPACC hash/HMAC/AES, and
+  explicit static-storage contracts used by the current connectivity path.
 
 ### Verification
 
