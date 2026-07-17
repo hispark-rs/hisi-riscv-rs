@@ -81,8 +81,8 @@ rf-init-diag = []
 # this does not emit synchronous UART traces from hot paths.
 rf-eloop-diag = ["hisi-crypto-ws63?/diagnostics"]
 # Spawn two native RTOS tasks that contend for the one CryptoService mutex.
-# Diagnostic-only: normal radio images do not deliberately hold crypto while
-# sleeping and do not reserve the two temporary task stacks/semaphores.
+# Diagnostic-only: normal radio images do not deliberately yield while holding
+# crypto and do not reserve the two temporary task stacks/semaphores.
 rf-crypto-contention-diag = []
 # Diagnostic-only differential: use the vendor scan RX filter while waiting
 # for Authentication seq2. This intentionally changes receive policy.

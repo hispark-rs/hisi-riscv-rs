@@ -991,8 +991,10 @@ extern "C" fn crypto_contention_holder(argument: *mut core::ffi::c_void) -> *mut
     let result = with_crypto_service(|service| {
         hisi_rf_rtos_driver::semaphore_up(context.start)
             .map_err(|_| contention_runtime_error(1))?;
-        hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(10).unwrap())
-            .map_err(|_| contention_runtime_error(2))?;
+        // Both diagnostic tasks have the same priority. Yield while retaining
+        // the service mutex so the waiter runs, attempts the real cipher path,
+        // and blocks on that mutex before this holder resumes.
+        hisi_rf_rtos_driver::yield_now().map_err(|_| contention_runtime_error(2))?;
         if context.waiter_attempted.load(Ordering::Acquire) == 0 {
             return Err(contention_runtime_error(3));
         }
