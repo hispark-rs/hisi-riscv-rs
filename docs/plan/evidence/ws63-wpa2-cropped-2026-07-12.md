@@ -54,6 +54,35 @@ in the transitional bare-metal runtime. It is therefore not silently selected.
 It remains an experimental future `hisi-crypto` backend until clock, IRQ and
 wait semantics have their own HIL gate.
 
+## 2026-07-17 Native Runtime Lock Regression
+
+Parent commit `9369b7828` removed the final no-op scheduler-lock assumption
+from the vendor ABI adapter: `LOS_TaskLock` and `LOS_TaskUnlock` now use the
+same nested `hisi-rf-rtos-driver` contract as `osal_kthread_lock` and
+`osal_kthread_unlock`. A host mock-runtime test proves that both lock and
+unlock calls cross that contract. Parent commit `389f8e369` also restored the
+standalone `wifi-wpa2-personal` build after P-256 became an explicitly gated
+`upstream-supplicant-wpa3` capability; CI now builds both security profiles
+independently.
+
+The committed vendor-WPA2 profile was then rebuilt and run on WS63:
+
+- 1,476 final layout sections, 5,322 patched relocations and 37 ROM patches;
+- 3 MHz full-verify download completed in 68.32 seconds;
+- association, DHCP, public ICMP `5/5`, RX queue drop `0` and DHCP renew all
+  passed;
+- gateway ICMP remained `0/5`, matching the separately frozen AP environment
+  boundary rather than a radio/runtime regression;
+- the smoke script reported `WS63 CONNECTIVITY SMOKE: PASS` with no fatal
+  connectivity or panic marker.
+
+One preceding programming attempt failed in probe-rs before firmware execution
+(page-program timeout followed by DMI reconnect failure). The board was
+restored with the complete official FWPKG and its normal boot markers were
+verified before the successful retry. That transport failure is deliberately
+excluded from the WPA2 behavior result. Credentials and the temporary firmware
+build directory were not retained.
+
 ## Remaining Boundary
 
 WPA2-Personal/CCMP no longer links SDK mbedTLS. Application TLS is a separate

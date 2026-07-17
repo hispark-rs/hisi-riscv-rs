@@ -371,7 +371,10 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      adapter：`LOS_TaskLock`/`LOS_TaskUnlock` 与 `osal_kthread_lock`/`unlock` 现均委托
      `hisi-rf-rtos-driver` 的可嵌套 scheduler-lock contract，不再依赖“Cooperative
      所以 no-op”的旧假设。该符号集合必须继续受 archive hash 与 required-symbol
-     manifest 限定，不得扩张为 LiteOS backend。
+     manifest 限定，不得扩张为 LiteOS backend。父仓 commits `9369b7828` 和
+     `389f8e369` 的 host contract test、独立 WPA2/WPA3 profile CI 以及 vendor-WPA2 真机
+     connectivity smoke 均已通过；证据追加到
+     [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
    - **W2D WS63 driver and safe wrapper（已完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
