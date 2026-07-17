@@ -530,10 +530,16 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      代码尺寸对比；各项证据闭合前只能声明具体已加速能力，不能给出笼统硬件加速承诺。
      HAL 只拥有 `Spacc`/`Pke`/`Km`/`Trng` token 与 clock/reset/IRQ/cache/DMA 基础机制；
      算法、channel/descriptor、keyslot、清零和错误恢复只归 `hisi-crypto-ws63`。HAL 中原有
-     无消费者的 SPACC/PKE no-op stub 已删除，不再形成第二套驱动事实源。当前 backend 内置
-     scratch 是过渡实现，后续改为调用方注入的
-     `StaticCell`/静态 storage；`Ws63Crypto::new` 也应收敛为 typed resources/builder，避免
-     随能力增长形成巨大构造器。RF 外层 mutex 加内部 busy guard 同样是迁移边界，长期以
+     无消费者的 SPACC/PKE no-op stub 已删除，不再形成第二套驱动事实源。SPACC hash/cipher
+     DMA storage 已从 backend 隐式 `.bss` 移出：调用方通过
+     `Ws63CryptoResources` 注入 32-byte aligned `Ws63CryptoStorage`，当前 all-feature storage
+     为 4,384 bytes；RF 以独立 `StaticCell` 提供唯一实例。PKE 当前不持有同类 backend
+     scratch，因此不能继续写成“PKE scratch gate”。父仓 `cb7662f3a` 与 crypto
+     `7760638` 的最终 guarded link 仍为 1,157 sections / 4,127 relocations / 37 ROM patches；
+     3 MHz full-verify transition smoke 在 93.31 秒下载后完成 SAE+required PMF、DHCP、ARP、
+     gateway 5/5、public 4/5 和 DHCP renew，TRNG/PBKDF2/SPACC/PKE 全部 failure counter 为
+     0。该证据只关闭 storage ownership，不替代 WPA3-only 或 cross-owner contention gate。
+     RF 外层 mutex 加内部 busy guard 同样是迁移边界，长期以
      `&mut self`/`CryptoSession` 表达独占，并保留 unsafe/FFI 防御。
      国密能力复用同一细粒度 fallible contract：SM3 对应 SPACC hash/HMAC，SM4 对应 SPACC
      symmetric 加 KM/keyslot，SM2 对应 PKE；算法必须由 typed algorithm/profile 区分，不能
@@ -724,8 +730,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [ ] 将 raw `EntropySource` 与 DRBG 分层，补重播种、连续健康检查和故障传播测试；TLS
   backend 不得把每次随机读取直接映射为同步 TRNG 调用。
 - [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
-  真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。真实跨 owner contention
-  injection 和调用方注入 DMA storage 仍是稳定化前 gate。
+  真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。调用方注入的 32-byte
+  aligned SPACC DMA storage 已通过 host/RV32/link/transition HIL；真实 cross-owner
+  contention injection 仍是稳定化前 gate。
 - [x] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC，以及 SAE P-256 point
   multiplication/addition 和 fixed-prime field multiplication/squaring/exponentiation 已完成
   硬件迁移；exact-P256 inverse/Legendre 已复用同一 pow capability，point inversion、
@@ -734,7 +741,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   峰值。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
   断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；受控 WPA3-only
-  SAE+PMF、真实跨 owner contention、调用方注入 PKE scratch 和依赖版本发布仍阻塞
+  SAE+PMF、真实 cross-owner contention 和依赖版本发布仍阻塞
   WPA3-SAE stable 声明。
 
 #### A2 progress
