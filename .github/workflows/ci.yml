@@ -45,6 +45,11 @@ jobs:
           submodules: recursive
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
+      - name: Install upstream supplicant C toolchain
+        if: contains(matrix.args, 'upstream-supplicant')
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes gcc-riscv64-unknown-elf
       - uses: actions/cache@v6
         with:
           # Registry/git only. RISC-V target artifacts are tied to the pinned nightly
