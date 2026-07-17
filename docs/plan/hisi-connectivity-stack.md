@@ -538,7 +538,23 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      `7760638` 的最终 guarded link 仍为 1,157 sections / 4,127 relocations / 37 ROM patches；
      3 MHz full-verify transition smoke 在 93.31 秒下载后完成 SAE+required PMF、DHCP、ARP、
      gateway 5/5、public 4/5 和 DHCP renew，TRNG/PBKDF2/SPACC/PKE 全部 failure counter 为
-     0。该证据只关闭 storage ownership，不替代 WPA3-only 或 cross-owner contention gate。
+     0。该证据只关闭 storage ownership，不替代 WPA3-only gate。随后
+     `rf-crypto-contention-diag` 以两个同优先级 native RTOS task 对 production
+     `CryptoService` mutex 制造真实竞争：holder 持锁显式 yield，waiter 进入真实 SPACC AES
+     路径并阻塞，holder 完成 SHA-256 KAT 后释放并直接交接。单次完整 smoke 与同一镜像
+     20 次 nRST 均得到 contention observed、holder/waiter completion 和 WPA3 association
+     `20/20`，每轮 TRNG/hash/MAC/cipher/P-256 failure counter 均为 0，gateway ICMP
+     `100/100`；公网 `89/100` 继续归入外部数据面边界。证据见
+     [W2E-H SPACC hash/HMAC](evidence/ws63-rf-w2e-h-spacc-hash-2026-07-16.md)。最初使用
+     timed sleep 的诊断暴露了 all-blocked timed-wake seam；该问题独立跟踪，不能把
+     contention gate 的显式 yield 描述成 timer 修复。
+     `Ws63CryptoResources` 也是后续 capability builder 的边界：不得重新膨胀为要求所有
+     引擎的大构造器，未注入的 PKE/SPACC/RKP/TRNG 能力应在类型或显式构造错误上可见。
+     后续纯结构整理只在当前 W2E-H/HIL 冻结后进行，内部按 error、RKP/TRNG、SPACC
+     channel/hash/symmetric、PKE channel/ECC/SM2 和 keyslot 收敛，不改变已经验证的算法
+     与超时语义。`hisi-crypto-ws63` 采用 `MIT OR Apache-2.0`；参考原厂 Apache-2.0
+     `security_unified` driver 时必须保留 attribution、修改说明和专利条款，不能做无说明的
+     逐行翻译。
      RF 外层 mutex 加内部 busy guard 同样是迁移边界，长期以
      `&mut self`/`CryptoSession` 表达独占，并保留 unsafe/FFI 防御。
      国密能力复用同一细粒度 fallible contract：SM3 对应 SPACC hash/HMAC，SM4 对应 SPACC
@@ -732,7 +748,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
   真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。调用方注入的 32-byte
   aligned SPACC DMA storage 已通过 host/RV32/link/transition HIL；真实 cross-owner
-  contention injection 仍是稳定化前 gate。
+  contention injection 已通过两个 native RTOS task 和同一镜像 20-reset gate。
 - [x] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC，以及 SAE P-256 point
   multiplication/addition 和 fixed-prime field multiplication/squaring/exponentiation 已完成
   硬件迁移；exact-P256 inverse/Legendre 已复用同一 pow capability，point inversion、
@@ -741,7 +757,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   峰值。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
   断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；受控 WPA3-only
-  SAE+PMF、真实 cross-owner contention 和依赖版本发布仍阻塞
+  SAE+PMF 和依赖版本发布仍阻塞
   WPA3-SAE stable 声明。
 
 #### A2 progress

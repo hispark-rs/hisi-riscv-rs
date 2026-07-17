@@ -65,6 +65,54 @@ operation per boot. This proves fail-closed recovery from the synthetic
 zero-attempt budget used by the diagnostic feature. It does not claim a real
 concurrent-owner or cross-security-domain contention injection.
 
+### Cross-owner contention follow-up
+
+The later `rf-crypto-contention-diag` profile closes the real cross-task owner
+gate without changing normal radio images. Two native `hisi-rtos` tasks share
+the production `CryptoService` mutex. The holder acquires the service, wakes
+the waiter, and explicitly yields at the same priority while retaining the
+mutex. The waiter enters the real SPACC AES path and blocks on that mutex. The
+holder then completes a SHA-256 known-answer operation, releases the service,
+and the waiter completes the AES-128 known-answer operation. Separate counters
+prove that contention was observed and both task owners completed.
+
+An initial diagnostic revision held the mutex across `sleep_ms(10)`. On
+silicon, the holder remained asleep after the waiter blocked and the main task
+waited for completion. Read-only inspection of the immutable image showed
+`waiter_attempted=1`, `holder_releasing=0`, and no task completion. That is a
+separate all-blocked timed-wake runtime seam. The contention gate now uses an
+explicit same-priority yield so this test measures mutex ownership and direct
+handoff rather than silently depending on that timer behavior. It does not
+claim that the timed-wake seam is fixed.
+
+The implementation is recorded by examples commit `1c2a425`, parent commit
+`a207c05e7`, and the deterministic-yield correction `77cdbb255`. Verification
+covered 45/45 host tests, RV32 check, and RV32 clippy with warnings denied. The
+guarded final link again verified 1,157 layout sections, 4,127 active vendor
+relocations, and 37 mask-ROM patches. A 3 MHz full-verify download completed in
+93.30 seconds; the first complete boot then passed contention, SAE with
+required PMF, EAPOL, DHCP, ARP, gateway/public 5/5 ping, and lease renewal.
+
+The same immutable image then ran 20 nRST trials:
+
+| Evidence | Result |
+| --- | --- |
+| Cross-task contention observed | 20/20 |
+| Holder / waiter completion | 20/20 / 20/20 |
+| WPA3 transition association with required PMF | 20/20 |
+| Authentication response-2 timeout | 0 |
+| TRNG/hash/MAC/cipher/P-256 failure counters | 0 in every run |
+| Gateway ICMP | 100/100 |
+| Public ICMP | 89/100 |
+
+The matrix command classified 13 runs as full pass, 6 as public-ping degraded,
+and 1 as public-ping timeout. Every degraded run had already completed
+contention, WPA3, EAPOL, DHCP, and gateway 5/5. Public loss remains the
+separately quantified external data-path boundary and is not counted as a
+crypto ownership failure. UART captures remain local under
+`/private/tmp/ws63-crypto-contention-reset-matrix`; the credential-bearing
+ephemeral build directory was removed by the HIL script.
+
 ## Resource Delta
 
 Against the preceding RKP-PBKDF2-only image:
@@ -87,9 +135,8 @@ an observed build result, not a stable ABI guarantee.
 
 ## Remaining W2E-H Gate
 
-1. Implement AES block operations, key-wrap, and CMAC through SPACC with explicit
-   keyslot ownership.
-2. Implement SAE group 19 P-256/Dragonfly through a fallible PKE capability.
+1. Run the completed hardware suite against a controlled WPA3-only SAE+PMF BSS.
+2. Publish the SVD/PAC and dependent crypto versions in dependency order.
 3. Keep standard vectors, software/original-SDK differential evidence, timeout
    and recovery tests, repeated WPA2/WPA3 HIL, and resource measurements for
-   every capability.
+   every future capability.
