@@ -244,6 +244,13 @@ pub fn hardware_p256_field_diagnostic_snapshot() -> [u32; 10] {
 pub fn hardware_p256_curve_diagnostic_snapshot() -> [u32; 10] {
     crypto::hardware_p256_curve_diagnostic_snapshot()
 }
+
+/// Return diagnostic-only cross-task crypto contention evidence.
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+#[doc(hidden)]
+pub fn hardware_crypto_contention_diagnostic_snapshot() -> [u32; 5] {
+    crypto::hardware_crypto_contention_diagnostic_snapshot()
+}
 mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]

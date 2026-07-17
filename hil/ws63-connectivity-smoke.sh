@@ -17,6 +17,7 @@ PROBE_SPEED="${PROBE_SPEED:-1000}"
 PORT="${PORT:-}"
 PYTHON="${PYTHON:-}"
 PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
+CRYPTO_CONTENTION_HIL="${WS63_CRYPTO_CONTENTION_HIL:-0}"
 
 usage() {
     cat <<'EOF'
@@ -27,7 +28,8 @@ Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           HISI_FWPKG, UART_BAUD, MONITOR,
           WS63_CONNECTIVITY_PROFILE={vendor-wpa2|upstream-wpa2|upstream-wpa3},
-          WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3.
+          WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3,
+          WS63_CRYPTO_CONTENTION_HIL=1 for the diagnostic two-task mutex gate.
 EOF
 }
 
@@ -92,6 +94,17 @@ preflight() {
             failed=1
             ;;
     esac
+    case "$CRYPTO_CONTENTION_HIL" in
+        0|1) ;;
+        *)
+            echo "ERROR: WS63_CRYPTO_CONTENTION_HIL must be 0 or 1" >&2
+            failed=1
+            ;;
+    esac
+    if [ "$CRYPTO_CONTENTION_HIL" = 1 ] && [ "$PROFILE" != upstream-wpa3 ]; then
+        echo "ERROR: crypto contention HIL currently requires upstream-wpa3" >&2
+        failed=1
+    fi
     for command in cargo JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv riscv64-unknown-elf-gcc; do
         require_command "$command" || failed=1
     done
@@ -189,6 +202,9 @@ case "$PROFILE" in
         FEATURES="full-init,upstream-supplicant,upstream-wpa3"
         ;;
 esac
+if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
+    FEATURES="$FEATURES,rf-crypto-contention-diag"
+fi
 
 echo "==> guarded connectivity link (profile=$PROFILE; credentials use an ephemeral target dir)"
 (
@@ -231,6 +247,9 @@ assert_marker 'RF5C_PING_OK target=1\.1\.1\.1 .*rx=0x0*[1-9a-fA-F]' 'public ICMP
 assert_marker 'RF5C_CONNECTIVITY_SUMMARY .*rx_queue_drop=0x0+([^0-9a-fA-F]|$)' 'bounded RX queue had no drops'
 assert_marker 'A4_NET_RUNNER_STEADY' 'long-lived network runner entered steady state'
 assert_marker 'A4_DHCP_RENEW_OK client=0x0*[1-9a-fA-F].*server=0x0*[1-9a-fA-F]' 'DHCP renewal request and response observed'
+if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
+    assert_marker 'RFDBG_HW_CONTENTION tests=0x0*1 failures=0x0+ observed=0x0*1 holder=0x0*1 waiter=0x0*1' 'two RTOS task owners contended and completed through one crypto service'
+fi
 assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|W2D_.*ERR|W2E_.*ERR|panicked at' 'no fatal connectivity marker'
 
 if [ "$fail" -ne 0 ]; then

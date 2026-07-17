@@ -141,6 +141,11 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             class: BackendErrorClass::Initialize,
             code: error.code(),
         })?;
+        #[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+        crate::crypto::ws63_crypto_contention_self_test().map_err(|error| BackendError {
+            class: BackendErrorClass::Initialize,
+            code: error.code(),
+        })?;
         let wifi = ActiveWifi::initialize(efuse).map_err(map_error)?;
         #[cfg(feature = "upstream-supplicant-port")]
         {

@@ -151,6 +151,29 @@ static P256_CURVE_INVERT_FAILURES: AtomicU32 = AtomicU32::new(0);
 static P256_CURVE_VALIDATE_FAILURES: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_arch = "riscv32")]
 static P256_CURVE_Y2_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_CONTEXT: StaticCell<CryptoContentionContext> = StaticCell::new();
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_TESTS: AtomicU32 = AtomicU32::new(0);
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_FAILURES: AtomicU32 = AtomicU32::new(0);
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_OBSERVED: AtomicU32 = AtomicU32::new(0);
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_HOLDER_COMPLETIONS: AtomicU32 = AtomicU32::new(0);
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+static CRYPTO_CONTENTION_WAITER_COMPLETIONS: AtomicU32 = AtomicU32::new(0);
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+struct CryptoContentionContext {
+    start: hisi_rf_rtos_driver::SemaphoreHandle,
+    done: hisi_rf_rtos_driver::SemaphoreHandle,
+    waiter_attempted: AtomicU32,
+    holder_releasing: AtomicU32,
+    contention_observed: AtomicU32,
+    holder_result: AtomicU32,
+    waiter_result: AtomicU32,
+}
 
 /// Install the unique HAL-owned KM/RKP and TRNG capabilities before radio initialization.
 #[cfg(target_arch = "riscv32")]
@@ -643,6 +666,18 @@ pub(crate) fn hardware_p256_curve_diagnostic_snapshot() -> [u32; 10] {
     ]
 }
 
+/// Return real cross-task CryptoService contention evidence.
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+pub(crate) fn hardware_crypto_contention_diagnostic_snapshot() -> [u32; 5] {
+    [
+        CRYPTO_CONTENTION_TESTS.load(Ordering::Relaxed),
+        CRYPTO_CONTENTION_FAILURES.load(Ordering::Relaxed),
+        CRYPTO_CONTENTION_OBSERVED.load(Ordering::Relaxed),
+        CRYPTO_CONTENTION_HOLDER_COMPLETIONS.load(Ordering::Relaxed),
+        CRYPTO_CONTENTION_WAITER_COMPLETIONS.load(Ordering::Relaxed),
+    ]
+}
+
 #[cfg(not(target_arch = "riscv32"))]
 pub(crate) fn install_hardware_crypto(
     _km: Km<'static>,
@@ -924,6 +959,187 @@ pub(crate) fn ws63_cipher_fault_recovery_self_test() -> Result<(), CryptoError> 
     let result = with_hardware_crypto(|backend| backend.diagnostic_cipher_recovery());
     if result.is_err() {
         CIPHER_RECOVERY_FAILURES.fetch_add(1, Ordering::Relaxed);
+    }
+    result
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+fn contention_runtime_error(code: u32) -> CryptoError {
+    CryptoError::Backend(0xffff_1200 | code)
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+fn signal_contention_done(
+    context: &CryptoContentionContext,
+    holder: bool,
+    result: Result<(), CryptoError>,
+) {
+    let code = result.map_or_else(|error| error.code(), |()| 0);
+    if holder {
+        context.holder_result.store(code, Ordering::Release);
+    } else {
+        context.waiter_result.store(code, Ordering::Release);
+    }
+    let _ = hisi_rf_rtos_driver::semaphore_up(context.done);
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+extern "C" fn crypto_contention_holder(argument: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    // SAFETY: the argument points to a StaticCell value that lives for the
+    // firmware lifetime and this diagnostic waits for both tasks to finish.
+    let context = unsafe { &*argument.cast::<CryptoContentionContext>() };
+    let result = with_crypto_service(|service| {
+        hisi_rf_rtos_driver::semaphore_up(context.start)
+            .map_err(|_| contention_runtime_error(1))?;
+        hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(10).unwrap())
+            .map_err(|_| contention_runtime_error(2))?;
+        if context.waiter_attempted.load(Ordering::Acquire) == 0 {
+            return Err(contention_runtime_error(3));
+        }
+        context.contention_observed.store(1, Ordering::Release);
+
+        const SHA256_EXPECTED: [u8; 32] = [
+            0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea, 0x41, 0x41, 0x40, 0xde, 0x5d, 0xae,
+            0x22, 0x23, 0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c, 0xb4, 0x10, 0xff, 0x61,
+            0xf2, 0x00, 0x15, 0xad,
+        ];
+        let mut output = [0; 32];
+        let result = TryHash::<32>::hash(&service.backend, &[&b"abc"[..]], &mut output);
+        let matches = output == SHA256_EXPECTED;
+        output.zeroize();
+        context.holder_releasing.store(1, Ordering::Release);
+        result?;
+        matches.then_some(()).ok_or(contention_runtime_error(4))
+    });
+    if result.is_ok() {
+        CRYPTO_CONTENTION_HOLDER_COMPLETIONS.fetch_add(1, Ordering::Relaxed);
+    }
+    signal_contention_done(context, true, result);
+    core::ptr::null_mut()
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+extern "C" fn crypto_contention_waiter(argument: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    // SAFETY: see `crypto_contention_holder`; both entries receive the same
+    // immutable synchronization context.
+    let context = unsafe { &*argument.cast::<CryptoContentionContext>() };
+    let result = (|| {
+        match hisi_rf_rtos_driver::semaphore_down(context.start, WaitTimeout::from_millis(500))
+            .map_err(|_| contention_runtime_error(5))?
+        {
+            WaitOutcome::Acquired => {}
+            WaitOutcome::TimedOut => return Err(contention_runtime_error(6)),
+        }
+        context.waiter_attempted.store(1, Ordering::Release);
+
+        const KEY: [u8; 16] = [
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf,
+            0x4f, 0x3c,
+        ];
+        const PLAIN: [u8; 16] = [
+            0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93,
+            0x17, 0x2a,
+        ];
+        const CIPHER: [u8; 16] = [
+            0x3a, 0xd7, 0x7b, 0xb4, 0x0d, 0x7a, 0x36, 0x60, 0xa8, 0x9e, 0xca, 0xf3, 0x24, 0x66,
+            0xef, 0x97,
+        ];
+        let mut output = [0; 16];
+        cipher_hardware(&KEY, &PLAIN, &mut output, false)?;
+        let matches = output == CIPHER;
+        output.zeroize();
+        if context.holder_releasing.load(Ordering::Acquire) == 0 {
+            return Err(contention_runtime_error(7));
+        }
+        matches.then_some(()).ok_or(contention_runtime_error(8))
+    })();
+    if result.is_ok() {
+        CRYPTO_CONTENTION_WAITER_COMPLETIONS.fetch_add(1, Ordering::Relaxed);
+    }
+    signal_contention_done(context, false, result);
+    core::ptr::null_mut()
+}
+
+#[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
+pub(crate) fn ws63_crypto_contention_self_test() -> Result<(), CryptoError> {
+    CRYPTO_CONTENTION_TESTS.fetch_add(1, Ordering::Relaxed);
+    let result = (|| {
+        let start =
+            hisi_rf_rtos_driver::semaphore_create(0).map_err(|_| contention_runtime_error(9))?;
+        let done = match hisi_rf_rtos_driver::semaphore_create(0) {
+            Ok(done) => done,
+            Err(_) => {
+                // SAFETY: no task has received `start` yet.
+                let _ = unsafe { hisi_rf_rtos_driver::semaphore_destroy(start) };
+                return Err(contention_runtime_error(10));
+            }
+        };
+        let Some(context) = CRYPTO_CONTENTION_CONTEXT.try_init(CryptoContentionContext {
+            start,
+            done,
+            waiter_attempted: AtomicU32::new(0),
+            holder_releasing: AtomicU32::new(0),
+            contention_observed: AtomicU32::new(0),
+            holder_result: AtomicU32::new(u32::MAX),
+            waiter_result: AtomicU32::new(u32::MAX),
+        }) else {
+            // SAFETY: neither handle escaped to a task.
+            let _ = unsafe { hisi_rf_rtos_driver::semaphore_destroy(start) };
+            let _ = unsafe { hisi_rf_rtos_driver::semaphore_destroy(done) };
+            return Err(contention_runtime_error(11));
+        };
+        let argument = core::ptr::from_ref(context).cast_mut().cast();
+        hisi_rf_rtos_driver::spawn(
+            crypto_contention_holder,
+            argument,
+            hisi_rf_rtos_driver::TaskConfig {
+                stack_size: core::num::NonZeroUsize::new(4 * 1024).unwrap(),
+                priority: 10,
+            },
+        )
+        .map_err(|_| contention_runtime_error(12))?;
+        let waiter_spawn = hisi_rf_rtos_driver::spawn(
+            crypto_contention_waiter,
+            argument,
+            hisi_rf_rtos_driver::TaskConfig {
+                stack_size: core::num::NonZeroUsize::new(4 * 1024).unwrap(),
+                priority: 10,
+            },
+        );
+
+        let completions = if waiter_spawn.is_ok() { 2 } else { 1 };
+        for _ in 0..completions {
+            match hisi_rf_rtos_driver::semaphore_down(done, WaitTimeout::from_millis(1_000))
+                .map_err(|_| contention_runtime_error(13))?
+            {
+                WaitOutcome::Acquired => {}
+                WaitOutcome::TimedOut => return Err(contention_runtime_error(14)),
+            }
+        }
+        if waiter_spawn.is_err() {
+            return Err(contention_runtime_error(15));
+        }
+
+        // SAFETY: both tasks signalled completion after their last access to
+        // either semaphore. They may still be in the return trampoline, but no
+        // longer retain or dereference these handles.
+        unsafe {
+            hisi_rf_rtos_driver::semaphore_destroy(start)
+                .map_err(|_| contention_runtime_error(16))?;
+            hisi_rf_rtos_driver::semaphore_destroy(done)
+                .map_err(|_| contention_runtime_error(17))?;
+        }
+        if context.contention_observed.load(Ordering::Acquire) == 0
+            || context.holder_result.load(Ordering::Acquire) != 0
+            || context.waiter_result.load(Ordering::Acquire) != 0
+        {
+            return Err(contention_runtime_error(18));
+        }
+        CRYPTO_CONTENTION_OBSERVED.fetch_add(1, Ordering::Relaxed);
+        Ok(())
+    })();
+    if result.is_err() {
+        CRYPTO_CONTENTION_FAILURES.fetch_add(1, Ordering::Relaxed);
     }
     result
 }
