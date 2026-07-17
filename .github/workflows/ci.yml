@@ -32,6 +32,13 @@ jobs:
             args: "--no-default-features --features chip-ws63"
           - crate: hisi-riscv-rt
             args: ""
+          # Keep the migration oracle and native WPA3 profiles independently
+          # buildable. Workspace feature unification cannot prove either
+          # profile's standalone capability boundary.
+          - crate: ws63-rf-rs
+            args: "--features net,wifi-wpa2-personal"
+          - crate: ws63-rf-rs
+            args: "--features net,upstream-supplicant-wpa3"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -113,6 +120,8 @@ jobs:
 
       - name: Check radio archive profile ownership
         run: python3 scripts/check-radio-profile.py
+      - name: Test WS63 runtime compatibility shims
+        run: cargo test -p ws63-rf-rs --target x86_64-unknown-linux-gnu --lib
       - name: Run clippy
         run: cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
 
