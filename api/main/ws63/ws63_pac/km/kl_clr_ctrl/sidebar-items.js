@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KlClrCtrlSpec"],"type":["KeyCountR","KeyCountW","KeySizeR","KeySizeW","R","StartR","StartW","W"]};

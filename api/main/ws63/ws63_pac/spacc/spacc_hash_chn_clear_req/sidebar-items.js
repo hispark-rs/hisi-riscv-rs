@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccHashChnClearReqSpec"],"type":["HashChnClearReqW","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpaccHashChnClearReqSpec"],"type":["HashChnClearReqW","W"]};

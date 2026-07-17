@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpiInsrSpec"],"type":["MstIsR","R","RxfIsR","RxoIsR","RxuIsR","TxeIsR","TxoIsR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpiInsrSpec"],"type":["MstIsR","R","RxfIsR","RxoIsR","RxuIsR","TxeIsR","TxoIsR"]};

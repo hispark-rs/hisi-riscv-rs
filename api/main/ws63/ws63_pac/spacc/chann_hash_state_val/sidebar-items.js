@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ChannHashStateValSpec"],"type":["R","StateR","StateW","W"]};

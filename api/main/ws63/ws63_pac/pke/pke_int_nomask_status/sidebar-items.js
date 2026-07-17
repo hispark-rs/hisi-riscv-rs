@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PkeIntNomaskStatusSpec"],"type":["FinishIntNomaskR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["PkeIntNomaskStatusSpec"],"type":["FinishIntNomaskR","FinishIntNomaskW","R","W"]};

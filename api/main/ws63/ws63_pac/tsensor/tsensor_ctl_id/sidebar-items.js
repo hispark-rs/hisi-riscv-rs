@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorCtlIdSpec"],"type":["R","TsensorCtlIdR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["TsensorCtlIdSpec"],"type":["R","TsensorCtlIdR"]};

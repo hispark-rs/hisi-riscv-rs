@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-487d562e.js";
+            window.path_to_searchindex_js = "../searchindex-67fbfcc8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -251,7 +251,9 @@ let uart = Uart::new_uart0(p.UART0, Config::default());</code></pre>
 <p>SPI <code>Config { frequency, mode, data_bits }</code>；UART <code>Config { baudrate, data_bits, parity, stop_bits, clock }</code>，其中 <code>clock</code> 是 <code>UartClock::{Pll, Boot}</code>。</p>
 </blockquote>
 <h2 id="单外设驱动new-模式"><a class="header" href="#单外设驱动new-模式">单外设驱动（<code>new()</code> 模式）</a></h2>
-<p>多数驱动遵循 <code>DriverName::new(peripheral)</code>：<code>Watchdog::new</code>、<code>TimerDriver::new</code>、<code>TcxoDriver::new</code>、<code>RtcDriver::new</code>、<code>LsAdc::new</code>、<code>I2sDriver::new</code>、<code>PwmChannel::new(&amp;Pwm, channel)</code>、<code>SfcDriver::new</code>、<code>PkeDriver::new</code>、<code>SpaccDriver::new</code>、<code>KmDriver::new</code>、<code>TrngDriver::new</code>、<code>TempSensor::new</code>、<code>EfuseDriver</code>、<code>System::new(SysCtl0, GlbCtlM, CldoCrg)</code>。其中未上板或 soundness 未闭合的模块/方法会被 <code>unstable</code> 门控；完整签名见各模块 rustdoc。</p>
+<p>多数驱动遵循 <code>DriverName::new(peripheral)</code>：<code>Watchdog::new</code>、<code>TimerDriver::new</code>、<code>TcxoDriver::new</code>、<code>RtcDriver::new</code>、<code>LsAdc::new</code>、<code>I2sDriver::new</code>、<code>PwmChannel::new(&amp;Pwm, channel)</code>、<code>SfcDriver::new</code>、<code>KmDriver::new</code>、<code>TrngDriver::new</code>、<code>TempSensor::new</code>、<code>EfuseDriver</code>、<code>System::new(SysCtl0, GlbCtlM, CldoCrg)</code>。其中未上板或 soundness 未闭合的模块/方法会被 <code>unstable</code> 门控；完整签名见各模块 rustdoc。</p>
+<p><code>Spacc</code> 与 <code>Pke</code> 只作为唯一外设 token 暴露，不在 HAL 提供算法式 driver。SPACC/PKE 的
+fallible channel、descriptor、keyslot、timeout 和密码能力实现归芯片 crypto backend。</p>
 <h2 id="时钟clockrs--clock_initrs仅-chip-ws63"><a class="header" href="#时钟clockrs--clock_initrs仅-chip-ws63">时钟（<code>clock.rs</code> / <code>clock_init.rs</code>，仅 <code>chip-ws63</code>）</a></h2>
 <ul>
 <li><code>clock_init::init_clocks(&amp;sys_ctl0, &amp;cldo_crg) -&gt; SystemClocks</code> — 为不经 flashboot 启动的固件初始化系统时钟，需 <code>unstable</code>。</li>

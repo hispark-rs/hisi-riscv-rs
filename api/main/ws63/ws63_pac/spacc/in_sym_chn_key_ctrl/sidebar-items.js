@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InSymChnKeyCtrlSpec"],"type":["AlgModeR","AlgModeW","AlgSelR","AlgSelW","DataWidthR","DataWidthW","DecryptR","DecryptW","KeyChnIdR","KeyChnIdW","KeyLenR","KeyLenW","R","W"]};

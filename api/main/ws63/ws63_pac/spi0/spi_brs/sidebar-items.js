@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpiBrsSpec"],"type":["ClkDivR","ClkDivW","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpiBrsSpec"],"type":["FrdvR","FrdvW","R","W"]};

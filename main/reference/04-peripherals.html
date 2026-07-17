@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-487d562e.js";
+            window.path_to_searchindex_js = "../searchindex-67fbfcc8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -217,8 +217,6 @@
 <tr><td><code>sfc</code></td><td>SPI Flash 控制器</td><td style="text-align: center">WS63</td><td><code>0x4800_0000</code>（safety.rs）</td><td><code>SfcDriver</code>（<code>BusConfig</code>）</td><td>无</td><td style="text-align: center">✅</td></tr>
 <tr><td><code>efuse</code></td><td>eFuse / OTP v151</td><td style="text-align: center">WS63</td><td>STS+0x2C / CTL+0x30 / data+0x800</td><td><code>EfuseDriver</code></td><td>无</td><td style="text-align: center">✅（只读）</td></tr>
 <tr><td><code>km</code></td><td>密钥管理 KLAD/RKP</td><td style="text-align: center">WS63</td><td>—（KEYSLOT_COUNT=8）</td><td><code>KmDriver</code></td><td>无</td><td style="text-align: center">✅</td></tr>
-<tr><td><code>pke</code></td><td>公钥引擎（RSA/ECC/SM2）</td><td style="text-align: center">WS63</td><td>—</td><td><code>PkeDriver</code></td><td>无</td><td style="text-align: center">✅</td></tr>
-<tr><td><code>spacc</code></td><td>安全加速器（AES/SM4/HASH）</td><td style="text-align: center">WS63</td><td>Crypto <code>0x4410_0000</code>（safety.rs）</td><td><code>SpaccDriver</code></td><td>无</td><td style="text-align: center">✅</td></tr>
 <tr><td><code>trng</code></td><td>TRNG（FRO 熵源）</td><td style="text-align: center">WS63</td><td>—</td><td><code>TrngDriver</code>（<code>TrngError</code>）</td><td>无</td><td style="text-align: center">✅</td></tr>
 <tr><td><code>trng_v1</code></td><td>TRNG v1</td><td style="text-align: center">BS21</td><td><code>0x5200_9000</code></td><td><code>Trng</code>（<code>TrngError</code>）</td><td>无</td><td style="text-align: center">✅</td></tr>
 <tr><td><code>system</code></td><td>系统控制（时钟/复位/电源）</td><td style="text-align: center">WS63</td><td>CHIP_RESET <code>0x4000_2110</code> 等</td><td><code>System</code>、<code>ResetReason</code></td><td><code>reset_demo</code></td><td style="text-align: center">✅</td></tr>
@@ -234,6 +232,9 @@
 </table>
 </div>
 <p>裸板自检：✅ 可在裸板上自验（无需外接器件）；⚠️ 需外接器件/接线/从机；n/a 非外设驱动。</p>
+<p>WS63 <code>Peripherals</code> 仍包含唯一 <code>Spacc</code> 与 <code>Pke</code> token，但 HAL 不提供对应算法 driver
+模块。已验证的 SPACC/KM/TRNG 密码能力由 <code>hisi-crypto-ws63</code> 消费这些 token 实现；PKE
+能力仍待后续 backend 与 HIL 证据。</p>
 <h2 id="dma-控制器"><a class="header" href="#dma-控制器">DMA 控制器</a></h2>
 <div class="table-wrapper">
 <table>

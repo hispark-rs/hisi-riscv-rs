@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["LeaDfxInfoSpec"],"type":["LeaDfxInfoR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["LeaDfxInfoSpec"],"type":["LeaDfxInfoR","R"]};

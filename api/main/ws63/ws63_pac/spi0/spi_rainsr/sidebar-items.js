@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpiRainsrSpec"],"type":["MstIrqR","R","RxfIrqR","RxoIrqR","RxuIrqR","TxeIrqR","TxoIrqR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpiRainsrSpec"],"type":["MstIrqR","R","RxfIrqR","RxoIrqR","RxuIrqR","TxeIrqR","TxoIrqR"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InHashChnNodeLengthSpec"],"type":["NodeLengthR","NodeLengthW","R","W"]};

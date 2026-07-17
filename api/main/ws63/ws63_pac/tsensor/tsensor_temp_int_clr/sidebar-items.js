@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["TsensorTempIntClrSpec"],"type":["DoneIntClrW","OutThreshIntClrW","OvertempIntClrW","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["TsensorTempIntClrSpec"],"type":["DoneIntClrW","OutThreshIntClrW","OvertempIntClrW","W"]};

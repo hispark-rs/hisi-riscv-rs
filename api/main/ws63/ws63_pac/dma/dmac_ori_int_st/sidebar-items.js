@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DmacOriIntStSpec"],"type":["OriIntErrStR","OriIntTransStR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["DmacOriIntStSpec"],"type":["OriIntErrStR","OriIntTransStR","R"]};

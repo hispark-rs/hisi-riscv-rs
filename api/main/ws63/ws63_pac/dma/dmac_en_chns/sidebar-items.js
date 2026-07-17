@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DmacEnChnsSpec"],"type":["EnChnsR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["DmacEnChnsSpec"],"type":["EnChnsR","R"]};

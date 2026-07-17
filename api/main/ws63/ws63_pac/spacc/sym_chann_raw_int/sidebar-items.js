@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SymChannRawIntSpec"],"type":["R","SymChannRawIntR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SymChannRawIntSpec"],"type":["R","SymChannRawIntR","SymChannRawIntW","W"]};

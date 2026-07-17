@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PwmStart1Spec"],"type":["PwmStart1W","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["PwmStart1Spec"],"type":["PwmStart1W","W"]};

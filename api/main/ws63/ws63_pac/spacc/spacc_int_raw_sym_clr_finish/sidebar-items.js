@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccIntRawSymClrFinishSpec"],"type":["R","RawSymClrFinishIntR","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpaccIntRawSymClrFinishSpec"],"type":["R","RawSymClrFinishIntR","RawSymClrFinishIntW","W"]};

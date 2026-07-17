@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PkeAlarmStatusSpec"],"type":["AlarmIntR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["PkeAlarmStatusSpec"],"type":["AlarmIntR","AlarmIntW","R","W"]};

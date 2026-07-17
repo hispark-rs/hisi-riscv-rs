@@ -270,15 +270,15 @@
 <a href=#270 id=270 data-nosnippet>270</a>    // programs a non-zero div_fra. (issue #15)
 <a href=#271 id=271 data-nosnippet>271</a>    </span><span class="kw">let </span>div64 = ((pclk <span class="kw">as </span>u64) * <span class="number">4 </span>/ (baudrate <span class="kw">as </span>u64)) <span class="kw">as </span>u32; <span class="comment">// = div * 64
 <a href=#272 id=272 data-nosnippet>272</a>    </span><span class="kw">let </span>div = div64 &gt;&gt; <span class="number">6</span>;
-<a href=#273 id=273 data-nosnippet>273</a>    <span class="kw">let </span>div_fra = (div64 &amp; <span class="number">0x3F</span>) <span class="kw">as </span>u16;
-<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">let </span>div_l = (div &amp; <span class="number">0xFF</span>) <span class="kw">as </span>u16;
-<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>div_h = ((div &gt;&gt; <span class="number">8</span>) &amp; <span class="number">0xFF</span>) <span class="kw">as </span>u16;
-<a href=#276 id=276 data-nosnippet>276</a>    r.div_l().write(|w| <span class="kw">unsafe </span>{ w.bits(div_l) });
-<a href=#277 id=277 data-nosnippet>277</a>    r.div_h().write(|w| <span class="kw">unsafe </span>{ w.bits(div_h) });
-<a href=#278 id=278 data-nosnippet>278</a>    r.div_fra().write(|w| <span class="kw">unsafe </span>{ w.bits(div_fra) });
+<a href=#273 id=273 data-nosnippet>273</a>    <span class="kw">let </span>div_fra = div64 &amp; <span class="number">0x3F</span>;
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">let </span>div_l = div &amp; <span class="number">0xFF</span>;
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>div_h = (div &gt;&gt; <span class="number">8</span>) &amp; <span class="number">0xFF</span>;
+<a href=#276 id=276 data-nosnippet>276</a>    r.div_l().write(|w| <span class="kw">unsafe </span>{ w.div_l().bits(div_l <span class="kw">as </span>u8) });
+<a href=#277 id=277 data-nosnippet>277</a>    r.div_h().write(|w| <span class="kw">unsafe </span>{ w.div_h().bits(div_h <span class="kw">as </span>u8) });
+<a href=#278 id=278 data-nosnippet>278</a>    r.div_fra().write(|w| <span class="kw">unsafe </span>{ w.div_fra().bits(div_fra <span class="kw">as </span>u8) });
 <a href=#279 id=279 data-nosnippet>279</a>
 <a href=#280 id=280 data-nosnippet>280</a>    <span class="comment">// Configure data bits, parity, stop bits
-<a href=#281 id=281 data-nosnippet>281</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>ctl = <span class="number">0u16</span>;
+<a href=#281 id=281 data-nosnippet>281</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>ctl = <span class="number">0u32</span>;
 <a href=#282 id=282 data-nosnippet>282</a>    ctl |= <span class="kw">match </span>config.data_bits {
 <a href=#283 id=283 data-nosnippet>283</a>        DataBits::Five =&gt; <span class="number">0</span>,
 <a href=#284 id=284 data-nosnippet>284</a>        DataBits::Six =&gt; <span class="number">1 </span>&lt;&lt; <span class="number">2</span>,
@@ -298,7 +298,7 @@
 <a href=#298 id=298 data-nosnippet>298</a>    <span class="kw">if </span><span class="macro">matches!</span>(config.stop_bits, StopBits::Two) {
 <a href=#299 id=299 data-nosnippet>299</a>        ctl |= <span class="number">1 </span>&lt;&lt; <span class="number">7</span>;
 <a href=#300 id=300 data-nosnippet>300</a>    }
-<a href=#301 id=301 data-nosnippet>301</a>    r.uart_ctl().write(|w| <span class="kw">unsafe </span>{ w.bits(ctl) }); <span class="comment">// div_en=0: DATA maps back to TX/RX.
+<a href=#301 id=301 data-nosnippet>301</a>    r.uart_ctl().write(|w| <span class="kw">unsafe </span>{ w.bits(ctl <span class="kw">as _</span>) }); <span class="comment">// div_en=0: DATA maps back to TX/RX.
 <a href=#302 id=302 data-nosnippet>302</a>
 <a href=#303 id=303 data-nosnippet>303</a>    // Reset and enable FIFO with the vendor default trigger levels:
 <a href=#304 id=304 data-nosnippet>304</a>    // TX interrupt threshold = 2 chars, RX threshold = 1/4 full.
@@ -311,7 +311,7 @@
 <a href=#311 id=311 data-nosnippet>311</a>    </span><span class="kw">pub fn </span>write_byte(<span class="kw-2">&amp;</span><span class="self">self</span>, byte: u8) {
 <a href=#312 id=312 data-nosnippet>312</a>        <span class="kw">let </span>r = uart_regs(T::PORT);
 <a href=#313 id=313 data-nosnippet>313</a>        <span class="kw">while </span>r.fifo_status().read().tx_fifo_full().bit_is_set() {}
-<a href=#314 id=314 data-nosnippet>314</a>        r.data().write(|w| <span class="kw">unsafe </span>{ w.bits(byte <span class="kw">as </span>u16) });
+<a href=#314 id=314 data-nosnippet>314</a>        r.data().write(|w| <span class="kw">unsafe </span>{ w.data().bits(byte) });
 <a href=#315 id=315 data-nosnippet>315</a>    }
 <a href=#316 id=316 data-nosnippet>316</a>
 <a href=#317 id=317 data-nosnippet>317</a>    <span class="doccomment">/// Read one byte, or `None` if this UART's RX FIFO is empty.

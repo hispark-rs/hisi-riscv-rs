@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["HashChannRawIntSpec"],"type":["HashChannRawIntR","HashChannRawIntW","R","W"]};

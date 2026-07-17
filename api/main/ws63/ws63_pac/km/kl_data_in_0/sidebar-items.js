@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["KlDataIn0Spec"],"type":["DataR","DataW","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["KlDataIn0Spec"],"type":["DataW","W"]};

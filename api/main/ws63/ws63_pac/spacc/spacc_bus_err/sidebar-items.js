@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SpaccBusErrSpec"],"type":["BusErrR","R","W"]};
+window.SIDEBAR_ITEMS = {"struct":["SpaccBusErrSpec"],"type":["BusErrR","R"]};
