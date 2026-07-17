@@ -512,9 +512,14 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      重复连接门槛已经闭合。同一已提交、未重烧镜像在整板断电上电后，UART 只读监听连续
      观察到 `A4_NET_RUNNER_ALIVE lease=up`，证明 cold start 最终进入持有 DHCP lease 的
      长生命周期 network runner；由于监听在启动后接入，该样本不包含逐阶段 cold-boot 时序。
-     WPA3-SAE 进入 stable 前仍须补受控 WPA3-only SAE+PMF，以及剩余 point inversion、
-     curve validation 与 `y^2` composition 等 Dragonfly 算术边界。不得把这些已验证的
-     小能力扩大成“完整 SAE/Dragonfly 已硬件化”。依赖固定为
+     point inversion、curve validation 与 `y^2` composition 随后也已通过固定 P-256
+     小能力 contract 接入硬件。最终 20-reset 矩阵累计 2,660 次曲线组合请求（80 次
+     inversion、100 次 validation、2,480 次 `y^2`）全部零失败，association/DHCP
+     20/20、gateway ICMP 100/100；同口径 guarded ELF 的 text 增加 5,616 bytes、data
+     不变、BSS 增加 32 bytes，三个 C ABI 入口的直接栈帧增量分别为 64/224/128 bytes。
+     完整口径见上述 PKE evidence。由此当前 hostap exact-P256 Dragonfly 所需的小能力
+     已完成显式硬件迁移；这仍不等于 generic ECC/bignum provider，也不替代受控
+     WPA3-only SAE+PMF gate。依赖固定为
      `upstream supplicant -> hisi-crypto fallible traits -> hisi-crypto-ws63 -> WS63 cipher/TRNG`；
      supplicant 不得直接调用芯片 UAPI，也不得重新依赖 LiteOS 或 vendor supplicant。
      backend 必须在构造、feature 或资源注入时显式选择 software、hardware 或准确标注的
@@ -721,15 +726,16 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
   真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。真实跨 owner contention
   injection 和调用方注入 DMA storage 仍是稳定化前 gate。
-- [ ] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC，以及 SAE P-256 point
+- [x] WPA 握手的 PBKDF2-HMAC-SHA1、SHA/HMAC、AES key-wrap/CMAC，以及 SAE P-256 point
   multiplication/addition 和 fixed-prime field multiplication/squaring/exponentiation 已完成
-  硬件迁移；exact-P256 inverse/Legendre 已复用同一 pow capability。剩余 point inversion、
-  curve validation 与 `y^2` composition 必须按实际 backend 能力逐项列出，
-  不能由 point-mul 证明替代。每一步记录 RustCrypto/原厂差分、重复握手 HIL、性能、栈和代码
-  尺寸。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
+  硬件迁移；exact-P256 inverse/Legendre 已复用同一 pow capability，point inversion、
+  curve validation 与 `y^2` composition 也已逐项接入并独立计数。每一步均记录
+  RustCrypto/原厂差分、重复握手 HIL、性能、直接栈帧和代码尺寸；直接栈帧不冒充完整调用链
+  峰值。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
-  断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；WPA3-only 和剩余
-  Dragonfly 算术仍阻塞 WPA3-SAE stable 声明。
+  断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；受控 WPA3-only
+  SAE+PMF、真实跨 owner contention、调用方注入 PKE scratch 和依赖版本发布仍阻塞
+  WPA3-SAE stable 声明。
 
 #### A2 progress
 
