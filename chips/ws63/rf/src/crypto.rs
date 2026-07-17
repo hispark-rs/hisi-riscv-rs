@@ -21,7 +21,7 @@ use hisi_crypto::{
     },
 };
 #[cfg(target_arch = "riscv32")]
-use hisi_crypto_ws63::{Ws63Crypto, Ws63P256};
+use hisi_crypto_ws63::{Ws63Crypto, Ws63CryptoResources, Ws63CryptoStorage, Ws63P256};
 use hisi_hal::peripherals::{Km, Pke, Spacc, Trng};
 #[cfg(target_arch = "riscv32")]
 use hisi_rf_rtos_driver::{MutexHandle, WaitOutcome, WaitTimeout};
@@ -45,6 +45,8 @@ struct CryptoService {
 
 #[cfg(target_arch = "riscv32")]
 static CRYPTO_CELL: StaticCell<CryptoService> = StaticCell::new();
+#[cfg(target_arch = "riscv32")]
+static CRYPTO_STORAGE: StaticCell<Ws63CryptoStorage> = StaticCell::new();
 #[cfg(target_arch = "riscv32")]
 static CRYPTO_SERVICE: AtomicPtr<CryptoService> = AtomicPtr::new(core::ptr::null_mut());
 #[cfg(target_arch = "riscv32")]
@@ -160,8 +162,13 @@ pub(crate) fn install_hardware_crypto(
 ) -> Result<(), CryptoError> {
     let mutex =
         hisi_rf_rtos_driver::mutex_create().map_err(|_| CryptoError::Backend(0xffff_1002))?;
+    let Some(storage) = CRYPTO_STORAGE.try_init(Ws63CryptoStorage::new()) else {
+        // SAFETY: this handle was just created above and has not escaped.
+        let _ = unsafe { hisi_rf_rtos_driver::mutex_destroy(mutex) };
+        return Err(CryptoError::InvalidValue);
+    };
     let Some(service) = CRYPTO_CELL.try_init(CryptoService {
-        backend: Ws63Crypto::new(km, spacc, trng),
+        backend: Ws63Crypto::new(Ws63CryptoResources::new(km, spacc, trng, storage)),
         p256: Ws63P256::new(pke),
         mutex,
     }) else {
