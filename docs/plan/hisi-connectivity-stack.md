@@ -546,8 +546,13 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      `20/20`，每轮 TRNG/hash/MAC/cipher/P-256 failure counter 均为 0，gateway ICMP
      `100/100`；公网 `89/100` 继续归入外部数据面边界。证据见
      [W2E-H SPACC hash/HMAC](evidence/ws63-rf-w2e-h-spacc-hash-2026-07-16.md)。最初使用
-     timed sleep 的诊断暴露了 all-blocked timed-wake seam；该问题独立跟踪，不能把
-     contention gate 的显式 yield 描述成 timer 修复。
+     timed sleep 的诊断暴露了 all-blocked timed-wake seam；`hisi-rtos` commit
+     `2024e62` 已修复 idle 的 IRQ handoff 和 ordinary-ready ownership，独立
+     `rtos_preemption` 镜像在创建任何动态任务前验证 main sleep -> idle -> TIMER_INT0 wake，
+     同一镜像 20 次 nRST 均得到 `A3_RTOS_IDLE_WAKE_OK` 与
+     `A3_RTOS_PREEMPTION_OK`。证据见
+     [A3 unified task-context preemption](evidence/ws63-rf-a3-unified-context-2026-07-14.md)。
+     contention gate 的显式 yield 仍只证明 mutex handoff，不能被改写成 timer 证据。
      `Ws63CryptoResources` 也是后续 capability builder 的边界：不得重新膨胀为要求所有
      引擎的大构造器，未注入的 PKE/SPACC/RKP/TRNG 能力应在类型或显式构造错误上可见。
      后续纯结构整理只在当前 W2E-H/HIL 冻结后进行，内部按 error、RKP/TRNG、SPACC
@@ -829,6 +834,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   272-byte `TaskContext` ABI；interrupt 保存完整 GPR/FPR，cooperative 路径只刷新 ABI
   callee-saved 槽，所有 restore 统一走 `mret`。`rtos_preemption` 连续三次真机得到
   `timer_irqs=101`、`slice_preemptions=101`、`software_irqs=2`、`fp_failures=0`。
+  2026-07-17 follow-up 又在动态任务创建前增加 all-blocked idle/timed-wake gate；同一镜像
+  20 次 nRST 均得到 `A3_RTOS_IDLE_WAKE_OK` 与 `A3_RTOS_PREEMPTION_OK`，没有 panic、
+  exception 或 failure marker。
   证据见 [A3 unified task-context preemption](evidence/ws63-rf-a3-unified-context-2026-07-14.md)。
 - [x] Recursive mutex 已从 WS63 ABI shim 下沉到 runtime-neutral contract；`hisi-rtos`
   实现 priority-ordered waiters、direct handoff、timeout cleanup 和 transitive priority

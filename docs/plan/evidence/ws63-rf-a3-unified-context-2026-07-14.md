@@ -62,6 +62,47 @@ deliberately overwrites `ft0` in the handler. `fp_failures=0` therefore proves
 that the interrupted full FPR frame is restored, rather than merely showing that
 both tasks made progress.
 
+### 2026-07-17 Idle Timed-Wake Regression
+
+The crypto-contention HIL later exposed a separate all-blocked seam: after the
+last business task slept, TIMER_INT0 made it ready but the IRQ epilogue treated
+the reserved idle task as an ordinary cooperative task and refused to switch.
+The same path could also enqueue idle in an ordinary ready queue. `hisi-rtos`
+commit `2024e62` now keeps idle out of those queues and makes a ready business
+task replace running idle at the outermost IRQ epilogue. Ordinary cooperative
+user tasks remain non-preemptive.
+
+The host gate now contains 46 unit tests plus the compile-fail capability suite.
+The two focused regressions prove that an idle yield does not enqueue idle and
+that a timed sleeper wakes from idle. Formatting, the 39-requirement evidence
+map, RV32IMFC clippy with `-D warnings`, and the RV32IMFC release build passed.
+
+`rtos_preemption` commit `be5034b` sleeps the adopted main task for 20 ms before
+creating any dynamic worker. During that interval idle is the only eligible
+task; reaching `A3_RTOS_IDLE_WAKE_OK` therefore requires TIMER_INT0 to wake main
+and replace idle. A 3 MHz probe-rs raw-bin download completed with full verify;
+an earlier verification failure was discarded as transport noise and did not
+count as firmware evidence. The successful image then produced:
+
+```text
+A3_STAGE_IRQS_ON
+A3_RTOS_IDLE_WAKE_OK
+A3_STAGE_TASKS_OK
+A3_STAGE_SLEEP_RETURNED
+loops0=5 loops1=5 timer_irqs=102 slice_preemptions=100 software_irqs=3 fp_failures=0
+A3_RTOS_PREEMPTION_OK
+```
+
+Without reflashing, 20 consecutive physical J-Link nRST captures produced both
+`A3_RTOS_IDLE_WAKE_OK` and `A3_RTOS_PREEMPTION_OK` in every run, with zero panic,
+exception, or failure markers.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `rtos_preemption` ELF | `55c047b947912e6e6aea8019da9da87a1c2917b5a3e1940a0a6fd6b3af06d235` |
+| canonical `.hisi.img` | `585a405c25910735fbb849f34ec69636c0d7e0a894bf4419af55090f44f3139f` |
+| FlashPlan JSON | `d893afe84dc5230ab3d7e8ae38beb016cc096d080b64bbbc67fca1ebfdf65a98` |
+
 ## Ownership Boundary
 
 `hisi-rtos` remains the sole maintained native backend and will eventually own
