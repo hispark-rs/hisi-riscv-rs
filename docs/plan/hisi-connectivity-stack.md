@@ -852,7 +852,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
 
 #### A5R -- Executable RTOS Semantics
 
-- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.8` 冻结
+- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.9` 冻结
   `RuntimeContractVersion 1.0`、细粒度 capability bitset 和 fail-closed install/require；RF 在
   claim 硬件、准备 vendor memory 前先要求 contract v1，不能因函数签名相同就宣称兼容。
 - [ ] 给 contract 补独立 execution profile 描述，区分 cooperative、ported cooperative、
@@ -872,9 +872,10 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
 - [ ] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
-  backend；未通过者不能注册为 RF production runtime。首批 schema 已由
-  `hisi-rf-rtos-driver 0.1.0-alpha.8` 发布，`hisi-rtos` 已用生产 `Sched` 核心执行
-  `priority_then_fifo` 与 `nested_scheduler_lock`；其余场景仍是完成门槛。
+  backend；未通过者不能注册为 RF production runtime。共享 schema 已由
+  `hisi-rf-rtos-driver 0.1.0-alpha.9` 发布，`hisi-rtos` 已用生产 `Sched` 核心执行
+  priority/FIFO、nested scheduler lock、sleep deadline、nested IRQ exit 和 task exit/reuse；
+  semaphore、mutex PI、wait timeout/cleanup 与 stale handle 场景仍是完成门槛。
 - [ ] WS63 vendor priority/tick/return-code 差异只在 archive-hash-bound compatibility
   profile 中转换；LiteOS oracle 测试约束 adapter，不反向定义通用 `hisi-rtos` API。通用
   scheduler 的内部模型、Kani/TLA+ 和 policy 仍以
