@@ -67,34 +67,38 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: astral-sh/setup-uv@v7
 
       - name: Check agent guide sync
         run: cmp -s AGENTS.md CLAUDE.md
 
       - name: Check embedded-test HIL registrations
-        run: python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
+        run: uv run .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
 
       - name: Check HIL smoke marker references
-        run: python3 .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+        run: uv run .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+
+      - name: Check Python uv ownership
+        run: uv run scripts/check-python-uv.py
 
       - name: Check image-format truth-source drift
-        run: python3 scripts/check-image-format-truth.py
+        run: uv run scripts/check-image-format-truth.py
 
       - name: Check happy-path documentation drift
-        run: python3 scripts/check-happy-path-docs.py
+        run: uv run scripts/check-happy-path-docs.py
 
       - name: Check tutorial snippet contracts
-        run: python3 scripts/check-tutorial-snippets.py
+        run: uv run scripts/check-tutorial-snippets.py
 
       - name: Check chip docs metadata
-        run: python3 scripts/check-chip-docs.py
+        run: uv run scripts/check-chip-docs.py
 
       - name: Check versioned docs metadata
-        run: python3 scripts/check-versioned-docs.py
+        run: uv run scripts/check-versioned-docs.py
 
       - name: Check Pages deployment payload
         run: >-
-          python3 scripts/deploy-pages.py --dry-run
+          uv run scripts/deploy-pages.py --dry-run
           --artifact-id 123
           --build-version 0123456789abcdef0123456789abcdef01234567
 
@@ -106,6 +110,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: astral-sh/setup-uv@v7
 
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
@@ -126,6 +131,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: astral-sh/setup-uv@v7
 
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
@@ -149,7 +155,7 @@ jobs:
         run: scripts/seed-docs-site.sh --out site
 
       - name: Resolve published latest docs version
-        run: echo "LATEST_VERSION=$(python3 scripts/read-doc-latest.py --site site)" >> "$GITHUB_ENV"
+        run: echo "LATEST_VERSION=$(uv run scripts/read-doc-latest.py --site site)" >> "$GITHUB_ENV"
 
       - name: Build the mdBook handbook (docs/ -> docs/book)
         run: mdbook build docs
@@ -157,16 +163,16 @@ jobs:
           DOC_VERSION: main
 
       - name: Assemble versioned handbook
-        run: python3 scripts/assemble-docs-site.py --version main --latest-version "${LATEST_VERSION}" --book docs/book --out site
+        run: uv run scripts/assemble-docs-site.py --version main --latest-version "${LATEST_VERSION}" --book docs/book --out site
 
       - name: Refresh shared docs theme assets
-        run: python3 scripts/sync-doc-theme-assets.py --book docs/book --site site
+        run: uv run scripts/sync-doc-theme-assets.py --book docs/book --site site
 
       - name: Build versioned API documentation
         run: scripts/build-rustdoc-site.sh --version main --out site
 
       - name: Check versioned docs site
-        run: python3 scripts/check-versioned-docs.py site
+        run: uv run scripts/check-versioned-docs.py site
 
       - name: Upload docs artifact
         uses: actions/upload-artifact@v7
@@ -189,6 +195,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
 
       - name: Download docs artifact
         uses: actions/download-artifact@v8
@@ -217,14 +224,14 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         run: >-
-          python3 scripts/deploy-pages.py
+          uv run scripts/deploy-pages.py
           --artifact-id "${{ steps.pages_artifact.outputs.artifact_id }}"
           --build-version "${{ steps.docs_state.outputs.deployment_sha }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify live main documentation
-        run: python3 scripts/check-live-docs.py --version main
+        run: uv run scripts/check-live-docs.py --version main
 
   # ── mdBook internal link check (gating) ───────────────────────
   # Validates the handbook's own cross-references (SUMMARY entries, relative
@@ -237,6 +244,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
 
       - name: Install mdBook + linkcheck
         uses: taiki-e/install-action@v2

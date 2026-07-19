@@ -52,7 +52,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 
 - 本地与 CI 必须通过：
   - `cargo fmt --all -- --check`
-  - `python3 scripts/check-register-access.py`
+  - `uv run crates/hisi-hal/scripts/check-register-access.py`
   - 以下 target 命令统一带
     `-Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf`；HAL 独立仓 pin
     `nightly-2026-07-09` + `rust-src`，不得依赖父仓配置或用 host build 代替。

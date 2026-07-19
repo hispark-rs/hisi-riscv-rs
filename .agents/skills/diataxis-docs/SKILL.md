@@ -15,7 +15,7 @@ Use this skill to keep repository documentation useful, current, and organized b
 4. For mechanical drift checks, run:
 
 ```bash
-python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs
+uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs
 ```
 
 Add `--links` for local Markdown link targets and `--current-claims` when specifically hunting stale "current/default/stable" statements. The script is a scanner, not an oracle. Treat its output as leads to inspect.
@@ -70,7 +70,7 @@ Do not mix modes just because one page is convenient. If a page needs another mo
 4. For moved content, leave a short pointer where readers would expect to find it.
 5. Run relevant checks:
    - `mdbook build docs` for mdBook changes;
-   - `python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs` for drift leads;
+   - `uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs` for drift leads;
    - project-specific build/test commands when docs describe runnable behavior.
 
 ## Forward Testing

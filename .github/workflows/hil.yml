@@ -82,7 +82,7 @@ jobs:
       - name: Check tutorial HIL contract
         run: |
           test -x hil/hil-smoke.sh
-          uv run --python '>=3.11' python scripts/check-tutorial-snippets.py
+          uv run scripts/check-tutorial-snippets.py
 
       - name: Tutorial HIL smoke / single example
         env:

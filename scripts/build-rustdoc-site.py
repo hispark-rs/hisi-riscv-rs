@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Build chip-specific rustdoc from docs/chips.toml metadata."""
 
 from __future__ import annotations

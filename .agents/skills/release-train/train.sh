@@ -46,8 +46,8 @@ if [ -f Cargo.toml ] && grep -q '^\[package\]' Cargo.toml; then
     command -v cargo >/dev/null 2>&1 || { echo "FATAL: cargo not found"; exit 2; }
     echo "==> cargo lockfile/package preflight"
     git ls-files --error-unmatch Cargo.lock >/dev/null 2>&1 || { echo "FATAL: Cargo.lock is not tracked"; exit 2; }
-    if [ -f "$STANDALONE_LOCK" ] && command -v python3 >/dev/null 2>&1; then
-        python3 "$STANDALONE_LOCK" . --package \
+    if [ -f "$STANDALONE_LOCK" ] && command -v uv >/dev/null 2>&1; then
+        uv run "$STANDALONE_LOCK" . --package \
             || { echo "FATAL: standalone Cargo.lock/package preflight failed"; exit 2; }
     else
         cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }

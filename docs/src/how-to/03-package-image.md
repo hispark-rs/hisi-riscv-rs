@@ -39,7 +39,7 @@ hisi-fwpkg plan \
 烧录时从 plan 读取基址：
 
 ```bash
-BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
+BASE_ADDR=$(uv run scripts/read-flash-plan-base.py blinky.plan.json)
 
 probe-rs download --chip WS63 \
     --chip-description-path HiSilicon_WS63.yaml \

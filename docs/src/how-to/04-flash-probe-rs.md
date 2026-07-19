@@ -33,7 +33,7 @@ hisi-fwpkg plan \
     > blinky.plan.json
 
 # 3. probe-rs 只按裸 bin 写入 plan 指定的基址
-BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
+BASE_ADDR=$(uv run scripts/read-flash-plan-base.py blinky.plan.json)
 probe-rs download --chip WS63 \
     --chip-description-path HiSilicon_WS63.yaml \
     --speed 2000 \

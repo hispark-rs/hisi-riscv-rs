@@ -42,7 +42,7 @@ cargo test --target aarch64-apple-darwin  # crates/hisi-rf
 cargo test --workspace --target aarch64-apple-darwin  # ws63-radio-sys
 9 passed; 0 failed
 
-python3 scripts/check-native-supplicant-port.py
+uv run scripts/check-native-supplicant-port.py
 native supplicant profile: 42 RV32 objects, 15 defines, external ABI locked
 
 cargo clippy -Zbuild-std=core,alloc -p ws63-rf-rs \

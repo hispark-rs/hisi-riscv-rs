@@ -32,7 +32,7 @@ hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
     --chip ws63 --image-output blinky.img > blinky.plan.json
 
 # 3a. 烧录【验证主路径】：probe-rs 只烧裸 bin image
-BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
+BASE_ADDR=$(uv run scripts/read-flash-plan-base.py blinky.plan.json)
 probe-rs download --chip WS63 --chip-description-path HiSilicon_WS63.yaml \
     --speed 2000 --verify \
     --binary-format bin --base-address "$BASE_ADDR" blinky.img

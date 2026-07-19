@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Check that the SDK WPA component can be narrowed to the WPA2 profile."""
 
 from __future__ import annotations

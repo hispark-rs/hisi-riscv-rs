@@ -36,14 +36,14 @@ The following command passed on both macOS arm64 with Clang/OpenSSL and the OrbS
 Linux development VM with GCC/OpenSSL:
 
 ```console
-python3 scripts/check-upstream-personal-vectors.py
+uv run scripts/check-upstream-personal-vectors.py
 upstream personal vectors: WPA2 PTK/MIC, RSNE/PMF, SAE HnP/H2E roundtrips, 5 SAE corpus fixtures
 ```
 
 Existing native-port checks remained green:
 
 ```console
-python3 scripts/check-native-supplicant-port.py
+uv run scripts/check-native-supplicant-port.py
 native supplicant profile: 42 RV32 objects, 15 defines, external ABI locked
 
 cargo test --workspace --target aarch64-apple-darwin

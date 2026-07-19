@@ -82,12 +82,7 @@ if [ -n "${FWPKG:-}" ]; then
     "$HISI_FWPKG" pack "$IMG" -o "$OUT" --chip "$CHIP" "${ADDR_ARGS[@]}" --name "$BASE"
 fi
 
-BASE_ADDR="$(python3 - "$PLAN" <<'PY'
-import json, sys
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    print(f"0x{json.load(f)['base_addr']:08X}")
-PY
-)"
+BASE_ADDR="$(uv run "$HERE/scripts/read-flash-plan-base.py" "$PLAN")"
 
 echo "==> done: $IMG"
 echo "    plan: $PLAN"

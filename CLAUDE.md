@@ -56,6 +56,17 @@ git -C crates/hisi-hal status              # Work inside submodule
 git -C crates/hisi-hal add -A && git -C crates/hisi-hal commit -m "..."
 ```
 
+### Python tooling
+
+All first-party Python is managed by [uv](https://docs.astral.sh/uv/). A Python
+project uses its own `pyproject.toml` + `uv.lock` and is invoked with `uv run`;
+an independent script uses the PEP 723 single-file form with
+`#!/usr/bin/env -S uv run --script`. Workflows, HIL scripts, skills, and docs must
+not call a system `python`/`python3` directly. Run
+`uv run scripts/check-python-uv.py` before changing parent-owned Python entry
+points. Independently versioned submodules own and enforce the same policy in
+their repositories.
+
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
 
 ## Architecture

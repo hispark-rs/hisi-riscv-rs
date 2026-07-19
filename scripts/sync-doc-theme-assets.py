@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Refresh shared mdBook theme assets across retained version directories.
 
 Versioned docs keep old handbook snapshots under /vX.Y.Z/ and /latest/. The

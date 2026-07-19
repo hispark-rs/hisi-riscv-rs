@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """mdBook preprocessor for hisi-riscv-rs docs.
 
 This is the single mdBook preprocessor for user-facing docs:

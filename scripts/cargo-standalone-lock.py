@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Generate or check a Rust crate Cargo.lock outside its parent workspace.
 
 This is for publishable submodule crates that live inside the hisi-riscv-rs

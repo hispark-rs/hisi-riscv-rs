@@ -3,4 +3,4 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec python3 "$ROOT/scripts/build-rustdoc-site.py" "$@"
+exec uv run "$ROOT/scripts/build-rustdoc-site.py" "$@"

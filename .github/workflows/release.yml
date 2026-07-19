@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: astral-sh/setup-uv@v7
 
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
@@ -81,10 +82,10 @@ jobs:
           LATEST_VERSION: ${{ github.ref_name }}
 
       - name: Assemble versioned handbook
-        run: python3 scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${GITHUB_REF_NAME}" --book docs/book --out site
+        run: uv run scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${GITHUB_REF_NAME}" --book docs/book --out site
 
       - name: Refresh shared docs theme assets
-        run: python3 scripts/sync-doc-theme-assets.py --book docs/book --site site
+        run: uv run scripts/sync-doc-theme-assets.py --book docs/book --site site
 
       - name: Build versioned API documentation
         run: scripts/build-rustdoc-site.sh --version "${GITHUB_REF_NAME}" --out site
@@ -92,7 +93,7 @@ jobs:
           LATEST_VERSION: ${{ github.ref_name }}
 
       - name: Check versioned docs site
-        run: python3 scripts/check-versioned-docs.py site
+        run: uv run scripts/check-versioned-docs.py site
 
       - name: Persist versioned docs state
         id: docs_state
@@ -110,7 +111,7 @@ jobs:
       - name: Deploy versioned docs to GitHub Pages
         id: deployment
         run: >-
-          python3 scripts/deploy-pages.py
+          uv run scripts/deploy-pages.py
           --artifact-id "${{ steps.pages_artifact.outputs.artifact_id }}"
           --build-version "${{ steps.docs_state.outputs.deployment_sha }}"
         env:
@@ -118,7 +119,7 @@ jobs:
 
       - name: Verify live versioned documentation
         run: >-
-          python3 scripts/check-live-docs.py
+          uv run scripts/check-live-docs.py
           --version "${GITHUB_REF_NAME}"
           --latest-version "${GITHUB_REF_NAME}"
 

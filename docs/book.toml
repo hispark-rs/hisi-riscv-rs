@@ -6,7 +6,7 @@ language = "zh"
 src = "src"
 
 [preprocessor.hisi-docs]
-command = "python3 ../scripts/mdbook-hisi-docs.py"
+command = "uv run ../scripts/mdbook-hisi-docs.py"
 
 [output.html]
 default-theme = "rust"

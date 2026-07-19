@@ -35,8 +35,8 @@ For every independently published Rust crate in this ecosystem
 of the release input even when the crate is a library. Before tagging:
 
 ```bash
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git diff --exit-code -- Cargo.lock
 ```
 

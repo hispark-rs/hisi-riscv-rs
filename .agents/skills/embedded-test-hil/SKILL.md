@@ -21,7 +21,7 @@ example UART smoke; that is `$hil-smoke`.
 3. Run the inventory when auditing or after edits:
 
 ```bash
-python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py
+uv run .agents/skills/embedded-test-hil/scripts/hil_inventory.py
 ```
 
 ## Where Tests Belong

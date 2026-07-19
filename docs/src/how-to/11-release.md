@@ -61,8 +61,8 @@ PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
   crate 复制到临时独立目录后再解析：
 
 ```bash
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
 ```
@@ -92,13 +92,13 @@ git switch main          # ws63-pac / bs2x-pac
 ```bash
 $EDITOR Cargo.toml       # package.version
 $EDITOR CHANGELOG.md
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
 ```
 
 做 release preflight：
 
 ```bash
-python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
 ```
@@ -190,10 +190,10 @@ cargo fmt --all -- --check
 
 ```bash
 mdbook build docs
-python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs --links
-python3 .agents/skills/diataxis-docs/scripts/audit_docs.py docs --current-claims
-python3 .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
-python3 .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
+uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs --links
+uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs --current-claims
+uv run .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+uv run .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
 ```
 
 `--current-claims` 会列出需要人工复核的“当前 / 默认 / stable”等表述；它是漂移线索扫描，输出不等于必然错误。
@@ -210,7 +210,7 @@ git push origin vX.Y.Z
 ## 5. 常见失败
 
 - **`--locked` 失败**：`Cargo.lock` 缺失或过期。先用
-  `python3 /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update`
+  `uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update`
   在父仓外的临时独立目录重新解析并回填 lockfile，提交后再重跑 preflight。
 - **`Cargo.lock is not tracked`**：lockfile 还是 untracked；这是 release blocker，`git add Cargo.lock` 后再提交。
 - **`cargo publish` 抱怨 path/git dependency**：发布 manifest 里混进本地开发依赖。把发布依赖改回 crates.io 版本依赖；本地替换放父仓 `[patch.crates-io]`。

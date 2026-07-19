@@ -58,7 +58,7 @@ need() {
 need cargo
 need cargo-generate
 need just
-need python3
+need uv
 need "$HISI_FWPKG"
 
 : <<'DOCS_SNIPPETS'
@@ -260,7 +260,7 @@ cargo build -Zbuild-std=core,alloc -p blinky --release
 hisi-fwpkg plan target/riscv32imfc-unknown-none-elf/release/blinky \
     --chip ws63 --image-output blinky.img > blinky.plan.json
 
-BASE_ADDR=$(python3 -c 'import json; print(json.load(open("blinky.plan.json"))["base_addr"])')
+BASE_ADDR=$(uv run scripts/read-flash-plan-base.py blinky.plan.json)
 probe-rs download --chip WS63 \
     --chip-description-path HiSilicon_WS63.yaml \
     --binary-format bin --base-address "$BASE_ADDR" blinky.img
@@ -300,34 +300,8 @@ PLAN="$WORK/uart_hello.plan.json"
 
 echo "tutorial-contracts: planning tutorial image"
 "$HISI_FWPKG" plan "$ELF" --chip ws63 --image-output "$IMG" > "$PLAN"
-python3 - "$PLAN" "$IMG" <<'PY'
-import json
-import os
-import sys
-
-plan_path, image_path = sys.argv[1], sys.argv[2]
-with open(plan_path, "r", encoding="utf-8") as f:
-    plan = json.load(f)
-
-required = [
-    "base_addr",
-    "image_len",
-    "body_range",
-    "code_area_len",
-    "code_area_hash",
-    "erase_range",
-    "write_chunks",
-]
-missing = [key for key in required if key not in plan]
-if missing:
-    raise SystemExit(f"missing plan keys: {missing}")
-if plan["base_addr"] != 0x230000:
-    raise SystemExit(f"unexpected WS63 base_addr: {plan['base_addr']:#x}")
-if plan["image_len"] != os.path.getsize(image_path):
-    raise SystemExit("plan image_len does not match image file size")
-if not plan["write_chunks"]:
-    raise SystemExit("write_chunks must not be empty")
-PY
+uv run "$ROOT/scripts/check-flash-plan.py" \
+    --base-address 0x230000 "$PLAN" "$IMG"
 
 run_template_case() {
     local chip="$1"

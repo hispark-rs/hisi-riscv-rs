@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
 echo "==> HAL register-access policy"
-python3 "$ROOT/crates/hisi-hal/scripts/check-register-access.py"
+uv run "$ROOT/crates/hisi-hal/scripts/check-register-access.py"
 
 if command -v uv >/dev/null 2>&1; then
     for svd_dir in \

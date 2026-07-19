@@ -46,12 +46,7 @@ IMAGE="${ELF}.hisi.img"
 PLAN="${ELF}.hisi-plan.json"
 echo "run-hw: planning complete flash image: $(basename "$ELF") -> $(basename "$IMAGE")"
 "$HISI_FWPKG" plan "$ELF" --chip ws63 --image-output "$IMAGE" > "$PLAN"
-BASE_ADDRESS="$(python3 - "$PLAN" <<'PY'
-import json, sys
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    print(f"0x{json.load(f)['base_addr']:08X}")
-PY
-)"
+BASE_ADDRESS="$(uv run "$SCRIPT_DIR/../scripts/read-flash-plan-base.py" "$PLAN")"
 
 case "$PROBE_DOWNLOAD_ATTEMPTS" in
     ''|*[!0-9]*|0)

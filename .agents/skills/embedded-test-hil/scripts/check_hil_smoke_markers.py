@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Check WS63 HIL smoke grep patterns across script, docs, and skill wrappers."""
 
 from __future__ import annotations

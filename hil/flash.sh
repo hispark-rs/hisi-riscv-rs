@@ -72,12 +72,7 @@ if [ "$METHOD" = "probe-rs" ]; then
         CHIP="$CHIP_KIND" "$HERE/hil/pack.sh" "$ARG" "$IMG" >&2
     fi
     PLAN="${IMG%.img}.plan.json"
-    BASE_ADDRESS="$(python3 - "$PLAN" <<'PY'
-import json, sys
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    print(f"0x{json.load(f)['base_addr']:08X}")
-PY
-)"
+    BASE_ADDRESS="$(uv run "$HERE/scripts/read-flash-plan-base.py" "$PLAN")"
 
     echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS, ${PROBE_SPEED} kHz (plan=$PLAN, yaml=$PROBE_RS_YAML)"
     "$PROBE_RS" download --chip "$CHIP" --speed "$PROBE_SPEED" --chip-description-path "$PROBE_RS_YAML" \
