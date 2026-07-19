@@ -85,6 +85,7 @@ guarded link，但该分支只作为迁移 oracle。
 |------|------|------|
 | `PORT` | 必填 | WS63 UART0 |
 | `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
+| `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的一次性 `0600` 文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，成功读取后立即删除；不能与直接环境变量混用 |
 | `WS63_CONNECTIVITY_PROFILE` | `vendor-wpa2` | `vendor-wpa2` / `upstream-wpa2` / `upstream-wpa3`；正式 upstream 验证使用 plain Cargo lane |
 | `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |

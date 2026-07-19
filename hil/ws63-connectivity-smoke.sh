@@ -8,6 +8,9 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/ws63-wifi-credentials.sh
+source "$HERE/hil/lib/ws63-wifi-credentials.sh"
+
 WPA_TAG="wpa2-personal-2026-07-13"
 WPA_ASSET="libwpa_supplicant_wpa2_personal.a"
 WPA_SHA256="891c195279d768ce5664e16fecac95f353fd2217c4e3590315baa4cb6e7f25a2"
@@ -32,6 +35,8 @@ usage() {
     cat <<'EOF'
 Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
        hil/ws63-connectivity-smoke.sh
+       WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+       PORT=/dev/ttyUSB0 hil/ws63-connectivity-smoke.sh
        hil/ws63-connectivity-smoke.sh --preflight
 
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
@@ -41,6 +46,9 @@ Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           fixture credentials and proves only image/startup/RF init/scan/runner,
           WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3,
           WS63_CRYPTO_CONTENTION_HIL=1 for the diagnostic two-task mutex gate.
+          WS63_WIFI_ENV_FILE is a local-only, non-symlink 0600 file containing
+          exactly WS63_WIFI_SSID=... and WS63_WIFI_PASSPHRASE=...; it is parsed
+          without shell evaluation and deleted immediately after a valid load.
 EOF
 }
 
@@ -180,8 +188,13 @@ assert_absent() {
 }
 
 case "${1:-}" in
-    --preflight) preflight; exit $? ;;
     -h|--help) usage; exit 0 ;;
+esac
+
+load_ws63_wifi_credentials
+
+case "${1:-}" in
+    --preflight) preflight; exit $? ;;
     "") ;;
     *) usage >&2; exit 2 ;;
 esac
