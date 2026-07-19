@@ -450,7 +450,9 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      窗口内 gateway ICMP `70/70`。证据见
      [W2E WPA3 reset reliability](evidence/ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md)。
      transition reset gate 已闭合；受控 WPA3-only SAE+PMF 仍是开放 gate。Guest AP 仍只
-     提供 WPA2 parity，不能替代 pure WPA3 HIL。
+     提供 WPA2 parity，不能替代 pure WPA3 HIL。最终 unchanged-image 20-reset gate 必须
+     使用 `ws63-connectivity-reset-matrix.py --required-ap-mode pure-wpa3`；classifier 会逐轮
+     校验固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。
    - **W2E-H Handshake crypto acceleration（已完成，2026-07-17）**：第一项
      PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
      唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立

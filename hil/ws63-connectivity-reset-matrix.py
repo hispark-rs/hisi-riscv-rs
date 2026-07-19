@@ -83,6 +83,11 @@ def parse_args() -> argparse.Namespace:
         default="connectivity",
         help="stop after association or continue through the IP connectivity probe",
     )
+    parser.add_argument(
+        "--required-ap-mode",
+        choices=("pure-wpa3", "transition"),
+        help="require every Rust run to report the selected WPA3 RSNE mode",
+    )
     parser.add_argument("--jlink", default="JLinkExe")
     parser.add_argument(
         "--reference-target",
@@ -166,7 +171,16 @@ def run_reference_ping(target: str, count: int, output: Path) -> dict[str, objec
     }
 
 
-def classify(log: bytes, profile: str, stage: str) -> str:
+def detected_ap_mode(log: bytes) -> str | None:
+    for mode in ("pure-wpa3", "transition"):
+        if f"W2E_AP_SECURITY mode={mode}".encode() in log:
+            return mode
+    return None
+
+
+def classify(
+    log: bytes, profile: str, stage: str, required_ap_mode: str | None = None
+) -> str:
     if profile == "official-liteos":
         if stage == "connect" and b"+NOTICE:CONNECTED" in log:
             return "pass"
@@ -177,6 +191,16 @@ def classify(log: bytes, profile: str, stage: str) -> str:
         if b"APP|[WIFI_STA_SAMPLE]::Connect fail!." in log:
             return "connect_error"
         return "capture_timeout"
+
+    if required_ap_mode is not None:
+        observed_ap_mode = detected_ap_mode(log)
+        if observed_ap_mode is not None and observed_ap_mode != required_ap_mode:
+            return "wrong_ap_mode"
+        success_evidence = (
+            b"W2E_WPA3_CONNECT_OK" in log or bool(parse_ping_summaries(log))
+        )
+        if observed_ap_mode is None and success_evidence:
+            return "missing_ap_mode"
 
     if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
         return "pass"
@@ -322,6 +346,8 @@ def main() -> int:
             "--runs, --timeout and --reference-count must be positive; "
             "--post-terminal-seconds must be non-negative"
         )
+    if args.required_ap_mode is not None and args.profile != "rust":
+        raise SystemExit("--required-ap-mode is only valid with --profile rust")
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     output = args.output or Path("/private/tmp") / f"ws63-connectivity-reset-matrix-{timestamp}"
@@ -346,7 +372,7 @@ def main() -> int:
                 args.profile,
                 args.stage,
             )
-            result = classify(log, args.profile, args.stage)
+            result = classify(log, args.profile, args.stage, args.required_ap_mode)
             log_path = output / f"run-{run:02d}.uart.log"
             log_path.write_bytes(log)
             record = {
@@ -355,6 +381,7 @@ def main() -> int:
                 "bytes": len(log),
                 "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
                 + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
+                "ap_mode": detected_ap_mode(log),
                 "ping": parse_ping_summaries(log),
                 "marker_seconds": marker_times,
                 "log": log_path.name,
@@ -394,6 +421,7 @@ def main() -> int:
         "baud": args.baud,
         "profile": args.profile,
         "stage": args.stage,
+        "required_ap_mode": args.required_ap_mode,
         "runs": args.runs,
         "timeout_seconds": args.timeout,
         "post_terminal_seconds": args.post_terminal_seconds,
