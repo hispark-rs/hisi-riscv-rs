@@ -89,9 +89,12 @@ preflight() {
         echo "ERROR: crypto contention HIL currently requires upstream-wpa3" >&2
         failed=1
     fi
-    for command in cargo JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv riscv64-unknown-elf-gcc; do
+    for command in cargo JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv; do
         require_command "$command" || failed=1
     done
+    if [ "$PROFILE" = vendor-wpa2 ]; then
+        require_command riscv64-unknown-elf-gcc || failed=1
+    fi
     if [ -z "$PORT" ]; then
         echo "ERROR: set PORT to the WS63 UART0 device" >&2
         failed=1
@@ -185,17 +188,38 @@ if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
     FEATURES="$FEATURES,rf-crypto-contention-diag"
 fi
 
-echo "==> guarded connectivity link (profile=$PROFILE; credentials use an ephemeral target dir)"
-(
-    cd "$HERE"
-    WS63_WPA_ARCHIVE="$ARCHIVE" \
-    WS63_WIFI_SSID="$WS63_WIFI_SSID" \
-    WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
-    WS63_RF_FEATURES="$FEATURES" \
-    WS63_RF_FINAL_MAP="$FINAL_MAP" \
-    CARGO_TARGET_DIR="$TARGET_DIR" \
-        bash chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh
-)
+case "$PROFILE" in
+    vendor-wpa2)
+        echo "==> guarded vendor-oracle link (credentials use an ephemeral target dir)"
+        (
+            cd "$HERE"
+            WS63_WPA_ARCHIVE="$ARCHIVE" \
+            WS63_WIFI_SSID="$WS63_WIFI_SSID" \
+            WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
+            WS63_RF_FEATURES="$FEATURES" \
+            WS63_RF_FINAL_MAP="$FINAL_MAP" \
+            CARGO_TARGET_DIR="$TARGET_DIR" \
+                bash chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh
+        )
+        ;;
+    upstream-wpa2|upstream-wpa3)
+        echo "==> plain Cargo connectivity link (profile=$PROFILE; credentials use an ephemeral target dir)"
+        PLAIN_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
+        (
+            cd "$HERE"
+            WS63_WIFI_SSID="$WS63_WIFI_SSID" \
+            WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
+            CARGO_ENCODED_RUSTFLAGS="$PLAIN_RUSTFLAGS" \
+            CARGO_TARGET_DIR="$TARGET_DIR" \
+                cargo build -Zbuild-std=core,alloc -p wifi_init_smoke \
+                    --release --features "$FEATURES"
+        )
+        uv run "$HERE/scripts/check-ws63-plain-rf-elf.py" \
+            --elf "$ELF" --require-upstream-supplicant
+        uv run "$HERE/scripts/check-ws63-supplicant-boundary.py" \
+            --map "$FINAL_MAP" --elf "$ELF"
+        ;;
+esac
 
 echo "==> planned-bin download, J-Link nRST, and UART capture"
 if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then

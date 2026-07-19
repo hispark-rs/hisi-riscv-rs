@@ -107,6 +107,58 @@ jobs:
           cargo build -Zbuild-std=core,alloc --release -p embassy_multitask
           cargo build -Zbuild-std=core,alloc --release -p embassy_async_io
 
+  # ── Stock rust-lld radio link across supported development hosts ──
+  radio-link:
+    name: Plain Cargo RF link (${{ matrix.os }}, ${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            profile: wpa2
+            features: upstream-supplicant
+          - os: ubuntu-latest
+            profile: wpa3
+            features: upstream-supplicant,upstream-wpa3
+          - os: macos-14
+            profile: wpa3
+            features: upstream-supplicant,upstream-wpa3
+          - os: windows-latest
+            profile: wpa3
+            features: upstream-supplicant,upstream-wpa3
+    env:
+      CARGO_TARGET_DIR: target/plain-radio-${{ matrix.profile }}
+      WS63_WIFI_SSID: ci-fixture
+      WS63_WIFI_PASSPHRASE: fixture-passphrase
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "scripts/check-ws63-plain-rf-elf.py"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-09
+          components: rust-src,llvm-tools-preview
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/
+          key: ${{ runner.os }}-cargo-ws63-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-ws63-
+      - name: Build upstream radio ELF with ordinary Cargo
+        run: >-
+          cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release
+          --features ${{ matrix.features }}
+      - name: Verify standard-relocation final ELF
+        run: >-
+          uv run scripts/check-ws63-plain-rf-elf.py
+          --elf target/plain-radio-${{ matrix.profile }}/riscv32imfc-unknown-none-elf/release/wifi_init_smoke
+          --require-upstream-supplicant
+
   # ── Clippy (gating) ─────────────────────────────────────────────
   clippy:
     name: Clippy

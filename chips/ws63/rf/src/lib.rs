@@ -61,12 +61,13 @@
 //! alternate-OS-adapter code that Wi-Fi init never reaches (0 BT symbols on the
 //! reachability path).
 //!
-//! **Why a runnable Wi-Fi image is still hardware-in-the-loop:** (1) the ROM
-//! symbols are **real-silicon addresses** (an emulator without a populated mask
-//! ROM cannot execute them); (2) the HiSilicon-toolchain blobs carry **custom
-//! relocations** that stock `lld` does not recognize directly. The guarded
-//! two-pass build keeps `rust-lld` as the layout owner, patches those relocations,
-//! and fails if the final section layout differs. The runtime + data-path
+//! **Why a runnable Wi-Fi image is still hardware-in-the-loop:** the ROM symbols
+//! are **real-silicon addresses** (an emulator without a populated mask ROM
+//! cannot execute them). The original HiSilicon-toolchain blobs carry custom
+//! relocations; the published `ws63-radio-blob` artifacts normalize those into
+//! standard RISC-V relocations ahead of release, and `ws63-radio-sys` contributes
+//! a relocatable ROM patch table. Stock `rust-lld` therefore completes the
+//! firmware in one ordinary Cargo link. The runtime + data-path
 //! plumbing (runtime adapter, FRW/HCC, timers and L2 device) is implemented and
 //! self-tested standalone. Real silicon has completed upstream WPA2 and
 //! transition-mode WPA3 association, DHCP, ARP, repeated ICMP and lease renewal.
