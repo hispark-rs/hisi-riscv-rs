@@ -79,8 +79,8 @@
 #![feature(c_variadic)]
 #![allow(non_upper_case_globals)] // contract symbols must match the C names exactly
 
-#[cfg(all(feature = "wifi-wpa2-personal", feature = "upstream-supplicant-port"))]
-compile_error!("select either the vendor WPA2 profile or the upstream supplicant profile");
+#[cfg(all(feature = "wifi-personal", feature = "upstream-supplicant-port"))]
+compile_error!("select either a vendor supplicant profile or an upstream supplicant profile");
 
 #[cfg(all(test, not(target_arch = "riscv32")))]
 mod host_test_support {

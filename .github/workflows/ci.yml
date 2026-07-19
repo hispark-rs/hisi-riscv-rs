@@ -61,6 +61,19 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-ws63-
       - name: Check ${{ matrix.crate }}
         run: cargo check -Zbuild-std=core,alloc -p ${{ matrix.crate }} ${{ matrix.args }}
+      - name: Reject mixed vendor and upstream supplicant profiles
+        if: contains(matrix.args, 'upstream-supplicant')
+        run: |
+          if cargo check -Zbuild-std=core,alloc -p ws63-rf-rs \
+              --features wifi-wpa3-personal,upstream-supplicant-wpa3; then
+            echo "ERROR: ws63-rf-rs accepted mixed vendor/upstream profiles" >&2
+            exit 1
+          fi
+          if cargo check -Zbuild-std=core,alloc -p ws63-radio-sys \
+              --features wpa3-personal,upstream-supplicant-wpa3; then
+            echo "ERROR: ws63-radio-sys accepted mixed vendor/upstream profiles" >&2
+            exit 1
+          fi
 
   # ── Full workspace check + library build ────────────────────────
   workspace:

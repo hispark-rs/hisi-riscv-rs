@@ -593,7 +593,10 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      防止兼容面静默扩大或 off-path 符号复活。新 upstream WPA3 guarded link 保持
      1,157 sections、4,127 patched relocations 和 37 ROM patches。`wpa_compat.rs` 与旧
      vendor feature 仍只作为迁移 oracle 保留，待受控 WPA3-only gate 闭合后删除；
-     `ws63-rf-rs` facade 仍按既定“不早于父仓 v0.8.0”窗口处理。
+     `ws63-rf-rs` facade 仍按既定“不早于父仓 v0.8.0”窗口处理。父层和
+     `ws63-radio-sys` 现都把任意 vendor supplicant profile 与任意 upstream profile
+     定义为互斥能力；CI 对两层非法 feature union 执行负向编译，防止下游 workspace 的
+     Cargo feature 合并把 oracle archive 重新带入正式路径。
 
    **参考实现与取舍：**
 
