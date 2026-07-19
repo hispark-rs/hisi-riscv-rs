@@ -25,13 +25,16 @@ and published the crates in dependency order, waiting for each exact version to
 become visible on crates.io before publishing the next. All three versions are
 available from crates.io.
 
-The subsequent release-hardening commit `b9e9686` added a CI gate that rebuilds
-all normalized vendor archives from the pinned `ws63-RF` submodule and compares
-bytes, SHA-256, size and relocation counts with the Cargo payload. Child run
-`29685140772` passed. The two pinned upstream hostap target archives are compiled
-from the complete source profiles and checked for ABI/symbol drift; making their
-archive bytes reproducible under one downloadable, exactly pinned C compiler is
-still release hardening work, not a consumer dependency.
+The subsequent release-hardening commits added two independent reconstruction
+gates. Child run `29685140772` rebuilt all normalized vendor archives from the
+pinned `ws63-RF` submodule and compared bytes, SHA-256, size and relocation counts
+with the Cargo payload. Child run `29687398059` then used the canonical macOS 15
+builder, pinned Homebrew tap revision, GCC 15.1.0, GNU binutils 2.45 and
+`cc-rs 1.2.67` to rebuild both complete upstream hostap WPA2 and WPA3 source
+profiles. Both output archives matched the packaged payload byte for byte. The
+toolchain provenance and archive hashes are machine-checked release metadata;
+the C toolchain remains a maintainer/release dependency, never a consumer build
+dependency.
 
 ## Cross-OS Consumer Build
 
@@ -97,5 +100,3 @@ starting.
 - Run and stabilize the controlled pure-WPA3 SAE+required-PMF reset matrix.
 - Only after those parity gates may the vendor guarded oracle and
   `wpa_compat.rs` leave the default migration window.
-- Pin a downloadable maintainer C toolchain and reproduce the two hostap target
-  archive bytes in release CI; consumer builds must remain toolchain-free.
