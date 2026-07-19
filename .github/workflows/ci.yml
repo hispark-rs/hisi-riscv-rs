@@ -151,8 +151,8 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-ws63-
       - name: Build upstream radio ELF with ordinary Cargo
         run: >-
-          cargo build -Zbuild-std=core,alloc -p wifi_init_smoke --release
-          --features ${{ matrix.features }}
+          cargo build "-Zbuild-std=core,alloc" -p wifi_init_smoke --release
+          --features "${{ matrix.features }}"
       - name: Verify standard-relocation final ELF
         run: >-
           uv run scripts/check-ws63-plain-rf-elf.py
