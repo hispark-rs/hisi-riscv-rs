@@ -451,7 +451,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      [W2E WPA3 reset reliability](evidence/ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md)。
      transition reset gate 已闭合；受控 WPA3-only SAE+PMF 仍是开放 gate。Guest AP 仍只
      提供 WPA2 parity，不能替代 pure WPA3 HIL。
-   - **W2E-H Handshake crypto acceleration（进行中，WPA3 stable gate）**：第一项
+   - **W2E-H Handshake crypto acceleration（已完成，2026-07-17）**：第一项
      PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
      唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立
      资源与失败契约。upstream WPA2 同一镜像 20 次 nRST 均完成 association/DHCP，40 次
@@ -574,16 +574,26 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      symmetric 加 KM/keyslot，SM2 对应 PKE；算法必须由 typed algorithm/profile 区分，不能
      仅凭输出长度选择。当前没有 SM9 硬件支持证据。原厂 `security_unified` driver 只作为
      Apache-2.0 oracle，派生实现必须保留 attribution、修改说明和相应专利条款。
-     发布顺序固定为：先将新增寄存器发布为 `ws63-pac 0.3.1`，再把
-     `hisi-crypto-ws63` 的最低 PAC 依赖与 standalone lock 提升到 `0.3.1`；开发期由父仓
-     `[patch]` 绑定当前 PAC checkout，禁止发布仍可解析到缺少 SPACC 字段的 `0.3.0` 组合。
-   - **W2F Migration retirement（未完成）**：旧 vendor supplicant archive 与 supplicant-only
+     依赖发布已经闭合：`ws63-pac 0.4.0`、`hisi-crypto 0.1.0-alpha.4`、
+     `hisi-crypto-ws63 0.1.0-alpha.2`、`hisi-riscv-rt 0.5.5` 与
+     `hisi-hal 0.7.0-alpha.3` 均已发布；独立 lockfile 和父仓解析只包含一个
+     `ws63-pac 0.4.0`，不再存在可解析到缺少 SPACC/PKE 字段旧 PAC 的发布组合。
+   - **W2F Migration retirement（部分完成）**：upstream WPA2/WPA3 profile 已不选择任何
+     vendor supplicant、mbedTLS 或 LiteOS libc archive。旧 vendor supplicant archive 与 supplicant-only
      LiteOS glue 保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认
      路径并删除 `wpa_compat.rs` 及其独占符号。`litos.rs` 不作为文件名或 LiteOS
      语义长期保留：必须按 required-symbol manifest 拆出/重命名为有界 WS63 runtime
      compatibility adapter，只保留非 supplicant radio blob 仍可达符号；不可为了删文件
      而伪造符号闭包，也不可建立 LiteOS backend。之后按既定兼容窗口退役
      `ws63-rf-rs` facade，但不得因架构迁移破坏 A4 gate。
+     2026-07-19 已将 `litos.rs` 收窄并重命名为私有 `ws63_runtime_compat`；
+     `ws63-radio-sys` 的 `ws63-runtime-compat.toml` 记录基础 Wi-Fi archives 的 15 个
+     kernel/arch namespace 引用，其中 7 个由 Rust adapter 提供、8 个在当前 upstream
+     最终链接中 off-path。子仓 `nm -u` gate、父仓 provider gate 和最终 ELF gate 同时
+     防止兼容面静默扩大或 off-path 符号复活。新 upstream WPA3 guarded link 保持
+     1,157 sections、4,127 patched relocations 和 37 ROM patches。`wpa_compat.rs` 与旧
+     vendor feature 仍只作为迁移 oracle 保留，待受控 WPA3-only gate 闭合后删除；
+     `ws63-rf-rs` facade 仍按既定“不早于父仓 v0.8.0”窗口处理。
 
    **参考实现与取舍：**
 

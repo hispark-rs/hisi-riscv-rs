@@ -218,6 +218,9 @@ echo "==> guarded connectivity link (profile=$PROFILE; credentials use an epheme
 )
 
 echo "==> planned-bin download, J-Link nRST, and UART capture"
+if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
+    uv run "$HERE/scripts/check-ws63-runtime-compat.py" --elf "$ELF"
+fi
 (
     cd "$HERE"
     PORT="$PORT" MONITOR="$MONITOR" PROBE_SPEED="$PROBE_SPEED" \

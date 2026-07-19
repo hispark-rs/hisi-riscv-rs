@@ -1,9 +1,11 @@
-//! LiteOS / arch compatibility shims.
+//! Bounded WS63 radio runtime compatibility shims.
 //!
-//! A handful of LiteOS kernel + arch primitives are reachable from the WiFi
-//! init path (the vendor blobs were built against LiteOS). They are a bounded
-//! ABI compatibility layer over the native runtime contracts, not a LiteOS
-//! backend. The *rest* of the
+//! A handful of kernel and architecture primitives are referenced by the
+//! delivered Wi-Fi archives. They are a bounded ABI compatibility layer over
+//! native runtime contracts, not a LiteOS backend. The exact archive-level
+//! surface is owned by `ws63-radio-sys`'s
+//! `ws63-runtime-compat.toml`; parent CI requires this module to provide exactly
+//! the symbols classified as `provided` there. The *rest* of the
 //! LiteOS + CMSIS-RTOS2 surface the blobs carry (`osMutex*`, `osTimer*`,
 //! `LOS_Swtmr*`, `create_thread`, …) is **not** reachable from `uapi_wifi_init`
 //! — those objects belong to off-path BT / alternate-OS-adapter code and are
@@ -160,7 +162,7 @@ mod tests {
     };
 
     #[test]
-    fn liteos_task_lock_uses_the_native_runtime_contract() {
+    fn ws63_task_lock_uses_the_native_runtime_contract() {
         hisi_rf_rtos_driver::install(&RUNTIME).unwrap();
 
         LOS_TaskLock();

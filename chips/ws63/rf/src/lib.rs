@@ -14,17 +14,17 @@
 //! It does **not** put any Rust into `ws63-RF` (that delivery stays
 //! language-neutral so it can be ported to any runtime).
 //!
-//! ## Status — Wi-Fi init + active scan verified on real WS63
+//! ## Status — upstream WPA2/WPA3 connectivity verified on real WS63
 //!
 //! Implemented for real (usable today):
 //! - **Memory** — `osal_kmalloc`/`osal_kfree` over a real heap ([`alloc`]);
 //!   `malloc`/`free`/`memalign`/`oal_mem_*` back onto it ([`libc`], [`oal`]).
-//! - **Scheduler** — a real cooperative scheduler (`sched`, internal) backs
-//!   `osal_kthread_*`, the counting `Semaphore` behind
-//!   `osal_sem_*`/`osal_mutex_*`/`osal_wait_*`, message queues + event groups
-//!   ([`osal_queue`]) and **timed** blocking (`*_timeout` via deadlines).
+//! - **Scheduler** — `osal_kthread_*`, semaphores, mutexes and timed waits are
+//!   adapters over the runtime-neutral `hisi-rf-rtos-driver` contract. The
+//!   current WS63 firmware installs the native `hisi-rtos` backend.
 //! - **Sync** — spinlocks + atomics ([`osal_sync`]); IRQ lock/restore (real
-//!   `mstatus` CSR) + `ArchIntLock`/`ArchIntRestore` ([`osal`], [`litos`]).
+//!   `mstatus` CSR) + the bounded WS63 runtime ABI compatibility layer
+//!   (`ArchIntLock`/`ArchIntRestore`, scheduler lock and diagnostics).
 //! - **Timers** — a real ms software-timer service ([`timer`]):
 //!   `osal_adapt_timer_*` / `frw_dmac_timer_*`, fired from the FRW worker loop.
 //! - **FRW/HCC data path** ([`frw`], [`hcc`]) — a real message-node pool, the
@@ -41,13 +41,12 @@
 //!   mask-ROM BSS addresses from `ws63_acore_rom.lds`; Rust must not shadow
 //!   these fixed objects with guessed storage.
 //!
-//! Remaining post-scan work:
-//! - **netif pbuf/TX contract** ([`netif`]) — the verified 80-byte zero-copy
-//!   reserve supports scan RX, while the remaining build-specific offsets need
-//!   generated assertions and the TX sink needs the blob transmit adapter.
-//! - **eFuse/TRNG** ([`uapi`]) — scaffold values; a HW run needs real ones.
-//!   NV reads already use the read-only ACPU flash KV parser with page/key/CRC
-//!   validation; encrypted records are deliberately rejected.
+//! Current connectivity path:
+//! - **netif pbuf/TX/RX** ([`netif`]) — generated layout assertions and the
+//!   Rust-visible L2 queue have passed DHCP, ARP and repeated ICMP HIL.
+//! - **NVS/TRNG/crypto** — NVS reads use the read-only ACPU KV parser; upstream
+//!   Personal profiles explicitly inject the WS63 TRNG and fallible
+//!   KM/RKP/SPACC/PKE capabilities without silent software fallback.
 //!
 //! **What "symbol closure" means here.** The vendor blobs
 //! (`libwifi_driver_{hmac,dmac,tcm}.a`, `libbg_common.a`, `libwifi_alg_*.a`,
@@ -68,10 +67,11 @@
 //! relocations** that stock `lld` does not recognize directly. The guarded
 //! two-pass build keeps `rust-lld` as the layout owner, patches those relocations,
 //! and fails if the final section layout differs. The runtime + data-path
-//! plumbing (scheduler, OSAL, FRW/HCC, timers, netif→smoltcp) is implemented and
-//! self-tested standalone. Real silicon now reaches `RF2_INIT_OK` and
-//! `RF3_SCAN_OK`; what remains is TX/RX closure, association and IP connectivity.
-//! See `README.md`, `ROADMAP.md`, and `docs/plan/hisi-connectivity-stack.md`.
+//! plumbing (runtime adapter, FRW/HCC, timers and L2 device) is implemented and
+//! self-tested standalone. Real silicon has completed upstream WPA2 and
+//! transition-mode WPA3 association, DHCP, ARP, repeated ICMP and lease renewal.
+//! The remaining W2 gates are tracked only in
+//! `docs/plan/hisi-connectivity-stack.md`.
 //!
 //! [`ws63-RF`]: https://github.com/hispark-rs/ws63-RF
 
@@ -111,7 +111,6 @@ pub mod hcc;
 #[cfg(any(feature = "wifi-personal", feature = "upstream-supplicant-port"))]
 pub mod hisi_rf_backend;
 pub mod libc;
-pub mod litos;
 pub mod log;
 pub mod netif;
 /// netif→smoltcp bridge (feature `net`): a Rust TCP/IP stack behind the netif
@@ -255,6 +254,7 @@ mod wal;
 pub mod wifi;
 #[cfg(feature = "wifi-personal")]
 mod wpa_compat;
+mod ws63_runtime_compat;
 
 pub use pmp::prepare_vendor_memory;
 #[cfg(feature = "upstream-supplicant-port")]
