@@ -22,7 +22,16 @@ SPEC.loader.exec_module(BOUNDARY)
 class SupplicantBoundaryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.profile = {
-            "native_archive": "libhisi_wpa_native_port.a",
+            "native_archives": [
+                {
+                    "profile": "personal",
+                    "archive": "libhisi_wpa_native_port.a",
+                },
+                {
+                    "profile": "personal-wpa3",
+                    "archive": "libhisi_wpa_native_port_wpa3.a",
+                },
+            ],
             "native_object_markers": ["hisi_wpa_port.o", "supplicant_ws63.o"],
             "legacy_archives": ["libwpa_supplicant.a", "libmbedtls_v3.6.0.a"],
             "legacy_provider_symbols": ["wifi_is_need_psk", "LOS_TaskResRecycle"],
