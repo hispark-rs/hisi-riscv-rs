@@ -231,7 +231,7 @@ must use `--locked`; release preflight is:
 ```bash
 cargo generate-lockfile --locked
 git diff --exit-code -- Cargo.lock
-cargo package --locked --no-verify
+cargo package --locked
 ```
 
 Do not rely on the parent workspace lockfile for a submodule crate release. If a

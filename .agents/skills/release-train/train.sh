@@ -51,7 +51,7 @@ if [ -f Cargo.toml ] && grep -q '^\[package\]' Cargo.toml; then
             || { echo "FATAL: standalone Cargo.lock/package preflight failed"; exit 2; }
     else
         cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }
-        cargo package --locked --no-verify || { echo "FATAL: cargo package preflight failed"; exit 2; }
+        cargo package --locked || { echo "FATAL: cargo package preflight failed"; exit 2; }
     fi
     git diff --exit-code -- Cargo.lock || { echo "FATAL: Cargo.lock changed during preflight"; exit 2; }
 fi

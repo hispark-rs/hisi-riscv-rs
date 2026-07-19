@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--package",
         action="store_true",
-        help="Also run `cargo package --locked --no-verify` in the standalone copy.",
+        help="Also run a fully verified `cargo package --locked` in the standalone copy.",
     )
     parser.add_argument(
         "--cargo",
@@ -109,7 +109,7 @@ def main() -> int:
             return 1
 
         if args.package:
-            run([args.cargo, "package", "--locked", "--no-verify"], standalone)
+            run([args.cargo, "package", "--locked"], standalone)
 
         same = src_lock.is_file() and src_lock.read_bytes() == tmp_lock.read_bytes()
         if args.update:
