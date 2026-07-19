@@ -852,7 +852,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
 
 #### A5R -- Executable RTOS Semantics
 
-- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.9` 冻结
+- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.10` 冻结
   `RuntimeContractVersion 1.0`、细粒度 capability bitset 和 fail-closed install/require；RF 在
   claim 硬件、准备 vendor memory 前先要求 contract v1，不能因函数签名相同就宣称兼容。
 - [ ] 给 contract 补独立 execution profile 描述，区分 cooperative、ported cooperative、
@@ -860,22 +860,24 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   report，不能用一个 capability bitset 暗示所有策略的时序都相同。
 - [x] 固定 contract-v1 priority 为 0..31，数字越小优先级越高；`TaskPriority` 在边界验证，
   不实现容易被误用的自然 `Ord`，WS63 vendor 数字只在 adapter 转换。
-- [ ] 继续消除“runtime-defined”关键语义：固定 zero-delay/yield、
-  monotonic time 与 tick rounding/wrap、wait-forever、同 deadline 次序、最高优先级 waiter、
-  semaphore/mutex direct handoff、timeout 后 wait-queue 清理和 recursive/PI 行为。
+- [ ] 继续消除“runtime-defined”关键语义：alpha.10 已用共享场景固定 semaphore direct
+  handoff、timeout 后 wait-queue 清理，以及 recursive mutex/PI/direct handoff；仍需固定
+  zero-delay/yield、monotonic time 与 tick rounding/wrap、wait-forever、同 deadline 次序和
+  多 waiter 的最高优先级选择。
 - [ ] 固定 context 规则：ISR 只能使用明确的 ISR-safe wake/post，任务只能在 outermost
   interrupt exit 后运行；nested scheduler lock 只在最外层 unlock 后 reschedule，并有最大
   持有时间/诊断；任何 callback 都不得在 IRQ、critical section 或 scheduler lock 中执行。
 - [ ] `TaskId`/wait handle 必须具有 identity generation 或等价 stale-handle 防护；定义 task
   return/exit、stack reclaim、destroy-with-waiters、重复 destroy、资源 grant 后取消和 FFI
   非法上下文的 fail-closed 结果，禁止 slot 复用让旧句柄指向新任务。
-- [ ] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
+- [x] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
   backend；未通过者不能注册为 RF production runtime。共享 schema 已由
-  `hisi-rf-rtos-driver 0.1.0-alpha.9` 发布，`hisi-rtos` 已用生产 `Sched` 核心执行
-  priority/FIFO、nested scheduler lock、sleep deadline、nested IRQ exit 和 task exit/reuse；
-  semaphore、mutex PI、wait timeout/cleanup 与 stale handle 场景仍是完成门槛。
+  `hisi-rf-rtos-driver 0.1.0-alpha.10` 发布；`hisi-rtos` 的 host deterministic adapter 复用
+  生产 `Sched`、wait queue 和 PI 核心执行九条场景：priority/FIFO、nested scheduler lock、
+  sleep deadline、nested IRQ exit、task exit/reuse、semaphore direct handoff、semaphore
+  timeout cleanup、recursive mutex PI/direct handoff 和 stale task identity。
 - [ ] WS63 vendor priority/tick/return-code 差异只在 archive-hash-bound compatibility
   profile 中转换；LiteOS oracle 测试约束 adapter，不反向定义通用 `hisi-rtos` API。通用
   scheduler 的内部模型、Kani/TLA+ 和 policy 仍以
