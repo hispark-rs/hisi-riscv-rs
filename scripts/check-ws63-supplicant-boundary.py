@@ -84,13 +84,16 @@ def check_map(profile: dict[str, object], map_text: str) -> None:
     ]
     if legacy:
         raise BoundaryError(f"legacy archives reached final link: {sorted(legacy)}")
-    native = str(profile["native_archive"])
+    native = [str(entry["archive"]) for entry in profile["native_archives"]]
     markers = [str(marker) for marker in profile["native_object_markers"]]
     missing_markers = [marker for marker in markers if marker not in map_text]
-    if not archive_is_present(map_text, native) and missing_markers:
+    native_present = any(
+        archive_is_present(map_text, archive) for archive in native
+    )
+    if not native_present and missing_markers:
         raise BoundaryError(
             "native supplicant provenance absent from final link: "
-            f"archive={native}, missing_markers={missing_markers}"
+            f"archives={native}, missing_markers={missing_markers}"
         )
 
 
@@ -153,7 +156,7 @@ def main() -> None:
         suffix = f", final={args.elf}"
     print(
         "WS63 supplicant boundary OK: "
-        f"native={profile['native_archive']}, "
+        f"native_profiles={len(profile['native_archives'])}, "
         f"native_markers={len(profile['native_object_markers'])}, "
         f"legacy_archives={len(profile['legacy_archives'])}, "
         f"legacy_symbols={len(profile['legacy_provider_symbols'])}{suffix}"

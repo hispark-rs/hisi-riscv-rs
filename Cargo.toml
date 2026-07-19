@@ -1,5 +1,10 @@
 [workspace]
 resolver = "3"
+exclude = [
+    # Host-only release tooling. Cargo otherwise auto-enrolls path dependencies
+    # below the workspace root and `--workspace` tries to build this CLI for RV32.
+    "crates/chips/ws63/ws63-radio-sys/crates/hisi-rf-link",
+]
 members = [
     "crates/chips/ws63/ws63-pac",
     "crates/chips/bs2x/bs2x-pac",

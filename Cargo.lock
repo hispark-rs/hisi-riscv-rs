@@ -863,15 +863,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-link"
-version = "0.1.0-alpha.1"
-dependencies = [
- "object",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "toml 0.9.12+spec-1.1.0",
-]
+version = "0.1.0-alpha.2"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
@@ -1781,12 +1773,10 @@ version = "0.9.12+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf92845e79fc2e2def6a5d828f0801e29a2f8acc037becc5ab08595c7d5e9863"
 dependencies = [
- "indexmap",
  "serde_core",
  "serde_spanned",
  "toml_datetime 0.7.5+spec-1.1.0",
  "toml_parser",
- "toml_writer",
  "winnow 0.7.15",
 ]
 
@@ -2113,7 +2103,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-blob"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "ruzstd",
  "serde",
@@ -2123,7 +2113,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-sys"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "hisi-rf-link",
  "hisi-rom-sys-ws63",
