@@ -68,6 +68,8 @@ jobs:
         with:
           submodules: recursive
       - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
 
       - name: Check agent guide sync
         run: cmp -s AGENTS.md CLAUDE.md
@@ -111,6 +113,8 @@ jobs:
         with:
           submodules: recursive
       - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
 
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
@@ -132,6 +136,8 @@ jobs:
         with:
           submodules: recursive
       - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
 
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
@@ -196,6 +202,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
 
       - name: Download docs artifact
         uses: actions/download-artifact@v8
@@ -245,6 +253,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
 
       - name: Install mdBook + linkcheck
         uses: taiki-e/install-action@v2

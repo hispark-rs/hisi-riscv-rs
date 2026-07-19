@@ -69,4 +69,16 @@ for pattern in INVOCATION_GLOBS:
                     "invoke a PEP 723 script with uv run"
                 )
 
+for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for index, line in enumerate(lines):
+        if "uses: astral-sh/setup-uv@v7" not in line:
+            continue
+        action_block = "\n".join(lines[index + 1 : index + 4])
+        if 'cache-dependency-glob: "**/*.py"' not in action_block:
+            fail(
+                f"{path.relative_to(ROOT)}:{index + 1} must key the uv cache "
+                "from PEP 723 Python scripts"
+            )
+
 print(f"python uv contract OK: {len(scripts)} parent-owned single-file scripts")
