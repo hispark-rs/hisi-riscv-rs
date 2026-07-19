@@ -420,6 +420,14 @@ pub struct WpaWifi<'d> {
     _efuse: Efuse<'d>,
 }
 
+#[cfg(target_arch = "riscv32")]
+fn require_radio_runtime() -> Result<(), Error> {
+    hisi_rf_rtos_driver::require_runtime_contract(hisi_rf_rtos_driver::RuntimeContract::V1)
+        .map_err(Error::Runtime)?;
+    hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
+    Ok(())
+}
+
 #[cfg(feature = "wifi-personal")]
 impl<'d> WpaWifi<'d> {
     /// Initialize the RF runtime, start the STA interface and its supplicant task.
@@ -431,7 +439,7 @@ impl<'d> WpaWifi<'d> {
         }
         #[cfg(target_arch = "riscv32")]
         {
-            hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
+            require_radio_runtime()?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()
@@ -774,7 +782,7 @@ impl<'d> Wifi<'d> {
 
         #[cfg(target_arch = "riscv32")]
         {
-            hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
+            require_radio_runtime()?;
             if WIFI_CLAIMED
                 .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
                 .is_err()

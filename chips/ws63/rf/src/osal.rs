@@ -463,7 +463,7 @@ pub extern "C" fn osal_kthread_create(
             stack_size,
             // LiteOS callers set the requested priority immediately after
             // creation. Keep a not-yet-configured task at the lowest level.
-            priority: 31,
+            priority: hisi_rf_rtos_driver::TaskPriority::LOWEST,
         },
     ) {
         Ok(task) => {
@@ -510,9 +510,12 @@ pub extern "C" fn osal_kthread_set_priority(thread: *mut c_void, priority: c_int
     let Ok(raw_task) = u32::try_from(raw_task) else {
         return OSAL_NOK;
     };
+    let Some(priority) = hisi_rf_rtos_driver::TaskPriority::new(priority as u8) else {
+        return OSAL_NOK;
+    };
     match hisi_rf_rtos_driver::set_task_priority(
         hisi_rf_rtos_driver::TaskId::from_raw(raw_task),
-        priority as u8,
+        priority,
     ) {
         Ok(()) => OSAL_OK,
         Err(_) => OSAL_NOK,

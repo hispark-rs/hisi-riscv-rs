@@ -70,8 +70,8 @@ mod tests {
     use core::num::NonZeroU32;
     use core::sync::atomic::{AtomicU32, Ordering};
     use hisi_rf_rtos_driver::{
-        Error, MutexHandle, Runtime, SemaphoreHandle, TaskConfig, TaskEntry, TaskId, WaitOutcome,
-        WaitTimeout,
+        Error, MutexHandle, Runtime, RuntimeContract, SemaphoreHandle, TaskConfig, TaskEntry,
+        TaskId, TaskPriority, WaitOutcome, WaitTimeout,
     };
 
     struct LockRuntime {
@@ -80,6 +80,10 @@ mod tests {
     }
 
     impl Runtime for LockRuntime {
+        fn contract(&self) -> RuntimeContract {
+            RuntimeContract::V1
+        }
+
         fn spawn(
             &self,
             _entry: TaskEntry,
@@ -101,7 +105,7 @@ mod tests {
             Err(Error::InvalidContext)
         }
 
-        fn set_task_priority(&self, _task: TaskId, _priority: u8) -> Result<(), Error> {
+        fn set_task_priority(&self, _task: TaskId, _priority: TaskPriority) -> Result<(), Error> {
             Err(Error::InvalidContext)
         }
 

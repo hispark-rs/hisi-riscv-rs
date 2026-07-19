@@ -1118,7 +1118,7 @@ pub(crate) fn ws63_crypto_contention_self_test() -> Result<(), CryptoError> {
             argument,
             hisi_rf_rtos_driver::TaskConfig {
                 stack_size: core::num::NonZeroUsize::new(4 * 1024).unwrap(),
-                priority: 10,
+                priority: hisi_rf_rtos_driver::TaskPriority::new(10).unwrap(),
             },
         )
         .map_err(|_| contention_runtime_error(12))?;
@@ -1127,7 +1127,7 @@ pub(crate) fn ws63_crypto_contention_self_test() -> Result<(), CryptoError> {
             argument,
             hisi_rf_rtos_driver::TaskConfig {
                 stack_size: core::num::NonZeroUsize::new(4 * 1024).unwrap(),
-                priority: 10,
+                priority: hisi_rf_rtos_driver::TaskPriority::new(10).unwrap(),
             },
         );
 

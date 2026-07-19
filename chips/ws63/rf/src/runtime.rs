@@ -4,7 +4,7 @@ use core::ffi::c_void;
 #[cfg(target_arch = "riscv32")]
 use core::num::NonZeroU32;
 use core::num::NonZeroUsize;
-use hisi_rf_rtos_driver::{TaskConfig, TaskEntry};
+use hisi_rf_rtos_driver::{TaskConfig, TaskEntry, TaskPriority};
 
 pub fn spawn(entry: TaskEntry, arg: *mut c_void, stack_size: usize) -> Option<usize> {
     spawn_with_priority(entry, arg, stack_size, 31)
@@ -17,6 +17,7 @@ pub fn spawn_with_priority(
     priority: u8,
 ) -> Option<usize> {
     let stack_size = NonZeroUsize::new(stack_size.max(1)).unwrap();
+    let priority = TaskPriority::new(priority)?;
     hisi_rf_rtos_driver::spawn(
         entry,
         arg,

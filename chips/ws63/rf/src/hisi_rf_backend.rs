@@ -579,6 +579,7 @@ fn runtime_code(error: hisi_rf_rtos_driver::Error) -> u32 {
         Error::InvalidContext => 6,
         Error::TimedOut => 7,
         Error::Runtime => 8,
+        Error::IncompatibleContract => 9,
     }
 }
 
