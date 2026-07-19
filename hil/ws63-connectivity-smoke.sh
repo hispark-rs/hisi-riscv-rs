@@ -15,7 +15,6 @@ WPA_URL="https://github.com/hispark-rs/ws63-RF/releases/download/$WPA_TAG/$WPA_A
 MONITOR="${MONITOR:-60}"
 PROBE_SPEED="${PROBE_SPEED:-1000}"
 PORT="${PORT:-}"
-PYTHON="${PYTHON:-}"
 PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
 CRYPTO_CONTENTION_HIL="${WS63_CRYPTO_CONTENTION_HIL:-0}"
 
@@ -48,21 +47,6 @@ require_command() {
     }
 }
 
-resolve_python() {
-    local python="$PYTHON"
-    if [ -z "$python" ]; then
-        python="$(uv python find '>=3.11')" || {
-            echo "ERROR: uv could not provide Python >=3.11" >&2
-            return 1
-        }
-    fi
-    "$python" -c 'import tomllib' >/dev/null 2>&1 || {
-        echo "ERROR: RF post-link tools require Python >=3.11 with tomllib: $python" >&2
-        return 1
-    }
-    printf '%s\n' "$python"
-}
-
 resolve_archive() {
     if [ -n "${WS63_WPA_ARCHIVE:-}" ]; then
         test -f "$WS63_WPA_ARCHIVE" || {
@@ -86,7 +70,7 @@ resolve_archive() {
 }
 
 preflight() {
-    local failed=0 archive actual python
+    local failed=0 archive actual
     case "$PROFILE" in
         vendor-wpa2|upstream-wpa2|upstream-wpa3) ;;
         *)
@@ -130,12 +114,6 @@ preflight() {
     fi
     if [ -n "${PROBE_YAML:-}" ] && [ ! -f "$PROBE_YAML" ]; then
         echo "ERROR: PROBE_YAML not found: $PROBE_YAML" >&2
-        failed=1
-    fi
-    if python="$(resolve_python)"; then
-        PYTHON="$python"
-        export PYTHON
-    else
         failed=1
     fi
     if [ "$failed" -eq 0 ] && [ "$PROFILE" = vendor-wpa2 ]; then

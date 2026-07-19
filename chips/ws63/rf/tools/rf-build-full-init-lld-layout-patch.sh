@@ -24,7 +24,6 @@ LLVM_NM="$(find "$(rustc --print sysroot)" -name llvm-nm -type f | head -1)"
 LLVM_OBJCOPY="$(find "$(rustc --print sysroot)" -name llvm-objcopy -type f | head -1)"
 LLVM_AR="$(find "$(rustc --print sysroot)" -name llvm-ar -type f | head -1)"
 HISI_FWPKG="${HISI_FWPKG:-hisi-fwpkg}"
-PYTHON="${PYTHON:-$(uv python find '>=3.11')}"
 HOST_TRIPLE="$(rustc -vV | sed -n 's/^host: //p')"
 RF_LINK_TARGET="${WS63_RF_LINK_TARGET:-${TMPDIR:-/tmp}/hisi-rf-link-target}"
 TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target}"
@@ -85,28 +84,9 @@ case "$WPA_PROFILE" in
       echo "ERROR: WPA archive not found: $WPA_ARCHIVE" >&2
       exit 1
     }
-    EXPECTED_WPA_SHA="$({
-      "$PYTHON" - "$TASK_PROFILE" "$WPA_PROFILE" <<'PY'
-import pathlib
-import sys
-import tomllib
-
-profile = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
-profile_name = sys.argv[2]
-artifact_id = {
-    "wpa2-personal": "wpa2-personal-oracle",
-    "wpa3-personal": "wpa3-personal-candidate",
-}[profile_name]
-matches = [
-    artifact["sha256"]
-    for artifact in profile["artifacts"]
-    if artifact["id"] == artifact_id
-]
-if len(matches) != 1:
-    raise SystemExit(f"task profile must define exactly one {artifact_id}")
-print(matches[0])
-PY
-    })"
+    EXPECTED_WPA_SHA="$(
+      uv run "$SCRIPT_DIR/read-task-profile-hash.py" "$TASK_PROFILE" "$WPA_PROFILE"
+    )"
     ACTUAL_WPA_SHA="$(shasum -a 256 "$WPA_ARCHIVE" | awk '{print $1}')"
     test "$ACTUAL_WPA_SHA" = "$EXPECTED_WPA_SHA" || {
       echo "ERROR: WPA archive does not match the selected task profile" >&2

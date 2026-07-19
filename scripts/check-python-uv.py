@@ -24,6 +24,7 @@ INVOCATION_GLOBS = (
     ".agents/skills/**/*.sh",
     "scripts/*.sh",
     "hil/*.sh",
+    "chips/ws63/rf/tools/*.sh",
     "docs/src/**/*.md",
     "docs/plan/**/*.md",
     "hil/README.md",
@@ -61,6 +62,11 @@ for pattern in INVOCATION_GLOBS:
                 fail(
                     f"{path.relative_to(ROOT)}:{number} invokes system python3; "
                     "use a uv single-file script or uv run"
+                )
+            if "uv python find" in line or "$PYTHON" in line or "PYTHON=" in line:
+                fail(
+                    f"{path.relative_to(ROOT)}:{number} bypasses uv execution; "
+                    "invoke a PEP 723 script with uv run"
                 )
 
 print(f"python uv contract OK: {len(scripts)} parent-owned single-file scripts")
