@@ -86,6 +86,7 @@ guarded link，但该分支只作为迁移 oracle。
 | `PORT` | 必填 | WS63 UART0 |
 | `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
 | `WS63_CONNECTIVITY_PROFILE` | `vendor-wpa2` | `vendor-wpa2` / `upstream-wpa2` / `upstream-wpa3`；正式 upstream 验证使用 plain Cargo lane |
+| `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
 | `PROBE_SPEED` | `1000` | 已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败 |

@@ -12,11 +12,21 @@ WPA_TAG="wpa2-personal-2026-07-13"
 WPA_ASSET="libwpa_supplicant_wpa2_personal.a"
 WPA_SHA256="891c195279d768ce5664e16fecac95f353fd2217c4e3590315baa4cb6e7f25a2"
 WPA_URL="https://github.com/hispark-rs/ws63-RF/releases/download/$WPA_TAG/$WPA_ASSET"
-MONITOR="${MONITOR:-60}"
 PROBE_SPEED="${PROBE_SPEED:-1000}"
 PORT="${PORT:-}"
 PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
+EXPECT="${WS63_CONNECTIVITY_EXPECT:-full}"
 CRYPTO_CONTENTION_HIL="${WS63_CRYPTO_CONTENTION_HIL:-0}"
+if [ "$EXPECT" = init-scan ]; then
+    MONITOR="${MONITOR:-35}"
+    WS63_WIFI_SSID="${WS63_WIFI_SSID:-ci-fixture}"
+    WS63_WIFI_PASSPHRASE="${WS63_WIFI_PASSPHRASE:-fixture-passphrase}"
+    if [ "$PROFILE" = upstream-wpa3 ]; then
+        WS63_WIFI_AP_MODE="${WS63_WIFI_AP_MODE:-transition}"
+    fi
+else
+    MONITOR="${MONITOR:-60}"
+fi
 
 usage() {
     cat <<'EOF'
@@ -27,6 +37,8 @@ Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           HISI_FWPKG, UART_BAUD, MONITOR,
           WS63_CONNECTIVITY_PROFILE={vendor-wpa2|upstream-wpa2|upstream-wpa3},
+          WS63_CONNECTIVITY_EXPECT={full|init-scan}; init-scan uses public
+          fixture credentials and proves only image/startup/RF init/scan/runner,
           WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3,
           WS63_CRYPTO_CONTENTION_HIL=1 for the diagnostic two-task mutex gate.
 EOF
@@ -78,6 +90,13 @@ preflight() {
             failed=1
             ;;
     esac
+    case "$EXPECT" in
+        full|init-scan) ;;
+        *)
+            echo "ERROR: WS63_CONNECTIVITY_EXPECT must be full or init-scan" >&2
+            failed=1
+            ;;
+    esac
     case "$CRYPTO_CONTENTION_HIL" in
         0|1) ;;
         *)
@@ -87,6 +106,10 @@ preflight() {
     esac
     if [ "$CRYPTO_CONTENTION_HIL" = 1 ] && [ "$PROFILE" != upstream-wpa3 ]; then
         echo "ERROR: crypto contention HIL currently requires upstream-wpa3" >&2
+        failed=1
+    fi
+    if [ "$CRYPTO_CONTENTION_HIL" = 1 ] && [ "$EXPECT" != full ]; then
+        echo "ERROR: crypto contention HIL requires WS63_CONNECTIVITY_EXPECT=full" >&2
         failed=1
     fi
     for command in cargo JLinkExe "${PROBE_RS:-probe-rs}" "${HISI_FWPKG:-hisi-fwpkg}" uv; do
@@ -133,7 +156,7 @@ preflight() {
         fi
     fi
     [ "$failed" -eq 0 ] || return 1
-    echo "connectivity-smoke: preflight PASS (profile=$PROFILE, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
+    echo "connectivity-smoke: preflight PASS (profile=$PROFILE, expect=$EXPECT, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
 }
 
 assert_marker() {
@@ -232,9 +255,27 @@ fi
 ) 2>&1 | tee "$LOG"
 
 fail=0
+assert_marker 'RF1_IMAGE_OK' 'normalized RF image started on silicon'
 assert_marker 'RF2_INIT_OK ifname=hisi-rf' 'chip-neutral radio initialized'
 assert_marker 'A4_RADIO_EVENT kind=initialized' 'initialized event delivered'
+assert_marker 'RF3_SCAN_OK count=0x0*[1-9a-fA-F]' 'RF scan returned at least one AP'
 assert_marker 'A4_RADIO_EVENT kind=scan-completed' 'scan event delivered'
+if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
+    assert_marker 'W2D_NATIVE_RUNNER_RX_READY' 'upstream native runner entered RX-ready state'
+fi
+assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|W2D_.*ERR|W2E_.*ERR|panicked at' 'no fatal connectivity marker'
+
+if [ "$EXPECT" = init-scan ]; then
+    if [ "$fail" -ne 0 ]; then
+        echo "WS63 RADIO INIT/SCAN SMOKE: FAIL" >&2
+        echo "--- UART tail ---" >&2
+        tail -80 "$LOG" >&2
+        exit 1
+    fi
+    echo "WS63 RADIO INIT/SCAN SMOKE: PASS"
+    exit 0
+fi
+
 assert_marker 'A4_RADIO_EVENT kind=connected' 'connect event delivered'
 case "$PROFILE" in
     vendor-wpa2)
@@ -257,7 +298,6 @@ assert_marker 'A4_DHCP_RENEW_OK client=0x0*[1-9a-fA-F].*server=0x0*[1-9a-fA-F]' 
 if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
     assert_marker 'RFDBG_HW_CONTENTION tests=0x0*1 failures=0x0+ observed=0x0*1 holder=0x0*1 waiter=0x0*1' 'two RTOS task owners contended and completed through one crypto service'
 fi
-assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|W2D_.*ERR|W2E_.*ERR|panicked at' 'no fatal connectivity marker'
 
 if [ "$fail" -ne 0 ]; then
     echo "WS63 CONNECTIVITY SMOKE: FAIL" >&2

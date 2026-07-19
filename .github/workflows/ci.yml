@@ -203,6 +203,8 @@ jobs:
         run: uv run scripts/test-ws63-supplicant-boundary.py
       - name: Test WS63 connectivity matrix classifier
         run: uv run hil/test-ws63-connectivity-reset-matrix.py
+      - name: Check WS63 connectivity shell contract
+        run: bash -n hil/ws63-connectivity-smoke.sh
       - name: Test WS63 runtime compatibility shims
         run: cargo test -p ws63-rf-rs --target x86_64-unknown-linux-gnu --lib
       - name: Run clippy

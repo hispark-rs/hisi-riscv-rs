@@ -57,9 +57,10 @@ the upstream-native WPA3 path is introduced. The pinned upstream hostap path has
 closed WPA2 connect/DHCP/public-ping/lease-renew parity, host protocol vectors,
 and a 20/20 transition-mode SAE+required-PMF reset matrix. Its release unit is
 published through tag CI, and the upstream WPA2/WPA3 firmware now performs one
-stock-rust-lld link through ordinary Cargo on Linux, macOS and Windows. Plain-link
-silicon parity, pure WPA3 SAE+PMF and migration retirement remain open; historical
-guarded linking is retained only for the vendor oracle.
+stock-rust-lld link through ordinary Cargo on Linux, macOS and Windows. The same
+plain-link image now passes an on-silicon init/non-empty-scan/native-runner gate;
+full transition-mode connect parity, pure WPA3 SAE+PMF and migration retirement
+remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 

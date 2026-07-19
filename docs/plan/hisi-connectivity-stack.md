@@ -679,8 +679,11 @@ let radio = hisi_rf::ws63::init(
      `cargo build --release` + stock `rust-lld` 单次链接；Ubuntu x86_64、macOS arm64 和
      Windows x86_64 原生 CI 均通过，最终 ELF 保持 37 项 ROM patch、零 58/59/61 vendor
      relocation，并证明 legacy provider 不可达。上游 HIL 脚本也已切到这一 plain Cargo
-     lane；该新 lane 的真机 parity 仍须与纯 WPA3 gate 一起留证，不能用三平台 host CI
-     替代。vendor WPA2 分支继续 guarded link，仅作为 migration oracle。
+     lane。无秘密 `init-scan` gate 已在真机完成两次 3 MHz full-verify，并由正式脚本
+     以 `RF1_IMAGE_OK`、RF init、非空 scan、native runner ready 和无 fatal marker 退出 0；
+     证据见 [W2F plain Cargo link](evidence/ws63-rf-w2f-plain-cargo-link-2026-07-19.md)。
+     这只证明标准 relocation 产物能在硅片执行到 scan，不替代完整 transition connect，
+     更不替代纯 WPA3 gate。vendor WPA2 分支继续 guarded link，仅作为 migration oracle。
 
    **参考实现与取舍：**
 
