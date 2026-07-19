@@ -91,6 +91,7 @@ Detailed deferred facts stay in their owning plans:
 - [RTOS semantics and verification](docs/plan/hisi-rtos-semantics-and-verification.md)
 - [RTOS future architecture](docs/plan/hisi-rtos-future-architecture.md)
 - [RTOS observability and CLI](docs/plan/hisi-rtos-debugging-cli.md)
+- [`cargo-hisi` developer workflow CLI](docs/plan/cargo-hisi-cli.md)
 - [NVS image tooling](docs/plan/hisi-nvs-image.md)
 - [WS63 debug memory diagnosis](docs/plan/ws63-debug-memory-access.md)
 
