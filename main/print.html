@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8d798495.js";
+            window.path_to_searchindex_js = "searchindex-abfc78cc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -2595,6 +2595,7 @@ guarded link，但该分支只作为迁移 oracle。</p>
 <tr><td><code>PORT</code></td><td>必填</td><td>WS63 UART0</td></tr>
 <tr><td><code>WS63_WIFI_PASSPHRASE</code></td><td>必填</td><td>仅由 self-hosted secret 注入，不写入仓库或日志</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_PROFILE</code></td><td><code>vendor-wpa2</code></td><td><code>vendor-wpa2</code> / <code>upstream-wpa2</code> / <code>upstream-wpa3</code>；正式 upstream 验证使用 plain Cargo lane</td></tr>
+<tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/ping/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
 <tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
 <tr><td><code>PROBE_SPEED</code></td><td><code>1000</code></td><td>已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败</td></tr>
