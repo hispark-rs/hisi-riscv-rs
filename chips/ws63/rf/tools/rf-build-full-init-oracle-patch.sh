@@ -23,13 +23,17 @@ cargo build --manifest-path "$RADIO_SYS_DIR/Cargo.toml" \
   -p hisi-rf-link --target "$HOST_TRIPLE" --target-dir "$RF_LINK_TARGET"
 RF_LINK="$RF_LINK_TARGET/$HOST_TRIPLE/debug/hisi-rf-link"
 
-SDK="${FBB_WS63_SDK:-$HOME/Documents/hispark/fbb_ws63/src}"
+SDK="${FBB_WS63_SDK:-}"
+if [ -z "$SDK" ]; then
+  echo "ERROR: set FBB_WS63_SDK to the explicit fbb_ws63/src oracle checkout" >&2
+  exit 2
+fi
 VENDOR_BIN="$SDK/tools/bin/compiler/riscv/cc_riscv32_musl_105/cc_riscv32_musl_fp/bin"
 VENDOR_LD="${WS63_RF_VENDOR_LD:-$VENDOR_BIN/riscv32-linux-musl-ld}"
 
 if [ ! -x "$VENDOR_LD" ]; then
   echo "ERROR: vendor linker not found: $VENDOR_LD" >&2
-  echo "Set FBB_WS63_SDK=/path/to/fbb_ws63/src" >&2
+  echo "Check FBB_WS63_SDK or set WS63_RF_VENDOR_LD explicitly" >&2
   exit 2
 fi
 

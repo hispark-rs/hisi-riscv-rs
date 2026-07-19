@@ -46,9 +46,6 @@ echo "== LLVM view =="
   grep -m 12 -E 'R_RISCV_IRELATIVE|Relocations|cali_trx_iq_get_a_matrix_value|cali_trx_iq_alg' || true
 
 sdk="${FBB_WS63_SDK:-}"
-if [ -z "$sdk" ] && [ -d /home/sanchuanhehe/Documents/hispark/fbb_ws63/src ]; then
-  sdk=/home/sanchuanhehe/Documents/hispark/fbb_ws63/src
-fi
 if [ -z "$sdk" ] || [ ! -x "$sdk/tools/bin/compiler/riscv/cc_riscv32_musl_105/cc_riscv32_musl_fp/bin/riscv32-linux-musl-ld" ]; then
   echo
   echo "Vendor toolchain not available on this host."

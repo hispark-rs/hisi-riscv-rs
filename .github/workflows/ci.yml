@@ -145,6 +145,8 @@ jobs:
         run: uv run scripts/check-ws63-runtime-compat.py
       - name: Check WS63 supplicant boundary profile
         run: uv run scripts/check-ws63-supplicant-boundary.py
+      - name: Check RF production path portability
+        run: uv run scripts/check-rf-production-paths.py
       - name: Test WS63 supplicant final-link boundary
         run: uv run scripts/test-ws63-supplicant-boundary.py
       - name: Test WS63 connectivity matrix classifier

@@ -3,7 +3,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
-FBB_WS63="${FBB_WS63:-/Users/sanchuan/Documents/hispark/fbb_ws63/src}"
+FBB_WS63="${FBB_WS63:-}"
+if [[ -z "$FBB_WS63" ]]; then
+  echo "ERROR: set FBB_WS63 to the explicit fbb_ws63/src oracle checkout" >&2
+  exit 2
+fi
 CC="${WS63_GCC:-$FBB_WS63/tools/bin/compiler/riscv/cc_riscv32_musl_105/cc_riscv32_musl_fp/bin/riscv32-linux-musl-gcc}"
 OUT="$ROOT/target/ws63-layout-oracle"
 mkdir -p "$OUT/include/asm"

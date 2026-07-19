@@ -18,9 +18,6 @@ fn main() {
     );
     if let Ok(canon) = lib_dir.canonicalize() {
         println!("cargo:rustc-link-search=native={}", canon.display());
-        // Compatibility for existing diagnostics. New build scripts consume
-        // `DEP_WS63_RADIO_SYS_LIB_DIR` directly.
-        println!("cargo:rustc-env=WS63_RF_LIB_DIR={}", canon.display());
     }
 
     // NOTE: the Wi-Fi packet-RAM linker symbols the blobs reference

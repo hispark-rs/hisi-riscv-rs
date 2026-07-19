@@ -72,7 +72,12 @@ esac
 
 case "$WPA_PROFILE" in
   wpa2-personal|wpa3-personal)
-    SDK_APP_OUT="${WS63_SDK_APP_OUT:-/Users/sanchuan/Documents/hispark/fbb_ws63/src/output/ws63/acore/ws63-liteos-app}"
+    SDK_APP_OUT="${WS63_SDK_APP_OUT:-}"
+    test -n "$SDK_APP_OUT" || {
+      echo "ERROR: $WPA_PROFILE oracle link requires WS63_SDK_APP_OUT" >&2
+      echo "Set it to the explicit fbb_ws63 app output directory" >&2
+      exit 1
+    }
     WPA_ARCHIVE="${WS63_WPA_ARCHIVE:-}"
     test -n "$WPA_ARCHIVE" || {
       echo "ERROR: $WPA_PROFILE requires its explicit profile archive" >&2
