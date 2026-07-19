@@ -861,16 +861,24 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   report schema v2 同时记录 profile revision/mode bits，不再用 capability bitset 暗示时序。
 - [x] 固定 contract-v1 priority 为 0..31，数字越小优先级越高；`TaskPriority` 在边界验证，
   不实现容易被误用的自然 `Ord`，WS63 vendor 数字只在 adapter 转换。
-- [ ] 继续消除“runtime-defined”关键语义：`hisi-rf-rtos-driver 0.1.0-alpha.12` 已用共享
+- [x] 继续消除“runtime-defined”关键语义：`hisi-rf-rtos-driver 0.1.0-alpha.12` 已用共享
   场景固定 zero-delay 等价 yield、wait-forever、同 deadline FIFO，以及 semaphore
   多 waiter 按有效优先级选择且同优先级 FIFO；`hisi-rtos` 同时修复了等待中优先级变化的
-  重排。仍需固定 monotonic time 与 vendor tick rounding/wrap 的通用边界。
-- [ ] 固定 context 规则：ISR 只能使用明确的 ISR-safe wake/post，任务只能在 outermost
+  重排。通用 contract 只接受单调毫秒时间和 `WaitTimeout`，不解释 vendor tick；WS63
+  archive-bound profile 另行固定 100 Hz tick、毫秒到 tick 向上取整、tick 到毫秒向下取整、
+  `u32` 饱和和 wait-forever。`LOS_MS2Tick`/`LOS_Tick2MS` 当前均为 off-path，一旦进入
+  reachable closure 而没有受审 provider，CI fail closed。
+- [x] 固定 context 规则：ISR 只能使用明确的 ISR-safe wake/post，任务只能在 outermost
   interrupt exit 后运行；nested scheduler lock 只在最外层 unlock 后 reschedule，并有最大
   持有时间/诊断；任何 callback 都不得在 IRQ、critical section 或 scheduler lock 中执行。
+  这些规则已进入 normative requirement map、共享 nested IRQ/lock 场景、host tests 和既有
+  `A3_SCHEDULER_STRESS_OK` HIL 证据。
 - [ ] `TaskId`/wait handle 必须具有 identity generation 或等价 stale-handle 防护；定义 task
   return/exit、stack reclaim、destroy-with-waiters、重复 destroy、资源 grant 后取消和 FFI
-  非法上下文的 fail-closed 结果，禁止 slot 复用让旧句柄指向新任务。
+  非法上下文的 fail-closed 结果，禁止 slot 复用让旧句柄指向新任务。当前 TaskId generation、
+  task exit/reuse、retired stack reclaim 已有证据；`hisi-rtos 0.1.0-alpha.6` 进一步拒绝销毁仍有
+  waiter 的 semaphore 和仍有 owner/waiter 的 mutex。剩余门槛是 resource/wait handle 的
+  generation、重复 destroy 检测，以及显式 cancel-after-grant 语义。
 - [x] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
@@ -881,10 +889,13 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   sleep deadline、nested IRQ exit、task exit/reuse、semaphore direct handoff、semaphore
   timeout cleanup、recursive mutex PI/direct handoff、stale task identity、zero-delay yield、
   wait-forever、same-deadline FIFO 和 highest-priority semaphore waiter，共十三条场景。
-- [ ] WS63 vendor priority/tick/return-code 差异只在 archive-hash-bound compatibility
+- [x] WS63 vendor priority/tick/return-code 差异只在 archive-hash-bound compatibility
   profile 中转换；LiteOS oracle 测试约束 adapter，不反向定义通用 `hisi-rtos` API。通用
   scheduler 的内部模型、Kani/TLA+ 和 policy 仍以
-  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源。
+  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源。现有
+  `ws63-runtime-compat.toml` 绑定 archive profile revision，并机器化 priority 0..31、100 Hz
+  tick、rounding/saturation/wait-forever 与 LiteOS success/failure/timeout 返回码；校验脚本
+  同时比对实际 archive undefined-symbol closure。
 - [x] conformance 输出机器可读 report，包含 contract/profile revision、backend version、
   capability set 和每个 scenario 结果；schema v3 固定容量 report 可无分配写 JSON，十三条
   scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
@@ -1078,7 +1089,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 真实 vendor `osal_kthread_create`、`osal_msleep`、current-task、semaphore、mutex、
   wait/message queue 和 event-group 路径已穿过 driver contract；opaque handle 的销毁也由
   contract 显式完成，不是空 facade。
-- [x] 已建立独立 `hisi-rtos 0.1.0-alpha.3` release unit；task slots、task stacks、context
+- [x] 已建立独立 `hisi-rtos 0.1.0-alpha.6` release unit；task slots、task stacks、context
   switch 和 cooperative scheduler ownership 已从 RF crate 移出。应用显式注入 allocator、
   deallocator 和 monotonic clock resources 后启动唯一 runtime。
 - [x] 当前兼容基线恢复为 1 adopted main + 1 internal idle + 15 dynamic task slots；host
