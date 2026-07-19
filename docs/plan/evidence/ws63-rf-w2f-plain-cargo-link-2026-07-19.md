@@ -14,24 +14,26 @@ connect parity and the controlled pure-WPA3 SAE+PMF matrix remain separate gates
 
 ## Release Unit
 
-`ws63-radio-sys v0.1.0-alpha.2` is one versioned release unit containing:
+`ws63-radio-sys v0.1.0-alpha.3` is one versioned release unit containing:
 
 - `hisi-rf-link`;
 - `ws63-radio-blob`;
 - `ws63-radio-sys`.
 
-Tag `v0.1.0-alpha.2` triggered GitHub Actions run `29684445921`, which packaged
-and published the crates in dependency order, waiting for each exact version to
-become visible on crates.io before publishing the next. All three versions are
-available from crates.io.
+Tag `v0.1.0-alpha.3` triggered GitHub Actions run `29687842852`, which rebuilt
+both native hostap archives, packaged and published the crates in dependency
+order, and waited for each exact version to become visible on crates.io before
+publishing the next. All three versions were subsequently downloaded from
+crates.io outside the workspace.
 
 The subsequent release-hardening commits added two independent reconstruction
 gates. Child run `29685140772` rebuilt all normalized vendor archives from the
 pinned `ws63-RF` submodule and compared bytes, SHA-256, size and relocation counts
-with the Cargo payload. Child run `29687398059` then used the canonical macOS 15
+with the Cargo payload. Child run `29687398059` established the canonical macOS 15
 builder, pinned Homebrew tap revision, GCC 15.1.0, GNU binutils 2.45 and
 `cc-rs 1.2.67` to rebuild both complete upstream hostap WPA2 and WPA3 source
-profiles. Both output archives matched the packaged payload byte for byte. The
+profiles; the tag workflow repeated that gate before publication. Both output
+archives matched the packaged payload byte for byte. The
 toolchain provenance and archive hashes are machine-checked release metadata;
 the C toolchain remains a maintainer/release dependency, never a consumer build
 dependency.

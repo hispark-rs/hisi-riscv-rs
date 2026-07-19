@@ -672,10 +672,11 @@ let radio = hisi_rf::ws63::init(
      vendor supplicant/security/mbedTLS/libc archive 全部不可达；最终 ELF 还必须不包含
      `wpa_compat.rs` 的精确 legacy provider 符号。profile drift、合成 map/ELF 负向场景和
      final ELF 均由 uv 单脚本 CI gate，避免仅凭 Cargo feature 拓扑推断最终产物。
-     `ws63-radio-sys v0.1.0-alpha.2` release unit 已由 tag CI 按
+     `ws63-radio-sys v0.1.0-alpha.3` release unit 已由 tag CI run `29687842852` 按
      `hisi-rf-link -> ws63-radio-blob -> ws63-radio-sys` 顺序发布到 crates.io；main CI
      从 pinned `ws63-RF` 重建全部 normalized vendor archives，并对 bytes、hash、size 和
-     relocation count 做 fail-closed 比较。main CI run `29687398059` 还使用固定
+     relocation count 做 fail-closed 比较。main CI run `29687398059` 建立、tag CI 再次执行
+     的 canonical archive gate 使用固定
      Homebrew tap revision、GCC 15.1.0、GNU binutils 2.45 和 `cc-rs 1.2.67`，从 pinned
      hostap 2.11 source 分别重建 WPA2/WPA3 target archive，并与 Cargo payload 逐字节
      相等；因此 target archive 的来源与构建器也已形成可执行 release gate，而 C 工具链
