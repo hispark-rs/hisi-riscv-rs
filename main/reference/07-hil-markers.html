@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-abfc78cc.js";
+            window.path_to_searchindex_js = "../searchindex-f67d2a4e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -281,6 +281,7 @@ guarded link，但该分支只作为迁移 oracle。</p>
 <tbody>
 <tr><td><code>PORT</code></td><td>必填</td><td>WS63 UART0</td></tr>
 <tr><td><code>WS63_WIFI_PASSPHRASE</code></td><td>必填</td><td>仅由 self-hosted secret 注入，不写入仓库或日志</td></tr>
+<tr><td><code>WS63_WIFI_ENV_FILE</code></td><td>空</td><td>本地手动 HIL 的一次性 <code>0600</code> 文件；只接受 <code>WS63_WIFI_SSID=...</code> 和 <code>WS63_WIFI_PASSPHRASE=...</code>，不执行 shell 内容，成功读取后立即删除；不能与直接环境变量混用</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_PROFILE</code></td><td><code>vendor-wpa2</code></td><td><code>vendor-wpa2</code> / <code>upstream-wpa2</code> / <code>upstream-wpa3</code>；正式 upstream 验证使用 plain Cargo lane</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/ping/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
