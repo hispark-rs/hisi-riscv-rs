@@ -36,6 +36,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   fail-closed resource destruction, and invalid-context parity between the
   production scheduler and deterministic backend. WS63-specific priority, tick
   and return-code conversion lives in its archive-bound machine profile.
+- **Cross-host RF artifacts** — validate Cargo-delivered normalized WPA2/WPA3
+  target archives on native Linux, macOS, and Windows without the vendor source
+  submodule. The matrix also exercises target paths containing spaces and
+  non-ASCII text; final single-dependency application linking remains an A5F gate.
 - **Release preflight** — standalone crate packaging now runs full
   `cargo package --locked` verification; `--no-verify` no longer allows a
   publish-only compile failure to escape local preflight.

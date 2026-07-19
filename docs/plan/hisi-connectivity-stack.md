@@ -929,7 +929,11 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   drift check 禁止 application manifest 和普通 build script 重新引入底层 crate/tool。
 - [ ] 在 macOS arm64、Linux x64 和 Windows x64 的 clean/offline consumer fixture 上，仅用
   crates.io/cache 中的 Rust packages 执行 `cargo build`；覆盖含空格/非 ASCII 路径、只读
-  Cargo registry 和并发构建，确保 single-dependency UX 不是父仓 patch/submodule 假象。
+  Cargo registry 和并发构建，确保 single-dependency UX 不是父仓 patch/submodule 假象。当前
+  `ws63-radio-sys` release unit 已建立 Linux/macOS/Windows 原生矩阵：不 checkout vendor
+  submodule，在含空格/非 ASCII 的 target 路径展开并校验 Cargo artifact，并构建 upstream
+  WPA2/WPA3 target contract。剩余门槛仍是外部 fixture 只声明 `hisi-rf`、执行最终
+  `cargo build`，以及 offline/只读 registry/并发构建；因此本项保持未完成。
 - [ ] `ws63-rf-rs` facade 保留一个 migration release，给出 Cargo feature 和 API 迁移表；
   所有模板、教程与 examples 切到 `hisi-rf` 后再删除，历史 evidence 不回写。
 
