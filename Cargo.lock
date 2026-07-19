@@ -867,7 +867,7 @@ version = "0.1.0-alpha.3"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
-version = "0.1.0-alpha.10"
+version = "0.1.0-alpha.11"
 dependencies = [
  "critical-section",
 ]

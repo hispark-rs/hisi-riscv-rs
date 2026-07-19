@@ -70,8 +70,8 @@ mod tests {
     use core::num::NonZeroU32;
     use core::sync::atomic::{AtomicU32, Ordering};
     use hisi_rf_rtos_driver::{
-        Error, MutexHandle, Runtime, RuntimeContract, SemaphoreHandle, TaskConfig, TaskEntry,
-        TaskId, TaskPriority, WaitOutcome, WaitTimeout,
+        Error, MutexHandle, Runtime, RuntimeContract, RuntimeExecutionProfile, SemaphoreHandle,
+        TaskConfig, TaskEntry, TaskId, TaskPriority, WaitOutcome, WaitTimeout,
     };
 
     struct LockRuntime {
@@ -82,6 +82,10 @@ mod tests {
     impl Runtime for LockRuntime {
         fn contract(&self) -> RuntimeContract {
             RuntimeContract::V1
+        }
+
+        fn execution_profile(&self) -> RuntimeExecutionProfile {
+            RuntimeExecutionProfile::V1_PORTED
         }
 
         fn spawn(

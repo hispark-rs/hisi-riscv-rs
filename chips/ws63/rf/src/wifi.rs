@@ -422,8 +422,10 @@ pub struct WpaWifi<'d> {
 
 #[cfg(target_arch = "riscv32")]
 fn require_radio_runtime() -> Result<(), Error> {
-    hisi_rf_rtos_driver::require_runtime_contract(hisi_rf_rtos_driver::RuntimeContract::V1)
-        .map_err(Error::Runtime)?;
+    hisi_rf_rtos_driver::require_runtime(
+        hisi_rf_rtos_driver::RuntimeRequirements::V1_PORTED_COOPERATIVE,
+    )
+    .map_err(Error::Runtime)?;
     hisi_rf_rtos_driver::current_task().map_err(Error::Runtime)?;
     Ok(())
 }
