@@ -852,12 +852,13 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
 
 #### A5R -- Executable RTOS Semantics
 
-- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.10` 冻结
+- [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.11` 冻结
   `RuntimeContractVersion 1.0`、细粒度 capability bitset 和 fail-closed install/require；RF 在
   claim 硬件、准备 vendor memory 前先要求 contract v1，不能因函数签名相同就宣称兼容。
-- [ ] 给 contract 补独立 execution profile 描述，区分 cooperative、ported cooperative、
-  budgeted 与 preemptive 的可执行保证；profile 必须进入 adapter requirement 和 conformance
-  report，不能用一个 capability bitset 暗示所有策略的时序都相同。
+- [x] 给 contract 补独立 execution profile 描述，区分 portless cooperative、ported
+  cooperative、budgeted 与 preemptive 的可执行保证；alpha.11 的
+  `RuntimeRequirements::V1_PORTED_COOPERATIVE` 已进入 WS63 RF 初始化前置检查，conformance
+  report schema v2 同时记录 profile revision/mode bits，不再用 capability bitset 暗示时序。
 - [x] 固定 contract-v1 priority 为 0..31，数字越小优先级越高；`TaskPriority` 在边界验证，
   不实现容易被误用的自然 `Ord`，WS63 vendor 数字只在 adapter 转换。
 - [ ] 继续消除“runtime-defined”关键语义：alpha.10 已用共享场景固定 semaphore direct
@@ -874,7 +875,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
   backend；未通过者不能注册为 RF production runtime。共享 schema 已由
-  `hisi-rf-rtos-driver 0.1.0-alpha.10` 发布；`hisi-rtos` 的 host deterministic adapter 复用
+  `hisi-rf-rtos-driver 0.1.0-alpha.11` 发布；`hisi-rtos` 的 host deterministic adapter 复用
   生产 `Sched`、wait queue 和 PI 核心执行九条场景：priority/FIFO、nested scheduler lock、
   sleep deadline、nested IRQ exit、task exit/reuse、semaphore direct handoff、semaphore
   timeout cleanup、recursive mutex PI/direct handoff 和 stale task identity。
@@ -882,10 +883,10 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   profile 中转换；LiteOS oracle 测试约束 adapter，不反向定义通用 `hisi-rtos` API。通用
   scheduler 的内部模型、Kani/TLA+ 和 policy 仍以
   [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源。
-- [ ] conformance 输出机器可读 report，包含 contract/profile revision、backend version、
-  capability set 和每个 scenario 结果；CI 对 profile 漂移、缺失场景和语义降级 fail closed。
-  当前固定容量 report 已包含 schema、contract/capability、backend revision、逐场景状态并可
-  无分配写 JSON；尚缺 execution profile 与完整 scenario inventory，因此此项不提前关闭。
+- [x] conformance 输出机器可读 report，包含 contract/profile revision、backend version、
+  capability set 和每个 scenario 结果；schema v2 固定容量 report 可无分配写 JSON，九条
+  scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
+  profile 缺失或不满足 adapter requirement 时在初始化前 fail closed。
 
 #### A5F -- Single-Dependency Facade
 
