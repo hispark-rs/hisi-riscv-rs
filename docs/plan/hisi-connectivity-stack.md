@@ -782,8 +782,12 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   bytes 在 drop 时 zeroize，安全代码不能签发 backend handle，handle 不提供 key bytes，且
   provider/slot/usage 路由和用途拒绝均有 host tests。该契约只封闭通用 key model；稳定硬件
   key-slot API 仍须等待 `hisi-keystore` 的生命周期、授权和真机证据。
-- [ ] 将 raw `EntropySource` 与 DRBG 分层，补重播种、连续健康检查和故障传播测试；TLS
-  backend 不得把每次随机读取直接映射为同步 TRNG 调用。
+- [x] `hisi-crypto` 已将 raw `EntropySource` 与 CSPRNG/DRBG 分层：raw adapter 只实现
+  fallible `TryRngCore`、不能满足 `TryCryptoRng`；只有显式资格标记的 entropy source 才能
+  经过连续 128-bit duplicate-block check，构造有 request-bounded reseed 的
+  `ReseedingCryptoRng`。初始取熵、重播种和 backend failure 均有传播测试，失败后不产出旧
+  RNG 数据。通用 crate 不替用户选择 DRBG 算法；未来 TLS backend 必须注入经向量验证的
+  `TrySeedableCryptoRng`，不得把每次随机读取直接映射为同步 TRNG 调用。
 - [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
   真机 HIL；硬件错误通过 fallible trait 传播，没有静默 fallback。调用方注入的 32-byte
   aligned SPACC DMA storage 已通过 host/RV32/link/transition HIL；真实 cross-owner
