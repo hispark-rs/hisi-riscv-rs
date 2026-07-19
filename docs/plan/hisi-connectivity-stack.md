@@ -778,8 +778,10 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   `CryptoSuite`；旧 provider 仅作为迁移兼容面，不再增加算法。
 - [x] 当前 WS63 backend 已实现并验证 PBKDF2/TRNG、SPACC SHA/HMAC/AES；RustCrypto
   保持 host oracle 和显式 software profile，不因硬件 timeout 自动回退。
-- [ ] 为 `SecretBytes`、`KeyUsage`、`KeyHandle` 和 `KeyRef` 固化 zeroize、不可导出和用途
-  权限测试；在此之前不公开稳定硬件 key-slot API。
+- [x] `hisi-crypto` 已提供 `SecretBytes`、`KeyUsage`、`KeyHandle` 和 `KeyRef`：exportable
+  bytes 在 drop 时 zeroize，安全代码不能签发 backend handle，handle 不提供 key bytes，且
+  provider/slot/usage 路由和用途拒绝均有 host tests。该契约只封闭通用 key model；稳定硬件
+  key-slot API 仍须等待 `hisi-keystore` 的生命周期、授权和真机证据。
 - [ ] 将 raw `EntropySource` 与 DRBG 分层，补重播种、连续健康检查和故障传播测试；TLS
   backend 不得把每次随机读取直接映射为同步 TRNG 调用。
 - [x] SPACC hash/MAC/AES 已具备标准向量、bounded timeout recovery、独占 token 和重复
