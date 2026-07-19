@@ -861,10 +861,10 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   report schema v2 同时记录 profile revision/mode bits，不再用 capability bitset 暗示时序。
 - [x] 固定 contract-v1 priority 为 0..31，数字越小优先级越高；`TaskPriority` 在边界验证，
   不实现容易被误用的自然 `Ord`，WS63 vendor 数字只在 adapter 转换。
-- [ ] 继续消除“runtime-defined”关键语义：alpha.10 已用共享场景固定 semaphore direct
-  handoff、timeout 后 wait-queue 清理，以及 recursive mutex/PI/direct handoff；仍需固定
-  zero-delay/yield、monotonic time 与 tick rounding/wrap、wait-forever、同 deadline 次序和
-  多 waiter 的最高优先级选择。
+- [ ] 继续消除“runtime-defined”关键语义：`hisi-rf-rtos-driver 0.1.0-alpha.12` 已用共享
+  场景固定 zero-delay 等价 yield、wait-forever、同 deadline FIFO，以及 semaphore
+  多 waiter 按有效优先级选择且同优先级 FIFO；`hisi-rtos` 同时修复了等待中优先级变化的
+  重排。仍需固定 monotonic time 与 vendor tick rounding/wrap 的通用边界。
 - [ ] 固定 context 规则：ISR 只能使用明确的 ISR-safe wake/post，任务只能在 outermost
   interrupt exit 后运行；nested scheduler lock 只在最外层 unlock 后 reschedule，并有最大
   持有时间/诊断；任何 callback 都不得在 IRQ、critical section 或 scheduler lock 中执行。
@@ -875,16 +875,18 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
   backend；未通过者不能注册为 RF production runtime。共享 schema 已由
-  `hisi-rf-rtos-driver 0.1.0-alpha.11` 发布；`hisi-rtos` 的 host deterministic adapter 复用
-  生产 `Sched`、wait queue 和 PI 核心执行九条场景：priority/FIFO、nested scheduler lock、
+  `hisi-rf-rtos-driver 0.1.0-alpha.11` 首次发布，alpha.12 扩充；`hisi-rtos` 的 host
+  deterministic adapter 复用生产 `Sched`、wait queue 和 PI 核心执行十三条场景：
+  priority/FIFO、nested scheduler lock、
   sleep deadline、nested IRQ exit、task exit/reuse、semaphore direct handoff、semaphore
-  timeout cleanup、recursive mutex PI/direct handoff 和 stale task identity。
+  timeout cleanup、recursive mutex PI/direct handoff、stale task identity、zero-delay yield、
+  wait-forever、same-deadline FIFO 和 highest-priority semaphore waiter，共十三条场景。
 - [ ] WS63 vendor priority/tick/return-code 差异只在 archive-hash-bound compatibility
   profile 中转换；LiteOS oracle 测试约束 adapter，不反向定义通用 `hisi-rtos` API。通用
   scheduler 的内部模型、Kani/TLA+ 和 policy 仍以
   [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源。
 - [x] conformance 输出机器可读 report，包含 contract/profile revision、backend version、
-  capability set 和每个 scenario 结果；schema v2 固定容量 report 可无分配写 JSON，九条
+  capability set 和每个 scenario 结果；schema v3 固定容量 report 可无分配写 JSON，十三条
   scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
   profile 缺失或不满足 adapter requirement 时在初始化前 fail closed。
 
