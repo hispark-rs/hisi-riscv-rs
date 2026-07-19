@@ -31,10 +31,11 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   `hisi-crypto-ws63 0.1.0-alpha.2` with the P-256, SPACC hash/HMAC/AES, and
   explicit static-storage contracts used by the current connectivity path.
 - **RTOS compatibility contract** — publish `hisi-rf-rtos-driver
-  0.1.0-alpha.12` with thirteen executable scheduling/wait scenarios and
-  `hisi-rtos 0.1.0-alpha.6` with priority-ordered semaphore grants and
-  fail-closed resource destruction. WS63-specific priority, tick and return-code
-  conversion now lives in its archive-bound machine profile.
+  0.1.0-alpha.13` with sixteen executable scheduling/wait/context scenarios and
+  `hisi-rtos 0.1.0-alpha.7` with priority-ordered semaphore grants,
+  fail-closed resource destruction, and invalid-context parity between the
+  production scheduler and deterministic backend. WS63-specific priority, tick
+  and return-code conversion lives in its archive-bound machine profile.
 - **Release preflight** — standalone crate packaging now runs full
   `cargo package --locked` verification; `--no-verify` no longer allows a
   publish-only compile failure to escape local preflight.
