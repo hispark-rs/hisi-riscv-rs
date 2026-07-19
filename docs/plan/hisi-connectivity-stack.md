@@ -338,9 +338,12 @@ let radio = hisi_rf::ws63::init(
   `ASSERT` 失败。
 - `ws63-radio-sys` 贡献 packet-RAM NOBITS input section、BGLE/shared-memory profile、
   ROM patch payload 和 post-relocation hook；RT 只负责收集与执行机制。
-- `hisi-rf-link` 负责 stock `rust-lld` layout pass、vendor relocation transform、
-  final-layout fail-closed 校验和 ROM patch table。最终 ELF 再交给 `hisi-fwpkg`
-  计算 header/hash/body；RF 工具不得复制镜像格式语义。
+- `hisi-rf-link` 是 maintainer/release-side 工具：从固定来源把 vendor relocation
+  预先规范化为标准 RISC-V relocation，并验证 archive/profile。`ws63-radio-blob`
+  通过 Cargo 分发 hash-bound normalized archives，`ws63-radio-sys` 在普通 build 中生成
+  可重定位 ROM patch object 并发出 link contract；stock `rust-lld` 只做一次最终链接，
+  不运行 layout pass 或 post-link patch。最终 ELF 再交给 `hisi-fwpkg` 计算
+  header/hash/body；RF 工具不得复制镜像格式语义。
 
 ## Milestones
 
@@ -655,19 +658,29 @@ let radio = hisi_rf::ws63::init(
      `ws63-radio-sys` 的 `ws63-runtime-compat.toml` 记录基础 Wi-Fi archives 的 15 个
      kernel/arch namespace 引用，其中 7 个由 Rust adapter 提供、8 个在当前 upstream
      最终链接中 off-path。子仓 `nm -u` gate、父仓 provider gate 和最终 ELF gate 同时
-     防止兼容面静默扩大或 off-path 符号复活。新 upstream WPA3 guarded link 保持
-     1,157 sections、4,127 patched relocations 和 37 ROM patches。`wpa_compat.rs` 与旧
+     防止兼容面静默扩大或 off-path 符号复活。迁移期 historical guarded lane 的
+     upstream WPA3 证据为 1,157 sections、4,127 patched relocations 和 37 ROM patches；
+     它只作为差分 oracle，不再是 upstream consumer build。`wpa_compat.rs` 与旧
      vendor feature 仍只作为迁移 oracle 保留，待受控 WPA3-only gate 闭合后删除；
      `ws63-rf-rs` facade 仍按既定“不早于父仓 v0.8.0”窗口处理。父层和
      `ws63-radio-sys` 现都把任意 vendor supplicant profile 与任意 upstream profile
      定义为互斥能力；CI 对两层非法 feature union 执行负向编译，防止下游 workspace 的
      Cargo feature 合并把 oracle archive 重新带入正式路径。
-     `ws63-supplicant-boundary.toml` 进一步成为该迁移边界的机器事实源：guarded
-     upstream link 必须在 rust-lld map 中证明 `libhisi_wpa_native_port.a` 或其被 Cargo
-     合并进 `ws63-radio-sys` rlib 后的必要 object markers 可达，同时证明
+     `ws63-supplicant-boundary.toml` 进一步成为该迁移边界的机器事实源：upstream
+     final link 必须证明 Cargo-delivered native hostap archive 的必要 object markers
+     可达，同时证明
      vendor supplicant/security/mbedTLS/libc archive 全部不可达；最终 ELF 还必须不包含
      `wpa_compat.rs` 的精确 legacy provider 符号。profile drift、合成 map/ELF 负向场景和
-     guarded link 均由 uv 单脚本 CI gate，避免仅凭 Cargo feature 拓扑推断最终产物。
+     final ELF 均由 uv 单脚本 CI gate，避免仅凭 Cargo feature 拓扑推断最终产物。
+     `ws63-radio-sys v0.1.0-alpha.2` release unit 已由 tag CI 按
+     `hisi-rf-link -> ws63-radio-blob -> ws63-radio-sys` 顺序发布到 crates.io；main CI
+     从 pinned `ws63-RF` 重建全部 normalized vendor archives，并对 bytes、hash、size 和
+     relocation count 做 fail-closed 比较。父仓 upstream WPA2/WPA3 已切到普通
+     `cargo build --release` + stock `rust-lld` 单次链接；Ubuntu x86_64、macOS arm64 和
+     Windows x86_64 原生 CI 均通过，最终 ELF 保持 37 项 ROM patch、零 58/59/61 vendor
+     relocation，并证明 legacy provider 不可达。上游 HIL 脚本也已切到这一 plain Cargo
+     lane；该新 lane 的真机 parity 仍须与纯 WPA3 gate 一起留证，不能用三平台 host CI
+     替代。vendor WPA2 分支继续 guarded link，仅作为 migration oracle。
 
    **参考实现与取舍：**
 

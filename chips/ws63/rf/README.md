@@ -30,11 +30,15 @@ This crate makes the porting contract **compile, link, and actually run** — th
 runtime and data-path plumbing (scheduler, OSAL, FRW worker + HCC, software
 timers, netif→smoltcp) are implemented and self-tested standalone on `ws63-qemu`
 (`rf_port_demo`, plus the crate's `sched_selftest` / `frw_hcc_selftest` /
-`netif_smoltcp_selftest`). The guarded full-init image now boots on a real WS63,
+`netif_smoltcp_selftest`). The full-init image boots on a real WS63,
 initializes `wlan0`, returns real STA scan results, associates through the cropped
 WPA2-Personal supplicant, obtains a DHCP lease, resolves the gateway with ARP, and
 receives an ICMP Echo Reply through the Rust-visible L2 path. Real RF behavior
 remains hardware-in-the-loop because the ROM symbols are silicon addresses.
+The upstream WPA2/WPA3 profiles consume normalized archives from the published
+`ws63-radio-sys` release unit and complete one stock-`rust-lld` link through ordinary
+Cargo on Linux, macOS, and Windows. The guarded two-pass path remains only for the
+vendor-supplicant migration oracle.
 
 ### Implemented for real (usable today)
 
@@ -82,10 +86,11 @@ almost all **obtainable from the vendor delivery** (see `ws63-radio-sys/ws63-RF/
 Still genuinely remaining for the runtime (beyond the contract above — note the
 scheduler + FRW worker thread are now **implemented**, see the status table):
 
-- **Component extraction without behavior drift.** The guarded RF image and its
-  PMP/shared-memory/NV platform setup are verified through init, active scan,
-  WPA2 association, DHCP, ARP and ICMP. A1-A4 now move ownership into independent
-  crates while preserving those HIL markers.
+- **Component extraction without behavior drift.** The frozen guarded-oracle evidence and the
+  current plain-Cargo RF image use the same PMP/shared-memory/NV platform setup. The
+  guarded lane is already verified through init, active scan, WPA2 association,
+  DHCP, ARP and ICMP; the plain-Cargo lane must preserve those HIL markers before
+  the oracle is retired.
 - Generating checks for the remaining optional pbuf fields from the WiFi build's
   headers, and connecting the smoltcp TX sink to the blob's transmit symbol.
 - Completing the **omitted Wi-Fi `.a` set** in `ws63-radio-sys/ws63-RF/lib` (`LIB_EXTRACT.md`).

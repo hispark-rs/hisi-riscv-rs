@@ -55,8 +55,11 @@ The single execution ledger, current evidence, and W2A-W2F gates live in
 The active-window policy keeps the WPA2-only archive and A4 HIL gate green while
 the upstream-native WPA3 path is introduced. The pinned upstream hostap path has
 closed WPA2 connect/DHCP/public-ping/lease-renew parity, host protocol vectors,
-and a 20/20 transition-mode SAE+required-PMF reset matrix. Pure WPA3 SAE+PMF,
-hardware-crypto gates and migration retirement remain open.
+and a 20/20 transition-mode SAE+required-PMF reset matrix. Its release unit is
+published through tag CI, and the upstream WPA2/WPA3 firmware now performs one
+stock-rust-lld link through ordinary Cargo on Linux, macOS and Windows. Plain-link
+silicon parity, pure WPA3 SAE+PMF and migration retirement remain open; historical
+guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
