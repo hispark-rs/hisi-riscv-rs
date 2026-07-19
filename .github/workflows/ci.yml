@@ -143,6 +143,10 @@ jobs:
         run: uv run scripts/check-radio-profile.py
       - name: Check WS63 runtime compatibility profile
         run: uv run scripts/check-ws63-runtime-compat.py
+      - name: Check WS63 supplicant boundary profile
+        run: uv run scripts/check-ws63-supplicant-boundary.py
+      - name: Test WS63 supplicant final-link boundary
+        run: uv run scripts/test-ws63-supplicant-boundary.py
       - name: Test WS63 connectivity matrix classifier
         run: uv run hil/test-ws63-connectivity-reset-matrix.py
       - name: Test WS63 runtime compatibility shims

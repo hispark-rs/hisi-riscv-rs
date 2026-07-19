@@ -432,6 +432,20 @@ if ! "$RF_LINK" verify-layout \
   exit 1
 fi
 
+case ",$FEATURES," in
+  *,upstream-supplicant,*)
+    echo
+    echo "== verify upstream supplicant final-link boundary =="
+    if ! uv run "$ROOT/scripts/check-ws63-supplicant-boundary.py" \
+      --map "$FINAL_MAP" \
+      --elf "$LAYOUT_ELF"; then
+      echo "ERROR: refusing upstream image with legacy supplicant inputs" >&2
+      rm -f "$LAYOUT_ELF"
+      exit 1
+    fi
+    ;;
+esac
+
 echo
 echo "== generate mask-ROM patch table from final ELF =="
 "$RF_LINK" generate-rom-patch \

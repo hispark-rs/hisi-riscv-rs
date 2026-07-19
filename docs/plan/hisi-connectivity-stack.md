@@ -599,6 +599,12 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
      `ws63-radio-sys` 现都把任意 vendor supplicant profile 与任意 upstream profile
      定义为互斥能力；CI 对两层非法 feature union 执行负向编译，防止下游 workspace 的
      Cargo feature 合并把 oracle archive 重新带入正式路径。
+     `ws63-supplicant-boundary.toml` 进一步成为该迁移边界的机器事实源：guarded
+     upstream link 必须在 rust-lld map 中证明 `libhisi_wpa_native_port.a` 或其被 Cargo
+     合并进 `ws63-radio-sys` rlib 后的必要 object markers 可达，同时证明
+     vendor supplicant/security/mbedTLS/libc archive 全部不可达；最终 ELF 还必须不包含
+     `wpa_compat.rs` 的精确 legacy provider 符号。profile drift、合成 map/ELF 负向场景和
+     guarded link 均由 uv 单脚本 CI gate，避免仅凭 Cargo feature 拓扑推断最终产物。
 
    **参考实现与取舍：**
 

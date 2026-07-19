@@ -165,6 +165,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 LOG="$TMP/uart.log"
 TARGET_DIR="$TMP/target"
+FINAL_MAP="$TMP/wifi_init_smoke-rf-lld-final.map"
 ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 ARCHIVE=""
 FEATURES=""
@@ -191,6 +192,7 @@ echo "==> guarded connectivity link (profile=$PROFILE; credentials use an epheme
     WS63_WIFI_SSID="$WS63_WIFI_SSID" \
     WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
     WS63_RF_FEATURES="$FEATURES" \
+    WS63_RF_FINAL_MAP="$FINAL_MAP" \
     CARGO_TARGET_DIR="$TARGET_DIR" \
         bash chips/ws63/rf/tools/rf-build-full-init-lld-layout-patch.sh
 )
