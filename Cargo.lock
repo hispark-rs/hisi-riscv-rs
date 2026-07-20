@@ -863,11 +863,11 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-link"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
-version = "0.1.0-alpha.13"
+version = "0.1.0-alpha.14"
 dependencies = [
  "critical-section",
 ]
@@ -896,7 +896,7 @@ version = "0.1.0-alpha.1"
 
 [[package]]
 name = "hisi-rtos"
-version = "0.1.0-alpha.7"
+version = "0.1.0-alpha.8"
 dependencies = [
  "critical-section",
  "embassy-time-driver",
@@ -2103,7 +2103,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-blob"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 dependencies = [
  "ruzstd",
  "serde",
@@ -2113,7 +2113,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-sys"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 dependencies = [
  "hisi-rf-link",
  "hisi-rom-sys-ws63",

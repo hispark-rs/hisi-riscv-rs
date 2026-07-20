@@ -71,7 +71,8 @@ mod tests {
     use core::sync::atomic::{AtomicU32, Ordering};
     use hisi_rf_rtos_driver::{
         Error, MutexHandle, Runtime, RuntimeContract, RuntimeExecutionProfile, SemaphoreHandle,
-        TaskConfig, TaskEntry, TaskId, TaskPriority, WaitOutcome, WaitTimeout,
+        TaskConfig, TaskEntry, TaskId, TaskPriority, WaitCancellationOutcome, WaitOutcome,
+        WaitTimeout,
     };
 
     struct LockRuntime {
@@ -110,6 +111,10 @@ mod tests {
         }
 
         fn set_task_priority(&self, _task: TaskId, _priority: TaskPriority) -> Result<(), Error> {
+            Err(Error::InvalidContext)
+        }
+
+        fn cancel_wait(&self, _task: TaskId) -> Result<WaitCancellationOutcome, Error> {
             Err(Error::InvalidContext)
         }
 
