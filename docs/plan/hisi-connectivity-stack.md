@@ -3,8 +3,9 @@
 ## Summary
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` vertical slice
-已经通过提交态真机 HIL。当前唯一 active milestone 是 W2 WPA3-Personal/SAE；每一步
-都必须保留 A4 的真实硅片连接性证据，不能为了增加安全模式打断北极星。
+已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
+**External Blocked Gate**；当前唯一 active milestone 是不依赖 AP 的 A5F facade 收口。
+每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
 `esp-radio → esp-radio-rtos-driver ← esp-rtos`、`esp-rom-sys` 和
@@ -23,11 +24,11 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
-## Active Window: NOW W2 WPA3-Personal
+## Active Window: NOW A5F Facade Closure
 
-本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。A4 已冻结，
-A4 product gate 按默认建议选择 W2 WPA3-Personal/SAE；BLE、SLE、TLS、SoftAP、
-Enterprise 和其他架构抽取不与 W2 并行。
+本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。A4 已冻结；W2
+transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件，不阻塞 A5F 的无板工作。
+BLE、SLE、TLS、SoftAP、Enterprise、A5U 和 A5B 不与当前 A5F 并行。
 
 ### Completed -- A3 Closeout
 
@@ -822,7 +823,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [29328000891](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29328000891)
   在 revision `3c2db43e971bb21d7565035179a7fee63d7861d1` 完整 PASS，A4 已冻结。
 
-### A5 -- Backend, Runtime And Facade Closure (Deferred After W2)
+### A5 -- Backend, Runtime And Facade Closure
 
 A5 处理 A4 冻结后暴露出的三个架构债务：`WifiController` 虽然提供 async API，
 `WifiBackend` 仍允许一次同步调用阻塞到操作终态；`hisi-rf-rtos-driver` 虽然不绑定具体
@@ -949,36 +950,50 @@ A5R 后续排期和验收顺序。
 
 #### A5F -- Single-Dependency Facade
 
-- [ ] 将当前芯片中立类型、controller、runner 和 backend contract 提取为
-  `hisi-rf-core`；保持 `no_std`、不依赖 PAC/sys/blob/RTOS/allocator，并用 public-API diff
-  证明除 crate path/re-export 外没有意外 surface 漂移。
-- [ ] 建立 `hisi-rf-ws63`，接收当前 `ws63-rf-rs` 的 `Ws63WifiBackend`、safe resources、
-  WS63 event/L2 adapter 和 feature mapping；它依赖 `hisi-rf-core` 与
-  `ws63-radio-sys`，但 `ws63-radio-sys` 不依赖 facade/core。
-- [ ] 将 `hisi-rf` package 转为稳定的用户 facade/composition root：要求 exactly-one
+- [x] 已将芯片中立类型、controller、runner 和 backend contract 提取为独立发布的
+  `hisi-rf-core 0.1.0-alpha.1`；它保持 `no_std`，不依赖 PAC/sys/blob/RTOS/allocator，
+  `hisi-rf` 通过 re-export 保留原公共路径。
+- [x] 已建立并发布 `hisi-rf-ws63 0.1.0-alpha.3`，接收原 `ws63-rf-rs` 的
+  `Ws63WifiBackend`、safe resources、WS63 event/L2 adapter 和 feature mapping；它依赖
+  `hisi-rf-core` 与 `ws63-radio-sys`，后两者不依赖 facade。
+- [x] `hisi-rf 0.1.0-alpha.5` 已转为用户 facade/composition root：要求 exactly-one
   `chip-*` feature，按 chip 选择 backend，re-export `hisi-rf-core` 公共类型，并提供
   `hisi_rf::ws63::{Resources, init}`。chip 未选、多选或 security profile 冲突必须
   `compile_error!`，不能由 target triple 或 default feature 静默猜测。
-- [ ] Facade feature 必须逐项、单向转发：`wifi`、`wpa2-personal`、`wpa3-personal`、
-  `smoltcp`/`embassy-net` 只启用对应后端能力；禁止 feature unification 意外把 vendor
-  oracle、WPA2 与 WPA3、diagnostics 或多个 chip backend 同时链接。
-- [ ] 在标准 relocation 转换完成后，把 archive、ROM patch object、link order 和 memory
-  contract 全部封装进 `hisi-rf-ws63 -> ws63-radio-sys` 构建链。普通 consumer 的
+- [x] Facade 已逐项、单向转发 `wifi`、`wpa2-personal`、`wpa3-personal` 和 `smoltcp`；
+  WPA2/WPA3 冲突会在编译期失败，diagnostics/vendor oracle 不在 facade feature 中。
+  `embassy-net` 尚无 backend，因此没有暴露一个不能工作的空 feature。
+- [x] 标准 relocation archive、37 项 ROM patch object、link order 和 memory contract
+  已封装进 `hisi-rf-ws63 -> ws63-radio-sys 0.1.0-alpha.6` 构建链。普通 consumer 的
   `build.rs` 不读取 `DEP_WS63_RADIO_SYS_*`，不执行 `hisi-rf-link`/shell/Python/GCC，也不
   维护 archive 名称、顺序、绝对路径或 ROM 地址。
-- [ ] 删除 examples/template 对 `ws63-rf-rs`、`ws63-radio-sys` 和
+- [ ] 删除用户 happy-path examples/template 对 `ws63-rf-rs`、`ws63-radio-sys` 和
   `hisi-rf-rtos-driver` 的直接 RF 集成依赖；runtime 由应用通过 `hisi-rtos` public API
   启动，radio runner 由 facade/RTOS-safe API 承载，不要求应用调用 driver service locator。
-- [ ] 增加 dependency-boundary gate：`cargo tree` 证明 sys/blob 只作为选中 backend 的传递
-  依赖；rustdoc/public-api 不出现 `ws63_radio_sys`；非 WS63 build 不下载或编译 WS63 blob；
-  drift check 禁止 application manifest 和普通 build script 重新引入底层 crate/tool。
-- [ ] 在 macOS arm64、Linux x64 和 Windows x64 的 clean/offline consumer fixture 上，仅用
+  当前跨 OS 外部 consumer 已只使用 facade；父仓现存直接依赖已冻结成不可扩张的 maintainer
+  allowlist：`wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 是迁移 oracle，RTOS 示例是
+  conformance fixture，`net_ping` 是 QEMU 合成 L2 fixture。pure-WPA3 gate 闭合前不为清单整洁
+  删除 oracle；新增 application manifest 直接依赖底层 crate 会由 CI 拒绝。
+- [x] 增加当前 WS63 dependency-boundary gate：`hisi-rf` release unit 已解析 Cargo
+  metadata，证明应用只直依赖 facade，`sys/blob/RTOS driver` 只沿
+  `hisi-rf -> hisi-rf-ws63 -> ws63-radio-sys -> ws63-radio-blob` 传递出现，且相关 package
+  唯一来自 registry；生成的 facade rustdoc 不出现底层 crate 名。父仓 drift check 同时禁止
+  application manifest 和普通 build script 重新引入底层 crate/tool。WPA2/WPA3 boundary gate
+  由 `hisi-rf` CI run `29720244237` 验证。
+- [ ] **Triggered -- second-chip isolation**：添加第二个 chip backend 时，必须增加非 WS63
+  consumer，证明其不下载、不编译 WS63 blob；当前只有 WS63 backend，不能用 feature 文本
+  扫描替代真实 Cargo 解析与构建证据。本项不阻塞当前 WS63 A5F。
+- [x] 在 macOS arm64、Linux x64 和 Windows x64 的 clean/offline consumer fixture 上，仅用
   crates.io/cache 中的 Rust packages 执行 `cargo build`；覆盖含空格/非 ASCII 路径、只读
-  Cargo registry 和并发构建，确保 single-dependency UX 不是父仓 patch/submodule 假象。当前
-  `ws63-radio-sys` release unit 已建立 Linux/macOS/Windows 原生矩阵：不 checkout vendor
-  submodule，在含空格/非 ASCII 的 target 路径展开并校验 Cargo artifact，并构建 upstream
-  WPA2/WPA3 target contract。剩余门槛仍是外部 fixture 只声明 `hisi-rf`、执行最终
-  `cargo build`，以及 offline/只读 registry/并发构建；因此本项保持未完成。
+  Cargo registry 和并发构建，确保 single-dependency UX 不是父仓 patch/submodule 假象。
+  `ws63-radio-sys` main/publish runs `29717997656`/`29718132327`、`hisi-rf-ws63`
+  main/publish runs `29718772390`/`29718883955` 和 `hisi-rf` main/publish runs
+  `29719074968`/`29719188141` 已闭合 release chain。外部 fixture 只声明发布版 `hisi-rf`
+  作为 RF 依赖，不含 path/patch/build.rs；CI runs `29719583839`、`29719800458` 已在三种 OS、
+  两种 Personal profile 下完成 clean + offline 最终 ELF 构建，后者还覆盖含空格、非 ASCII
+  和长 target path。run `29720774020` 进一步将解析到的 registry source 临时设为只读、比较
+  构建前后文件集合与 SHA-256，并在 Ubuntu 同时启动隔离 target 的 WPA2/WPA3 构建；三平台
+  两种 profile 全部通过。
 - [ ] `ws63-rf-rs` facade 保留一个 migration release，给出 Cargo feature 和 API 迁移表；
   所有模板、教程与 examples 切到 `hisi-rf` 后再删除，历史 evidence 不回写。
 
