@@ -515,10 +515,14 @@ let radio = hisi_rf::ws63::init(
      20 次 nRST 得到 transition association `20/20`、`WLAN_AUTH_RSP2_TIMEOUT=0`，capture
      窗口内 gateway ICMP `70/70`。证据见
      [W2E WPA3 reset reliability](evidence/ws63-rf-w2e-wpa3-reset-reliability-2026-07-16.md)。
-     transition reset gate 已闭合；受控 WPA3-only SAE+PMF 仍是开放 gate。Guest AP 仍只
-     提供 WPA2 parity，不能替代 pure WPA3 HIL。最终 unchanged-image 20-reset gate 必须
-     使用 `ws63-connectivity-reset-matrix.py --required-ap-mode pure-wpa3`；classifier 会逐轮
-     校验固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。
+     transition reset gate 已闭合；受控 WPA3-only SAE+PMF 当前标记为 **External Blocked
+     Gate**：没有可用的 SAE-only AP，因此暂不执行、不再索取 AP 或凭据，也不让该硬件门槛
+     冻结 A5R/A5F/A5U/A5B 的无板工作。Guest AP 仍只提供 WPA2 parity，不能替代 pure WPA3
+     HIL。具备受控 AP 后，最终 unchanged-image 20-reset gate 必须使用
+     `ws63-connectivity-reset-matrix.py --required-ap-mode pure-wpa3`；classifier 会逐轮校验
+     固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。在该 gate
+     闭合前，不删除 vendor supplicant oracle/`wpa_compat.rs`，不宣称 WPA3 stable，也不把
+     新 backend 切为唯一默认路径或退役旧 facade。
    - **W2E-H Handshake crypto acceleration（已完成，2026-07-17）**：第一项
      PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
      唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立
@@ -873,12 +877,16 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   持有时间/诊断；任何 callback 都不得在 IRQ、critical section 或 scheduler lock 中执行。
   这些规则已进入 normative requirement map、共享 nested IRQ/lock 场景、host tests 和既有
   `A3_SCHEDULER_STRESS_OK` HIL 证据。
-- [ ] `TaskId`/wait handle 必须具有 identity generation 或等价 stale-handle 防护；定义 task
+- [x] `TaskId`/wait/resource handle 具有 identity generation 或等价 stale-handle 防护；定义 task
   return/exit、stack reclaim、destroy-with-waiters、重复 destroy、资源 grant 后取消和 FFI
-  非法上下文的 fail-closed 结果，禁止 slot 复用让旧句柄指向新任务。当前 TaskId generation、
-  task exit/reuse、retired stack reclaim 已有证据；`hisi-rtos 0.1.0-alpha.7` 进一步拒绝销毁仍有
-  waiter 的 semaphore 和仍有 owner/waiter 的 mutex。剩余门槛是 resource/wait handle 的
-  generation、重复 destroy 检测，以及显式 cancel-after-grant 语义。
+  非法上下文的 fail-closed 结果，禁止 slot 复用让旧句柄指向新任务。
+  `hisi-rf-rtos-driver 0.1.0-alpha.14` 将 contract 提升到 v1.1，增加 generation-bearing
+  resource handle 与显式 wait cancellation；`hisi-rtos 0.1.0-alpha.8` 拒绝 stale/duplicate/
+  busy destroy，并在 cancel-after-grant 时准确归还 semaphore count 或释放/继续 handoff mutex。
+  共享 conformance schema v6 共 22 个场景，production-core host suite 共 56 个测试。两条
+  Kani harness 覆盖 stale generation 与重复销毁，`ResourceLifecycle.tla` 在 257 个生成状态、
+  89 个 distinct state、depth 15 下验证 stale/double destroy fail closed 与 grant 不重复。
+  真机 acceptance 留待后续 HIL，不阻塞当前无板 contract closure。
 - [x] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
@@ -901,6 +909,43 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   capability set 和每个 scenario 结果；schema v4 固定容量 report 可无分配写 JSON，十六条
   scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
   profile 缺失或不满足 adapter requirement 时在初始化前 fail closed。
+
+##### A5R-F -- Formal Model Coverage Closure (Deferred)
+
+当前形式化基线只覆盖 `Budgeted` quota 与 scheduler-lock 交互：TLA+ 检查
+single-running、budget bound、exhausted eligibility 和 lock-deferred exhaustion，Kani 验证
+一次 dispatch/switch-out 的预算上界。这是有效基线，但不代表 RTOS 整体已形式化。
+完整证明义务、requirement ID 和模型语义继续以
+[RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源；本节只定义
+A5R 后续排期和验收顺序。
+
+- [x] **A5R-F0 -- Coverage inventory**：把 normative requirement 分为 abstract-model、
+  concrete-Rust 和 silicon-only 证明义务；在 requirement map 中明确每条性质的
+  TLA+/Kani/host/HIL 证据，禁止把普通 unit test 标成形式证明。当前 41 个 normative
+  requirement ID 已与模型、Kani、host/RV32 和 silicon-only 证据类型对齐。
+- [x] **A5R-F1 -- Identity and resource lifecycle**：建模 generation-bearing task/semaphore/
+  mutex handle 的 create/destroy/reuse，验证 stale handle 不能命中新对象、重复销毁失败、
+  存在 waiter/owner 时销毁 fail closed；Kani 覆盖实际 slot/generation 编码与 pool
+  状态转换。`ResourceLifecycle.tla` 与两条 production-encoding Kani harness 已进入 CI。
+- [ ] **A5R-F2 -- Wait linearization and queue ownership（部分完成）**：用 TLA+/PlusCal 覆盖
+  post/timeout/cancel/grant 交错，证明每次 wait 只有一个 terminal result、direct grant
+  不丢失也不被第三个任务窃取；同时证明 task 在 running/ready/wait/sleep/
+  throttle 状态和队列中只有一个归属、无重复入队、无丢失任务。当前生命周期模型已覆盖
+  grant/resource conservation，共享场景已覆盖 cancel-after-grant；完整 wait queue ownership
+  与 terminal-result 线性化仍待建模。
+- [ ] **A5R-F3 -- Priority inheritance**：覆盖最高有效优先级 waiter、同级 FIFO、
+  donation 传播与移除、timeout/cancel/release 后基础优先级恢复，并对链式继承和
+  cycle 拒绝给出有界反例搜索。
+- [ ] **A5R-F4 -- Port linearization**：在公开 scheduler/wait 语义冻结后，建模 timer
+  re-arm generation，证明 stale arm 不能覆盖更早 deadline；按已排期的 switch-intent/
+  ticket protocol 建模 commit/cancel/consume exactly once、identity generation 和 detached
+  ready ownership。这一阶段不提前移除已有 stale-switch recovery。
+- [ ] **A5R-F5 -- Evidence gate（部分完成）**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
+  状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
+  normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
+  trap frame/`mret`/FPU/IRQ 时序仍由 RV32 compile checks 与真机 HIL 验收，不宣称
+  TLA+ 或 Kani 可以替代硬件证据。TLC/Kani pin、模型统计和 requirement map 已进入 CI；
+  A5R 新增资源/取消语义的真机 marker 尚未验收。
 
 #### A5F -- Single-Dependency Facade
 
