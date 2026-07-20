@@ -61,3 +61,6 @@
 [submodule "crates/hisi-rf"]
 	path = crates/hisi-rf
 	url = https://github.com/hispark-rs/hisi-rf.git
+[submodule "crates/hisi-rf-core"]
+	path = crates/hisi-rf-core
+	url = https://github.com/hispark-rs/hisi-rf-core.git

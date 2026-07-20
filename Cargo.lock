@@ -853,6 +853,13 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
+version = "0.1.0-alpha.2"
+dependencies = [
+ "hisi-rf-core",
+]
+
+[[package]]
+name = "hisi-rf-core"
 version = "0.1.0-alpha.1"
 dependencies = [
  "critical-section",
