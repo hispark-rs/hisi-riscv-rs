@@ -13,7 +13,10 @@ name = "ws63_rf_rs"
 hisi-alloc = "0.1.0-alpha.1"
 hisi-storage = "0.1.0-alpha.1"
 hisi-nvs = "0.1.0-alpha.1"
-hisi-rf = "0.1.0-alpha.1"
+# Depend on the chip-neutral contract directly so this compatibility crate
+# cannot form a cycle through the user-facing facade. `src/lib.rs` keeps the
+# old internal path as a Rust-only alias during the migration release.
+hisi-rf-core = "0.1.0-alpha.1"
 hisi-rf-rtos-driver = "0.1.0-alpha.14"
 hisi-crypto = { version = "0.1.0-alpha.4", optional = true }
 hisi-crypto-ws63 = { version = "0.1.0-alpha.2", optional = true, default-features = false }
@@ -34,7 +37,7 @@ smoltcp = { version = "0.13", default-features = false, features = [
 ], optional = true }
 
 [features]
-net = ["dep:smoltcp", "hisi-rf/smoltcp"]
+net = ["dep:smoltcp", "hisi-rf-core/smoltcp"]
 # Common vendor-oracle station control surface. Concrete WPA profiles select
 # exactly one crypto implementation on top of it.
 wifi-personal = []

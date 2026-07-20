@@ -96,7 +96,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-ws63-
       # Covers every member (incl. blinky + flashboot) at the type/codegen level.
       - name: Check workspace
-        run: cargo check -Zbuild-std=core,alloc --workspace
+        run: cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
       # Real link of the default members. Provider-specific legacy Embassy examples
       # are linked separately because a firmware may contain exactly one global
       # embassy-time driver and Cargo unifies dependency features across one build.
@@ -210,7 +210,7 @@ jobs:
       - name: Test WS63 runtime compatibility shims
         run: cargo test -p ws63-rf-rs --target x86_64-unknown-linux-gnu --lib
       - name: Run clippy
-        run: cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+        run: cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
 
   # ── Format check ────────────────────────────────────────────────
   fmt:

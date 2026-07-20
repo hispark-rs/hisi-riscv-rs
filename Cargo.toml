@@ -11,6 +11,7 @@ members = [
     "crates/hisi-alloc",
     "crates/hisi-crypto",
     "crates/chips/ws63/hisi-crypto-ws63",
+    "crates/chips/ws63/hisi-rf-ws63",
     "crates/hisi-rom-sys",
     "crates/hisi-storage",
     "crates/hisi-nvs",
@@ -67,10 +68,10 @@ default-members = [
     "crates/hisi-alloc",
     "crates/hisi-crypto",
     "crates/chips/ws63/hisi-crypto-ws63",
+    "crates/chips/ws63/hisi-rf-ws63",
     "crates/hisi-storage",
     "crates/hisi-nvs",
     "crates/hisi-rf-core",
-    "crates/hisi-rf",
     "crates/hisi-rf-rtos-driver",
     "crates/hisi-rtos",
     "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys",
@@ -118,6 +119,7 @@ hisi-storage = { path = "crates/hisi-storage" }
 hisi-nvs = { path = "crates/hisi-nvs" }
 hisi-rf-core = { path = "crates/hisi-rf-core" }
 hisi-rf = { path = "crates/hisi-rf" }
+hisi-rf-ws63 = { path = "crates/chips/ws63/hisi-rf-ws63" }
 hisi-rf-rtos-driver = { path = "crates/hisi-rf-rtos-driver" }
 hisi-rtos = { path = "crates/hisi-rtos" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
@@ -148,10 +150,12 @@ hisi-storage = { path = "crates/hisi-storage" }
 hisi-nvs = { path = "crates/hisi-nvs" }
 hisi-rf-core = { path = "crates/hisi-rf-core" }
 hisi-rf = { path = "crates/hisi-rf" }
+hisi-rf-ws63 = { path = "crates/chips/ws63/hisi-rf-ws63" }
 hisi-rf-rtos-driver = { path = "crates/hisi-rf-rtos-driver" }
 hisi-rtos = { path = "crates/hisi-rtos" }
 hisi-rom-sys-ws63 = { path = "crates/chips/ws63/hisi-rom-sys-ws63" }
 hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
+ws63-radio-sys = { path = "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys" }
 hisi-hal = { path = "crates/hisi-hal" }
 # hisi-hal depends on hisi-riscv-rt by version (resolved through cargo);
 # patch it to the local submodule for the monorepo build (mirrors the PAC pattern).

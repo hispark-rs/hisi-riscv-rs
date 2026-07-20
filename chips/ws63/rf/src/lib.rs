@@ -80,6 +80,8 @@
 #![feature(c_variadic)]
 #![allow(non_upper_case_globals)] // contract symbols must match the C names exactly
 
+extern crate hisi_rf_core as hisi_rf;
+
 #[cfg(all(feature = "wifi-personal", feature = "upstream-supplicant-port"))]
 compile_error!("select either a vendor supplicant profile or an upstream supplicant profile");
 
