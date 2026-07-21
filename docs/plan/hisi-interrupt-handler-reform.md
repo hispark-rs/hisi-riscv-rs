@@ -278,13 +278,18 @@ hisi-riscv-rt (startup.S)
 
 ---
 
-## 六、废弃与与未来迭代
+## 六、存量路径处置与未来迭代
 
-### 6.1 废弃项
+### 6.1 被替代的现有路径
 
-- `startup.S` 中手写汇编的 `local_isr_dispatch` 默认实现（将被 `set_handler` 表替代）
-- 不在 MI 或 local IRQ 路径上继续用 `push_reg` / `pop_reg` 宏（异常路径和 NMI 路径保留）
-- `startup_riscvrt.S` 中的实验模式（`riscv-rt-start-experiment` feature）：当 `set_handler` 框架成熟后标记为废弃
+- `startup.S` 中手写汇编的 `local_isr_dispatch` 默认实现：当 `set_handler` 表完备后，该弱符号可由 handler 表覆盖替代。汇编中的默认 `ret` 保留（fallback 到空操作）。
+- `push_reg` / `pop_reg` 宏：MIR 和 local IRQ 路径不再使用（已改为 `hisi_push_task_context` / `hisi_pop_task_context` 的 unified 272B frame）。异常路径和 NMI 路径保留现有宏。
+
+### 6.2 实验模式 `riscv-rt-start-experiment` 的处理
+
+该 feature 目前是 unstable + non-default，意图是让 `riscv-rt` 提供通用 `_start` 流程而 `hisi-riscv-rt` 通过 `__pre_init` / `_setup_interrupts` 钩子注入 WS63 特化逻辑。
+
+当前状态：保留不动。`set_handler` / `bind_interrupts!` 在**默认 startup 路径**上开发，两者与 startup 入口的选择耦合度很低——handler 注册不关心 `mtvec` 是谁初始化的。当 esp-hal 路线稳定后，实验路径自然获得相同的 handler API 能力，届时再评估是否提升其优先级或合并为统一入口路径。
 
 ### 6.2 潜在后续工作
 
