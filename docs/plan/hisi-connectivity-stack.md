@@ -1080,12 +1080,19 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   success 后 first-EAPOL stall 映射到 EAPOL，未知和负 status 均保真上报，不从 packed code 反推。
   association rejection、first-EAPOL timeout、cancel/resource/backend timeout 的完整 fixture
   matrix 及 host/QEMU/HIL stable-class parity 尚未闭合，因此本项保持未完成。
+- [x] **闭合 host typed-error fixture parity**：`hisi-rf-core` 的公开 fixture matrix 覆盖
+  association rejection、first-EAPOL timeout、cancel、resource shortage 和 runtime/backend
+  timeout；`hisi-rf-ws63` commit `27af8f0` 又把 status 30/PMF rejection 与“association 成功但
+  首个 EAPOL 未到”的 fixture 绑定到生产连接循环实际调用的 error builder，验证 stable code、
+  stage、profile revision、recovery action 和 bounded trace。CI run `29953423800` 在 WPA2/WPA3
+  profile、minimal target、package 和 macOS/Linux/Windows final-link 上通过。此证据只闭合
+  host/构建层，不替代 QEMU 或 HIL failure injection。
 - [x] 为 typed error 建立 vendor/IEEE/hostap source matrix 和 unknown-code 保真回退；新增 raw
   code 不修改既有 stable enum 判别语义，secret、passphrase、key material 不进入 `Debug`、
   Display 或 JSON。release chain 由 core main/publish runs `29947847220`/`29948082527`、backend
   runs `29948247748`/`29948416210` 和 facade runs `29948547164`/`29948895065` 闭合。
 - [ ] 对 association rejection、first-EAPOL timeout、cancel/resource/backend timeout 建立
-  host/QEMU/HIL stable-class parity；UART/dump 的 redaction 与 bounded trace 仍需真机证据。
+  QEMU/HIL stable-class parity；UART/dump 的 redaction 与 bounded trace 仍需真机证据。
 - [x] facade example 与 crates.io-only consumer 已只展示：选择命名 profile、构造
   `Resources`/`Storage`、初始化 controller；在线、离线、只读 registry、含空格/非 ASCII 和
   并发 target 构建均使用发布 crate，不依赖父仓 patch。
