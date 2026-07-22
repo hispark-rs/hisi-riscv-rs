@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.18"
+version = "0.1.0-alpha.19"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-core"
-version = "0.1.0-alpha.6"
+version = "0.1.0-alpha.7"
 dependencies = [
  "critical-section",
  "embassy-sync",
