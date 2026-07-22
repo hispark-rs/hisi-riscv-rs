@@ -851,24 +851,23 @@ oracle adapter。
 
 #### A5B -- 增量式 `WifiBackend`
 
-`hisi-rf-core 0.1.0-alpha.7` 已发布 opt-in contract：feature
+`hisi-rf-core 0.1.0-alpha.8` 已发布 opt-in contract：feature
 `incremental-backend-experiment` 提供 generation-tagged `OperationId`、
 `Queued -> Started -> CancelRequested -> Terminal` tracker、双维 `WorkBudget`/
 `WorkReport`、组合 `WaitSet`、公平 wake selector、确定性 `IncrementalRunnerState` 与
-`IncrementalWifiBackend`。report 绑定 operation generation，host tests 覆盖 stale completion、
-幂等 cancel、cancel-before/after-start、late-success suppression、budget exhaustion 和持续
-command/backend/L2/timer ready 时的公平选择；main/publish CI runs
-`29957092108`/`29957172073` 通过。`hisi-rf 0.1.0-alpha.19` 只把该 opt-in feature 和已发布
-类型从 facade 转发出去，main/publish CI runs `29958003605`/`29958675574` 通过；它没有把
-实验契约接入 `RadioRunner` 或 WS63 backend。发布后的 crates.io-only fixture 又在 Linux、
-macOS 和 Windows 上完成 WPA2/WPA3 clean/offline 构建，Ubuntu WPA2 lane 额外从外部依赖图
-编译 experimental contract（CI run `29958822481`）。
+`IncrementalWifiBackend`。可执行 `IncrementalBackendDriver` 已把 command arbiter、generation
+state、start/poll/cancel、固定 work budget、wait-set 和 terminal slot recovery 组合起来；最多
+一个 active + 一个 pending command，替换命令只触发一次 cancel，queue full 归还命令所有权，
+stale terminal 不得结束复用后的 operation。38 个 host tests 覆盖 stale completion、幂等
+cancel、cancel-before/after-start、late-success suppression、start/poll/cancel error、budget
+exhaustion 和持续 command/backend/L2/timer ready 时的公平选择；main/publish CI runs
+`29960158728`/`29960263072` 通过。
 
-core `Unreleased` 又补了 backend start/poll/cancel error 的 terminal/reap 路径，以及最多
-一个 active + 一个 pending command 的 bounded arbiter：替换命令只触发一次 cancel，queue
-full 归还命令所有权，stale terminal 不得结束复用后的 operation；CI runs
-`29957718625`/`29958493981` 通过。这些尚未进入 facade release，不能被写成 alpha.19 承诺。
-因此下列迁移项继续保持未完成，默认路径没有变化。
+`hisi-rf 0.1.0-alpha.20` 精确依赖 core alpha.8 并转发这组 opt-in 类型；main/publish CI runs
+`29960442143`/`29961401663` 通过。发布后的 crates.io-only fixture 在 Linux、macOS 和 Windows
+完成 WPA2/WPA3 clean/offline 构建，Ubuntu WPA2 lane 还直接构造 driver/arbiter，避免只验证
+feature 可打开却遗漏 facade re-export（CI run `29961678112`）。该 driver 尚未接入现有
+`RadioRunner` 或 WS63 backend，因此下列迁移项继续保持未完成，默认路径没有变化。
 
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
