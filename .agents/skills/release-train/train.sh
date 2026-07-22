@@ -13,6 +13,7 @@
 #   REPO       owner/name to override gh's auto-detection (default: cwd remote)
 #   WORKFLOW   workflow file/name to pin (e.g. release.yml). Default: auto-pick the
 #              release/build/publish run on the tag over a CI run (a tag often fires both).
+#   PACKAGE_FEATURES comma-separated features required for standalone package verification.
 set -uo pipefail
 
 TAG="${1:-}"
@@ -47,11 +48,19 @@ if [ -f Cargo.toml ] && grep -q '^\[package\]' Cargo.toml; then
     echo "==> cargo lockfile/package preflight"
     git ls-files --error-unmatch Cargo.lock >/dev/null 2>&1 || { echo "FATAL: Cargo.lock is not tracked"; exit 2; }
     if [ -f "$STANDALONE_LOCK" ] && command -v uv >/dev/null 2>&1; then
-        uv run "$STANDALONE_LOCK" . --package \
+        PREFLIGHT_ARGS=(--script "$STANDALONE_LOCK" . --package)
+        if [ -n "${PACKAGE_FEATURES:-}" ]; then
+            PREFLIGHT_ARGS+=(--features "$PACKAGE_FEATURES")
+        fi
+        uv run "${PREFLIGHT_ARGS[@]}" \
             || { echo "FATAL: standalone Cargo.lock/package preflight failed"; exit 2; }
     else
         cargo generate-lockfile --locked || { echo "FATAL: Cargo.lock is missing or stale"; exit 2; }
-        cargo package --locked || { echo "FATAL: cargo package preflight failed"; exit 2; }
+        PACKAGE_ARGS=(--locked)
+        if [ -n "${PACKAGE_FEATURES:-}" ]; then
+            PACKAGE_ARGS+=(--features "$PACKAGE_FEATURES")
+        fi
+        cargo package "${PACKAGE_ARGS[@]}" || { echo "FATAL: cargo package preflight failed"; exit 2; }
     fi
     git diff --exit-code -- Cargo.lock || { echo "FATAL: Cargo.lock changed during preflight"; exit 2; }
 fi

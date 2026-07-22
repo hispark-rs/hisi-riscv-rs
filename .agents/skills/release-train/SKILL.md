@@ -35,8 +35,8 @@ For every independently published Rust crate in this ecosystem
 of the release input even when the crate is a library. Before tagging:
 
 ```bash
-uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
-uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git diff --exit-code -- Cargo.lock
 ```
 
@@ -65,6 +65,10 @@ cd /root/ws63-qemu        && bash /root/ws63-rs/.agents/skills/release-train/tra
 
 # A library crate — crates.io publish (no GitHub assets; watches publish.yml)
 cd /root/ws63-rs/crates/hisi-hal && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.3.1
+
+# A facade that deliberately rejects an empty chip selection
+cd /root/ws63-rs/crates/hisi-rf && PACKAGE_FEATURES=chip-ws63 \
+  bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.1.0-alpha.20
 ```
 
 ## What it does
@@ -100,6 +104,7 @@ Hosts = `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `aarch64-apple-
 |-----|---------|---------|
 | `WAIT_RUN` | `90` | seconds to wait for the run to appear after the tag push |
 | `REPO` | cwd remote | `owner/name` to override `gh`'s auto-detection |
+| `PACKAGE_FEATURES` | empty | comma-separated minimal features required for standalone package verification |
 
 ## Gotchas
 
