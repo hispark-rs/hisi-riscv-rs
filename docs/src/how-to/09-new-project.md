@@ -13,7 +13,7 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template
 交互式会问两个选项：
 
 - **chip（目标芯片）**：`ws63` / `bs21` / `bs21e` / `bs22` / `bs20`（默认 `ws63`）。BS2X 几个 SKU 在 HAL 里是同一颗实验芯片 target（`chip-bs21`，需 `unstable`），差别只在 L2RAM 大小（bs20=128K，其余 160K，写在 `memory.x`）和 QEMU machine 名。
-- **starter（起步应用）**：`blinky` / `uart_hello` / `async`（默认 `blinky`）。
+- **starter（起步应用）**：`blinky` / `uart_hello` / `async` / `wifi`（默认 `blinky`）。`wifi` 当前仅支持 WS63；它使用公开的 `hisi-rf` facade、调用者持有的 radio storage 和长期运行的 smoltcp DHCP loop。
 - 还会问 **app 分区 flash 地址**（WS63 默认 `0x00230000`，BS2X 默认 `0x00090000`）——没有自定义分区表就用默认。
 
 非交互式可一把给定：
@@ -24,6 +24,8 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
 ```
 
 > WS63 的内存布局来自 hisi-riscv-rt 自带的链接脚本，所以模板**不**为 WS63 生成 `memory.x`；BS2X 才需要工程级 `memory.x`（模板会带）。
+
+`wifi` starter 的 RF 路径依赖 WS63 mask ROM，普通 CI/QEMU 只验证生成、编译和镜像契约，不能代替真机连接性证据。最终固件构建时通过 `WS63_WIFI_SSID` / `WS63_WIFI_PASSPHRASE` 临时环境变量注入网络配置；模板不会把真实凭据写进源码。真机成功门槛是依次看到 `WIFI_INIT_OK`、`WIFI_SCAN_OK`、`WIFI_CONNECT_OK` 和 `WIFI_DHCP_OK`。
 
 ## 生成的 justfile
 

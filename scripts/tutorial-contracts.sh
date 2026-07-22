@@ -323,6 +323,14 @@ run_template_case() {
             --no-workspace \
             --silent
         cd "$project"
+        if [ "$starter" = "wifi" ]; then
+            export WS63_WIFI_SSID=ci-network
+            export WS63_WIFI_PASSPHRASE=ci-passphrase
+            if grep -Eq '^(hisi-rf-ws63|hisi-rf-rtos-driver|ws63-radio-sys|ws63-rf-rs)[[:space:]]*=' Cargo.toml; then
+                echo "tutorial-contracts: wifi starter leaked an internal RF dependency" >&2
+                exit 1
+            fi
+        fi
         cargo check -Zbuild-std=core,alloc
         cargo build -Zbuild-std=core,alloc --release
         just --list >/dev/null
@@ -339,6 +347,7 @@ for chip in "${CHIPS[@]}"; do
         ws63)
             run_template_case ws63 blinky hp-ws63-blinky hp_ws63_blinky 0x00230000 image
             run_template_case ws63 uart_hello hp-ws63-uart-hello hp_ws63_uart_hello 0x00230000 image
+            run_template_case ws63 wifi hp-ws63-wifi hp_ws63_wifi 0x00230000 image
             ;;
         bs21)
             run_template_case bs21 blinky hp-bs21-blinky hp_bs21_blinky 0x00090000 noimage
