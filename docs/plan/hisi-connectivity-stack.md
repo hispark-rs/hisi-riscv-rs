@@ -1,10 +1,16 @@
 # RF5 之后的 HiSilicon Connectivity 全栈重构计划
 
-## Summary
+## 状态
 
-A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` vertical slice
+**执行中 / P0。** A5U 开发者体验与资源准入独占仓库的主要 WIP 槽位。A5R 和 A5B
+继续作为已登记依赖；pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
+[工程计划注册表](README.md)为准。
+
+## 概要
+
+A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**External Blocked Gate**；A5F 的无板 facade/release closure 已完成，当前唯一 active
+**外部阻塞门槛**；A5F 的无板 facade/release 收口已完成，当前唯一 active
 milestone 是不依赖 AP 的 A5U developer UX 与资源准入收口。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
@@ -25,15 +31,17 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
-## Active Window: NOW A5U Developer UX And Resource Admission
+<a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 
-本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。A4 已冻结；W2
+## 当前执行窗口：A5U 开发者体验与资源准入
+
+本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
 标准 relocation 与三平台 crates.io-only consumer；当前只推进 A5U 中不依赖 AP 的资源
 ownership、admission、report、typed diagnostics 和 template contract。BLE、SLE、TLS、
 SoftAP、Enterprise 和 A5B 不与当前 A5U 并行。
 
-### Completed -- A3 Closeout
+### 已完成 -- A3 收口
 
 1. 已将每轮单次 ping 扩为每个目标 5 次；20 次 nRST 得到 WPA2/DHCP/ARP 20/20、
    公网 `88/100`、gateway `0/100`。后续 RF seam 矩阵证明 queue-full drop 为 0、
@@ -52,7 +60,7 @@ SoftAP、Enterprise 和 A5B 不与当前 A5U 并行。
    和网络归因已经冻结。完整收口见
    [A3 network attribution](evidence/ws63-rf-a3-network-attribution-2026-07-14.md)。
 
-### Completed -- A4 Wi-Fi Vertical Slice
+### 已完成 -- A4 Wi-Fi 垂直切片
 
 A4 的第一条完整 vertical slice 已在 WS63 上运行：`RadioController`/`RadioRunner`、
 `WifiController`/`WifiDevice`、bounded event queue 和应用持有的长生命周期 smoltcp
@@ -61,7 +69,7 @@ renew。`hisi-rf 0.1.0-alpha.1` 已发布，迁移 facade 有明确删除窗口�
 `ws63-hil` workflow 已 PASS。冻结证据见
 [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
-### External Blocked -- W2 Upstream Supplicant And WPA3-Personal
+### 外部阻塞 -- W2 上游 Supplicant 与 WPA3-Personal
 
 W2 的当前状态、提交证据和完成门槛只维护在
 [W2A-W2F 执行账本](#w2-upstream-supplicant-and-wpa3personal)；本 Active Window 不复制
@@ -76,7 +84,7 @@ A5B `WifiBackend` 非阻塞化仍为 deferred architecture milestone。pure-WPA3
 A5U 不删除 vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
 真机稳定性结论。
 
-## Target Architecture
+## 目标架构
 
 ```mermaid
 graph TD
@@ -109,9 +117,9 @@ graph TD
 依赖方向必须保持单向：RTOS 不依赖 RF；NVS 不知道 RF key；ROM sys 不依赖
 HAL；RF 不实现 IP stack；examples 不直接列 vendor archives 或 ROM 地址。
 
-## Component Boundaries
+## 组件边界
 
-| Component | Responsibility |
+| 组件 | 职责 |
 | --- | --- |
 | `ws63-RF` | Language-neutral blobs、headers、ROM symbol/patch lists；不放 Rust 实现。 |
 | `hisi-rom-sys` | 芯片中立的显式 chip-selection facade；统一 re-export ROM facts，并转发 backend Cargo metadata。 |
@@ -141,9 +149,9 @@ relocation 规则必须原子升级。闭源 archive 未确认 crates.io 重分�
 从 `hisi-rf` 依赖 `hisi-crypto`，firmware verification 也只依赖 `hisi-crypto`。
 WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依赖 `hisi-tls`。
 
-## Public Contracts
+## 公共契约
 
-### RTOS And Embassy
+### RTOS 与 Embassy
 
 - `hisi-rtos::start(config, timer0, soft_interrupt0, resources)` 一次性启动
   tickless、priority-preemptive scheduler。重复启动返回 `AlreadyStarted`。
@@ -166,7 +174,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一计划事实源；
   A3 evidence 只证明已列出的实现/真机场景。
 
-### Storage And NVS
+### 存储与 NVS
 
 - `hisi-storage` 稳定面只承诺 memory-mapped read 和边界检查。erase/write 必须在
   RAM/ROM 中执行，并处理 SFC、cache、interrupt 和 XIP 约束；在掉电 HIL 前保持
@@ -175,7 +183,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `hisi_nvs::NvReader<S>::read(NvKey, &mut [u8]) -> Result<usize, NvError>`。
   它校验 page header、反码、record bounds、state、encryption flag 和 CRC。
 
-### Crypto, Keys And TLS
+### 密码能力、密钥与 TLS
 
 - `hisi-crypto` 是“芯片中立的密码能力契约 + RustCrypto 软件实现”，不是统一承包所有
   算法、硬件和协议的 provider。模块边界固定为 `error`、`hash`、`mac`、`cipher`、
@@ -210,7 +218,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 - NVS 首版只读。GC、双页切换、磨损管理和中途掉电恢复全部完成后，才讨论稳定
   write API。RF calibration/MAC key newtype 留在 `hisi-rf`。
 
-### Radio
+### 射频协议
 
 - `hisi_rf::init(RadioConfig, RadioResources)` 返回独占 `RadioController`；所有协议共享
   RF、IRQ、blob、memory profile 和 coexistence resources，禁止分别以 `Wifi::new()`、
@@ -264,15 +272,15 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
 <a id="native-supplicant-dependency-contract"></a>
 
-- 新 supplicant 路径固定为 `hostap 2.11 pinned source -> os_hisi_rtos /
-  eloop_hisi_rtos -> driver_ws63 / l2_packet_ws63 -> versioned narrow C shim ->
-  Rust FFI safety wrapper -> hisi-rf::wifi::security -> RadioController / RadioRunner /
-  bounded event queue`。
+- 新 supplicant 路径固定为 `hostap 2.11 固定源码 -> os_hisi_rtos /
+  eloop_hisi_rtos -> driver_ws63 / l2_packet_ws63 -> 固定版本的窄 C shim ->
+  Rust FFI 安全 wrapper -> hisi-rf::wifi::security -> RadioController / RadioRunner /
+  有界 event queue`。
   运行时只经 `hisi-rf-rtos-driver -> hisi-rtos`；不得新增 LiteOS backend、LOS shim
   daemon 或完整 POSIX 仿真。callback/IRQ 只复制有界事件并 wake `RadioRunner`，用户逻辑
   只能在普通任务上下文运行。
 
-### RF Dependency UX And Composition Root
+### RF 依赖体验与组合根
 
 最终用户的 RF 集成依赖必须收敛为一条显式 chip/profile 选择：
 
@@ -323,7 +331,7 @@ let radio = hisi_rf::ws63::init(
 `DEP_WS63_RADIO_SYS_*`、调用 `hisi-rf-link` 或依赖 GCC/Python/个人绝对路径才能完成普通
 `cargo build`。
 
-### TLS
+### TLS 层
 
 - `hisi-tls` 默认使用 mbedTLS；`embedded-tls` 是显式 opt-in backend。backend 选择不改变
   上层 async stream contract，应用不得依赖 mbedTLS C context。
@@ -335,7 +343,7 @@ let radio = hisi_rf::ws63::init(
   Rust/C shared allocator 或专用 C arena。硬件加速只存在于 crypto backend，不散落在
   TLS 状态机、BIO 或证书策略中。
 
-### Runtime And Link
+### Runtime 与链接
 
 - `hisi-riscv-rt` 增加一个 pre-relocation memory-profile descriptor 和一个
   linker-collected post-relocation init registry；重复 memory profile 由 linker
@@ -349,9 +357,9 @@ let radio = hisi_rf::ws63::init(
   不运行 layout pass 或 post-link patch。最终 ELF 再交给 `hisi-fwpkg` 计算
   header/hash/body；RF 工具不得复制镜像格式语义。
 
-## Milestones
+## 里程碑
 
-### RF5A -- TX/RX Closure
+### RF5A -- TX/RX 收口
 
 - 从 vendor headers 生成 pbuf offset/size assertions，覆盖当前已验证的 80-byte
   zero-copy reserve 以及 TX/RX 实际访问字段。
@@ -362,14 +370,14 @@ let radio = hisi_rf::ws63::init(
   gateway ARP reply 均在真机通过。MTU-sized smoltcp token 曾令 8 KiB 主栈下溢并覆盖
   FRW queue；现改为静态单占用 scratch，并以 token-size host test 防回归。
 
-### RF5B -- Open AP Connect
+### RF5B -- 开放 AP 连接
 
 - 在当前 `ws63-rf-rs` 中增加 typed station config、connection-state event 和
   `Wifi::connect`；第一目标是受控实验室 open AP，不宣称生产安全能力。
 - UART marker 固定为 `RF5_CONNECT_BEGIN`、`RF5_CONNECT_OK` 或
   `RF5_CONNECT_ERR:<class>:<vendor-code>`；用户逻辑不在 vendor event callback 中执行。
 
-### RF5C -- Ping And Baseline Freeze
+### RF5C -- Ping 与基线冻结
 
 - 第一轮使用静态 IPv4、gateway 和受控 peer，随后补 DHCP；ICMP 必须经过 Rust-visible
   L2 device，而不是 vendor lwIP 隐藏路径。
@@ -380,7 +388,7 @@ let radio = hisi_rf::ws63::init(
   Rust-visible L2 path；UART 输出 `RF5C_PING_OK rx=0x00000004`。迁移前 A0 已冻结在
   [WS63 RF A0 baseline](evidence/ws63-rf-a0-2026-07-12.md)。
 
-### A0 -- Baseline Freeze
+### A0 -- 基线冻结
 
 - [x] 固定 init/scan/connect/DHCP/ARP/ping UART marker。
 - [x] 固定最终 ELF、rust-lld map、relocation manifest、ROM patch report、canonical image
@@ -388,18 +396,18 @@ let radio = hisi_rf::ws63::init(
 - [x] 保留 `.wifi_pkt_ram` NOBITS、ROM symbol、patch count 与 image body/erase range 证据。
 - A1-A4 的每个迁移阶段必须复现该 baseline；不能用仅构建或 QEMU 结果替代 RF 真机证据。
 
-### W0-W4 -- Wi-Fi Security Closure
+### W0-W4 -- Wi-Fi 安全能力收口
 
-1. **W0A oracle（已完成）**：完整原厂 supplicant + mbedTLS/security archives 在真机完成
+1. **W0A Oracle（已完成）**：完整原厂 supplicant + mbedTLS/security archive 在真机完成
    WPA2-Personal connect、DHCP、ARP、ping；保留 marker、ABI probe 和资源基线。
-2. **W0B WPA2-only（已完成）**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
+2. **W0B 仅 WPA2（已完成）**：从原厂同版本源码/config 生成只含 STA WPA2-PSK/CCMP 的 archive，
    删除 SAE、AP、EAP/TLS/WPS/P2P/WAPI 对象。以 link closure 固定所需 crypto/libc ABI，
    对外 feature 命名为 `wifi-wpa2-personal`。机器可读边界由
    `chips/ws63/rf/tools/wpa2-personal-profile.toml` 定义，并由
    `check-wpa-profile.py` 对原厂 CMake source/define 集执行 fail-closed 检查。
    2026-07-12 真机复现 connect、DHCP、ARP、ping；构建闭包、SDK compatibility define
    陷阱和资源差异见 [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
-3. **W1 crypto baseline（已完成，已由 W2E-H 演进）**：过渡 `CryptoProvider` 已覆盖 PBKDF2-HMAC-SHA1、
+3. **W1 密码能力基线（已完成，已由 W2E-H 演进）**：过渡 `CryptoProvider` 已覆盖 PBKDF2-HMAC-SHA1、
    SHA-1/SHA-256、HMAC-SHA1/HMAC-SHA256、AES 和 TRNG。WS63 当前使用已验证的
    unified-cipher PBKDF2/TRNG，最初 SHA/HMAC/AES 使用 RustCrypto；最终 ELF 无 `mbedtls_*`
    supplicant 符号，并在真机 KAT 后完成 WPA2 connect/DHCP/ARP/ping。SPACC HMAC/SYMC
@@ -409,22 +417,22 @@ let radio = hisi_rf::ws63::init(
    [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
 <a id="w2-upstream-supplicant-and-wpa3personal"></a>
 
-4. **W2 upstream supplicant + WPA3/SAE（进行中）**：正式路径从固定 upstream hostap
+4. **W2 上游 Supplicant + WPA3/SAE（进行中）**：正式路径从固定 upstream hostap
    源码用标准跨平台 RISC-V 工具链可复现构建，不依赖原厂 compiler、预编译 supplicant
    archive 或 LiteOS backend。分阶段 gate 如下；WIP policy 由 Active Window 唯一维护：
 
-   - **W2A Source pin and oracle（已完成）**：固定 upstream hostap 2.11 tag
+   - **W2A 固定源码与 Oracle（已完成）**：固定 upstream hostap 2.11 tag
      `hostap_2_11`、commit `d945ddd368085f255e68328f2d3b020ceea359af` 和 tarball
      SHA-256 `912ea06f74e30a8e36fbb68064d6cdff218d8d591db0fc5d75dee6c81ac7fc0a`；
      vendor 2.10 fork、原厂 compiler 和 WPA2/WPA3 archives 只用于差分、WS63 driver ABI
      与真机 HIL oracle。安全更新/CVE radar 必须能独立升级 hostap pin，而不迫使
      `hisi-rf` 公共 API 改版。
-   - **W2B Narrow ABI（已完成）**：`ws63-radio-sys` 拥有窄、版本化 C shim 和预生成/手写
+   - **W2B 窄 ABI（已完成）**：`ws63-radio-sys` 拥有窄、版本化 C shim 和预生成/手写
      Rust FFI，只暴露 create/init/configure/connect/disconnect、management/EAPOL 输入、
      poll/event 与 key-install hooks。CI 校验 source pin/hash、ABI size/offset、callback
      calling convention、required symbols 和 archive/profile drift；禁止 bindgen 暴露 hostap
      内部结构、全局状态或要求构建机安装 libclang。
-   - **W2C Native OS and event loop（已完成）**：`ws63-radio-sys` commits `310db49`、
+   - **W2C 原生 OS 与事件循环（已完成）**：`ws63-radio-sys` commits `310db49`、
      `7ffd946`、`701b1c3`
      已实现 `os_hisi_rtos`、`eloop_hisi_rtos` 和版本化 OS hook table；host 行为测试与
      freestanding RV32 编译覆盖 allocator、sleep、单调/墙钟时间、entropy、timeout
@@ -445,11 +453,11 @@ let radio = hisi_rf::ws63::init(
      `389f8e369` 的 host contract test、独立 WPA2/WPA3 profile CI 以及 vendor-WPA2 真机
      connectivity smoke 均已通过；证据追加到
      [WPA2 cropped evidence](evidence/ws63-wpa2-cropped-2026-07-12.md)。
-   - **W2D WS63 driver and safe wrapper（已完成）**：实现最小 `driver_ws63` 与
+   - **W2D WS63 Driver 与安全 Wrapper（已完成）**：实现最小 `driver_ws63` 与
      `l2_packet_ws63`，只覆盖 scan/auth/assoc、management/EAPOL、set-key 和事件桥接；
      allocator、clock、entropy/crypto、TX/RX/key install 分别走既定 `hisi-*` contract。
      `ws63-radio-sys` commits `a7cf71e`、`58c267a`、`e668776`、`701b1c3` 已完成
-     EAPOL-only
+     `EAPOL-only` 路径
      `l2_packet_ws63`、版本化 driver-hook 生命周期、upstream `wpa_driver_ops` 的
      init/deinit、MAC、management TX 与 key 参数归一化；host 行为测试、freestanding RV32
      编译和 exact object-symbol manifest 均通过。当前窄 C lifecycle 已真实调用 upstream
@@ -488,17 +496,17 @@ let radio = hisi_rf::ws63::init(
      candidate 已通过真实 link closure：1568 sections、5612 relocations、37 ROM patches，
      ELF SHA-256 `ed7cd91357ddb981d8fe599f8ebd8d4eed658d525ec72c60fc2b0745fe6dc024`；
      这不等于 WPA3 已完成。早期 native owner/RX/runner 证据见
-     [W2D native runner and RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)，
+     [W2D 原生 runner 与 RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)，
      WPA2 parity 收口见
      [W2E upstream WPA2 parity](evidence/ws63-rf-w2e-upstream-wpa2-parity-2026-07-14.md)。
-   - **W2E Parity HIL（部分完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
+   - **W2E 一致性 HIL（部分完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
      ARP、重复 ping 和 lease-renew marker。host gate 已在固定 hostap 2.11 上覆盖 WPA2
      PMK-to-PTK、EAPOL M2 MIC、WPA2/WPA3/transition RSNE 与 PMF、SAE group 19 HnP/H2E
      双端 roundtrip，并重放 upstream 的 5 个 SAE corpus fixtures；证据见
      [W2E host protocol vectors](evidence/ws63-rf-w2e-host-protocol-vectors-2026-07-15.md)。
      `personal-wpa3` profile 的 41 个 SAE bignum/P-256 ABI、1157-section 最终链接与
      fail-closed 真机探测见
-     [W2E upstream WPA3 readiness](evidence/ws63-rf-w2e-upstream-wpa3-readiness-2026-07-15.md)：
+     [W2E 上游 WPA3 就绪度](evidence/ws63-rf-w2e-upstream-wpa3-readiness-2026-07-15.md)：
      当前 Guest BSS 被 WS63 scan 判为 WPA2-only，因此没有发送 SAE Authentication frame；
      同一代码基线随后再次通过 upstream WPA2 connect、DHCP、5/5 public ping、零 RX drop
      和 DHCP renew。
@@ -527,7 +535,7 @@ let radio = hisi_rf::ws63::init(
      固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。在该 gate
      闭合前，不删除 vendor supplicant oracle/`wpa_compat.rs`，不宣称 WPA3 stable，也不把
      新 backend 切为唯一默认路径或退役旧 facade。
-   - **W2E-H Handshake crypto acceleration（已完成，2026-07-17）**：第一项
+   - **W2E-H 握手密码能力硬件加速（已完成，2026-07-17）**：第一项
      PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
      唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立
      资源与失败契约。upstream WPA2 同一镜像 20 次 nRST 均完成 association/DHCP，40 次
@@ -584,7 +592,8 @@ let radio = hisi_rf::ws63::init(
      association 20/20、EAPOL notify/receive/feed/send 40/40/40/40，累计 2,947 次 pow、
      10,627 次全部 field operation 均零失败，pow/field 观察最大值均为 1 ms。
      因此当前 production candidate 已是 KM/RKP + TRNG + SPACC SHA/HMAC/AES + PKE P-256
-     point multiplication/addition + fixed-prime field multiplication/squaring/exponentiation
+     point multiplication/addition 加 fixed-prime field
+     multiplication/squaring/exponentiation
      的显式硬件 profile；RustCrypto 仍是 host oracle，不得被描述为硬件失败后的 fallback。
      最后一条 association-success/no-first-EAPOL 竞态也已收敛：confirmed disconnect
      callback 不再在同一 hostap event stack 内直接发起 association，而是注册 zero-delay
@@ -654,7 +663,7 @@ let radio = hisi_rf::ws63::init(
      `hisi-crypto-ws63 0.1.0-alpha.2`、`hisi-riscv-rt 0.5.5` 与
      `hisi-hal 0.7.0-alpha.3` 均已发布；独立 lockfile 和父仓解析只包含一个
      `ws63-pac 0.4.0`，不再存在可解析到缺少 SPACC/PKE 字段旧 PAC 的发布组合。
-   - **W2F Migration retirement（部分完成）**：upstream WPA2/WPA3 profile 已不选择任何
+   - **W2F 迁移路径退役（部分完成）**：upstream WPA2/WPA3 profile 已不选择任何
      vendor supplicant、mbedTLS 或 LiteOS libc archive。旧 vendor supplicant archive 与 supplicant-only
      LiteOS glue 保留一个 migration release 作为 oracle；满足 WPA2/WPA3 parity 后移出默认
      路径并删除 `wpa_compat.rs` 及其独占符号。`litos.rs` 不作为文件名或 LiteOS
@@ -736,18 +745,18 @@ let radio = hisi_rf::ws63::init(
 W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。测试 SSID 和
 passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或 evidence artifact。
 
-### H0 -- Rename `hisi-riscv-hal` To `hisi-hal`
+### H0 -- 将 `hisi-riscv-hal` 重命名为 `hisi-hal`
 
-**Status: complete (2026-07-13).** Evidence:
+**状态：已完成（2026-07-13）。** 证据如下：
 
-- Published migration-only `hisi-riscv-hal 0.6.1` and preserved the
-  `release/0.6` maintenance branch without yanking history.
-- Renamed the GitHub repository and parent gitlink to `hisi-hal`, published
-  `hisi-hal 0.7.0-alpha.1`, and passed the normalized stable API parity gate.
-- Migrated and linked WS63/BS20/BS21 examples, RF, stable/unstable HIL ELFs,
-  template `v0.7.0-alpha.1`, CI, skills, mdBook metadata, and WS63/BS21 rustdoc.
-- The template's three-project GitHub CI matrix passes using the crates.io
-  package, proving the happy path does not depend on the old repository redirect.
+- 已发布仅用于迁移的 `hisi-riscv-hal 0.6.1`，并保留 `release/0.6` 维护分支，没有
+  yank 历史版本。
+- GitHub 仓库和父仓 gitlink 已重命名为 `hisi-hal`，已发布
+  `hisi-hal 0.7.0-alpha.1`，并通过归一化 stable API parity gate。
+- WS63/BS20/BS21 examples、RF、stable/unstable HIL ELF、template
+  `v0.7.0-alpha.1`、CI、skills、mdBook metadata 和 WS63/BS21 rustdoc 均已迁移并链接。
+- template 的三个项目使用 crates.io package 通过 GitHub CI matrix，证明 happy path
+  不依赖旧仓库重定向。
 
 - H0 只在 `hisi-riscv-hal 0.6.0` 正式发布且 RF5C baseline 已冻结后开始，并在
   A1 新组件建仓前完成。重命名 release 不夹带 API、寄存器行为或 feature 重构。
@@ -768,7 +777,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - 父仓下一条 `v0.7.0-alpha.1` release train 以 `hisi-hal 0.7.0-alpha.1` 为 anchor；
   `hisi-riscv-rs v0.6.x` 文档快照继续指向旧 package，不回写历史版本。
 
-### A1-A4 -- Decomposition And Wi-Fi Migration
+### A1-A4 -- 组件拆分与 Wi-Fi 迁移
 
 1. A1：在 H0 完成后抽取 `hisi-rom-sys`、`hisi-alloc`、`hisi-crypto`、
    `hisi-crypto-ws63`、`ws63-radio-sys`、`hisi-rf-link`；examples
@@ -784,7 +793,9 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
    `hisi-tls-embedded`；TLS 不阻塞 A1-A4 的 Wi-Fi personal 迁移。密钥句柄策略随后
    独立到 `hisi-keystore`，不塞进 NVS 或 TLS backend。
 
-#### A4 extraction gates
+<a id="a4-extraction-gates"></a>
+
+#### A4 提取门槛
 
 - 在 A2/A3 完成前不启动 `hisi-rf` 大规模迁移；现有 `ws63-rf-rs` 继续承载已经验证的
   init/scan/connect/ping，架构整洁不能中断 connectivity baseline。
@@ -796,7 +807,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 - `hisi-rf-link` 继续唯一拥有 radio relocation/layout；`hisi-fwpkg` 继续唯一拥有
   header/hash/body/image semantics。任何 backend 或私有 blob 分发都不得复制这两类事实。
 
-#### A4 progress
+#### A4 进展
 
 - [x] 独立公开 `hisi-rf` repository 已建立；公共 crate 为 `no_std`，不依赖 WS63 PAC、
   blob、ROM、NVS format、scheduler 或 IP stack。host tests 覆盖 runner-only backend
@@ -826,7 +837,7 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
   [29328000891](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/29328000891)
   在 revision `3c2db43e971bb21d7565035179a7fee63d7861d1` 完整 PASS，A4 已冻结。
 
-### A5 -- Backend, Runtime And Facade Closure
+### A5 -- Backend、Runtime 与 Facade 收口
 
 A5 处理 A4 冻结后暴露出的三个架构债务：`WifiController` 虽然提供 async API，
 `WifiBackend` 仍允许一次同步调用阻塞到操作终态；`hisi-rf-rtos-driver` 虽然不绑定具体
@@ -835,7 +846,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
 冻结 upstream WPA2/pure-WPA3 的 marker、时序和 HIL parity，迁移期间保留旧 backend
 作为一个 release 的 oracle adapter。
 
-#### A5B -- Incremental `WifiBackend`
+#### A5B -- 增量式 `WifiBackend`
 
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
@@ -858,7 +869,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
 
-#### A5R -- Executable RTOS Semantics
+#### A5R -- 可执行 RTOS 语义
 
 - [x] 在 `hisi-rf-rtos-driver 0.1.0-alpha.11` 冻结
   `RuntimeContractVersion 1.0`、细粒度 capability bitset 和 fail-closed install/require；RF 在
@@ -914,7 +925,7 @@ WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，�
   scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
   profile 缺失或不满足 adapter requirement 时在初始化前 fail closed。
 
-##### A5R-F -- Formal Model Coverage Closure (Deferred)
+##### A5R-F -- 形式化模型覆盖收口（延期）
 
 当前形式化基线只覆盖 `Budgeted` quota 与 scheduler-lock 交互：TLA+ 检查
 single-running、budget bound、exhausted eligibility 和 lock-deferred exhaustion，Kani 验证
@@ -923,49 +934,50 @@ single-running、budget bound、exhausted eligibility 和 lock-deferred exhausti
 [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md) 为唯一事实源；本节只定义
 A5R 后续排期和验收顺序。
 
-- [x] **A5R-F0 -- Coverage inventory**：把 normative requirement 分为 abstract-model、
+- [x] **A5R-F0 -- 覆盖清单**：把 normative requirement 分为 abstract-model、
   concrete-Rust 和 silicon-only 证明义务；在 requirement map 中明确每条性质的
   TLA+/Kani/host/HIL 证据，禁止把普通 unit test 标成形式证明。当前 41 个 normative
   requirement ID 已与模型、Kani、host/RV32 和 silicon-only 证据类型对齐。
-- [x] **A5R-F1 -- Identity and resource lifecycle**：建模 generation-bearing task/semaphore/
+- [x] **A5R-F1 -- 身份与资源生命周期**：建模 generation-bearing task/semaphore/
   mutex handle 的 create/destroy/reuse，验证 stale handle 不能命中新对象、重复销毁失败、
   存在 waiter/owner 时销毁 fail closed；Kani 覆盖实际 slot/generation 编码与 pool
   状态转换。`ResourceLifecycle.tla` 与两条 production-encoding Kani harness 已进入 CI。
-- [ ] **A5R-F2 -- Wait linearization and queue ownership（部分完成）**：用 TLA+/PlusCal 覆盖
+- [ ] **A5R-F2 -- Wait 线性化与 Queue Ownership（部分完成）**：用 TLA+/PlusCal 覆盖
   post/timeout/cancel/grant 交错，证明每次 wait 只有一个 terminal result、direct grant
   不丢失也不被第三个任务窃取；同时证明 task 在 running/ready/wait/sleep/
   throttle 状态和队列中只有一个归属、无重复入队、无丢失任务。当前生命周期模型已覆盖
   grant/resource conservation，共享场景已覆盖 cancel-after-grant；完整 wait queue ownership
   与 terminal-result 线性化仍待建模。
-- [ ] **A5R-F3 -- Priority inheritance**：覆盖最高有效优先级 waiter、同级 FIFO、
+- [ ] **A5R-F3 -- 优先级继承**：覆盖最高有效优先级 waiter、同级 FIFO、
   donation 传播与移除、timeout/cancel/release 后基础优先级恢复，并对链式继承和
   cycle 拒绝给出有界反例搜索。
-- [ ] **A5R-F4 -- Port linearization**：在公开 scheduler/wait 语义冻结后，建模 timer
+- [ ] **A5R-F4 -- Port 线性化**：在公开 scheduler/wait 语义冻结后，建模 timer
   re-arm generation，证明 stale arm 不能覆盖更早 deadline；按已排期的 switch-intent/
   ticket protocol 建模 commit/cancel/consume exactly once、identity generation 和 detached
   ready ownership。这一阶段不提前移除已有 stale-switch recovery。
-- [ ] **A5R-F5 -- Evidence gate（部分完成）**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
+- [ ] **A5R-F5 -- 证据门槛（部分完成）**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
   trap frame/`mret`/FPU/IRQ 时序仍由 RV32 compile checks 与真机 HIL 验收，不宣称
   TLA+ 或 Kani 可以替代硬件证据。TLC/Kani pin、模型统计和 requirement map 已进入 CI；
   A5R 新增资源/取消语义的真机 marker 尚未验收。
 
-#### A5F -- Single-Dependency Facade
+#### A5F -- 单依赖 Facade
 
 - [x] 已将芯片中立类型、controller、runner 和 backend contract 提取为独立发布的
-  `hisi-rf-core 0.1.0-alpha.1`；它保持 `no_std`，不依赖 PAC/sys/blob/RTOS/allocator，
+  `hisi-rf-core 0.1.0-alpha.3`；它保持 `no_std`，不依赖 PAC/sys/blob/RTOS/allocator，
   `hisi-rf` 通过 re-export 保留原公共路径。
-- [x] 已建立并发布 `hisi-rf-ws63 0.1.0-alpha.4`，接收原 `ws63-rf-rs` 的
+- [x] 已建立并发布 `hisi-rf-ws63 0.1.0-alpha.7`，接收原 `ws63-rf-rs` 的
   `Ws63WifiBackend`、safe resources、WS63 event/L2 adapter 和 feature mapping；它依赖
   `hisi-rf-core` 与 `ws63-radio-sys`，后两者不依赖 facade。
-- [x] `hisi-rf 0.1.0-alpha.7` 已转为用户 facade/composition root：要求 exactly-one
+- [x] `hisi-rf 0.1.0-alpha.10` 已转为用户 facade/composition root：要求 exactly-one
   `chip-*` feature，按 chip 选择 backend，re-export `hisi-rf-core` 公共类型，并提供
   `hisi_rf::ws63::{Resources, init}`。chip 未选、多选或 security profile 冲突必须
   `compile_error!`，不能由 target triple 或 default feature 静默猜测。
 - [x] Facade 已逐项、单向转发 `wifi`、`wpa2-personal`、`wpa3-personal` 和 `smoltcp`；
-  WPA2/WPA3 冲突会在编译期失败，diagnostics/vendor oracle 不在 facade feature 中。
-  `embassy-net` 尚无 backend，因此没有暴露一个不能工作的空 feature。
+  WPA2/WPA3 冲突会在编译期失败，vendor oracle 不在 facade feature 中；通用 diagnostics
+  无需另开 feature，由 facade 直接 re-export。`embassy-net` 尚无 backend，因此没有暴露
+  一个不能工作的空 feature。
 - [x] 标准 relocation archive、37 项 ROM patch object、link order 和 memory contract
   已封装进 `hisi-rf-ws63 -> ws63-radio-sys 0.1.0-alpha.6` 构建链。普通 consumer 的
   `build.rs` 不读取 `DEP_WS63_RADIO_SYS_*`，不执行 `hisi-rf-link`/shell/Python/GCC，也不
@@ -983,7 +995,7 @@ A5R 后续排期和验收顺序。
   唯一来自 registry；生成的 facade rustdoc 不出现底层 crate 名。父仓 drift check 同时禁止
   application manifest 和普通 build script 重新引入底层 crate/tool。WPA2/WPA3 boundary gate
   由 `hisi-rf` CI run `29720244237` 验证。
-- [ ] **Triggered -- second-chip isolation**：添加第二个 chip backend 时，必须增加非 WS63
+- [ ] **条件触发 -- 第二芯片隔离**：添加第二个 chip backend 时，必须增加非 WS63
   consumer，证明其不下载、不编译 WS63 blob；当前只有 WS63 backend，不能用 feature 文本
   扫描替代真实 Cargo 解析与构建证据。本项不阻塞当前 WS63 A5F。
 - [x] 在 macOS arm64、Linux x64 和 Windows x64 的 clean/offline consumer fixture 上，仅用
@@ -999,16 +1011,25 @@ A5R 后续排期和验收顺序。
   两种 profile 全部通过。caller-owned profile storage 的 release chain 由
   `hisi-rf-ws63` main/publish runs `29892493214`/`29892626898` 和 `hisi-rf`
   main/publish runs `29893029109`/`29893410676` 闭合。
+  task-capacity 与 typed-diagnostics release chain 继续由 `hisi-rf-core`
+  main/publish runs `29896917072`/`29897007083`、`hisi-rf-ws63`
+  main/publish runs `29897444266`/`29897577038` 和 `hisi-rf`
+  main/publish runs `29897676064`/`29897985216` 闭合；发布后 crates.io-only diagnostic
+  fixture 的三平台复验由 run `29898320517` 跟踪。细分 stage/profile/trace 的 v2 release
+  chain 由 `hisi-rf-core` main/publish runs `29935225660`/`29935347504`、
+  `hisi-rf-ws63` main/publish runs `29935539659`/`29935728262` 和 `hisi-rf`
+  main/publish runs `29936129708`/`29936614642` 闭合；发布后的 alpha.10 crates.io-only
+  fixture 由 run `29936906866` 在三平台继续复验。
 - [ ] `ws63-rf-rs` facade 保留一个 migration release，给出 Cargo feature 和 API 迁移表；
   所有模板、教程与 examples 切到 `hisi-rf` 后再删除，历史 evidence 不回写。
 
-#### A5U -- Developer UX P0
+#### A5U -- 开发者体验 P0
 
 P0 面向应用开发者，只收敛完成 Wi-Fi demo 所必需的四个体验缺口；统一 workflow CLI、BSP/
 board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo-hisi` 的命令、agent、安全、
 跨平台与 release 规划见 [`cargo-hisi` Developer Workflow CLI Plan](cargo-hisi-cli.md)。
 
-- [x] **隐藏 composition root**：`hisi_rf::ws63::Resources::new(...)` 消费明确的 HAL
+- [x] **隐藏组合根**：`hisi_rf::ws63::Resources::new(...)` 消费明确的 HAL
   peripheral tokens，`hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装并返回只能通过
   chip-neutral API `split()` 的 controller。普通 consumer 不构造 `Ws63WifiBackend`，不直接
   依赖 `ws63-radio-sys`/blob/RTOS driver，也不调用 vendor OSAL。
@@ -1016,33 +1037,59 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `profile-wifi-wpa2-smoltcp`/`profile-wifi-wpa3-smoltcp` 固定 supplicant、crypto、network
   adapter 和 link contract；缺 chip、冲突 profile 与缺失 smoltcp 均在编译期失败。尚无经过
   backend/HIL 验证的 Embassy Net 组合，因此不暴露虚假的 `*-embassy` profile。
-- [x] **caller-owned storage 第一阶段**：`Storage<SelectedProfile, EVENTS>` 已集中持有 bounded
+- [x] **调用方持有 Storage 第一阶段**：`Storage<SelectedProfile, EVENTS>` 已集中持有 bounded
   radio/event state 与 4,384-byte SPACC DMA scratch，重复 claim 在硬件启动前返回错误；packet
   RAM 保持 linker-owned 并由 report 明确列出，没有把迁移成本藏进新的 backend 全局 `.bss`。
 - [ ] **完成静态资源准入**：将 task-slot reservation、task stacks、supplicant arena、alignment
   与 memory-profile admission 接入 `Storage<Profile>` 或显式 runtime capability；不足时返回
   `Required/Available` 结构化错误，不得进入 blob 后才停在 `RF2_INIT_BEGIN`。
+  task-slot 子项已由 `hisi-rf-rtos-driver 0.1.0-alpha.16` 的 v1.3 owner-bound reservation、
+  `hisi-rtos 0.1.0-alpha.10` 和 `hisi-rf-ws63 0.1.0-alpha.10` 闭合：main/idle 不消耗
+  15 个 dynamic slots，profile 在硬件访问前原子保留 public runner 与五个已观测 worker 所需的
+  6 个 slot，容量不足携带 `required/available`，失败或初始化回滚时释放 reservation。
+  `hisi-rf-ws63 0.1.0-alpha.13` 又让 C `memalign` 走受检的 power-of-two aligned heap path，
+  不再静默降级为默认对齐。task stack 与 supplicant arena 的 caller ownership、精确字节数和
+  memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
   flash 字节保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。
-- [ ] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
+- [x] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
   build/CI artifact；人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护第二份值。
+  父仓 `scripts/assemble-radio-build-report.py` 将 versioned profile resource JSON、
+  `hisi-fwpkg` image plan 与最终 ELF/image 信息合并为唯一 artifact；CI runs
+  `29941153042`、`29949035543` 已生成并上传该 report。尚未校准的 stack/arena 字段保持
+  `null`，不会在构建报告中伪造精确容量。
 - [ ] **错误可执行诊断**：公共错误优先返回稳定、协议化 enum，例如 association status、
   SAE/EAPOL/PMF stage、timeout/cancel/resource/runtime class；vendor/raw code、最后状态、profile
   revision 和 bounded trace 保留在 `Diagnostics`，不作为用户匹配的主要 API。错误 display/
   JSON 必须提供安全的 next action 和相关 docs anchor，禁止只输出 `BackendError(0x...)`。
-- [ ] 为 typed error 建立 vendor/IEEE/hostap 差分表和 unknown-code 保真回退；同一底层故障在
-  host/QEMU/HIL 上保持相同 stable class，新增 raw code 不得通过修改既有 enum 判别语义破坏
-  下游。secret、passphrase、key material 不进入 `Debug`、Display、JSON、UART 或 dump。
+  当前 `hisi-rf-core 0.1.0-alpha.5` / `hisi-rf-ws63 0.1.0-alpha.13` /
+  `hisi-rf 0.1.0-alpha.16` 已提供 `hisi-rf-error/v2`：stable code、明确的 scan/authenticate/
+  associate/SAE/EAPOL/PMF/disconnect/runtime stage、recovery action、lossless numeric backend
+  code、profile revision、4 项有界 numeric trace、truncation 状态、docs anchor、allocation-free
+  deterministic JSON 和 secret-redaction tests。vendor raw status、IEEE 802.11 status、hostap
+  status 与 disconnect reason 使用不同 trace kind；WS63 status 30 映射到 PMF，association
+  success 后 first-EAPOL stall 映射到 EAPOL，未知和负 status 均保真上报，不从 packed code 反推。
+  association rejection、first-EAPOL timeout、cancel/resource/backend timeout 的完整 fixture
+  matrix 及 host/QEMU/HIL stable-class parity 尚未闭合，因此本项保持未完成。
+- [x] 为 typed error 建立 vendor/IEEE/hostap source matrix 和 unknown-code 保真回退；新增 raw
+  code 不修改既有 stable enum 判别语义，secret、passphrase、key material 不进入 `Debug`、
+  Display 或 JSON。release chain 由 core main/publish runs `29947847220`/`29948082527`、backend
+  runs `29948247748`/`29948416210` 和 facade runs `29948547164`/`29948895065` 闭合。
+- [ ] 对 association rejection、first-EAPOL timeout、cancel/resource/backend timeout 建立
+  host/QEMU/HIL stable-class parity；UART/dump 的 redaction 与 bounded trace 仍需真机证据。
 - [x] facade example 与 crates.io-only consumer 已只展示：选择命名 profile、构造
   `Resources`/`Storage`、初始化 controller；在线、离线、只读 registry、含空格/非 ASCII 和
   并发 target 构建均使用发布 crate，不依赖父仓 patch。
-- [ ] 更新 template 和完整 Wi-Fi examples，使 happy path 只展示：选择一个已验证 profile、构造
+- [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
-  sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。
+  sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
+  v0.7.0-alpha.5` 固定 `hisi-rf 0.1.0-alpha.16`，CI run `29950231881` 已生成并构建 WS63
+  Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
+  不再属于用户 happy path，也不因 pure-WPA3 external gate 被提前删除。
 
-#### A5 Acceptance
+#### A5 验收
 
 - [ ] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
   control cancellation、L2 RX/TX、timer 和 diagnostics 均能获得可量化的最大响应时间。
@@ -1051,10 +1098,12 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   只靠 happy-path unit test。
 - [ ] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
   archive compatibility suite、generic runtime suite 与真机 HIL 三层证据分开报告。
-- [ ] 独立生成的 WS63 consumer manifest 在 RF 相关依赖中只列 `hisi-rf`，并以
-  `features = ["chip-ws63", "wifi", "wpa3-personal", "smoltcp"]` 在三种开发主机上完成
+- [x] 独立生成的 WS63 consumer manifest 在 RF 相关依赖中只列 `hisi-rf`，并以
+  `features = ["chip-ws63", "profile-wifi-wpa3-smoltcp"]` 在三种开发主机上完成
   plain `cargo build`；最终 dependency graph 可含传递的 `hisi-rf-ws63`/
   `ws63-radio-sys`，但用户源码、manifest、build script 与文档 happy path 不直接引用它们。
+  facade CI runs `29948547164`、`29949674878` 已在 macOS/Linux/Windows 对 WPA2/WPA3 profile
+  完成 crates.io-only clean、offline、只读 registry 和最终 ELF 构建。
 - [ ] template 生成项目不导入 `Ws63WifiBackend` 或 `hisi-rf-rtos-driver`；一个命名 profile
   可以完成资源构造、runner 启动和 async scan/connect，资源不足在 blob 初始化前报告精确
   required/available，构建产物同时生成可复查的 resource/profile report。
@@ -1067,7 +1116,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 
-#### A1 progress
+#### A1 进展
 
 - [x] `hisi-alloc` 已抽为独立 repository/release unit。通用 crate 只拥有 caller-provided
   arena、对齐/ownership 校验和可选 C allocation mechanics；WS63 linker symbols、RF C ABI
@@ -1105,7 +1154,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   均已由 GitHub Actions 发布到 crates.io；父仓 workspace、machine profile 和 drift
   checks 只消费各自 owner 导出的契约。
 
-#### Crypto migration gates
+#### 密码能力迁移门槛
 
 - [x] 通用 crate 已从“大 `CryptoProvider`”方向转为小能力 trait 与显式
   `CryptoSuite`；旧 provider 仅作为迁移兼容面，不再增加算法。
@@ -1136,12 +1185,12 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   SAE+PMF 和依赖版本发布仍阻塞
   WPA3-SAE stable 声明。
 
-#### A2 progress
+#### A2 进展
 
 - [x] `hisi-storage 0.1.0-alpha.1` 已作为独立 repository/release unit 发布，稳定候选面
   仅包含 bounded memory-mapped/read-only `embedded-storage` contract；erase/write 未暴露。
 - [x] `hisi-nvs 0.1.0-alpha.1` 已建立独立 repository、tag、green CI，并发布到 crates.io；
-  ACPU KV reader
+  ACPU KV 只读解析器
   覆盖 page complement、duplicate sequence、record bounds/state/encryption length、CRC 与
   integrity-before-buffer-size，共 9/9 host tests。
 - [x] RF 已删除内联 NVS format/constants/parser，`uapi_nv_read` 仅保留 vendor C ABI 与
@@ -1155,7 +1204,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   prerelease 均可从当前 tag 获取。A2 已完成，主机端 image builder/CLI 继续按独立 N0-N5
   计划推进，不反向阻塞只读 runtime reader。
 
-#### A3 progress
+#### A3 进展
 
 - [x] 已建立独立公开 `hisi-rf-rtos-driver 0.1.0-alpha.6` release unit；其 contract
   包含可失败 task/semaphore、validated stack/timeout/wait 类型和 exactly-one runtime
@@ -1182,7 +1231,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   拒绝不平衡 unlock，host test 覆盖嵌套与错误路径。该能力不冒充抢占或优先级继承。
 - [x] Guarded link 仍验证 1,486 section、5,335 relocation 和 37 ROM patch；WS63 HIL
   已复现 init/scan/WPA2 connect/DHCP/ARP/ping。driver contract 的首次证据见
-  [A3 driver contract](evidence/ws63-rf-a3-driver-contract-2026-07-13.md)，scheduler ownership
+  [A3 driver 契约](evidence/ws63-rf-a3-driver-contract-2026-07-13.md)，scheduler ownership
   迁移证据见 [A3 hisi-rtos extraction](evidence/ws63-rf-a3-hisi-rtos-2026-07-13.md)，策略
   收窄与最新真机 parity 见
   [A3 scheduling policy](evidence/ws63-rf-a3-scheduling-policy-2026-07-13.md)。
@@ -1259,14 +1308,14 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `radio_task_policy` 永久应用到所有 task。critical 候选可使用高优先级 Preemptive，
   worker/background 使用 per-thread quota，并在分类完成后评估 aggregate group quota。
   `Budgeted` 不提供最低 CPU 服务保证；是否引入独立 Reservation 只按
-  [Quota Closure And Guaranteed Service Evolution](hisi-rtos-semantics-and-verification.md#quota-closure-and-guaranteed-service-evolution)
+  [Quota 收口与保证服务演进](hisi-rtos-semantics-and-verification.md#quota-closure-and-guaranteed-service-evolution)
   的 G0 gate 决定，不阻塞当前 init/scan/connect/ping parity。
 - ported switch 的长期 ticket/generation 强化是独立 deferred correctness 轨道，唯一排期见
-  [Ported Switch Intent/Ticket Protocol](hisi-rtos-semantics-and-verification.md#ported-switch-intentticket-protocol-deferred)。
+  [Ported Switch Intent/Ticket 协议](hisi-rtos-semantics-and-verification.md#ported-switch-intentticket-protocol-deferred)。
   当前已验证的 stale-request recovery 在该轨道完成 100-reset HIL 前不得删除；它不属于
   Q4 group quota 或 Reservation。
 
-### B0-B3 -- BLE Vendor Host First
+### B0-B3 -- BLE 优先使用原厂 Host
 
 1. B0：对 `libbg_common`、`libbt_host`、`libbt_app`、`libbth_sdk` 做 symbol closure、
    archive/version hash、ABI layout 和 memory-profile 清单。
@@ -1275,28 +1324,28 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 4. B3：实现 GATT client/server、notification/indication 和断连清理。Classic BR/EDR
    不在本轮范围。
 
-### S0-S3 -- SLE
+### S0-S3 -- SLE 移植
 
 1. S0：对 `libbth_gle` 及共享 BT archives 做 closure，明确 BLE/SLE 共享 transport、
    heap、NVS 和 coex state。
-2. S1：announce/seek；S2：connect/disconnect；S3：SSAP client/server。
+2. S1：announce/seek；S2：connect/disconnect；S3：SSAP 客户端/服务端。
 3. 自动连接与数据收发 HIL 需要第二块 WS63；单板只能作为 init/announce 证据。
 
-### X0 And R0 -- Coexistence And Release
+### X0 与 R0 -- 共存和发布
 
 - 先验证 Wi-Fi ping + BLE advertising/connection，再验证 Wi-Fi + SLE；只有并发 RF
   时序、shared RAM profile、heap watermark 和 IRQ latency 都有 HIL 后才公开 `coex`。
 - R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、
   examples 和 HIL evidence；之后才把更高层 convenience API 作为稳定候选。
 
-## Verification
+## 验证
 
 W2 的七个 security/migration gate 按顺序为：
 
 1. upstream tag/commit/tarball hash 固定并通过 CVE/source radar；
 2. C/Rust shim 的 size/offset/calling-convention/required-symbol drift gate；
 3. host EAPOL/RSNE/SAE/PMF golden vectors 或 pcap replay；
-4. upstream-native WPA2 connect/DHCP/ARP/repeated-ping/lease-renew parity HIL；
+4. 上游原生 WPA2 connect/DHCP/ARP/repeated-ping/lease-renew 一致性 HIL；
 5. WPA3-only SAE+PMF 与 WPA2/WPA3 transition-mode HIL；
 6. 按 W2E-H 顺序完成握手密码学硬件迁移；显式软件/mixed profile 可先用于行为验证，但
    WPA3-SAE stable 前必须闭合对应硬件证据；
@@ -1318,7 +1367,7 @@ W2 的七个 security/migration gate 按顺序为：
 - CI drift：禁止 ROM symbols、NVS constants、scheduler implementation 和 direct blob link
   args 出现在各自 owner 之外；检查依赖图无反向边和循环。
 
-## Assumptions And Locked Decisions
+## 假设与锁定决策
 
 - 先完成 Wi-Fi ping，再拆仓；不并行维护新旧两条主路径。
 - `hisi-riscv-hal 0.6.0` 是旧名称的最后一个主 release；新名称从

@@ -1,12 +1,12 @@
 # hisi-riscv-hal v0.6.0 正式版里程碑计划
 
-## Status
+## 状态
 
-**Completed / historical evidence.** `hisi-riscv-hal 0.6.0` 已于 2026-07-12 发布；
+**已完成 / 历史证据。** `hisi-riscv-hal 0.6.0` 已于 2026-07-12 发布；
 本文保留 release gate 与证据，不再是当前执行计划。当前优先级见根
 [`ROADMAP.md`](../../ROADMAP.md)。
 
-## Summary
+## 概要
 
 `hisi-riscv-hal v0.6.0` 是 HAL stable API stabilization release。它的发布门槛是
 默认 stable API、HIL 证据、safe/unsafe 边界、CI/release/docs 全部闭合；WS63 RF / Wi-Fi
@@ -20,9 +20,9 @@ init / scan / connect / ping 属于下游 connectivity track，不阻塞 HAL 0.6
 RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果只是需要新增能力，默认先进
 `unstable`，等 HIL 与 soundness 证据闭合后再毕业。
 
-## Milestones
+## 里程碑
 
-### M0 -- Blocking Bug Closure
+### M0 -- 阻塞缺陷收口
 
 - [x] 修复 `#16`：WS63 I2C completion 轮询已对齐 SDK `int_done` 语义，不再把
   `int_tx` / `int_rx` 当作事务完成信号。`tests::i2c0_nack_is_reported_after_done`
@@ -31,7 +31,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
   eFuse write 或 LSADC analog/data path 毕业。Issue 已改名为 post-0.6 full feature
   validation，并留言记录 stable 边界；任务保持 open，但不再误作 0.6.0 blocker。
 
-### M1 -- Stable API Freeze
+### M1 -- 稳定 API 冻结
 
 - [x] 默认 `chip-ws63,rt` 暴露项必须全部出现在
   `docs/src/reference/10-stable-api.md`。
@@ -48,7 +48,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 能力级说明仍以 stable API reference 为用户事实源。stable-only rustdoc 另以
 `-D warnings` 检查公开文档不得链接被 gate 的私有项。
 
-### M2 -- Evidence Gate
+### M2 -- 证据门槛
 
 - 本地与 CI 必须通过：
   - `cargo fmt --all -- --check`
@@ -61,9 +61,9 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
   - `cargo clippy ... --locked --no-default-features --features chip-bs21,rt,unstable -- -D warnings`
   - `cargo check ... --locked --no-default-features --features chip-ws63,rt,async,embassy --release`
   - `cargo check ... --locked --no-default-features --features chip-bs21,rt,unstable --release`
-  - `cargo doc ... --locked --no-deps --document-private-items --no-default-features --features chip-ws63,rt,async,embassy` with `RUSTDOCFLAGS=-D warnings`
+  - 使用 `RUSTDOCFLAGS=-D warnings` 运行 `cargo doc ... --locked --no-deps --document-private-items --no-default-features --features chip-ws63,rt,async,embassy`
 - BS2X negative gate：`chip-bs21,rt` without `unstable` 必须失败并包含实验性提示。
-- HIL gate：
+- HIL 门槛：
   - [x] 跑默认 WS63 HAL embedded-test suite：`chip-ws63,rt`；2026-07-12 真机
     30/30 通过。
   - [x] 跑一组 `unstable` smoke HIL；2026-07-12 使用
@@ -71,7 +71,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
     `dma_mem_to_mem` 与 `dma_transfer_guard` 两个实验性用例。
   - `hil-loopback`、`hil-rtc`、示例级 `hil-smoke.sh` 不作为 crates.io 0.6.0 blocker。
 
-### M3 -- Release Candidate
+### M3 -- 候选版本
 
 - [x] 发布 `0.6.0-rc.1`；2026-07-12 crates.io publish workflow 成功。rc 后只接受编译、文档、CI、release、stable API 行为 bug 修复。
 - [x] rc 后冻结 stable API、默认 feature 语义和 breaking rename。
@@ -81,7 +81,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
     crates.io 解析 RC 并通过 check/build；WS63 image plan 通过。
   - [x] 父仓 changelog 标记 anchor 为 `hisi-riscv-hal 0.6.0-rc.1`。
 
-### M4 -- Final v0.6.0 Release
+### M4 -- 正式发布 v0.6.0
 
 - [x] 将 HAL 版本提升到 `0.6.0`，更新 changelog 日期。
 - [x] 使用 standalone lock helper 更新并确认 `Cargo.lock` 无父仓 patch 漂移。
@@ -91,7 +91,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
   `hisi-riscv-rs v0.6.0`，anchor 为 `hisi-riscv-hal 0.6.0`；GitHub release
   assets、版本化 mdBook/rustdoc 和 `latest=v0.6.0` 已于 2026-07-12 在线验证。
 
-## Test Cases And Scenarios
+## 测试用例与场景
 
 - Stable default consumer：只启用 `chip-ws63,rt` 时，可使用 stable API 清单中的
   GPIO、UART、SPI0、I2C0、Timer、TCXO、PWM0、WDT、TRNG、eFuse read、LSADC subset、
@@ -104,7 +104,7 @@ RF 推进中如果暴露 HAL 已稳定 API 的 bug，可以阻塞 0.6.0；如果
 - Docs evidence：stable API reference、HAL changelog、release guide、parent happy path
   不能互相矛盾，且不能暗示 DMA/embassy/BS2X/RF connectivity 已经 stable。
 
-## Assumptions
+## 假设
 
 - HAL 0.6.0 不等待 WS63 Wi-Fi init、scan、connect 或 ping。
 - HAL 0.6.0 不等待 PAC/SVD 全覆盖审计完成；只要求 stable HAL 面不依赖缺失 PAC 字段。

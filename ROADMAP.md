@@ -116,6 +116,7 @@ Completed historical plans remain as evidence, not current work:
 
 ## Fact Sources
 
+- plan status, priority, triggers, and dependencies: [Engineering plan registry](docs/plan/README.md)
 - current execution and architecture: [Connectivity stack](docs/plan/hisi-connectivity-stack.md)
 - stable HAL surface: [Stable API reference](docs/src/reference/10-stable-api.md)
 - transitional RF implementation: [`ws63-rf-rs` README](chips/ws63/rf/README.md)

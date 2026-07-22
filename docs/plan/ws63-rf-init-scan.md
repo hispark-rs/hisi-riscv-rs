@@ -1,13 +1,13 @@
 # WS63 RF 推进计划：Init → Scan 优先
 
-## Status
+## 状态
 
-**Completed / historical evidence.** Init、scan、connect、WPA2-Personal、DHCP、ARP 和
+**已完成 / 历史证据。** Init、scan、connect、WPA2-Personal、DHCP、ARP 和
 ping capability 已完成真机证明；本文保留 RF0-RF5 的 bring-up 事实，不再承载当前
-TODO。A3 已冻结；A4 Wi-Fi vertical slice 的唯一当前入口是
-[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a4)。
+TODO。A3/A4 已冻结；后续工作的唯一当前入口是
+[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5u-developer-ux-and-resource-admission)。
 
-## Summary
+## 概要
 
 WS63 RF 的第一阶段目标是 **真实 WS63 硅片上的 Wi-Fi init + scan**；该目标现已
 通过 HIL。RF5 的 TX/RX、open-AP connect、WPA2-Personal oracle 和 ping 也已在
@@ -26,9 +26,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；LiteOS/blob
 特有行为则由 [WS63 RF runtime compatibility](ws63-rf-runtime-compatibility.md) 管理。
 
-## Key Milestones
+## 关键里程碑
 
-### RF0 -- Baseline And Truth Sources
+### RF0 -- 基线与事实源
 
 - 固定事实源：vendor 行为以 `fbb_ws63` 为准；blob delivery 以
   `crates/chips/ws63/ws63-radio-sys/ws63-RF` 为准；archive/ABI/post-link 以
@@ -38,7 +38,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
   `RF0_LINK_OK`、`RF1_IMAGE_OK`、`RF2_INIT_BEGIN`、`RF2_INIT_OK/ERR:<code>`、
   `RF3_SCAN_RESULT/ERR:<code>`。
 
-### RF1 -- Real RF Runtime Image
+### RF1 -- 真实 RF Runtime 镜像
 
 - 在 `hisi-riscv-rt` WS63 linker 中提供真实 `.wifi_pkt_ram (NOLOAD)`：
   `0x00A00000..0x00A0C000`。
@@ -59,7 +59,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
 - 保持 `rf_port_demo` / `netif_smoltcp_selftest` 作为 QEMU/host selftest，不把它们称为
   真实 Wi-Fi。
 
-### RF2 -- HAL-Backed Platform Services
+### RF2 -- HAL 支撑的平台服务
 
 - HAL 提供通用硬件能力，RF 保持组合层：
   - eFuse read buffer / bit read：用于 MAC、RF trim、校准数据读取；不可逆 write 不启用。
@@ -75,7 +75,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
   9/9 host tests 与完整 connectivity HIL 通过。WS63 partition link contract 由
   `ws63-radio-sys` 拥有，不再位于 RT。
 
-### RF3 -- Wi-Fi Init On Silicon
+### RF3 -- 真机 Wi-Fi 初始化
 
 - 调用最小 `uapi_wifi_init` / vendor init path。
 - custom relocation 已采用 stock `rust-lld` layout 驱动的受控 patch lane；原厂
@@ -99,7 +99,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
 - HIL 验收：`wifi_init_smoke` 通过 `hisi-fwpkg plan` 生成 image，烧录后 UART 必须出现
   `RF2_INIT_OK` 或结构化 `RF2_INIT_ERR:<class>`，不能无声挂死。
 
-### RF4 -- Scan MVP
+### RF4 -- Scan 最小可行版本
 
 - `wifi_init_smoke` 通过窄 `Wifi::init` / `Wifi::scan` API 执行 STA scan，并把
   vendor 结果转换为固定容量 `ScanResult` 数组。
@@ -110,9 +110,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
   `RF3_SCAN_OK count=0x20` 和真实 AP 的 SSID/frequency/RSSI；WLMAC IRQ 也在扫描期间
   到达。输出仍限制为固定容量，避免无界日志。
 
-### RF5 -- Data Path, Connect And Ping
+### RF5 -- 数据路径、连接与 Ping
 
-- **RF5A TX/RX closure**：从 vendor headers 生成 pbuf layout checks；真实 TX symbol
+- **RF5A TX/RX 收口**：从 vendor headers 生成 pbuf layout checks；真实 TX symbol
   替换测试 sink，RX `driverif_input` 进入有界 L2 queue，先以 ARP round-trip 验收。
 - 当前 RF5A evidence：以原厂 `lwip/lwipopts_default.h`（`NO_SYS=0`）和 delivered
   archive DWARF 为 oracle，确认 `pbuf=32 bytes`、`netif.drv_send@244`、80-byte
@@ -120,7 +120,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
   已移到静态单占用缓冲，`dhcp_probe` 栈帧从超过主栈的规模降到 1136 bytes；真机
   获得 `192.168.155.2/24`、router `192.168.155.1`，随后 ARP request/reply 通过
   Rust-visible L2 path，UART 输出 `RF5A_DHCP_OK`、`RF5A_ARP_OK`。
-- **RF5B Open-AP connect**：增加 typed station config 和 deferred connection events；
+- **RF5B 开放 AP 连接**：增加 typed station config 和 deferred connection events；
   受控实验室 open AP 只用于数据面证明，不作为生产安全承诺。
 - 当前 RF5B evidence：`OpenNetwork::from_scan` 只能从真实 scan result 构造，
   `Wifi::connect_open` 直接使用 SDK `ext_associate_params_stru` ABI；vendor event 6/7
@@ -130,7 +130,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
   auth/association 已闭合；同日 RF5A Rust-visible TX/RX 与 RF5C ping 也已通过。
 - 原厂 app 变体的 `libwpa_supplicant.a` 已作为可选 archive 收入 `ws63-RF`，用于后续
   WPA bring-up；开放网络路径默认不链接它。
-- **RF5B WPA2-Personal oracle**：`wpa` 实验 feature 已按原厂 `--short-enums` ABI
+- **RF5B WPA2-Personal oracle 路径**：`wpa` 实验 feature 已按原厂 `--short-enums` ABI
   对齐 scan/association/event 结构，并按原厂顺序初始化 unified cipher driver 与
   mbedTLS harden provider。2026-07-12 真机连接受保护的 `HUAWEI-HLJ_Guest` 后依次输出
   `RF5B_WPA_CONNECT_OK`、DHCP、ARP 和 ping marker。该路径仍链接完整原厂 supplicant
@@ -168,7 +168,7 @@ storage/NVS 与 RTOS ownership 拆分，再按
 - RF5 完整 API、crate 边界、RTOS/NVS/BLE/SLE 后续见
   [Connectivity 全栈重构计划](hisi-connectivity-stack.md)。
 
-## Issue Mapping
+## Issue 映射
 
 - `#9`：RF1 必须关闭，`.wifi_pkt_ram` NOLOAD 是 image 前置。
 - `#7`：RF2/RF3 分批关闭；IRQ、uapi、libc/sched stub 不要求一次全部清零，但 init 所需路径必须真实。
@@ -178,9 +178,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
   HIL 或保持 unstable。
 - `#16`：I2C 修复属于 HAL 0.6.0 blocker；不直接阻塞 RF，除非 RF/NV 路径实际依赖 I2C 外设。
 
-## Test Plan
+## 测试计划
 
-- No-hardware:
+- 无硬件测试：
   - `cargo build -p ws63-rf-rs --release`
   - `cargo build -p rf_port_demo --release`
   - `cargo build -p wifi_init_smoke --release`
@@ -192,12 +192,12 @@ storage/NVS 与 RTOS ownership 拆分，再按
   - `chips/ws63/rf/tools/rf-reloc58-diagnose.sh`
   - QEMU smoke：`rf_port_demo` 输出 `RF PORT DEMO: PASS`
   - `netif_smoltcp_selftest` 保持 ARP/selftest 通过。
-- Link/image:
+- 链接与镜像：
   - `readelf` 验证 `.wifi_pkt_ram` 是 `NOBITS/NOLOAD`，地址 `0x00A00000`，大小 `0xC000`。
   - `hisi-fwpkg plan --image-output` 生成完整 image，hash/body range 正确。
   - `hil/pack.sh` 只把上述 canonical `.img` 封装成 app-only FWPKG，不再从 ELF
     重复推导另一份 partition image。
-- HIL:
+- HIL 真机测试：
   - `wifi_init_smoke --features full-init` 必须输出 `RF2_INIT_OK`，随后输出
     `RF3_SCAN_OK count=N` 或分类错误。
   - RF HIL 不进入普通 PR gate，放 self-hosted/manual workflow；每个 RF milestone 合并前必须留 UART log 证据。
@@ -209,13 +209,13 @@ storage/NVS 与 RTOS ownership 拆分，再按
     `RF5B_WPA_CONNECT_OK`、`RF5A_DHCP_OK`、`RF5A_ARP_OK`、`RF5C_PING_OK`；日志和
     artifact 不得记录 passphrase。
 
-## Assumptions
+## 假设
 
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
 - Init、scan、RF5A-C 与 WPA2-PSK/CCMP W0-W1 已完成。后续只按
-  [Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a3-next-a4)
-  收口 A3，再执行 A4；WPA3/SAE、SoftAP 和 Enterprise 不是当前并行任务。
+  [Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5u-developer-ux-and-resource-admission)
+  推进 A5U；pure-WPA3 是 external blocked gate，SoftAP 和 Enterprise 不是当前并行任务。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。

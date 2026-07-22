@@ -5,6 +5,13 @@
 **范围**: hisi-riscv-rt + hisi-hal + hisi-rtos
 **决策**: esp-hal 路线（`set_handler` + `bind_interrupts!` 语法糖）
 
+## 状态
+
+**延期 / P2，执行前必须重新评审架构。** 本文的阶段编号只表示本计划内部
+顺序，不表示生态全局优先级。执行前必须先对照当前 272-byte trap ABI、RTOS F2 WS63
+port、单 hart 无 A 的原子/临界区约束和现有 HIL 重新评审；当前 P0 仍是 A5U。跨计划
+优先级与触发条件以[工程计划注册表](README.md)为准。
+
 ---
 
 ## 一、背景与现状
@@ -115,7 +122,7 @@ bind_interrupts! {
 
 ## 三、分步实施计划
 
-### 阶段一（P0）：`set_handler` API
+### IR0：`set_handler` 接口
 
 **位置**: `crates/hisi-hal/src/interrupt.rs`
 
@@ -161,7 +168,7 @@ unsafe extern "C" fn mie0_interrupt_handler() {
 - `timer_irq` 和 `gpio_irq` 测试用例可通过 `set_handler` 替代手写 `#[no_mangle]` 运行
 - 空 handler（未注册的 IRQ 触发）不 crash
 
-### 阶段二（P1）：`bind_interrupts!` 声明宏
+### IR1：`bind_interrupts!` 声明宏
 
 **位置**: `crates/hisi-hal/src/interrupt.rs`（或新增 `macros.rs`）
 
@@ -218,13 +225,13 @@ macro_rules! bind_interrupts {
 - `bind_interrupts!` 生成的代码与等价的手写 `#[no_mangle] extern "C" fn` 产生的二进制完全一致
 - 编译期检测重复符号（linker error on symbol conflict）
 
-### 阶段三（P2）：embassy 兼容
+### IR2：embassy 兼容
 
 **无需在本 crate 实现。** embassy 的 `bind_interrupts!` 宏在其自身的 proc macro 中完成。当用户的 `Interrupt` 枚举类型实现了 `embassy_executor::Interrupt` trait 后即可直接使用 embassy 自己的宏。
 
 验证点：确保 `ws63_pac::interrupt::ExternalInterrupt` 或 `hisi_riscv_rt::interrupt::ExternalInterrupt` 枚举中的变体名称在 embassy 的 `Interrupt` trait 中可被识别。
 
-### 阶段四（P3）：废弃 timer_irq / gpio_irq 的手写汇编 mode（可选）
+### IR3：废弃 timer_irq / gpio_irq 的手写汇编 mode（可选）
 
 这两个 QEMU 测试例现在自装 `csrw mtvec, xxx` 和使用手写汇编。当 `set_handler` / `bind_interrupts!` 功能完备后，可考虑：
 

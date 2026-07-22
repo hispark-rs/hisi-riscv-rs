@@ -1,20 +1,25 @@
-# WS63 RF Blob Runtime Compatibility Plan
+# WS63 RF Blob Runtime 兼容计划
 
-## Scope And Ownership
+## 状态
 
-This plan defines the bounded compatibility layer between a pinned WS63 radio
-archive and the native Rust runtime. It does not make `hisi-rtos` a LiteOS clone
-and does not add a LiteOS backend.
+**配套工作 / P1。** 当前 archive-bound profile 已建立。仅在 archive/profile 变化或
+A5R 暴露兼容缺口时重开本计划。它为执行中的 connectivity 计划提供配套支持，但不占用
+独立的主要 WIP 槽位。跨计划优先级以[工程计划注册表](README.md)为准。
 
-The facts are deliberately separated:
+## 范围与归属
 
-- `hisi-rtos` behavior comes from its Rust API, Embassy and embedded-Rust needs,
-  the [RTOS scheduling semantics and verification plan](hisi-rtos-semantics-and-verification.md),
-  host-deterministic tests, and future cross-chip runtime architecture.
-- WS63 RF compatibility comes from the blob ABI, its exact archive hash, the
-  matching fbb_ws63 LiteOS behavior/disassembly, and RF HIL.
+本计划定义固定 WS63 radio archive 与原生 Rust runtime 之间的有界兼容层。它不会把
+`hisi-rtos` 变成 LiteOS 克隆，也不会增加 LiteOS backend。
 
-The dependency direction is:
+必须明确分开两类事实：
+
+- `hisi-rtos` 行为来自其 Rust API、Embassy/embedded Rust 需求、
+  [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)、host deterministic
+  测试和未来跨芯片 runtime 架构。
+- WS63 RF 兼容行为来自 blob ABI、精确 archive hash、对应的 fbb_ws63 LiteOS
+  行为/反汇编和 RF HIL。
+
+依赖方向如下：
 
 ```text
 WS63 blob -> ws63-radio-sys -> WS63 compatibility adapter
@@ -24,95 +29,87 @@ WS63 blob -> ws63-radio-sys -> WS63 compatibility adapter
 Application / Embassy --------------------------^
 ```
 
-`hisi-rf-rtos-driver` owns small chip-neutral capabilities. The WS63 adapter owns
-`LOS_*`/`osal_*` calling conventions, priority and tick conversion, direct-handoff
-profile, callback context, and compatibility tests. Vendor LiteOS remains an
-oracle outside the product dependency graph.
+`hisi-rf-rtos-driver` 拥有芯片中立的小能力契约。WS63 adapter 拥有 `LOS_*`/`osal_*`
+调用约定、priority/tick 转换、direct-handoff profile、callback context 和兼容测试。
+原厂 LiteOS 只作为产品依赖图之外的 oracle。
 
-## Three Evidence Gates
+## 三层证据门槛
 
-### ABI Contract
+### ABI 契约
 
-Owned by `ws63-radio-sys`:
+由 `ws63-radio-sys` 负责：
 
-- archive SHA-256 and build identity;
-- `llvm-nm -u` required-symbol manifest;
-- RV32 function signatures, callback ABI, variadic/`va_list` boundaries;
-- structure size/alignment/offset assertions;
-- ROM symbols, relocation inputs, and linker requirements.
+- archive SHA-256 和 build identity；
+- `llvm-nm -u` 必需符号 manifest；
+- RV32 函数签名、callback ABI、variadic/`va_list` 边界；
+- 结构体 size/alignment/offset 断言；
+- ROM symbol、relocation 输入和 linker 要求。
 
-`required-symbols.txt` is version controlled. A new unresolved symbol or archive
-hash must fail CI and force profile review; the compatibility surface never grows
-silently.
+`required-symbols.txt` 必须纳入版本控制。出现新的 unresolved symbol 或 archive hash
+时，CI 必须失败并要求重新评审 profile；兼容面不得静默扩大。
 
-### Semantic Contract
+### 语义契约
 
-Owned by the WS63 compatibility adapter. LiteOS scenarios are rewritten as Rust
-behavior assertions, not copied as `LOS_*` APIs and not presented as generic RTOS
-semantics. A deterministic harness uses actions such as `Spawn`, `Yield`,
-`AdvanceTime`, `LockScheduler`, `SemWait`, `SemPost`, `EnterIrq`, and `ExitIrq`,
-and observations such as `Running`, `Blocked`, `TimedOut`, `Granted`,
-`PreemptionDeferred`, and `ContextSwitched`.
+由 WS63 compatibility adapter 负责。LiteOS 场景要重写为 Rust 行为断言，不能复制成
+`LOS_*` API，也不能宣称为通用 RTOS 语义。deterministic harness 使用 `Spawn`、
+`Yield`、`AdvanceTime`、`LockScheduler`、`SemWait`、`SemPost`、`EnterIrq`、`ExitIrq`
+等 action，并观测 `Running`、`Blocked`、`TimedOut`、`Granted`、
+`PreemptionDeferred`、`ContextSwitched` 等状态。
 
-Differences are absorbed by typed adapter state: `VendorPriority`, tick-to-duration
-conversion, deferred callback workers, and ABI return-code mapping. A mismatch is
-first fixed in the adapter; generic runtime behavior changes only when it is a
-sound cross-platform capability.
+差异由类型化 adapter state 吸收，包括 `VendorPriority`、tick-to-duration 转换、deferred
+callback worker 和 ABI return-code mapping。出现不匹配时先修 adapter；只有它确实是
+合理的跨平台能力时，才改变通用 runtime 行为。
 
-These scenarios are compatibility assertions, not the normative scheduler model.
-Every generic invariant they rely on references a requirement owned by the
-[RTOS scheduling semantics and verification plan](hisi-rtos-semantics-and-verification.md);
-vendor-only behavior remains local to this profile and its pinned archive hash.
+这些场景是兼容断言，不是规范性 scheduler model。它们依赖的每条通用不变量都必须引用
+[RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)拥有的 requirement；
+vendor-only 行为只能留在当前 profile 及其固定 archive hash 内。
 
-### Silicon Contract
+### 真机契约
 
-Owned by RF HIL: init, scan, connect, WPA, DHCP, ARP, ping, reset matrices,
-IRQ/scheduler stress, and statistical failure rate. Host semantic tests cannot
-substitute for ABI closure or silicon evidence.
+由 RF HIL 负责：init、scan、connect、WPA、DHCP、ARP、ping、reset matrix、
+IRQ/scheduler stress 和统计失败率。Host 语义测试不能替代 ABI 闭合或真机证据。
 
-## Initial Scenario Set
+## 首批场景
 
-Only capabilities referenced by the pinned blob are enabled.
+只启用固定 blob 实际引用的能力。
 
-- Scheduler: nested lock deferral, highest-priority unlock, explicit numeric
-  priority mapping, ready-task preemption, same-priority FIFO yield, zero-tick
-  vendor yield, and same-priority-only time slicing.
-- Semaphore: count/block, wait forever, timeout queue removal, direct handoff,
-  highest-priority waiter, ISR wake at IRQ exit, and non-stealable grants.
-- Mutex: owner-only recursive unlock, highest-priority inheritance, multiple
-  donors, transitive donation, timeout restoration, and direct handoff.
-- Task/timer: one-shot/rearm/cancel, timeout rounding/wrap, callback context,
-  task argument/stack alignment/return-to-exit, handle generation, stack
-  reclamation, and full GPR/FPR/FCSR preservation.
+- Scheduler：nested lock 延迟调度、unlock 后选择最高 priority、显式数字 priority 映射、
+  ready task 抢占、同 priority FIFO yield、zero-tick vendor yield、只在同 priority 间
+  time slicing。
+- Semaphore：count/block、永久等待、timeout 后移出 wait queue、direct handoff、最高
+  priority waiter、IRQ exit 后 ISR wake，以及 grant 不可被第三方抢走。
+- Mutex：仅 owner 可 recursive unlock、最高 priority inheritance、多个 donor、传递
+  donation、timeout 恢复和 direct handoff。
+- Task/timer：one-shot/rearm/cancel、timeout rounding/wrap、callback context、task
+  argument/stack alignment/return-to-exit、handle generation、stack reclamation，以及完整
+  GPR/FPR/FCSR 保存。
 
-Queues, events, or software timers enter this list only when `nm -u` and call-site
-evidence prove the archive uses them. LiteOS shell/POSIX breadth is out of scope.
+只有 `nm -u` 和 call-site 证据证明 archive 使用 queue、event 或 software timer 时，
+它们才能加入清单。LiteOS shell/POSIX 的完整能力不在范围内。
 
-## Oracle And Attribution
+## Oracle 与署名
 
-Open LiteOS V2 BSD-3 demos may be translated into Rust assertions with source and
-attribution comments. WS63 vendor 5.10 source, final map, and disassembly are used
-as behavior-only oracles unless their incremental license permits copying. Each
-test records oracle path/version, blob SHA-256, and one or more evidence labels:
-`OpenSourceBehavior`, `VendorSourceBehavior`, `DisassemblyConfirmed`, or
-`BlobHilConfirmed`.
+开放的 LiteOS V2 BSD-3 demo 可以在保留来源和 attribution 注释的前提下改写为 Rust
+断言。WS63 原厂 5.10 source、最终 map 和 disassembly 只作为行为 oracle；除非增量许可
+允许，否则不得复制。每项测试记录 oracle path/version、blob SHA-256，以及一个或多个
+证据标签：`OpenSourceBehavior`、`VendorSourceBehavior`、`DisassemblyConfirmed`、
+`BlobHilConfirmed`。
 
-The compatibility profile binds to an archive hash, not the broad name
-"LiteOS 5.10". A changed archive regenerates symbols, reopens semantic review,
-and reruns RF HIL.
+compatibility profile 绑定 archive hash，而不是笼统的“LiteOS 5.10”。archive 变化后
+必须重新生成 symbol、重开语义评审并重跑 RF HIL。
 
-## Milestones
+## 里程碑
 
-1. **CABI0 Manifest:** generate archive hash, required symbols, ABI layout and
-   symbol-to-capability mapping.
-2. **CSEM0 Harness:** implement deterministic scheduler/semaphore/IRQ scenarios,
-   prioritizing paths related to the former `WLAN_AUTH_RSP2_TIMEOUT` risk.
-3. **CSEM1 Mutex/task:** add only blob-used mutex, timer, queue, event and task
-   lifecycle scenarios.
-4. **CHIL0 Parity:** run unchanged-image reset matrices and init/scan/connect/ping;
-   compare failures and traces with the vendor firmware oracle.
-5. **CCI0 Gate:** make archive hash, symbol closure, semantic profile, and HIL
-   evidence explicit release inputs.
+1. **CABI0 Manifest：**生成 archive hash、required symbol、ABI layout 和
+   symbol-to-capability mapping。
+2. **CSEM0 测试框架：**实现 deterministic scheduler/semaphore/IRQ 场景，优先覆盖曾与
+   `WLAN_AUTH_RSP2_TIMEOUT` 风险相关的路径。
+3. **CSEM1 Mutex/task：**只增加 blob 实际使用的 mutex、timer、queue、event 和 task
+   lifecycle 场景。
+4. **CHIL0 一致性验证：**对 unchanged image 运行 reset matrix 与
+   init/scan/connect/ping，对照原厂 firmware oracle 比较失败和 trace。
+5. **CCI0 门槛：**把 archive hash、symbol closure、semantic profile 和 HIL evidence
+   固定为显式 release input。
 
-Embassy integration remains native `hisi-rtos` work. It shares the runtime with
-vendor threads and never starts a second LiteOS scheduler.
+Embassy 集成继续属于原生 `hisi-rtos` 工作。它与 vendor thread 共享 runtime，永远不
+启动第二套 LiteOS scheduler。

@@ -83,6 +83,9 @@ jobs:
       - name: Check Python uv ownership
         run: uv run scripts/check-python-uv.py
 
+      - name: Check engineering plan registry
+        run: uv run --script scripts/check-plan-registry.py
+
       - name: Check image-format truth-source drift
         run: uv run scripts/check-image-format-truth.py
 
