@@ -5,7 +5,7 @@
 **已完成 / 历史证据。** Init、scan、connect、WPA2-Personal、DHCP、ARP 和
 ping capability 已完成真机证明；本文保留 RF0-RF5 的 bring-up 事实，不再承载当前
 TODO。A3/A4 已冻结；后续工作的唯一当前入口是
-[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5u-developer-ux-and-resource-admission)。
+[Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5b-incremental-backend-prototype)。
 
 ## 概要
 
@@ -214,8 +214,8 @@ storage/NVS 与 RTOS ownership 拆分，再按
 - RF 推进不阻塞 `hisi-riscv-hal 0.6.0`。
 - HAL 能力优先，但新补的 RF 相关通用能力默认先 `unstable`，不扩大 HAL stable 面。
 - Init、scan、RF5A-C 与 WPA2-PSK/CCMP W0-W1 已完成。后续只按
-  [Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5u-developer-ux-and-resource-admission)
-  推进 A5U；pure-WPA3 是 external blocked gate，SoftAP 和 Enterprise 不是当前并行任务。
+  [Connectivity 全栈计划 Active Window](hisi-connectivity-stack.md#active-window-now-a5b-incremental-backend-prototype)
+  推进 A5B 非默认原型；pure-WPA3 是 external blocked gate，SoftAP 和 Enterprise 不是当前并行任务。
 - `libwpa_supplicant.a` 暂不 vendored；开放 AP / scan MVP 不需要它。
 - 如果真实 blob custom relocation 无法被 stock `lld` 产出可执行 image，优先定位并记录
   relocation 类型，再决定 linker workaround、post-link patch 或专用转换工具。

@@ -2,8 +2,9 @@
 
 ## 状态
 
-**执行中 / P0。** A5U 开发者体验与资源准入独占仓库的主要 WIP 槽位。A5R 和 A5B
-继续作为已登记依赖；pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
+**执行中 / P0。** A5U 的无板 developer UX 已收口到发布模板，当前唯一主要 WIP 是
+A5B 非默认增量 backend 原型；A5U 的 stack/arena 校准和 QEMU/HIL parity 保留为证据门槛。
+pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
@@ -11,7 +12,7 @@
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
 **外部阻塞门槛**；A5F 的无板 facade/release 收口已完成，当前唯一 active
-milestone 是不依赖 AP 的 A5U developer UX 与资源准入收口。
+milestone 是不依赖 AP、且不切换默认路径的 A5B 增量 backend 原型。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -32,14 +33,16 @@ Embassy executor/time 运行环境。
 兼容 profile 不得反向改写通用 RTOS 语义。
 
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
+<a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5U 开发者体验与资源准入
+## 当前执行窗口：A5B 非默认增量 Backend 原型
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
-标准 relocation 与三平台 crates.io-only consumer；当前只推进 A5U 中不依赖 AP 的资源
-ownership、admission、report、typed diagnostics 和 template contract。BLE、SLE、TLS、
-SoftAP、Enterprise 和 A5B 不与当前 A5U 并行。
+标准 relocation 与三平台 crates.io-only consumer；A5U 已闭合 profile/storage/report、
+typed diagnostics、文档锚点和发布模板等无板部分。当前只推进 A5B 的 opt-in core protocol、
+deterministic host interleaving 与后续非默认 adapter；不改当前验证过的 WS63 blocking backend。
+BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5B 并行。
 
 ### 已完成 -- A3 收口
 
@@ -79,9 +82,9 @@ W2 的当前状态、提交证据和完成门槛只维护在
 W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1 fast
 path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
 
-A5F single-dependency facade 已完成，A5U 的无板 developer UX 是当前 active window；
-A5B `WifiBackend` 非阻塞化仍为 deferred architecture milestone。pure-WPA3 gate 闭合前，
-A5U 不删除 vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
+A5F single-dependency facade 和 A5U 无板 developer UX 已完成；A5B
+`WifiBackend` 非阻塞化现只推进 opt-in prototype。pure-WPA3 gate 闭合前，A5B 不删除
+vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
 真机稳定性结论。
 
 ## 目标架构
@@ -842,11 +845,22 @@ passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或
 A5 处理 A4 冻结后暴露出的三个架构债务：`WifiController` 虽然提供 async API，
 `WifiBackend` 仍允许一次同步调用阻塞到操作终态；`hisi-rf-rtos-driver` 虽然不绑定具体
 RTOS 类型，却仍把若干会影响 blob 正确性的行为留给实现自行解释；应用仍需直接感知
-WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径，也不与 W2 并行；启动前先
-冻结 upstream WPA2/pure-WPA3 的 marker、时序和 HIL parity，迁移期间保留旧 backend
-作为一个 release 的 oracle adapter。
+WS63 backend/sys 与特殊链接路径。A5 不改变 W2 当前连接路径；pure-WPA3 外部门槛期间只做
+无板、非默认原型，不能迁移默认 backend。迁移期间保留旧 backend 作为一个 release 的
+oracle adapter。
 
 #### A5B -- 增量式 `WifiBackend`
+
+`hisi-rf-core 0.1.0-alpha.6` 已发布第一层 opt-in contract：feature
+`incremental-backend-experiment` 提供 generation-tagged `OperationId`、
+`Queued -> Started -> CancelRequested -> Terminal` tracker、双维 `WorkBudget`/
+`WorkReport`、组合 `WaitSet` 与 `IncrementalWifiBackend`。host tests 覆盖 stale completion、
+幂等 cancel、late-success suppression 和超预算拒绝；main/publish CI runs
+`29954851469`/`29955002430` 通过。`hisi-rf 0.1.0-alpha.18` 只把该 opt-in feature 和类型从
+facade 转发出去，main/publish CI runs `29955424728`/`29955819219` 通过；它没有把实验契约
+接入 `RadioRunner` 或 WS63 backend。发布后的 crates.io-only fixture 又在 Linux、macOS 和
+Windows 上以 WPA2/WPA3 profile 完成 clean/offline 构建（CI run `29955979080`）。因此下列
+迁移项继续保持未完成，默认路径没有变化。
 
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
@@ -1099,8 +1113,9 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.5` 固定 `hisi-rf 0.1.0-alpha.16`，CI run `29950231881` 已生成并构建 WS63
-  Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
+  v0.7.0-alpha.6` 固定 `hisi-rf 0.1.0-alpha.17`/`hisi-alloc 0.1.0-alpha.2`，并在 init、runner
+  startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。CI run `29954202098` 已生成并构建
+  WS63 Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
   不再属于用户 happy path，也不因 pure-WPA3 external gate 被提前删除。
 
 #### A5 验收
