@@ -1048,12 +1048,19 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   15 个 dynamic slots，profile 在硬件访问前原子保留 public runner 与五个已观测 worker 所需的
   6 个 slot，容量不足携带 `required/available`，失败或初始化回滚时释放 reservation。
   `hisi-rf-ws63 0.1.0-alpha.13` 又让 C `memalign` 走受检的 power-of-two aligned heap path，
-  不再静默降级为默认对齐。task stack 与 supplicant arena 的 caller ownership、精确字节数和
-  memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
+  不再静默降级为默认对齐。`hisi-alloc 0.1.0-alpha.2`、`hisi-rf-ws63
+  0.1.0-alpha.14` 和 `hisi-rf 0.1.0-alpha.17` 进一步从 public facade 暴露 allocation-free 的
+  arena/live/peak/allocation-failure 指标；其 main/publish CI runs 分别为
+  `29951395537`/`29951468013`、`29951849863`/`29952027018` 和
+  `29952214198`/`29952911404`。这些值用于 HIL 校准和泄漏诊断，不承诺最大连续可分配块，也
+  不等价于初始化前的 reservation。task stack 与 supplicant arena 的 caller ownership、精确
+  字节数和 memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
-  flash 字节保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。
+  flash 字节保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。运行期 RF heap
+  live/peak 指标另由 `hisi_rf::ws63::rf_heap_metrics()` 提供；静态 report 不把一次运行的
+  watermark 回写成 profile 保证。
 - [x] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
   build/CI artifact；人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护第二份值。
   父仓 `scripts/assemble-radio-build-report.py` 将 versioned profile resource JSON、
