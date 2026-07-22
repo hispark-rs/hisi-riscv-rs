@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-0b03f8bd.js";
+            window.path_to_searchindex_js = "../searchindex-97cc7bc2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-e7bf55d7.js"></script>
@@ -193,7 +193,7 @@
 <p>交互式会问两个选项：</p>
 <ul>
 <li><strong>chip（目标芯片）</strong>：<code>ws63</code> / <code>bs21</code> / <code>bs21e</code> / <code>bs22</code> / <code>bs20</code>（默认 <code>ws63</code>）。BS2X 几个 SKU 在 HAL 里是同一颗实验芯片 target（<code>chip-bs21</code>，需 <code>unstable</code>），差别只在 L2RAM 大小（bs20=128K，其余 160K，写在 <code>memory.x</code>）和 QEMU machine 名。</li>
-<li><strong>starter（起步应用）</strong>：<code>blinky</code> / <code>uart_hello</code> / <code>async</code>（默认 <code>blinky</code>）。</li>
+<li><strong>starter（起步应用）</strong>：<code>blinky</code> / <code>uart_hello</code> / <code>async</code> / <code>wifi</code>（默认 <code>blinky</code>）。<code>wifi</code> 当前仅支持 WS63；它使用公开的 <code>hisi-rf</code> facade、调用者持有的 radio storage 和长期运行的 smoltcp DHCP loop。</li>
 <li>还会问 <strong>app 分区 flash 地址</strong>（WS63 默认 <code>0x00230000</code>，BS2X 默认 <code>0x00090000</code>）——没有自定义分区表就用默认。</li>
 </ul>
 <p>非交互式可一把给定：</p>
@@ -203,6 +203,7 @@
 <blockquote>
 <p>WS63 的内存布局来自 hisi-riscv-rt 自带的链接脚本，所以模板<strong>不</strong>为 WS63 生成 <code>memory.x</code>；BS2X 才需要工程级 <code>memory.x</code>（模板会带）。</p>
 </blockquote>
+<p><code>wifi</code> starter 的 RF 路径依赖 WS63 mask ROM，普通 CI/QEMU 只验证生成、编译和镜像契约，不能代替真机连接性证据。最终固件构建时通过 <code>WS63_WIFI_SSID</code> / <code>WS63_WIFI_PASSPHRASE</code> 临时环境变量注入网络配置；模板不会把真实凭据写进源码。真机成功门槛是依次看到 <code>WIFI_INIT_OK</code>、<code>WIFI_SCAN_OK</code>、<code>WIFI_CONNECT_OK</code> 和 <code>WIFI_DHCP_OK</code>。</p>
 <h2 id="生成的-justfile"><a class="header" href="#生成的-justfile">生成的 justfile</a></h2>
 <p>工程带一个 <code>justfile</code>（<code>cargo install just</code>），封装了硬件验证过的流程：</p>
 <div class="table-wrapper">
