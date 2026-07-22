@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fb1d9d61.js";
+            window.path_to_searchindex_js = "../searchindex-d700aace.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-f8527be2.js"></script>
@@ -238,15 +238,15 @@
 <code>[patch.crates-io]</code>，生成一个被本地 checkout 污染的 lockfile。用父仓脚本把
 crate 复制到临时独立目录后再解析：</li>
 </ul>
-<pre><code class="language-bash">uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
-uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+<pre><code class="language-bash">uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
 </code></pre>
 <p>如果 crate 在未选择芯片/profile 时会用 <code>compile_error!</code> 拒绝构建，standalone
 package 验证也必须传入该 crate 的最小发布 feature，而不是使用
 <code>--no-verify</code> 跳过验证。例如：</p>
-<pre><code class="language-bash">uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
+<pre><code class="language-bash">uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
   --package --features chip-ws63
 </code></pre>
 <ul>
@@ -266,10 +266,10 @@ git switch main          # ws63-pac / bs2x-pac
 <p>更新版本与 changelog：</p>
 <pre><code class="language-bash">$EDITOR Cargo.toml       # package.version
 $EDITOR CHANGELOG.md
-uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
+uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update
 </code></pre>
 <p>做 release preflight：</p>
-<pre><code class="language-bash">uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
+<pre><code class="language-bash">uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
 </code></pre>
@@ -310,6 +310,11 @@ git push origin vX.Y.Z
 # 可选：用 repo skill 代看 workflow
 bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
 </code></pre>
+<p>如果 crate 要求显式选择 chip/profile，则把同一个最小 feature 集传给自动
+preflight；不要用 <code>--no-verify</code> 绕过：</p>
+<pre><code class="language-bash">PACKAGE_FEATURES=chip-ws63 \
+  bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
+</code></pre>
 <p>crates.io 没有 GitHub release asset；<code>publish.yml</code> 成功就是发布信号。若下游马上要依赖这个版本，等 crates.io index 能解析到它后再继续。</p>
 <h2 id="3-更新父仓-submodule-pointer"><a class="header" href="#3-更新父仓-submodule-pointer">3. 更新父仓 submodule pointer</a></h2>
 <p>子仓 release 成功并 push 后，回到父仓根目录：</p>
@@ -333,10 +338,10 @@ cargo fmt --all -- --check
 </code></pre>
 <p>如果 release 包含 HAL stable API 或真机行为变化，按<a href="07-run-hil-tests.html">如何运行 HIL 测试</a>跑对应 HIL；如果只更新文档，也至少跑：</p>
 <pre><code class="language-bash">mdbook build docs
-uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs --links
-uv run .agents/skills/diataxis-docs/scripts/audit_docs.py docs --current-claims
-uv run .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
-uv run .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
+uv run --script .agents/skills/diataxis-docs/scripts/audit_docs.py docs --links
+uv run --script .agents/skills/diataxis-docs/scripts/audit_docs.py docs --current-claims
+uv run --script .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers.py
+uv run --script .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
 </code></pre>
 <p><code>--current-claims</code> 会列出需要人工复核的“当前 / 默认 / stable”等表述；它是漂移线索扫描，输出不等于必然错误。</p>
 <p>然后 tag 父仓：</p>
@@ -347,7 +352,7 @@ git push origin vX.Y.Z
 <h2 id="5-常见失败"><a class="header" href="#5-常见失败">5. 常见失败</a></h2>
 <ul>
 <li><strong><code>--locked</code> 失败</strong>：<code>Cargo.lock</code> 缺失或过期。先用
-<code>uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update</code>
+<code>uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --update</code>
 在父仓外的临时独立目录重新解析并回填 lockfile，提交后再重跑 preflight。</li>
 <li><strong><code>Cargo.lock is not tracked</code></strong>：lockfile 还是 untracked；这是 release blocker，<code>git add Cargo.lock</code> 后再提交。</li>
 <li><strong><code>cargo publish</code> 抱怨 path/git dependency</strong>：发布 manifest 里混进本地开发依赖。把发布依赖改回 crates.io 版本依赖；本地替换放父仓 <code>[patch.crates-io]</code>。</li>
