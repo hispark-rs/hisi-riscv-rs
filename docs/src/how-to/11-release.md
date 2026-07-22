@@ -67,6 +67,15 @@ git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
 ```
 
+如果 crate 在未选择芯片/profile 时会用 `compile_error!` 拒绝构建，standalone
+package 验证也必须传入该 crate 的最小发布 feature，而不是使用
+`--no-verify` 跳过验证。例如：
+
+```bash
+uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
+  --package --features chip-ws63
+```
+
 - 改 public API 时同步更新 rustdoc/手册。HAL stable/unstable 变化必须同步更新 [Stable API 清单](../reference/10-stable-api.md)，并有对应真机 HIL 证据。
 - 子仓 commit 必须先 push，再更新父仓 submodule pointer。父仓不能指向别人 fetch 不到的提交。
 

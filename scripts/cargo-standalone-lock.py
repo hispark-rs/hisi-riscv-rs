@@ -45,6 +45,10 @@ def parse_args() -> argparse.Namespace:
         help="Also run a fully verified `cargo package --locked` in the standalone copy.",
     )
     parser.add_argument(
+        "--features",
+        help="Comma-separated Cargo features used by package verification.",
+    )
+    parser.add_argument(
         "--cargo",
         default=os.environ.get("CARGO", "cargo"),
         help="Cargo executable to use (default: CARGO env or `cargo`).",
@@ -109,7 +113,10 @@ def main() -> int:
             return 1
 
         if args.package:
-            run([args.cargo, "package", "--locked"], standalone)
+            package_cmd = [args.cargo, "package", "--locked"]
+            if args.features:
+                package_cmd.extend(["--features", args.features])
+            run(package_cmd, standalone)
 
         same = src_lock.is_file() and src_lock.read_bytes() == tmp_lock.read_bytes()
         if args.update:
