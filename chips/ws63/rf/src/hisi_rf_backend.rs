@@ -90,62 +90,46 @@ impl WifiBackend for Ws63WifiBackend<'static> {
         if self.wifi.is_some() {
             return Ok(());
         }
-        let efuse = self.efuse.take().ok_or(BackendError {
-            class: BackendErrorClass::Initialize,
-            code: 0x1000_0001,
-        })?;
-        let trng = self.trng.take().ok_or(BackendError {
-            class: BackendErrorClass::Initialize,
-            code: 0x1000_0004,
-        })?;
-        let km = self.km.take().ok_or(BackendError {
-            class: BackendErrorClass::Initialize,
-            code: 0x1000_0005,
-        })?;
-        let spacc = self.spacc.take().ok_or(BackendError {
-            class: BackendErrorClass::Initialize,
-            code: 0x1000_0006,
-        })?;
-        let pke = self.pke.take().ok_or(BackendError {
-            class: BackendErrorClass::Initialize,
-            code: 0x1000_0007,
-        })?;
-        crate::crypto::install_hardware_crypto(km, spacc, pke, trng).map_err(|error| {
-            BackendError {
-                class: BackendErrorClass::Initialize,
-                code: error.code(),
-            }
-        })?;
+        let efuse = self.efuse.take().ok_or(BackendError::new(
+            BackendErrorClass::Initialize,
+            0x1000_0001,
+        ))?;
+        let trng = self.trng.take().ok_or(BackendError::new(
+            BackendErrorClass::Initialize,
+            0x1000_0004,
+        ))?;
+        let km = self.km.take().ok_or(BackendError::new(
+            BackendErrorClass::Initialize,
+            0x1000_0005,
+        ))?;
+        let spacc = self.spacc.take().ok_or(BackendError::new(
+            BackendErrorClass::Initialize,
+            0x1000_0006,
+        ))?;
+        let pke = self.pke.take().ok_or(BackendError::new(
+            BackendErrorClass::Initialize,
+            0x1000_0007,
+        ))?;
+        crate::crypto::install_hardware_crypto(km, spacc, pke, trng)
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(target_arch = "riscv32")]
-        crate::crypto::ws63_pbkdf2_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_pbkdf2_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(target_arch = "riscv32")]
-        crate::crypto::ws63_hash_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_hash_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(all(target_arch = "riscv32", feature = "upstream-supplicant-wpa3"))]
-        crate::crypto::ws63_p256_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_p256_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(all(target_arch = "riscv32", feature = "rf-eloop-diag"))]
-        crate::crypto::ws63_hash_fault_recovery_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_hash_fault_recovery_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(all(target_arch = "riscv32", feature = "rf-eloop-diag"))]
-        crate::crypto::ws63_cipher_fault_recovery_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_cipher_fault_recovery_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         #[cfg(all(target_arch = "riscv32", feature = "rf-crypto-contention-diag"))]
-        crate::crypto::ws63_crypto_contention_self_test().map_err(|error| BackendError {
-            class: BackendErrorClass::Initialize,
-            code: error.code(),
-        })?;
+        crate::crypto::ws63_crypto_contention_self_test()
+            .map_err(|error| BackendError::new(BackendErrorClass::Initialize, error.code()))?;
         let wifi = ActiveWifi::initialize(efuse).map_err(map_error)?;
         #[cfg(feature = "upstream-supplicant-port")]
         {
@@ -277,10 +261,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                         }
                         NativeConnectEvent::Failed => {
                             let code = emit_backend_failure(supplicant, event.status);
-                            return Err(BackendError {
-                                class: BackendErrorClass::Connect,
-                                code,
-                            });
+                            return Err(BackendError::new(BackendErrorClass::Connect, code));
                         }
                     }
                 }
@@ -290,26 +271,25 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                     if let Some(status) = last_disconnect_status {
                         let code = emit_backend_failure(supplicant, status);
                         let _ = supplicant.disconnect();
-                        return Err(BackendError {
-                            class: BackendErrorClass::Connect,
-                            code,
-                        });
+                        return Err(BackendError::new(BackendErrorClass::Connect, code));
                     }
                     let context_diagnostic = supplicant.context_diagnostic_word();
                     let port_diagnostic = crate::upstream_supplicant::diagnostic_word();
                     let _ = supplicant.disconnect();
-                    return Err(BackendError {
-                        class: BackendErrorClass::Timeout,
-                        code: 0x8000_0000
+                    return Err(BackendError::new(
+                        BackendErrorClass::Timeout,
+                        0x8000_0000
                             | ((last_event_kind as u32 & 0x7) << 28)
                             | ((context_diagnostic & 0x0fff) << 16)
                             | port_diagnostic,
-                    });
+                    ));
                 }
                 hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
-                    |error| BackendError {
-                        class: BackendErrorClass::Other,
-                        code: 0x5732_e000 | runtime_code(error),
+                    |error| {
+                        BackendError::new(
+                            BackendErrorClass::Other,
+                            0x5732_e000 | runtime_code(error),
+                        )
                     },
                 )?;
             }
@@ -324,10 +304,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                         && scan.bssid == config.bssid
                         && scan.channel() == config.channel
                 })
-                .ok_or(BackendError {
-                    class: BackendErrorClass::Connect,
-                    code: 0x1000_0002,
-                })?;
+                .ok_or(BackendError::new(BackendErrorClass::Connect, 0x1000_0002))?;
             let network = PersonalNetwork::from_scan_with_security(
                 scan,
                 config.passphrase.expose_secret(),
@@ -354,10 +331,10 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                     match event.kind {
                         NATIVE_EVENT_DISCONNECTED => return Ok(()),
                         NATIVE_EVENT_FAILED => {
-                            return Err(BackendError {
-                                class: BackendErrorClass::Connect,
-                                code: event.status as u32,
-                            });
+                            return Err(BackendError::new(
+                                BackendErrorClass::Connect,
+                                event.status as u32,
+                            ));
                         }
                         _ => {}
                     }
@@ -365,15 +342,14 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at)
                     >= config.disconnect_timeout_ms as u64
                 {
-                    return Err(BackendError {
-                        class: BackendErrorClass::Timeout,
-                        code: 2,
-                    });
+                    return Err(BackendError::new(BackendErrorClass::Timeout, 2));
                 }
                 hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
-                    |error| BackendError {
-                        class: BackendErrorClass::Other,
-                        code: 0x5732_e000 | runtime_code(error),
+                    |error| {
+                        BackendError::new(
+                            BackendErrorClass::Other,
+                            0x5732_e000 | runtime_code(error),
+                        )
                     },
                 )?;
             }
@@ -456,10 +432,7 @@ fn to_connection_info(info: Ws63ConnectionInfo) -> ConnectionInfo {
 }
 
 fn not_initialized() -> BackendError {
-    BackendError {
-        class: BackendErrorClass::Initialize,
-        code: 0x1000_0003,
-    }
+    BackendError::new(BackendErrorClass::Initialize, 0x1000_0003)
 }
 
 fn map_error(error: Ws63Error) -> BackendError {
@@ -492,7 +465,7 @@ fn map_error(error: Ws63Error) -> BackendError {
         }
         Ws63Error::UnsupportedTarget => (BackendErrorClass::Other, u32::MAX),
     };
-    BackendError { class, code }
+    BackendError::new(class, code)
 }
 
 #[cfg(feature = "upstream-supplicant-port")]
@@ -551,10 +524,7 @@ fn map_native_error(error: NativeSupplicantError) -> BackendError {
             (BackendErrorClass::Other, 0x5000 | status as u32 & 0xfff)
         }
     };
-    BackendError {
-        class,
-        code: 0x5732_0000 | code,
-    }
+    BackendError::new(class, 0x5732_0000 | code)
 }
 
 #[cfg(feature = "upstream-supplicant-port")]
