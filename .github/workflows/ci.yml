@@ -158,6 +158,41 @@ jobs:
           uv run scripts/check-ws63-plain-rf-elf.py
           --elf target/plain-radio-${{ matrix.profile }}/riscv32imfc-unknown-none-elf/release/examples/ws63_plain_firmware
           --require-upstream-supplicant
+      - name: Install the image-plan truth source
+        if: runner.os == 'Linux'
+        run: cargo install hisi-fwpkg-cli --version 0.3.2 --locked
+      - name: Emit the compile-time RF resource report
+        if: runner.os == 'Linux'
+        run: >-
+          cargo run -p hisi-rf --example ws63_resource_report
+          --target x86_64-unknown-linux-gnu
+          --features "${{ matrix.features }}"
+          > target/plain-radio-${{ matrix.profile }}/rf-resource.json
+      - name: Build the canonical flash image and plan
+        if: runner.os == 'Linux'
+        run: |
+          ELF=target/plain-radio-${{ matrix.profile }}/riscv32imfc-unknown-none-elf/release/examples/ws63_plain_firmware
+          IMAGE=target/plain-radio-${{ matrix.profile }}/ws63-${{ matrix.profile }}.img
+          PLAN=target/plain-radio-${{ matrix.profile }}/ws63-${{ matrix.profile }}.plan.json
+          hisi-fwpkg plan "$ELF" --chip ws63 --image-output "$IMAGE" > "$PLAN"
+      - name: Assemble the unified RF build report
+        if: runner.os == 'Linux'
+        run: >-
+          uv run --script scripts/assemble-radio-build-report.py
+          --resource target/plain-radio-${{ matrix.profile }}/rf-resource.json
+          --plan target/plain-radio-${{ matrix.profile }}/ws63-${{ matrix.profile }}.plan.json
+          --elf target/plain-radio-${{ matrix.profile }}/riscv32imfc-unknown-none-elf/release/examples/ws63_plain_firmware
+          --image target/plain-radio-${{ matrix.profile }}/ws63-${{ matrix.profile }}.img
+          --output target/plain-radio-${{ matrix.profile }}/rf-build-report.json
+      - name: Upload the unified RF build report
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rf-build-report-${{ matrix.profile }}
+          path: |
+            target/plain-radio-${{ matrix.profile }}/rf-build-report.json
+            target/plain-radio-${{ matrix.profile }}/ws63-${{ matrix.profile }}.plan.json
+          if-no-files-found: error
 
   # ── Clippy (gating) ─────────────────────────────────────────────
   clippy:
@@ -199,6 +234,8 @@ jobs:
         run: uv run scripts/check-ws63-supplicant-boundary.py
       - name: Check RF production path portability
         run: uv run scripts/check-rf-production-paths.py
+      - name: Test the unified RF build report
+        run: uv run --script scripts/assemble-radio-build-report.py --self-test
       - name: Test WS63 supplicant final-link boundary
         run: uv run scripts/test-ws63-supplicant-boundary.py
       - name: Test WS63 connectivity matrix classifier
