@@ -4,7 +4,8 @@
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` vertical slice
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**External Blocked Gate**；当前唯一 active milestone 是不依赖 AP 的 A5F facade 收口。
+**External Blocked Gate**；A5F 的无板 facade/release closure 已完成，当前唯一 active
+milestone 是不依赖 AP 的 A5U developer UX 与资源准入收口。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -24,11 +25,13 @@ Embassy executor/time 运行环境。
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
 
-## Active Window: NOW A5F Facade Closure
+## Active Window: NOW A5U Developer UX And Resource Admission
 
 本计划保留完整架构，但当前 WIP limit 是 **一个 major milestone**。A4 已冻结；W2
-transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件，不阻塞 A5F 的无板工作。
-BLE、SLE、TLS、SoftAP、Enterprise、A5U 和 A5B 不与当前 A5F 并行。
+transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
+标准 relocation 与三平台 crates.io-only consumer；当前只推进 A5U 中不依赖 AP 的资源
+ownership、admission、report、typed diagnostics 和 template contract。BLE、SLE、TLS、
+SoftAP、Enterprise 和 A5B 不与当前 A5U 并行。
 
 ### Completed -- A3 Closeout
 
@@ -58,7 +61,7 @@ renew。`hisi-rf 0.1.0-alpha.1` 已发布，迁移 facade 有明确删除窗口�
 `ws63-hil` workflow 已 PASS。冻结证据见
 [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
-### NOW -- W2 Upstream Supplicant And WPA3-Personal
+### External Blocked -- W2 Upstream Supplicant And WPA3-Personal
 
 W2 的当前状态、提交证据和完成门槛只维护在
 [W2A-W2F 执行账本](#w2-upstream-supplicant-and-wpa3personal)；本 Active Window 不复制
@@ -68,10 +71,10 @@ W2 的当前状态、提交证据和完成门槛只维护在
 W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1 fast
 path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
 
-A5 `WifiBackend` 非阻塞化、RF runtime 语义闭合和 single-dependency facade 也属于
-**W2 完成后的 deferred architecture/correctness milestone**。它只在 pure-WPA3 parity
-和当前 UART/HIL 基线冻结后启动，且继续遵守 WIP limit 1；当前 W2 不为架构迁移改写已验证的
-supplicant/backend 路径。
+A5F single-dependency facade 已完成，A5U 的无板 developer UX 是当前 active window；
+A5B `WifiBackend` 非阻塞化仍为 deferred architecture milestone。pure-WPA3 gate 闭合前，
+A5U 不删除 vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
+真机稳定性结论。
 
 ## Target Architecture
 
@@ -953,10 +956,10 @@ A5R 后续排期和验收顺序。
 - [x] 已将芯片中立类型、controller、runner 和 backend contract 提取为独立发布的
   `hisi-rf-core 0.1.0-alpha.1`；它保持 `no_std`，不依赖 PAC/sys/blob/RTOS/allocator，
   `hisi-rf` 通过 re-export 保留原公共路径。
-- [x] 已建立并发布 `hisi-rf-ws63 0.1.0-alpha.3`，接收原 `ws63-rf-rs` 的
+- [x] 已建立并发布 `hisi-rf-ws63 0.1.0-alpha.4`，接收原 `ws63-rf-rs` 的
   `Ws63WifiBackend`、safe resources、WS63 event/L2 adapter 和 feature mapping；它依赖
   `hisi-rf-core` 与 `ws63-radio-sys`，后两者不依赖 facade。
-- [x] `hisi-rf 0.1.0-alpha.5` 已转为用户 facade/composition root：要求 exactly-one
+- [x] `hisi-rf 0.1.0-alpha.7` 已转为用户 facade/composition root：要求 exactly-one
   `chip-*` feature，按 chip 选择 backend，re-export `hisi-rf-core` 公共类型，并提供
   `hisi_rf::ws63::{Resources, init}`。chip 未选、多选或 security profile 冲突必须
   `compile_error!`，不能由 target triple 或 default feature 静默猜测。
@@ -993,7 +996,9 @@ A5R 后续排期和验收顺序。
   两种 Personal profile 下完成 clean + offline 最终 ELF 构建，后者还覆盖含空格、非 ASCII
   和长 target path。run `29720774020` 进一步将解析到的 registry source 临时设为只读、比较
   构建前后文件集合与 SHA-256，并在 Ubuntu 同时启动隔离 target 的 WPA2/WPA3 构建；三平台
-  两种 profile 全部通过。
+  两种 profile 全部通过。caller-owned profile storage 的 release chain 由
+  `hisi-rf-ws63` main/publish runs `29892493214`/`29892626898` 和 `hisi-rf`
+  main/publish runs `29893029109`/`29893410676` 闭合。
 - [ ] `ws63-rf-rs` facade 保留一个 migration release，给出 Cargo feature 和 API 迁移表；
   所有模板、教程与 examples 切到 `hisi-rf` 后再删除，历史 evidence 不回写。
 
@@ -1003,25 +1008,26 @@ P0 面向应用开发者，只收敛完成 Wi-Fi demo 所必需的四个体验�
 board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo-hisi` 的命令、agent、安全、
 跨平台与 release 规划见 [`cargo-hisi` Developer Workflow CLI Plan](cargo-hisi-cli.md)。
 
-- [ ] **隐藏 composition root**：`hisi_rf::ws63::Resources::new(...)` 消费明确的 HAL
-  peripheral tokens，并由 `hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装。应用只
-  获得 `RadioParts { wifi, device, runner }`；`runner.run().await` 或 RTOS-safe spawn adapter
-  承担长期执行，用户不构造 `Ws63WifiBackend`，不调用 `hisi-rf-rtos-driver::spawn/install`
-  或 vendor OSAL。
-- [ ] **提供命名、验证过的 profile**：保留正交底层 feature 给维护者，但 happy path 优先
-  提供 `profile-wifi-wpa2-{smoltcp,embassy}`、`profile-wifi-wpa3-{smoltcp,embassy}` 等有限
-  组合。每个 profile 固定 supplicant、crypto、runtime capability、network adapter 和 memory
-  contract；CI 展开为底层 feature matrix，冲突、缺失能力和未经 HIL 的组合在编译期失败，
-  不能产生“能编译但缺时钟/任务/链接资源”的固件。
-- [ ] **静态资源与准入可见**：按 profile 提供 `Storage<Profile>` 或等价 caller-owned
-  `StaticCell` 类型，集中承载 task stacks/slots、event queues、packet RAM descriptor、
-  supplicant arena 和 crypto DMA scratch。初始化前完成 task-slot reservation、alignment、
-  容量和 memory-profile admission；不足时返回 `Required/Available` 结构化错误，不得进入
-  blob 后才停在 `RF2_INIT_BEGIN`。禁止为了方便把 RAM 成本隐藏到新的全局 `.bss` 或 heap。
-- [ ] **生成资源报告**：同一 profile metadata 在 build/CI 中输出机器可读 report，至少包含
-  dynamic/internal tasks、stack/arena/event/packet-RAM/crypto-DMA/flash bytes、选中 backend
-  与 profile revision。人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护
-  第二份估算值。
+- [x] **隐藏 composition root**：`hisi_rf::ws63::Resources::new(...)` 消费明确的 HAL
+  peripheral tokens，`hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装并返回只能通过
+  chip-neutral API `split()` 的 controller。普通 consumer 不构造 `Ws63WifiBackend`，不直接
+  依赖 `ws63-radio-sys`/blob/RTOS driver，也不调用 vendor OSAL。
+- [x] **提供命名、验证过的 profile**：当前发布的
+  `profile-wifi-wpa2-smoltcp`/`profile-wifi-wpa3-smoltcp` 固定 supplicant、crypto、network
+  adapter 和 link contract；缺 chip、冲突 profile 与缺失 smoltcp 均在编译期失败。尚无经过
+  backend/HIL 验证的 Embassy Net 组合，因此不暴露虚假的 `*-embassy` profile。
+- [x] **caller-owned storage 第一阶段**：`Storage<SelectedProfile, EVENTS>` 已集中持有 bounded
+  radio/event state 与 4,384-byte SPACC DMA scratch，重复 claim 在硬件启动前返回错误；packet
+  RAM 保持 linker-owned 并由 report 明确列出，没有把迁移成本藏进新的 backend 全局 `.bss`。
+- [ ] **完成静态资源准入**：将 task-slot reservation、task stacks、supplicant arena、alignment
+  与 memory-profile admission 接入 `Storage<Profile>` 或显式 runtime capability；不足时返回
+  `Required/Available` 结构化错误，不得进入 blob 后才停在 `RF2_INIT_BEGIN`。
+- [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
+  覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
+  RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
+  flash 字节保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。
+- [ ] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
+  build/CI artifact；人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护第二份值。
 - [ ] **错误可执行诊断**：公共错误优先返回稳定、协议化 enum，例如 association status、
   SAE/EAPOL/PMF stage、timeout/cancel/resource/runtime class；vendor/raw code、最后状态、profile
   revision 和 bounded trace 保留在 `Diagnostics`，不作为用户匹配的主要 API。错误 display/
@@ -1029,7 +1035,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [ ] 为 typed error 建立 vendor/IEEE/hostap 差分表和 unknown-code 保真回退；同一底层故障在
   host/QEMU/HIL 上保持相同 stable class，新增 raw code 不得通过修改既有 enum 判别语义破坏
   下游。secret、passphrase、key material 不进入 `Debug`、Display、JSON、UART 或 dump。
-- [ ] 更新 template 和 Wi-Fi examples，使 happy path 只展示：选择一个已验证 profile、构造
+- [x] facade example 与 crates.io-only consumer 已只展示：选择命名 profile、构造
+  `Resources`/`Storage`、初始化 controller；在线、离线、只读 registry、含空格/非 ASCII 和
+  并发 target 构建均使用发布 crate，不依赖父仓 patch。
+- [ ] 更新 template 和完整 Wi-Fi examples，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。
 

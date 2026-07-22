@@ -8,8 +8,9 @@ that goal. This ecosystem is still moving quickly: when roadmap text, docs,
 examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
-**WIP limit:** one major milestone at a time. A0-A4 are frozen; the active
-milestone is now W2 WPA3-Personal/SAE.
+**WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
+externally blocked on a suitable SAE-only AP, so the active no-board milestone
+is A5U developer UX and resource admission.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -48,7 +49,7 @@ an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
 committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
 
-## NOW -- W2 Upstream Supplicant And WPA3-Personal
+## EXTERNAL BLOCKED -- W2 Upstream Supplicant And WPA3-Personal
 
 The single execution ledger, current evidence, and W2A-W2F gates live in
 [Connectivity stack W2](docs/plan/hisi-connectivity-stack.md#w2-upstream-supplicant-and-wpa3personal).
@@ -63,6 +64,15 @@ full transition-mode connect parity, pure WPA3 SAE+PMF and migration retirement
 remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
+
+## NOW -- A5U Developer UX And Resource Admission
+
+A5F has closed the single-dependency facade, normalized-link artifact and
+macOS/Linux/Windows crates.io-only build path. A5U now makes resource ownership
+and admission visible before radio startup: named profiles, caller-owned
+storage, versioned machine-readable reports, actionable typed errors, and a
+template happy path. Pure-WPA3 evidence remains an external gate; this no-board
+work does not remove the vendor oracle or claim WPA3 stability.
 
 ## LATER -- Triggered Product Directions
 
