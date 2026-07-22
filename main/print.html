@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-97cc7bc2.js";
+            window.path_to_searchindex_js = "searchindex-fb1d9d61.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-e7bf55d7.js"></script>
+        <script src="toc-f8527be2.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1786,6 +1786,7 @@ git push origin vX.Y.Z
 <tr><td><a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a></td><td><code>embedded-test</code> runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源</td></tr>
 <tr><td><a href="#cli-工具速查">CLI 工具速查</a></td><td><code>hisi-fwpkg</code>、补丁版 <code>probe-rs</code>、QEMU、<code>hisiflash</code> 命令与仓库清单</td></tr>
 <tr><td><a href="#已知问题索引">已知问题索引</a></td><td>工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue</td></tr>
+<tr><td><a href="#rf-错误与诊断契约">RF 错误与诊断契约</a></td><td><code>hisi-rf-error/v2</code> 字段、稳定错误码、阶段、恢复动作和文档 fragment</td></tr>
 </tbody>
 </table>
 </div>
@@ -2887,6 +2888,74 @@ client 优先级注意事项见 <a href="#如何安装官方-rust-工具链">安
 <li>仅属配置/环境坑、无需上游修的,“跟踪“列填 <code>—</code>,并在 how-to 里给出规避步骤后链接过去。</li>
 <li>保持“现象“列用用户<strong>实际看到的报错原文</strong>,方便搜索命中。</li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
+<h1 id="rf-错误与诊断契约"><a class="header" href="#rf-错误与诊断契约">RF 错误与诊断契约</a></h1>
+<p><code>hisi-rf</code> 的公共错误可通过 <code>Error::diagnostic()</code> 或
+<code>InitError::diagnostic()</code> 转为 allocation-free 的 <code>Diagnostic</code>。当前机器可读 schema 是
+<code>hisi-rf-error/v2</code>；其字段只包含稳定分类、阶段、恢复动作、数值 backend code、profile
+revision 和最多 4 项数值 trace，不包含 SSID、passphrase、密钥或任意 backend 文本。</p>
+<h2 id="字段"><a class="header" href="#字段">字段</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>字段</th><th>含义</th></tr>
+</thead>
+<tbody>
+<tr><td><code>code</code></td><td>稳定错误标识；应用和工具优先匹配此字段</td></tr>
+<tr><td><code>stage</code></td><td>失败发生在 initialize、scan、associate、SAE、EAPOL、PMF、runtime 等哪个阶段</td></tr>
+<tr><td><code>action</code></td><td>可执行的下一步；不是“重试一切”的模糊建议</td></tr>
+<tr><td><code>backend_code</code></td><td>芯片或 backend 的无损数值状态；未知值也必须保留</td></tr>
+<tr><td><code>profile_revision</code></td><td>生成错误的 chip/profile revision；没有事实时为 <code>null</code></td></tr>
+<tr><td><code>trace</code></td><td>固定容量的数值上下文；<code>trace_truncated</code> 表示还有条目未保留</td></tr>
+<tr><td><code>docs</code></td><td>本页中的稳定 fragment；工具应与当前手册版本的本页 URL 组合</td></tr>
+</tbody>
+</table>
+</div>
+<p>不同来源的数值不能混用：vendor status、IEEE 802.11 status、hostap status、disconnect
+reason 和 runtime code 使用不同 <code>trace.kind</code>。日志文本只用于现场阅读，不是错误分类的事实源。</p>
+<p><a id="errors-radio-already-initialized"></a></p>
+<h2 id="radioalready_initialized"><a class="header" href="#radioalready_initialized"><code>radio.already_initialized</code></a></h2>
+<p>同一份 radio storage 或硬件资源已被 controller 持有。继续使用已有 controller；不要通过
+<code>steal</code>、重复初始化或重新构造 token 绕过唯一所有权。</p>
+<p><a id="errors-backend-initialize"></a></p>
+<h2 id="backendinitialize"><a class="header" href="#backendinitialize"><code>backend.initialize</code></a></h2>
+<p>backend 在进入正常操作前失败。核对 profile revision、<code>backend_code</code> 和 trace，再重新创建并
+初始化 controller；重复失败应保留完整诊断，而不是只报告“初始化失败”。</p>
+<p><a id="errors-backend-busy"></a></p>
+<h2 id="backendbusy"><a class="header" href="#backendbusy"><code>backend.busy</code></a></h2>
+<p>已有控制面操作占用 backend。等待当前 bounded operation 完成后重试；不要并发发起第二个
+scan/connect/disconnect。</p>
+<p><a id="errors-backend-timeout"></a></p>
+<h2 id="backendtimeout"><a class="header" href="#backendtimeout"><code>backend.timeout</code></a></h2>
+<p>一个有界操作超过 deadline。先看 <code>stage</code>：<code>associate</code>、<code>eapol</code>、<code>pmf</code> 和 <code>runtime</code> 指向不同
+故障域。保留 backend code 与 trace，确认事件循环、timer、IRQ 和 AP 行为后再重试；不要只增大
+总 timeout 掩盖状态机缺口。</p>
+<p><a id="errors-operation-cancelled"></a></p>
+<h2 id="operationcancelled"><a class="header" href="#operationcancelled"><code>operation.cancelled</code></a></h2>
+<p>调用方取消了尚未完成的操作。等待取消完成或重新发起操作；旧 operation generation 的完成
+不得被解释为新操作成功。</p>
+<p><a id="errors-resource-unavailable"></a></p>
+<h2 id="resourceunavailable"><a class="header" href="#resourceunavailable"><code>resource.unavailable</code></a></h2>
+<p>选定 profile 的 bounded resource 不足。查看 <code>resource_required</code> / <code>resource_available</code> trace，
+增加 caller-owned storage/arena 或选择更小且已验证的 profile。运行期 heap watermark 只是校准
+观测，不等价于初始化前 reservation。</p>
+<p><a id="errors-wifi-unsupported-security"></a></p>
+<h2 id="wifiunsupported_security"><a class="header" href="#wifiunsupported_security"><code>wifi.unsupported_security</code></a></h2>
+<p>扫描结果、station config 与编译选择的 Personal security profile 不兼容。选择支持该网络的
+WPA2/WPA3 profile；不要把 unknown/protected BSS 静默降级成开放网络。</p>
+<p><a id="errors-wifi-connection-failed"></a></p>
+<h2 id="wificonnection_failed"><a class="header" href="#wificonnection_failed"><code>wifi.connection_failed</code></a></h2>
+<p>认证、关联或授权失败。根据 <code>stage</code> 和来源明确的 trace 判断是 authentication、association、
+SAE、EAPOL 还是 PMF；IEEE status 30 表示 temporary rejection/PMF 恢复路径，不等于 WPA 四次
+握手失败。</p>
+<p><a id="errors-backend-other"></a></p>
+<h2 id="backendother"><a class="header" href="#backendother"><code>backend.other</code></a></h2>
+<p>当前稳定 schema 尚无更精确分类。必须保留 <code>backend_code</code>、profile revision 和 trace，并按数值
+来源定位；未知 code 不得被丢弃或猜测映射。</p>
+<p><a id="errors-radio-protocol"></a></p>
+<h2 id="radioprotocol"><a class="header" href="#radioprotocol"><code>radio.protocol</code></a></h2>
+<p>runner 观察到无效的 command/completion 序列。重新创建 controller；若可复现，报告 profile
+revision、bounded trace 和操作顺序，不要继续复用可能已失配的控制面状态。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="原理与背景--explanation"><a class="header" href="#原理与背景--explanation">原理与背景 · Explanation</a></h1>
 <p>这一章不是教你“怎么做“，也不是给你查“叫什么“的索引——它讲的是<strong>为什么</strong>：
