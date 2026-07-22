@@ -851,7 +851,7 @@ oracle adapter。
 
 #### A5B -- 增量式 `WifiBackend`
 
-`hisi-rf-core 0.1.0-alpha.9` 已发布 opt-in contract：feature
+`hisi-rf-core 0.1.0-alpha.10` 已发布 opt-in contract：feature
 `incremental-backend-experiment` 提供 generation-tagged `OperationId`、
 `Queued -> Started -> CancelRequested -> Terminal` tracker、双维 `WorkBudget`/
 `WorkReport`、组合 `WaitSet`、公平 wake selector、确定性 `IncrementalRunnerState` 与
@@ -861,16 +861,20 @@ state、start/poll/cancel、固定 work budget、wait-set 和 terminal slot reco
 stale terminal 不得结束复用后的 operation。alpha.9 进一步用 `split_incremental` 把该 driver
 接到现有 async `WifiController`、L2 device、bounded event queue 和固定 scan storage；facade
 只在 driver pending slot 可接收时才从单项 command channel 取命令，使 active、pending 和
-channel 各自保持唯一所有权。42 个 host tests 覆盖 stale completion、幂等
+channel 各自保持唯一所有权。alpha.10 增加一致性 `IncrementalWaitIntent` snapshot：平台可在
+一次读取中得到 immediate-work、command/backend/L2/timer wake-set 和单调 deadline；有 deadline
+时 TIMER 订阅强制存在，driver backpressure 时 COMMAND 订阅撤销，避免 busy poll、猜测 timeout
+或从 channel 过早取走第三条命令。43 个 host tests 覆盖 stale completion、幂等
 cancel、cancel-before/after-start、late-success suppression、start/poll/cancel error、budget
 exhaustion、连续丢弃 future 后的 bounded backpressure，以及持续 command/backend/L2/timer
-ready 时的公平选择；alpha.9 main/publish CI runs `29962936507`/`29963078253` 通过。
+ready 时的公平选择；alpha.10 main/publish CI runs `29964634195`/`29964792672` 通过。
 
-`hisi-rf 0.1.0-alpha.21` 精确依赖 core alpha.9，并转发 incremental driver、async facade
-runner 和 split result；publish run `29963730413` 通过。发布后的 crates.io-only fixture
-直接类型检查 `RadioController::split_incremental`，Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3
-clean/offline 构建（CI run `29963892508`）。该 adapter 仍要求平台显式提供 ready wait-set，
-尚未接入 WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前默认 blocking 路径不变。
+`hisi-rf 0.1.0-alpha.22` 精确依赖 core alpha.10，并转发 incremental driver、async facade
+runner、split result 和 wait intent；main/publish runs `29965114677`/`29965499025` 通过。发布后的
+crates.io-only fixture 直接类型检查 `RadioController::split_incremental` 以及 wait-intent 的
+sources/deadline/immediate contract，Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3 clean/offline
+构建（CI run `29965674697`）。该 adapter 仍要求平台实现真实 wake/deadline wait，尚未接入
+WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前默认 blocking 路径不变。
 
 - [x] 提供 opt-in async facade adapter，保持 `WifiController`/`WifiDevice` 用户 API、scan
   storage 和 bounded event queue；active + pending + channel backpressure 有 host 回归，协议
@@ -878,22 +882,23 @@ clean/offline 构建（CI run `29963892508`）。该 adapter 仍要求平台显�
 
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
-- [ ] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
+- [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
-- [ ] `WorkBudget` 同时限制单次 poll 的事件数和可消耗时间；backend 必须返回
+- [x] `WorkBudget` 同时限制单次 poll 的事件数和可消耗时间；backend 必须返回
   made-progress、pending/deadline、terminal result 或 budget-exhausted，禁止内部无界循环、
   固定 `sleep_ms(1)` busy polling 或等待外部 RF/AP 进展。
-- [ ] `RadioRunner` 改为统一 wait-set：control command、backend/callback wake、L2 RX、timer
-  deadline 和 cancellation 共用一次等待；无事件时休眠，有事件时按公平、可观测的批次推进。
+- [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent：control command、backend/callback
+  wake、L2 RX、timer deadline 和 cancellation 共用一次等待；无事件时休眠，有事件时按公平、
+  可观测的批次推进。
   callback/IRQ 仍只复制 bounded data、置位和 wake。
-- [ ] 固定 operation lifecycle：`Queued -> Started -> CancelRequested -> Terminal`；取消前、
+- [x] 固定 operation lifecycle：`Queued -> Started -> CancelRequested -> Terminal`；取消前、
   启动后、底层不可立即取消和 terminal event 同时到达均有定义。late event 必须按
   operation generation 丢弃或归档，不能错误完成新请求。
-- [ ] 保持 `WifiController::scan/connect/disconnect/wait_for_link` 的 async 用户体验和
+- [x] 保持 `WifiController::scan/connect/disconnect/wait_for_link` 的 async 用户体验和
   `WifiDevice` L2 contract；backend 状态机是内部机制，不让用户接触 vendor poll 或 RTOS
   primitive。旧同步 adapter 只保留给 oracle/host fixture，并明确不得成为默认 WS63 路径。
-- [ ] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
+- [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
 
