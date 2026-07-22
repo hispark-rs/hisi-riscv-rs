@@ -19,3 +19,4 @@
 | [HIL 脚本与 runner 环境变量](07-hil-markers.md) | `embedded-test` runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源 |
 | [CLI 工具速查](08-cli-tools.md) | `hisi-fwpkg`、补丁版 `probe-rs`、QEMU、`hisiflash` 命令与仓库清单 |
 | [已知问题索引](09-known-issues.md) | 工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue |
+| [RF 错误与诊断契约](11-rf-diagnostics.md) | `hisi-rf-error/v2` 字段、稳定错误码、阶段、恢复动作和文档 fragment |
