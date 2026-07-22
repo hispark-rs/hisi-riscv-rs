@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f67d2a4e.js";
+            window.path_to_searchindex_js = "searchindex-0b03f8bd.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-e7bf55d7.js"></script>
@@ -1650,6 +1650,12 @@ crate 复制到临时独立目录后再解析：</li>
 uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . --package
 git ls-files --error-unmatch Cargo.lock
 git diff --exit-code -- Cargo.lock
+</code></pre>
+<p>如果 crate 在未选择芯片/profile 时会用 <code>compile_error!</code> 拒绝构建，standalone
+package 验证也必须传入该 crate 的最小发布 feature，而不是使用
+<code>--no-verify</code> 跳过验证。例如：</p>
+<pre><code class="language-bash">uv run /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
+  --package --features chip-ws63
 </code></pre>
 <ul>
 <li>改 public API 时同步更新 rustdoc/手册。HAL stable/unstable 变化必须同步更新 <a href="#stable-api-清单与门控状态">Stable API 清单</a>，并有对应真机 HIL 证据。</li>
