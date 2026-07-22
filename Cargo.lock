@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.9"
+version = "0.1.0-alpha.10"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-core"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 dependencies = [
  "critical-section",
  "embassy-sync",
@@ -893,7 +893,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.6"
+version = "0.1.0-alpha.7"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
