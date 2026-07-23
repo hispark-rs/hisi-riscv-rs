@@ -878,6 +878,9 @@ alpha.12 又给当前 blocking lane 增加饱和原子诊断：event queue high-
 `run_once`/command/backend poll/work/error/immediate-repoll 计数均可从 controller 获取；默认/feature
 host tests 分别为 16/46 项，行为/publish runs `29968577797`/`29968667510` 通过。这些计数只用于
 迁移测量，不参与同步或正确性决策，也没有把 host 计数写成硅片性能结论。
+alpha.13 补齐固定单槽 control command channel 的当前 occupancy 与 high-water；completed send
+即证明单槽曾被占用，即使 runner 随即消费也不会漏记。行为/publish runs
+`29971558975`/`29971767278` 通过。
 
 `hisi-rf-ws63 0.1.0-alpha.15` 已给 `initialize/scan/connect/disconnect/poll` 包装 allocation-free
 blocking metrics，并单独记录内部 1 ms sleep 与 native supplicant poll。每项同时记录 calls、
@@ -885,15 +888,16 @@ timed calls 和最大耗时：ROM timebase 尚未安全初始化时只增加 cal
 WPA2/WPA3 host tests 分别为 55/60 项，双 profile clippy/RV32、独立 package 与 macOS/Linux/
 Windows 最终链接均通过（行为/publish runs `29970030735`/`29970214192`）。
 
-`hisi-rf 0.1.0-alpha.25` 精确依赖 core alpha.12 与 WS63 backend alpha.15，并转发 blocking
+`hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
 runner、split result、wait intent、wait platform 与 typed wait error；行为/publish runs
-`29970358854`/`29970684802` 通过。发布后的 crates.io-only fixture 直接类型检查
+`29972299125`/`29972733982` 通过。发布后的 crates.io-only fixture 直接类型检查
 `RadioController::split_incremental`、wait-intent snapshot，以及外部
 `IncrementalWaitPlatform` 实现、`runner.wait_ready()` future、blocking runner snapshot 和 event
-high-water，还会从 `hisi_rf::ws63` 读取 operation/sleep/supplicant-poll snapshot；Linux、macOS
-和 Windows 继续覆盖 WPA2/WPA3 clean/offline 构建（CI run `29970801259`）。该 adapter 仍要求
+high-water/control queue occupancy，还会从 `hisi_rf::ws63` 读取
+operation/sleep/supplicant-poll snapshot；Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3
+clean/offline 构建（CI run `29972956808`）。该 adapter 仍要求
 WS63 平台实现真实
 wake/deadline wait，尚未接入 WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前
 默认 blocking 路径不变。
@@ -904,9 +908,9 @@ wake/deadline wait，尚未接入 WS63 backend 或成为默认 `RadioRunner`；p
 
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
-  alpha.12/WS63 alpha.15 已接好 runner/poll/event high-water、operation duration、内部 sleep 与
-  supplicant poll 的无板计数底座；control channel 为固定单槽，尚未形成独立 occupancy 字段。
-  真机运行尚未读取并固化数值，且首次 initialize 会如实显示 untimed，因此不得勾选本项。
+  core alpha.13/WS63 alpha.15 已接好 runner/poll、control/event queue high-water、operation
+  duration、内部 sleep 与 supplicant poll 的无板计数底座。真机运行尚未读取并固化数值，且
+  首次 initialize 会如实显示 untimed，因此不得勾选本项。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
