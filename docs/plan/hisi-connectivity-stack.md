@@ -904,13 +904,20 @@ supplicant 输入和输出按精确 work accounting 推进，结果集按剩余 
 报告 truncation。由于 vendor scan callback 没有 operation generation，取消和超时会等待旧 scan-done
 与 cache drain 后才完成，防止迟到结果污染下一次扫描。WPA2/WPA3 host tests 分别为 67/72 项，
 双 incremental profile、普通 smoltcp profile、RV32、package 与三平台最终链接在修复后的 CI
-`29979582873` 全部通过。
+`29979582873` 全部通过。`hisi-rf-ws63 0.1.0-alpha.17` 又修复了并行测试对全局 runtime
+安装状态的错误假设：测试现在只断言缺少 runtime semaphore 时不会注册 C singleton，不再依赖
+其他测试是否已安装不可卸载的 fake runtime。72 项 WPA3 incremental host tests 连续 10 轮通过，
+完整 package、RV32、WPA2/WPA3 与 Linux/macOS/Windows 最终链接 CI `29980903208` 全绿；
+发布 workflow `29981024969` 成功，alpha.17 已可从 crates.io 获取。
 
 这仍是**部分 adapter**：initialize 会返回明确 unsupported error，而不是包装现有 blocking 调用
 伪装成增量实现；默认 `WifiBackend` 未切换，facade 也暂不转发 WS63 实验 feature。
-`hisi-rf 0.1.0-alpha.27` 已通过 package 和 Linux/macOS/Windows CI `29977507122`，但 crates.io
-上传被 24 小时版本频率限制以 HTTP 429 拒绝（workflow `29977787436`），因此该 tag 不能写成
-已发布版本；父仓当前通过 submodule/path 使用这组提交。
+`hisi-rf 0.1.0-alpha.28` 已把精确依赖同步到 WS63 backend alpha.17，并在 changelog 中明确
+incremental scan/connect/disconnect 仍是非默认内部原型；package、host/RV32、Linux/macOS/Windows
+consumer、最终固件链接、crates.io-only fixture、离线/只读 registry 与并发构建 CI
+`29981408046` 全绿。其 tag 已创建，但 crates.io 上传被 24 小时版本频率限制以 HTTP 429 拒绝
+（workflow `29981646548`），因此 alpha.28 不能写成已发布版本；父仓当前通过 submodule/path 使用
+该提交，限流解除后重跑同一 publish workflow。
 
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
