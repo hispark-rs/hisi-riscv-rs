@@ -910,14 +910,28 @@ supplicant 输入和输出按精确 work accounting 推进，结果集按剩余 
 完整 package、RV32、WPA2/WPA3 与 Linux/macOS/Windows 最终链接 CI `29980903208` 全绿；
 发布 workflow `29981024969` 成功，alpha.17 已可从 crates.io 获取。
 
-这仍是**部分 adapter**：initialize 会返回明确 unsupported error，而不是包装现有 blocking 调用
-伪装成增量实现；默认 `WifiBackend` 未切换，facade 也暂不转发 WS63 实验 feature。
-`hisi-rf 0.1.0-alpha.28` 已把精确依赖同步到 WS63 backend alpha.17，并在 changelog 中明确
-incremental scan/connect/disconnect 仍是非默认内部原型；package、host/RV32、Linux/macOS/Windows
-consumer、最终固件链接、crates.io-only fixture、离线/只读 registry 与并发构建 CI
-`29981408046` 全绿。其 tag 已创建，但 crates.io 上传被 24 小时版本频率限制以 HTTP 429 拒绝
-（workflow `29981646548`），因此 alpha.28 不能写成已发布版本；父仓当前通过 submodule/path 使用
-该提交，限流解除后重跑同一 publish workflow。
+alpha.17 仍是**部分 adapter**：initialize 返回明确 unsupported error，而不是包装现有 blocking
+调用伪装成增量实现。`hisi-rf 0.1.0-alpha.28` 曾把精确依赖同步到 WS63 backend alpha.17；
+package、host/RV32、Linux/macOS/Windows consumer、最终固件链接、crates.io-only fixture、
+离线/只读 registry 与并发构建 CI `29981408046` 全绿，但 crates.io 上传被 24 小时版本频率限制
+以 HTTP 429 拒绝（workflow `29981646548`），因此该 tag 只保留为历史发布尝试，不是可获取版本。
+
+`hisi-rf-ws63 0.1.0-alpha.18` 随后闭合了 **blocking bootstrap 之后** 的所有权链：显式
+`init_incremental_after_blocking_bootstrap` 先同步完成 vendor Wi-Fi、netdev 与 native supplicant
+bootstrap，再把已经初始化的 backend 移交给 owned `IncrementalRadioController`/
+`IncrementalRadioRunner`。增量 `Initialize` request 只确认该 bootstrap 已完成；确认前取消会
+确定性返回 `Cancelled`，不会再次执行或伪装切分 vendor 初始化。若同步 bootstrap 已创建 vendor
+task 后失败，task-slot reservation 可能仍被其持有，实验入口因此 fail closed 且保持 one-shot，
+不能释放全局 reservation 制造悬垂引用。默认 blocking `init`/runner 路径完全不变。WPA2/WPA3
+incremental host tests、严格 clippy、RV32、独立 package 与 Linux/macOS/Windows 最终 RF 链接
+在 CI `29983061894` 全绿；publish workflow `29983184413` 成功。
+
+`hisi-rf 0.1.0-alpha.29` 已把 `incremental-backend-experiment` 同时转发到 core 与 WS63 backend，
+并从 `hisi_rf::ws63` 暴露上述显式实验生命周期；普通用户 API 和默认 backend 仍未切换。CI
+`29983369220` 覆盖 WPA2/WPA3 完整 composition、RV32、package、三平台最终固件链接、外部
+crates.io-only fixture 和离线只读 registry，全部通过；publish workflow `29983636191` 成功，
+alpha.29 已可从 crates.io 获取。这一阶段证明的是“同步 bootstrap 后可进入有界增量 runner”，
+不是“vendor bootstrap 已增量化”。
 
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
@@ -956,15 +970,17 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   operation generation 丢弃或归档，不能错误完成新请求。
 - [x] 保持 `WifiController::scan/connect/disconnect/wait_for_link` 的 async 用户体验和
   `WifiDevice` L2 contract；backend 状态机是内部机制，不让用户接触 vendor poll 或 RTOS
-  primitive。旧同步 adapter 只保留给 oracle/host fixture，并明确不得成为默认 WS63 路径。
+  primitive。pure-WPA3 parity gate 闭合前，旧同步 adapter 仍是默认 WS63 路径和行为 oracle；
+  增量生命周期保持显式 opt-in，不得提前替换默认路径。
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
-- [ ] 完成 WS63 真实 incremental adapter：alpha.16 与后续提交已闭合 upstream supplicant 的
-  scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence 和预算回归；
-  initialize 仍保留明确的 fail-closed gate。初始化目前包含 `uapi_wifi_init`、netdev 创建、事件注册
-  和 native supplicant create 等不可抢占 vendor 调用；只有拿到可轮询的 vendor 边界或证明每一步
-  的可接受最坏时延，并接入 facade wait platform 后，才允许勾选，不得用 blocking wrapper 充数。
+- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.18 已闭合 upstream supplicant 的
+  scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence、预算回归，以及同步
+  bootstrap 后的 owned facade/runner 生命周期。初始化仍包含 `uapi_wifi_init`、netdev 创建、事件注册
+  和 native supplicant create 等不可抢占 vendor 调用；alpha.18 只显式标出这条同步边界，未把它
+  包装成增量调用。只有拿到可轮询的 vendor 边界，或逐阶段证明可接受的最坏时延并接入真实 facade
+  wait platform 后，才允许勾选。
 
 #### A5R -- 可执行 RTOS 语义
 
