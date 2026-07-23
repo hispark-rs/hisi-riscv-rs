@@ -24,8 +24,8 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5U 独占当前 WIP；pure WPA3 是外部阻塞门槛 | A5 发布收口和下一产品方向决策 |
-| [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | 等待 A5U 闭合并释放 WIP；随后执行 A5R-F2 至 F5 | A5 runtime 证据门槛 |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5B 独占当前 WIP；pure WPA3 是外部阻塞门槛 | 完成 WS63 incremental init/scan adapter 后再决定默认迁移 |
+| [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5B 完成并释放 WIP 后再执行未闭合的 A5R-F2 至 F5 | A5 runtime 证据门槛 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
 | [中断处理整改](hisi-interrupt-handler-reform.md) | 延期 | P2 | 对照 RTOS F2 port 和当前 trap ABI 重新评审架构 | 稳定的类型化中断注册和 Embassy IRQ 体验 |
@@ -40,11 +40,12 @@
 
 ```mermaid
 flowchart LR
-    A5U["P0 A5U 资源准入"] --> A5R["P1 A5R 语义收口"]
+    A5U["Done A5U 资源准入"] --> A5B["P0 A5B 增量 backend"]
+    A5U --> A5R["P1 A5R 语义收口"]
     A5U --> REPORT["产物与资源契约"]
     REPORT --> CLI["P2 cargo-hisi 触发条件"]
     A5R --> A5["A5 发布收口"]
-    A5B["P1 A5B 增量 backend"] --> A5
+    A5B --> A5
     WPA3["外部门槛：pure WPA3 HIL"] --> A5
     A5 --> PRODUCT["选择一个后续产品方向"]
     PRODUCT --> NVS["NVS N0-N3"]
@@ -53,8 +54,8 @@ flowchart LR
     PRODUCT --> SLE["SLE"]
 ```
 
-这张图不表示要把 `A5B` 或外部阻塞的 WPA3 门槛排在当前 WIP 之前。它只记录依赖关系，
-防止无板 A5U 成功后被误写成整个 A5 已经验收。
+这张图不表示外部阻塞的 WPA3 门槛会冻结当前 A5B 无板工作。它只记录依赖关系，防止
+connect/disconnect 原型或已完成的 A5U 被误写成整个 A5 已经验收。
 
 ## 维护契约
 

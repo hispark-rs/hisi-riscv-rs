@@ -888,6 +888,23 @@ timed calls 和最大耗时：ROM timebase 尚未安全初始化时只增加 cal
 WPA2/WPA3 host tests 分别为 55/60 项，双 profile clippy/RV32、独立 package 与 macOS/Linux/
 Windows 最终链接均通过（行为/publish runs `29970030735`/`29970214192`）。
 
+`ws63-radio-sys 0.1.0-alpha.7` 把 native supplicant poll ABI 提升到 v9：
+`work_completed` 精确记录本轮完成的 eloop/Rust 输入队列工作，`output_pending` 只表示 C shim
+输出事件可取，不再混用“做过工作”和“仍有输出”两个概念。可重现 archive 重建、ABI、双
+profile 与发布 workflow `29976597661` 全部通过。`hisi-rf-ws63 0.1.0-alpha.16` 在此 ABI 上
+加入非默认的真实 connect/disconnect 增量切片：借用已经初始化的 upstream supplicant，按
+generation-tagged operation、事件数/耗时双预算、显式 cancel、backend/timer wait set 和 bounded
+event drain 推进。迟到 `AUTHORIZED` 不得越过取消，disconnect cancel 不重复发 driver 请求，
+backend 超报预算会 fail closed 并清除 active operation。65 项 host tests、WPA2/WPA3 RV32、
+独立 package 均通过；CI `29977175954` 还把 `wpa2-incremental` 作为固定 matrix profile，
+publish `29977347273` 通过。
+
+这仍是**部分 adapter**：initialize/scan 会返回明确 unsupported error，而不是包装现有 blocking
+调用伪装成增量实现；默认 `WifiBackend` 未切换，facade 也暂不转发 WS63 实验 feature。
+`hisi-rf 0.1.0-alpha.27` 已通过 package 和 Linux/macOS/Windows CI `29977507122`，但 crates.io
+上传被 24 小时版本频率限制以 HTTP 429 拒绝（workflow `29977787436`），因此该 tag 不能写成
+已发布版本；父仓当前通过 submodule/path 使用这组提交。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -897,10 +914,9 @@ runner、split result、wait intent、wait platform 与 typed wait error；行�
 `IncrementalWaitPlatform` 实现、`runner.wait_ready()` future、blocking runner snapshot 和 event
 high-water/control queue occupancy，还会从 `hisi_rf::ws63` 读取
 operation/sleep/supplicant-poll snapshot；Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3
-clean/offline 构建（CI run `29972956808`）。该 adapter 仍要求
-WS63 平台实现真实
-wake/deadline wait，尚未接入 WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前
-默认 blocking 路径不变。
+clean/offline 构建（CI run `29972956808`）。该 facade adapter 仍要求 WS63 平台实现真实
+wake/deadline wait；backend 的 connect/disconnect 原型尚未覆盖 initialize/scan，也未成为默认
+`RadioRunner`。pure-WPA3 外部门槛前默认 blocking 路径不变。
 
 - [x] 提供 opt-in async facade adapter，保持 `WifiController`/`WifiDevice` 用户 API、scan
   storage 和 bounded event queue；active + pending + channel backpressure 有 host 回归，协议
@@ -930,6 +946,10 @@ wake/deadline wait，尚未接入 WS63 backend 或成为默认 `RadioRunner`；p
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
+- [ ] 完成 WS63 真实 incremental adapter：alpha.16 已闭合 upstream supplicant 的
+  connect/disconnect、精确 poll accounting、取消和预算回归；initialize/scan 仍保留明确的
+  fail-closed gate。只有把这两个 vendor 边界拆成真正有界步骤，并接入 facade wait platform
+  后，才允许勾选；不得用 blocking wrapper 充数。
 
 #### A5R -- 可执行 RTOS 语义
 
