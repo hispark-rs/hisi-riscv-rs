@@ -899,8 +899,15 @@ backend 超报预算会 fail closed 并清除 active operation。65 项 host tes
 独立 package 均通过；CI `29977175954` 还把 `wpa2-incremental` 作为固定 matrix profile，
 publish `29977347273` 通过。
 
-这仍是**部分 adapter**：initialize/scan 会返回明确 unsupported error，而不是包装现有 blocking
-调用伪装成增量实现；默认 `WifiBackend` 未切换，facade 也暂不转发 WS63 实验 feature。
+后续提交 `0ffdf60` 把 scan 也接入同一非默认 adapter：启动 ioctl 只提交一次，native
+supplicant 输入和输出按精确 work accounting 推进，结果集按剩余 event budget 逐项复制并显式
+报告 truncation。由于 vendor scan callback 没有 operation generation，取消和超时会等待旧 scan-done
+与 cache drain 后才完成，防止迟到结果污染下一次扫描。WPA2/WPA3 host tests 分别为 67/72 项，
+双 incremental profile、普通 smoltcp profile、RV32、package 与三平台最终链接在修复后的 CI
+`29979582873` 全部通过。
+
+这仍是**部分 adapter**：initialize 会返回明确 unsupported error，而不是包装现有 blocking 调用
+伪装成增量实现；默认 `WifiBackend` 未切换，facade 也暂不转发 WS63 实验 feature。
 `hisi-rf 0.1.0-alpha.27` 已通过 package 和 Linux/macOS/Windows CI `29977507122`，但 crates.io
 上传被 24 小时版本频率限制以 HTTP 429 拒绝（workflow `29977787436`），因此该 tag 不能写成
 已发布版本；父仓当前通过 submodule/path 使用这组提交。
@@ -915,7 +922,7 @@ runner、split result、wait intent、wait platform 与 typed wait error；行�
 high-water/control queue occupancy，还会从 `hisi_rf::ws63` 读取
 operation/sleep/supplicant-poll snapshot；Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3
 clean/offline 构建（CI run `29972956808`）。该 facade adapter 仍要求 WS63 平台实现真实
-wake/deadline wait；backend 的 connect/disconnect 原型尚未覆盖 initialize/scan，也未成为默认
+wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 initialize，也未成为默认
 `RadioRunner`。pure-WPA3 外部门槛前默认 blocking 路径不变。
 
 - [x] 提供 opt-in async facade adapter，保持 `WifiController`/`WifiDevice` 用户 API、scan
@@ -946,10 +953,11 @@ wake/deadline wait；backend 的 connect/disconnect 原型尚未覆盖 initializ
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
-- [ ] 完成 WS63 真实 incremental adapter：alpha.16 已闭合 upstream supplicant 的
-  connect/disconnect、精确 poll accounting、取消和预算回归；initialize/scan 仍保留明确的
-  fail-closed gate。只有把这两个 vendor 边界拆成真正有界步骤，并接入 facade wait platform
-  后，才允许勾选；不得用 blocking wrapper 充数。
+- [ ] 完成 WS63 真实 incremental adapter：alpha.16 与后续提交已闭合 upstream supplicant 的
+  scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence 和预算回归；
+  initialize 仍保留明确的 fail-closed gate。初始化目前包含 `uapi_wifi_init`、netdev 创建、事件注册
+  和 native supplicant create 等不可抢占 vendor 调用；只有拿到可轮询的 vendor 边界或证明每一步
+  的可接受最坏时延，并接入 facade wait platform 后，才允许勾选，不得用 blocking wrapper 充数。
 
 #### A5R -- 可执行 RTOS 语义
 
