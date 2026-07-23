@@ -851,7 +851,7 @@ oracle adapter。
 
 #### A5B -- 增量式 `WifiBackend`
 
-`hisi-rf-core 0.1.0-alpha.10` 已发布 opt-in contract：feature
+`hisi-rf-core 0.1.0-alpha.11` 已发布 opt-in contract：feature
 `incremental-backend-experiment` 提供 generation-tagged `OperationId`、
 `Queued -> Started -> CancelRequested -> Terminal` tracker、双维 `WorkBudget`/
 `WorkReport`、组合 `WaitSet`、公平 wake selector、确定性 `IncrementalRunnerState` 与
@@ -868,13 +868,21 @@ channel 各自保持唯一所有权。alpha.10 增加一致性 `IncrementalWaitI
 cancel、cancel-before/after-start、late-success suppression、start/poll/cancel error、budget
 exhaustion、连续丢弃 future 后的 bounded backpressure，以及持续 command/backend/L2/timer
 ready 时的公平选择；alpha.10 main/publish CI runs `29964634195`/`29964792672` 通过。
+alpha.11 再增加 executor-neutral `IncrementalWaitPlatform` 和 `wait_ready()`：controller command
+channel 与 backend/L2/timer 在同一个 future 中注册，平台错误和未订阅 ready bit 用 typed error
+fail closed，command 只观察不消费。该实现测试时发现并修复了一条真实状态同步缺口：backend
+存在 deadline 时，driver 不仅要在 wait intent 中暴露 TIMER，还必须把 TIMER 加入 runner 的
+实际订阅，否则 deadline 到达后 `run_once(TIMER)` 不会 poll backend。45 个 feature host tests、
+main/publish runs `29966641702`/`29966772572` 均通过。
 
-`hisi-rf 0.1.0-alpha.22` 精确依赖 core alpha.10，并转发 incremental driver、async facade
-runner、split result 和 wait intent；main/publish runs `29965114677`/`29965499025` 通过。发布后的
-crates.io-only fixture 直接类型检查 `RadioController::split_incremental` 以及 wait-intent 的
-sources/deadline/immediate contract，Linux、macOS 和 Windows 继续覆盖 WPA2/WPA3 clean/offline
-构建（CI run `29965674697`）。该 adapter 仍要求平台实现真实 wake/deadline wait，尚未接入
-WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前默认 blocking 路径不变。
+`hisi-rf 0.1.0-alpha.23` 精确依赖 core alpha.11，并转发 incremental driver、async facade
+runner、split result、wait intent、wait platform 与 typed wait error；行为/publish runs
+`29967062949`/`29967410811` 通过。发布后的 crates.io-only fixture 直接类型检查
+`RadioController::split_incremental`、wait-intent snapshot，以及外部
+`IncrementalWaitPlatform` 实现与 `runner.wait_ready()` future；Linux、macOS 和 Windows 继续覆盖
+WPA2/WPA3 clean/offline 构建（CI run `29967612530`）。该 adapter 仍要求 WS63 平台实现真实
+wake/deadline wait，尚未接入 WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前
+默认 blocking 路径不变。
 
 - [x] 提供 opt-in async facade adapter，保持 `WifiController`/`WifiDevice` 用户 API、scan
   storage 和 bounded event queue；active + pending + channel backpressure 有 host 回归，协议
@@ -888,9 +896,9 @@ WS63 backend 或成为默认 `RadioRunner`；pure-WPA3 外部门槛前默认 blo
 - [x] `WorkBudget` 同时限制单次 poll 的事件数和可消耗时间；backend 必须返回
   made-progress、pending/deadline、terminal result 或 budget-exhausted，禁止内部无界循环、
   固定 `sleep_ms(1)` busy polling 或等待外部 RF/AP 进展。
-- [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent：control command、backend/callback
-  wake、L2 RX、timer deadline 和 cancellation 共用一次等待；无事件时休眠，有事件时按公平、
-  可观测的批次推进。
+- [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
+  control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
+  无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。
   callback/IRQ 仍只复制 bounded data、置位和 wake。
 - [x] 固定 operation lifecycle：`Queued -> Started -> CancelRequested -> Terminal`；取消前、
   启动后、底层不可立即取消和 terminal event 同时到达均有定义。late event 必须按
