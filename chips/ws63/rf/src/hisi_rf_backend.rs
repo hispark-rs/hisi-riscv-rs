@@ -373,7 +373,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             let result = supplicant
                 .poll(core::num::NonZeroU32::new(32).unwrap())
                 .map_err(map_native_error)?;
-            Ok(result.work_pending != 0)
+            Ok(result.work_completed != 0 || result.output_pending != 0)
         }
         #[cfg(not(feature = "upstream-supplicant-port"))]
         {

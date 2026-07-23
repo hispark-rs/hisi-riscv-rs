@@ -455,12 +455,6 @@ impl MgmtRxQueue {
             .ok()?;
         Some(MgmtFrame { slot })
     }
-
-    fn has_pending(&self) -> bool {
-        self.slots
-            .iter()
-            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
-    }
 }
 
 const fn sequence_before(candidate: u32, current: u32) -> bool {
@@ -743,12 +737,6 @@ impl LinkEventQueue {
     fn take_oldest(&self) -> Option<LinkEvent<'_>> {
         take_oldest_slot(&self.slots).map(|slot| LinkEvent { slot })
     }
-
-    fn has_pending(&self) -> bool {
-        self.slots
-            .iter()
-            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
-    }
 }
 
 struct LinkEvent<'a> {
@@ -849,12 +837,6 @@ impl ExternalAuthQueue {
 
     fn take_oldest(&self) -> Option<ExternalAuthGuard<'_>> {
         take_oldest_slot(&self.slots).map(|slot| ExternalAuthGuard { slot })
-    }
-
-    fn has_pending(&self) -> bool {
-        self.slots
-            .iter()
-            .any(|slot| slot.state.load(Ordering::Acquire) != SLOT_FREE)
     }
 }
 
@@ -1427,8 +1409,8 @@ impl NativeSupplicant {
             self.external_auth_dropped_seen = dropped;
             return Err(NativeSupplicantError::ExternalAuthQueueOverflow(delta));
         }
-        let mut rx_work = false;
-        let mut rx_budget = work_budget.get().saturating_sub(1);
+        let rx_grant = work_budget.get().saturating_sub(1);
+        let mut rx_budget = rx_grant;
         while rx_budget != 0 {
             let Some(event) = SCAN_EVENT_QUEUE.take_oldest() else {
                 break;
@@ -1464,7 +1446,6 @@ impl NativeSupplicant {
             if status != 0 {
                 return Err(NativeSupplicantError::FeedScanFailed(status));
             }
-            rx_work = true;
             rx_budget -= 1;
         }
         while rx_budget != 0 {
@@ -1530,7 +1511,6 @@ impl NativeSupplicant {
             if status != 0 {
                 return Err(NativeSupplicantError::FeedLinkFailed(status));
             }
-            rx_work = true;
             rx_budget -= 1;
         }
         while rx_budget != 0 {
@@ -1545,7 +1525,6 @@ impl NativeSupplicant {
             if status != 0 {
                 return Err(NativeSupplicantError::FeedExternalAuthFailed(status));
             }
-            rx_work = true;
             rx_budget -= 1;
         }
         while rx_budget != 0 {
@@ -1568,7 +1547,6 @@ impl NativeSupplicant {
             if status != 0 {
                 return Err(NativeSupplicantError::FeedMgmtFailed(status));
             }
-            rx_work = true;
             rx_budget -= 1;
         }
         let notified = EAPOL_PENDING.swap(false, Ordering::AcqRel);
@@ -1579,7 +1557,7 @@ impl NativeSupplicant {
                 DIAG_EAPOL_FALLBACK_POLLS.fetch_add(1, Ordering::Relaxed);
             }
             let received_before = DIAG_EAPOL_RECEIVED.load(Ordering::Relaxed);
-            rx_work |= self.drain_eapol(&mut rx_budget)?;
+            self.drain_eapol(&mut rx_budget)?;
             if fallback && DIAG_EAPOL_RECEIVED.load(Ordering::Relaxed) != received_before {
                 DIAG_EAPOL_FALLBACK_HITS.fetch_add(1, Ordering::Relaxed);
             }
@@ -1592,6 +1570,7 @@ impl NativeSupplicant {
                 rx_budget.max(1),
             )
         };
+        account_poll_work(&mut result, rx_grant, rx_budget);
         // SAFETY: the unique owner serializes this read-only snapshot with
         // every other access to the native context.
         DIAG_RECOVERY.store(
@@ -1601,15 +1580,9 @@ impl NativeSupplicant {
         if result.status != 0 {
             return Err(NativeSupplicantError::PollFailed(result.status));
         }
-        if rx_work
-            || SCAN_EVENT_QUEUE.has_pending()
-            || LINK_EVENT_QUEUE.has_pending()
-            || EXTERNAL_AUTH_QUEUE.has_pending()
-            || MGMT_RX_QUEUE.has_pending()
-            || EAPOL_PENDING.load(Ordering::Acquire)
-        {
-            result.work_pending = 1;
-        }
+        // `output_pending` belongs exclusively to the C shim's output-event
+        // ring. Rust-side input work is charged to `work_completed`; callers
+        // can therefore distinguish budget consumption from event readiness.
         Ok(result)
     }
 
@@ -1693,6 +1666,12 @@ impl NativeSupplicant {
             status => Err(NativeSupplicantError::PollFailed(status)),
         }
     }
+}
+
+fn account_poll_work(result: &mut PollResult, rx_grant: u32, rx_remaining: u32) {
+    result.work_completed = result
+        .work_completed
+        .saturating_add(rx_grant.saturating_sub(rx_remaining));
 }
 
 fn classify_eapol_receive(status: c_int) -> Result<bool, c_int> {
@@ -2819,6 +2798,21 @@ unsafe extern "C" fn wake_runner(_: *mut c_void) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn poll_accounting_combines_rust_queue_and_eloop_work() {
+        let mut result = PollResult {
+            status: 0,
+            work_completed: 3,
+            output_pending: 1,
+            reserved: 0,
+            next_deadline_ms: 42,
+        };
+        account_poll_work(&mut result, 7, 2);
+        assert_eq!(result.work_completed, 8);
+        assert_eq!(result.output_pending, 1);
+        assert_eq!(result.next_deadline_ms, 42);
+    }
 
     #[test]
     fn rejects_registration_before_runtime_installation() {
