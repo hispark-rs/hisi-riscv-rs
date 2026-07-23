@@ -43,6 +43,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
 - **Release preflight** — standalone crate packaging now runs full
   `cargo package --locked` verification; `--no-verify` no longer allows a
   publish-only compile failure to escape local preflight.
+- **Incremental RF observability** — publish `hisi-rf-ws63 0.1.0-alpha.19`
+  and `hisi-rf 0.1.0-alpha.30` with secret-free, stage-level
+  bootstrap metrics exposed through the safe facade. The default backend and
+  blocking vendor initialization semantics remain unchanged.
 
 ### Verification
 
@@ -54,6 +58,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
 - SPACC AES standard vectors and recovery checks pass on silicon; an unchanged
   upstream WPA2 image completed 20/20 nRST associations with 720/720 AES block
   operations and no hardware failures.
+- WS63 RF bootstrap diagnostics pass minimal-target, WPA2/WPA3 blocking and
+  incremental builds, independent packaging, and Linux/macOS/Windows final
+  linking; the facade additionally passes six crates.io-only consumer lanes,
+  offline read-only registry rebuilds, and concurrent profile builds.
 
 ---
 

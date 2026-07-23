@@ -933,6 +933,17 @@ crates.io-only fixture 和离线只读 registry，全部通过；publish workflo
 alpha.29 已可从 crates.io 获取。这一阶段证明的是“同步 bootstrap 后可进入有界增量 runner”，
 不是“vendor bootstrap 已增量化”。
 
+`hisi-rf-ws63 0.1.0-alpha.19` 又把同步 bootstrap 拆成 11 个固定编号的诊断阶段：resource claim、
+crypto install/self-test、vendor memory、ROM timebase、vendor Wi-Fi init、station netdev create、
+event registration、station open、supplicant port 和 native supplicant create。每阶段只记录进入、
+完成、失败、可计时调用数和观测到的最大毫秒数；timebase 初始化前不伪造 `0 ms` 证据，阶段
+边界也不承诺 vendor 调用可抢占。minimal target、WPA2/WPA3 blocking/incremental、独立 package
+及 Linux/macOS/Windows 最终 RF 链接在 CI `29985603598` 全绿，publish workflow
+`29985785769` 成功。`hisi-rf 0.1.0-alpha.30` 从安全 WS63 composition root 转发这些隐藏诊断
+类型，CI `29986181474` 的六组三平台 consumer 与 crates.io-only/offline gate 全绿，publish
+workflow `29986543335` 成功。当前仍缺真实硅片逐阶段 WCT 和可轮询 vendor init 边界，因此
+这些证据不会把默认 backend 切换为增量实现，也不会提前关闭 A5B。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -975,12 +986,12 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
-- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.18 已闭合 upstream supplicant 的
+- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.19 已闭合 upstream supplicant 的
   scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence、预算回归，以及同步
-  bootstrap 后的 owned facade/runner 生命周期。初始化仍包含 `uapi_wifi_init`、netdev 创建、事件注册
-  和 native supplicant create 等不可抢占 vendor 调用；alpha.18 只显式标出这条同步边界，未把它
-  包装成增量调用。只有拿到可轮询的 vendor 边界，或逐阶段证明可接受的最坏时延并接入真实 facade
-  wait platform 后，才允许勾选。
+  bootstrap 后的 owned facade/runner 生命周期。alpha.19 已为初始化的 11 个阶段提供无秘密统计，
+  但 `uapi_wifi_init`、netdev 创建、事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占，
+  不能因有计时器就包装成增量调用。只有拿到可轮询的 vendor 边界，或在真实硅片逐阶段证明可接受的
+  最坏时延并接入真实 facade wait platform 后，才允许勾选。
 
 #### A5R -- 可执行 RTOS 语义
 
