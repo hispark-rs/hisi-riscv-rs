@@ -2,7 +2,7 @@
 
 ## 状态与归属
 
-**配套工作 / P1。** A5R-F2 已闭合；当前下一批执行项是 A5R-F3 至 F5，并受单一 WIP 规则约束：A5U
+**配套工作 / P1。** A5R-F3 已闭合；当前下一批执行项是 A5R-F4 至 F5，并受单一 WIP 规则约束：A5U
 闭合前不抢占 active slot。跨计划优先级与依赖以
 [工程计划注册表](README.md)为准。
 
@@ -309,7 +309,11 @@ CI 最终分为：
 2. **V1 单 Hart 基础规范**：冻结 identity/state/queue/priority、Cooperative、
    Preemptive、scheduler lock 和 IRQ epilogue。
 3. **V2 Wait 与 Mutex 规范**：冻结 signal-timeout race、semaphore grant、recursive
-   mutex 和 transitive priority inheritance；补齐 TLA+ 与 Kani。
+   mutex 和 transitive priority inheritance；`hisi-rtos 0.1.0-alpha.11` 已将
+   `PriorityInheritance.tla`、两条 production-path Kani harness、FIFO/cycle host
+   regression 与 requirement map 纳入 CI。TLC 对两级 donation/cancel/timeout/release/
+   cycle-rejection 模型完整搜索 1,039 个 generated、299 个 distinct state、depth 10，
+   未发现反例；60 个 host tests 与两个新增 Kani harness 均通过。
 4. **V3 Budget 设计冻结**：已冻结 `Budgeted` 为周期 CPU quota 上限，并实现
    throttle/replenishment、scheduler-lock fail-stop 上界与可执行模型；后续不改变其为
    最低服务保证。

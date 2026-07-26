@@ -1135,9 +1135,13 @@ A5R 后续排期和验收顺序。
   类型保持中立；mutex handoff/cancel 的具体行为继续由 production host tests 覆盖，优先级
   donation 属于 F3。sleep/throttle 和全局 single-running 仍由 `RTOS-STATE-*`/budget 模型
   追踪，不把本项写成整个 scheduler 状态空间已被证明。
-- [ ] **A5R-F3 -- 优先级继承**：覆盖最高有效优先级 waiter、同级 FIFO、
-  donation 传播与移除、timeout/cancel/release 后基础优先级恢复，并对链式继承和
-  cycle 拒绝给出有界反例搜索。
+- [x] **A5R-F3 -- 优先级继承**：`hisi-rtos 0.1.0-alpha.11` 已覆盖最高有效优先级
+  waiter、同级 FIFO、donation 传播与移除、timeout/cancel/release 后基础优先级恢复，
+  并对两级链式继承和 cycle 拒绝完成有界反例搜索。抽象 TLA+ 模型完整搜索 299 个
+  distinct state；两条 production-path Kani harness、60 个 host tests、RV32 build/
+  clippy 与 requirements drift gate 均通过，CI run `30204615209` 和 crates.io publish
+  run `30204693243` 全绿。完整语义与证据边界见
+  [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md)。
 - [ ] **A5R-F4 -- Port 线性化**：在公开 scheduler/wait 语义冻结后，建模 timer
   re-arm generation，证明 stale arm 不能覆盖更早 deadline；按已排期的 switch-intent/
   ticket protocol 建模 commit/cancel/consume exactly once、identity generation 和 detached
