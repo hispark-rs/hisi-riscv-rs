@@ -1081,12 +1081,16 @@ A5R 后续排期和验收顺序。
   mutex handle 的 create/destroy/reuse，验证 stale handle 不能命中新对象、重复销毁失败、
   存在 waiter/owner 时销毁 fail closed；Kani 覆盖实际 slot/generation 编码与 pool
   状态转换。`ResourceLifecycle.tla` 与两条 production-encoding Kani harness 已进入 CI。
-- [ ] **A5R-F2 -- Wait 线性化与 Queue Ownership（部分完成）**：用 TLA+/PlusCal 覆盖
-  post/timeout/cancel/grant 交错，证明每次 wait 只有一个 terminal result、direct grant
-  不丢失也不被第三个任务窃取；同时证明 task 在 running/ready/wait/sleep/
-  throttle 状态和队列中只有一个归属、无重复入队、无丢失任务。当前生命周期模型已覆盖
-  grant/resource conservation，共享场景已覆盖 cancel-after-grant；完整 wait queue ownership
-  与 terminal-result 线性化仍待建模。
+- [x] **A5R-F2 -- Wait 线性化与 Queue Ownership**：`WaitLinearization.tla` 已覆盖
+  post/timeout/cancel/direct-grant/consume 交错，验证 wait/ready 归属互斥、grant 只属于
+  Ready task、terminal result 唯一和 permit conservation；TLC 完整搜索生成 47 个状态、
+  27 个 distinct state、depth 4。两条 production-path Kani harness 显式穷举 signal 前后
+  cancel、signal 前后 timeout、grant pending/consume，分别完成 582 和 568 项检查且零失败。
+  semaphore cancel/timeout 的线性化步骤由通用 runtime 与 proof 共用，wait queue 删除遍历
+  以实际 17 个 task slot 为上界，损坏或成环队列不再无限挂住 scheduler。抽象模型对资源
+  类型保持中立；mutex handoff/cancel 的具体行为继续由 production host tests 覆盖，优先级
+  donation 属于 F3。sleep/throttle 和全局 single-running 仍由 `RTOS-STATE-*`/budget 模型
+  追踪，不把本项写成整个 scheduler 状态空间已被证明。
 - [ ] **A5R-F3 -- 优先级继承**：覆盖最高有效优先级 waiter、同级 FIFO、
   donation 传播与移除、timeout/cancel/release 后基础优先级恢复，并对链式继承和
   cycle 拒绝给出有界反例搜索。

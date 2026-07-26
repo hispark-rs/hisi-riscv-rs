@@ -2,7 +2,7 @@
 
 ## 状态与归属
 
-**配套工作 / P1。** 当前下一批执行项是 A5R-F2 至 F5，并受单一 WIP 规则约束：A5U
+**配套工作 / P1。** A5R-F2 已闭合；当前下一批执行项是 A5R-F3 至 F5，并受单一 WIP 规则约束：A5U
 闭合前不抢占 active slot。跨计划优先级与依赖以
 [工程计划注册表](README.md)为准。
 
@@ -327,7 +327,11 @@ CI 最终分为：
 已完成的 unified context、IRQ epilogue、software interrupt、priority inheritance、
 scheduler stress 和 Budgeted HIL 是 V0/V1/V2/V3/V5 的输入，不需要推倒重做。
 `Budgeted` 已有 host tests、Kani harness、TLA+ model 和 WS63 quota marker，但这些证据
-仍只覆盖已列出的性质与场景，不证明所有事件排列。Q2-Q4 的观测、archive profile 和
+仍只覆盖已列出的性质与场景，不证明所有事件排列。wait 线性化已由
+`WaitLinearization.tla` 对 post/timeout/cancel/grant/consume 交错完成 47/27 状态搜索，
+并由两条 production-path Kani harness 显式穷举 signal/cancel 与 signal/timeout 顺序；
+它证明 wait/ready/grant ownership 和 permit conservation，不替代 mutex PI、全局
+scheduler state 或真机机制证据。Q2-Q4 的观测、archive profile 和
 group-quota gate 仍未完成；不得从现有 quota 逻辑隐式演化出 Reservation 契约。
 
 ## 非目标
