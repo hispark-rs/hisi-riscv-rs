@@ -944,6 +944,19 @@ event registration、station open、supplicant port 和 native supplicant create
 workflow `29986543335` 成功。当前仍缺真实硅片逐阶段 WCT 和可轮询 vendor init 边界，因此
 这些证据不会把默认 backend 切换为增量实现，也不会提前关闭 A5B。
 
+`hisi-rf-ws63 0.1.0-alpha.20` 随后闭合了 vendor Wi-Fi bootstrap 的栈破坏问题。根因是普通
+8 KiB main stack 在同步 `uapi_wifi_init` 中溢出并破坏相邻 vendor `.bss`，不是 PAC、RTOS
+handle、relocation 或 flash。`hisi-riscv-rt 0.5.6` 新增显式
+`ws63-radio-main-stack-32k` profile；RF bootstrap 选择该 profile 并在 resource report 中声明
+`main_stack_bytes_required = 32768`，普通 WS63 固件仍保持 8 KiB 默认值。3 MHz 完整烧录与
+verify 后，同一镜像连续 20 次 nRST 均得到 `RFDBG_BOOTSTRAP_PROFILE_OK`，vendor Wi-Fi init
+20/20 完成，实测 61--62 ms。RT/RF 的 CI runs `30194568618`/`30195327948` 与 publish runs
+`30194608951`/`30195406751` 均通过；RF CI 还覆盖 Linux/macOS/Windows 的 plain firmware 和
+bootstrap profile 最终链接。完整证据见
+[A5B bootstrap stack evidence](evidence/ws63-rf-a5b-bootstrap-stack-2026-07-26.md)。
+这证明当前同步 bootstrap 的实测最坏时延在该样本矩阵内可接受，但不把 vendor 调用改写成
+可轮询或可抢占操作，也不切换默认 backend。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -964,8 +977,9 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
   core alpha.13/WS63 alpha.15 已接好 runner/poll、control/event queue high-water、operation
-  duration、内部 sleep 与 supplicant poll 的无板计数底座。真机运行尚未读取并固化数值，且
-  首次 initialize 会如实显示 untimed，因此不得勾选本项。
+  duration、内部 sleep 与 supplicant poll 的无板计数底座。alpha.20 已在真机固定 bootstrap
+  主栈为 32 KiB，并以 20/20 nRST 记录 vendor init 61--62 ms；scan/connect/disconnect/poll、
+  wake 次数和 queue high-water 尚未读取并固化，因此不得勾选本项。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
@@ -986,12 +1000,13 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
-- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.19 已闭合 upstream supplicant 的
+- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.20 已闭合 upstream supplicant 的
   scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence、预算回归，以及同步
-  bootstrap 后的 owned facade/runner 生命周期。alpha.19 已为初始化的 11 个阶段提供无秘密统计，
-  但 `uapi_wifi_init`、netdev 创建、事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占，
-  不能因有计时器就包装成增量调用。只有拿到可轮询的 vendor 边界，或在真实硅片逐阶段证明可接受的
-  最坏时延并接入真实 facade wait platform 后，才允许勾选。
+  bootstrap 后的 owned facade/runner 生命周期。alpha.19 为初始化的 11 个阶段提供无秘密统计；
+  alpha.20 修复 8 KiB main stack 溢出，并在 32 KiB profile 上以 20/20 nRST 证明当前
+  `uapi_wifi_init` 为 61--62 ms。该证据接受当前 bootstrap 的 blocking WCT，但 netdev 创建、
+  事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占，也尚未接入真实 facade wait
+  platform。不能因有计时器就包装成增量调用；只有这些剩余边界闭合后才允许勾选。
 
 #### A5R -- 可执行 RTOS 语义
 
