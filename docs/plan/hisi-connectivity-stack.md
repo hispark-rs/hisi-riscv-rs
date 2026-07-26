@@ -1142,10 +1142,17 @@ A5R 后续排期和验收顺序。
   clippy 与 requirements drift gate 均通过，CI run `30204615209` 和 crates.io publish
   run `30204693243` 全绿。完整语义与证据边界见
   [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md)。
-- [ ] **A5R-F4 -- Port 线性化**：在公开 scheduler/wait 语义冻结后，建模 timer
-  re-arm generation，证明 stale arm 不能覆盖更早 deadline；按已排期的 switch-intent/
-  ticket protocol 建模 commit/cancel/consume exactly once、identity generation 和 detached
-  ready ownership。这一阶段不提前移除已有 stale-switch recovery。
+- [x] **A5R-F4 -- Port 线性化**：`hisi-rtos 0.1.0-alpha.12` 已用
+  `SwitchIntent { sequence, previous: TaskRef, target: TaskRef,
+  previous_resume_generation }` 和单次消费的 `PendingSwitch` 替换裸
+  `forced_next`；task identity/resume generation 失效时显式取消，并把仍有效的 detached
+  target 归还 ready queue。timer re-arm generation 的静止点最终一致性由
+  `TimerRearm.tla` 和 production-path Kani harness 验证，switch commit/cancel/consume、
+  identity 与 detached ownership 由 `SwitchIntent.tla`、3 条 Kani harness 和 7 条 host
+  regression 覆盖。TLC 分别完整搜索 1,135 与 17 个 distinct state；64 个 host tests、
+  RV32 build/clippy、requirements gate 和 CI run `30208473782` 全绿，publish run
+  `30208614225` 成功。已有 `switch_race_recoveries` 仍保留；只有 T6 真机 parity
+  完成后才允许执行 T7 删除。
 - [ ] **A5R-F5 -- 证据门槛（部分完成）**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。

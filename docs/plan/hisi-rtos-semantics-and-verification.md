@@ -2,7 +2,7 @@
 
 ## 状态与归属
 
-**配套工作 / P1。** A5R-F3 已闭合；当前下一批执行项是 A5R-F4 至 F5，并受单一 WIP 规则约束：A5U
+**配套工作 / P1。** A5R-F4 已闭合；当前下一批执行项是 A5R-F5，并受单一 WIP 规则约束：A5U
 闭合前不抢占 active slot。跨计划优先级与依赖以
 [工程计划注册表](README.md)为准。
 
@@ -163,7 +163,7 @@ critical thread。
 
 <a id="ported-switch-intentticket-protocol-deferred"></a>
 
-### Ported Switch Intent/Ticket 协议（延期）
+### Ported Switch Intent/Ticket 协议（T0-T5 已完成，T6-T7 延期）
 
 当前 `recover_completed_switch_request` 已修复并通过真机证明“thread mode 选出 target
 后、提交 SWI 前，IRQ 已完成切换并又恢复 previous”的高频竞态。它是近期正确性修复，
@@ -175,21 +175,21 @@ identity generation 和单次消费协议替代裸 `(previous, target)` 与 stat
 profile 并行，但不阻塞当前 A5U；也不得与 Q4 group quota 或 G0-G5
 guaranteed-service 扩展合并实施。
 
-1. **T0 规范冻结**：定义 `SwitchIntent`/`PendingSwitch` 状态机。冻结唯一 `Running`、
+1. **T0 规范冻结（完成）**：定义 `SwitchIntent`/`PendingSwitch` 状态机。冻结唯一 `Running`、
    `current` 一致、ready queue/live intent 唯一归属、intent 单次 Commit/Cancel、pending
    单次消费、`TaskRef` generation、idle 不入普通队列、cancel 恢复 detached target。
-2. **T1 内部 Ticket**：引入 `#[must_use] SwitchIntent { sequence, previous:
+2. **T1 内部 Ticket（完成）**：引入 `#[must_use] SwitchIntent { sequence, previous:
    TaskRef, target: SwitchTarget, previous_resume_generation }`；`prepare_yield/block/exit`
    在同一 critical section 返回 intent，`execute_switch` 只接受 intent。
-3. **T2 Generation 验证**：intent 创建时记录 slot identity generation 和 resume
+3. **T2 Generation 验证（完成）**：intent 创建时记录 slot identity generation 和 resume
    generation；提交时变化必须显式分类为 stale/identity mismatch，cancel 并恢复 target。
    FFI/unsafe 边界继续保留运行时防御。
-4. **T3 结构化 Pending 状态**：用 `PendingSwitch { sequence, previous, target }` 替换
+4. **T3 结构化 Pending 状态（完成）**：用 `PendingSwitch { sequence, previous, target }` 替换
    `forced_next: usize`，trap 只能按 sequence 消费一次。
-5. **T4 离队 Ownership**：分阶段引入 `ReadyQueued` / `ReadyDetached {
+5. **T4 离队 Ownership（第一阶段完成）**：分阶段引入 `ReadyQueued` / `ReadyDetached {
    intent_sequence }`；先保留当前 `ready_contains` 防御，只有 membership 已显式建模且
    parity 通过后才删除 bounded scan。
-6. **T5 验证**：覆盖 host interleaving、TLA+ A/B/C 状态机与 Kani；诊断记录
+6. **T5 验证（核心证明完成，HIL 统计待补）**：覆盖 host interleaving、TLA+ A/B/C 状态机与 Kani；诊断记录
    created/committed/cancelled-stale/cancelled-identity/completed/max-age。旧
    `switch_race_recoveries` 至少保留一个迁移周期。
 7. **T6 HIL**：Cooperative/Budgeted/Preemptive/Embassy 加 RF 压力，至少 100 次 reset；
@@ -197,6 +197,14 @@ guaranteed-service 扩展合并实施。
    `created = committed + cancelled` 与 `committed = completed + pending`。
 8. **T7 清理**：只有 ticket parity、形式化检查和 T6 真机门槛全部通过后，才能移除
    当前 state-inference recovery；删除必须是独立提交并保留迁移证据。
+
+T0-T5 当前的软件证据发布于 `hisi-rtos 0.1.0-alpha.12`：timer 与 switch intent 两个 TLA+
+模型分别完整搜索 1,135 和 17 个 distinct state；4 条 production-path Kani harness、
+64 个 host tests、RV32 build/clippy 和 requirement map 在 CI run `30208473782` 通过，
+crates.io publish run `30208614225` 成功。T4 当前仍用有界 `ready_contains` 守卫来表达
+detached ownership；显式 `ReadyDetached { intent_sequence }` 和删除 bounded scan
+属于 T7 之后的独立优化，不是当前正确性前置。`max-age` 与 100-reset 静止点统计仍归
+T6 真机门槛，不能由当前 host/形式化结果替代。
 
 ### Scheduler Lock 与中断
 
