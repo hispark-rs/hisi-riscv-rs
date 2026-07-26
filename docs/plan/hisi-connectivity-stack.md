@@ -985,6 +985,17 @@ crates.io-only fixture 精确锁定 alpha.33/alpha.23，并在 CI `30201114073` 
 Linux/macOS/Windows × WPA2/WPA3、普通最终链接、opt-in incremental contract、离线只读
 registry 和并发构建。ROM 地址与芯片策略仍只由 WS63 backend 拥有，facade 不复制事实。
 
+`hisi-rf-core 0.1.0-alpha.14` 为非默认 incremental runner 增加 allocation-free、饱和计数的
+运行诊断，覆盖 ready batch、wait、operation lifecycle、budget exhausted 以及 driver/protocol
+错误；`hisi-rf-ws63 0.1.0-alpha.24` 增加 backend/L2 signal、waker、platform poll 和 timer-ready
+计数；`hisi-rf 0.1.0-alpha.34` 从公开 composition root 转发两类 snapshot。三仓主 CI
+`30202489928`、`30202636247`、`30202814013` 与 publish workflows `30202532430`、
+`30202726472`、`30203190600` 均通过。发布后的 crates.io-only fixture 进一步精确锁定
+alpha.34/alpha.24/alpha.14，并直接类型检查两类诊断 API；CI `30203358342` 覆盖
+Linux/macOS/Windows、WPA2/WPA3、离线只读 registry 和并发构建，全部通过。该阶段只闭合
+“可读取无秘密统计”的仪表接口；尚未取得真实硅片 scan/connect/disconnect/poll、wake 和
+queue high-water 样本，不能据此勾选下方 HIL baseline 或切换默认 backend。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -1005,9 +1016,11 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
   core alpha.13/WS63 alpha.15 已接好 runner/poll、control/event queue high-water、operation
-  duration、内部 sleep 与 supplicant poll 的无板计数底座。alpha.20 已在真机固定 bootstrap
-  主栈为 32 KiB，并以 20/20 nRST 记录 vendor init 61--62 ms；scan/connect/disconnect/poll、
-  wake 次数和 queue high-water 尚未读取并固化，因此不得勾选本项。
+  duration、内部 sleep 与 supplicant poll 的无板计数底座；core alpha.14/WS63 alpha.24/facade
+  alpha.34 又把 incremental runner 与 wait bridge 的无秘密饱和计数导出到 composition root。
+  alpha.20 已在真机固定 bootstrap 主栈为 32 KiB，并以 20/20 nRST 记录 vendor init
+  61--62 ms；scan/connect/disconnect/poll、wake 次数和 queue high-water 尚未读取并固化，
+  因此不得勾选本项。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
