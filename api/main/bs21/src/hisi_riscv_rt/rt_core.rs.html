@@ -4,10 +4,36 @@
 <a href=#4 id=4 data-nosnippet>4</a>//! chip addresses, image-header layout, interrupt names, or board memory maps.
 <a href=#5 id=5 data-nosnippet>5</a>//! Those facts belong in chip startup adapters and linker fragments.
 <a href=#6 id=6 data-nosnippet>6</a>
-<a href=#7 id=7 data-nosnippet>7</a></span><span class="kw">pub use </span>riscv_rt::{entry, pre_init};
-<a href=#8 id=8 data-nosnippet>8</a>
-<a href=#9 id=9 data-nosnippet>9</a><span class="attr">#[cfg(feature = <span class="string">"riscv-rt-start-experiment"</span>)]
-<a href=#10 id=10 data-nosnippet>10</a>#[doc(hidden)]
-<a href=#11 id=11 data-nosnippet>11</a></span><span class="kw">pub const </span>RISCV_RT_START_EXPERIMENT: <span class="kw-2">&amp;</span>str =
-<a href=#12 id=12 data-nosnippet>12</a>    <span class="string">"reserved: keep using the chip startup adapter until QEMU and HIL prove a riscv-rt _start path"</span>;
+<a href=#7 id=7 data-nosnippet>7</a>/// Marks `fn main() -&gt; !` as the firmware entry point.
+<a href=#8 id=8 data-nosnippet>8</a>///
+<a href=#9 id=9 data-nosnippet>9</a>/// When control reaches `main()`, the startup adapter has already:
+<a href=#10 id=10 data-nosnippet>10</a>///
+<a href=#11 id=11 data-nosnippet>11</a>/// - Initialized shared RAM banks (dynamic memory config)
+<a href=#12 id=12 data-nosnippet>12</a>/// - Initialized and invalidated L1 caches
+<a href=#13 id=13 data-nosnippet>13</a>/// - Relocated all sections from flash to RAM (ROM data → DTCM,
+<a href=#14 id=14 data-nosnippet>14</a>///   TCM text → ITCM, TCM data → DTCM, SRAM text/data → SRAM)
+<a href=#15 id=15 data-nosnippet>15</a>/// - Zeroed BSS (ROM BSS, TCM BSS, SRAM BSS)
+<a href=#16 id=16 data-nosnippet>16</a>/// - Enabled the ROM patch table (if non-empty)
+<a href=#17 id=17 data-nosnippet>17</a>/// - Enabled the FPU (`mstatus.FS = Dirty`)
+<a href=#18 id=18 data-nosnippet>18</a>/// - Set `mie` bits for TIMER0-2, RTC, I2C0, I2C1
+<a href=#19 id=19 data-nosnippet>19</a>///
+<a href=#20 id=20 data-nosnippet>20</a>/// These specifics vary by chip; see the selected chip adapter source module
+<a href=#21 id=21 data-nosnippet>21</a>/// (for example, `chips::ws63`) for the exact sequence.
+<a href=#22 id=22 data-nosnippet>22</a>///
+<a href=#23 id=23 data-nosnippet>23</a>/// # Chip-specific behaviour
+<a href=#24 id=24 data-nosnippet>24</a>///
+<a href=#25 id=25 data-nosnippet>25</a>/// See the crate's `chips` source module for chip-specific startup details.
+<a href=#26 id=26 data-nosnippet>26</a></span><span class="kw">pub use </span>riscv_rt::entry;
+<a href=#27 id=27 data-nosnippet>27</a>
+<a href=#28 id=28 data-nosnippet>28</a><span class="doccomment">/// Runs a function before [`entry`] — typically for custom early
+<a href=#29 id=29 data-nosnippet>29</a>/// initialization.
+<a href=#30 id=30 data-nosnippet>30</a>///
+<a href=#31 id=31 data-nosnippet>31</a>/// See [`entry`] for the environment that has already been set up by the
+<a href=#32 id=32 data-nosnippet>32</a>/// time `main()` is reached.
+<a href=#33 id=33 data-nosnippet>33</a></span><span class="kw">pub use </span>riscv_rt::pre_init;
+<a href=#34 id=34 data-nosnippet>34</a>
+<a href=#35 id=35 data-nosnippet>35</a><span class="attr">#[cfg(feature = <span class="string">"riscv-rt-start-experiment"</span>)]
+<a href=#36 id=36 data-nosnippet>36</a>#[doc(hidden)]
+<a href=#37 id=37 data-nosnippet>37</a></span><span class="kw">pub const </span>RISCV_RT_START_EXPERIMENT: <span class="kw-2">&amp;</span>str =
+<a href=#38 id=38 data-nosnippet>38</a>    <span class="string">"reserved: keep using the chip startup adapter until QEMU and HIL prove a riscv-rt _start path"</span>;
 </code></pre></div></section></main></body></html>

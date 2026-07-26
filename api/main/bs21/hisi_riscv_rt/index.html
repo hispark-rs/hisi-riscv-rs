@@ -1,19 +1,183 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="hisi-riscv-rt"><title>hisi_riscv_rt - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hisi_riscv_rt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (14cae6813 2026-07-08)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate hisi_riscv_rt</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../hisi_riscv_rt/index.html">hisi_<wbr>riscv_<wbr>rt</a><span class="version">0.5.5</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#hisi-riscv-rt" title="hisi-riscv-rt">hisi-riscv-rt</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#attributes" title="Attribute Macros">Attribute Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>hisi_<wbr>riscv_<wbr>rt</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/hisi_riscv_rt/lib.rs.html#1-104">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="hisi-riscv-rt"><a class="doc-anchor" href="#hisi-riscv-rt">§</a>hisi-riscv-rt</h2>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="hisi-riscv-rt"><title>hisi_riscv_rt - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hisi_riscv_rt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (14cae6813 2026-07-08)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate hisi_riscv_rt</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../hisi_riscv_rt/index.html">hisi_<wbr>riscv_<wbr>rt</a><span class="version">0.5.6</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#hisi-riscv-rt" title="hisi-riscv-rt">hisi-riscv-rt</a></li><li><a href="#architecture-overview" title="Architecture overview">Architecture overview</a></li><li><a href="#quick-start" title="Quick start">Quick start</a></li><li><a href="#interrupt-handling" title="Interrupt handling">Interrupt handling</a><ul><li><a href="#weak-symbol-override-convention" title="Weak-symbol override convention">Weak-symbol override convention</a></li><li><a href="#mscratch-register-contract" title="`mscratch` register contract"><code>mscratch</code> register contract</a></li><li><a href="#four-stack-model" title="Four-stack model">Four-stack model</a></li></ul></li><li><a href="#rtos-integration" title="RTOS integration">RTOS integration</a></li><li><a href="#feature-flags" title="Feature flags">Feature flags</a></li><li><a href="#safety-invariants" title="Safety invariants">Safety invariants</a></li><li><a href="#linker-conventions" title="Linker conventions">Linker conventions</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#attributes" title="Attribute Macros">Attribute Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>hisi_<wbr>riscv_<wbr>rt</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/hisi_riscv_rt/lib.rs.html#1-344">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="hisi-riscv-rt"><a class="doc-anchor" href="#hisi-riscv-rt">§</a>hisi-riscv-rt</h2>
 <p>Runtime entry support for HiSilicon RISC-V firmware.</p>
 <p>The public crate interface is intentionally small: it re-exports the
 <code>riscv-rt</code> entry attributes, the selected chip PAC’s interrupt enum, and the
 single-hart critical-section implementation configured through the <code>riscv</code>
 crate. Chip-specific reset code, linker fragments, and image headers live
-behind startup adapters. Chip interrupt symbols (<code>device.x</code>) are owned by the
-selected PAC’s <code>rt</code> feature.</p>
+behind startup adapters.</p>
 <p>Current adapters:</p>
 <ul>
-<li><code>chip-ws63</code>: WS63 startup, linker layout, <code>ws63-pac/rt</code> interrupt symbols,
-and optional link-time boot header.</li>
-<li><code>chip-bs21</code> + <code>unstable</code>: BS2X compatibility path. This crate provides a
-BS21/BS2X default <code>memory.x</code>, a BS2X layout adapter, legacy startup, and
-<code>bs2x-pac/rt</code> provides <code>device.x</code>. BS20/custom boards should provide their
-own <code>memory.x</code>.</li>
+<li><code>chip-ws63</code>: WS63 startup, linker layout, interrupt symbols, and optional
+link-time boot header.</li>
+<li><code>chip-bs21</code> + <code>unstable</code>: BS2X compatibility path.</li>
 </ul>
 <p>Downstream binaries should link with <code>-Thisi-riscv-link.x</code>.</p>
-</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="interrupt/index.html" title="mod hisi_riscv_rt::interrupt">interrupt</a></dt><dd>Interrupt numbers, priority levels, and HART IDs.</dd><dt><a class="mod" href="prelude/index.html" title="mod hisi_riscv_rt::prelude">prelude</a></dt><dd>Prelude: commonly used runtime types.</dd><dt><a class="mod" href="rt_core/index.html" title="mod hisi_riscv_rt::rt_core">rt_core</a></dt><dd>CPU-generic runtime facade.</dd></dl><h2 id="attributes" class="section-header">Attribute Macros<a href="#attributes" class="anchor">§</a></h2><dl class="item-table"><dt><a class="attr" href="attr.entry.html" title="attr hisi_riscv_rt::entry">entry</a></dt><dd>Attribute to declare the entry point of the program</dd><dt><a class="attr" href="attr.pre_init.html" title="attr hisi_riscv_rt::pre_init">pre_<wbr>init</a></dt><dd>Attribute to mark which function will be called at the beginning of the reset handler.</dd></dl></section></div></main></body></html>
+<h2 id="architecture-overview"><a class="doc-anchor" href="#architecture-overview">§</a>Architecture overview</h2><div class="example-wrap"><pre class="language-text"><code>Power-on / reset
+  │
+  ▼
+reset_vector (asm/ws63/startup.S)
+  ├── Clear PMP, set mtvec, disable interrupts
+  ├── Enable FPU, initialize gp / sp
+  ├── Fill stack canary
+  └── tail runtime_init
+        │
+        ▼
+      runtime_init() (Rust, chips/ws63/startup.rs)
+        ├── Shared-RAM init (dyn_mem_cfg)
+        ├── Cache init &amp; invalidate
+        ├── Multi-region relocation (ROM data, TCM text/data, SRAM text/data)
+        ├── BSS zeroing
+        ├── ROM patch enable
+        ├── MIE bits set (TIMER0-2, RTC, I2C0, I2C1)
+        └── call main()
+              │
+              ▼
+            your #[entry] fn main() -&gt; !</code></pre></div><div class="example-wrap"><pre class="language-text"><code>Interrupt arrives
+  │
+  ▼
+mtvec → trap_vector (vectored mode)
+  ├── mie_interruptX_handler / local_interrupt_handler
+  │     ├── csrci mstatus, 0x08          (disable interrupts)
+  │     ├── hisi_push_task_context       (save 272B unified frame)
+  │     ├── csrw mscratch, sp            (stash frame pointer)
+  │     ├── la sp, __irq_stack_top__     (switch to IRQ stack)
+  │     ├── call user_handler            (weak symbol override)
+  │     ├── csrr a0, mscratch            (a0 = frame)
+  │     ├── call __hisi_irq_epilogue     (RTOS scheduling hook)
+  │     ├── j __hisi_resume_trap         (restore frame + mret)
+  │
+  ├── trap_entry (exceptions)
+  │     ├── save_all                     (save 36-word frame incl. CSRs)
+  │     ├── csrw mscratch, sp
+  │     ├── la sp, __exc_stack_top__
+  │     ├── dispatch via excp_vect_table
+  │     ├── csrr sp, mscratch
+  │     ├── restore_all + mret
+  │
+  └── nmi_vector
+        ├── csrci mstatus, 0x08
+        ├── save_all
+        ├── csrw mscratch, sp
+        ├── la sp, __nmi_stack_top__
+        ├── call nmi_handler
+        ├── csrr sp, mscratch
+        ├── restore_all + mret</code></pre></div><h2 id="quick-start"><a class="doc-anchor" href="#quick-start">§</a>Quick start</h2>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#![no_std]
+#![no_main]
+
+</span><span class="kw">use </span>hisi_riscv_rt::entry;
+
+<span class="attr">#[entry]
+</span><span class="kw">fn </span>main() -&gt; ! {
+    <span class="comment">// At this point:
+    //   - .data / .bss / TCM sections have been relocated
+    //   - FPU is enabled (mstatus.FS = Dirty)
+    //   - L1 caches are initialized and invalidated
+    //   - MIE bits are set
+    //   - ROM patch table is resident in ITCM
+    //   - ITCM / DTCM are available
+    //   - WiFi / BT protocol stacks are NOT yet initialized
+    </span><span class="kw">loop </span>{}
+}</code></pre></div><h2 id="interrupt-handling"><a class="doc-anchor" href="#interrupt-handling">§</a>Interrupt handling</h2><h3 id="weak-symbol-override-convention"><a class="doc-anchor" href="#weak-symbol-override-convention">§</a>Weak-symbol override convention</h3>
+<p>Interrupt handlers in <code>startup.S</code> are declared as <strong>weak symbols</strong> (<code>.weak</code>
+directive). To handle an interrupt, define a function with the <strong>exact same
+name</strong> in your Rust code:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
+</span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>TIMER_INT0() {
+    <span class="comment">// your ISR logic — no register save/restore, no mret
+</span>}</code></pre></div>
+<p>The handler is called by the assembly entry with the following environment
+already set up:</p>
+<ul>
+<li>A 272-byte unified <code>TaskContext</code> frame has been saved via
+<code>hisi_push_task_context</code>.</li>
+<li><code>sp</code> points to the <strong>IRQ stack</strong> (<code>__irq_stack_top__</code>).</li>
+<li>Machine interrupts are disabled; the entry will re-enable them on exit.</li>
+<li><code>mscratch</code> holds the saved frame pointer (see below).</li>
+</ul>
+<p>Your handler <strong>must</strong> follow these rules:</p>
+<ul>
+<li><strong>Signature</strong>: <code>extern "C" fn()</code> — no arguments, no return value.</li>
+<li><strong>No <code>mret</code></strong>: the assembly entry performs <code>mret</code> via <code>__hisi_resume_trap</code>.</li>
+<li><strong>No direct <code>mscratch</code> access</strong>: <code>mscratch</code> is owned by the runtime.</li>
+<li><strong>Do not block</strong> or wait on hardware indefinitely — the interrupt entry
+masks interrupts, and the epilogue expects a timely return.</li>
+<li><strong>If two modules define the same weak symbol</strong>, the linker silently picks
+one — there is no duplicate-symbol error.</li>
+</ul>
+<h3 id="mscratch-register-contract"><a class="doc-anchor" href="#mscratch-register-contract">§</a><code>mscratch</code> register contract</h3>
+<p>The <code>mscratch</code> CSR is <strong>exclusively owned</strong> by <code>hisi-riscv-rt</code>. It is used to
+atomically swap the stack pointer between execution contexts via <code>csrrw</code>:</p>
+<div class="example-wrap"><pre class="language-text"><code>Normal execution:   mscratch = __irq_stack_top__
+During interrupt:   mscratch = saved TaskContext frame pointer
+During exception:    mscratch = saved frame pointer (36-word save_all)
+During NMI:         mscratch = saved frame pointer</code></pre></div>
+<p><strong>User code must never read or write <code>mscratch</code>.</strong> Doing so silently corrupts
+the stack-switch machinery and will cause undefined behaviour on the next
+trap.</p>
+<h3 id="four-stack-model"><a class="doc-anchor" href="#four-stack-model">§</a>Four-stack model</h3>
+<p>The runtime allocates four independent stacks in SRAM (top-down, sizes
+configurable via <code>memory.x</code>):</p>
+<div><table><thead><tr><th>Stack</th><th>Symbol</th><th>Default size</th><th>Used by</th></tr></thead><tbody>
+<tr><td>User / main</td><td><code>__stack_top__</code></td><td>8 KiB</td><td>application code</td></tr>
+<tr><td>IRQ</td><td><code>__irq_stack_top__</code></td><td>2 KiB</td><td>MIE interrupts (26-31) and local interrupts (32-91)</td></tr>
+<tr><td>Exception</td><td><code>__exc_stack_top__</code></td><td>2 KiB</td><td>synchronous exceptions (illegal insn, bus fault, …)</td></tr>
+<tr><td>NMI</td><td><code>__nmi_stack_top__</code></td><td>1 KiB</td><td>non-maskable interrupt</td></tr>
+</tbody></table>
+</div>
+<p>Each stack is independent — an overflow in one does not corrupt the others.
+Stack sizes can be overridden in your <code>memory.x</code>:</p>
+<div class="example-wrap"><pre class="language-ld"><code>__irq_stack_size = 0x1000;  /* 4 KiB */</code></pre></div><h2 id="rtos-integration"><a class="doc-anchor" href="#rtos-integration">§</a>RTOS integration</h2>
+<p>When an RTOS (e.g. <code>hisi-rtos</code>) is linked, it provides a <strong>strong symbol</strong>
+for <code>__hisi_irq_epilogue</code>:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[<span class="kw">unsafe</span>(no_mangle)]
+</span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>__hisi_irq_epilogue(frame: usize) -&gt; usize {
+    <span class="comment">// frame: *mut TaskContext (272-byte unified frame on IRQ stack)
+    // return: *mut TaskContext (same or different task's frame)
+</span>}</code></pre></div>
+<p>The epilogue may select a different task’s frame to resume. If no RTOS is
+linked, the default weak symbol returns <code>frame</code> unchanged (resume the
+interrupted context).</p>
+<h2 id="feature-flags"><a class="doc-anchor" href="#feature-flags">§</a>Feature flags</h2><div><table><thead><tr><th>Feature</th><th>Default</th><th>Chip</th><th>Effect</th></tr></thead><tbody>
+<tr><td><code>bundled-memory-x</code></td><td>on</td><td>all</td><td>Emit default <code>memory.x</code> via <code>build.rs</code></td></tr>
+<tr><td><code>chip-ws63</code></td><td>off</td><td>WS63</td><td>WS63 startup adapter, <code>ws63-pac/rt</code> interrupts</td></tr>
+<tr><td><code>chip-bs21</code></td><td>off</td><td>BS2X</td><td>BS2X startup adapter (requires <code>unstable</code>)</td></tr>
+<tr><td><code>boot-header</code></td><td>off</td><td>WS63</td><td>Embed 0x300-byte HiSilicon image header at <code>0x230000</code></td></tr>
+<tr><td><code>ws63-bgle-32k</code></td><td>off</td><td>WS63</td><td>Use 32 KiB BGLE exchange memory profile (radio images)</td></tr>
+<tr><td><code>ws63-radio-main-stack-32k</code></td><td>off</td><td>WS63</td><td>Select the HIL-verified 32 KiB main-stack envelope for synchronous radio bootstrap</td></tr>
+<tr><td><code>startup-uart-trace</code></td><td>off</td><td>WS63</td><td>Emit 4-char markers (e.g. <code>RT2!</code>) on UART0 during startup</td></tr>
+<tr><td><code>riscv-rt-start-experiment</code></td><td>off</td><td>WS63</td><td>Delegate <code>_start</code> to <code>riscv-rt</code>; inject WS63 hooks (requires <code>unstable</code>)</td></tr>
+<tr><td><code>unstable</code></td><td>off</td><td>all</td><td>Gate for experimental APIs (no stability guarantee)</td></tr>
+</tbody></table>
+</div><h2 id="safety-invariants"><a class="doc-anchor" href="#safety-invariants">§</a>Safety invariants</h2>
+<p>Users of this crate must uphold these contracts:</p>
+<ul>
+<li><strong><code>mscratch</code> exclusivity</strong>: do not read or write <code>mscratch</code> in any
+application, HAL, or RTOS code.</li>
+<li><strong>Weak-symbol signature</strong>: handlers must be <code>extern "C" fn()</code> with no
+arguments and no return value. Mismatched signatures cause UB.</li>
+<li><strong>No duplicate weak symbols</strong>: if two translation units define the same
+handler name, the linker silently picks one — there is no error.</li>
+<li><strong>Stack sizing</strong>: ensure each stack is large enough for its worst-case
+depth. The runtime does not perform stack overflow checking.</li>
+<li><strong>Chip-specific addresses are in chip adapter docs</strong>: see the
+<code>chips::ws63</code> or <code>chips::bs2x</code> source modules for memory maps and startup
+sequences.</li>
+</ul>
+<h2 id="linker-conventions"><a class="doc-anchor" href="#linker-conventions">§</a>Linker conventions</h2>
+<p>When <code>bundled-memory-x</code> is enabled (default), <code>hisi-riscv-rt</code> emits
+<code>memory.x</code> via <code>build.rs</code>. If you provide a custom <code>memory.x</code>:</p>
+<ul>
+<li>The four stack symbols (<code>__stack_top__</code>, <code>__irq_stack_top__</code>,
+<code>__exc_stack_top__</code>, <code>__nmi_stack_top__</code>) must be defined in the <code>.stacks</code>
+section of <code>layout.ld</code> in the correct relative order.</li>
+<li><code>.text.entry</code> and <code>.text.runtime.init</code> must be placed at the start of the
+PROGRAM region.</li>
+<li>ITCM/DTCM ORIGIN values must match the target chip (see chip adapter docs).</li>
+<li>The <code>PRESERVE</code> region (256 bytes at end of SRAM) must not be removed —
+boot state is shared through it.</li>
+</ul>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="interrupt/index.html" title="mod hisi_riscv_rt::interrupt">interrupt</a></dt><dd>Interrupt numbers, priority levels, and HART IDs.</dd><dt><a class="mod" href="prelude/index.html" title="mod hisi_riscv_rt::prelude">prelude</a></dt><dd>Prelude: commonly used runtime types.</dd><dt><a class="mod" href="rt_core/index.html" title="mod hisi_riscv_rt::rt_core">rt_core</a></dt><dd>CPU-generic runtime facade.</dd></dl><h2 id="attributes" class="section-header">Attribute Macros<a href="#attributes" class="anchor">§</a></h2><dl class="item-table"><dt><a class="attr" href="attr.entry.html" title="attr hisi_riscv_rt::entry">entry</a></dt><dd>Marks <code>fn main() -&gt; !</code> as the firmware entry point.</dd><dt><a class="attr" href="attr.pre_init.html" title="attr hisi_riscv_rt::pre_init">pre_<wbr>init</a></dt><dd>Runs a function before <a href="attr.entry.html" title="attr hisi_riscv_rt::entry"><code>entry</code></a> — typically for custom early
+initialization.</dd></dl></section></div></main></body></html>
