@@ -298,6 +298,14 @@ software IRQ、cache、blob ABI 和 RF latency 只能由 QEMU/HIL/oracle evidenc
 TLA+ property/action、Kani harness、host/property test、QEMU/HIL test 或
 `NotApplicable` 理由，以及 implementation symbols。
 
+`hisi-rtos` commit `4498331` 已把这一约束实现为 fail-closed CI gate：检查器会解析
+`requirements.toml`，验证 implementation/host test 符号、TLA invariant/model config、
+Kani harness 及其 CI invocation，并校验 HIL marker 形状。CI 生成确定性的
+`requirement-evidence` JSON（含固定 Kani/TLA+ 版本、模型和 harness inventory），同时
+保存完整 `tla-state-space-evidence` 日志，使成功统计和失败反例都可下载审计。带 HIL
+marker 的 requirement 只标为 `hil-required`，不会因软件 proof 通过而自动毕业。CI run
+`30208954292` 已验证 check、6 个 TLA model 和 11 个 Kani harness 全绿。
+
 CI 最终分为：
 
 - `rtos-spec`：规范 ID、链接、manifest 和 trace schema drift；

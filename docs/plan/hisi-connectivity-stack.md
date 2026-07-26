@@ -1157,8 +1157,12 @@ A5R 后续排期和验收顺序。
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
   trap frame/`mret`/FPU/IRQ 时序仍由 RV32 compile checks 与真机 HIL 验收，不宣称
-  TLA+ 或 Kani 可以替代硬件证据。TLC/Kani pin、模型统计和 requirement map 已进入 CI；
-  A5R 新增资源/取消语义的真机 marker 尚未验收。
+  TLA+ 或 Kani 可以替代硬件证据。`hisi-rtos` commit `4498331` 已让 CI 对 41 个
+  requirement 的实现符号、host test、TLA invariant、Kani harness/CI invocation 和 HIL
+  marker 做 fail-closed 校验，并发布带固定工具版本的 `requirement-evidence` JSON 与完整
+  `tla-state-space-evidence` 日志；CI run `30208954292` 的 check、TLA 和 11 条 Kani
+  harness 全绿。软件可追溯性门槛已闭合；12 个带 HIL marker 的 requirement 仍明确标为
+  `hil-required`，A5R 新增资源/取消语义的真机 marker 尚未验收。
 
 #### A5F -- 单依赖 Facade
 
