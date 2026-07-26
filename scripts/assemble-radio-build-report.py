@@ -16,7 +16,7 @@ from typing import Any
 
 
 SCHEMA = "hisi-rf-build-report/v1"
-RESOURCE_SCHEMA = "hisi-rf-resource-report/v2"
+RESOURCE_SCHEMA = "hisi-rf-resource-report/v3"
 PLAN_KEYS = (
     "base_addr",
     "image_len",
@@ -105,6 +105,9 @@ def self_test() -> None:
                     "schema": RESOURCE_SCHEMA,
                     "profile": "wifi-wpa2-smoltcp",
                     "profile_revision": "fixture-v1",
+                    "runtime_contract": "hisi-rf-rtos-driver/v1.3-ported-cooperative",
+                    "task_admission": "owner-bound-reservation",
+                    "main_stack_bytes_required": 0x8000,
                     "flash_bytes": None,
                 }
             ),
@@ -126,6 +129,8 @@ def self_test() -> None:
         persisted = load_object(output, "build report")
         assert persisted["schema"] == SCHEMA
         assert persisted["resource"]["flash_bytes"] == image.stat().st_size
+        assert persisted["resource"]["main_stack_bytes_required"] == 0x8000
+        assert persisted["resource"]["task_admission"] == "owner-bound-reservation"
         assert persisted["artifact"]["elf_name"] == elf.name
         assert persisted["artifact"]["image_name"] == image.name
         assert str(root) not in output.read_text(encoding="utf-8")
