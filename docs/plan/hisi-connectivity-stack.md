@@ -957,6 +957,34 @@ bootstrap profile 最终链接。完整证据见
 这证明当前同步 bootstrap 的实测最坏时延在该样本矩阵内可接受，但不把 vendor 调用改写成
 可轮询或可抢占操作，也不切换默认 backend。
 
+`hisi-rf-ws63 0.1.0-alpha.21` 随后把真实增量等待平台收进 WS63 composition root：
+callback 采用边沿通知、L2 RX 采用电平检查、timer deadline 复用 `hisi-rtos` 提供的
+Embassy 单调时钟；应用侧的 `IncrementalRadioRunner::wait_ready()` 不再要求自行实现
+WS63 wait platform。默认 blocking backend 保持不变，WPA2/WPA3 blocking/incremental、
+RV32、独立 package 与 Linux/macOS/Windows 最终链接 CI `30199337137` 全绿，publish
+workflow `30199422282` 成功。alpha.22 又把 backend 生成的 mask-ROM fallback linker
+script 作为 Cargo `links` metadata 显式导出；三平台完整链接 CI `30199903543` 与
+publish workflow `30199981160` 成功。
+
+这项修复随后暴露了一条 release-unit 边界缺陷：Cargo 不会把依赖 crate 的
+`cargo:rustc-link-arg` 传给最终应用。未发布的 `hisi-rf 0.1.0-alpha.31` 因此在跨平台
+完整链接 CI `30199606414` 中失败；没有 tag 或上传。alpha.22 的 Cargo metadata 与
+`hisi-rf 0.1.0-alpha.32` 的 facade build-script relay 只能修复“facade 自身是当前
+package root”的一层路径，CI `30200099048` 和 publish workflow `30200262951` 虽然成功，
+但发布后精确锁定 alpha.32 的两层 `application -> hisi-rf -> hisi-rf-ws63` fixture
+在 CI `30200341652` 再次因 mask-ROM 符号未定义而失败。这个失败证明 build-script linker
+argument 不能跨 library dependency 递归 relay，不能作为公开 composition contract。
+
+`hisi-rf-ws63 0.1.0-alpha.23` 改为把 mask-ROM 地址作为全局绝对 ELF symbol 编入 backend
+rlib；最终应用从 archive closure 正常解析这些符号，不再依赖可见性受 package 边界限制的
+linker argument。backend 的 host/profile/RV32/package 以及 Linux/macOS/Windows 完整固件
+链接在 CI `30200638835` 全绿，publish workflow `30200720676` 成功。
+`hisi-rf 0.1.0-alpha.33` 随后删除无效 relay，只精确选择 alpha.23；当前源码测试和六组
+完整 facade 链接在 CI `30200915891` 通过，publish workflow `30201065552` 成功。发布后的
+crates.io-only fixture 精确锁定 alpha.33/alpha.23，并在 CI `30201114073` 通过
+Linux/macOS/Windows × WPA2/WPA3、普通最终链接、opt-in incremental contract、离线只读
+registry 和并发构建。ROM 地址与芯片策略仍只由 WS63 backend 拥有，facade 不复制事实。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -989,7 +1017,8 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。
-  callback/IRQ 仍只复制 bounded data、置位和 wake。
+  callback/IRQ 仍只复制 bounded data、置位和 wake。WS63 composition 已在 alpha.21 内置
+  callback/L2/timer bridge；外部平台参数只保留给 core conformance fixture。
 - [x] 固定 operation lifecycle：`Queued -> Started -> CancelRequested -> Terminal`；取消前、
   启动后、底层不可立即取消和 terminal event 同时到达均有定义。late event 必须按
   operation generation 丢弃或归档，不能错误完成新请求。
@@ -1005,8 +1034,10 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   bootstrap 后的 owned facade/runner 生命周期。alpha.19 为初始化的 11 个阶段提供无秘密统计；
   alpha.20 修复 8 KiB main stack 溢出，并在 32 KiB profile 上以 20/20 nRST 证明当前
   `uapi_wifi_init` 为 61--62 ms。该证据接受当前 bootstrap 的 blocking WCT，但 netdev 创建、
-  事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占，也尚未接入真实 facade wait
-  platform。不能因有计时器就包装成增量调用；只有这些剩余边界闭合后才允许勾选。
+  事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占。alpha.21 已接入真实
+  facade wait platform，但尚未取得 scan/connect/disconnect/poll、runner wake 与 queue
+  high-water 的真机统计。不能因有计时器就包装成增量调用；只有这些剩余边界与证据闭合后
+  才允许勾选。
 
 #### A5R -- 可执行 RTOS 语义
 
