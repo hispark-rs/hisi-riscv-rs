@@ -74,6 +74,12 @@ storage, versioned machine-readable reports, actionable typed errors, and a
 template happy path. Pure-WPA3 evidence remains an external gate; this no-board
 work does not remove the vendor oracle or claim WPA3 stability.
 
+Task-stack allocation is now observable on silicon: the post-scan snapshot
+measured five live dynamic tasks at 24 KiB each, while the profile keeps a sixth
+slot reserved for the connect-time envelope. Caller-owned stacks, high-water
+measurement, the supplicant arena, and pre-init memory admission remain open.
+Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
+
 ## LATER -- Triggered Product Directions
 
 After W2, choose exactly one direction from measured product demand:

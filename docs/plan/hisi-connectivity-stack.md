@@ -2,8 +2,8 @@
 
 ## 状态
 
-**执行中 / P0。** A5U 的无板 developer UX 已收口到发布模板，当前唯一主要 WIP 是
-A5B 非默认增量 backend 原型；A5U 的 stack/arena 校准和 QEMU/HIL parity 保留为证据门槛。
+**执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。当前唯一
+主要 WIP 是 A5U 的 stack/arena 校准、静态资源准入和 QEMU/HIL parity。
 pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -11,8 +11,8 @@ pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**外部阻塞门槛**；A5F 的无板 facade/release 收口已完成，当前唯一 active
-milestone 是不依赖 AP、且不切换默认路径的 A5B 增量 backend 原型。
+**外部阻塞门槛**；A5F 的无板 facade/release 和 A5B 的 opt-in 增量原型已完成，当前唯一
+active milestone 是不依赖 pure-WPA3 AP 的 A5U 静态资源准入。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -35,14 +35,15 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5B 非默认增量 Backend 原型
+## 当前执行窗口：A5U 静态资源准入
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
-标准 relocation 与三平台 crates.io-only consumer；A5U 已闭合 profile/storage/report、
-typed diagnostics、文档锚点和发布模板等无板部分。当前只推进 A5B 的 opt-in core protocol、
-deterministic host interleaving 与后续非默认 adapter；不改当前验证过的 WS63 blocking backend。
-BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5B 并行。
+标准 relocation 与三平台 crates.io-only consumer；A5B 已闭合 opt-in core protocol、
+deterministic host interleaving、真实 scan/connect/disconnect work-budget 证据和非默认
+adapter。当前只推进 A5U 的 task-stack/supplicant-arena 校准、caller-owned storage 与初始化前
+memory-profile admission；不改当前验证过的 WS63 blocking backend。BLE、SLE、TLS、SoftAP
+和 Enterprise 不与当前 A5U 并行。
 
 ### 已完成 -- A3 收口
 
@@ -1314,6 +1315,11 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `29952214198`/`29952911404`。这些值用于 HIL 校准和泄漏诊断，不承诺最大连续可分配块，也
   不等价于初始化前的 reservation。task stack 与 supplicant arena 的 caller ownership、精确
   字节数和 memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
+  `hisi-rtos` commit `a580c1e` 已把实际动态栈分配字节数加入只读 task snapshot；
+  `ws63-examples` commit `985aee2` 在 credential-free init/scan HIL 的稳定点测得 5 个 live
+  dynamic tasks 均分配 24 KiB，合计 120 KiB，main/idle 报告 0。profile 仍保留 6 个 slot
+  reservation，scan-only 样本不能提前把 connect-time envelope 写死为 120 KiB。完整边界见
+  [A5U task-stack allocation evidence](evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md)。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
