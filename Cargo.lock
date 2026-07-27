@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.35"
+version = "0.1.0-alpha.36"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -886,14 +886,14 @@ version = "0.1.0-alpha.8"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
-version = "0.1.0-alpha.16"
+version = "0.1.0-alpha.17"
 dependencies = [
  "critical-section",
 ]
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.25"
+version = "0.1.0-alpha.26"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
@@ -943,7 +943,7 @@ version = "0.1.0-alpha.2"
 
 [[package]]
 name = "hisi-rtos"
-version = "0.1.0-alpha.12"
+version = "0.1.0-alpha.13"
 dependencies = [
  "critical-section",
  "embassy-time-driver",
