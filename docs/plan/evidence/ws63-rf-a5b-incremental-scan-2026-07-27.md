@@ -17,14 +17,14 @@ does not consume or emit AP credentials, SSIDs, BSSIDs, or frame contents.
 ## Build And Transport
 
 - `hisi-rf-core`: commit `e0a3de5`
-- `hisi-rf-ws63`: commits `e4b381d` and `0cedcae`
+- `hisi-rf-ws63`: commits `e4b381d`, `0cedcae`, `332c5cb`, and `7653dc1`
 - target: `riscv32imfc-unknown-none-elf`
 - profile: release, LTO enabled by the repository profile
 - image semantics: `hisi-fwpkg` planned full image
 - transport: probe-rs binary download at 3 MHz
 - verification: full write verify
 - reset/capture: J-Link nRST followed by UART0 at 115200 baud
-- download duration: 75.66 seconds
+- download duration: 75.67 seconds
 
 ## Silicon Result
 
@@ -33,14 +33,14 @@ The same boot completed all RF bootstrap stages and emitted:
 ```text
 RFDBG_A5B_BOOTSTRAP_OK elapsed_ms=0x00000148
 RFDBG_A5B_INITIALIZE_OK elapsed_ms=0x00000024
-RFDBG_A5B_SCAN_OK elapsed_ms=0x0000062b count=0x0000000a truncated=0x00000000
+RFDBG_A5B_SCAN_OK elapsed_ms=0x00000644 count=0x0000000b truncated=0x00000001
 RFDBG_A5B_EVENT pending=0x00000002 high_water=0x00000002 dropped=0x00000000
 RFDBG_A5B_CONTROL pending=0x00000000 high_water=0x00000001
-RFDBG_A5B_RUNNER run=0x00000006 waits=0x00000006 wake=0x00000006 immediate=0x00000004 operations=0x00000002 completed=0x00000002 pending=0x00000001 exhausted=0x00000001 errors=0x00000000
+RFDBG_A5B_RUNNER run=0x00000007 waits=0x00000007 wake=0x00000007 immediate=0x00000005 operations=0x00000002 completed=0x00000002 pending=0x00000002 exhausted=0x00000001 errors=0x00000000
 RFDBG_A5B_SCAN_PROFILE_OK
 ```
 
-The six runner calls took 5, 6, 12, 7, 12, and 6 ms. A 10 ms diagnostic
+The seven runner calls took 5, 5, 11, 7, 11, 12, and 6 ms. A 10 ms diagnostic
 `WorkBudget` therefore produced one expected bounded exhaustion and a fair
 immediate continuation; the operation completed without a backend error. The
 earlier 2 ms provisional value was not supported by silicon timing.
@@ -57,8 +57,16 @@ Two correctness defects were required to reach this result:
    scan and association events.
 
 The LTO build also exposed that strong assembler aliases for absolute mask-ROM
-addresses are unsafe for preserved `R_RISCV_CALL_PLT` relocations. The adapter
-now emits linker-script `PROVIDE` definitions again.
+addresses are unsafe for preserved `R_RISCV_CALL_PLT` relocations, while linker
+script `PROVIDE` definitions do not propagate through
+`application -> hisi-rf -> hisi-rf-ws63`. The backend now classifies native
+archive relocations at build time: directly called ROM symbols receive ordinary
+weak function veneers, while address-only ROM/RAM symbols retain exact weak
+absolute values. Rust/LTO calls are not present when the build script runs, so
+their bounded surface is declared in `link/ws63-rom-call-symbols.txt`; every
+entry must exist in the machine-owned ROM table. The first archive-only HIL
+stopped at `systick_init`; adding the explicit Rust-call manifest closed that
+blind spot, and the repeated full-verify HIL reached the final scan marker.
 
 ## Automated Gates
 
