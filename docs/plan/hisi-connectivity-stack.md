@@ -1207,8 +1207,14 @@ A5R 后续排期和验收顺序。
   requirement 的实现符号、host test、TLA invariant、Kani harness/CI invocation 和 HIL
   marker 做 fail-closed 校验，并发布带固定工具版本的 `requirement-evidence` JSON 与完整
   `tla-state-space-evidence` 日志；CI run `30208954292` 的 check、TLA 和 11 条 Kani
-  harness 全绿。软件可追溯性门槛已闭合；12 个带 HIL marker 的 requirement 仍明确标为
-  `hil-required`，A5R 新增资源/取消语义的真机 marker 尚未验收。
+  harness 全绿。软件可追溯性门槛已闭合。`hisi-rtos` commit `1a7aecb` 修复了 forever
+  semaphore wait 丢失 cancel-after-grant 结果的问题，并把
+  `A5R_RESOURCE_LIFECYCLE_OK` 绑定到 `RTOS-WAIT-003/004`；`ws63-examples` commit
+  `cceba4b` 在同一镜像 20 次 nRST 中同时取得 20/20
+  `A3_SCHEDULER_STRESS_OK` 和 20/20 `A5R_RESOURCE_LIFECYCLE_OK`。资源生命周期与
+  取消语义的真机缺口已经闭合，但其余 mechanism-specific HIL requirement 仍保持各自
+  门槛，因此 F5 不提前标为全部完成。详细记录见
+  [A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
 
 #### A5F -- 单依赖 Facade
 

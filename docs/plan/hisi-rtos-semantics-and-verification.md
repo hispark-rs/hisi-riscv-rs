@@ -306,6 +306,13 @@ Kani harness 及其 CI invocation，并校验 HIL marker 形状。CI 生成确�
 marker 的 requirement 只标为 `hil-required`，不会因软件 proof 通过而自动毕业。CI run
 `30208954292` 已验证 check、6 个 TLA model 和 11 个 Kani harness 全绿。
 
+2026-07-28 的 WS63 resource-lifecycle HIL 又验证了这条边界：
+`A5R_RESOURCE_LIFECYCLE_OK` 现在明确绑定 `RTOS-WAIT-003/004`。首轮测试发现 forever
+semaphore wait 在 cancel-after-grant 后错误报告成功；`hisi-rtos` commit `1a7aecb`
+修复后，同一镜像连续 20 次 nRST 均同时通过 scheduler-stress 与 resource-lifecycle
+marker。该证据只闭合资源生命周期和取消语义，不替代其他 HIL requirement。完整记录见
+[A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
+
 CI 最终分为：
 
 - `rtos-spec`：规范 ID、链接、manifest 和 trace schema drift；
