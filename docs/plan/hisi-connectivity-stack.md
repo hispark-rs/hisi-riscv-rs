@@ -1307,19 +1307,29 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `hisi-rtos 0.1.0-alpha.10` 和 `hisi-rf-ws63 0.1.0-alpha.10` 闭合：main/idle 不消耗
   15 个 dynamic slots，profile 在硬件访问前原子保留 public runner 与五个已观测 worker 所需的
   6 个 slot，容量不足携带 `required/available`，失败或初始化回滚时释放 reservation。
+  task-stack 子项进一步由 `hisi-rf-rtos-driver 0.1.0-alpha.17` 的 v1.4 resource contract、
+  `hisi-rtos 0.1.0-alpha.13`、`hisi-rf-ws63 0.1.0-alpha.26` 与
+  `hisi-rf 0.1.0-alpha.36` 闭合初始化前准入：RTOS 在 scheduler critical section 外预分配
+  6 个 24 KiB stack，随后与 slot reservation 原子发布；部分分配、slot 准入或初始化失败均
+  完整回滚，reserved spawn 请求超过 24 KiB 时在消费任何资源前失败。
   `hisi-rf-ws63 0.1.0-alpha.13` 又让 C `memalign` 走受检的 power-of-two aligned heap path，
   不再静默降级为默认对齐。`hisi-alloc 0.1.0-alpha.2`、`hisi-rf-ws63
   0.1.0-alpha.14` 和 `hisi-rf 0.1.0-alpha.17` 进一步从 public facade 暴露 allocation-free 的
   arena/live/peak/allocation-failure 指标；其 main/publish CI runs 分别为
   `29951395537`/`29951468013`、`29951849863`/`29952027018` 和
   `29952214198`/`29952911404`。这些值用于 HIL 校准和泄漏诊断，不承诺最大连续可分配块，也
-  不等价于初始化前的 reservation。task stack 与 supplicant arena 的 caller ownership、精确
-  字节数和 memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
+  不等价于初始化前的 reservation。task stack 已有精确 144 KiB profile reservation 与
+  commit-state HIL，但其 caller-owned storage/high-water，以及 supplicant arena 的 owner、
+  精确字节数和 memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
   `hisi-rtos` commit `a580c1e` 已把实际动态栈分配字节数加入只读 task snapshot；
   `ws63-examples` commit `985aee2` 在 credential-free init/scan HIL 的稳定点测得 5 个 live
   dynamic tasks 均分配 24 KiB，合计 120 KiB，main/idle 报告 0。profile 仍保留 6 个 slot
   reservation，scan-only 样本不能提前把 connect-time envelope 写死为 120 KiB。完整边界见
   [A5U task-stack allocation evidence](evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md)。
+  父仓提交 `c23c2b45e` 的无凭据 bootstrap HIL 随后以 3 MHz 完整 verify 通过，并输出
+  `A5U_TASK_STACK_ADMISSION_OK bytes=0x00024000 reserved=0x00000002`：启动前承诺
+  147,456 B，初始化消费四个 reservation 后保留两个。该 marker 只证明 resource admission，
+  不替代 scan/connect、stack high-water 或 pure-WPA3 gate。
   同一稳定点的共享 RF heap 为 367,008 B，scan 峰值 193,764 B、180 个 allocation，
   allocation/deallocation failure 均为 0；该值混合 vendor、supplicant 与 OSAL 所有者，
   也不覆盖 connect/SAE/EAPOL，因此仍不能据此收窄 arena 或勾选静态准入。

@@ -74,10 +74,13 @@ storage, versioned machine-readable reports, actionable typed errors, and a
 template happy path. Pure-WPA3 evidence remains an external gate; this no-board
 work does not remove the vendor oracle or claim WPA3 stability.
 
-Task-stack allocation is now observable on silicon: the post-scan snapshot
-measured five live dynamic tasks at 24 KiB each, while the profile keeps a sixth
-slot reserved for the connect-time envelope. Caller-owned stacks, high-water
-measurement, the supplicant arena, and pre-init memory admission remain open.
+Task-stack allocation is now observable and admitted before hardware startup:
+the profile atomically reserves six 24 KiB stacks and six dynamic slots, while
+the post-scan snapshot measured five live dynamic tasks at 24 KiB each. The
+commit-state bootstrap HIL reported the full 144 KiB reservation and two
+unconsumed stacks after initialization. Caller-owned stack storage, high-water
+measurement, the shared supplicant arena, and whole-profile memory admission
+remain open.
 Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
 
 ## LATER -- Triggered Product Directions

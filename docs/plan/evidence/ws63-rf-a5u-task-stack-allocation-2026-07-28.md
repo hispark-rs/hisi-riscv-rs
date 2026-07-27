@@ -66,15 +66,39 @@ profile HIL matrix.
 
 ## Boundary
 
-This closes observability of the actual allocation request selected by the RTOS.
-It does not close:
+The first run closed observability of the actual allocation request selected by
+the RTOS. A follow-up implementation and commit-state HIL closed pre-init task
+stack admission:
+
+- `hisi-rf-rtos-driver 0.1.0-alpha.17` defines the v1.4 owner-bound slot and
+  stack reservation contract;
+- `hisi-rtos 0.1.0-alpha.13` preallocates all requested stacks outside the
+  scheduler critical section, atomically publishes stacks with task slots, and
+  rolls back every allocation if either phase fails;
+- `hisi-rf-ws63 0.1.0-alpha.26` reserves six 24 KiB stacks before touching
+  radio hardware and reports the exact 147,456-byte commitment;
+- `hisi-rf 0.1.0-alpha.36` selects that backend through the public facade.
+
+The dependency chain is pinned by parent commit `c23c2b45e`. Its credential-free
+bootstrap image downloaded at 3 MHz with full verify in 75.38 seconds, completed
+all initialization stages, and emitted:
+
+```text
+RFDBG_BOOTSTRAP_PROFILE_OK
+A5U_TASK_STACK_ADMISSION_OK bytes=0x00024000 reserved=0x00000002
+```
+
+The two remaining reservations show that initialization consumed four of the
+six promised slot/stack pairs without losing the connect-time envelope.
+
+This does not close:
 
 - caller-owned task-stack storage;
 - stack high-water measurement;
 - connect-time maximum live task count;
 - separation and caller ownership of the shared RF/supplicant arena;
 - connect/SAE/EAPOL heap peak and fragmentation envelope;
-- memory-profile admission before hardware initialization.
+- whole-profile memory admission beyond task slots and stacks.
 
 Those remain A5U work. The unavailable pure-WPA3 AP gate remains external and
 unchanged.
