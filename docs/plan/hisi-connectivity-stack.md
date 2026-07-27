@@ -996,6 +996,21 @@ Linux/macOS/Windows、WPA2/WPA3、离线只读 registry 和并发构建，全部
 “可读取无秘密统计”的仪表接口；尚未取得真实硅片 scan/connect/disconnect/poll、wake 和
 queue high-water 样本，不能据此勾选下方 HIL baseline 或切换默认 backend。
 
+2026-07-27 的未发布提交 `e0a3de5`/`0cedcae` 随后闭合了第一条真实增量 HIL：
+core 不再让 terminal deadline 掩盖 backend 的立即本地续跑；WS63 scan callback 同时唤醒
+legacy semaphore 和 incremental wait bridge，已经归属 backend 的 scan/output 批次会在
+`WaitSet::empty()` 上公平续跑。凭据无关的 `incremental_scan_profile` 在 3 MHz、完整 verify
+后完成 blocking bootstrap、增量 initialize 和一次 scan，返回 10 个结果、无 truncation、
+event queue high-water 2/8、drop 0；6 次 runner step 包含一次有界
+`budget_exhausted`，随后正常完成，最终 marker 为 `RFDBG_A5B_SCAN_PROFILE_OK`。单次 runner
+实测 5--12 ms，证明先前 2 ms 诊断预算没有硅片依据。LTO 同时暴露并修复了 strong assembler
+ROM alias 被 `R_RISCV_CALL_PLT` 当作 PC-relative displacement 的问题；当前恢复 linker-script
+`PROVIDE` 语义。core CI `30260136814` 和 WS63 修复后 CI `30260695179` 通过，后者覆盖
+package、WPA2/WPA3 blocking/incremental profile、RV32，以及 Linux/macOS/Windows 的
+plain/bootstrap/incremental-scan 最终链接。完整串口证据见
+[A5B incremental scan evidence](evidence/ws63-rf-a5b-incremental-scan-2026-07-27.md)。
+该结果不读取 AP 凭据，也不替代 pure-WPA3 gate。
+
 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
@@ -1019,8 +1034,9 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   duration、内部 sleep 与 supplicant poll 的无板计数底座；core alpha.14/WS63 alpha.24/facade
   alpha.34 又把 incremental runner 与 wait bridge 的无秘密饱和计数导出到 composition root。
   alpha.20 已在真机固定 bootstrap 主栈为 32 KiB，并以 20/20 nRST 记录 vendor init
-  61--62 ms；scan/connect/disconnect/poll、wake 次数和 queue high-water 尚未读取并固化，
-  因此不得勾选本项。
+  61--62 ms；2026-07-27 的 credential-free HIL 又记录了 incremental initialize/scan、
+  runner wake、event/control queue high-water 和 5--12 ms runner step。connect/disconnect/
+  poll 的对应真机统计仍未读取并固化，因此不得勾选本项。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
@@ -1048,9 +1064,9 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   alpha.20 修复 8 KiB main stack 溢出，并在 32 KiB profile 上以 20/20 nRST 证明当前
   `uapi_wifi_init` 为 61--62 ms。该证据接受当前 bootstrap 的 blocking WCT，但 netdev 创建、
   事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占。alpha.21 已接入真实
-  facade wait platform，但尚未取得 scan/connect/disconnect/poll、runner wake 与 queue
-  high-water 的真机统计。不能因有计时器就包装成增量调用；只有这些剩余边界与证据闭合后
-  才允许勾选。
+  facade wait platform；2026-07-27 已取得真实 initialize/scan、runner wake、预算续跑与
+  queue high-water 统计。connect/disconnect/poll 的真机统计和 parity 仍未闭合。不能因有
+  计时器就包装成增量调用；只有这些剩余边界与证据闭合后才允许勾选。
 
 #### A5R -- 可执行 RTOS 语义
 
