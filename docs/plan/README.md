@@ -25,7 +25,7 @@
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
 | [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5B 独占当前 WIP；pure WPA3 是外部阻塞门槛 | bootstrap 栈/WCT 已闭合；继续收口真实 wait platform 和剩余 incremental 边界 |
-| [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F2 已闭合；A5B 完成并释放 WIP 后再执行 F3 至 F5 | A5 runtime 证据门槛 |
+| [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
 | [中断处理整改](hisi-interrupt-handler-reform.md) | 延期 | P2 | 对照 RTOS F2 port 和当前 trap ABI 重新评审架构 | 稳定的类型化中断注册和 Embassy IRQ 体验 |

@@ -1130,7 +1130,9 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   共享 conformance schema v6 共 22 个场景，production-core host suite 共 56 个测试。两条
   Kani harness 覆盖 stale generation 与重复销毁，`ResourceLifecycle.tla` 在 257 个生成状态、
   89 个 distinct state、depth 15 下验证 stale/double destroy fail closed 与 grant 不重复。
-  真机 acceptance 留待后续 HIL，不阻塞当前无板 contract closure。
+  2026-07-28 的 `A5R_RESOURCE_LIFECYCLE_OK` 又在真实 WS63 上覆盖 stale/duplicate handle、
+  destroy-with-waiter/owner 和 cancel-after-grant；同一镜像连续 20 次 nRST 全部通过，详见
+  [A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
 - [x] 扩完整 runtime-neutral `Scenario -> Action -> Observation` conformance harness，至少覆盖
   spawn/yield/sleep/time advance、lock/unlock、sem wait/post、mutex PI、enter/exit IRQ、timeout
   和 task exit。相同 suite 必须运行在 `hisi-rtos`、host deterministic backend 及未来任何
@@ -1199,7 +1201,7 @@ A5R 后续排期和验收顺序。
   RV32 build/clippy、requirements gate 和 CI run `30208473782` 全绿，publish run
   `30208614225` 成功。已有 `switch_race_recoveries` 仍保留；只有 T6 真机 parity
   完成后才允许执行 T7 删除。
-- [ ] **A5R-F5 -- 证据门槛（部分完成）**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
+- [x] **A5R-F5 -- 证据门槛**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
   trap frame/`mret`/FPU/IRQ 时序仍由 RV32 compile checks 与真机 HIL 验收，不宣称
@@ -1212,8 +1214,11 @@ A5R 后续排期和验收顺序。
   `A5R_RESOURCE_LIFECYCLE_OK` 绑定到 `RTOS-WAIT-003/004`；`ws63-examples` commit
   `cceba4b` 在同一镜像 20 次 nRST 中同时取得 20/20
   `A3_SCHEDULER_STRESS_OK` 和 20/20 `A5R_RESOURCE_LIFECYCLE_OK`。资源生命周期与
-  取消语义的真机缺口已经闭合，但其余 mechanism-specific HIL requirement 仍保持各自
-  门槛，因此 F5 不提前标为全部完成。详细记录见
+  取消语义的真机缺口已经闭合。commit `a774d64` 进一步加入
+  `docs/spec/hil-evidence.toml`，要求 requirement 中引用的 6 个唯一 marker 与 6 条
+  immutable parent-commit evidence record 完全一致，并把 target、日期、成功次数和 reset
+  模式写入 CI 的 `requirement-evidence` JSON。该可追溯性 gate 已闭合；requirement 仍保持
+  `hil-required`，登记证据不会自动把 silicon-specific API 毕业。资源真机记录见
   [A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
 
 #### A5F -- 单依赖 Facade

@@ -2,8 +2,8 @@
 
 ## 状态与归属
 
-**配套工作 / P1。** A5R-F4 已闭合；当前下一批执行项是 A5R-F5，并受单一 WIP 规则约束：A5U
-闭合前不抢占 active slot。跨计划优先级与依赖以
+**配套工作 / P1。** A5R-F0-F5 已闭合；后续只在 requirement、runtime contract 或
+silicon mechanism 变化时重开，不抢占 Connectivity 当前 active slot。跨计划优先级与依赖以
 [工程计划注册表](README.md)为准。
 
 本文是 `hisi-rtos` 严格调度语义、证明义务和实现一致性验证的唯一计划
@@ -312,6 +312,12 @@ semaphore wait 在 cancel-after-grant 后错误报告成功；`hisi-rtos` commit
 修复后，同一镜像连续 20 次 nRST 均同时通过 scheduler-stress 与 resource-lifecycle
 marker。该证据只闭合资源生命周期和取消语义，不替代其他 HIL requirement。完整记录见
 [A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
+
+`hisi-rtos` commit `a774d64` 又将 6 个唯一 HIL marker 绑定到独立
+`hil-evidence.toml`：target、日期、成功次数、reset 模式和 immutable parent-commit URL
+全部进入 fail-closed 检查与生成的 evidence JSON。requirement 引用缺少记录或记录没有
+requirement 消费都会使 CI 失败。这个机制闭合的是证据可追溯性，不改变
+`hil-required` 的 API/机制毕业含义。
 
 CI 最终分为：
 
