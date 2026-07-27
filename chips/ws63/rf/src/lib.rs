@@ -136,6 +136,16 @@ pub mod uapi;
 #[cfg(feature = "upstream-supplicant-port")]
 mod upstream_supplicant;
 
+/// Return a non-secret snapshot of the transitional RF heap.
+///
+/// This migration diagnostic matches the maintained `hisi-rf-ws63` backend.
+/// It reports observed allocator state and does not promise that `free_bytes`
+/// is one contiguous allocation.
+#[doc(hidden)]
+pub fn rf_heap_metrics() -> hisi_alloc::HeapMetrics {
+    alloc::heap_metrics()
+}
+
 /// Return the bounded upstream-supplicant bring-up snapshot.
 ///
 /// This is a diagnostic contract for the WS63 connectivity smoke, not a user

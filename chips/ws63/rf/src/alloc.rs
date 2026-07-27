@@ -184,6 +184,10 @@ fn ensure_heap() -> bool {
     unsafe { HEAP.init(start, len).is_ok() }
 }
 
+pub(crate) fn heap_metrics() -> hisi_alloc::HeapMetrics {
+    HEAP.metrics()
+}
+
 /// Allocate `size` zero-initialized bytes. Returns null on failure or zero size.
 #[unsafe(no_mangle)]
 pub extern "C" fn osal_kmalloc(size: usize) -> *mut c_void {
