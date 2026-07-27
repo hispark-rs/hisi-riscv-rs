@@ -1011,7 +1011,28 @@ plain/bootstrap/incremental-scan 最终链接。完整串口证据见
 [A5B incremental scan evidence](evidence/ws63-rf-a5b-incremental-scan-2026-07-27.md)。
 该结果不读取 AP 凭据，也不替代 pure-WPA3 gate。
 
-`hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
+2026-07-28 的 transition-mode differential 又给 connect 路径加上了 fail-closed 时间证据：
+WPA2 profile 在同一份镜像上连续 20 次 J-Link nRST 全部完成 connect/disconnect，20 轮都观察到
+并恢复 vendor `8030` / IEEE status 30，`WLAN_AUTH_RSP2_TIMEOUT` 为 0。fixture 的单步
+`WorkBudget` 从临时 5 s 收紧到 100 ms 后没有越界，runner 最大 38 ms，初始 association ioctl
+最大 32 ms；这证伪了“数秒 runner slice 必然来自 association ioctl”。完整脱敏证据见
+[A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
+该结果只建立 transition AP 上的 WPA2 differential 和执行上界；AP 不提供 pure-WPA3 模式，
+因此 pure-WPA3 20-reset gate 仍标记 external blocked，不能据此切换默认 backend 或宣称
+WPA3 stable。
+
+该矩阵使用的 status-30 恢复 ABI 已随 `ws63-radio-sys 0.1.0-alpha.8` 发布；release-unit CI
+`30299853553` 与 publish workflow `30300012911` 通过。`hisi-rf-ws63 0.1.0-alpha.25`
+随后精确依赖该 sys release 并固化 100 ms fixture，CI `30300680338` 覆盖 package、
+WPA2/WPA3 blocking/incremental profile 以及 Linux/macOS/Windows 最终链接，publish workflow
+`30300939460` 成功。`hisi-rf 0.1.0-alpha.35` 再把 facade 精确依赖提升到 backend
+alpha.25，并将 bounded incremental backend 与 `incremental-embassy-wait` 拆为两个显式
+feature contract；CI `30301584752` 覆盖两条能力路径、六组跨平台 consumer、crates.io-only
+fixture 与 offline rebuild，publish workflow `30301976965` 成功。发布后的 backend
+Unreleased 提交 `d9d4df6` 还用标准 linker `--wrap` 恢复了 normalized archive 下的
+`rf-eloop-diag` 最终链接，CI `30301165743` 通过；该诊断修复不属于 alpha.25。
+
+更早的 `hisi-rf 0.1.0-alpha.26` 精确依赖 core alpha.13 与 WS63 backend alpha.15，并转发 blocking
 diagnostics、incremental
 driver、async facade
 runner、split result、wait intent、wait platform 与 typed wait error；行为/publish runs
@@ -1035,8 +1056,10 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   alpha.34 又把 incremental runner 与 wait bridge 的无秘密饱和计数导出到 composition root。
   alpha.20 已在真机固定 bootstrap 主栈为 32 KiB，并以 20/20 nRST 记录 vendor init
   61--62 ms；2026-07-27 的 credential-free HIL 又记录了 incremental initialize/scan、
-  runner wake、event/control queue high-water 和 5--12 ms runner step。connect/disconnect/
-  poll 的对应真机统计仍未读取并固化，因此不得勾选本项。
+  runner wake、event/control queue high-water 和 5--12 ms runner step。2026-07-28 的
+  transition differential 又记录了 20/20 connect/disconnect、38 ms 最大 runner step 与
+  32 ms 最大 association ioctl；但 connect 路径完整的 operation sleep、poll、wake 与
+  queue high-water 聚合尚未固化，因此不得勾选本项。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
