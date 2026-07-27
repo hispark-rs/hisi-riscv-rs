@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.30"
+version = "0.1.0-alpha.35"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-core"
-version = "0.1.0-alpha.13"
+version = "0.1.0-alpha.14"
 dependencies = [
  "critical-section",
  "embassy-sync",
@@ -882,7 +882,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-link"
-version = "0.1.0-alpha.7"
+version = "0.1.0-alpha.8"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
@@ -893,15 +893,19 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.19"
+version = "0.1.0-alpha.25"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
+ "embassy-executor",
+ "embassy-sync",
+ "embassy-time",
  "hisi-alloc",
  "hisi-crypto",
  "hisi-crypto-ws63",
  "hisi-hal",
  "hisi-nvs",
+ "hisi-panic-handler",
  "hisi-rf-core",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
@@ -917,7 +921,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-riscv-rt"
-version = "0.5.5"
+version = "0.5.6"
 dependencies = [
  "bs2x-pac",
  "critical-section",
@@ -2157,7 +2161,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-blob"
-version = "0.1.0-alpha.7"
+version = "0.1.0-alpha.8"
 dependencies = [
  "ruzstd",
  "serde",
@@ -2167,7 +2171,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-sys"
-version = "0.1.0-alpha.7"
+version = "0.1.0-alpha.8"
 dependencies = [
  "hisi-rf-link",
  "hisi-rom-sys-ws63",
