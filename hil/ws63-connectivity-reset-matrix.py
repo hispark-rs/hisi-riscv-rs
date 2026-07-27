@@ -69,10 +69,55 @@ OFFICIAL_TIMED_MARKERS = (
     b"APP|[WIFI_STA_SAMPLE]::STA DHCP success.",
 )
 
+A5B_METRIC_MARKERS = {
+    "event_queue": (
+        b"RFDBG_A5B_EVENT ",
+        ("pending", "high_water", "dropped"),
+    ),
+    "control_queue": (
+        b"RFDBG_A5B_CONTROL ",
+        ("pending", "high_water"),
+    ),
+    "runner": (
+        b"RFDBG_A5B_RUNNER run=",
+        (
+            "run",
+            "waits",
+            "wake",
+            "immediate",
+            "operations",
+            "completed",
+            "pending",
+            "exhausted",
+            "errors",
+        ),
+    ),
+    "wait": (
+        b"RFDBG_A5B_WAIT ",
+        ("backend", "l2", "waker", "polls", "pending", "ready", "timer"),
+    ),
+    "blocking": (
+        b"RFDBG_A5B_BLOCKING ",
+        (
+            "init_calls",
+            "init_max_ms",
+            "scan_calls",
+            "poll_calls",
+            "internal_sleep",
+            "supplicant_poll",
+        ),
+    ),
+}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", default=os.environ.get("PORT"), required="PORT" not in os.environ)
+    parser.add_argument("--port", default=os.environ.get("PORT"))
+    parser.add_argument(
+        "--analyze-dir",
+        type=Path,
+        help="reclassify existing run-*.uart.log files without resetting hardware",
+    )
     parser.add_argument("--baud", type=int, default=115_200)
     parser.add_argument("--runs", type=int, default=20)
     parser.add_argument("--timeout", type=float, default=65.0)
@@ -184,6 +229,140 @@ def detected_ap_mode(log: bytes) -> str | None:
     return None
 
 
+def parse_hex_fields(line: bytes) -> dict[str, int]:
+    fields: dict[str, int] = {}
+    for token in line.decode(errors="replace").split()[1:]:
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        if not value.lower().startswith("0x"):
+            continue
+        try:
+            fields[key] = int(value, 16)
+        except ValueError:
+            continue
+    return fields
+
+
+def parse_hex_values(line: bytes) -> list[int]:
+    values: list[int] = []
+    for token in line.decode(errors="replace").split()[1:]:
+        if not token.lower().startswith("0x"):
+            continue
+        try:
+            values.append(int(token, 16))
+        except ValueError:
+            continue
+    return values
+
+
+def parse_a5b_metrics(log: bytes) -> dict[str, object] | None:
+    """Parse the bounded A5B diagnostic trailer from one unchanged-image boot."""
+    lines = log.splitlines()
+    if not any(
+        line.startswith(prefix)
+        for line in lines
+        for prefix, _ in A5B_METRIC_MARKERS.values()
+    ):
+        return None
+
+    metrics: dict[str, object] = {}
+    missing: list[str] = []
+    for section, (prefix, required_fields) in A5B_METRIC_MARKERS.items():
+        line = next((candidate for candidate in reversed(lines) if candidate.startswith(prefix)), None)
+        if line is None:
+            missing.append(section)
+            continue
+        fields = parse_hex_fields(line)
+        absent = [field for field in required_fields if field not in fields]
+        if absent:
+            missing.extend(f"{section}.{field}" for field in absent)
+            continue
+        metrics[section] = {field: fields[field] for field in required_fields}
+
+    runner_steps = [
+        fields["value"]
+        for line in lines
+        if line.startswith(b"RFDBG_A5B_RUNNER_ELAPSED_MS ")
+        and "value" in (fields := parse_hex_fields(line))
+    ]
+    timings: dict[str, int] = {}
+    for name, prefix in (
+        ("initialize_elapsed_ms", b"RFDBG_A5B_INITIALIZE_OK "),
+        ("scan_elapsed_ms", b"RFDBG_A5B_SCAN_OK "),
+        ("connect_elapsed_ms", b"RFDBG_A5B_CONNECT_OK "),
+        ("disconnect_elapsed_ms", b"RFDBG_A5B_DISCONNECT_OK "),
+    ):
+        line = next((candidate for candidate in reversed(lines) if candidate.startswith(prefix)), None)
+        if line is None:
+            missing.append(name)
+            continue
+        fields = parse_hex_fields(line)
+        if "elapsed_ms" not in fields:
+            missing.append(name)
+            continue
+        timings[name] = fields["elapsed_ms"]
+
+    association_ioctl = next(
+        (
+            candidate
+            for candidate in reversed(lines)
+            if candidate.startswith(b"RFDBG_A5B_CONNECT_ASSOC_IOCTL ")
+        ),
+        None,
+    )
+    association_values = (
+        parse_hex_values(association_ioctl) if association_ioctl is not None else []
+    )
+    if len(association_values) == 12:
+        timings["association_ioctl_max_ms"] = max(
+            association_values[index] for index in (2, 5, 8, 11)
+        )
+    else:
+        missing.append("association_ioctl")
+
+    if runner_steps:
+        timings["runner_step_max_ms"] = max(runner_steps)
+        timings["runner_step_count"] = len(runner_steps)
+    else:
+        missing.append("runner_step_elapsed")
+    metrics["timings"] = timings
+    metrics["complete"] = not missing
+    metrics["missing"] = missing
+    return metrics
+
+
+def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object] | None:
+    parsed = [
+        metrics
+        for record in records
+        if isinstance((metrics := record.get("a5b_metrics")), dict)
+    ]
+    if not parsed:
+        return None
+
+    complete = [metrics for metrics in parsed if metrics.get("complete") is True]
+    ranges: dict[str, dict[str, int]] = {}
+    for metrics in complete:
+        for section, values in metrics.items():
+            if section in {"complete", "missing"} or not isinstance(values, dict):
+                continue
+            for field, value in values.items():
+                if not isinstance(value, int):
+                    continue
+                key = f"{section}.{field}"
+                aggregate = ranges.setdefault(key, {"min": value, "max": value})
+                aggregate["min"] = min(aggregate["min"], value)
+                aggregate["max"] = max(aggregate["max"], value)
+
+    return {
+        "runs_with_markers": len(parsed),
+        "complete_runs": len(complete),
+        "missing_runs": len(parsed) - len(complete),
+        "ranges": ranges,
+    }
+
+
 def classify(
     log: bytes, profile: str, stage: str, required_ap_mode: str | None = None
 ) -> str:
@@ -209,6 +388,11 @@ def classify(
         )
         if observed_ap_mode is None and success_evidence:
             return "missing_ap_mode"
+
+    if b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
+        metrics = parse_a5b_metrics(log)
+        if metrics is None or metrics.get("complete") is not True:
+            return "missing_a5b_metrics"
 
     if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
         return "pass"
@@ -353,69 +537,47 @@ def capture_run(
     return bytes(log), marker_times
 
 
-def main() -> int:
-    args = parse_args()
-    if (
-        args.runs <= 0
-        or args.timeout <= 0
-        or args.post_terminal_seconds < 0
-        or args.reference_count <= 0
-    ):
-        raise SystemExit(
-            "--runs, --timeout and --reference-count must be positive; "
-            "--post-terminal-seconds must be non-negative"
-        )
-    if args.required_ap_mode is not None and args.profile != "rust":
-        raise SystemExit("--required-ap-mode is only valid with --profile rust")
+def record_from_log(
+    run: int,
+    log: bytes,
+    profile: str,
+    stage: str,
+    required_ap_mode: str | None,
+    log_name: str,
+    marker_times: dict[str, float] | None = None,
+) -> dict[str, object]:
+    return {
+        "run": run,
+        "result": classify(log, profile, stage, required_ap_mode),
+        "bytes": len(log),
+        "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
+        + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
+        "ap_mode": detected_ap_mode(log),
+        "ping": parse_ping_summaries(log),
+        "a5b_metrics": parse_a5b_metrics(log),
+        "marker_seconds": marker_times or {},
+        "log": log_name,
+    }
 
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output = args.output or Path("/private/tmp") / f"ws63-connectivity-reset-matrix-{timestamp}"
-    output.mkdir(parents=True, exist_ok=False)
-    records: list[dict[str, object]] = []
-    reference_ping = None
-    if args.reference_target:
-        reference_ping = run_reference_ping(
-            args.reference_target, args.reference_count, output / "reference-ping.log"
-        )
-        print(f"reference ping: {json.dumps(reference_ping, sort_keys=True)}", flush=True)
 
-    # Open UART before every reset pulse so boot and early failure markers are
-    # observable. Keep the descriptor open across runs to avoid driver churn.
-    with serial.Serial(args.port, args.baud, timeout=0.2) as port:
-        for run in range(1, args.runs + 1):
-            log, marker_times = capture_run(
-                port,
-                args.jlink,
-                args.timeout,
-                args.post_terminal_seconds,
-                args.profile,
-                args.stage,
-            )
-            result = classify(log, args.profile, args.stage, args.required_ap_mode)
-            log_path = output / f"run-{run:02d}.uart.log"
-            log_path.write_bytes(log)
-            record = {
-                "run": run,
-                "result": result,
-                "bytes": len(log),
-                "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
-                + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
-                "ap_mode": detected_ap_mode(log),
-                "ping": parse_ping_summaries(log),
-                "marker_seconds": marker_times,
-                "log": log_path.name,
-            }
-            records.append(record)
-            print(
-                f"run {run:02d}/{args.runs}: {result} "
-                f"(auth_rsp2_timeouts={record['auth_rsp2_timeouts']}, {len(log)} bytes)",
-                flush=True,
-            )
-
+def summarize_records(
+    records: list[dict[str, object]],
+    *,
+    port: str | None,
+    baud: int,
+    profile: str,
+    stage: str,
+    required_ap_mode: str | None,
+    timeout: float,
+    post_terminal_seconds: float,
+    reference_ping: dict[str, object] | None,
+    source_dir: Path | None = None,
+) -> dict[str, object]:
     counts: dict[str, int] = {}
     for record in records:
         result = str(record["result"])
         counts[result] = counts.get(result, 0) + 1
+
     ping_totals: dict[str, dict[str, int]] = {}
     for record in records:
         ping = record.get("ping", {})
@@ -435,22 +597,142 @@ def main() -> int:
         totals["loss_pct"] = (
             totals["drop"] * 100 // totals["tx"] if totals["tx"] else 100
         )
-    summary = {
-        "port": args.port,
-        "baud": args.baud,
-        "profile": args.profile,
-        "stage": args.stage,
-        "required_ap_mode": args.required_ap_mode,
-        "runs": args.runs,
-        "timeout_seconds": args.timeout,
-        "post_terminal_seconds": args.post_terminal_seconds,
+
+    summary: dict[str, object] = {
+        "port": port,
+        "baud": baud,
+        "profile": profile,
+        "stage": stage,
+        "required_ap_mode": required_ap_mode,
+        "runs": len(records),
+        "timeout_seconds": timeout,
+        "post_terminal_seconds": post_terminal_seconds,
         "counts": counts,
         "ping_totals": ping_totals,
-        "auth_rsp2_timeouts": sum(int(record["auth_rsp2_timeouts"]) for record in records),
+        "auth_rsp2_timeouts": sum(
+            int(record["auth_rsp2_timeouts"]) for record in records
+        ),
         "reference_ping": reference_ping,
+        "a5b_metrics": aggregate_a5b_metrics(records),
         "records": records,
     }
+    if source_dir is not None:
+        summary["source_dir"] = str(source_dir.resolve())
+    return summary
+
+
+def main() -> int:
+    args = parse_args()
+    if (
+        args.runs <= 0
+        or args.timeout <= 0
+        or args.post_terminal_seconds < 0
+        or args.reference_count <= 0
+    ):
+        raise SystemExit(
+            "--runs, --timeout and --reference-count must be positive; "
+            "--post-terminal-seconds must be non-negative"
+        )
+    if args.required_ap_mode is not None and args.profile != "rust":
+        raise SystemExit("--required-ap-mode is only valid with --profile rust")
+    if args.analyze_dir is None and args.port is None:
+        raise SystemExit("--port or PORT is required unless --analyze-dir is used")
+
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    if args.analyze_dir is not None:
+        source_logs = sorted(args.analyze_dir.glob("run-*.uart.log"))
+        if not source_logs:
+            raise SystemExit(f"no run-*.uart.log files in {args.analyze_dir}")
+        output = args.output or args.analyze_dir / f"reanalysis-{timestamp}"
+        output.mkdir(parents=True, exist_ok=False)
+        records = [
+            record_from_log(
+                run,
+                log_path.read_bytes(),
+                args.profile,
+                args.stage,
+                args.required_ap_mode,
+                log_path.name,
+            )
+            for run, log_path in enumerate(source_logs, start=1)
+        ]
+        summary = summarize_records(
+            records,
+            port=None,
+            baud=args.baud,
+            profile=args.profile,
+            stage=args.stage,
+            required_ap_mode=args.required_ap_mode,
+            timeout=args.timeout,
+            post_terminal_seconds=args.post_terminal_seconds,
+            reference_ping=None,
+            source_dir=args.analyze_dir,
+        )
+        (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+        print(f"summary: {json.dumps(summary['counts'], sort_keys=True)}")
+        print(f"artifacts: {output}")
+        counts = summary["counts"]
+        assert isinstance(counts, dict)
+        return 0 if counts.get("pass", 0) == len(records) else 1
+
+    output = (
+        args.output
+        or Path("/private/tmp") / f"ws63-connectivity-reset-matrix-{timestamp}"
+    )
+    output.mkdir(parents=True, exist_ok=False)
+    records: list[dict[str, object]] = []
+    reference_ping = None
+    if args.reference_target:
+        reference_ping = run_reference_ping(
+            args.reference_target, args.reference_count, output / "reference-ping.log"
+        )
+        print(f"reference ping: {json.dumps(reference_ping, sort_keys=True)}", flush=True)
+
+    # Open UART before every reset pulse so boot and early failure markers are
+    # observable. Keep the descriptor open across runs to avoid driver churn.
+    assert args.port is not None
+    with serial.Serial(args.port, args.baud, timeout=0.2) as port:
+        for run in range(1, args.runs + 1):
+            log, marker_times = capture_run(
+                port,
+                args.jlink,
+                args.timeout,
+                args.post_terminal_seconds,
+                args.profile,
+                args.stage,
+            )
+            log_path = output / f"run-{run:02d}.uart.log"
+            log_path.write_bytes(log)
+            record = record_from_log(
+                run,
+                log,
+                args.profile,
+                args.stage,
+                args.required_ap_mode,
+                log_path.name,
+                marker_times,
+            )
+            records.append(record)
+            print(
+                f"run {run:02d}/{args.runs}: {record['result']} "
+                f"(auth_rsp2_timeouts={record['auth_rsp2_timeouts']}, {len(log)} bytes)",
+                flush=True,
+            )
+
+    summary = summarize_records(
+        records,
+        port=args.port,
+        baud=args.baud,
+        profile=args.profile,
+        stage=args.stage,
+        required_ap_mode=args.required_ap_mode,
+        timeout=args.timeout,
+        post_terminal_seconds=args.post_terminal_seconds,
+        reference_ping=reference_ping,
+    )
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    counts = summary["counts"]
+    assert isinstance(counts, dict)
     print(f"summary: {json.dumps(counts, sort_keys=True)}")
     print(f"artifacts: {output}")
     return 0 if counts.get("pass", 0) == args.runs else 1

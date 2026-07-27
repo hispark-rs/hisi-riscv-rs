@@ -1049,7 +1049,7 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   storage 和 bounded event queue；active + pending + channel backpressure 有 host 回归，协议
   mismatch 会唤醒 controller 并返回 `Error::Protocol`，不会静默挂起。
 
-- [ ] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
+- [x] 记录现有 `initialize/scan/connect/disconnect/poll` 的最长单次调用时间、内部 sleep、
   poll 次数、runner wake 次数和控制/event queue high-water，形成迁移前 host/HIL baseline。
   core alpha.13/WS63 alpha.15 已接好 runner/poll、control/event queue high-water、operation
   duration、内部 sleep 与 supplicant poll 的无板计数底座；core alpha.14/WS63 alpha.24/facade
@@ -1057,9 +1057,13 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   alpha.20 已在真机固定 bootstrap 主栈为 32 KiB，并以 20/20 nRST 记录 vendor init
   61--62 ms；2026-07-27 的 credential-free HIL 又记录了 incremental initialize/scan、
   runner wake、event/control queue high-water 和 5--12 ms runner step。2026-07-28 的
-  transition differential 又记录了 20/20 connect/disconnect、38 ms 最大 runner step 与
-  32 ms 最大 association ioctl；但 connect 路径完整的 operation sleep、poll、wake 与
-  queue high-water 聚合尚未固化，因此不得勾选本项。
+  transition differential 的 20/20 完整 trailer 经同一 reset-matrix parser 离线复算：
+  initialize 36--37 ms、scan 1514--1610 ms、connect 5089--5306 ms、disconnect
+  48--53 ms；runner 单步最大 34--38 ms、22--25 次 wake/wait、23--27 次 backend poll、
+  control/event high-water 分别为 1/4，event drop、backend error、blocking scan/poll、
+  internal sleep 与 supplicant busy poll 均为 0。association ioctl 最大 28--32 ms。
+  parser 在 success marker 缺少任一指标时 fail closed，完整脱敏聚合见
+  [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
@@ -1081,15 +1085,18 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [x] 增加 deterministic host interleaving：connect 期间 scan/disconnect、command 与 RX/
   timeout 同时到达、queue full、cancel-before-start、cancel-after-start、stale completion、
   backend error/recovery，以及持续 L2 traffic 下控制面不饥饿。
-- [ ] 完成 WS63 真实 incremental adapter：alpha.16-alpha.20 已闭合 upstream supplicant 的
+- [x] 完成 WS63 真实 incremental adapter：alpha.16-alpha.20 已闭合 upstream supplicant 的
   scan/connect/disconnect、精确 poll accounting、取消、旧 scan quiescence、预算回归，以及同步
   bootstrap 后的 owned facade/runner 生命周期。alpha.19 为初始化的 11 个阶段提供无秘密统计；
   alpha.20 修复 8 KiB main stack 溢出，并在 32 KiB profile 上以 20/20 nRST 证明当前
   `uapi_wifi_init` 为 61--62 ms。该证据接受当前 bootstrap 的 blocking WCT，但 netdev 创建、
   事件注册和 native supplicant create 等 vendor 调用本身仍不可抢占。alpha.21 已接入真实
   facade wait platform；2026-07-27 已取得真实 initialize/scan、runner wake、预算续跑与
-  queue high-water 统计。connect/disconnect/poll 的真机统计和 parity 仍未闭合。不能因有
-  计时器就包装成增量调用；只有这些剩余边界与证据闭合后才允许勾选。
+  queue high-water 统计。2026-07-28 同一镜像 20/20 nRST 又闭合 connect/disconnect/poll、
+  wait/wake、queue 和 blocking-call 聚合；每轮四个 operation 均 terminal、runner error 与
+  event drop 均为 0，100 ms work budget 无越界。当前同步 bootstrap 的 WCT 被明确接受，
+  netdev 创建、事件注册和 native supplicant create 等 vendor 调用仍不宣称可抢占；
+  incremental adapter 继续保持非默认，默认路径切换仍受 A5 总体验收与 pure-WPA3 gate 约束。
 
 #### A5R -- 可执行 RTOS 语义
 

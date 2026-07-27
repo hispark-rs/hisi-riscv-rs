@@ -18,13 +18,32 @@ verification, and then reused unchanged for every reset.
 - All 20 boots observed vendor status `8030`, normalized it to IEEE status 30,
   and recovered through the bounded native event-loop path.
 - The per-step `WorkBudget` was 100 ms. No step exceeded the budget.
-- The longest observed runner step was 38 ms.
-- The longest observed initial association ioctl was 32 ms.
-- Event and control queues reported no drop or backend error.
+- All 20 diagnostic trailers were complete. The operation ranges were:
+  initialize 36--37 ms, scan 1514--1610 ms, connect 5089--5306 ms, and
+  disconnect 48--53 ms.
+- Runner steps were 34--38 ms maximum per boot, with 22--25 steps, waits and
+  wakes. Backend polling was 23--27 calls; timer wakeups were exactly 2.
+- The longest observed association ioctl was 32 ms (28--32 ms across boots).
+- The control queue high-water was 1. The event queue high-water was 4, with
+  zero drops and zero backend errors.
+- Incremental execution reported zero blocking scan/poll calls, zero internal
+  sleeps and zero supplicant busy polls.
 
 The raw captures were kept outside the repository during diagnosis. This
 committed summary intentionally excludes credentials, BSS identifiers, and
 frame contents; none of those values are part of the evidence contract.
+
+The checked-in parser can reproduce the aggregate from a capture directory
+without resetting or reflashing the board:
+
+```console
+uv run hil/ws63-connectivity-reset-matrix.py \
+  --analyze-dir <capture-directory> \
+  --stage connect
+```
+
+The reanalysis fails closed when an A5B success marker lacks any required
+operation, queue, wait, runner or blocking-call metric.
 
 ## Interpretation
 
@@ -36,4 +55,4 @@ this matrix. The current transition profile therefore has evidence for a
 This does not prove every hostap callback is incrementally preemptible, and it
 does not close the pure-WPA3 gate. The 100 ms budget remains a migration
 measurement, not a public latency guarantee. The legacy blocking backend stays
-the default until the remaining A5B state-machine and parity gates close.
+the default until the A5 acceptance gates, including pure-WPA3 parity, close.
