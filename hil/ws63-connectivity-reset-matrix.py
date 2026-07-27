@@ -21,6 +21,9 @@ import serial
 
 RUST_TERMINAL_MARKERS = (
     b"RF5C_CONNECTIVITY_SUMMARY",
+    b"RFDBG_A5B_CONNECT_PROFILE_OK",
+    b"RFDBG_A5B_CONNECT_ERR",
+    b"RFDBG_A5B_SCAN_ERR",
     b"RF5B_WPA_CONNECT_ERR:",
     b"RF5B_CONNECT_ERR:",
     b"W2D_WPA2_CONNECT_ERR",
@@ -33,6 +36,9 @@ RUST_TERMINAL_MARKERS = (
 )
 
 RUST_TIMED_MARKERS = (
+    b"RFDBG_A5B_SCAN_OK",
+    b"RFDBG_A5B_CONNECT_OK",
+    b"RFDBG_A5B_CONNECT_PROFILE_OK",
     b"RF1_IMAGE_OK",
     b"RF2_INIT_OK",
     b"RF3_SCAN_OK",
@@ -197,7 +203,9 @@ def classify(
         if observed_ap_mode is not None and observed_ap_mode != required_ap_mode:
             return "wrong_ap_mode"
         success_evidence = (
-            b"W2E_WPA3_CONNECT_OK" in log or bool(parse_ping_summaries(log))
+            b"W2E_WPA3_CONNECT_OK" in log
+            or b"RFDBG_A5B_CONNECT_PROFILE_OK" in log
+            or bool(parse_ping_summaries(log))
         )
         if observed_ap_mode is None and success_evidence:
             return "missing_ap_mode"
@@ -207,6 +215,8 @@ def classify(
     if stage == "connect" and (
         b"W2D_WPA2_CONNECT_OK" in log or b"W2E_WPA3_CONNECT_OK" in log
     ):
+        return "pass"
+    if stage == "connect" and b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
         return "pass"
     public_ping = parse_ping_summaries(log).get("1.1.1.1")
     if public_ping is not None:
@@ -224,18 +234,28 @@ def classify(
         or b"RF5B_CONNECT_ERR:" in log
         or b"W2D_WPA2_CONNECT_ERR" in log
         or b"W2E_WPA3_CONNECT_ERR" in log
+        or b"RFDBG_A5B_CONNECT_ERR" in log
         or b"A4_NET_ERR" in log
     ):
         return "connect_error"
     if b"RF5B_AP_NOT_FOUND" in log:
         return "ap_not_found"
-    if b"RF3_SCAN_ERR" in log:
+    if b"RF3_SCAN_ERR" in log or b"RFDBG_A5B_SCAN_ERR" in log:
         return "scan_error"
     if b"RF2_INIT_ERR:" in log:
         return "init_error"
     if b"RFDBG_EXCEPTION" in log:
         return "exception"
     return "capture_timeout"
+
+
+def post_terminal_elapsed(
+    terminal_seen_at: float | None, post_terminal_seconds: float, now: float
+) -> bool:
+    return (
+        terminal_seen_at is not None
+        and now - terminal_seen_at >= post_terminal_seconds
+    )
 
 
 def capture_run(
@@ -277,6 +297,10 @@ def capture_run(
             terminal_markers = (*terminal_markers, success_marker)
 
     while time.monotonic() < deadline:
+        if post_terminal_elapsed(
+            terminal_seen_at, post_terminal_seconds, time.monotonic()
+        ):
+            break
         try:
             chunk = port.read(4096)
         except serial.SerialException:
@@ -325,11 +349,6 @@ def capture_run(
                 marker_times[name] = round(now, 3)
         if terminal_seen_at is None and any(marker in log for marker in terminal_markers):
             terminal_seen_at = time.monotonic()
-        if (
-            terminal_seen_at is not None
-            and time.monotonic() - terminal_seen_at >= post_terminal_seconds
-        ):
-            break
 
     return bytes(log), marker_times
 

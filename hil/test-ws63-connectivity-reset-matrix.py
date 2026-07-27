@@ -55,6 +55,27 @@ class ClassifyTests(unittest.TestCase):
             "missing_ap_mode",
         )
 
+    def test_transition_gate_accepts_matching_a5b_success(self) -> None:
+        log = b"\n".join(
+            (
+                b"W2E_AP_SECURITY mode=transition",
+                b"RFDBG_A5B_CONNECT_PROFILE_OK",
+            )
+        )
+        self.assertEqual(MATRIX.classify(log, "rust", "connect", "transition"), "pass")
+
+    def test_transition_gate_rejects_a5b_success_without_mode_evidence(self) -> None:
+        log = b"RFDBG_A5B_CONNECT_PROFILE_OK"
+        self.assertEqual(
+            MATRIX.classify(log, "rust", "connect", "transition"),
+            "missing_ap_mode",
+        )
+
+    def test_terminal_capture_can_finish_while_uart_is_silent(self) -> None:
+        self.assertFalse(MATRIX.post_terminal_elapsed(None, 2.0, 100.0))
+        self.assertFalse(MATRIX.post_terminal_elapsed(10.0, 2.0, 11.999))
+        self.assertTrue(MATRIX.post_terminal_elapsed(10.0, 2.0, 12.0))
+
 
 if __name__ == "__main__":
     unittest.main()
