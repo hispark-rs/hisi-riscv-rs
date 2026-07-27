@@ -1331,8 +1331,14 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   147,456 B，初始化消费四个 reservation 后保留两个。该 marker 只证明 resource admission，
   不替代 scan/connect、stack high-water 或 pure-WPA3 gate。
   同一稳定点的共享 RF heap 为 367,008 B，scan 峰值 193,764 B、180 个 allocation，
-  allocation/deallocation failure 均为 0；该值混合 vendor、supplicant 与 OSAL 所有者，
-  也不覆盖 connect/SAE/EAPOL，因此仍不能据此收窄 arena 或勾选静态准入。
+  allocation/deallocation failure 均为 0；该值混合 vendor、supplicant 与 OSAL 所有者。
+  后续 WPA2-on-transition connect HIL 在另一最终 ELF 上得到 340,416 B linker arena、
+  211,080 B 峰值、204 个 peak live allocations，关联/EAPOL/断开成功且分配/释放失败均为 0；
+  两次 WPA3 transition 尝试则在 EAPOL 前失败，不能提供 SAE 峰值。两份镜像的 linker
+  remainder 不同，已证实当前 arena 不是稳定 profile contract。下一步必须引入 one-shot
+  explicit arena capability、profile minimum/alignment 和硬件启动前的 `required/available`
+  检查；不能把任一观测值写死。完整边界见
+  [A5U shared RF arena evidence](evidence/ws63-rf-a5u-shared-arena-2026-07-28.md)。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、

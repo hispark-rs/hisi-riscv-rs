@@ -82,6 +82,10 @@ unconsumed stacks after initialization. Caller-owned stack storage, high-water
 measurement, the shared supplicant arena, and whole-profile memory admission
 remain open.
 Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
+The next resource gate is based on
+[shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md):
+the current linker remainder changes with ELF layout, so it must become an
+explicit pre-init capability rather than a copied constant.
 
 ## LATER -- Triggered Product Directions
 
