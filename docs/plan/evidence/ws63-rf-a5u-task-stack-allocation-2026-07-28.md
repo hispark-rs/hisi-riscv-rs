@@ -10,7 +10,9 @@ The image used:
 
 - parent base: `ec74c5665c333658d8856789a7cf292940539e09`;
 - `hisi-rtos`: `a580c1e9a3edcfe840e8e5469fb1d04c13431a73`;
-- `ws63-examples`: `985aee21e7f2ee7cb4092400e891f2defc736d04`;
+- `ws63-examples`: task-stack image
+  `985aee21e7f2ee7cb4092400e891f2defc736d04`; heap-metrics image
+  `6778cae`;
 - profile: upstream hostap WPA3-capable transition profile, init/scan-only;
 - transport: probe-rs planned-bin download at 3 MHz with full verify, followed
   by J-Link nRST and UART capture.
@@ -43,6 +45,25 @@ minimum. The profile continues to reserve six dynamic slots because connect may
 create or require one additional worker; this scan-only sample is not evidence
 that 120 KiB is the final connect-time envelope.
 
+The follow-up image exposed the existing shared RF allocator metrics at the same
+post-scan point:
+
+| Metric | Value |
+|---|---:|
+| Managed arena | 367,008 bytes |
+| Current used | 183,696 bytes |
+| Peak used | 193,764 bytes |
+| Live allocations | 156 |
+| Peak live allocations | 180 |
+| Allocation failures | 0 |
+| Deallocation failures | 0 |
+
+This is the shared vendor/supplicant/OSAL heap, not a supplicant-only arena.
+The scan sample leaves 173,244 bytes free in the allocator's free list, but that
+is neither a largest-contiguous-allocation guarantee nor a connect/SAE/EAPOL
+peak. The arena must not be reduced to the observed peak without the remaining
+profile HIL matrix.
+
 ## Boundary
 
 This closes observability of the actual allocation request selected by the RTOS.
@@ -51,7 +72,8 @@ It does not close:
 - caller-owned task-stack storage;
 - stack high-water measurement;
 - connect-time maximum live task count;
-- supplicant arena ownership or size;
+- separation and caller ownership of the shared RF/supplicant arena;
+- connect/SAE/EAPOL heap peak and fragmentation envelope;
 - memory-profile admission before hardware initialization.
 
 Those remain A5U work. The unavailable pure-WPA3 AP gate remains external and

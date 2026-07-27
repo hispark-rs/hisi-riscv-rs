@@ -1320,6 +1320,9 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   dynamic tasks 均分配 24 KiB，合计 120 KiB，main/idle 报告 0。profile 仍保留 6 个 slot
   reservation，scan-only 样本不能提前把 connect-time envelope 写死为 120 KiB。完整边界见
   [A5U task-stack allocation evidence](evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md)。
+  同一稳定点的共享 RF heap 为 367,008 B，scan 峰值 193,764 B、180 个 allocation，
+  allocation/deallocation failure 均为 0；该值混合 vendor、supplicant 与 OSAL 所有者，
+  也不覆盖 connect/SAE/EAPOL，因此仍不能据此收窄 arena 或勾选静态准入。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
