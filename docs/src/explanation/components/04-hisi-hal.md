@@ -17,7 +17,8 @@
   - 裸寄存器布局与地址映射（属 `ws63-pac`）。
   - 启动汇编、链接脚本、中断向量表（属 `hisi-riscv-rt`）。
   - 应用业务逻辑（属 `ws63-examples`）。
-  - 连接性协议栈（WiFi/BLE/SLE）、RF porting 层与 HCC IPC（属 `ws63-rf-rs`/厂商 blob 边界；HAL 只提供底层外设能力）。
+  - 连接性协议栈（WiFi/BLE/SLE）、RF porting 层与 HCC IPC（用户入口属
+    `hisi-rf`，WS63 实现属 `hisi-rf-ws63`/厂商 blob 边界；HAL 只提供底层外设能力）。
 
 `#![no_std]`、无堆、无 `Vec`（`lib.rs:20`）。寄存器访问全部经 `unsafe { w.bits(...) }` 封装在驱动方法内部。
 

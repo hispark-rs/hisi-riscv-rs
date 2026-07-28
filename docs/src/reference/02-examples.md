@@ -2,6 +2,10 @@
 
 `examples/ws63/` 下 18 个示例。下表的成功标记串、失败标记串、是否需接线均直接取自各 `examples/ws63/<name>/src/main.rs`。所有 UART 输出走 **UART0 @ 115200 8N1**；`semihost_selftest` 走 RISC-V 半主机（semihosting），不走 UART。
 
+`rf_port_demo`、`wifi_blob_link` 和 `wifi_init_smoke` 是 maintainer/HIL fixtures，
+不是用户项目模板。用户 Wi-Fi 入口见[从模板新建工程](../how-to/09-new-project.md)；
+旧 RF 应用迁移见[`ws63-rf-rs` 到 `hisi-rf`](../how-to/12-migrate-ws63-rf-to-hisi-rf.md)。
+
 0.6.0 起默认 HAL 只暴露 HIL/soundness 已闭合的稳定 API；演示实验性面的示例会在自己的 `Cargo.toml` 显式启用 `unstable`，例如 `dma_loopback`、`async_delay`、`async_bus`、`embassy_*`、`reset_demo`。
 
 如何构建/运行见 [构建一个示例](../how-to/02-build-example.md) 与 [在 QEMU 里运行](../tutorials/contrib/02-examples.md)。
@@ -24,10 +28,10 @@ HIL runner 与脚本环境变量见 [HIL 脚本与 runner 环境变量](07-hil-m
 | `embassy_multitask` | embassy 双任务 `Timer::after` | UART | `EMBASSY MULTITASK: PASS` | 否 | ✅ | ⚠️ |
 | `net_ping` | smoltcp over ws63-netmac + SLIRP（ARP/ICMP/UDP） | UART | `NET PING: PASS` | 否⁵ | ✅ | ❌⁶ |
 | `reset_demo` | `software_reset` + `reset_reason` 端到端 | UART | `OK: software reset observed` | 否 | ✅ | ⚠️ |
-| `rf_port_demo` | ws63-rf-rs allocator/securec/log porting 层 | UART | `RF PORT DEMO: PASS` | 否 | ✅ | ⚠️ |
+| `rf_port_demo` | maintainer fixture：旧 porting allocator/securec/log 契约 | UART | `RF PORT DEMO: PASS` | 否 | ✅ | ⚠️ |
 | `semihost_selftest` | CPU 自检（M/F 扩展、mcycle），半主机退出码 | semihosting | 退出码 `0`，console `semihost_selftest: PASS` | 否⁸ | ✅ | ❌⁸ |
 | `custom_memory` | 验证 per-example `memory.x` 覆盖 rt 自带 | UART | `custom_memory: OK (per-example memory.x in effect)` | 否 | ✅ | ⚠️ |
-| `wifi_blob_link` | `--whole-archive` 链接 Wi-Fi ROM-data blob + 重定位证明 | UART | `BLOB LINK SPIKE: PASS` | 否⁷ | ✅ | ⚠️ |
+| `wifi_blob_link` | maintainer fixture：ROM-data archive/link 契约 | UART | `BLOB LINK SPIKE: PASS` | 否⁷ | ✅ | ⚠️ |
 | `xip_flash_clk_hazard` | 演示 XIP 执行中切 flash 时钟会挂死 | UART | `XIP-HAZARD: before flash-clock switch` | 否 | ✅ | ❌⁹ |
 
 图例（**真机**列）：✅ 已在真实硅片上验证通过；⚠️ QEMU 通过、真机示例 smoke 尚未逐一验证；❌ 真机不适用或不纳入常规 HIL。
