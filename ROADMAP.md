@@ -77,11 +77,12 @@ in-memory transitions and advances vendor work only through budgeted poll turns;
 A5F has removed hidden backend and concrete RTOS types from public signatures.
 The incremental cancellation model, public native-supplicant disconnect path,
 upstream hostap key cleanup, and WS63 WAL key programming/rollback are now
-covered across their exact production seams. The remaining release gates are
-to rerun target response-bound evidence on the released A5B state machine,
-inject failures through the actual controller/connect/control source path, and
-keep QEMU/HIL evidence executable and fail-closed. Pure-WPA3 remains a separate
-external gate.
+covered across their exact production seams. Credential-free cancellation and
+timeout injection now also crosses the public controller, facade channels,
+incremental runner, and WS63 backend, with identical QEMU and silicon output.
+The remaining release gates are to rerun target response-bound evidence on the
+released A5B state machine and keep the complete QEMU/HIL evidence executable
+and fail-closed. Pure-WPA3 remains a separate external gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
@@ -102,9 +103,11 @@ Resource shortage, association rejection, first-EAPOL timeout, operation
 cancellation and backend timeout now emit the same production
 `hisi-rf-error/v2` diagnostics in host fixtures, QEMU and on real WS63.
 Operation cancellation and timeout also pass through the production
-incremental state machine and prove terminal-slot recovery. A production-path
-host regression now covers key-held cancellation, one retained replacement,
-late success suppression, timer cleanup and generation-safe slot reuse.
+public controller and incremental state machine, then return through facade
+completion/event channels while proving terminal-slot recovery. A
+production-path host regression now covers key-held cancellation, one retained
+replacement, late success suppression, timer cleanup and generation-safe slot
+reuse.
 Template `v0.7.0-alpha.9` now generates the Wi-Fi firmware,
 FlashPlan image and deterministic profile resource report from the same public
 `hisi-rf` dependency; native Linux, macOS and Windows CI all pass.

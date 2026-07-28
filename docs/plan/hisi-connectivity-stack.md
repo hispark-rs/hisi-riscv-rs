@@ -5,7 +5,8 @@
 **执行中 / P0。** A5F 单依赖 facade、A5B 非默认增量 backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership 和 opaque facade/runtime 解耦门槛已经
-闭合，对抗式审计仍保留真实 source-path failure injection 与严格 QEMU/HIL evidence。
+闭合，真实 controller/connect/control source-path failure injection 也已在 host、QEMU
+和真机闭合；对抗式审计仍保留 release-train response-bound rerun 与严格 QEMU/HIL evidence。
 pure-WPA3 HIL 另受外部条件阻塞。剩余门槛闭合前
 不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
@@ -1534,8 +1535,19 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
   不足和 backend timeout 均有 typed error fixture；人类输出给出下一步，`--json`/agent 路径
   使用版本化 schema，且 secret-redaction tests 通过。
-- [ ] failure injection 必须穿过实际 controller/connect/control source path；直接调用
+- [x] failure injection 必须穿过实际 controller/connect/control source path；直接调用
   error builder 的 fixture 只能证明序列化契约，不能证明生产状态机会产生同一错误。
+  `hisi-rf-ws63 0.1.0-alpha.36` 将凭据无关 fixture 从私有 driver 直调改为公开
+  `WifiController::connect`/`disconnect`，经过 facade command/completion/event channel、
+  `IncrementalRadioRunner` 和真实 WS63 incremental backend。host 回归验证取消经 public
+  event queue 返回 `operation.cancelled/operation`，一毫秒连接 deadline 经 connect future
+  返回 `backend.timeout/connect`；同一 RV32 ELF 在 QEMU 与真实 WS63 上逐字输出相同 JSON
+  和 marker，3 MHz 完整 verify 下载为 2.49 秒。backend commit `407ae8a` 的 main/publish
+  runs `30357162605`/`30357192915` 成功；facade `hisi-rf 0.1.0-alpha.46` commit
+  `868537b` 精确携带该 release。该项只关闭 production source-path injection，不替代下一项
+  对完整 init/scan/connect/DHCP/renew marker 与 artifact hash 的统一 fail-closed parser。
+  证据见
+  [A5U operation error injection evidence](evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md)。
 - [ ] QEMU 与 HIL 使用同一组分阶段 marker 和 fail-closed parser；缺少 init/scan/connect/
   DHCP/renew、出现非零 drop/error/budget violation，或 ELF/profile/evidence hash 不一致时
   必须失败并保存可复算 artifact。
