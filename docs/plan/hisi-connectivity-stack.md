@@ -1390,15 +1390,26 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   code 不修改既有 stable enum 判别语义，secret、passphrase、key material 不进入 `Debug`、
   Display 或 JSON。release chain 由 core main/publish runs `29947847220`/`29948082527`、backend
   runs `29948247748`/`29948416210` 和 facade runs `29948547164`/`29948895065` 闭合。
-- [ ] 对 association rejection、first-EAPOL timeout、cancel/backend timeout 建立
-  QEMU/HIL stable-class parity；UART/dump 的 redaction 与 bounded trace 仍需真机证据。
+- [ ] 对 association rejection、first-EAPOL timeout 建立 production source-path
+  QEMU/HIL parity，并对 cancel/backend timeout 建立 operation-level injection；
+  通用 stable-class 的 RV32 UART/JSON/redaction parity 已闭合，但不能替代这些行为证据。
   resource-shortage 子项已经闭合：生产 `ArenaAdmissionError` 在 QEMU 与真实 WS63 上逐字输出
   相同的 `resource.unavailable` / `runtime` / `provide_resources`，并保留
   `required=303104`、`available=0` 两项有界 trace；错误在 RF 电源和 blob 启动前产生，不需要
   AP 或凭据。3 MHz 完整 verify 的真机下载为 2.28 秒。backend main/publish runs
   `30320681798`/`30320859956`，facade main/publish runs
-  `30320968688`/`30321264555` 均通过。剩余 parity 范围因此收窄为 association rejection、
-  first-EAPOL timeout、cancel 和 backend timeout。
+  `30320968688`/`30321264555` 均通过。剩余 parity 范围因此收窄为 association rejection/
+  first-EAPOL timeout 的 production source path，以及 cancel/backend timeout 的
+  operation-level injection。
+- [x] **闭合通用 cancellation/backend-timeout 目标序列化 parity**：凭据无关的 production
+  diagnostic fixture 在 QEMU 和真实 WS63 上逐字输出相同的
+  `operation.cancelled`/`backend.timeout`、stage、recovery action、numeric backend code、
+  空 bounded trace 和 docs anchor；3 MHz 完整 verify 下载为 2.24 秒。该证据证明 RV32
+  UART/JSON schema 与 secret-redaction parity，不冒充真实 operation cancellation 生命周期或
+  芯片 backend timeout 注入。`hisi-rf-ws63 0.1.0-alpha.29` main/publish runs
+  `30322046865`/`30322230818`，`hisi-rf 0.1.0-alpha.39` main/publish runs
+  `30322310077`/`30322601660` 均通过。完整边界见
+  [A5U typed-error target parity evidence](evidence/ws63-rf-a5u-typed-error-target-parity-2026-07-28.md)。
 - [x] facade example 与 crates.io-only consumer 已只展示：选择命名 profile、构造
   `Resources`/`Storage`、初始化 controller；在线、离线、只读 registry、含空格/非 ASCII 和
   并发 target 构建均使用发布 crate，不依赖父仓 patch。
