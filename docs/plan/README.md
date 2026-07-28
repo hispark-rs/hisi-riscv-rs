@@ -24,7 +24,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5 无板收口已完成；pure WPA3 是外部阻塞发布门槛 | 保持现有回归和 oracle；门槛闭合前不切默认 backend、不启动第二产品方向 |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5 对抗式审计仍有可执行的 correctness/release-contract 项；pure WPA3 另为外部阻塞门槛 | 逐项关闭 A5B/A5F/A5U 复开项并保持现有回归和 oracle；全部门槛闭合前不切默认 backend |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
@@ -40,11 +40,12 @@
 
 ```mermaid
 flowchart LR
-    A5B["Done A5B opt-in 增量 backend"] --> A5["A5 发布收口"]
-    A5U["Done A5U 资源准入"] --> A5
+    A5B["A5B 有界 start/cancel 与真实 key seam"] --> A5["A5 发布收口"]
+    A5U["A5U 真实错误路径与严格证据"] --> A5
     A5U --> REPORT["产物与资源契约"]
     REPORT --> CLI["P2 cargo-hisi 触发条件"]
     A5R["Done A5R 语义收口"] --> A5
+    A5F["A5F opaque facade 与 runtime 解耦"] --> A5
     WPA3["外部门槛：pure WPA3 HIL"] --> A5
     A5 --> PRODUCT["选择一个后续产品方向"]
     PRODUCT --> NVS["NVS N0-N3"]
@@ -53,8 +54,9 @@ flowchart LR
     PRODUCT --> SLE["SLE"]
 ```
 
-这张图记录 A5 无板工作已经闭合，而发布切换仍等待 pure-WPA3 门槛。外部阻塞期间不把
-局部完成误写成整个 A5 已验收，也不借此并行启动第二个产品方向。
+这张图记录 A5 已交付的基础能力仍有对抗式审计复开的门槛；pure-WPA3 是另一条外部
+门槛。任何一条未闭合时都不能把局部完成写成整个 A5 已验收，也不借此并行启动第二个
+产品方向。
 
 ## 维护契约
 

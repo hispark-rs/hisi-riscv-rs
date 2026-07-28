@@ -9,11 +9,10 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
-externally blocked on a suitable SAE-only AP. A5U caller-owned resource admission,
-template/resource-report closure, host-side cancellation conservation, bounded
-response measurement and RTOS conformance are complete. Remaining A5 release
-gates require the externally blocked pure-WPA3 matrix before changing the
-default backend.
+externally blocked on a suitable SAE-only AP. The current A5 window is limited to
+correctness and release-contract findings exposed by adversarial review; it does
+not open a second product direction. Changing the default backend still requires
+both those unblocked findings and the external pure-WPA3 matrix to close.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -68,19 +67,22 @@ remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
-## NOW -- A5 Release Gate Externally Blocked
+## NOW -- A5 Correctness And Release Closure
 
-A5F has closed the single-dependency facade, normalized-link artifact and
-macOS/Linux/Windows crates.io-only build path. A5U now exposes named profiles,
+A5F has delivered the single-dependency facade, normalized-link artifact and
+macOS/Linux/Windows crates.io-only build path. A5U exposes named profiles,
 caller-owned storage, versioned machine-readable reports, actionable typed
-errors, and a template happy path. Pure-WPA3 evidence remains an external gate;
-this work does not remove the vendor oracle or claim WPA3 stability.
+errors, and a template happy path. Adversarial review nevertheless reopened four
+release gates: make every incremental start/cancel step genuinely bounded, bind
+key conservation to the real install/delete seam, remove hidden backend and
+concrete RTOS types from the facade contract, and make QEMU/HIL evidence
+executable and fail-closed. Pure-WPA3 remains a separate external gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
-No unblocked A5 implementation checklist remains; while the pure-WPA3 gate is
-unavailable, the project keeps regression evidence current rather than opening
-a second product direction.
+The project closes those findings one at a time while keeping the verified
+blocking backend as the default. It does not remove the vendor oracle, claim
+WPA3 stability, or start BLE/SLE/TLS/NVS work while the A5 window is active.
 
 Task-stack and shared-arena admission are now closed before hardware startup:
 the profile atomically reserves six 24 KiB stacks and six dynamic slots, while

@@ -70,6 +70,15 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   composition-root, RTOS and dependency-tree mappings. The old crate remains a
   bounded maintainer oracle until its pure-WPA3 parity and migration-release
   removal gates are satisfied.
+- **Incremental release closure** — publish `hisi-rf-core
+  0.1.0-alpha.15`, `hisi-rf-ws63 0.1.0-alpha.32`, and `hisi-rf
+  0.1.0-alpha.42`. The core preserves local continuation when a deadline adds a
+  timer subscription, and the released consumer fixture now pins and verifies
+  the exact facade/core/backend closure in clean and offline builds.
+- **A5 evidence correction** — reopen bounded `start`/`cancel`, real key-hook
+  conservation, opaque facade/runtime selection, and strict QEMU/HIL gates
+  exposed by adversarial review. Pure WPA3 remains a separate externally
+  blocked gate rather than the only unfinished A5 item.
 
 ### Verification
 

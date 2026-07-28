@@ -2,19 +2,19 @@
 
 ## 状态
 
-**执行中 / P0，发布门槛外部阻塞。** A5F 单依赖 facade、A5B 非默认增量 backend、
-A5R conformance、A5U caller-owned resource admission、typed diagnostics、host-side
-resource conservation、bounded-response 和 template/resource-report 均已闭合。当前没有
-未完成的无板 A5 实现项；pure-WPA3 HIL 仍受外部条件阻塞，因此不切换当前默认 backend，
-也不删除 vendor/migration oracle。跨计划优先级和依赖以
+**执行中 / P0。** A5F 单依赖 facade、A5B 非默认增量 backend、A5R conformance、
+A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
+已经形成可用基线；对抗式审计复开了有界执行、真实 key ownership、opaque facade/runtime
+解耦和严格 QEMU/HIL evidence 四类门槛。pure-WPA3 HIL 另受外部条件阻塞。两类门槛闭合前
+不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**外部阻塞门槛**；A5F/A5B/A5R/A5U 的无板和既有 HIL 收口已经完成。当前执行槽位只保留
-给 pure-WPA3 发布门槛，不因为外部阻塞并行开启另一个产品方向。
+**外部阻塞门槛**；A5 当前执行槽位用于关闭对抗式审计复开的 correctness 和 release
+contract，不因为外部门槛并行开启另一个产品方向。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -37,19 +37,24 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5 发布门槛外部阻塞
+## 当前执行窗口：A5 审计收口
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
-transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
-标准 relocation 与三平台 crates.io-only consumer；A5B 已闭合 opt-in core protocol、
-deterministic host interleaving、真实 scan/connect/disconnect work-budget 证据和非默认
-adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
-memory admission、association rejection/first-EAPOL timeout 的生产构造路径、
-operation-level cancellation/backend-timeout injection，以及 resource/generic stable-class
-的目标序列化均已闭合。resource ownership/conservation 的 deterministic negative test、
-bounded-response 量化证据和 template/resource-report 均已完成。当前不再有可独立于 AP
-推进的 A5 checklist；等待 pure-WPA3 gate 期间保持验证过的 WS63 blocking backend，
-只维护回归和发布证据。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
+transition-mode 证据已闭合，pure-WPA3 等待外部 AP 条件。A5 已交付 facade、标准
+relocation、三平台 consumer、opt-in incremental protocol、caller-owned resources、
+typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
+
+1. A5B 的 `start`/`cancel` 也必须受可验证 work budget 约束，不能只约束 `poll`；硬件
+   key ownership 必须在真实 install/delete hook 上证明，而不是 fixture 布尔状态。
+2. A5F 的 public signatures 不得泄露隐藏 backend/RTOS-driver 类型；应用选择 runtime，
+   `incremental-embassy-wait` 不得通过普通依赖暗选 `hisi-rtos`。
+3. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
+   精确锁定当前 facade release 和其 core/backend release closure。
+4. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
+   violation、ELF/profile/hash 不一致均应 fail closed。
+
+这些项和 pure-WPA3 gate 都未闭合前，保持验证过的 WS63 blocking backend。BLE、SLE、
+TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
 ### 已完成 -- A3 收口
 
@@ -90,7 +95,7 @@ W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1
 path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
 
 A5F single-dependency facade、A5U caller-owned resource admission 和 A5B opt-in host
-prototype 已完成；A5B adapter 保持非默认。pure-WPA3 gate 闭合前，A5B 不删除
+prototype 已形成基线；A5B adapter 保持非默认。上述审计项与 pure-WPA3 gate 闭合前，A5B 不删除
 vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
 真机稳定性结论。
 
@@ -1297,6 +1302,12 @@ A5R 后续排期和验收顺序。
   ../src/how-to/12-migrate-ws63-rf-to-hisi-rf.md)，覆盖单 facade 依赖、命名 profile、
   caller-owned storage、composition root、RTOS 启动和 dependency-tree 验证；模板和用户
   how-to 已只使用 `hisi-rf`。
+- [ ] **Opaque public facade**：`InitError`、`RadioController::split()` 和 rustdoc
+  signatures 不得暴露 `hisi-rf-rtos-driver`、`Ws63WifiBackend` 或其他隐藏 composition
+  类型；增加真实 public-API/rustdoc gate，而不是只扫描页面文本。
+- [ ] **Runtime choice stays with the application**：普通 facade/backend dependency
+  graph 不得因 `incremental-embassy-wait` 引入具体 `hisi-rtos` backend；目标 examples
+  可以在 dev-dependencies 中显式选择 runtime。
 - [ ] `ws63-rf-rs` facade 继续保留一个 migration release；父仓中的
   `wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 仍是明确 allowlist 的 maintainer
   oracle，不是假装成用户 happy path。只有 pure-WPA3 parity gate 闭合、所有 oracle
@@ -1457,19 +1468,21 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 
 #### A5 验收
 
-- [x] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
+- [ ] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
   control cancellation、L2 RX/TX、timer 和 diagnostics 均能获得可量化的最大响应时间。
   同一 transition-profile 镜像 20 次 nRST 中每次 100 ms budget 均无越界，runner step
   最大 34--38 ms，最长 association ioctl 为 32 ms，queue/event drop 和 backend error
   均为 0。该结果是当前固定 profile 的迁移上界，不扩大成任意 callback 或其他芯片的
-  公共实时保证。证据见
+  公共实时保证。当前实现只把 budget 传给 `poll`，`start`/`cancel` 仍可同步进入 vendor
+  调用；因此该证据只保留为观测基线，不能关闭完整门槛。证据见
   [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
-- [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
+- [ ] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
   只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行
   key-held connect、replacement queue、cancel、late `AUTHORIZED`、final `DISCONNECTED` 和
   generation-reuse 的对抗序列；WPA2/WPA3 host profile 分别通过 86/91 项测试，RV32 check
-  同时通过。证据见
+  同时通过。当前 key 断言只操作 fixture 状态，尚未绑定真实 hostap set/delete-key hook；
+  owner/queue/timer/generation 子项保留为已验证证据，但完整 key conservation 门槛重开。证据见
   [A5 incremental resource conservation](evidence/ws63-rf-a5-resource-conservation-2026-07-28.md)。
 - [x] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
   archive compatibility suite、generic runtime suite 与真机 HIL 三层证据分开报告。
@@ -1491,6 +1504,11 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
   不足和 backend timeout 均有 typed error fixture；人类输出给出下一步，`--json`/agent 路径
   使用版本化 schema，且 secret-redaction tests 通过。
+- [ ] failure injection 必须穿过实际 controller/connect/control source path；直接调用
+  error builder 的 fixture 只能证明序列化契约，不能证明生产状态机会产生同一错误。
+- [ ] QEMU 与 HIL 使用同一组分阶段 marker 和 fail-closed parser；缺少 init/scan/connect/
+  DHCP/renew、出现非零 drop/error/budget violation，或 ELF/profile/evidence hash 不一致时
+  必须失败并保存可复算 artifact。
 - [ ] 同一最终镜像完成 init/scan、upstream WPA2、pure WPA3 SAE+PMF、DHCP/renew 和重复 ping
   parity；至少 20 次 unchanged-image nRST 无 runner starvation、永久 pending、stale
   completion、event drop 或 scheduler invariant failure。

@@ -19,7 +19,7 @@ behavior remains A4 work.
 | final `wifi_init_smoke` ELF | `85d831e2a71d2e8d649d80d2d526edbc17f1e0f1e976a56627ebc5ade9a7eb3e` |
 | canonical `.hisi.img` | `97a3b09b1bd6457d1b8e67bc529b977a7c8dd6b20758a9e99be6429db29f5e9d` |
 | FlashPlan JSON | `c6e62c99a1879e88acc3d5f2b8241f19413c228a4b1917414233d2a26d5477b3` |
-| five-reset summary | `c7cf697d4849195c7ee176cb661177eff7fd0686163eb648b05682634b808c15` |
+| five-reset summary | `0303e9973b3d631b52249ffed6053b3e3a0fff85f681bb8fc28323b5d7e4b8ec` |
 
 The WPA2-Personal passphrase was injected at build time and is not stored in this
 evidence. Raw UART logs remain under the ignored local
