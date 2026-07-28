@@ -81,14 +81,21 @@ task 或 queue 常量。
 底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：
 
 ```rust
-let resources =
-    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, radio_arena);
+let resources = hisi_rf::ws63::Resources::<hisi_rf::ws63::WifiWpa2Smoltcp>::builder(
+    efuse,
+    radio_arena,
+)
+.crypto(km, spacc, trng)
+.build();
 
 let controller =
     hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &RADIO_STORAGE)?;
 
 let mut wifi = controller.start_runner()?;
 ```
+
+WPA3 使用 `WifiWpa3Smoltcp`，并在 `.crypto(...)` 后追加 `.pke(pke)`；漏掉
+PKE 时没有可调用的 `build()`。WPA2 不消费 PKE，因此应用仍可把该 token 留给其他用途。
 
 应用只通过 chip-neutral 控制面继续工作：
 

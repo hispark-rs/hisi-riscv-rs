@@ -343,14 +343,20 @@ hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);
 let arena = RADIO_ARENA
     .claim_for::<hisi_rf::ws63::SelectedProfile>()?
     .install()?;
+let resources =
+    hisi_rf::ws63::Resources::<hisi_rf::ws63::WifiWpa2Smoltcp>::builder(efuse, arena)
+        .crypto(km, spacc, trng)
+        .build();
 let radio = hisi_rf::ws63::init(
     RadioConfig::default(),
-    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena),
+    resources,
     &RADIO_STATE,
 )?;
 ```
 
 用户不能传入 `ws63_radio_sys::*` raw type、archive path、ROM address 或 relocation profile。
+WPA3 profile 使用同一 builder，但必须在 `build()` 前显式 `.pke(pke)`；WPA2 profile
+在类型上不消费 PKE。
 标准 RISC-V relocation archive、可重定位 ROM patch object 和 dependency-owned link directives
 是此 UX 的前置条件；最终应用不得运行 guarded-link shell、读取
 `DEP_WS63_RADIO_SYS_*`、调用 `hisi-rf-link` 或依赖 GCC/Python/个人绝对路径才能完成普通
@@ -1333,7 +1339,7 @@ P0 面向应用开发者，只收敛完成 Wi-Fi demo 所必需的四个体验�
 board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo-hisi` 的命令、agent、安全、
 跨平台与 release 规划见 [`cargo-hisi` Developer Workflow CLI Plan](cargo-hisi-cli.md)。
 
-- [x] **隐藏组合根**：`hisi_rf::ws63::Resources::new(...)` 消费明确的 HAL
+- [x] **隐藏组合根**：`hisi_rf::ws63::Resources::<Profile>::builder(...)` 消费明确的 HAL
   peripheral tokens，`hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装并返回只能通过
   chip-neutral API `split()` 的 controller。普通 consumer 不构造 `Ws63WifiBackend`，不直接
   依赖 `ws63-radio-sys`/blob/RTOS driver，也不调用 vendor OSAL。
@@ -1469,7 +1475,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.11` 固定 `hisi-rf 0.1.0-alpha.48`、`hisi-rtos 0.1.0-alpha.14` 和
+  v0.7.0-alpha.12` 固定 `hisi-rf 0.1.0-alpha.49`、`hisi-rtos 0.1.0-alpha.14` 和
   `hisi-riscv-rt 0.5.7`，通过 facade macro 声明并安装 caller-owned arena，不再让应用直接
   依赖 `hisi-alloc`；init、runner startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。
   生成项目自身携带 pinned nightly/`rust-src`、target、`--no-relax` 和根级
@@ -1500,11 +1506,16 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   选择留在 composition root 内；需要显式实验选择时使用命名 profile，不把实现阶段编码进
   普通用户函数名。旧入口仅保留一个 alpha 迁移周期，并由 rustdoc/compile fixture 验证新
   用户路径不引用它。
-- [ ] 将当前多参数 `hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena)`
+- [x] 将当前多参数 `hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena)`
   收敛为 profile-aware typed builder 或等价能力构造器。缺少 profile 必需资源必须在编译期
   或初始化前返回结构化 `Required/Available` 错误；WPA2 profile 不应被迫理解仅 WPA3/SAE
   使用的能力，新增 DMA/keyslot/IRQ 也不得继续无限增长位置参数。builder 仍显式消费 HAL
-  peripheral token，不能重新引入 service locator 或隐藏软件回退。
+  peripheral token，不能重新引入 service locator 或隐藏软件回退。`hisi-rf-ws63
+  0.1.0-alpha.40` 提供 profile-aware typestate builder：WPA2 在 `.crypto(...)` 后可
+  `build()` 且不消费 PKE；WPA3 必须再 `.pke(...)` 才能 `build()`。两种 profile 的公共
+  名字集合除预期的 `SelectedProfile` 目标外一致，host tests、RV32 checks、独立
+  `cargo package --locked` 与 public-API gate 均通过。`hisi-rf 0.1.0-alpha.49`、
+  `ws63-examples` 和 template v0.7.0-alpha.12 已沿 facade 消费同一契约。
 - [ ] 决定并冻结 `Storage<Profile, EVENTS>` 与 `RadioArenaStorage` 的长期所有权形态。
   优先评估一个 caller-owned `RadioStorage<Profile, const EVENTS: usize>` composition
   object，在内部持有 bounded event state、crypto scratch 和 arena claim；若因 linker
