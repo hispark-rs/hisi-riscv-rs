@@ -65,7 +65,7 @@ remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
-## NOW -- A5U Typed-Error QEMU/HIL Parity
+## NOW -- A5 Resource-Lifecycle And Template Closure
 
 A5F has closed the single-dependency facade, normalized-link artifact and
 macOS/Linux/Windows crates.io-only build path. A5U now exposes named profiles,
@@ -82,11 +82,14 @@ HIL with no event drop or backend error.
 Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
 The shared-arena closure is recorded in
 [shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md).
-Resource shortage, generic cancellation and generic backend-timeout classes now
-emit the same `hisi-rf-error/v2` diagnostics in QEMU and on real WS63. The
-remaining A5U gate is source-path parity for association rejection and
-first-EAPOL timeout, plus operation-level cancellation/timeout injection across
-host fixtures, QEMU and HIL.
+Resource shortage, association rejection, first-EAPOL timeout, operation
+cancellation and backend timeout now emit the same production
+`hisi-rf-error/v2` diagnostics in host fixtures, QEMU and on real WS63.
+Operation cancellation and timeout also pass through the production
+incremental state machine and prove terminal-slot recovery. The current
+credential-free gate is broader resource conservation under adversarial
+interleavings plus executable template/resource-report closure.
+Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md).
 
 ## LATER -- Triggered Product Directions
 

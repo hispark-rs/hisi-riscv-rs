@@ -3,18 +3,19 @@
 ## 状态
 
 **执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。A5U
-的 caller-owned storage、task-stack/shared-arena 静态准入和 init/scan HIL 已闭合；
-association rejection 与 first-EAPOL timeout 的生产构造路径也已完成 QEMU/HIL parity；
-当前唯一主要 WIP 是 A5U operation-level cancellation/backend-timeout injection。
-pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
+的 caller-owned storage、task-stack/shared-arena 静态准入、typed-error
+production source-path 和 operation-level cancellation/backend-timeout injection
+均已完成 QEMU/HIL parity。pure-WPA3 HIL 门槛仍受外部条件阻塞；当前转入 A5
+资源生命周期守恒和 template/resource-report 验收。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**外部阻塞门槛**；A5F 的无板 facade/release 和 A5B 的 opt-in 增量原型已完成，当前唯一
-active milestone 是不依赖 pure-WPA3 AP 的 A5U typed-error QEMU/HIL parity。
+**外部阻塞门槛**；A5F 的无板 facade/release、A5B 的 opt-in 增量原型和 A5U typed-error
+QEMU/HIL parity 已完成，当前 active milestone 是不依赖 pure-WPA3 AP 的 A5 资源生命周期
+守恒与 template/resource-report 验收。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -37,17 +38,18 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5U Typed-Error QEMU/HIL Parity
+## 当前执行窗口：A5 Resource-Lifecycle And Template Closure
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
 标准 relocation 与三平台 crates.io-only consumer；A5B 已闭合 opt-in core protocol、
 deterministic host interleaving、真实 scan/connect/disconnect work-budget 证据和非默认
 adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
-memory admission、association rejection/first-EAPOL timeout 的生产构造路径 QEMU/HIL
-parity，以及 resource/generic stable-class 的目标序列化均已闭合；当前只推进
-operation-level cancellation/backend-timeout injection，不改当前验证过的 WS63 blocking
-backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5U 并行。
+memory admission、association rejection/first-EAPOL timeout 的生产构造路径、
+operation-level cancellation/backend-timeout injection，以及 resource/generic stable-class
+的目标序列化均已闭合。当前只推进 A5 resource ownership/conservation 的 deterministic
+negative tests，以及 template/resource-report 的可执行验收；不改当前验证过的 WS63 blocking
+backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
 ### 已完成 -- A3 收口
 
@@ -1368,7 +1370,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `hisi-fwpkg` image plan 与最终 ELF/image 信息合并为唯一 artifact；CI runs
   `29941153042`、`29949035543` 已生成并上传该 report。父仓 report assembler 已升级到
   schema v5，并校验 296 KiB shared arena；仍未闭合的字段继续为 `null`。
-- [ ] **错误可执行诊断**：公共错误优先返回稳定、协议化 enum，例如 association status、
+- [x] **错误可执行诊断**：公共错误优先返回稳定、协议化 enum，例如 association status、
   SAE/EAPOL/PMF stage、timeout/cancel/resource/runtime class；vendor/raw code、最后状态、profile
   revision 和 bounded trace 保留在 `Diagnostics`，不作为用户匹配的主要 API。错误 display/
   JSON 必须提供安全的 next action 和相关 docs anchor，禁止只输出 `BackendError(0x...)`。
@@ -1380,8 +1382,9 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   status 与 disconnect reason 使用不同 trace kind；WS63 status 30 映射到 PMF，association
   success 后 first-EAPOL stall 映射到 EAPOL，未知和负 status 均保真上报，不从 packed code 反推。
   association rejection、first-EAPOL timeout、cancel/resource/backend timeout 的 fixture
-  matrix和目标序列化 parity 已闭合；真实 operation-level cancellation/backend-timeout
-  injection 尚未闭合，因此本项保持未完成。
+  matrix和目标序列化 parity 已闭合；`hisi-rf-ws63 0.1.0-alpha.31` 又通过 production
+  incremental driver 完成真实 operation-level cancellation/backend-timeout injection，
+  并证明 terminal slot 可供下一操作复用。
 - [x] **闭合 host typed-error fixture parity**：`hisi-rf-core` 的公开 fixture matrix 覆盖
   association rejection、first-EAPOL timeout、cancel、resource shortage 和 runtime/backend
   timeout；`hisi-rf-ws63` commit `27af8f0` 又把 status 30/PMF rejection 与“association 成功但
@@ -1393,7 +1396,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   code 不修改既有 stable enum 判别语义，secret、passphrase、key material 不进入 `Debug`、
   Display 或 JSON。release chain 由 core main/publish runs `29947847220`/`29948082527`、backend
   runs `29948247748`/`29948416210` 和 facade runs `29948547164`/`29948895065` 闭合。
-- [ ] 对 association rejection、first-EAPOL timeout 建立 production source-path
+- [x] 对 association rejection、first-EAPOL timeout 建立 production source-path
   QEMU/HIL parity，并对 cancel/backend timeout 建立 operation-level injection；
   通用 stable-class 的 RV32 UART/JSON/redaction parity 已闭合，但不能替代这些行为证据。
   resource-shortage 子项已经闭合：生产 `ArenaAdmissionError` 在 QEMU 与真实 WS63 上逐字输出
@@ -1408,8 +1411,17 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   stable code、recovery action、profile revision 与 bounded trace。3 MHz 完整 verify 下载为
   2.65 秒。backend main/publish runs `30334902194`/`30335131492`、facade main/publish
   runs `30335307515`/`30335653352` 均通过。该证据不冒充 live AP failure injection；
-  当前只剩 cancel/backend timeout 的 operation-level injection。完整边界见
-  [A5U connect-error source-path parity evidence](evidence/ws63-rf-a5u-connect-error-source-path-parity-2026-07-28.md)。
+  cancel/backend timeout 子项随后由 `hisi-rf-ws63 0.1.0-alpha.31` 闭合：fixture 驱动
+  production `IncrementalBackendDriver` 和私有 WS63 incremental backend，观察
+  `CancelRequested -> Cancelled`、deadline timeout 和终态后的 slot recovery；同一 RV32
+  ELF 在 QEMU 与真实 WS63 上逐字输出 `operation.cancelled` 和 `backend.timeout`。
+  3 MHz 完整 verify 下载为 2.38 秒。backend main/publish runs
+  `30336483115`/`30336721595`、facade main/publish runs
+  `30336949920`/`30337275627` 均通过。该证据不初始化 RF 或消费 AP 凭据，也不替代更广的
+  owner/timer/queue/key conservation 验收。完整边界见
+  [A5U connect-error source-path parity evidence](evidence/ws63-rf-a5u-connect-error-source-path-parity-2026-07-28.md)
+  和
+  [A5U operation error injection evidence](evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md)。
 - [x] **闭合通用 cancellation/backend-timeout 目标序列化 parity**：凭据无关的 production
   diagnostic fixture 在 QEMU 和真实 WS63 上逐字输出相同的
   `operation.cancelled`/`backend.timeout`、stage、recovery action、numeric backend code、
@@ -1450,7 +1462,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [ ] template 生成项目不导入 `Ws63WifiBackend` 或 `hisi-rf-rtos-driver`；一个命名 profile
   可以完成资源构造、runner 启动和 async scan/connect，资源不足在 blob 初始化前报告精确
   required/available，构建产物同时生成可复查的 resource/profile report。
-- [ ] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
+- [x] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
   不足和 backend timeout 均有 typed error fixture；人类输出给出下一步，`--json`/agent 路径
   使用版本化 schema，且 secret-redaction tests 通过。
 - [ ] 同一最终镜像完成 init/scan、upstream WPA2、pure WPA3 SAE+PMF、DHCP/renew 和重复 ping
