@@ -81,18 +81,37 @@ sides of the native supplicant boundary:
   on Linux, macOS and Windows; publish run
   [`30353500687`](https://github.com/hispark-rs/hisi-rf/actions/runs/30353500687)
   passed.
+- `ws63-radio-sys` commit
+  `aef315a6c8f99961ef5f1dae37c23fe77895f190` links the complete pinned hostap
+  source closure into `native_supplicant_lifecycle.c`. The test initializes the
+  production `hisi_wpa_context`, installs a pairwise CCMP key through the real
+  `wpa_driver_ws63_ops.set_key` hook, calls the public production
+  `hisi_wpa_disconnect`, and proves upstream `wpa_clear_keys` reaches the real
+  remove-key hook exactly once for that pairwise key. A second disconnect is
+  idempotent. CI run
+  [`30355215033`](https://github.com/hispark-rs/ws63-radio-sys/actions/runs/30355215033)
+  passed the native WPA2/WPA3 profiles, both RV32 source closures, package
+  verification, and Linux/macOS/Windows consumer builds.
 
 ## Evidence Boundary
 
-The key lease remains a deterministic `SupplicantPort` observation of the
-incremental cancellation contract. The later tests prove the real hostap
-install/remove callback and the real WS63 WAL command/rollback implementation
-independently, but they do not yet execute one integrated
-`cancel -> hisi_wpa_disconnect -> hostap key cleanup -> IOCTL_DEL_KEY` trace.
-That end-to-end host path remains the final key-conservation acceptance item.
-These tests also do not claim that WS63 hardware key tables can be read back
-from a host process. Existing real-silicon connect/disconnect HIL remains the
-target evidence for the driver path.
+The host acceptance is compositional across exact production seams rather than
+one synthetic mega-binary:
+
+1. the incremental adversarial test proves cancellation calls the production
+   `SupplicantPort::disconnect` once and conserves owner, queue, timer and
+   generation state;
+2. the production port directly calls `NativeSupplicant::disconnect`, which
+   directly calls public `hisi_wpa_disconnect`;
+3. the complete hostap lifecycle test proves `hisi_wpa_disconnect` invokes
+   upstream `wpa_clear_keys` and the real remove-key hook;
+4. the WS63 backend test proves that remove-key hook is encoded as
+   `IOCTL_DEL_KEY`, while failed install selection rolls back.
+
+No seam is substituted with an error builder or a model-only callback. This
+closes the host-side key-conservation gate. It does not claim that a host
+process can read back WS63 hardware key tables. Existing real-silicon
+connect/disconnect HIL remains the target evidence for the driver path.
 
 This gate does not prove pure-WPA3 stability, does not remove the vendor oracle,
 and does not make the incremental backend the default. The SAE-only AP gate

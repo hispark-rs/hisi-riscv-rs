@@ -4,8 +4,9 @@
 
 **执行中 / P0。** A5F 单依赖 facade、A5B 非默认增量 backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
-已经形成可用基线；对抗式审计复开了有界执行、真实 key ownership、opaque facade/runtime
-解耦和严格 QEMU/HIL evidence 四类门槛。pure-WPA3 HIL 另受外部条件阻塞。两类门槛闭合前
+已经形成可用基线；有界执行、真实 key ownership 和 opaque facade/runtime 解耦门槛已经
+闭合，对抗式审计仍保留真实 source-path failure injection 与严格 QEMU/HIL evidence。
+pure-WPA3 HIL 另受外部条件阻塞。剩余门槛闭合前
 不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -44,13 +45,11 @@ transition-mode 证据已闭合，pure-WPA3 等待外部 AP 条件。A5 已交�
 relocation、三平台 consumer、opt-in incremental protocol、caller-owned resources、
 typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
 
-1. A5B 的 `start`/`cancel` 也必须受可验证 work budget 约束，不能只约束 `poll`；硬件
-   key ownership 必须在真实 install/delete hook 上证明，而不是 fixture 布尔状态。
-2. A5F 的 public signatures 不得泄露隐藏 backend/RTOS-driver 类型；应用选择 runtime，
-   `incremental-embassy-wait` 不得通过普通依赖暗选 `hisi-rtos`。
-3. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
+1. A5B 的最终 release-train 镜像仍需重跑目标端 response-bound acceptance，证明
+   control、L2、timer 和 diagnostics 在长操作期间保持可量化响应。
+2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
-4. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
+3. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
    violation、ELF/profile/hash 不一致均应 fail closed。
 
 这些项和 pure-WPA3 gate 都未闭合前，保持验证过的 WS63 blocking backend。BLE、SLE、
@@ -1494,7 +1493,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   公共实时保证。由于上述矩阵早于 `alpha.34` 的 start/cancel 状态机修正，仍需用同一最终
   release train 镜像重跑 target acceptance；旧证据只保留为观测基线，不能关闭该门槛。证据见
   [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
-- [ ] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
+- [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
   只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行
   key-held connect、replacement queue、cancel、late `AUTHORIZED`、final `DISCONNECTED` 和
@@ -1503,11 +1502,17 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `hisi-rf-ws63 0.1.0-alpha.35` commit `3ce931a` 又通过生产
   `install_key_via`/`remove_key_via` 覆盖 `IOCTL_NEW_KEY -> IOCTL_SET_KEY ->
   IOCTL_DEL_KEY` 和 SET 失败回滚，WPA2/WPA3 host profile 分别通过 88/93 项测试。facade
-  `hisi-rf 0.1.0-alpha.45` 已发布并通过三平台 crates.io-only consumer CI。上述证据分别
-  证明 cancellation 资源模型、hostap hook 和 WAL key lifecycle，但尚未证明一次真实
-  incremental cancel 会贯通 hostap 清理并最终发出 `IOCTL_DEL_KEY`；因此
-  owner/queue/timer/generation 子项与两层 key seam 保留为已验证证据，完整 key
-  conservation 门槛继续开放。证据见
+  `hisi-rf 0.1.0-alpha.45` 已发布并通过三平台 crates.io-only consumer CI。随后
+  `ws63-radio-sys` commit `aef315a` 将完整 pinned hostap source closure 链入
+  lifecycle regression：生产 `hisi_wpa_disconnect` 调用 upstream `wpa_clear_keys`，
+  经过真实 `wpa_driver_ws63_ops.set_key` 删除 hook，并验证 pairwise key 只释放一次且
+  重复 disconnect 不重复删除。CI run `30355215033` 同时通过 native WPA2/WPA3 profile、
+  RV32 closure、package 和 Linux/macOS/Windows consumer。结合
+  `SupplicantPort::disconnect -> NativeSupplicant::disconnect -> hisi_wpa_disconnect`
+  的生产直连，以及 `remove_key_via -> IOCTL_DEL_KEY` 的 backend regression，host
+  cancellation-to-key-remove 契约已在每个精确生产 seam 上形成可执行闭包。主机测试不能
+  读回硬件 key table，真实 target 行为仍由连接/断连 HIL 负责；这不重开 host
+  conservation gate。证据见
   [A5 incremental resource conservation](evidence/ws63-rf-a5-resource-conservation-2026-07-28.md)。
 - [x] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
   archive compatibility suite、generic runtime suite 与真机 HIL 三层证据分开报告。

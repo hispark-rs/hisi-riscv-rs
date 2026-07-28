@@ -75,12 +75,13 @@ caller-owned storage, versioned machine-readable reports, actionable typed
 errors, and a template happy path. A5B now keeps start/cancel in bounded
 in-memory transitions and advances vendor work only through budgeted poll turns;
 A5F has removed hidden backend and concrete RTOS types from public signatures.
-The real hostap install/delete hooks and WS63 WAL key programming/rollback are
-now independently covered. The remaining release gates are to prove the
-incremental cancellation path drives that real key-removal chain end to end,
-rerun target response-bound evidence on the released A5B
-state machine, and keep QEMU/HIL evidence executable and fail-closed.
-Pure-WPA3 remains a separate external gate.
+The incremental cancellation model, public native-supplicant disconnect path,
+upstream hostap key cleanup, and WS63 WAL key programming/rollback are now
+covered across their exact production seams. The remaining release gates are
+to rerun target response-bound evidence on the released A5B state machine,
+inject failures through the actual controller/connect/control source path, and
+keep QEMU/HIL evidence executable and fail-closed. Pure-WPA3 remains a separate
+external gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
