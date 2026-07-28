@@ -111,9 +111,11 @@ completion/event channels while proving terminal-slot recovery. A
 production-path host regression now covers key-held cancellation, one retained
 replacement, late success suppression, timer cleanup and generation-safe slot
 reuse.
-Template `v0.7.0-alpha.9` now generates the Wi-Fi firmware,
-FlashPlan image and deterministic profile resource report from the same public
-`hisi-rf` dependency; native Linux, macOS and Windows CI all pass.
+Template `v0.7.0-alpha.11` now generates the Wi-Fi firmware, FlashPlan image
+and deterministic profile resource report from the same public `hisi-rf`
+dependency. Generated projects carry their own pinned toolchain, target/linker
+and release-profile configuration; tag-gated native Linux, macOS and Windows CI
+all pass before the GitHub prerelease is published.
 Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md).
 Resource-conservation evidence:
 [A5 incremental resource conservation](docs/plan/evidence/ws63-rf-a5-resource-conservation-2026-07-28.md).

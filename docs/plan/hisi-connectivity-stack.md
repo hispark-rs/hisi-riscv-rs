@@ -1470,13 +1470,16 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.9` 固定 `hisi-rf 0.1.0-alpha.41`、`hisi-rtos 0.1.0-alpha.13` 和
+  v0.7.0-alpha.11` 固定 `hisi-rf 0.1.0-alpha.48`、`hisi-rtos 0.1.0-alpha.14` 和
   `hisi-riscv-rt 0.5.7`，通过 facade macro 声明并安装 caller-owned arena，不再让应用直接
   依赖 `hisi-alloc`；init、runner startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。
+  生成项目自身携带 pinned nightly/`rust-src`、target、`--no-relax` 和根级
+  `codegen-units = 1` release profile，不依赖父 workspace 继承这些决定。
   Wi-Fi workspace 还通过同一个精确版本的 public `hisi-rf` 依赖生成确定性的
   `hisi-rf-resource-report/v5`，`just image` 同时产出 ELF、FlashPlan image、plan JSON
-  与 resource JSON。CI runs `30339350088`、`30340135903` 已在 native Linux/macOS/Windows
-  运行 host helper，并生成、构建 WS63 Wi-Fi 项目及 plan image；父仓旧
+  与 resource JSON。branch/tag CI runs `30376540180`、`30377443816` 已在 native
+  Linux/macOS/Windows 运行 host helper，并生成、构建 WS63 Wi-Fi 项目及 plan image；tag
+  workflow 只有在完整矩阵成功后才发布 GitHub prerelease。父仓旧
   `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，不再属于用户 happy path，也不因
   pure-WPA3 external gate 被提前删除。
 
@@ -1600,7 +1603,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
 - [x] template 生成项目不导入 `Ws63WifiBackend` 或 `hisi-rf-rtos-driver`；一个命名 profile
   可以完成资源构造、runner 启动和 async scan/connect，资源不足在 blob 初始化前报告精确
   required/available，构建产物同时生成可复查的 resource/profile report。该契约由
-  `hisi-rs-template v0.7.0-alpha.9` 和 CI runs `30339350088`、`30340135903` 闭合。
+  `hisi-rs-template v0.7.0-alpha.11` 和 branch/tag CI runs `30376540180`、
+  `30377443816` 闭合；生成项目自己的工具链、target/linker 与 release profile 不再依赖
+  父 workspace。
 - [x] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
   不足和 backend timeout 均有 typed error fixture；人类输出给出下一步，`--json`/agent 路径
   使用版本化 schema，且 secret-redaction tests 通过。

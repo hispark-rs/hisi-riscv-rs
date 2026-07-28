@@ -60,11 +60,14 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   conformance checklist entries against their existing transition-profile HIL,
   shared scenario, negative-test, Kani, TLA+, and real-silicon evidence while
   retaining the pure-WPA3 external gate.
-- **Executable Wi-Fi template reports** — publish `hisi-rs-template
-  v0.7.0-alpha.9`; generated Wi-Fi projects now use the same public `hisi-rf`
-  dependency for firmware and a host-only resource-report helper, and `just
-  image` emits the ELF, FlashPlan image, plan JSON and deterministic profile
-  resource JSON together.
+- **Self-contained Wi-Fi template release** — publish `hisi-rs-template
+  v0.7.0-alpha.11`; generated Wi-Fi projects pin `hisi-rf 0.1.0-alpha.48`,
+  `hisi-rtos 0.1.0-alpha.14` and the official nightly locally, carry their own
+  target/linker and root release-profile configuration, and emit the ELF,
+  FlashPlan image, plan JSON and deterministic profile resource JSON together.
+  Template tag pushes now rerun the full generated-project and native
+  Linux/macOS/Windows resource-report matrices before creating a GitHub
+  prerelease.
 - **RF facade migration contract** — add the application migration guide from
   `ws63-rf-rs` to the single `hisi-rf` dependency, including profile, storage,
   composition-root, RTOS and dependency-tree mappings. The old crate remains a
@@ -99,10 +102,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
 - The operation-level fixture emits identical cancellation and scan-timeout
   diagnostics in QEMU and on WS63, then starts a new operation to prove slot
   recovery; the 3 MHz fully verified download completed in 2.38 seconds.
-- Template CI runs `30339350088` and `30340135903` generate the complete WS63
-  Wi-Fi project and run its resource-report helper on native Linux, macOS and
-  Windows; the Windows MSVC path uses an explicit host `critical-section`
-  implementation rather than relying on platform-specific dead-code removal.
+- Template branch/tag CI runs `30376540180` and `30377443816` generate the
+  complete WS63 Wi-Fi project, build its release image and run the
+  resource-report helper on native Linux, macOS and Windows. The successful tag
+  run published `v0.7.0-alpha.11` as a non-draft prerelease.
 
 ---
 
