@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ea56f0f7.js";
+            window.path_to_searchindex_js = "../searchindex-6f576f91.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -234,9 +234,9 @@ rustflags = ["-C", "link-arg=--no-relax"]
 </div>
 <h2 id="risc-v-构建命令"><a class="header" href="#risc-v-构建命令">RISC-V 构建命令</a></h2>
 <p>因为 std 组件尚未由 rustup 分发，RISC-V 命令必须显式构建 <code>core</code> / <code>alloc</code>：</p>
-<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace
+<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
 cargo build -Zbuild-std=core,alloc --release
-cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
 </code></pre>
 <p>不要把 build-std 写成全局 Cargo 配置。host unit tests 需要在 <code>stable</code> + <code>x86_64-unknown-linux-gnu</code> 上运行；全局 <code>[unstable] build-std</code> 会污染 host 目标。</p>
 <h2 id="原子与-critical-section"><a class="header" href="#原子与-critical-section">原子与 critical-section</a></h2>
