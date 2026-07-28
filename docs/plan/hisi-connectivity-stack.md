@@ -47,7 +47,9 @@ relocation、三平台 consumer、opt-in incremental protocol、caller-owned res
 typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
 
 1. A5B 的最终 release-train 镜像仍需重跑目标端 response-bound acceptance，证明
-   control、L2、timer 和 diagnostics 在长操作期间保持可量化响应。
+   control、L2、timer 和 diagnostics 在长操作期间保持可量化响应。该验收现在由
+   `hil/ws63-a5b-response-bound.sh` 固定为“一次烧录、20 次 nRST、同一 ELF identity、
+   100 ms fail-closed 上界”；仍需取得本轮结果。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
@@ -1496,6 +1498,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   公共实时保证。由于上述矩阵早于 `alpha.34` 的 start/cancel 状态机修正，仍需用同一最终
   release train 镜像重跑 target acceptance；旧证据只保留为观测基线，不能关闭该门槛。证据见
   [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
+  当前 parser 已进一步收窄：声明 `--max-runner-step-ms` 时，缺少完整 A5B trailer 本身即
+  contract violation，且 `connectivity` 阶段也执行同一上界检查。专用
+  `hil/ws63-a5b-response-bound.sh` 会冻结 release closure 与 ELF/profile identity、只烧录
+  一次并执行 20 次 J-Link nRST；脚本可执行不等于本轮 HIL 已通过。
 - [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
   只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行

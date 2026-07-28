@@ -15,6 +15,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 | `hil/embedded-test-runner.sh` | `hisi-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
 | `hil/ws63-connectivity-smoke.sh` | WS63 A4/W2 connectivity gate | upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART contract |
+| `hil/ws63-a5b-response-bound.sh` | A5B release-train response-bound gate | 当前 incremental WPA2 fixture：一次 verified download + 20 次 unchanged-image J-Link nRST + 100 ms fail-closed runner bound |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
 | `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | hisi-fwpkg plan + probe-rs bin download，可选 UART stream |
@@ -90,6 +91,13 @@ TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP �
 `RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only`。它只证明目标端 marker
 producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
 该 marker 若出现在真机 capture 中反而会 fail closed。
+
+A5B 上界不能靠事后肉眼看最大值。专用入口
+`hil/ws63-a5b-response-bound.sh` 使用一次性凭据文件构建当前 release closure 的
+`incremental_scan_profile`，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
+交给同一 parser 的 `--stage connect --require-contract --max-runner-step-ms 100`。只要缺少
+完整 A5B trailer、event/backend error 非零、出现 blocking fallback 或单步超过 100 ms，
+整轮即失败。该 gate 证明 transition/WPA2 profile 的迁移上界，不替代 pure-WPA3。
 
 | 变量 | 默认 | 说明 |
 |------|------|------|

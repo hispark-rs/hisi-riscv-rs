@@ -107,6 +107,19 @@ uv run hil/ws63-connectivity-reset-matrix.py \
 `--profile-id`。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
 `/private/tmp/ws63-connectivity-smoke-<timestamp>`；含 AP 凭据的临时构建目录仍自动删除。
 
+重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：
+
+```bash
+WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+PORT=/dev/cu.wchusbserial... \
+    hil/ws63-a5b-response-bound.sh
+```
+
+它固定使用当前 release closure、一次 verified download、同一 ELF 的 20 次 J-Link nRST，
+并要求每轮完整 diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
+立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
+closure、脱敏 UART 与 summary。
+
 ## 读懂结果
 
 - `embedded-test` 路径：每个 Rust `#[test]` 以 libtest 风格输出 `ok` / `FAILED`；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。
