@@ -1293,8 +1293,15 @@ A5R 后续排期和验收顺序。
   `hisi-rf-ws63` main/publish runs `29935539659`/`29935728262` 和 `hisi-rf`
   main/publish runs `29936129708`/`29936614642` 闭合；发布后的 alpha.10 crates.io-only
   fixture 由 run `29936906866` 在三平台继续复验。
-- [ ] `ws63-rf-rs` facade 保留一个 migration release，给出 Cargo feature 和 API 迁移表；
-  所有模板、教程与 examples 切到 `hisi-rf` 后再删除，历史 evidence 不回写。
+- [x] 已给出 [`ws63-rf-rs` -> `hisi-rf` Cargo feature 与 API 迁移表](
+  ../src/how-to/12-migrate-ws63-rf-to-hisi-rf.md)，覆盖单 facade 依赖、命名 profile、
+  caller-owned storage、composition root、RTOS 启动和 dependency-tree 验证；模板和用户
+  how-to 已只使用 `hisi-rf`。
+- [ ] `ws63-rf-rs` facade 继续保留一个 migration release；父仓中的
+  `wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 仍是明确 allowlist 的 maintainer
+  oracle，不是假装成用户 happy path。只有 pure-WPA3 parity gate 闭合、所有 oracle
+  用途被新 facade evidence 替代，并经过不早于父仓 v0.8.0 的迁移窗口后才删除；历史
+  evidence 不回写。
 
 #### A5U -- 开发者体验 P0
 

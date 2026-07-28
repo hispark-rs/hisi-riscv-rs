@@ -25,6 +25,7 @@
   - [从模板新建一个工程](how-to/09-new-project.md)
   - [新增一个外设驱动](how-to/10-add-driver.md)
   - [发布 crate 与父仓 release](how-to/11-release.md)
+  - [从 ws63-rf-rs 迁移到 hisi-rf](how-to/12-migrate-ws63-rf-to-hisi-rf.md)
 - [参考 · Reference](reference/00-index.md)
   - [内存映射](reference/01-memory-map.md)
   - [示例目录与验证标记串](reference/02-examples.md)

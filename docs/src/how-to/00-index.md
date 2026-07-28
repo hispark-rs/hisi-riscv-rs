@@ -23,4 +23,5 @@
 
 - [如何从模板新建一个工程](09-new-project.md) —— `cargo generate` 从 hisi-rs-template 起步，用生成的 justfile 完成首次构建+烧录。
 - [如何新增一个外设驱动](10-add-driver.md) —— HAL 驱动模块范式、外设单例宏、sealed trait，以及配一个带 PASS 标记的 HIL 示例。
+- [如何从 `ws63-rf-rs` 迁移到 `hisi-rf`](12-migrate-ws63-rf-to-hisi-rf.md) —— 用单一 facade、命名 profile、调用方 storage 和 composition root 替换旧的底层 RF 直接依赖。
 - [如何发布 crate 与父仓 release](11-release.md) —— 子仓 crates.io 发布、父仓 firmware release、`Cargo.lock`/`--locked` 门禁和 submodule pointer 顺序。

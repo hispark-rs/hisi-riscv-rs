@@ -65,6 +65,11 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   dependency for firmware and a host-only resource-report helper, and `just
   image` emits the ELF, FlashPlan image, plan JSON and deterministic profile
   resource JSON together.
+- **RF facade migration contract** — add the application migration guide from
+  `ws63-rf-rs` to the single `hisi-rf` dependency, including profile, storage,
+  composition-root, RTOS and dependency-tree mappings. The old crate remains a
+  bounded maintainer oracle until its pure-WPA3 parity and migration-release
+  removal gates are satisfied.
 
 ### Verification
 
