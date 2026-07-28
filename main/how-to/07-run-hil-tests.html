@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-09ddc547.js";
+            window.path_to_searchindex_js = "../searchindex-3e5e67e5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -267,6 +267,15 @@ hil/hil-smoke.sh
 <p>若还要证明 capture 对应指定最终 ELF，追加 <code>--artifact-identity</code>、<code>--elf</code> 和
 <code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
 <code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
+<p>重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：</p>
+<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+PORT=/dev/cu.wchusbserial... \
+    hil/ws63-a5b-response-bound.sh
+</code></pre>
+<p>它固定使用当前 release closure、一次 verified download、同一 ELF 的 20 次 J-Link nRST，
+并要求每轮完整 diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
+立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
+closure、脱敏 UART 与 summary。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>

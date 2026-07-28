@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-09ddc547.js";
+            window.path_to_searchindex_js = "searchindex-3e5e67e5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1323,6 +1323,15 @@ hil/hil-smoke.sh
 <p>若还要证明 capture 对应指定最终 ELF，追加 <code>--artifact-identity</code>、<code>--elf</code> 和
 <code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
 <code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
+<p>重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：</p>
+<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+PORT=/dev/cu.wchusbserial... \
+    hil/ws63-a5b-response-bound.sh
+</code></pre>
+<p>它固定使用当前 release closure、一次 verified download、同一 ELF 的 20 次 J-Link nRST，
+并要求每轮完整 diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
+立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
+closure、脱敏 UART 与 summary。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
@@ -2660,6 +2669,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- 
 <tr><td><code>hil/embedded-test-runner.sh</code></td><td><code>hisi-hal --test hil</code> 与 <code>tests-hil</code> 的 on-target test runner</td><td><code>probe-rs run</code> + RISC-V semihosting，libtest 兼容输出</td></tr>
 <tr><td><code>hil/hil-smoke.sh</code></td><td>WS63 示例级 UART smoke</td><td>UART0 grep 标记串</td></tr>
 <tr><td><code>hil/ws63-connectivity-smoke.sh</code></td><td>WS63 A4/W2 connectivity gate</td><td>upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART contract</td></tr>
+<tr><td><code>hil/ws63-a5b-response-bound.sh</code></td><td>A5B release-train response-bound gate</td><td>当前 incremental WPA2 fixture：一次 verified download + 20 次 unchanged-image J-Link nRST + 100 ms fail-closed runner bound</td></tr>
 <tr><td><code>.agents/skills/hil-smoke/hil.sh</code></td><td>CI/agent wrapper：preflight、chip 封装；WS63 全套委托 <code>hil/hil-smoke.sh</code></td><td>UART0 grep 标记串</td></tr>
 <tr><td><code>hil/flash.sh</code></td><td>示例/固件烧录封装</td><td>hisi-fwpkg plan + probe-rs bin download，或 hisiflash</td></tr>
 <tr><td><code>hil/cargo-run-hw.sh</code></td><td>把单次 <code>cargo run</code> 改成烧真机</td><td>hisi-fwpkg plan + probe-rs bin download，可选 UART stream</td></tr>
@@ -2743,6 +2753,12 @@ TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP �
 <code>RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only</code>。它只证明目标端 marker
 producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
 该 marker 若出现在真机 capture 中反而会 fail closed。</p>
+<p>A5B 上界不能靠事后肉眼看最大值。专用入口
+<code>hil/ws63-a5b-response-bound.sh</code> 使用一次性凭据文件构建当前 release closure 的
+<code>incremental_scan_profile</code>，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
+交给同一 parser 的 <code>--stage connect --require-contract --max-runner-step-ms 100</code>。只要缺少
+完整 A5B trailer、event/backend error 非零、出现 blocking fallback 或单步超过 100 ms，
+整轮即失败。该 gate 证明 transition/WPA2 profile 的迁移上界，不替代 pure-WPA3。</p>
 <div class="table-wrapper">
 <table>
 <thead>
