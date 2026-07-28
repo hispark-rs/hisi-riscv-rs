@@ -6,6 +6,11 @@ This evidence freezes the public ownership shape for WS63 radio control state
 and the shared RF arena. It is API, link-layout, package, and cross-host build
 evidence; it does not replace Wi-Fi connectivity HIL.
 
+The alpha.52 public shape recorded here still exposed `EVENTS` in facade types
+and the storage macro. Alpha.53 retained the same ownership and physical layout
+while moving event capacity into the selected profile; see
+[A5UX opaque event capacity](ws63-rf-a5ux-opaque-event-capacity-2026-07-29.md).
+
 ## Frozen Contract
 
 - An application declares one `RadioStorage<Profile, EVENTS>` through

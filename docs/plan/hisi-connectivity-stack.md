@@ -1536,10 +1536,15 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   0.1.0-alpha.43`、`hisi-rf 0.1.0-alpha.52`、WS63 example 和 template 均沿同一公开
   composition 构建；证据见
   [A5UX caller-owned radio storage](evidence/ws63-rf-a5ux-caller-owned-storage-2026-07-29.md)。
-- [ ] 让事件容量属于 storage/resource report，而不是传播进常用控制面签名。普通业务函数
-  应能接收 `WifiController<'_>` 或等价 opaque handle，而不需要携带
-  `WifiController<const EVENTS: usize>`；容量仍由调用方在编译期选择，并继续接受 queue-full、
-  stale generation 和取消交错测试。
+- [x] 让事件容量属于命名 profile 的 storage/resource report，而不是传播进常用控制面
+  签名。`hisi-rf 0.1.0-alpha.53` 的 WS63 facade 将当前公开 profile 固定为八个有界事件槽；
+  普通业务函数只接收 `WifiController`、`RadioController`、`WifiParts` 或 incremental
+  opaque handle，`declare_radio_storage!(static RADIO_STORAGE)` 也不再接收 `events=`
+  参数。core/backend 维护面仍保留 const-generic 容量及 queue-full、stale generation 和
+  取消交错测试；未来不同容量必须作为经资源报告和 HIL 校准的命名 profile 发布，而不是重新
+  泄漏到每个调用签名。crates.io-only WPA2/WPA3 consumer、RV32 final link、独立 package
+  和 public-API/boundary gate 均已通过；WS63 example 与 template 已迁移到同一形态。证据见
+  [A5UX opaque event capacity](evidence/ws63-rf-a5ux-opaque-event-capacity-2026-07-29.md)。
 - [ ] 冻结三层 timeout/cancellation 语义：协议 operation timeout、backend/vendor timeout
   与应用等待 deadline 必须使用不同类型或明确命名，错误分别映射为稳定 stage/code；禁止
   `ScanConfig` 内层 timeout 与外层 `with_timeout` 在文档中被描述成同一保证。外层取消必须
