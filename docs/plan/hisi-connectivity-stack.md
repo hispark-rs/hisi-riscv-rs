@@ -1487,6 +1487,12 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 成本、长期 runner
 任务、runtime 选择或可失败资源准入。
 
+- [x] 在 API 迁移前建立三层 `cargo-public-api 0.52.0` 基线：`hisi-rf-core`
+  all-features 532 项、`hisi-rf-ws63` WPA2/WPA3 incremental 各 498 项、`hisi-rf`
+  facade 107 项可达名字。backend 两个 profile 只允许 `SelectedProfile` 目标类型这一项
+  预期差异；其他新增、删除或签名变化必须输出可审查 diff 并使 CI 失败。该门禁只冻结
+  起点，不代表下面的 API 收敛或最终 HIL 已完成。证据见
+  [A5UX public API baseline](evidence/ws63-rf-a5ux-public-api-baseline-2026-07-28.md)。
 - [ ] 将迁移实现名 `init_incremental_after_blocking_bootstrap` 收敛为 facade 的长期
   `hisi_rf::ws63::init` 入口。blocking bootstrap、incremental backend 和 archive/profile
   选择留在 composition root 内；需要显式实验选择时使用命名 profile，不把实现阶段编码进
