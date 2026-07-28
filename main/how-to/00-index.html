@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d700aace.js";
+            window.path_to_searchindex_js = "../searchindex-79afca01.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-f8527be2.js"></script>
+        <script src="../toc-91c64007.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -205,6 +205,7 @@
 <ul>
 <li><a href="09-new-project.html">如何从模板新建一个工程</a> —— <code>cargo generate</code> 从 hisi-rs-template 起步，用生成的 justfile 完成首次构建+烧录。</li>
 <li><a href="10-add-driver.html">如何新增一个外设驱动</a> —— HAL 驱动模块范式、外设单例宏、sealed trait，以及配一个带 PASS 标记的 HIL 示例。</li>
+<li><a href="12-migrate-ws63-rf-to-hisi-rf.html">如何从 <code>ws63-rf-rs</code> 迁移到 <code>hisi-rf</code></a> —— 用单一 facade、命名 profile、调用方 storage 和 composition root 替换旧的底层 RF 直接依赖。</li>
 <li><a href="11-release.html">如何发布 crate 与父仓 release</a> —— 子仓 crates.io 发布、父仓 firmware release、<code>Cargo.lock</code>/<code>--locked</code> 门禁和 submodule pointer 顺序。</li>
 </ul>
 

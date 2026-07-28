@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d700aace.js";
+            window.path_to_searchindex_js = "searchindex-79afca01.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-f8527be2.js"></script>
+        <script src="toc-91c64007.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -828,6 +828,7 @@ grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或
 <ul>
 <li><a href="#如何从模板新建一个工程">如何从模板新建一个工程</a> —— <code>cargo generate</code> 从 hisi-rs-template 起步，用生成的 justfile 完成首次构建+烧录。</li>
 <li><a href="#如何新增一个外设驱动">如何新增一个外设驱动</a> —— HAL 驱动模块范式、外设单例宏、sealed trait，以及配一个带 PASS 标记的 HIL 示例。</li>
+<li><a href="#从-ws63-rf-rs-迁移到-hisi-rf">如何从 <code>ws63-rf-rs</code> 迁移到 <code>hisi-rf</code></a> —— 用单一 facade、命名 profile、调用方 storage 和 composition root 替换旧的底层 RF 直接依赖。</li>
 <li><a href="#如何发布-crate-与父仓-release">如何发布 crate 与父仓 release</a> —— 子仓 crates.io 发布、父仓 firmware release、<code>Cargo.lock</code>/<code>--locked</code> 门禁和 submodule pointer 顺序。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
@@ -1769,6 +1770,127 @@ git push origin vX.Y.Z
 <li><strong>父仓指向不可 fetch 的 submodule commit</strong>：你先更新了父仓 pointer，但忘了 push 子仓。先 push 子仓，再修正父仓 pointer commit。</li>
 <li><strong>tag 打错仓库</strong>：crate release 必须在 crate 子仓 tag；父仓 tag 只做 firmware release。</li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
+<h1 id="从-ws63-rf-rs-迁移到-hisi-rf"><a class="header" href="#从-ws63-rf-rs-迁移到-hisi-rf">从 <code>ws63-rf-rs</code> 迁移到 <code>hisi-rf</code></a></h1>
+<p>面向应用的 WS63 Wi-Fi 入口已经收敛到 <code>hisi-rf</code>。旧
+<code>ws63-rf-rs</code> 仍保留给父仓中的连接性迁移 oracle 和底层诊断示例；新应用不应直接依赖
+它，也不应直接依赖 <code>ws63-radio-sys</code> 或 <code>hisi-rf-rtos-driver</code>。</p>
+<p>本页只说明应用迁移。底层 crate 的 archive、ROM patch、OSAL 和 ABI 关系见
+<a href="#ws63-rf-架构">WS63 RF 组件说明</a>。</p>
+<h2 id="1-替换依赖"><a class="header" href="#1-替换依赖">1. 替换依赖</a></h2>
+<p>删除应用 <code>Cargo.toml</code> 中的直接底层依赖：</p>
+<pre><code class="language-toml">ws63-rf-rs = { path = "..." }
+ws63-radio-sys = { path = "..." }
+hisi-rf-rtos-driver = "..."
+</code></pre>
+<p>改为一个公开 RF facade，并显式选择芯片和完整 profile：</p>
+<pre><code class="language-toml">[dependencies]
+hisi-rf = {
+    version = "=0.1.0-alpha.41",
+    features = ["chip-ws63", "profile-wifi-wpa2-smoltcp"],
+}
+hisi-rtos = "0.1.0-alpha.13"
+smoltcp = {
+    version = "0.13",
+    default-features = false,
+    features = ["medium-ethernet", "proto-ipv4", "socket-dhcpv4"],
+}
+</code></pre>
+<p>版本号应以当前 release train 或
+<a href="https://github.com/hispark-rs/hisi-rs-template/blob/main/docs/lifecycle.md">模板生命周期矩阵</a>
+为准，不要把本页的示例版本当作跨 release 的范围依赖。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>旧 feature / 依赖</th><th>新选择</th><th>说明</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ws63-rf-rs/net</code> + WPA2 相关 features</td><td><code>chip-ws63</code>, <code>profile-wifi-wpa2-smoltcp</code></td><td>当前用户 happy path</td></tr>
+<tr><td><code>ws63-rf-rs</code> 的 WPA3 / upstream supplicant 组合</td><td><code>chip-ws63</code>, <code>profile-wifi-wpa3-smoltcp</code></td><td>仍属 alpha；transition-mode 已验证，pure-WPA3 gate 尚未闭合</td></tr>
+<tr><td>直接 <code>hisi-rf-rtos-driver</code></td><td><code>hisi-rtos</code></td><td>应用启动 RTOS，但不调用 RF driver service locator</td></tr>
+<tr><td>直接 <code>ws63-radio-sys</code></td><td>无</td><td>由 <code>hisi-rf</code> 的 WS63 backend 传递依赖并完成链接</td></tr>
+<tr><td><code>rf-init-diag</code> / <code>rf-eloop-diag</code> 等底层诊断</td><td><code>hisi-rf::Diagnostic</code></td><td>低层诊断只保留给 maintainer oracle，不迁移为用户 API</td></tr>
+</tbody>
+</table>
+</div>
+<p>不要同时选择 WPA2 和 WPA3 profile。缺少 <code>chip-ws63</code>、缺少 profile 所需网络后端或
+选择冲突时，facade 会在编译期报错。</p>
+<h2 id="2-把全局状态改成调用方持有的-storage"><a class="header" href="#2-把全局状态改成调用方持有的-storage">2. 把全局状态改成调用方持有的 storage</a></h2>
+<p>旧应用通常由 <code>ws63-rf-rs</code> 内部全局状态隐式持有队列、密码硬件 scratch 和 RF heap。
+新入口要求应用明确提供有界 storage 和 radio arena：</p>
+<pre><code class="language-rust">const EVENT_CAPACITY: usize = 8;
+
+static RADIO_STORAGE:
+    hisi_rf::ws63::Storage&lt;hisi_rf::ws63::SelectedProfile, EVENT_CAPACITY&gt; =
+    hisi_rf::ws63::Storage::new();
+
+hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);</code></pre>
+<p>初始化 RTOS 前先 claim 并安装 arena。重复 claim、容量不足或 profile 不匹配会在启动
+blob 前返回结构化错误：</p>
+<pre><code class="language-rust">let radio_arena = RADIO_ARENA
+    .claim_for::&lt;hisi_rf::ws63::SelectedProfile&gt;()?
+    .install()?;</code></pre>
+<p>完整资源数字由生成项目中的 <code>just rf-resource-report</code> 输出；不要从旧示例复制 heap、
+task 或 queue 常量。</p>
+<h2 id="3-使用-ws63-composition-root"><a class="header" href="#3-使用-ws63-composition-root">3. 使用 WS63 composition root</a></h2>
+<p>旧路径会在应用中构造 <code>Ws63WifiBackend</code>，或者分别调用 <code>config()</code>、<code>resources()</code> 和
+底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：</p>
+<pre><code class="language-rust">let resources =
+    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, radio_arena);
+
+let controller =
+    hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &amp;RADIO_STORAGE)?;
+
+let mut wifi = controller.start_runner()?;</code></pre>
+<p>应用只通过 chip-neutral 控制面继续工作：</p>
+<ul>
+<li><code>wifi.controller.initialize().await</code></li>
+<li><code>wifi.controller.scan(...)</code></li>
+<li><code>wifi.controller.connect(...)</code></li>
+<li><code>wifi.device</code> 接入 <code>smoltcp</code></li>
+</ul>
+<p>不要从 <code>hisi-rf-ws63</code>、<code>ws63-radio-sys</code> 或 blob crate 导入实现类型。它们是 facade 的
+内部依赖，不是应用兼容面。</p>
+<h2 id="4-启动-runtime不安装-rf-service-locator"><a class="header" href="#4-启动-runtime不安装-rf-service-locator">4. 启动 runtime，不安装 RF service locator</a></h2>
+<p>WS63 用户路径使用 <code>hisi_rtos::start_with_port(...)</code> 启动 timer/SWI port。应用可以在
+自己的执行模型里轮询 radio future；当前同步模板在 future 返回 <code>Pending</code> 时调用
+<code>hisi_rtos::request_reschedule()</code>，让 radio runner 和 vendor worker 获得调度点。</p>
+<p>旧的 <code>hisi-rf-rtos-driver</code> 安装、任务创建和 OSAL 映射由 composition root 及其 backend
+负责。应用不应再直接注册 driver runtime。</p>
+<h2 id="5-验证迁移"><a class="header" href="#5-验证迁移">5. 验证迁移</a></h2>
+<p>最可靠的迁移基线是重新生成一个 Wi-Fi 工程，与现有应用做差分：</p>
+<pre><code class="language-bash">cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
+    --name rf-migration-reference \
+    --define chip=ws63 \
+    --define starter=wifi \
+    --silent
+
+cd rf-migration-reference
+just build
+just rf-resource-report
+just image
+</code></pre>
+<p>然后检查原应用：</p>
+<pre><code class="language-bash">cargo tree -i ws63-rf-rs
+cargo tree -i ws63-radio-sys
+cargo tree -i hisi-rf-rtos-driver
+</code></pre>
+<p>预期：</p>
+<ul>
+<li><code>ws63-rf-rs</code> 不再出现在用户应用依赖图中；</li>
+<li><code>ws63-radio-sys</code> 和 <code>hisi-rf-rtos-driver</code> 即使出现，也只能是
+<code>hisi-rf -&gt; hisi-rf-ws63</code> 下的传递实现依赖；</li>
+<li>应用 manifest 中唯一直接 RF 依赖是 <code>hisi-rf</code>；</li>
+<li><code>cargo build --release</code> 不调用 Python、Shell、原厂 GCC 或原厂 SDK；</li>
+<li><code>just image</code> 只在 ELF 完成链接后由 <code>hisi-fwpkg</code> 生成可烧录镜像。</li>
+</ul>
+<p>真机迁移验收至少保留 <code>WIFI_INIT_OK</code>、<code>WIFI_SCAN_OK</code>、<code>WIFI_CONNECT_OK</code> 和
+<code>WIFI_DHCP_OK</code>。旧 <code>wifi_init_smoke</code> 仍是 maintainer 诊断 oracle，不应作为新应用结构
+的复制模板。</p>
+<h2 id="迁移窗口"><a class="header" href="#迁移窗口">迁移窗口</a></h2>
+<p><code>ws63-rf-rs::radio</code> 已弃用，父仓 0.7.x 保留迁移兼容；删除不会早于父仓 0.8.0。
+删除还要求 pure-WPA3 parity gate 和旧 oracle 退役条件闭合。因此，“新应用已经迁移”
+不等于“旧 crate 现在可以删除”。</p>
 <div style="break-before: page; page-break-before: always;"></div><script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
 <h1 id="本章导读--reference"><a class="header" href="#本章导读--reference">本章导读 · Reference</a></h1>
 <p>参考章节是<strong>信息导向</strong>的查阅资料：精确、结构化、可逐项检索。这里只<strong>陈述事实</strong>（地址、大小、标志位、字段偏移、签名、默认值），不讲教程，不讲原理。需要“怎么做“请看 <a href="#操作指南--how-to-guides">操作指南</a>，需要“为什么“请看 <a href="#原理与背景--explanation">原理与背景</a>。</p>

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>hisi-hal - HiSilicon RISC-V Rust 嵌入式开发手册</title>
+        <title>从 ws63-rf-rs 迁移到 hisi-rf - HiSilicon RISC-V Rust 嵌入式开发手册</title>
 
 
         <!-- Custom HTML head -->
@@ -12,34 +12,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../../favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
-        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../../css/general-e96d0476.css">
-        <link rel="stylesheet" href="../../css/chrome-d279d366.css">
-        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../../theme/hisi-docs-5dcc79d1.css">
+        <link rel="stylesheet" href="../theme/hisi-docs-5dcc79d1.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "../../";
+            const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-79afca01.js";
+            window.path_to_searchindex_js = "../searchindex-79afca01.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-91c64007.js"></script>
+        <script src="../toc-91c64007.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -106,7 +106,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -141,13 +141,13 @@
                     <h1 class="menu-title">HiSilicon RISC-V Rust 嵌入式开发手册</h1>
 
                     <div class="right-buttons">
-                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/hispark-rs/hisi-riscv-rs" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/explanation/components/04-hisi-hal.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -182,108 +182,136 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="hisi-hal-架构"><a class="header" href="#hisi-hal-架构">hisi-hal 架构</a></h1>
-<blockquote>
-<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
-</blockquote>
-<blockquote>
-<p><strong>2026-06 更新</strong>：HAL 现为<strong>多芯片</strong> —— 使用 <code>chip-ws63</code> / <code>chip-bs21</code> 特性二选一（HAL standalone 无默认芯片）。后者基于 <code>bs2x-pac</code> 服务 BS21/BS2X（BLE 5.4 + SLE/星闪）家族，但因没有 BS2X 真机 HIL，整个 <code>chip-bs21</code> target 目前需 <code>unstable</code>。BS2X 全部功能外设（SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM/USB）已在 QEMU <code>-M bs21/bs22/bs20</code> 上验证。crate 路径 <code>crates/hisi-hal</code>。</p>
-</blockquote>
-<h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
-<p><code>hisi-hal</code> 是 WS63 SoC 的硬件抽象层（HAL），在 <code>ws63-pac</code> 的裸寄存器之上手写安全、符合 embedded-hal 习惯的驱动 API。</p>
-<ul>
-<li><strong>负责</strong>：
-<ul>
-<li>为 36 个 PAC 外设/寄存器块提供生命周期化的安全单例封装（<code>peripherals.rs</code>），并在其上实现按功能聚合的驱动模块（GPIO、UART、SPI、I2C、DMA、PWM、Timer、WDT、RTC、TRNG、Tsensor、SFC、I2S、LSADC、eFuse、KM/PKE/SPACC、shared memory 等）。</li>
-<li>时钟架构：<code>clock.rs</code> 的 <code>Peripheral</code>/<code>cken_info()</code> 审计图、引导期时钟树初始化（<code>clock_init.rs</code>，实验面）。</li>
-<li>GPIO 三层驱动模型、DMA 双控制器抽象、sealed trait 体系（<code>private.rs</code>）。</li>
-<li>embedded-hal 1.0 / embedded-hal-nb 1.0 / embedded-io 0.6 / nb 的 trait 实现。</li>
-</ul>
-</li>
-<li><strong>不负责</strong>：
-<ul>
-<li>裸寄存器布局与地址映射（属 <code>ws63-pac</code>）。</li>
-<li>启动汇编、链接脚本、中断向量表（属 <code>hisi-riscv-rt</code>）。</li>
-<li>应用业务逻辑（属 <code>ws63-examples</code>）。</li>
-<li>连接性协议栈（WiFi/BLE/SLE）、RF porting 层与 HCC IPC（属 <code>ws63-rf-rs</code>/厂商 blob 边界；HAL 只提供底层外设能力）。</li>
-</ul>
-</li>
-</ul>
-<p><code>#![no_std]</code>、无堆、无 <code>Vec</code>（<code>lib.rs:20</code>）。寄存器访问全部经 <code>unsafe { w.bits(...) }</code> 封装在驱动方法内部。</p>
-<h2 id="在依赖链中的位置"><a class="header" href="#在依赖链中的位置">在依赖链中的位置</a></h2>
-<pre><code class="language-console">ws63-svd (XML)
-   │ svd2rust 生成
-   ▼
-ws63-pac ──► hisi-hal ──► examples/ws63/*
-                ▲
-       hisi-riscv-rt（启动汇编 / 链接脚本；中断符号来自 PAC/rt）并行提供运行期支撑
+<h1 id="从-ws63-rf-rs-迁移到-hisi-rf"><a class="header" href="#从-ws63-rf-rs-迁移到-hisi-rf">从 <code>ws63-rf-rs</code> 迁移到 <code>hisi-rf</code></a></h1>
+<p>面向应用的 WS63 Wi-Fi 入口已经收敛到 <code>hisi-rf</code>。旧
+<code>ws63-rf-rs</code> 仍保留给父仓中的连接性迁移 oracle 和底层诊断示例；新应用不应直接依赖
+它，也不应直接依赖 <code>ws63-radio-sys</code> 或 <code>hisi-rf-rtos-driver</code>。</p>
+<p>本页只说明应用迁移。底层 crate 的 archive、ROM patch、OSAL 和 ABI 关系见
+<a href="../explanation/components/09-ws63-rf.html">WS63 RF 组件说明</a>。</p>
+<h2 id="1-替换依赖"><a class="header" href="#1-替换依赖">1. 替换依赖</a></h2>
+<p>删除应用 <code>Cargo.toml</code> 中的直接底层依赖：</p>
+<pre><code class="language-toml">ws63-rf-rs = { path = "..." }
+ws63-radio-sys = { path = "..." }
+hisi-rf-rtos-driver = "..."
 </code></pre>
-<p><code>hisi-hal</code> 是承上启下的核心层：向下消费 <code>ws63-pac</code> 的 <code>RegisterBlock</code>，向上为示例提供驱动。它<strong>不</strong>直接依赖 <code>hisi-riscv-rt</code>，但其中断子系统依赖 <code>riscv</code> crate 的 trap 模型，运行期中断符号由当前 PAC 的 <code>rt</code> feature（WS63 为 <code>ws63-pac/rt</code>）提供，并由 <code>hisi-riscv-rt</code> 的 linker contract 引入。</p>
-<p>依赖：<code>embedded-hal 1.0</code>、<code>embedded-hal-nb 1.0</code>、<code>embedded-io 0.6</code>、<code>nb</code>、<code>portable-atomic</code>、<code>riscv</code>。</p>
-<h2 id="关键设计"><a class="header" href="#关键设计">关键设计</a></h2>
-<h3 id="类型化配置--能编译就能上板050"><a class="header" href="#类型化配置--能编译就能上板050">类型化配置 — “能编译就能上板”（0.5.0）</a></h3>
-<p>0.5.0 把<strong>配置面</strong>全面收紧为「能写出来的值就是能在硅上跑的值」：不存在能编译却被静默
-clamp / 截断 / 没接时钟的参数。约定与 A/B/C/D 缺陷分类见
-<a href="../policies/01-typed-config.html">类型化配置</a>；当前默认稳定面与真机证据见 <a href="../../reference/10-stable-api.html">Stable API 清单</a>。
-两层结构：</p>
+<p>改为一个公开 RF facade，并显式选择芯片和完整 profile：</p>
+<pre><code class="language-toml">[dependencies]
+hisi-rf = {
+    version = "=0.1.0-alpha.41",
+    features = ["chip-ws63", "profile-wifi-wpa2-smoltcp"],
+}
+hisi-rtos = "0.1.0-alpha.13"
+smoltcp = {
+    version = "0.13",
+    default-features = false,
+    features = ["medium-ethernet", "proto-ipv4", "socket-dhcpv4"],
+}
+</code></pre>
+<p>版本号应以当前 release train 或
+<a href="https://github.com/hispark-rs/hisi-rs-template/blob/main/docs/lifecycle.md">模板生命周期矩阵</a>
+为准，不要把本页的示例版本当作跨 release 的范围依赖。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>旧 feature / 依赖</th><th>新选择</th><th>说明</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ws63-rf-rs/net</code> + WPA2 相关 features</td><td><code>chip-ws63</code>, <code>profile-wifi-wpa2-smoltcp</code></td><td>当前用户 happy path</td></tr>
+<tr><td><code>ws63-rf-rs</code> 的 WPA3 / upstream supplicant 组合</td><td><code>chip-ws63</code>, <code>profile-wifi-wpa3-smoltcp</code></td><td>仍属 alpha；transition-mode 已验证，pure-WPA3 gate 尚未闭合</td></tr>
+<tr><td>直接 <code>hisi-rf-rtos-driver</code></td><td><code>hisi-rtos</code></td><td>应用启动 RTOS，但不调用 RF driver service locator</td></tr>
+<tr><td>直接 <code>ws63-radio-sys</code></td><td>无</td><td>由 <code>hisi-rf</code> 的 WS63 backend 传递依赖并完成链接</td></tr>
+<tr><td><code>rf-init-diag</code> / <code>rf-eloop-diag</code> 等底层诊断</td><td><code>hisi-rf::Diagnostic</code></td><td>低层诊断只保留给 maintainer oracle，不迁移为用户 API</td></tr>
+</tbody>
+</table>
+</div>
+<p>不要同时选择 WPA2 和 WPA3 profile。缺少 <code>chip-ws63</code>、缺少 profile 所需网络后端或
+选择冲突时，facade 会在编译期报错。</p>
+<h2 id="2-把全局状态改成调用方持有的-storage"><a class="header" href="#2-把全局状态改成调用方持有的-storage">2. 把全局状态改成调用方持有的 storage</a></h2>
+<p>旧应用通常由 <code>ws63-rf-rs</code> 内部全局状态隐式持有队列、密码硬件 scratch 和 RF heap。
+新入口要求应用明确提供有界 storage 和 radio arena：</p>
+<pre><code class="language-rust">const EVENT_CAPACITY: usize = 8;
+
+static RADIO_STORAGE:
+    hisi_rf::ws63::Storage&lt;hisi_rf::ws63::SelectedProfile, EVENT_CAPACITY&gt; =
+    hisi_rf::ws63::Storage::new();
+
+hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);</code></pre>
+<p>初始化 RTOS 前先 claim 并安装 arena。重复 claim、容量不足或 profile 不匹配会在启动
+blob 前返回结构化错误：</p>
+<pre><code class="language-rust">let radio_arena = RADIO_ARENA
+    .claim_for::&lt;hisi_rf::ws63::SelectedProfile&gt;()?
+    .install()?;</code></pre>
+<p>完整资源数字由生成项目中的 <code>just rf-resource-report</code> 输出；不要从旧示例复制 heap、
+task 或 queue 常量。</p>
+<h2 id="3-使用-ws63-composition-root"><a class="header" href="#3-使用-ws63-composition-root">3. 使用 WS63 composition root</a></h2>
+<p>旧路径会在应用中构造 <code>Ws63WifiBackend</code>，或者分别调用 <code>config()</code>、<code>resources()</code> 和
+底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：</p>
+<pre><code class="language-rust">let resources =
+    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, radio_arena);
+
+let controller =
+    hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &amp;RADIO_STORAGE)?;
+
+let mut wifi = controller.start_runner()?;</code></pre>
+<p>应用只通过 chip-neutral 控制面继续工作：</p>
 <ul>
-<li><strong>配置/构造面（HAL 自有，可自由类型化）</strong>：受校验 newtype + 可失败构造子返回
-<code>Option</code>/<code>Result</code>（<code>SpiHz</code>/<code>DataBits</code>/<code>BaudRate</code>/<code>WdtTimeout</code>/<code>SampleCount</code> 等），越界
-在构造点拒绝；角色用 type-state（I2S <code>new_master(非零派生分频)</code> 已验证，<code>new_slave()</code> 仍 unstable，零分频
-Master 不可表达）；驱动在 <code>new</code>/<code>configure</code> 里<strong>自起本外设时钟门</strong>（construct→clocked，
-如 PWM/I2S）。类型编码的是<strong>实测硅事实而非数据手册</strong>（如 <code>pwm::PwmPeriod</code> 是 <code>u16</code>，
-因 WS63 <code>pwm_freq_h</code> 高半字在硅上不 latch）。</li>
-<li><strong>操作面（embedded-hal trait，固定签名）</strong>：<code>SetDutyCycle</code>/<code>SpiBus</code>/<code>I2c</code>/<code>Read</code>/<code>Write</code>
-保留标准 <code>u16</code>/<code>&amp;[u8]</code> + <code>Result</code>（<code>Result</code> 即 embedded-hal 的非法输入惯用法），不改 trait 签名。</li>
+<li><code>wifi.controller.initialize().await</code></li>
+<li><code>wifi.controller.scan(...)</code></li>
+<li><code>wifi.controller.connect(...)</code></li>
+<li><code>wifi.device</code> 接入 <code>smoltcp</code></li>
 </ul>
-<p>危险外设（<code>Wdt</code>/<code>PwmChannel</code>/<code>Output</code>）实现 scoped <code>Drop</code>（停表/关输出/回高阻）；逃生口按 HIL
-证据分别稳定或门控（如 <code>Watchdog::into_armed</code>/<code>leak</code> 已验证，<code>PwmChannel::into_running</code> 仍是 unstable）。
-DMA 提供拥有缓冲区的
-<code>Transfer</code> guard（<code>embedded_dma</code> bound + 缓存维护折进类型），safe 代码里 use-after-free 不可表达。
-每个收紧面都有 host newtype/property 测试，并在连接的真机经 HIL 套件（<code>tests/hil.rs</code>）复验。</p>
-<h3 id="外设单例--d-生命周期"><a class="header" href="#外设单例--d-生命周期">外设单例 + <code>'d</code> 生命周期</a></h3>
-<p><code>peripherals.rs</code> 用两个宏生成全套封装：</p>
+<p>不要从 <code>hisi-rf-ws63</code>、<code>ws63-radio-sys</code> 或 blob crate 导入实现类型。它们是 facade 的
+内部依赖，不是应用兼容面。</p>
+<h2 id="4-启动-runtime不安装-rf-service-locator"><a class="header" href="#4-启动-runtime不安装-rf-service-locator">4. 启动 runtime，不安装 RF service locator</a></h2>
+<p>WS63 用户路径使用 <code>hisi_rtos::start_with_port(...)</code> 启动 timer/SWI port。应用可以在
+自己的执行模型里轮询 radio future；当前同步模板在 future 返回 <code>Pending</code> 时调用
+<code>hisi_rtos::request_reschedule()</code>，让 radio runner 和 vendor worker 获得调度点。</p>
+<p>旧的 <code>hisi-rf-rtos-driver</code> 安装、任务创建和 OSAL 映射由 composition root 及其 backend
+负责。应用不应再直接注册 driver runtime。</p>
+<h2 id="5-验证迁移"><a class="header" href="#5-验证迁移">5. 验证迁移</a></h2>
+<p>最可靠的迁移基线是重新生成一个 Wi-Fi 工程，与现有应用做差分：</p>
+<pre><code class="language-bash">cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
+    --name rf-migration-reference \
+    --define chip=ws63 \
+    --define starter=wifi \
+    --silent
+
+cd rf-migration-reference
+just build
+just rf-resource-report
+just image
+</code></pre>
+<p>然后检查原应用：</p>
+<pre><code class="language-bash">cargo tree -i ws63-rf-rs
+cargo tree -i ws63-radio-sys
+cargo tree -i hisi-rf-rtos-driver
+</code></pre>
+<p>预期：</p>
 <ul>
-<li><code>peripheral!($name, $pac_ty)</code>（<code>peripherals.rs:10-48</code>）— 为每个外设生成零大小、<code>'d</code> 参数化的 ZST，提供 <code>unsafe steal()</code>、<code>ptr()</code>；raw PAC <code>register_block()</code> 是 <code>unstable</code> + <code>unsafe</code> 的逃生口。</li>
-<li><code>peripherals!(...)</code>（<code>peripherals.rs:50-87</code>）— 生成 <code>Peripherals</code> 结构体，<code>take()</code> 经 PAC 单例校验（<code>peripherals.rs:61-64</code>），<code>unsafe steal()</code> 绕过校验。</li>
+<li><code>ws63-rf-rs</code> 不再出现在用户应用依赖图中；</li>
+<li><code>ws63-radio-sys</code> 和 <code>hisi-rf-rtos-driver</code> 即使出现，也只能是
+<code>hisi-rf -&gt; hisi-rf-ws63</code> 下的传递实现依赖；</li>
+<li>应用 manifest 中唯一直接 RF 依赖是 <code>hisi-rf</code>；</li>
+<li><code>cargo build --release</code> 不调用 Python、Shell、原厂 GCC 或原厂 SDK；</li>
+<li><code>just image</code> 只在 ELF 完成链接后由 <code>hisi-fwpkg</code> 生成可烧录镜像。</li>
 </ul>
-<p>全部 36 个 PAC 块都有 HAL ownership token；其中未经 HIL 的行为面（如 <code>shared_memory</code>）仍受 <code>unstable</code> 门控。<code>'d</code> 生命周期防止 <code>Peripherals</code> token 被释放后仍持有驱动，是这一层的核心安全不变量。</p>
-<h3 id="时钟架构"><a class="header" href="#时钟架构">时钟架构</a></h3>
-<p>两套并存：</p>
-<ol>
-<li><strong><code>clock_init.rs</code>（标杆）</strong> — 逐寄存器对照 fbb_ws63 C SDK 的启动时钟序列核实。文件头部完整记录了 <code>CLDO_CRG_CLK_SEL</code> 位图、寄存器地址映射、时钟树（<code>clock_init.rs:1-74</code>）。<code>init_clocks()</code>（<code>clock_init.rs:197-253</code>）实现 flash→PLL（bit 18）、UART0/1/2→PLL（bits 1/2/3）、SPI→PLL（bit 6）的切换，并经 <code>REG_EXCEP_RO_RG</code> bit 12 轮询 PLL 锁定（<code>clock_init.rs:127-148</code>）。TCXO 频率检测读 <code>HW_CTL</code> bit 0（<code>clock_init.rs:103-107</code>）。所有地址均注明 fbb_ws63 出处。</li>
-<li><strong><code>clock.rs</code> 的 CKEN 参考图</strong> — 旧 <code>ClockControl</code> / <code>PeripheralGuard</code> RAII 时钟门控因零消费者已删除。当前 <code>Peripheral::cken_info()</code> 保存经 SDK/SVD 审计的 <code>(cken 寄存器索引, 位)</code> 映射，PWM 的 9 位连续门控（bits 2:10）特殊处理；无证据的外设返回 <code>None</code>，不虚构 gate bit。</li>
-</ol>
-<h3 id="gpio-三层模型"><a class="header" href="#gpio-三层模型">GPIO 三层模型</a></h3>
-<p>19 个引脚分布在 3 个 block（GPIO0 bits 0-7、GPIO1 bits 8-15、GPIO2 bits 16-18），block 映射为 <code>pin / 8</code>、位为 <code>pin % 8</code>。两层（0.5.0 删除了遗留的 type-state <code>GpioPin&lt;MODE&gt;</code>，统一到下面这一套）：</p>
-<ol>
-<li><code>AnyPin&lt;'d&gt;</code> — 类型擦除，经 <code>unsafe steal(pin)</code> 创建。</li>
-<li><code>Input</code> / <code>Output</code> / <code>Flex</code> — 由 <code>AnyPin</code> 经 <code>init_input()</code>/<code>init_output()</code>/<code>init_flex()</code> 派生；<code>degrade()</code> 可安全擦除回 <code>AnyPin</code>，<code>Flex::set_as_input/set_as_output</code> 提供显式方向。</li>
-</ol>
-<p><code>InputConfig { pull }</code> / <code>OutputConfig { initial_high }</code> 为配置入口。旧 <code>open_drain</code> 字段没有硬件落地，已删除。<code>Output</code> 实现 scoped <code>Drop</code>（回 input/高阻），逃生口 <code>into_latched()</code>/<code>into_flex()</code>。embedded-hal <code>digital</code> trait 用 <code>Infallible</code> 错误类型实现。</p>
-<h3 id="dma-双控制器"><a class="header" href="#dma-双控制器">DMA 双控制器</a></h3>
-<p><code>Dma0</code>（0x4A00_0000）与 <code>Sdma0</code>（0x520A_0000）共享 <code>dma::RegisterBlock</code>，经 <code>DmaInstance</code> trait 提供 <code>ptr()</code>。<code>DmaDriver&lt;'d, T: DmaInstance&gt;</code> 泛型于控制器；typed channel token、<code>DmaTransferSize</code>、<code>DmaSyncMask</code> 和 owned transfer guard 负责收窄 unsafe-adjacent 输入。0.6.0 默认不暴露公共 <code>dma</code> 模块：cache-line ownership、timeout quiescence、async cancellation 与 SPI1/UART DMA 证据未闭合前，它整体在 <code>unstable</code> 后。</p>
-<h3 id="sealed-trait--异步层"><a class="header" href="#sealed-trait--异步层">Sealed trait + 异步层</a></h3>
-<p><code>private.rs</code> 定义 crate 内部 <code>Sealed</code> 超 trait，封印 <code>PeripheralInput</code>、<code>PeripheralOutput</code> 等硬件限定 signal trait。早先空壳的 <code>DriverMode</code>/<code>Blocking</code>/<code>Async</code> mode 标记（associated type 恒等、零消费者）和 vestigial <code>DmaWord</code> <strong>已删除</strong>。</p>
-<p><strong>异步层已实现但分层暴露</strong>（feature <code>async</code>/<code>embassy</code>，详见 <a href="06-async-embassy.html">async-embassy.md</a>）：SPI/I2C 的 blocking-backed <code>embedded-hal-async</code> trait impl 随 <code>async</code> 暴露；<code>asynch::block_on</code> + <code>IrqSignal</code>（中断→waker 桥）、GPIO wait、timer async delay、UART async I/O、LSADC/DMA 自研异步以及 embassy-time <code>Driver</code> 仍需 <code>unstable</code>。全部可在无原子的 WS63 上编译（portable-atomic + critical-section），但默认稳定面只承诺 HIL/soundness 已闭合的子集。</p>
-<h3 id="embedded-hal-trait-选型"><a class="header" href="#embedded-hal-trait-选型">embedded-hal trait 选型</a></h3>
-<ul>
-<li>SPI 实现 <code>SpiBus</code> 而非 <code>SpiDevice</code>（<code>spi.rs:135</code>）— HAL 层不持有 CS，符合分层惯例。</li>
-<li>I2C <code>transaction</code> 在操作间发 repeated-START、仅末尾发 STOP（<code>i2c.rs:215-265</code>），符合 embedded-hal 契约。NACK 映射为 <code>NoAcknowledge</code>（<code>i2c.rs:278-280</code>）。</li>
-<li>UART 同时实现 embedded-io <code>Read</code>/<code>Write</code> 与 embedded-hal-nb serial（<code>uart.rs:172-293</code>）。</li>
-</ul>
-<h3 id="编译期断言safetyrs"><a class="header" href="#编译期断言safetyrs">编译期断言（<code>safety.rs</code>）</a></h3>
-<p><code>safety.rs</code> 保留少量编译期结构检查，用来把 MMIO 地址范围、外设/通道数量等维护假设显式化。它不是 public API 或 stable 证据的事实源；当前稳定面与真机证据仍以 <a href="../../reference/10-stable-api.html">Stable API 清单</a> 为准。</p>
+<p>真机迁移验收至少保留 <code>WIFI_INIT_OK</code>、<code>WIFI_SCAN_OK</code>、<code>WIFI_CONNECT_OK</code> 和
+<code>WIFI_DHCP_OK</code>。旧 <code>wifi_init_smoke</code> 仍是 maintainer 诊断 oracle，不应作为新应用结构
+的复制模板。</p>
+<h2 id="迁移窗口"><a class="header" href="#迁移窗口">迁移窗口</a></h2>
+<p><code>ws63-rf-rs::radio</code> 已弃用，父仓 0.7.x 保留迁移兼容；删除不会早于父仓 0.8.0。
+删除还要求 pure-WPA3 parity gate 和旧 oracle 退役条件闭合。因此，“新应用已经迁移”
+不等于“旧 crate 现在可以删除”。</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../explanation/components/03-ws63-pac.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../how-to/11-release.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../../explanation/components/05-hisi-riscv-rt.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../reference/00-index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -293,11 +321,11 @@ DMA 提供拥有缓冲区的
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../explanation/components/03-ws63-pac.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../how-to/11-release.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../../explanation/components/05-hisi-riscv-rt.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../reference/00-index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -317,16 +345,16 @@ DMA 提供拥有缓冲区的
         </script>
 
 
-        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
-        <script src="../../mark-09e88c2c.min.js"></script>
-        <script src="../../searcher-09f2665d.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
-        <script src="../../clipboard-1626706a.min.js"></script>
-        <script src="../../highlight-abc7f01d.js"></script>
-        <script src="../../book-609e4cb8.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="../../theme/hisi-docs-d2dc7ae4.js"></script>
+        <script src="../theme/hisi-docs-d2dc7ae4.js"></script>
 
 
 
