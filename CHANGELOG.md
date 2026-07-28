@@ -53,6 +53,11 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   backend-timeout paths. Cancellation and timeout now drive the real
   incremental operation state machine and prove terminal-slot recovery rather
   than only serializing preconstructed errors.
+- **Executable Wi-Fi template reports** — publish `hisi-rs-template
+  v0.7.0-alpha.9`; generated Wi-Fi projects now use the same public `hisi-rf`
+  dependency for firmware and a host-only resource-report helper, and `just
+  image` emits the ELF, FlashPlan image, plan JSON and deterministic profile
+  resource JSON together.
 
 ### Verification
 
@@ -73,6 +78,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
 - The operation-level fixture emits identical cancellation and scan-timeout
   diagnostics in QEMU and on WS63, then starts a new operation to prove slot
   recovery; the 3 MHz fully verified download completed in 2.38 seconds.
+- Template CI runs `30339350088` and `30340135903` generate the complete WS63
+  Wi-Fi project and run its resource-report helper on native Linux, macOS and
+  Windows; the Windows MSVC path uses an explicit host `critical-section`
+  implementation rather than relying on platform-specific dead-code removal.
 
 ---
 

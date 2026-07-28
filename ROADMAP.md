@@ -10,7 +10,8 @@ the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
 externally blocked on a suitable SAE-only AP. A5U caller-owned resource admission
-is closed, so the active no-board milestone is typed-error QEMU/HIL parity.
+and template/resource-report closure are complete, so the active no-board milestone
+is resource conservation under adversarial interleavings.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -88,7 +89,9 @@ cancellation and backend timeout now emit the same production
 Operation cancellation and timeout also pass through the production
 incremental state machine and prove terminal-slot recovery. The current
 credential-free gate is broader resource conservation under adversarial
-interleavings plus executable template/resource-report closure.
+interleavings. Template `v0.7.0-alpha.9` now generates the Wi-Fi firmware,
+FlashPlan image and deterministic profile resource report from the same public
+`hisi-rf` dependency; native Linux, macOS and Windows CI all pass.
 Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md).
 
 ## LATER -- Triggered Product Directions

@@ -6,7 +6,8 @@
 的 caller-owned storage、task-stack/shared-arena 静态准入、typed-error
 production source-path 和 operation-level cancellation/backend-timeout injection
 均已完成 QEMU/HIL parity。pure-WPA3 HIL 门槛仍受外部条件阻塞；当前转入 A5
-资源生命周期守恒和 template/resource-report 验收。跨计划优先级和依赖以
+资源生命周期守恒；template/resource-report 验收已由 `hisi-rs-template
+v0.7.0-alpha.9` 闭合。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
@@ -15,7 +16,7 @@ A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂�
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
 **外部阻塞门槛**；A5F 的无板 facade/release、A5B 的 opt-in 增量原型和 A5U typed-error
 QEMU/HIL parity 已完成，当前 active milestone 是不依赖 pure-WPA3 AP 的 A5 资源生命周期
-守恒与 template/resource-report 验收。
+守恒；template/resource-report 已完成可执行验收。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -48,7 +49,7 @@ adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初�
 memory admission、association rejection/first-EAPOL timeout 的生产构造路径、
 operation-level cancellation/backend-timeout injection，以及 resource/generic stable-class
 的目标序列化均已闭合。当前只推进 A5 resource ownership/conservation 的 deterministic
-negative tests，以及 template/resource-report 的可执行验收；不改当前验证过的 WS63 blocking
+negative tests；template/resource-report 已完成可执行验收，不改当前验证过的 WS63 blocking
 backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
 ### 已完成 -- A3 收口
@@ -1437,12 +1438,15 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.8` 固定 `hisi-rf 0.1.0-alpha.38`、`hisi-rtos 0.1.0-alpha.13` 和
+  v0.7.0-alpha.9` 固定 `hisi-rf 0.1.0-alpha.41`、`hisi-rtos 0.1.0-alpha.13` 和
   `hisi-riscv-rt 0.5.7`，通过 facade macro 声明并安装 caller-owned arena，不再让应用直接
   依赖 `hisi-alloc`；init、runner startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。
-  CI run `30321410853` 已生成并构建
-  WS63 Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
-  不再属于用户 happy path，也不因 pure-WPA3 external gate 被提前删除。
+  Wi-Fi workspace 还通过同一个精确版本的 public `hisi-rf` 依赖生成确定性的
+  `hisi-rf-resource-report/v5`，`just image` 同时产出 ELF、FlashPlan image、plan JSON
+  与 resource JSON。CI runs `30339350088`、`30340135903` 已在 native Linux/macOS/Windows
+  运行 host helper，并生成、构建 WS63 Wi-Fi 项目及 plan image；父仓旧
+  `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，不再属于用户 happy path，也不因
+  pure-WPA3 external gate 被提前删除。
 
 #### A5 验收
 
@@ -1459,9 +1463,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `ws63-radio-sys`，但用户源码、manifest、build script 与文档 happy path 不直接引用它们。
   facade CI runs `29948547164`、`29949674878` 已在 macOS/Linux/Windows 对 WPA2/WPA3 profile
   完成 crates.io-only clean、offline、只读 registry 和最终 ELF 构建。
-- [ ] template 生成项目不导入 `Ws63WifiBackend` 或 `hisi-rf-rtos-driver`；一个命名 profile
+- [x] template 生成项目不导入 `Ws63WifiBackend` 或 `hisi-rf-rtos-driver`；一个命名 profile
   可以完成资源构造、runner 启动和 async scan/connect，资源不足在 blob 初始化前报告精确
-  required/available，构建产物同时生成可复查的 resource/profile report。
+  required/available，构建产物同时生成可复查的 resource/profile report。该契约由
+  `hisi-rs-template v0.7.0-alpha.9` 和 CI runs `30339350088`、`30340135903` 闭合。
 - [x] WPA2/WPA3、association rejection、first-EAPOL timeout、cancellation、task-slot/arena
   不足和 backend timeout 均有 typed error fixture；人类输出给出下一步，`--json`/agent 路径
   使用版本化 schema，且 secret-redaction tests 通过。
