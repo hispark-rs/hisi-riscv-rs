@@ -19,6 +19,7 @@ SCHEMA = "hisi-rf-build-report/v1"
 RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v3",
     "hisi-rf-resource-report/v4",
+    "hisi-rf-resource-report/v5",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -55,13 +56,22 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
             f"unsupported resource schema: {resource.get('schema')!r}; "
             f"expected one of {sorted(RESOURCE_SCHEMAS)}"
         )
-    if resource["schema"] == "hisi-rf-resource-report/v4":
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v4",
+        "hisi-rf-resource-report/v5",
+    }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ValueError(
                     f"resource report v4 requires non-negative integer {key}"
                 )
+    if resource["schema"] == "hisi-rf-resource-report/v5":
+        value = resource.get("shared_rf_arena_bytes")
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            raise ValueError(
+                "resource report v5 requires positive integer shared_rf_arena_bytes"
+            )
     missing = [key for key in PLAN_KEYS if key not in plan]
     if missing:
         raise ValueError(f"FlashPlan is missing keys: {missing}")
@@ -113,7 +123,7 @@ def self_test() -> None:
         resource_path.write_text(
             json.dumps(
                 {
-                    "schema": "hisi-rf-resource-report/v4",
+                    "schema": "hisi-rf-resource-report/v5",
                     "profile": "wifi-wpa2-smoltcp",
                     "profile_revision": "fixture-v1",
                     "runtime_contract": "hisi-rf-rtos-driver/v1.4-ported-cooperative",
@@ -121,6 +131,7 @@ def self_test() -> None:
                     "main_stack_bytes_required": 0x8000,
                     "runtime_internal_tasks": 2,
                     "task_stack_bytes": 6 * 24 * 1024,
+                    "shared_rf_arena_bytes": 296 * 1024,
                     "flash_bytes": None,
                 }
             ),
@@ -148,6 +159,7 @@ def self_test() -> None:
             == "owner-bound-slot-stack-reservation"
         )
         assert persisted["resource"]["task_stack_bytes"] == 6 * 24 * 1024
+        assert persisted["resource"]["shared_rf_arena_bytes"] == 296 * 1024
         assert persisted["artifact"]["elf_name"] == elf.name
         assert persisted["artifact"]["image_name"] == image.name
         assert str(root) not in output.read_text(encoding="utf-8")
@@ -162,7 +174,7 @@ def self_test() -> None:
             raise AssertionError("mismatched FlashPlan image_len was accepted")
 
         resource = load_object(resource_path, "resource report")
-        resource["schema"] = "hisi-rf-resource-report/v5"
+        resource["schema"] = "hisi-rf-resource-report/v6"
         resource_path.write_text(json.dumps(resource), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)

@@ -55,10 +55,10 @@ in this setup, not pure-WPA3 evidence and not a capacity result.
 No root cause is assigned yet. The failure remains separate from the external
 pure-WPA3 gate and from the successful WPA2 arena measurement.
 
-## Decision
+## Closure
 
-Do not encode either observed linker remainder as the permanent arena size.
-The next A5U step is an explicit, one-shot RF arena capability with:
+Neither observed linker remainder was encoded as the permanent arena size.
+The release chain now provides an explicit, one-shot RF arena capability with:
 
 - profile-specific minimum bytes and alignment;
 - initialization before any task-stack or vendor allocation;
@@ -67,5 +67,29 @@ The next A5U step is an explicit, one-shot RF arena capability with:
 - a versioned report that distinguishes the shared RF arena from a
   supplicant-only budget.
 
-Caller-owned backing storage and a final WPA3 capacity remain open until the
-pure-WPA3 gate is available.
+The selected profile reserves 296 KiB with 16-byte alignment. `hisi-riscv-rt
+0.5.7` fixes the WS63 ACPU SRAM fact at 544 KiB, places the arena in a dedicated
+NOLOAD section, reserves a 32 KiB radio main stack, clears the arena before
+D-cache enable, and rejects overlap at link time. `hisi-rf-ws63
+0.1.0-alpha.27` owns the one-shot claim/install contract; `hisi-rf
+0.1.0-alpha.37` exposes it through the public facade.
+
+The independently linked final image had:
+
+| Region | Start | Size / end |
+| --- | ---: | ---: |
+| `.bss` | `0x00A11D30` | `0x000200DC` |
+| `.hisi_shared_arenas` | `0x00A31E40` | `0x0004A040`, ending `0x00A7BE80` |
+| gap before stacks | `0x00A7BE80` | `0x00000C80` |
+| `.stacks` | `0x00A7CB00` | `0x00009400` |
+
+The section is 64 bytes larger than the usable 296 KiB arena because it also
+contains ownership/profile metadata. A 3 MHz probe-rs download retained full
+verify and completed in 92.75 seconds. After nRST, the same image completed
+bootstrap, initialization and a non-empty scan, ending in
+`RFDBG_A5B_SCAN_PROFILE_OK`; event drops and backend errors were both zero.
+
+Caller-owned backing storage and pre-init memory admission are therefore
+closed. A pure-WPA3 run is still required to calibrate SAE-path peak usage and
+to close WPA3 reliability, but that external gate does not change the
+296 KiB profile contract without a new measured profile revision.

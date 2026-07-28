@@ -9,8 +9,8 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
-externally blocked on a suitable SAE-only AP, so the active no-board milestone
-is A5U developer UX and resource admission.
+externally blocked on a suitable SAE-only AP. A5U caller-owned resource admission
+is closed, so the active no-board milestone is typed-error QEMU/HIL parity.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -65,27 +65,26 @@ remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
-## NOW -- A5U Developer UX And Resource Admission
+## NOW -- A5U Typed-Error QEMU/HIL Parity
 
 A5F has closed the single-dependency facade, normalized-link artifact and
-macOS/Linux/Windows crates.io-only build path. A5U now makes resource ownership
-and admission visible before radio startup: named profiles, caller-owned
-storage, versioned machine-readable reports, actionable typed errors, and a
-template happy path. Pure-WPA3 evidence remains an external gate; this no-board
-work does not remove the vendor oracle or claim WPA3 stability.
+macOS/Linux/Windows crates.io-only build path. A5U now exposes named profiles,
+caller-owned storage, versioned machine-readable reports, actionable typed
+errors, and a template happy path. Pure-WPA3 evidence remains an external gate;
+this work does not remove the vendor oracle or claim WPA3 stability.
 
-Task-stack allocation is now observable and admitted before hardware startup:
+Task-stack and shared-arena admission are now closed before hardware startup:
 the profile atomically reserves six 24 KiB stacks and six dynamic slots, while
-the post-scan snapshot measured five live dynamic tasks at 24 KiB each. The
-commit-state bootstrap HIL reported the full 144 KiB reservation and two
-unconsumed stacks after initialization. Caller-owned stack storage, high-water
-measurement, the shared supplicant arena, and whole-profile memory admission
-remain open.
+the 296 KiB caller-owned arena is installed once against a fixed 544 KiB WS63
+memory profile. The final linker contract reserves a 32 KiB radio main stack,
+checks overlap at link time, and passed 3 MHz full-verify init/non-empty-scan
+HIL with no event drop or backend error.
 Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
-The next resource gate is based on
-[shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md):
-the current linker remainder changes with ELF layout, so it must become an
-explicit pre-init capability rather than a copied constant.
+The shared-arena closure is recorded in
+[shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md).
+The remaining A5U gate is stable-class parity for association rejection,
+first-EAPOL timeout, cancellation/resource shortage and backend timeout across
+host fixtures, QEMU and HIL.
 
 ## LATER -- Triggered Product Directions
 

@@ -2,8 +2,9 @@
 
 ## 状态
 
-**执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。当前唯一
-主要 WIP 是 A5U 的 stack/arena 校准、静态资源准入和 QEMU/HIL parity。
+**执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。A5U
+的 caller-owned storage、task-stack/shared-arena 静态准入和 init/scan HIL 已闭合；当前唯一
+主要 WIP 是 A5U typed-error 的 QEMU/HIL parity。
 pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -12,7 +13,7 @@ pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
 **外部阻塞门槛**；A5F 的无板 facade/release 和 A5B 的 opt-in 增量原型已完成，当前唯一
-active milestone 是不依赖 pure-WPA3 AP 的 A5U 静态资源准入。
+active milestone 是不依赖 pure-WPA3 AP 的 A5U typed-error QEMU/HIL parity。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -35,15 +36,16 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5U 静态资源准入
+## 当前执行窗口：A5U Typed-Error QEMU/HIL Parity
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
 标准 relocation 与三平台 crates.io-only consumer；A5B 已闭合 opt-in core protocol、
 deterministic host interleaving、真实 scan/connect/disconnect work-budget 证据和非默认
-adapter。当前只推进 A5U 的 task-stack/supplicant-arena 校准、caller-owned storage 与初始化前
-memory-profile admission；不改当前验证过的 WS63 blocking backend。BLE、SLE、TLS、SoftAP
-和 Enterprise 不与当前 A5U 并行。
+adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
+memory admission 已闭合；当前只推进 association rejection、first-EAPOL timeout、
+cancel/resource/backend timeout 的 QEMU/HIL stable-class parity，不改当前验证过的 WS63
+blocking backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5U 并行。
 
 ### 已完成 -- A3 收口
 
@@ -83,8 +85,8 @@ W2 的当前状态、提交证据和完成门槛只维护在
 W3-W4、B/S/X、NVS/RTOS future、ported switch ticket、group Reservation、AP1 fast
 path、i18n、BSP 和 Hi3322 均为 deferred/triggered backlog，不是当前 TODO。
 
-A5F single-dependency facade 和 A5U 无板 developer UX 已完成；A5B
-`WifiBackend` 非阻塞化现只推进 opt-in prototype。pure-WPA3 gate 闭合前，A5B 不删除
+A5F single-dependency facade、A5U caller-owned resource admission 和 A5B opt-in host
+prototype 已完成；A5B adapter 保持非默认。pure-WPA3 gate 闭合前，A5B 不删除
 vendor oracle、不切换唯一默认 supplicant/backend，也不把无板证据写成 WPA3
 真机稳定性结论。
 
@@ -323,8 +325,14 @@ composition root 可以同时依赖抽象与具体实现，这不改变 backend 
 期望初始化入口是由 facade re-export 的安全资源构造器，例如：
 
 ```rust,ignore
+hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);
+
+let arena = RADIO_ARENA
+    .claim_for::<hisi_rf::ws63::SelectedProfile>()?
+    .install()?;
 let radio = hisi_rf::ws63::init(
-    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng),
+    RadioConfig::default(),
+    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena),
     &RADIO_STATE,
 )?;
 ```
@@ -1300,7 +1308,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] **调用方持有 Storage 第一阶段**：`Storage<SelectedProfile, EVENTS>` 已集中持有 bounded
   radio/event state 与 4,384-byte SPACC DMA scratch，重复 claim 在硬件启动前返回错误；packet
   RAM 保持 linker-owned 并由 report 明确列出，没有把迁移成本藏进新的 backend 全局 `.bss`。
-- [ ] **完成静态资源准入**：将 task-slot reservation、task stacks、supplicant arena、alignment
+- [x] **完成静态资源准入**：将 task-slot reservation、task stacks、supplicant arena、alignment
   与 memory-profile admission 接入 `Storage<Profile>` 或显式 runtime capability；不足时返回
   `Required/Available` 结构化错误，不得进入 blob 后才停在 `RF2_INIT_BEGIN`。
   task-slot 子项已由 `hisi-rf-rtos-driver 0.1.0-alpha.16` 的 v1.3 owner-bound reservation、
@@ -1319,8 +1327,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `29951395537`/`29951468013`、`29951849863`/`29952027018` 和
   `29952214198`/`29952911404`。这些值用于 HIL 校准和泄漏诊断，不承诺最大连续可分配块，也
   不等价于初始化前的 reservation。task stack 已有精确 144 KiB profile reservation 与
-  commit-state HIL，但其 caller-owned storage/high-water，以及 supplicant arena 的 owner、
-  精确字节数和 memory-profile HIL calibration 仍未完成，因此整体资源准入不能勾为完成。
+  commit-state HIL；shared arena 随后收敛为 profile-owned 296 KiB one-shot capability。
   `hisi-rtos` commit `a580c1e` 已把实际动态栈分配字节数加入只读 task snapshot；
   `ws63-examples` commit `985aee2` 在 credential-free init/scan HIL 的稳定点测得 5 个 live
   dynamic tasks 均分配 24 KiB，合计 120 KiB，main/idle 报告 0。profile 仍保留 6 个 slot
@@ -1334,23 +1341,30 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   allocation/deallocation failure 均为 0；该值混合 vendor、supplicant 与 OSAL 所有者。
   后续 WPA2-on-transition connect HIL 在另一最终 ELF 上得到 340,416 B linker arena、
   211,080 B 峰值、204 个 peak live allocations，关联/EAPOL/断开成功且分配/释放失败均为 0；
-  两次 WPA3 transition 尝试则在 EAPOL 前失败，不能提供 SAE 峰值。两份镜像的 linker
-  remainder 不同，已证实当前 arena 不是稳定 profile contract。下一步必须引入 one-shot
-  explicit arena capability、profile minimum/alignment 和硬件启动前的 `required/available`
-  检查；不能把任一观测值写死。完整边界见
+  两次 WPA3 transition 尝试则在 EAPOL 前失败，不能提供 SAE 峰值。两份历史镜像的 linker
+  remainder 不同，证明“吃掉剩余 SRAM”不是稳定 profile contract。`hisi-riscv-rt 0.5.7`
+  现将 WS63 ACPU SRAM 事实修正为 544 KiB，并提供固定 shared-arena/32 KiB radio-main-stack
+  linker contract、重叠断言和启动期清零；`hisi-rf-ws63 0.1.0-alpha.27` 提供 296 KiB、
+  16-byte aligned、one-shot `RadioArenaStorage`，`claim_for().install()` 在 RF 电源与 blob
+  启动前完成 owner/profile/required/available 检查；`hisi-rf 0.1.0-alpha.37` 只通过 facade
+  re-export 该能力。最终 ELF 中 arena 结束于 `0xA7BE80`，32 KiB main stack 从 `0xA7CB00`
+  开始，保留 `0xC80` 间隔；3 MHz 完整 verify 后，真实 WS63 init/non-empty scan HIL 输出
+  `RFDBG_A5B_SCAN_PROFILE_OK`，event drop/error 均为 0。pure-WPA3 峰值仍属外部阻塞证据，
+  但不再阻塞静态 admission contract。完整边界见
   [A5U shared RF arena evidence](evidence/ws63-rf-a5u-shared-arena-2026-07-28.md)。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
-  RAM 和观测到的 dynamic tasks。尚未归属或 HIL 校准的 runtime internal tasks、stack、arena、
-  flash 字节保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。运行期 RF heap
+  RAM 和观测到的 dynamic tasks。schema v5 已把 144 KiB task-stack reservation、296 KiB
+  shared arena 和 32 KiB radio main stack 固化为 profile contract；尚未归属或 HIL 校准的
+  runtime internal/flash 字节继续保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。运行期 RF heap
   live/peak 指标另由 `hisi_rf::ws63::rf_heap_metrics()` 提供；静态 report 不把一次运行的
   watermark 回写成 profile 保证。
 - [x] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
   build/CI artifact；人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护第二份值。
   父仓 `scripts/assemble-radio-build-report.py` 将 versioned profile resource JSON、
   `hisi-fwpkg` image plan 与最终 ELF/image 信息合并为唯一 artifact；CI runs
-  `29941153042`、`29949035543` 已生成并上传该 report。尚未校准的 stack/arena 字段保持
-  `null`，不会在构建报告中伪造精确容量。
+  `29941153042`、`29949035543` 已生成并上传该 report。父仓 report assembler 已升级到
+  schema v5，并校验 296 KiB shared arena；仍未闭合的字段继续为 `null`。
 - [ ] **错误可执行诊断**：公共错误优先返回稳定、协议化 enum，例如 association status、
   SAE/EAPOL/PMF stage、timeout/cancel/resource/runtime class；vendor/raw code、最后状态、profile
   revision 和 bounded trace 保留在 `Diagnostics`，不作为用户匹配的主要 API。错误 display/
@@ -1383,8 +1397,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.6` 固定 `hisi-rf 0.1.0-alpha.17`/`hisi-alloc 0.1.0-alpha.2`，并在 init、runner
-  startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。CI run `29954202098` 已生成并构建
+  v0.7.0-alpha.7` 固定 `hisi-rf 0.1.0-alpha.37`、`hisi-rtos 0.1.0-alpha.13` 和
+  `hisi-riscv-rt 0.5.7`，通过 facade macro 声明并安装 caller-owned arena，不再让应用直接
+  依赖 `hisi-alloc`；init、runner startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。
+  CI run `30319763074` 已生成并构建
   WS63 Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
   不再属于用户 happy path，也不因 pure-WPA3 external gate 被提前删除。
 
