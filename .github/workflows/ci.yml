@@ -107,6 +107,74 @@ jobs:
           cargo build -Zbuild-std=core,alloc --release -p embassy_multitask
           cargo build -Zbuild-std=core,alloc --release -p embassy_async_io
 
+  # ── Target-side connectivity contract on the WS63 QEMU model ─────
+  connectivity-contract-qemu:
+    name: Connectivity contract (QEMU, contract-only)
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TARGET_DIR: target/connectivity-contract-qemu
+      QEMU_VERSION: v0.4.9
+      QEMU_ARCHIVE_SHA256: 16e5f93de1cb3977fbf0b4730f9d1653f572a4e67ed99dc9785edc1ca4165b5a
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
+      - name: Install Rust toolchain
+        run: bash .github/scripts/install-toolchain.sh
+      - name: Build the target-side contract fixture
+        run: >-
+          cargo build -Zbuild-std=core,alloc -p hisi-rf-ws63
+          --example connectivity_contract_fixture --release
+          --no-default-features --features firmware-example
+      - name: Install the pinned WS63 QEMU release
+        run: |
+          archive="$RUNNER_TEMP/hisi-riscv-qemu-x86_64-linux.tar.gz"
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            "https://github.com/hispark-rs/hisi-riscv-qemu/releases/download/$QEMU_VERSION/hisi-riscv-qemu-x86_64-linux.tar.gz"
+          echo "$QEMU_ARCHIVE_SHA256  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+      - name: Run and verify the shared marker and identity contract
+        run: |
+          evidence="$RUNNER_TEMP/connectivity-contract-evidence"
+          mkdir "$evidence"
+          elf="$CARGO_TARGET_DIR/riscv32imfc-unknown-none-elf/release/examples/connectivity_contract_fixture"
+          qemu_root="$RUNNER_TEMP/hisi-riscv-qemu-x86_64-linux"
+          uv run hil/ws63-connectivity-reset-matrix.py \
+            --write-artifact-identity "$evidence/connectivity-artifact.json" \
+            --elf "$elf" --profile-id qemu-contract-fixture
+          set +e
+          LD_LIBRARY_PATH="$qemu_root/lib" timeout 5 \
+            "$qemu_root/qemu-system-riscv32" \
+            -M ws63 -nographic -bios none -kernel "$elf" \
+            </dev/null >"$evidence/run-01.uart.log" 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            cat "$evidence/run-01.uart.log"
+            exit "$status"
+          fi
+          uv run hil/ws63-connectivity-reset-matrix.py \
+            --analyze-dir "$evidence" \
+            --output "$evidence/contract" \
+            --stage connectivity --require-contract --qemu-contract-fixture \
+            --artifact-identity "$evidence/connectivity-artifact.json" \
+            --elf "$elf" --profile-id qemu-contract-fixture
+          jq -e '
+            .counts.pass == 1 and
+            .evidence_scope == "contract-only" and
+            .records[0].contract.violations == []
+          ' "$evidence/contract/summary.json" >/dev/null
+      - name: Upload contract-only QEMU evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws63-connectivity-contract-qemu
+          path: ${{ runner.temp }}/connectivity-contract-evidence
+          if-no-files-found: error
+
   # ── Stock rust-lld radio link across supported development hosts ──
   radio-link:
     name: Plain Cargo RF link (${{ matrix.os }}, ${{ matrix.profile }})
@@ -238,7 +306,7 @@ jobs:
         run: uv run --script scripts/assemble-radio-build-report.py --self-test
       - name: Test WS63 supplicant final-link boundary
         run: uv run scripts/test-ws63-supplicant-boundary.py
-      - name: Test WS63 connectivity matrix classifier
+      - name: Test WS63 connectivity marker and identity contract
         run: uv run hil/test-ws63-connectivity-reset-matrix.py
       - name: Check WS63 connectivity shell contract
         run: |

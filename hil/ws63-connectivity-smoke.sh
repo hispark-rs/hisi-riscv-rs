@@ -15,7 +15,7 @@ WPA_TAG="wpa2-personal-2026-07-13"
 WPA_ASSET="libwpa_supplicant_wpa2_personal.a"
 WPA_SHA256="891c195279d768ce5664e16fecac95f353fd2217c4e3590315baa4cb6e7f25a2"
 WPA_URL="https://github.com/hispark-rs/ws63-RF/releases/download/$WPA_TAG/$WPA_ASSET"
-PROBE_SPEED="${PROBE_SPEED:-1000}"
+PROBE_SPEED="${PROBE_SPEED:-3000}"
 PORT="${PORT:-}"
 PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
 EXPECT="${WS63_CONNECTIVITY_EXPECT:-full}"
@@ -41,6 +41,7 @@ Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
 
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           HISI_FWPKG, UART_BAUD, MONITOR,
+          EVIDENCE_DIR (default: timestamped directory under /private/tmp),
           WS63_CONNECTIVITY_PROFILE={vendor-wpa2|upstream-wpa2|upstream-wpa3},
           WS63_CONNECTIVITY_EXPECT={full|init-scan}; init-scan uses public
           fixture credentials and proves only image/startup/RF init/scan/runner,
@@ -167,26 +168,6 @@ preflight() {
     echo "connectivity-smoke: preflight PASS (profile=$PROFILE, expect=$EXPECT, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
 }
 
-assert_marker() {
-    local pattern="$1" description="$2"
-    if grep -qE "$pattern" "$LOG"; then
-        echo "  PASS $description"
-    else
-        echo "  FAIL $description (missing: $pattern)" >&2
-        fail=1
-    fi
-}
-
-assert_absent() {
-    local pattern="$1" description="$2"
-    if grep -qE "$pattern" "$LOG"; then
-        echo "  FAIL $description (unexpected: $pattern)" >&2
-        fail=1
-    else
-        echo "  PASS $description"
-    fi
-}
-
 case "${1:-}" in
     -h|--help) usage; exit 0 ;;
 esac
@@ -202,10 +183,17 @@ esac
 preflight
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-LOG="$TMP/uart.log"
+EVIDENCE_DIR="${EVIDENCE_DIR:-/private/tmp/ws63-connectivity-smoke-$(date +%Y%m%d-%H%M%S)}"
+if [ -d "$EVIDENCE_DIR" ] && [ -n "$(ls -A "$EVIDENCE_DIR")" ]; then
+    echo "ERROR: EVIDENCE_DIR must be empty: $EVIDENCE_DIR" >&2
+    exit 1
+fi
+mkdir -p "$EVIDENCE_DIR"
+LOG="$EVIDENCE_DIR/run-01.uart.log"
 TARGET_DIR="$TMP/target"
 FINAL_MAP="$TMP/wifi_init_smoke-rf-lld-final.map"
 ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
+IDENTITY="$EVIDENCE_DIR/connectivity-artifact.json"
 ARCHIVE=""
 FEATURES=""
 case "$PROFILE" in
@@ -257,6 +245,11 @@ case "$PROFILE" in
         ;;
 esac
 
+uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" \
+    --write-artifact-identity "$IDENTITY" \
+    --elf "$ELF" \
+    --profile-id "$PROFILE"
+
 echo "==> planned-bin download, J-Link nRST, and UART capture"
 if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
     uv run "$HERE/scripts/check-ws63-runtime-compat.py" --elf "$ELF"
@@ -267,56 +260,50 @@ fi
         bash hil/cargo-run-hw.sh "$ELF"
 ) 2>&1 | tee "$LOG"
 
-fail=0
-assert_marker 'RF1_IMAGE_OK' 'normalized RF image started on silicon'
-assert_marker 'RF2_INIT_OK ifname=hisi-rf' 'chip-neutral radio initialized'
-assert_marker 'A4_RADIO_EVENT kind=initialized' 'initialized event delivered'
-assert_marker 'RF3_SCAN_OK count=0x0*[1-9a-fA-F]' 'RF scan returned at least one AP'
-assert_marker 'A4_RADIO_EVENT kind=scan-completed' 'scan event delivered'
-if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
-    assert_marker 'W2D_NATIVE_RUNNER_RX_READY' 'upstream native runner entered RX-ready state'
-fi
-assert_absent 'A4_NET_ERR|RF5A_DHCP_TIMEOUT|RF5B_.*ERR|W2D_.*ERR|W2E_.*ERR|panicked at' 'no fatal connectivity marker'
-
+CONTRACT_OUTPUT="$EVIDENCE_DIR/contract"
+CONTRACT_STAGE=connectivity
 if [ "$EXPECT" = init-scan ]; then
-    if [ "$fail" -ne 0 ]; then
-        echo "WS63 RADIO INIT/SCAN SMOKE: FAIL" >&2
-        echo "--- UART tail ---" >&2
-        tail -80 "$LOG" >&2
-        exit 1
-    fi
-    echo "WS63 RADIO INIT/SCAN SMOKE: PASS"
-    exit 0
+    CONTRACT_STAGE=init-scan
 fi
-
-assert_marker 'A4_RADIO_EVENT kind=connected' 'connect event delivered'
-case "$PROFILE" in
-    vendor-wpa2)
-        assert_marker 'RF5B_WPA_CONNECT_OK' 'vendor-oracle WPA2 association completed'
-        ;;
-    upstream-wpa2)
-        assert_marker 'W2D_WPA2_CONNECT_OK' 'upstream hostap WPA2 association completed'
-        ;;
-    upstream-wpa3)
-        assert_marker "W2E_AP_SECURITY mode=${WS63_WIFI_AP_MODE}" 'scan RSNE matches the controlled WPA3 AP mode'
-        assert_marker 'W2E_WPA3_CONNECT_OK pmf=required' 'upstream hostap SAE association completed with required PMF'
-        ;;
-esac
-assert_marker 'RF5A_DHCP_OK addr=' 'DHCP lease acquired'
-assert_marker 'RF5A_ARP_OK mode=smoltcp-neighbor-cache' 'neighbor cache resolved L2 peer'
-assert_marker 'RF5C_PING_OK target=1\.1\.1\.1 .*rx=0x0*[1-9a-fA-F]' 'public ICMP received replies'
-assert_marker 'RF5C_CONNECTIVITY_SUMMARY .*rx_queue_drop=0x0+([^0-9a-fA-F]|$)' 'bounded RX queue had no drops'
-assert_marker 'A4_NET_RUNNER_STEADY' 'long-lived network runner entered steady state'
-assert_marker 'A4_DHCP_RENEW_OK client=0x0*[1-9a-fA-F].*server=0x0*[1-9a-fA-F]' 'DHCP renewal request and response observed'
-if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
-    assert_marker 'RFDBG_HW_CONTENTION tests=0x0*1 failures=0x0+ observed=0x0*1 holder=0x0*1 waiter=0x0*1' 'two RTOS task owners contended and completed through one crypto service'
+contract_args=(
+    --analyze-dir "$EVIDENCE_DIR"
+    --output "$CONTRACT_OUTPUT"
+    --stage "$CONTRACT_STAGE"
+    --require-contract
+    --artifact-identity "$IDENTITY"
+    --elf "$ELF"
+    --profile-id "$PROFILE"
+)
+if [ "$PROFILE" = upstream-wpa3 ] && [ "$EXPECT" = full ]; then
+    contract_args+=(--required-ap-mode "$WS63_WIFI_AP_MODE")
 fi
-
-if [ "$fail" -ne 0 ]; then
-    echo "WS63 CONNECTIVITY SMOKE: FAIL" >&2
+if ! uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" "${contract_args[@]}"; then
+    echo "WS63 CONNECTIVITY CONTRACT: FAIL" >&2
     echo "--- UART tail ---" >&2
     tail -80 "$LOG" >&2
     exit 1
 fi
 
+if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
+    if ! grep -q 'W2D_NATIVE_RUNNER_RX_READY' "$LOG"; then
+        echo "WS63 UPSTREAM RUNNER CONTRACT: FAIL" >&2
+        tail -80 "$LOG" >&2
+        exit 1
+    fi
+fi
+
+if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
+    if ! grep -qE 'RFDBG_HW_CONTENTION tests=0x0*1 failures=0x0+ observed=0x0*1 holder=0x0*1 waiter=0x0*1' "$LOG"; then
+        echo "WS63 CRYPTO CONTENTION CONTRACT: FAIL" >&2
+        tail -80 "$LOG" >&2
+        exit 1
+    fi
+fi
+
+if [ "$EXPECT" = init-scan ]; then
+    echo "connectivity-smoke: evidence saved at $EVIDENCE_DIR"
+    echo "WS63 RADIO INIT/SCAN SMOKE: PASS"
+    exit 0
+fi
+echo "connectivity-smoke: evidence saved at $EVIDENCE_DIR"
 echo "WS63 CONNECTIVITY SMOKE: PASS"

@@ -8,7 +8,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
+import tempfile
 import unittest
 
 
@@ -53,6 +55,33 @@ def a5b_success_log() -> bytes:
                 b"supplicant_poll=0x00000000"
             ),
             b"RFDBG_A5B_CONNECT_PROFILE_OK",
+        )
+    )
+
+
+def connectivity_success_log() -> bytes:
+    return b"\n".join(
+        (
+            b"RF1_IMAGE_OK",
+            b"RF2_INIT_OK ifname=hisi-rf",
+            b"A4_RADIO_EVENT kind=initialized",
+            b"RF3_SCAN_OK count=0x00000003",
+            b"A4_RADIO_EVENT kind=scan-completed",
+            b"W2D_WPA2_CONNECT_OK",
+            b"A4_RADIO_EVENT kind=connected",
+            b"RF5A_DHCP_OK addr=192.0.2.2",
+            b"RF5A_ARP_OK mode=smoltcp-neighbor-cache",
+            (
+                b"RF5C_PING_OK target=1.1.1.1 tx=0x00000005 rx=0x00000004 "
+                b"drop=0x00000001 tx_error=0x00000000 rx_queue_drop=0x00000000"
+            ),
+            (
+                b"RF5C_CONNECTIVITY_SUMMARY gateway_tx=0x00000005 "
+                b"gateway_rx=0x00000000 public_tx=0x00000005 "
+                b"public_rx=0x00000004 rx_queue_drop=0x00000000"
+            ),
+            b"A4_NET_RUNNER_STEADY lease=managed neighbor_cache=managed",
+            b"A4_DHCP_RENEW_OK client=0x00000001 server=0x00000001",
         )
     )
 
@@ -178,6 +207,120 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(summary["counts"], {"pass": 1})
         self.assertEqual(summary["a5b_metrics"]["complete_runs"], 1)
         self.assertEqual(summary["records"][0]["result"], "pass")
+
+    def test_connectivity_contract_accepts_ordered_zero_error_log(self) -> None:
+        log = connectivity_success_log()
+        self.assertEqual(MATRIX.validate_rust_contract(log, "connectivity"), [])
+        self.assertEqual(
+            MATRIX.classify(
+                log,
+                "rust",
+                "connectivity",
+                require_contract=True,
+            ),
+            "pass",
+        )
+
+    def test_connectivity_contract_fails_closed_on_missing_renew(self) -> None:
+        log = connectivity_success_log().replace(
+            b"A4_DHCP_RENEW_OK client=0x00000001 server=0x00000001",
+            b"",
+        )
+        self.assertIn(
+            "missing:dhcp_renew",
+            MATRIX.validate_rust_contract(log, "connectivity"),
+        )
+        self.assertEqual(
+            MATRIX.classify(
+                log,
+                "rust",
+                "connectivity",
+                require_contract=True,
+            ),
+            "contract_violation",
+        )
+
+    def test_connectivity_contract_rejects_nonzero_queue_drop(self) -> None:
+        log = connectivity_success_log().replace(
+            b"rx_queue_drop=0x00000000",
+            b"rx_queue_drop=0x00000001",
+        )
+        violations = MATRIX.validate_rust_contract(log, "connectivity")
+        self.assertIn("nonzero:summary.rx_queue_drop", violations)
+        self.assertIn("nonzero:public_ping.rx_queue_drop", violations)
+
+    def test_qemu_fixture_is_contract_only_and_rejected_as_silicon(self) -> None:
+        log = b"\n".join(
+            (
+                MATRIX.QEMU_CONTRACT_FIXTURE_MARKER,
+                connectivity_success_log(),
+            )
+        )
+        self.assertEqual(
+            MATRIX.validate_rust_contract(
+                log,
+                "connectivity",
+                qemu_contract_fixture=True,
+            ),
+            [],
+        )
+        self.assertIn(
+            "forbidden:qemu_contract_fixture",
+            MATRIX.validate_rust_contract(log, "connectivity"),
+        )
+
+    def test_qemu_fixture_mode_requires_explicit_marker(self) -> None:
+        self.assertIn(
+            "missing:qemu_contract_fixture",
+            MATRIX.validate_rust_contract(
+                connectivity_success_log(),
+                "connectivity",
+                qemu_contract_fixture=True,
+            ),
+        )
+
+    def test_a5b_contract_rejects_budget_and_backend_errors(self) -> None:
+        log = (
+            a5b_success_log()
+            .replace(b"errors=0x00000000", b"errors=0x00000001")
+            .replace(
+                b"RFDBG_A5B_RUNNER_ELAPSED_MS value=0x00000026",
+                b"RFDBG_A5B_RUNNER_ELAPSED_MS value=0x00000065",
+            )
+        )
+        violations = MATRIX.validate_rust_contract(
+            log, "connect", max_runner_step_ms=100
+        )
+        self.assertIn("nonzero:runner.errors", violations)
+        self.assertIn("budget:runner_step_max_ms=101>100", violations)
+
+    def test_artifact_identity_detects_elf_and_profile_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            elf = root / "firmware.elf"
+            identity_path = root / "identity.json"
+            elf.write_bytes(b"first")
+            written = MATRIX.write_artifact_identity(
+                identity_path, elf, "upstream-wpa2"
+            )
+            verified = MATRIX.verify_artifact_identity(
+                identity_path, elf, "upstream-wpa2"
+            )
+            self.assertEqual(verified["elf_sha256"], written["elf_sha256"])
+            self.assertEqual(
+                json.loads(identity_path.read_text())["marker_contract"],
+                MATRIX.MARKER_CONTRACT,
+            )
+
+            with self.assertRaisesRegex(ValueError, "profile_id"):
+                MATRIX.verify_artifact_identity(
+                    identity_path, elf, "upstream-wpa3"
+                )
+            elf.write_bytes(b"second")
+            with self.assertRaisesRegex(ValueError, "elf_sha256"):
+                MATRIX.verify_artifact_identity(
+                    identity_path, elf, "upstream-wpa2"
+                )
 
     def test_terminal_capture_can_finish_while_uart_is_silent(self) -> None:
         self.assertFalse(MATRIX.post_terminal_elapsed(None, 2.0, 100.0))

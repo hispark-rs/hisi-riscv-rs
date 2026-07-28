@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -109,6 +110,62 @@ A5B_METRIC_MARKERS = {
     ),
 }
 
+ARTIFACT_IDENTITY_SCHEMA = "hisi-connectivity-artifact/v1"
+MARKER_CONTRACT = "ws63-connectivity-markers/v1"
+
+RUST_FATAL_MARKERS = (
+    b"A4_NET_ERR",
+    b"RF2_INIT_ERR:",
+    b"RF3_SCAN_ERR",
+    b"RF5B_AP_NOT_FOUND",
+    b"RF5B_CONNECT_ERR:",
+    b"RF5B_WPA_CONNECT_ERR:",
+    b"W2D_WPA2_CONNECT_ERR",
+    b"W2E_WPA3_CONNECT_ERR",
+    b"RFDBG_A5B_SCAN_ERR",
+    b"RFDBG_A5B_CONNECT_ERR",
+    b"RFDBG_A5B_RUNNER_ERR",
+    b"RFDBG_A5B_WAIT_ERR",
+    b"RFDBG_EXCEPTION",
+    b"panicked at",
+    b"scheduler contract violation",
+    b"BUDGET_VIOLATION",
+)
+
+QEMU_CONTRACT_FIXTURE_MARKER = b"RFDBG_CONNECTIVITY_CONTRACT_FIXTURE"
+
+RUST_STAGE_MARKERS = {
+    "init-scan": (
+        ("image", (b"RF1_IMAGE_OK",)),
+        ("initialize", (b"RF2_INIT_OK",)),
+        ("initialized_event", (b"A4_RADIO_EVENT kind=initialized",)),
+        ("scan", (b"RF3_SCAN_OK",)),
+        ("scan_event", (b"A4_RADIO_EVENT kind=scan-completed",)),
+    ),
+    "connectivity": (
+        ("image", (b"RF1_IMAGE_OK",)),
+        ("initialize", (b"RF2_INIT_OK",)),
+        ("initialized_event", (b"A4_RADIO_EVENT kind=initialized",)),
+        ("scan", (b"RF3_SCAN_OK",)),
+        ("scan_event", (b"A4_RADIO_EVENT kind=scan-completed",)),
+        (
+            "connect",
+            (
+                b"RF5B_WPA_CONNECT_OK",
+                b"W2D_WPA2_CONNECT_OK",
+                b"W2E_WPA3_CONNECT_OK",
+            ),
+        ),
+        ("connected_event", (b"A4_RADIO_EVENT kind=connected",)),
+        ("dhcp", (b"RF5A_DHCP_OK",)),
+        ("neighbor", (b"RF5A_ARP_OK",)),
+        ("public_ping", (b"RF5C_PING_OK target=1.1.1.1",)),
+        ("summary", (b"RF5C_CONNECTIVITY_SUMMARY",)),
+        ("steady", (b"A4_NET_RUNNER_STEADY",)),
+        ("dhcp_renew", (b"A4_DHCP_RENEW_OK",)),
+    ),
+}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -130,7 +187,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--profile", choices=("rust", "official-liteos"), default="rust")
     parser.add_argument(
         "--stage",
-        choices=("connect", "connectivity"),
+        choices=("init-scan", "connect", "connectivity"),
         default="connectivity",
         help="stop after association or continue through the IP connectivity probe",
     )
@@ -146,6 +203,36 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--reference-count", type=int, default=5)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--require-contract",
+        action="store_true",
+        help="fail closed on missing/out-of-order stage markers or non-zero diagnostics",
+    )
+    parser.add_argument(
+        "--qemu-contract-fixture",
+        action="store_true",
+        help="require the explicit contract-only QEMU fixture marker",
+    )
+    parser.add_argument(
+        "--max-runner-step-ms",
+        type=int,
+        help="maximum accepted A5B runner turn when --require-contract is set",
+    )
+    parser.add_argument(
+        "--write-artifact-identity",
+        type=Path,
+        help="write a deterministic ELF/profile identity manifest and exit",
+    )
+    parser.add_argument(
+        "--artifact-identity",
+        type=Path,
+        help="verify this identity manifest before classifying captures",
+    )
+    parser.add_argument("--elf", type=Path, help="ELF covered by the identity manifest")
+    parser.add_argument(
+        "--profile-id",
+        help="build profile covered by the identity manifest",
+    )
     return parser.parse_args()
 
 
@@ -256,6 +343,205 @@ def parse_hex_values(line: bytes) -> list[int]:
     return values
 
 
+def sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def artifact_identity(elf: Path, profile_id: str) -> dict[str, str]:
+    return {
+        "schema": ARTIFACT_IDENTITY_SCHEMA,
+        "marker_contract": MARKER_CONTRACT,
+        "profile_id": profile_id,
+        "elf_sha256": sha256_path(elf),
+    }
+
+
+def write_artifact_identity(path: Path, elf: Path, profile_id: str) -> dict[str, str]:
+    identity = artifact_identity(elf, profile_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(identity, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return identity
+
+
+def verify_artifact_identity(
+    path: Path, elf: Path, profile_id: str
+) -> dict[str, str]:
+    try:
+        expected = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"cannot read artifact identity: {error}") from error
+    if not isinstance(expected, dict):
+        raise ValueError("artifact identity must be a JSON object")
+
+    actual = artifact_identity(elf, profile_id)
+    mismatches = [
+        key
+        for key, value in actual.items()
+        if expected.get(key) != value
+    ]
+    unknown = sorted(set(expected) - set(actual))
+    if unknown:
+        mismatches.extend(f"unknown:{key}" for key in unknown)
+    if mismatches:
+        raise ValueError(
+            "artifact identity mismatch: " + ", ".join(sorted(mismatches))
+        )
+    actual["manifest_sha256"] = sha256_path(path)
+    return actual
+
+
+def marker_group_position(
+    log: bytes, markers: tuple[bytes, ...], after: int
+) -> int | None:
+    positions = [position for marker in markers if (position := log.find(marker, after)) >= 0]
+    return min(positions) if positions else None
+
+
+def last_prefixed_line(log: bytes, prefix: bytes) -> bytes | None:
+    return next(
+        (line for line in reversed(log.splitlines()) if line.startswith(prefix)),
+        None,
+    )
+
+
+def validate_rust_contract(
+    log: bytes,
+    stage: str,
+    max_runner_step_ms: int | None = None,
+    qemu_contract_fixture: bool = False,
+) -> list[str]:
+    """Return fail-closed marker/diagnostic violations for one Rust boot."""
+    violations: list[str] = []
+
+    has_fixture_marker = QEMU_CONTRACT_FIXTURE_MARKER in log
+    if qemu_contract_fixture and not has_fixture_marker:
+        violations.append("missing:qemu_contract_fixture")
+    if not qemu_contract_fixture and has_fixture_marker:
+        violations.append("forbidden:qemu_contract_fixture")
+
+    for marker in RUST_FATAL_MARKERS:
+        if marker in log:
+            violations.append(f"fatal:{marker.decode(errors='replace')}")
+
+    stage_markers = RUST_STAGE_MARKERS.get(stage)
+    if stage_markers is not None:
+        cursor = 0
+        for name, markers in stage_markers:
+            position = marker_group_position(log, markers, cursor)
+            if position is None:
+                violations.append(f"missing:{name}")
+                continue
+            if position < cursor:
+                violations.append(f"out_of_order:{name}")
+                continue
+            cursor = position + 1
+
+        scan_line = last_prefixed_line(log, b"RF3_SCAN_OK ")
+        if scan_line is not None:
+            scan = parse_hex_fields(scan_line)
+            if scan.get("count", 0) <= 0:
+                violations.append("invalid:scan.count")
+
+    if stage == "connect":
+        if b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
+            metrics = parse_a5b_metrics(log)
+            if metrics is None or metrics.get("complete") is not True:
+                missing = [] if metrics is None else metrics.get("missing", [])
+                suffix = ",".join(str(value) for value in missing)
+                violations.append(f"a5b_metrics_incomplete:{suffix}")
+            else:
+                event = metrics["event_queue"]
+                runner = metrics["runner"]
+                blocking = metrics["blocking"]
+                timings = metrics["timings"]
+                assert isinstance(event, dict)
+                assert isinstance(runner, dict)
+                assert isinstance(blocking, dict)
+                assert isinstance(timings, dict)
+                if event["dropped"] != 0:
+                    violations.append("nonzero:event_queue.dropped")
+                if runner["errors"] != 0:
+                    violations.append("nonzero:runner.errors")
+                for field in (
+                    "scan_calls",
+                    "poll_calls",
+                    "internal_sleep",
+                    "supplicant_poll",
+                ):
+                    if blocking[field] != 0:
+                        violations.append(f"nonzero:blocking.{field}")
+                if (
+                    max_runner_step_ms is not None
+                    and timings["runner_step_max_ms"] > max_runner_step_ms
+                ):
+                    violations.append(
+                        "budget:runner_step_max_ms="
+                        f"{timings['runner_step_max_ms']}>{max_runner_step_ms}"
+                    )
+        elif not any(
+            marker in log
+            for marker in (
+                b"RF5B_WPA_CONNECT_OK",
+                b"W2D_WPA2_CONNECT_OK",
+                b"W2E_WPA3_CONNECT_OK",
+            )
+        ):
+            violations.append("missing:connect")
+
+    if stage == "connectivity":
+        if (
+            b"W2E_WPA3_CONNECT_OK" in log
+            and b"W2E_WPA3_CONNECT_OK pmf=required" not in log
+        ):
+            violations.append("invalid:wpa3.pmf")
+        summary_line = last_prefixed_line(log, b"RF5C_CONNECTIVITY_SUMMARY ")
+        if summary_line is not None:
+            summary = parse_hex_fields(summary_line)
+            for field in (
+                "gateway_tx",
+                "gateway_rx",
+                "public_tx",
+                "public_rx",
+                "rx_queue_drop",
+            ):
+                if field not in summary:
+                    violations.append(f"missing:summary.{field}")
+            if summary.get("public_tx", 0) <= 0:
+                violations.append("invalid:summary.public_tx")
+            if summary.get("public_rx", 0) <= 0:
+                violations.append("invalid:summary.public_rx")
+            if summary.get("rx_queue_drop", 0) != 0:
+                violations.append("nonzero:summary.rx_queue_drop")
+
+        public_ping = parse_ping_summaries(log).get("1.1.1.1")
+        if public_ping is not None:
+            if int(public_ping.get("tx", 0)) <= 0:
+                violations.append("invalid:public_ping.tx")
+            if int(public_ping.get("rx", 0)) <= 0:
+                violations.append("invalid:public_ping.rx")
+            if int(public_ping.get("tx_error", 0)) != 0:
+                violations.append("nonzero:public_ping.tx_error")
+            if int(public_ping.get("rx_queue_drop", 0)) != 0:
+                violations.append("nonzero:public_ping.rx_queue_drop")
+
+        renew_line = last_prefixed_line(log, b"A4_DHCP_RENEW_OK ")
+        if renew_line is not None:
+            renew = parse_hex_fields(renew_line)
+            if renew.get("client", 0) <= 0:
+                violations.append("invalid:dhcp_renew.client")
+            if renew.get("server", 0) <= 0:
+                violations.append("invalid:dhcp_renew.server")
+
+    return violations
+
+
 def parse_a5b_metrics(log: bytes) -> dict[str, object] | None:
     """Parse the bounded A5B diagnostic trailer from one unchanged-image boot."""
     lines = log.splitlines()
@@ -364,7 +650,13 @@ def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object]
 
 
 def classify(
-    log: bytes, profile: str, stage: str, required_ap_mode: str | None = None
+    log: bytes,
+    profile: str,
+    stage: str,
+    required_ap_mode: str | None = None,
+    require_contract: bool = False,
+    max_runner_step_ms: int | None = None,
+    qemu_contract_fixture: bool = False,
 ) -> str:
     if profile == "official-liteos":
         if stage == "connect" and b"+NOTICE:CONNECTED" in log:
@@ -394,22 +686,37 @@ def classify(
         if metrics is None or metrics.get("complete") is not True:
             return "missing_a5b_metrics"
 
-    if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
+    def pass_or_contract_violation() -> str:
+        if require_contract and validate_rust_contract(
+            log, stage, max_runner_step_ms, qemu_contract_fixture
+        ):
+            return "contract_violation"
         return "pass"
+
+    if stage == "init-scan" and (
+        b"RF3_SCAN_OK" in log or b"RFDBG_A5B_SCAN_PROFILE_OK" in log
+    ):
+        return pass_or_contract_violation()
+    if stage == "connect" and b"RF5B_WPA_CONNECT_OK" in log:
+        return pass_or_contract_violation()
     if stage == "connect" and (
         b"W2D_WPA2_CONNECT_OK" in log or b"W2E_WPA3_CONNECT_OK" in log
     ):
-        return "pass"
+        return pass_or_contract_violation()
     if stage == "connect" and b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
-        return "pass"
+        return pass_or_contract_violation()
     public_ping = parse_ping_summaries(log).get("1.1.1.1")
     if public_ping is not None:
         tx = int(public_ping.get("tx", 0))
         rx = int(public_ping.get("rx", 0))
         if tx > 0 and rx == tx:
-            return "pass"
+            return pass_or_contract_violation()
         if rx > 0:
-            return "ping_degraded"
+            return (
+                pass_or_contract_violation()
+                if require_contract
+                else "ping_degraded"
+            )
         return "ping_timeout"
     if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
         return "auth_rsp2_timeout"
@@ -545,16 +852,42 @@ def record_from_log(
     required_ap_mode: str | None,
     log_name: str,
     marker_times: dict[str, float] | None = None,
+    require_contract: bool = False,
+    max_runner_step_ms: int | None = None,
+    qemu_contract_fixture: bool = False,
 ) -> dict[str, object]:
+    contract_violations = (
+        validate_rust_contract(
+            log, stage, max_runner_step_ms, qemu_contract_fixture
+        )
+        if require_contract and profile == "rust"
+        else []
+    )
     return {
         "run": run,
-        "result": classify(log, profile, stage, required_ap_mode),
+        "result": classify(
+            log,
+            profile,
+            stage,
+            required_ap_mode,
+            require_contract,
+            max_runner_step_ms,
+            qemu_contract_fixture,
+        ),
         "bytes": len(log),
         "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
         + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
         "ap_mode": detected_ap_mode(log),
         "ping": parse_ping_summaries(log),
         "a5b_metrics": parse_a5b_metrics(log),
+        "contract": {
+            "schema": MARKER_CONTRACT,
+            "required": require_contract,
+            "evidence_scope": (
+                "contract-only" if qemu_contract_fixture else "silicon"
+            ),
+            "violations": contract_violations,
+        },
         "marker_seconds": marker_times or {},
         "log": log_name,
     }
@@ -621,8 +954,39 @@ def summarize_records(
     return summary
 
 
+def print_record_failures(records: list[dict[str, object]]) -> None:
+    for record in records:
+        if record.get("result") == "pass":
+            continue
+        contract = record.get("contract")
+        violations = (
+            contract.get("violations", [])
+            if isinstance(contract, dict)
+            else []
+        )
+        print(
+            f"run {record.get('run')}: result={record.get('result')} "
+            f"contract_violations={json.dumps(violations)}",
+            flush=True,
+        )
+
+
 def main() -> int:
     args = parse_args()
+    if args.write_artifact_identity is not None:
+        if args.elf is None or args.profile_id is None:
+            raise SystemExit(
+                "--write-artifact-identity requires --elf and --profile-id"
+            )
+        identity = write_artifact_identity(
+            args.write_artifact_identity, args.elf, args.profile_id
+        )
+        print(
+            "artifact identity: "
+            f"{args.write_artifact_identity} ({identity['elf_sha256']})"
+        )
+        return 0
+
     if (
         args.runs <= 0
         or args.timeout <= 0
@@ -635,6 +999,20 @@ def main() -> int:
         )
     if args.required_ap_mode is not None and args.profile != "rust":
         raise SystemExit("--required-ap-mode is only valid with --profile rust")
+    if args.max_runner_step_ms is not None and args.max_runner_step_ms <= 0:
+        raise SystemExit("--max-runner-step-ms must be positive")
+    identity = None
+    if args.artifact_identity is not None:
+        if args.elf is None or args.profile_id is None:
+            raise SystemExit("--artifact-identity requires --elf and --profile-id")
+        try:
+            identity = verify_artifact_identity(
+                args.artifact_identity, args.elf, args.profile_id
+            )
+        except ValueError as error:
+            raise SystemExit(str(error)) from error
+    elif args.elf is not None or args.profile_id is not None:
+        raise SystemExit("--elf/--profile-id require --artifact-identity")
     if args.analyze_dir is None and args.port is None:
         raise SystemExit("--port or PORT is required unless --analyze-dir is used")
 
@@ -653,6 +1031,9 @@ def main() -> int:
                 args.stage,
                 args.required_ap_mode,
                 log_path.name,
+                require_contract=args.require_contract,
+                max_runner_step_ms=args.max_runner_step_ms,
+                qemu_contract_fixture=args.qemu_contract_fixture,
             )
             for run, log_path in enumerate(source_logs, start=1)
         ]
@@ -668,8 +1049,13 @@ def main() -> int:
             reference_ping=None,
             source_dir=args.analyze_dir,
         )
+        summary["artifact_identity"] = identity
+        summary["evidence_scope"] = (
+            "contract-only" if args.qemu_contract_fixture else "silicon"
+        )
         (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         print(f"summary: {json.dumps(summary['counts'], sort_keys=True)}")
+        print_record_failures(records)
         print(f"artifacts: {output}")
         counts = summary["counts"]
         assert isinstance(counts, dict)
@@ -711,6 +1097,9 @@ def main() -> int:
                 args.required_ap_mode,
                 log_path.name,
                 marker_times,
+                args.require_contract,
+                args.max_runner_step_ms,
+                args.qemu_contract_fixture,
             )
             records.append(record)
             print(
@@ -730,10 +1119,15 @@ def main() -> int:
         post_terminal_seconds=args.post_terminal_seconds,
         reference_ping=reference_ping,
     )
+    summary["artifact_identity"] = identity
+    summary["evidence_scope"] = (
+        "contract-only" if args.qemu_contract_fixture else "silicon"
+    )
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     counts = summary["counts"]
     assert isinstance(counts, dict)
     print(f"summary: {json.dumps(counts, sort_keys=True)}")
+    print_record_failures(records)
     print(f"artifacts: {output}")
     return 0 if counts.get("pass", 0) == args.runs else 1
 

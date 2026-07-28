@@ -93,7 +93,7 @@ jobs:
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
           PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
-          PROBE_SPEED: "1000"
+          PROBE_SPEED: "3000"
           WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'vendor-wpa2' }}
           WS63_WIFI_AP_MODE: ${{ vars.HIL_WIFI_AP_MODE }}
           WS63_WIFI_SSID: ${{ vars.HIL_WIFI_SSID }}
