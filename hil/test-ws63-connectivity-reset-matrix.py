@@ -327,6 +327,37 @@ class ClassifyTests(unittest.TestCase):
             ),
         )
 
+    def test_connectivity_a5b_trailer_does_not_require_disconnect(self) -> None:
+        trailer = a5b_success_log().replace(
+            b"RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x00000009\n",
+            b"",
+        )
+        log = b"\n".join((connectivity_success_log(), trailer))
+        metrics = MATRIX.parse_a5b_metrics(
+            trailer,
+            require_disconnect=False,
+        )
+        self.assertIsNotNone(metrics)
+        assert metrics is not None
+        self.assertTrue(metrics["complete"])
+        self.assertNotIn("disconnect_elapsed_ms", metrics["timings"])
+        self.assertEqual(
+            MATRIX.validate_rust_contract(
+                log,
+                "connectivity",
+                max_runner_step_ms=100,
+            ),
+            [],
+        )
+        self.assertIn(
+            "a5b_metrics_incomplete:disconnect_elapsed_ms",
+            MATRIX.validate_rust_contract(
+                trailer,
+                "connect",
+                max_runner_step_ms=100,
+            ),
+        )
+
     def test_artifact_identity_detects_elf_and_profile_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

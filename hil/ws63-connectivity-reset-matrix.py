@@ -414,6 +414,8 @@ def last_prefixed_line(log: bytes, prefix: bytes) -> bytes | None:
 def validate_a5b_metrics(
     log: bytes,
     max_runner_step_ms: int | None,
+    *,
+    require_disconnect: bool,
 ) -> list[str]:
     """Validate the bounded incremental-runner trailer for one boot."""
     if b"RFDBG_A5B_CONNECT_PROFILE_OK" not in log:
@@ -423,7 +425,7 @@ def validate_a5b_metrics(
             else []
         )
 
-    metrics = parse_a5b_metrics(log)
+    metrics = parse_a5b_metrics(log, require_disconnect=require_disconnect)
     if metrics is None or metrics.get("complete") is not True:
         missing = [] if metrics is None else metrics.get("missing", [])
         suffix = ",".join(str(value) for value in missing)
@@ -500,7 +502,13 @@ def validate_rust_contract(
                 violations.append("invalid:scan.count")
 
     if stage in ("connect", "connectivity"):
-        violations.extend(validate_a5b_metrics(log, max_runner_step_ms))
+        violations.extend(
+            validate_a5b_metrics(
+                log,
+                max_runner_step_ms,
+                require_disconnect=stage == "connect",
+            )
+        )
 
     if stage == "connect":
         if (
@@ -563,7 +571,11 @@ def validate_rust_contract(
     return violations
 
 
-def parse_a5b_metrics(log: bytes) -> dict[str, object] | None:
+def parse_a5b_metrics(
+    log: bytes,
+    *,
+    require_disconnect: bool = True,
+) -> dict[str, object] | None:
     """Parse the bounded A5B diagnostic trailer from one unchanged-image boot."""
     lines = log.splitlines()
     if not any(
@@ -594,12 +606,16 @@ def parse_a5b_metrics(log: bytes) -> dict[str, object] | None:
         and "value" in (fields := parse_hex_fields(line))
     ]
     timings: dict[str, int] = {}
-    for name, prefix in (
+    timing_markers = [
         ("initialize_elapsed_ms", b"RFDBG_A5B_INITIALIZE_OK "),
         ("scan_elapsed_ms", b"RFDBG_A5B_SCAN_OK "),
         ("connect_elapsed_ms", b"RFDBG_A5B_CONNECT_OK "),
-        ("disconnect_elapsed_ms", b"RFDBG_A5B_DISCONNECT_OK "),
-    ):
+    ]
+    if require_disconnect:
+        timing_markers.append(
+            ("disconnect_elapsed_ms", b"RFDBG_A5B_DISCONNECT_OK ")
+        )
+    for name, prefix in timing_markers:
         line = next((candidate for candidate in reversed(lines) if candidate.startswith(prefix)), None)
         if line is None:
             missing.append(name)
@@ -703,7 +719,10 @@ def classify(
             return "missing_ap_mode"
 
     if b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
-        metrics = parse_a5b_metrics(log)
+        metrics = parse_a5b_metrics(
+            log,
+            require_disconnect=stage == "connect",
+        )
         if metrics is None or metrics.get("complete") is not True:
             return "missing_a5b_metrics"
 
@@ -790,23 +809,40 @@ def capture_run(
     reconnects = 0
 
     timed_markers = OFFICIAL_TIMED_MARKERS if profile == "official-liteos" else RUST_TIMED_MARKERS
-    terminal_markers = (
-        OFFICIAL_TERMINAL_MARKERS if profile == "official-liteos" else RUST_TERMINAL_MARKERS
-    )
-    if stage == "connect":
-        success_marker = (
-            b"+NOTICE:CONNECTED"
-            if profile == "official-liteos"
-            else (
+    terminal_markers = OFFICIAL_TERMINAL_MARKERS
+    if profile == "rust":
+        failure_markers = tuple(
+            marker
+            for marker in RUST_TERMINAL_MARKERS
+            if marker
+            not in (
+                b"RF5C_CONNECTIVITY_SUMMARY",
+                b"RFDBG_A5B_CONNECT_PROFILE_OK",
+            )
+        )
+        if stage == "init-scan":
+            terminal_markers = (
+                *failure_markers,
+                b"RF3_SCAN_OK",
+                b"RFDBG_A5B_SCAN_PROFILE_OK",
+            )
+        elif stage == "connect":
+            terminal_markers = (
+                *failure_markers,
+                b"RFDBG_A5B_CONNECT_PROFILE_OK",
                 b"RF5B_WPA_CONNECT_OK",
                 b"W2D_WPA2_CONNECT_OK",
                 b"W2E_WPA3_CONNECT_OK",
             )
-        )
-        if isinstance(success_marker, tuple):
-            terminal_markers = (*terminal_markers, *success_marker)
         else:
-            terminal_markers = (*terminal_markers, success_marker)
+            # The final connectivity contract includes lease renewal. A ping
+            # summary is therefore progress, not a terminal success marker.
+            terminal_markers = (*failure_markers, b"A4_DHCP_RENEW_OK")
+    elif stage == "connect":
+        success_marker = (
+            b"+NOTICE:CONNECTED"
+        )
+        terminal_markers = (*terminal_markers, success_marker)
 
     while time.monotonic() < deadline:
         if post_terminal_elapsed(

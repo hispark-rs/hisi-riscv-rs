@@ -27,14 +27,14 @@ on:
         options: [ws63]
         default: ws63
       example:
-        description: Single example; use wifi_init_smoke for the A4 connectivity gate (blank = tutorial smoke suite)
+        description: Single example; use wifi_connectivity for the A4/A5 gate (blank = tutorial smoke suite)
         type: string
         default: ""
       connectivity_profile:
-        description: Supplicant path used by wifi_init_smoke
+        description: Supplicant path used by the connectivity smoke
         type: choice
         options: [vendor-wpa2, upstream-wpa2, upstream-wpa3]
-        default: vendor-wpa2
+        default: upstream-wpa2
   # schedule:
   #   - cron: "0 4 * * *"   # nightly once a board is permanently attached
 
@@ -69,13 +69,14 @@ jobs:
           LOADERBOOT: ${{ vars.HIL_LOADERBOOT }}
           ADDRESS: ${{ vars.HIL_ADDRESS }}
           PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
-          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'vendor-wpa2' }}
+          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'upstream-wpa2' }}
           WS63_WIFI_AP_MODE: ${{ vars.HIL_WIFI_AP_MODE }}
           WS63_WIFI_SSID: ${{ vars.HIL_WIFI_SSID }}
           WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
           WS63_WPA_ARCHIVE: ${{ vars.HIL_WPA_ARCHIVE }}
         run: |
-          if [ "${{ github.event.inputs.example }}" = wifi_init_smoke ]; then
+          if [ "${{ github.event.inputs.example }}" = wifi_connectivity ] ||
+             [ "${{ github.event.inputs.example }}" = wifi_init_smoke ]; then
             bash hil/ws63-connectivity-smoke.sh --preflight
           else
             bash .agents/skills/hil-smoke/hil.sh "${{ github.event.inputs.chip || 'ws63' }}" --preflight
@@ -94,7 +95,7 @@ jobs:
           ADDRESS: ${{ vars.HIL_ADDRESS }}
           PROBE_YAML: ${{ vars.HIL_PROBE_YAML }}
           PROBE_SPEED: "3000"
-          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'vendor-wpa2' }}
+          WS63_CONNECTIVITY_PROFILE: ${{ github.event.inputs.connectivity_profile || 'upstream-wpa2' }}
           WS63_WIFI_AP_MODE: ${{ vars.HIL_WIFI_AP_MODE }}
           WS63_WIFI_SSID: ${{ vars.HIL_WIFI_SSID }}
           WS63_WIFI_PASSPHRASE: ${{ secrets.WS63_WIFI_PASSPHRASE }}
@@ -103,7 +104,7 @@ jobs:
         run: |
           chip="${{ github.event.inputs.chip || 'ws63' }}"
           ex="${{ github.event.inputs.example }}"
-          if [ "$ex" = wifi_init_smoke ]; then
+          if [ "$ex" = wifi_connectivity ] || [ "$ex" = wifi_init_smoke ]; then
             bash hil/ws63-connectivity-smoke.sh
           else
             bash .agents/skills/hil-smoke/hil.sh "$chip" $ex

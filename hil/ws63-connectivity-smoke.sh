@@ -17,7 +17,7 @@ WPA_SHA256="891c195279d768ce5664e16fecac95f353fd2217c4e3590315baa4cb6e7f25a2"
 WPA_URL="https://github.com/hispark-rs/ws63-RF/releases/download/$WPA_TAG/$WPA_ASSET"
 PROBE_SPEED="${PROBE_SPEED:-3000}"
 PORT="${PORT:-}"
-PROFILE="${WS63_CONNECTIVITY_PROFILE:-vendor-wpa2}"
+PROFILE="${WS63_CONNECTIVITY_PROFILE:-upstream-wpa2}"
 EXPECT="${WS63_CONNECTIVITY_EXPECT:-full}"
 CRYPTO_CONTENTION_HIL="${WS63_CRYPTO_CONTENTION_HIL:-0}"
 if [ "$EXPECT" = init-scan ]; then
@@ -42,7 +42,7 @@ Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           HISI_FWPKG, UART_BAUD, MONITOR,
           EVIDENCE_DIR (default: timestamped directory under /private/tmp),
-          WS63_CONNECTIVITY_PROFILE={vendor-wpa2|upstream-wpa2|upstream-wpa3},
+          WS63_CONNECTIVITY_PROFILE={upstream-wpa2|upstream-wpa3|vendor-wpa2},
           WS63_CONNECTIVITY_EXPECT={full|init-scan}; init-scan uses public
           fixture credentials and proves only image/startup/RF init/scan/runner,
           WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3,
@@ -191,21 +191,36 @@ fi
 mkdir -p "$EVIDENCE_DIR"
 LOG="$EVIDENCE_DIR/run-01.uart.log"
 TARGET_DIR="$TMP/target"
-FINAL_MAP="$TMP/wifi_init_smoke-rf-lld-final.map"
+FINAL_MAP="$TMP/wifi-init-smoke-rf-lld-final.map"
 ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_init_smoke"
 IDENTITY="$EVIDENCE_DIR/connectivity-artifact.json"
 ARCHIVE=""
 FEATURES=""
+USE_FINAL_CONNECTIVITY=0
+if { [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; } &&
+    [ "$EXPECT" = full ] && [ "$CRYPTO_CONTENTION_HIL" = 0 ]; then
+    USE_FINAL_CONNECTIVITY=1
+    FINAL_MAP="$TMP/wifi-connectivity.map"
+    ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_connectivity"
+fi
 case "$PROFILE" in
     vendor-wpa2)
         ARCHIVE="$(resolve_archive)"
         FEATURES="full-init,wpa"
         ;;
     upstream-wpa2)
-        FEATURES="full-init,upstream-supplicant"
+        if [ "$USE_FINAL_CONNECTIVITY" = 1 ]; then
+            FEATURES="wpa2"
+        else
+            FEATURES="full-init,upstream-supplicant"
+        fi
         ;;
     upstream-wpa3)
-        FEATURES="full-init,upstream-supplicant,upstream-wpa3"
+        if [ "$USE_FINAL_CONNECTIVITY" = 1 ]; then
+            FEATURES="wpa3"
+        else
+            FEATURES="full-init,upstream-supplicant,upstream-wpa3"
+        fi
         ;;
 esac
 if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
@@ -229,15 +244,27 @@ case "$PROFILE" in
     upstream-wpa2|upstream-wpa3)
         echo "==> plain Cargo connectivity link (profile=$PROFILE; credentials use an ephemeral target dir)"
         PLAIN_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
-        (
-            cd "$HERE"
-            WS63_WIFI_SSID="$WS63_WIFI_SSID" \
-            WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
-            CARGO_ENCODED_RUSTFLAGS="$PLAIN_RUSTFLAGS" \
-            CARGO_TARGET_DIR="$TARGET_DIR" \
-                cargo build -Zbuild-std=core,alloc -p wifi_init_smoke \
-                    --release --features "$FEATURES"
-        )
+        if [ "$USE_FINAL_CONNECTIVITY" = 1 ]; then
+            (
+                cd "$HERE"
+                WS63_WIFI_SSID="$WS63_WIFI_SSID" \
+                WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
+                CARGO_ENCODED_RUSTFLAGS="$PLAIN_RUSTFLAGS" \
+                CARGO_TARGET_DIR="$TARGET_DIR" \
+                    cargo build -Zbuild-std=core,alloc -p wifi_connectivity \
+                        --release --no-default-features --features "$FEATURES"
+            )
+        else
+            (
+                cd "$HERE"
+                WS63_WIFI_SSID="$WS63_WIFI_SSID" \
+                WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
+                CARGO_ENCODED_RUSTFLAGS="$PLAIN_RUSTFLAGS" \
+                CARGO_TARGET_DIR="$TARGET_DIR" \
+                    cargo build -Zbuild-std=core,alloc -p wifi_init_smoke \
+                        --release --features "$FEATURES"
+            )
+        fi
         uv run "$HERE/scripts/check-ws63-plain-rf-elf.py" \
             --elf "$ELF" --require-upstream-supplicant
         uv run "$HERE/scripts/check-ws63-supplicant-boundary.py" \

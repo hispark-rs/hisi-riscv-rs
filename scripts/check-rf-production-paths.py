@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PRODUCTION_FILES = [
     ROOT / "chips/ws63/rf/build.rs",
     ROOT / "examples/ws63/wifi_init_smoke/build.rs",
+    ROOT / "examples/ws63/wifi_connectivity/Cargo.toml",
+    ROOT / "examples/ws63/wifi_connectivity/build.rs",
     ROOT / "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys/Cargo.toml",
     ROOT / "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-sys/build.rs",
     ROOT / "crates/chips/ws63/ws63-radio-sys/crates/ws63-radio-blob/Cargo.toml",

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build one WS63 incremental-connect image, flash it once, then prove the
-# response-bound contract across unchanged-image J-Link nRST boots.
+# Build the final public-facade connectivity image, flash it once, then prove
+# both its response bound and end-to-end network contract across unchanged-image
+# J-Link nRST boots.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -10,10 +11,10 @@ source "$HERE/hil/lib/ws63-wifi-credentials.sh"
 PORT="${PORT:-}"
 PROBE_SPEED="${PROBE_SPEED:-3000}"
 RUNS="${RUNS:-20}"
-TIMEOUT="${TIMEOUT:-20}"
+TIMEOUT="${TIMEOUT:-90}"
 MAX_RUNNER_STEP_MS="${MAX_RUNNER_STEP_MS:-100}"
-PROFILE_ID="a5b-upstream-wpa2-transition"
-FEATURES="wpa2-personal,incremental-backend-experiment,incremental-embassy-wait,bootstrap-stage-diag,incremental-connect-profile,firmware-example"
+PROFILE_ID="wifi-connectivity-upstream-wpa2"
+FEATURES="wpa2"
 
 usage() {
     cat <<'EOF'
@@ -28,7 +29,7 @@ user, mode 0600, no symlink. It is consumed before the build.
 Optional:
   PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED (default 3000),
   PROBE_DOWNLOAD_ATTEMPTS, PROBE_RETRY_SPEED, HISI_FWPKG,
-  RUNS (default 20), TIMEOUT (default 20 seconds),
+  RUNS (default 20), TIMEOUT (default 90 seconds),
   MAX_RUNNER_STEP_MS (default 100),
   EVIDENCE_DIR (default timestamped directory under /private/tmp).
 EOF
@@ -102,8 +103,8 @@ preflight
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 TARGET_DIR="$TMP/target"
-FINAL_MAP="$TMP/incremental-scan-profile.map"
-ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/examples/incremental_scan_profile"
+FINAL_MAP="$TMP/wifi-connectivity.map"
+ELF="$TARGET_DIR/riscv32imfc-unknown-none-elf/release/wifi_connectivity"
 EVIDENCE_DIR="${EVIDENCE_DIR:-/private/tmp/ws63-a5b-response-bound-$(date +%Y%m%d-%H%M%S)}"
 IDENTITY="$EVIDENCE_DIR/connectivity-artifact.json"
 SUMMARY_DIR="$EVIDENCE_DIR/contract"
@@ -114,7 +115,7 @@ if [ -d "$EVIDENCE_DIR" ] && [ -n "$(ls -A "$EVIDENCE_DIR")" ]; then
 fi
 mkdir -p "$EVIDENCE_DIR"
 
-echo "==> build the current release-train incremental connect fixture"
+echo "==> build the final public-facade connectivity image"
 PLAIN_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
 (
     cd "$HERE"
@@ -122,9 +123,8 @@ PLAIN_RUSTFLAGS="-Clink-arg=--no-relax"$'\x1f'"-Clink-arg=-Map=$FINAL_MAP"
     WS63_WIFI_PASSPHRASE="$WS63_WIFI_PASSPHRASE" \
     CARGO_ENCODED_RUSTFLAGS="$PLAIN_RUSTFLAGS" \
     CARGO_TARGET_DIR="$TARGET_DIR" \
-        cargo build -Zbuild-std=core,alloc -p hisi-rf-ws63 \
-            --example incremental_scan_profile --release \
-            --features "$FEATURES"
+        cargo build -Zbuild-std=core,alloc -p wifi_connectivity \
+            --release --no-default-features --features "$FEATURES"
 )
 
 uv run "$HERE/scripts/check-ws63-plain-rf-elf.py" \
@@ -141,6 +141,8 @@ uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" \
     printf 'parent_commit=%s\n' "$(git -C "$HERE" rev-parse HEAD)"
     printf 'hisi_rf_ws63_commit=%s\n' \
         "$(git -C "$HERE/crates/chips/ws63/hisi-rf-ws63" rev-parse HEAD)"
+    printf 'hisi_rf_commit=%s\n' \
+        "$(git -C "$HERE/crates/hisi-rf" rev-parse HEAD)"
     printf 'hisi_rf_core_commit=%s\n' \
         "$(git -C "$HERE/crates/hisi-rf-core" rev-parse HEAD)"
     printf 'hisi_rtos_commit=%s\n' \
@@ -156,12 +158,12 @@ echo "==> flash once through the canonical FlashPlan bin path"
         bash hil/cargo-run-hw.sh "$ELF"
 )
 
-echo "==> run unchanged-image response-bound matrix"
+echo "==> run unchanged-image response-bound connectivity matrix"
 uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" \
     --port "$PORT" \
     --runs "$RUNS" \
     --timeout "$TIMEOUT" \
-    --stage connect \
+    --stage connectivity \
     --require-contract \
     --max-runner-step-ms "$MAX_RUNNER_STEP_MS" \
     --artifact-identity "$IDENTITY" \
