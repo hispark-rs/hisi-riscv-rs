@@ -75,8 +75,10 @@ caller-owned storage, versioned machine-readable reports, actionable typed
 errors, and a template happy path. A5B now keeps start/cancel in bounded
 in-memory transitions and advances vendor work only through budgeted poll turns;
 A5F has removed hidden backend and concrete RTOS types from public signatures.
-The remaining release gates are to bind key conservation to the real
-install/delete seam, rerun target response-bound evidence on the released A5B
+The real hostap install/delete hooks and WS63 WAL key programming/rollback are
+now independently covered. The remaining release gates are to prove the
+incremental cancellation path drives that real key-removal chain end to end,
+rerun target response-bound evidence on the released A5B
 state machine, and keep QEMU/HIL evidence executable and fail-closed.
 Pure-WPA3 remains a separate external gate.
 

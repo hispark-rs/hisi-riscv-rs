@@ -1498,9 +1498,16 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
   只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行
   key-held connect、replacement queue、cancel、late `AUTHORIZED`、final `DISCONNECTED` 和
-  generation-reuse 的对抗序列；WPA2/WPA3 host profile 分别通过 86/91 项测试，RV32 check
-  同时通过。当前 key 断言只操作 fixture 状态，尚未绑定真实 hostap set/delete-key hook；
-  owner/queue/timer/generation 子项保留为已验证证据，但完整 key conservation 门槛重开。证据见
+  generation-reuse 的对抗序列。后续 `ws63-radio-sys` commit `8e77747` 已通过实际
+  `wpa_driver_ws63_ops.set_key` 覆盖 install/remove hook、重复删除错误传播；
+  `hisi-rf-ws63 0.1.0-alpha.35` commit `3ce931a` 又通过生产
+  `install_key_via`/`remove_key_via` 覆盖 `IOCTL_NEW_KEY -> IOCTL_SET_KEY ->
+  IOCTL_DEL_KEY` 和 SET 失败回滚，WPA2/WPA3 host profile 分别通过 88/93 项测试。facade
+  `hisi-rf 0.1.0-alpha.45` 已发布并通过三平台 crates.io-only consumer CI。上述证据分别
+  证明 cancellation 资源模型、hostap hook 和 WAL key lifecycle，但尚未证明一次真实
+  incremental cancel 会贯通 hostap 清理并最终发出 `IOCTL_DEL_KEY`；因此
+  owner/queue/timer/generation 子项与两层 key seam 保留为已验证证据，完整 key
+  conservation 门槛继续开放。证据见
   [A5 incremental resource conservation](evidence/ws63-rf-a5-resource-conservation-2026-07-28.md)。
 - [x] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
   archive compatibility suite、generic runtime suite 与真机 HIL 三层证据分开报告。
