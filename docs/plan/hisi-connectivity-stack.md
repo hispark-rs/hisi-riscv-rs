@@ -1477,13 +1477,22 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 
 #### A5 验收
 
-- [ ] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
-  control cancellation、L2 RX/TX、timer 和 diagnostics 均能获得可量化的最大响应时间。
+- [x] 增量 backend 的 `start`/`cancel` 只执行有界内存状态转换；vendor、transport 和硬件
+  动作只允许在带 work budget 的 `poll` turn 中推进。`hisi-rf-core 0.1.0-alpha.16`
+  将该约束写入 trait contract，并在 start/cancel 后安排立即 poll，避免尚无外部 wake source
+  时停滞；`hisi-rf-ws63 0.1.0-alpha.34` 将 scan/connect/disconnect/cancel 的 vendor 调用
+  拆为逐 turn 状态机。WPA2/WPA3 host tests 分别为 86/91 项，core 48 项测试、clippy、
+  RV32 check、standalone package 和三平台最终 RF link 均通过；facade
+  `hisi-rf 0.1.0-alpha.44` 已把该契约带入单依赖入口。CI runs `30350075588`、
+  `30350374536`、`30350922514` 与 publish runs `30350139315`、`30350618398`、
+  `30351273191` 全部成功。
+- [ ] connect/SAE/EAPOL 等长操作期间，control cancellation、L2 RX/TX、timer 和
+  diagnostics 均能获得可量化的目标端最大响应时间。
   同一 transition-profile 镜像 20 次 nRST 中每次 100 ms budget 均无越界，runner step
   最大 34--38 ms，最长 association ioctl 为 32 ms，queue/event drop 和 backend error
   均为 0。该结果是当前固定 profile 的迁移上界，不扩大成任意 callback 或其他芯片的
-  公共实时保证。当前实现只把 budget 传给 `poll`，`start`/`cancel` 仍可同步进入 vendor
-  调用；因此该证据只保留为观测基线，不能关闭完整门槛。证据见
+  公共实时保证。由于上述矩阵早于 `alpha.34` 的 start/cancel 状态机修正，仍需用同一最终
+  release train 镜像重跑 target acceptance；旧证据只保留为观测基线，不能关闭该门槛。证据见
   [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
 - [ ] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能

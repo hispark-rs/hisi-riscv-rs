@@ -72,11 +72,13 @@ BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 A5F has delivered the single-dependency facade, normalized-link artifact and
 macOS/Linux/Windows crates.io-only build path. A5U exposes named profiles,
 caller-owned storage, versioned machine-readable reports, actionable typed
-errors, and a template happy path. Adversarial review nevertheless reopened four
-release gates: make every incremental start/cancel step genuinely bounded, bind
-key conservation to the real install/delete seam, remove hidden backend and
-concrete RTOS types from the facade contract, and make QEMU/HIL evidence
-executable and fail-closed. Pure-WPA3 remains a separate external gate.
+errors, and a template happy path. A5B now keeps start/cancel in bounded
+in-memory transitions and advances vendor work only through budgeted poll turns;
+A5F has removed hidden backend and concrete RTOS types from public signatures.
+The remaining release gates are to bind key conservation to the real
+install/delete seam, rerun target response-bound evidence on the released A5B
+state machine, and keep QEMU/HIL evidence executable and fail-closed.
+Pure-WPA3 remains a separate external gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
