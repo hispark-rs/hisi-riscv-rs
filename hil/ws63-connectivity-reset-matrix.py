@@ -411,6 +411,56 @@ def last_prefixed_line(log: bytes, prefix: bytes) -> bytes | None:
     )
 
 
+def validate_a5b_metrics(
+    log: bytes,
+    max_runner_step_ms: int | None,
+) -> list[str]:
+    """Validate the bounded incremental-runner trailer for one boot."""
+    if b"RFDBG_A5B_CONNECT_PROFILE_OK" not in log:
+        return (
+            ["missing:a5b_connect_profile"]
+            if max_runner_step_ms is not None
+            else []
+        )
+
+    metrics = parse_a5b_metrics(log)
+    if metrics is None or metrics.get("complete") is not True:
+        missing = [] if metrics is None else metrics.get("missing", [])
+        suffix = ",".join(str(value) for value in missing)
+        return [f"a5b_metrics_incomplete:{suffix}"]
+
+    violations: list[str] = []
+    event = metrics["event_queue"]
+    runner = metrics["runner"]
+    blocking = metrics["blocking"]
+    timings = metrics["timings"]
+    assert isinstance(event, dict)
+    assert isinstance(runner, dict)
+    assert isinstance(blocking, dict)
+    assert isinstance(timings, dict)
+    if event["dropped"] != 0:
+        violations.append("nonzero:event_queue.dropped")
+    if runner["errors"] != 0:
+        violations.append("nonzero:runner.errors")
+    for field in (
+        "scan_calls",
+        "poll_calls",
+        "internal_sleep",
+        "supplicant_poll",
+    ):
+        if blocking[field] != 0:
+            violations.append(f"nonzero:blocking.{field}")
+    if (
+        max_runner_step_ms is not None
+        and timings["runner_step_max_ms"] > max_runner_step_ms
+    ):
+        violations.append(
+            "budget:runner_step_max_ms="
+            f"{timings['runner_step_max_ms']}>{max_runner_step_ms}"
+        )
+    return violations
+
+
 def validate_rust_contract(
     log: bytes,
     stage: str,
@@ -449,48 +499,19 @@ def validate_rust_contract(
             if scan.get("count", 0) <= 0:
                 violations.append("invalid:scan.count")
 
+    if stage in ("connect", "connectivity"):
+        violations.extend(validate_a5b_metrics(log, max_runner_step_ms))
+
     if stage == "connect":
-        if b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
-            metrics = parse_a5b_metrics(log)
-            if metrics is None or metrics.get("complete") is not True:
-                missing = [] if metrics is None else metrics.get("missing", [])
-                suffix = ",".join(str(value) for value in missing)
-                violations.append(f"a5b_metrics_incomplete:{suffix}")
-            else:
-                event = metrics["event_queue"]
-                runner = metrics["runner"]
-                blocking = metrics["blocking"]
-                timings = metrics["timings"]
-                assert isinstance(event, dict)
-                assert isinstance(runner, dict)
-                assert isinstance(blocking, dict)
-                assert isinstance(timings, dict)
-                if event["dropped"] != 0:
-                    violations.append("nonzero:event_queue.dropped")
-                if runner["errors"] != 0:
-                    violations.append("nonzero:runner.errors")
-                for field in (
-                    "scan_calls",
-                    "poll_calls",
-                    "internal_sleep",
-                    "supplicant_poll",
-                ):
-                    if blocking[field] != 0:
-                        violations.append(f"nonzero:blocking.{field}")
-                if (
-                    max_runner_step_ms is not None
-                    and timings["runner_step_max_ms"] > max_runner_step_ms
-                ):
-                    violations.append(
-                        "budget:runner_step_max_ms="
-                        f"{timings['runner_step_max_ms']}>{max_runner_step_ms}"
-                    )
-        elif not any(
+        if (
+            b"RFDBG_A5B_CONNECT_PROFILE_OK" not in log
+            and not any(
             marker in log
             for marker in (
                 b"RF5B_WPA_CONNECT_OK",
                 b"W2D_WPA2_CONNECT_OK",
                 b"W2E_WPA3_CONNECT_OK",
+            )
             )
         ):
             violations.append("missing:connect")

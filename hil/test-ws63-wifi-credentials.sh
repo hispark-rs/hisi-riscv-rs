@@ -85,4 +85,8 @@ write_file "$help_file" $'WS63_WIFI_SSID=test\nWS63_WIFI_PASSPHRASE=not-a-secret
 WS63_WIFI_ENV_FILE="$help_file" "$HERE/hil/ws63-connectivity-smoke.sh" --help >"$TMP/help.out"
 [ -e "$help_file" ] || fail "--help consumed the one-shot credential file"
 
+WS63_WIFI_ENV_FILE="$help_file" "$HERE/hil/ws63-a5b-response-bound.sh" --help \
+    >"$TMP/a5b-help.out"
+[ -e "$help_file" ] || fail "A5B --help consumed the one-shot credential file"
+
 echo "WS63 Wi-Fi credential contract: PASS"

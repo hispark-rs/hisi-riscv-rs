@@ -294,6 +294,39 @@ class ClassifyTests(unittest.TestCase):
         self.assertIn("nonzero:runner.errors", violations)
         self.assertIn("budget:runner_step_max_ms=101>100", violations)
 
+    def test_declared_response_bound_requires_a5b_trailer(self) -> None:
+        self.assertIn(
+            "missing:a5b_connect_profile",
+            MATRIX.validate_rust_contract(
+                connectivity_success_log(),
+                "connectivity",
+                max_runner_step_ms=100,
+            ),
+        )
+
+    def test_connectivity_stage_enforces_a5b_response_bound(self) -> None:
+        log = b"\n".join((connectivity_success_log(), a5b_success_log()))
+        self.assertEqual(
+            MATRIX.validate_rust_contract(
+                log,
+                "connectivity",
+                max_runner_step_ms=100,
+            ),
+            [],
+        )
+        over_budget = log.replace(
+            b"RFDBG_A5B_RUNNER_ELAPSED_MS value=0x00000026",
+            b"RFDBG_A5B_RUNNER_ELAPSED_MS value=0x00000065",
+        )
+        self.assertIn(
+            "budget:runner_step_max_ms=101>100",
+            MATRIX.validate_rust_contract(
+                over_budget,
+                "connectivity",
+                max_runner_step_ms=100,
+            ),
+        )
+
     def test_artifact_identity_detects_elf_and_profile_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
