@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-97c4d6d1.js";
+            window.path_to_searchindex_js = "../searchindex-18670b0c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -246,13 +246,19 @@ task 或 queue 常量。</p>
 <h2 id="3-使用-ws63-composition-root"><a class="header" href="#3-使用-ws63-composition-root">3. 使用 WS63 composition root</a></h2>
 <p>旧路径会在应用中构造 <code>Ws63WifiBackend</code>，或者分别调用 <code>config()</code>、<code>resources()</code> 和
 底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：</p>
-<pre><code class="language-rust">let resources =
-    hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, radio_arena);
+<pre><code class="language-rust">let resources = hisi_rf::ws63::Resources::&lt;hisi_rf::ws63::WifiWpa2Smoltcp&gt;::builder(
+    efuse,
+    radio_arena,
+)
+.crypto(km, spacc, trng)
+.build();
 
 let controller =
     hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &amp;RADIO_STORAGE)?;
 
 let mut wifi = controller.start_runner()?;</code></pre>
+<p>WPA3 使用 <code>WifiWpa3Smoltcp</code>，并在 <code>.crypto(...)</code> 后追加 <code>.pke(pke)</code>；漏掉
+PKE 时没有可调用的 <code>build()</code>。WPA2 不消费 PKE，因此应用仍可把该 token 留给其他用途。</p>
 <p>应用只通过 chip-neutral 控制面继续工作：</p>
 <ul>
 <li><code>wifi.controller.initialize().await</code></li>
