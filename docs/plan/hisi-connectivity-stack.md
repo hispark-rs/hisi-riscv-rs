@@ -1525,11 +1525,17 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   名字集合除预期的 `SelectedProfile` 目标外一致，host tests、RV32 checks、独立
   `cargo package --locked` 与 public-API gate 均通过。`hisi-rf 0.1.0-alpha.49`、
   `ws63-examples` 和 template v0.7.0-alpha.12 已沿 facade 消费同一契约。
-- [ ] 决定并冻结 `Storage<Profile, EVENTS>` 与 `RadioArenaStorage` 的长期所有权形态。
-  优先评估一个 caller-owned `RadioStorage<Profile, const EVENTS: usize>` composition
-  object，在内部持有 bounded event state、crypto scratch 和 arena claim；若因 linker
-  section/one-shot capability 必须保持分离，则提供单一 typed install/admission 入口并在
-  文档中说明原因。两种方案都必须保持 RAM/flash/task/queue 报告确定、静态且可审计。
+- [x] 冻结 `Storage<Profile, EVENTS>` 与 `RadioArenaStorage` 的长期所有权形态：普通用户
+  只声明一个 caller-owned `RadioStorage<Profile, const EVENTS: usize>` composition，并
+  通过单一 `install()` / `into_init_parts()` admission 入口消费。实现必须物理拆分普通
+  `.bss` control state 与 `.hisi.shared-arena` NOLOAD backing；把两者强行放入同一 linker
+  section 会与 WS63 SRAM 布局冲突，因此“逻辑单一所有权、物理分区存放”是已冻结契约。
+  allocation hooks 只可通过已安装的 `InstalledRadioStorage` 访问 arena。resource report
+  schema v6 使用 WS63 RV32 模型而不是 host `size_of`，并显式报告 control、radio state、
+  crypto DMA、arena backing 与零尺寸 composition handle。`hisi-rf-ws63
+  0.1.0-alpha.43`、`hisi-rf 0.1.0-alpha.52`、WS63 example 和 template 均沿同一公开
+  composition 构建；证据见
+  [A5UX caller-owned radio storage](evidence/ws63-rf-a5ux-caller-owned-storage-2026-07-29.md)。
 - [ ] 让事件容量属于 storage/resource report，而不是传播进常用控制面签名。普通业务函数
   应能接收 `WifiController<'_>` 或等价 opaque handle，而不需要携带
   `WifiController<const EVENTS: usize>`；容量仍由调用方在编译期选择，并继续接受 queue-full、

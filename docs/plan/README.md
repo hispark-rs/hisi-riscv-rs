@@ -24,7 +24,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5B/A5R/A5F/A5U 基线和 final-image 20-reset response-bound/connectivity acceptance 已闭合；A5UX 的长期 `ws63::init` 与 profile-aware resource builder 已发布；pure WPA3 另为外部阻塞门槛 | 冻结 caller-owned radio storage/event-capacity 形态，再依次关闭 timeout、identity、diagnostics 和 typed-result 用户契约；pure WPA3 门槛闭合前不删除 migration oracle 或切唯一默认 backend |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5B/A5R/A5F/A5U 基线和 final-image 20-reset response-bound/connectivity acceptance 已闭合；A5UX 的长期 `ws63::init`、profile-aware resource builder 与 caller-owned radio storage 已发布；pure WPA3 另为外部阻塞门槛 | 收敛 event-capacity 公共签名，再依次关闭 timeout、identity、diagnostics 和 typed-result 用户契约；pure WPA3 门槛闭合前不删除 migration oracle 或切唯一默认 backend |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
