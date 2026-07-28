@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-3e5e67e5.js";
+            window.path_to_searchindex_js = "../searchindex-97c4d6d1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -257,8 +257,11 @@ hil/hil-smoke.sh
 </div>
 <p>脚本当前检查的 UART smoke 子集和 grep 模式见 <a href="../reference/07-hil-markers.html">HIL 脚本与 runner 环境变量</a>；
 完整示例清单与真机状态见 <a href="../reference/02-examples.html">示例目录与验证标记串</a>。</p>
-<p>连接性不是一组散落的 <code>grep</code>。<code>hil/ws63-connectivity-smoke.sh</code> 会冻结 ELF/profile identity，
-采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：</p>
+<p>连接性不是一组散落的 <code>grep</code>。完整 upstream profile 默认构建公开
+<code>wifi_connectivity</code> 示例；它只直接依赖 <code>hisi-rf</code>，并让 init/scan、A5B response bound、
+connect、DHCP、重复 ping 和 lease renew 共享同一个最终 ELF。<code>wifi_init_smoke</code> 仅保留
+credential-free init/scan、crypto contention 和 vendor oracle 诊断。脚本会冻结
+ELF/profile identity，采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：</p>
 <pre><code class="language-bash">uv run hil/ws63-connectivity-reset-matrix.py \
     --analyze-dir /path/to/captures \
     --stage connectivity \
@@ -272,8 +275,9 @@ hil/hil-smoke.sh
 PORT=/dev/cu.wchusbserial... \
     hil/ws63-a5b-response-bound.sh
 </code></pre>
-<p>它固定使用当前 release closure、一次 verified download、同一 ELF 的 20 次 J-Link nRST，
-并要求每轮完整 diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
+<p>它固定构建 <code>wifi_connectivity</code> 的当前 release closure，只做一次 verified download，
+随后对同一 ELF 执行 20 次 J-Link nRST；每轮同时要求完整 connectivity marker、
+diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
 立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
 closure、脱敏 UART 与 summary。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
