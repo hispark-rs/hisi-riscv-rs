@@ -1501,11 +1501,20 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   预期差异；其他新增、删除或签名变化必须输出可审查 diff 并使 CI 失败。该门禁只冻结
   起点，不代表下面的 API 收敛或最终 HIL 已完成。证据见
   [A5UX public API baseline](evidence/ws63-rf-a5ux-public-api-baseline-2026-07-28.md)。
-- [ ] 将迁移实现名 `init_incremental_after_blocking_bootstrap` 收敛为 facade 的长期
+- [x] 将迁移实现名 `init_incremental_after_blocking_bootstrap` 收敛为 facade 的长期
   `hisi_rf::ws63::init` 入口。blocking bootstrap、incremental backend 和 archive/profile
   选择留在 composition root 内；需要显式实验选择时使用命名 profile，不把实现阶段编码进
   普通用户函数名。旧入口仅保留一个 alpha 迁移周期，并由 rustdoc/compile fixture 验证新
-  用户路径不引用它。
+  用户路径不引用它。`hisi-rf-ws63 0.1.0-alpha.41` 新增后端维护者使用的
+  `init_incremental`，并 deprecate 旧长名字；`hisi-rf 0.1.0-alpha.50` 在显式
+  `incremental-backend-experiment` 下将 `ws63::init` 精确绑定为返回
+  `IncrementalRadioController` 的入口，未选择实验 backend 时仍保留 blocking controller
+  语义。函数指针 compile test、WPA2/WPA3 host tests、RV32 checks、公共 API snapshot、
+  standalone package 和 crates.io 发布均通过；公开 `wifi_connectivity` 已只使用长期入口。
+  facade main CI
+  [30392415479](https://github.com/hispark-rs/hisi-rf/actions/runs/30392415479)
+  进一步验证了 macOS/Linux/Windows 的 WPA2/WPA3 外部 consumer、完整链接、crates.io-only
+  fixture 与离线重建。
 - [x] 将当前多参数 `hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena)`
   收敛为 profile-aware typed builder 或等价能力构造器。缺少 profile 必需资源必须在编译期
   或初始化前返回结构化 `Required/Available` 错误；WPA2 profile 不应被迫理解仅 WPA3/SAE
