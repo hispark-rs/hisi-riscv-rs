@@ -76,21 +76,22 @@
 <a href=#76 id=76 data-nosnippet>76</a>//! 3. `relocate_data()` — copy initialized sections from flash to
 <a href=#77 id=77 data-nosnippet>77</a>//!    ITCM/DTCM/SRAM. Regions: ROM patch, ROM data, WiFi ROM data,
 <a href=#78 id=78 data-nosnippet>78</a>//!    TCM text, TCM data, SRAM text, `.data`.
-<a href=#79 id=79 data-nosnippet>79</a>//! 4. `zero_bss()` — clear ROM BSS, TCM BSS, and SRAM BSS
-<a href=#80 id=80 data-nosnippet>80</a>//! 5. `__hisi_ws63_rom_patch_enable()` — enable the ROM patch controller
-<a href=#81 id=81 data-nosnippet>81</a>//!    (only if the patch table in ITCM is non-empty)
-<a href=#82 id=82 data-nosnippet>82</a>//! 6. Re-enable machine interrupts (`csrs mie, 0x888` — TIMER0-2, RTC,
-<a href=#83 id=83 data-nosnippet>83</a>//!    I2C0, I2C1)
-<a href=#84 id=84 data-nosnippet>84</a>//! 7. `call main()`
-<a href=#85 id=85 data-nosnippet>85</a>
-<a href=#86 id=86 data-nosnippet>86</a></span><span class="kw">mod </span>cache;
-<a href=#87 id=87 data-nosnippet>87</a><span class="attr">#[cfg(feature = <span class="string">"chip-ws63"</span>)]
-<a href=#88 id=88 data-nosnippet>88</a></span><span class="kw">mod </span>memory;
-<a href=#89 id=89 data-nosnippet>89</a><span class="attr">#[cfg(feature = <span class="string">"chip-ws63"</span>)]
-<a href=#90 id=90 data-nosnippet>90</a></span><span class="kw">mod </span>rom_patch;
-<a href=#91 id=91 data-nosnippet>91</a>
-<a href=#92 id=92 data-nosnippet>92</a><span class="attr">#[cfg(not(feature = <span class="string">"riscv-rt-start-experiment"</span>))]
-<a href=#93 id=93 data-nosnippet>93</a></span><span class="kw">mod </span>startup;
-<a href=#94 id=94 data-nosnippet>94</a><span class="attr">#[cfg(feature = <span class="string">"riscv-rt-start-experiment"</span>)]
-<a href=#95 id=95 data-nosnippet>95</a></span><span class="kw">mod </span>startup_riscvrt;
+<a href=#79 id=79 data-nosnippet>79</a>//! 4. Clear caller-owned shared arenas before enabling D-cache, then
+<a href=#80 id=80 data-nosnippet>80</a>//!    `zero_bss()` clears ROM BSS, TCM BSS, and SRAM BSS
+<a href=#81 id=81 data-nosnippet>81</a>//! 5. `__hisi_ws63_rom_patch_enable()` — enable the ROM patch controller
+<a href=#82 id=82 data-nosnippet>82</a>//!    (only if the patch table in ITCM is non-empty)
+<a href=#83 id=83 data-nosnippet>83</a>//! 6. Re-enable machine interrupts (`csrs mie, 0x888` — TIMER0-2, RTC,
+<a href=#84 id=84 data-nosnippet>84</a>//!    I2C0, I2C1)
+<a href=#85 id=85 data-nosnippet>85</a>//! 7. `call main()`
+<a href=#86 id=86 data-nosnippet>86</a>
+<a href=#87 id=87 data-nosnippet>87</a></span><span class="kw">mod </span>cache;
+<a href=#88 id=88 data-nosnippet>88</a><span class="attr">#[cfg(feature = <span class="string">"chip-ws63"</span>)]
+<a href=#89 id=89 data-nosnippet>89</a></span><span class="kw">mod </span>memory;
+<a href=#90 id=90 data-nosnippet>90</a><span class="attr">#[cfg(feature = <span class="string">"chip-ws63"</span>)]
+<a href=#91 id=91 data-nosnippet>91</a></span><span class="kw">mod </span>rom_patch;
+<a href=#92 id=92 data-nosnippet>92</a>
+<a href=#93 id=93 data-nosnippet>93</a><span class="attr">#[cfg(not(feature = <span class="string">"riscv-rt-start-experiment"</span>))]
+<a href=#94 id=94 data-nosnippet>94</a></span><span class="kw">mod </span>startup;
+<a href=#95 id=95 data-nosnippet>95</a><span class="attr">#[cfg(feature = <span class="string">"riscv-rt-start-experiment"</span>)]
+<a href=#96 id=96 data-nosnippet>96</a></span><span class="kw">mod </span>startup_riscvrt;
 </code></pre></div></section></main></body></html>
