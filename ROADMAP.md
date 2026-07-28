@@ -68,13 +68,19 @@ remain open. Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
 
-## NOW -- A5 Resource-Lifecycle And Template Closure
+## NOW -- A5 Release Gate Externally Blocked
 
 A5F has closed the single-dependency facade, normalized-link artifact and
 macOS/Linux/Windows crates.io-only build path. A5U now exposes named profiles,
 caller-owned storage, versioned machine-readable reports, actionable typed
 errors, and a template happy path. Pure-WPA3 evidence remains an external gate;
 this work does not remove the vendor oracle or claim WPA3 stability.
+
+The application migration contract is documented in
+[`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
+No unblocked A5 implementation checklist remains; while the pure-WPA3 gate is
+unavailable, the project keeps regression evidence current rather than opening
+a second product direction.
 
 Task-stack and shared-arena admission are now closed before hardware startup:
 the profile atomically reserves six 24 KiB stacks and six dynamic slots, while

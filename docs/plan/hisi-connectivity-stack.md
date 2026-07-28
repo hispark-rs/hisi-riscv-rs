@@ -2,21 +2,19 @@
 
 ## 状态
 
-**执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。A5U
-的 caller-owned storage、task-stack/shared-arena 静态准入、typed-error
-production source-path 和 operation-level cancellation/backend-timeout injection
-均已完成 QEMU/HIL parity。pure-WPA3 HIL 门槛仍受外部条件阻塞；A5 host-side
-cancellation conservation 已闭合，当前转入 bounded-response 收口；template/resource-report 验收已由 `hisi-rs-template
-v0.7.0-alpha.9` 闭合。跨计划优先级和依赖以
+**执行中 / P0，发布门槛外部阻塞。** A5F 单依赖 facade、A5B 非默认增量 backend、
+A5R conformance、A5U caller-owned resource admission、typed diagnostics、host-side
+resource conservation、bounded-response 和 template/resource-report 均已闭合。当前没有
+未完成的无板 A5 实现项；pure-WPA3 HIL 仍受外部条件阻塞，因此不切换当前默认 backend，
+也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
 
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
-**外部阻塞门槛**；A5F 的无板 facade/release、A5B 的 opt-in 增量原型和 A5U typed-error
-QEMU/HIL parity 已完成，当前 active milestone 是不依赖 pure-WPA3 AP 的 A5 bounded-response
-收口；host-side 资源生命周期守恒和 template/resource-report 已完成可执行验收。
+**外部阻塞门槛**；A5F/A5B/A5R/A5U 的无板和既有 HIL 收口已经完成。当前执行槽位只保留
+给 pure-WPA3 发布门槛，不因为外部阻塞并行开启另一个产品方向。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -39,7 +37,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5 Resource-Lifecycle And Template Closure
+## 当前执行窗口：A5 发布门槛外部阻塞
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
 transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已闭合单依赖 facade、
@@ -48,9 +46,10 @@ deterministic host interleaving、真实 scan/connect/disconnect work-budget 证
 adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
 memory admission、association rejection/first-EAPOL timeout 的生产构造路径、
 operation-level cancellation/backend-timeout injection，以及 resource/generic stable-class
-的目标序列化均已闭合。resource ownership/conservation 的 deterministic negative test
-和 template/resource-report 已完成；当前只推进 A5 bounded-response 的可量化验收，不改当前验证过的 WS63 blocking
-backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
+的目标序列化均已闭合。resource ownership/conservation 的 deterministic negative test、
+bounded-response 量化证据和 template/resource-report 均已完成。当前不再有可独立于 AP
+推进的 A5 checklist；等待 pure-WPA3 gate 期间保持验证过的 WS63 blocking backend，
+只维护回归和发布证据。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
 ### 已完成 -- A3 收口
 
@@ -1255,10 +1254,11 @@ A5R 后续排期和验收顺序。
   已封装进 `hisi-rf-ws63 -> ws63-radio-sys 0.1.0-alpha.6` 构建链。普通 consumer 的
   `build.rs` 不读取 `DEP_WS63_RADIO_SYS_*`，不执行 `hisi-rf-link`/shell/Python/GCC，也不
   维护 archive 名称、顺序、绝对路径或 ROM 地址。
-- [ ] 删除用户 happy-path examples/template 对 `ws63-rf-rs`、`ws63-radio-sys` 和
+- [x] 删除用户 happy-path examples/template 对 `ws63-rf-rs`、`ws63-radio-sys` 和
   `hisi-rf-rtos-driver` 的直接 RF 集成依赖；runtime 由应用通过 `hisi-rtos` public API
   启动，radio runner 由 facade/RTOS-safe API 承载，不要求应用调用 driver service locator。
-  当前跨 OS 外部 consumer 已只使用 facade；父仓现存直接依赖已冻结成不可扩张的 maintainer
+  当前模板、迁移 how-to 和跨 OS 外部 consumer 已只使用 facade；父仓现存直接依赖已冻结成
+  不可扩张的 maintainer
   allowlist：`wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 是迁移 oracle，RTOS 示例是
   conformance fixture，`net_ping` 是 QEMU 合成 L2 fixture。pure-WPA3 gate 闭合前不为清单整洁
   删除 oracle；新增 application manifest 直接依赖底层 crate 会由 CI 拒绝。
