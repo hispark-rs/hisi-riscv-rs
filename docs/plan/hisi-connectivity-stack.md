@@ -1302,12 +1302,21 @@ A5R 后续排期和验收顺序。
   ../src/how-to/12-migrate-ws63-rf-to-hisi-rf.md)，覆盖单 facade 依赖、命名 profile、
   caller-owned storage、composition root、RTOS 启动和 dependency-tree 验证；模板和用户
   how-to 已只使用 `hisi-rf`。
-- [ ] **Opaque public facade**：`InitError`、`RadioController::split()` 和 rustdoc
-  signatures 不得暴露 `hisi-rf-rtos-driver`、`Ws63WifiBackend` 或其他隐藏 composition
-  类型；增加真实 public-API/rustdoc gate，而不是只扫描页面文本。
-- [ ] **Runtime choice stays with the application**：普通 facade/backend dependency
-  graph 不得因 `incremental-embassy-wait` 引入具体 `hisi-rtos` backend；目标 examples
-  可以在 dev-dependencies 中显式选择 runtime。
+- [x] **Opaque public facade**：`hisi-rf-ws63 0.1.0-alpha.33` 将初始化错误收窄为
+  facade-owned `InitError`/`InitErrorKind`，删除返回 `Ws63WifiBackend` 的 blocking
+  `RadioController::split()`，并让 `start_runner()` 只返回 facade-owned
+  `WifiParts`/`WifiDevice`/RX/TX token。CI 使用 `cargo public-api` 解析真实导出面并拒绝
+  `hisi-rf-rtos-driver`、`Ws63WifiBackend`、`Ws63Device` 出现在 composition signatures；
+  backend main/publish runs `30347690142`/`30348070565` 和 facade
+  main/publish runs `30348315746`/`30348706944` 均通过。发布后的 crates.io-only fixture
+  还直接编译检查 opaque `start_runner -> Result<WifiParts, InitError>` 契约。
+- [x] **Runtime choice stays with the application**：`hisi-rf-ws63 0.1.0-alpha.33`
+  已把 `hisi-rtos` 移到仅 RV32 target tests/examples 使用的 dev-dependency，并让
+  `incremental-embassy-wait` 只启用 runtime-neutral wait bridge。`hisi-rf
+  0.1.0-alpha.43` 的 Cargo metadata gate 会在选择 named profile 与该 feature 后遍历
+  非 dev production graph，发现具体 `hisi-rtos` 即失败；发布后 external fixture
+  lockfile 同时实际移除了 `hisi-rtos`、`embassy-executor-timer-queue` 和
+  `embassy-time-queue-utils`。目标 examples 仍可在 dev-dependencies 中显式选择 runtime。
 - [ ] `ws63-rf-rs` facade 继续保留一个 migration release；父仓中的
   `wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 仍是明确 allowlist 的 maintainer
   oracle，不是假装成用户 happy path。只有 pure-WPA3 parity gate 闭合、所有 oracle
