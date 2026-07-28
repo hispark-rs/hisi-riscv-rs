@@ -35,7 +35,7 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # but rustup does not ship its prebuilt rust-std component yet, so RISC-V commands
 # use `-Zbuild-std=core,alloc`. Default target is set in .cargo/config.toml.
 cargo build -Zbuild-std=core,alloc                         # Build libraries + default-member WS63 examples.
-cargo check -Zbuild-std=core,alloc --workspace             # Full workspace check.
+cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63  # Full WS63 workspace check.
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
 cargo check -Zbuild-std=core,alloc -p hisi-hal --features chip-ws63    # Check HAL only (chip-ws63)

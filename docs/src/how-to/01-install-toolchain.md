@@ -48,8 +48,8 @@ RISC-V 构建命令需要带 build-std：
 
 ```bash
 cargo build -Zbuild-std=core,alloc --release
-cargo check -Zbuild-std=core,alloc --workspace
-cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
+cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
 ```
 
 `hisi-rs-template` 生成的新项目已经把这个细节封装进 `just build` / `just run` / `just image`，所以应用开发者通常不需要手写 `-Zbuild-std=core,alloc`。

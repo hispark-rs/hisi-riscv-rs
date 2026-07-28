@@ -99,8 +99,8 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 
 ```bash
 cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
-cargo check -Zbuild-std=core,alloc --workspace        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63        # 检查全部（含 blinky/flashboot，不链接）
+cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```
