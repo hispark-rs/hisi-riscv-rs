@@ -93,6 +93,20 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 脚本当前检查的 UART smoke 子集和 grep 模式见 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；
 完整示例清单与真机状态见 [示例目录与验证标记串](../reference/02-examples.md)。
 
+连接性不是一组散落的 `grep`。`hil/ws63-connectivity-smoke.sh` 会冻结 ELF/profile identity，
+采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：
+
+```bash
+uv run hil/ws63-connectivity-reset-matrix.py \
+    --analyze-dir /path/to/captures \
+    --stage connectivity \
+    --require-contract
+```
+
+若还要证明 capture 对应指定最终 ELF，追加 `--artifact-identity`、`--elf` 和
+`--profile-id`。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
+`/private/tmp/ws63-connectivity-smoke-<timestamp>`；含 AP 凭据的临时构建目录仍自动删除。
+
 ## 读懂结果
 
 - `embedded-test` 路径：每个 Rust `#[test]` 以 libtest 风格输出 `ok` / `FAILED`；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。

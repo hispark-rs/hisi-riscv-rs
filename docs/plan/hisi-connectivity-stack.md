@@ -51,7 +51,9 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
-   violation、ELF/profile/hash 不一致均应 fail closed。
+   violation、ELF/profile/hash 不一致均应 fail closed。统一 parser、artifact identity、
+   QEMU contract-only target fixture 和 credential-free HIL init/scan 已闭合；仍需最终
+   完整 connectivity 镜像执行同一 contract。
 
 这些项和 pure-WPA3 gate 都未闭合前，保持验证过的 WS63 blocking backend。BLE、SLE、
 TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
@@ -1551,6 +1553,16 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 - [ ] QEMU 与 HIL 使用同一组分阶段 marker 和 fail-closed parser；缺少 init/scan/connect/
   DHCP/renew、出现非零 drop/error/budget violation，或 ELF/profile/evidence hash 不一致时
   必须失败并保存可复算 artifact。
+  `hil/ws63-connectivity-reset-matrix.py` 已成为单次 smoke、unchanged-image reset matrix
+  和离线复算的共享 classifier，覆盖有序阶段、fatal marker、内部 drop/error、A5B budget
+  与 `hisi-connectivity-artifact/v1` ELF/profile identity。最终 release closure 的
+  credential-free upstream-WPA2 init/scan 镜像已在 3 MHz 完整 verify 后通过真机严格契约；
+  host 18 项 negative/identity 回归和 QEMU contract-only target fixture 均通过。QEMU
+  fixture 只证明 target marker producer 与 parser 可执行契约，不作为 RF 行为证据。该证据
+  只关闭 parser、QEMU contract-only 与 HIL init/scan 子项；最终 connect/DHCP/renew
+  contract 尚未执行，因此本项保持未勾选。
+  证据见
+  [A5 marker and artifact contract](evidence/ws63-rf-a5-marker-contract-2026-07-28.md)。
 - [ ] 同一最终镜像完成 init/scan、upstream WPA2、pure WPA3 SAE+PMF、DHCP/renew 和重复 ping
   parity；至少 20 次 unchanged-image nRST 无 runner starvation、永久 pending、stale
   completion、event drop 或 scheduler invariant failure。

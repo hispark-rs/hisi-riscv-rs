@@ -14,7 +14,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 |------|------|----------|
 | `hil/embedded-test-runner.sh` | `hisi-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
-| `hil/ws63-connectivity-smoke.sh` | WS63 A4/W2 connectivity gate | upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART markers |
+| `hil/ws63-connectivity-smoke.sh` | WS63 A4/W2 connectivity gate | upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART contract |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
 | `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | hisi-fwpkg plan + probe-rs bin download，可选 UART stream |
@@ -68,7 +68,9 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 
 ## A4 connectivity marker contract
 
-`hil/ws63-connectivity-smoke.sh` 是连接性 marker 和 HIL 流程的可执行事实源。它与普通
+`hil/ws63-connectivity-reset-matrix.py` 是连接性 marker/diagnostic contract 的唯一可执行
+事实源；单次 `hil/ws63-connectivity-smoke.sh`、多次 unchanged-image nRST 和离线复算都调用
+同一 classifier。smoke 脚本与普通
 外设 smoke 分开，因为需要受控 Personal-mode AP、secret 和更长的 UART 窗口。
 `upstream-wpa2`/`upstream-wpa3` 直接使用 Cargo-delivered normalized archives，执行普通
 `cargo build --release`、final-ELF gate、`hisi-fwpkg plan`、probe-rs bin download 和
@@ -76,10 +78,18 @@ J-Link nRST；不调用外部 RISC-V GCC 或 post-link patch。`vendor-wpa2` 仍
 `ws63-RF` release 下载固定 archive（或接受 `WS63_WPA_ARCHIVE`），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。
 
-成功必须同时出现：`RF2_INIT_OK ifname=hisi-rf`、initialized/scan-completed/connected
-三个 `A4_RADIO_EVENT`、`RF5B_WPA_CONNECT_OK`、`RF5A_DHCP_OK`、smoltcp neighbor-cache
-`RF5A_ARP_OK`、公共 ICMP 非零回复、零 RX queue drop、`A4_NET_RUNNER_STEADY` 和
-`A4_DHCP_RENEW_OK`。脚本打印 `WS63 CONNECTIVITY SMOKE: PASS` 才算通过。
+严格契约按顺序要求 image/init/scan/connect/DHCP/neighbor/public-ping/summary/steady/renew
+阶段及对应 `A4_RADIO_EVENT`；缺失或乱序 marker、fatal marker、非零内部 queue drop /
+TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP 允许有可量化丢包，
+但必须有非零回复；gateway 不回应仍按已记录的 AP 环境边界处理。构建后先冻结
+`hisi-connectivity-artifact/v1`（profile、ELF SHA-256、marker contract），解析前再次复核；
+不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
+`EVIDENCE_DIR`，含凭据的临时 ELF/target 仍在退出时删除。
+
+普通 CI 的 QEMU target fixture 也执行同一 parser，但必须携带
+`RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only`。它只证明目标端 marker
+producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
+该 marker 若出现在真机 capture 中反而会 fail closed。
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
@@ -90,8 +100,9 @@ guarded link，但该分支只作为迁移 oracle。
 | `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
-| `PROBE_SPEED` | `1000` | 已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败 |
+| `PROBE_SPEED` | `3000` | connectivity lane 已验证的 WS63 download 速率；始终保留完整 readback verify，失败再显式降到 1000/500 kHz |
 | `MONITOR` | `60` | 覆盖 connect、ping 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口 |
+| `EVIDENCE_DIR` | `/private/tmp/ws63-connectivity-smoke-<timestamp>` | 保存 UART、artifact identity 与严格 contract summary；必须为空 |
 
 ## 环境变量
 
