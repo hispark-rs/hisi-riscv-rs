@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d1c637f0.js";
+            window.path_to_searchindex_js = "searchindex-09ddc547.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1313,6 +1313,16 @@ hil/hil-smoke.sh
 </div>
 <p>脚本当前检查的 UART smoke 子集和 grep 模式见 <a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a>；
 完整示例清单与真机状态见 <a href="#示例目录与验证标记串">示例目录与验证标记串</a>。</p>
+<p>连接性不是一组散落的 <code>grep</code>。<code>hil/ws63-connectivity-smoke.sh</code> 会冻结 ELF/profile identity，
+采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：</p>
+<pre><code class="language-bash">uv run hil/ws63-connectivity-reset-matrix.py \
+    --analyze-dir /path/to/captures \
+    --stage connectivity \
+    --require-contract
+</code></pre>
+<p>若还要证明 capture 对应指定最终 ELF，追加 <code>--artifact-identity</code>、<code>--elf</code> 和
+<code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
+<code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
@@ -2649,7 +2659,7 @@ cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- 
 <tbody>
 <tr><td><code>hil/embedded-test-runner.sh</code></td><td><code>hisi-hal --test hil</code> 与 <code>tests-hil</code> 的 on-target test runner</td><td><code>probe-rs run</code> + RISC-V semihosting，libtest 兼容输出</td></tr>
 <tr><td><code>hil/hil-smoke.sh</code></td><td>WS63 示例级 UART smoke</td><td>UART0 grep 标记串</td></tr>
-<tr><td><code>hil/ws63-connectivity-smoke.sh</code></td><td>WS63 A4/W2 connectivity gate</td><td>upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART markers</td></tr>
+<tr><td><code>hil/ws63-connectivity-smoke.sh</code></td><td>WS63 A4/W2 connectivity gate</td><td>upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART contract</td></tr>
 <tr><td><code>.agents/skills/hil-smoke/hil.sh</code></td><td>CI/agent wrapper：preflight、chip 封装；WS63 全套委托 <code>hil/hil-smoke.sh</code></td><td>UART0 grep 标记串</td></tr>
 <tr><td><code>hil/flash.sh</code></td><td>示例/固件烧录封装</td><td>hisi-fwpkg plan + probe-rs bin download，或 hisiflash</td></tr>
 <tr><td><code>hil/cargo-run-hw.sh</code></td><td>把单次 <code>cargo run</code> 改成烧真机</td><td>hisi-fwpkg plan + probe-rs bin download，可选 UART stream</td></tr>
@@ -2713,17 +2723,26 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 <p><code>blinky</code>（GPIO 翻转无 UART，需 LED/逻辑分析仪）与 <code>semihost_selftest</code>（需 debugger 半主机）在裸 HIL 跳过。
 总结果：全过打印 <code>HIL SMOKE: PASS</code>，否则 <code>HIL SMOKE: FAIL</code> 并 <code>exit 1</code>。</p>
 <h2 id="a4-connectivity-marker-contract"><a class="header" href="#a4-connectivity-marker-contract">A4 connectivity marker contract</a></h2>
-<p><code>hil/ws63-connectivity-smoke.sh</code> 是连接性 marker 和 HIL 流程的可执行事实源。它与普通
+<p><code>hil/ws63-connectivity-reset-matrix.py</code> 是连接性 marker/diagnostic contract 的唯一可执行
+事实源；单次 <code>hil/ws63-connectivity-smoke.sh</code>、多次 unchanged-image nRST 和离线复算都调用
+同一 classifier。smoke 脚本与普通
 外设 smoke 分开，因为需要受控 Personal-mode AP、secret 和更长的 UART 窗口。
 <code>upstream-wpa2</code>/<code>upstream-wpa3</code> 直接使用 Cargo-delivered normalized archives，执行普通
 <code>cargo build --release</code>、final-ELF gate、<code>hisi-fwpkg plan</code>、probe-rs bin download 和
 J-Link nRST；不调用外部 RISC-V GCC 或 post-link patch。<code>vendor-wpa2</code> 仍从公开
 <code>ws63-RF</code> release 下载固定 archive（或接受 <code>WS63_WPA_ARCHIVE</code>），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。</p>
-<p>成功必须同时出现：<code>RF2_INIT_OK ifname=hisi-rf</code>、initialized/scan-completed/connected
-三个 <code>A4_RADIO_EVENT</code>、<code>RF5B_WPA_CONNECT_OK</code>、<code>RF5A_DHCP_OK</code>、smoltcp neighbor-cache
-<code>RF5A_ARP_OK</code>、公共 ICMP 非零回复、零 RX queue drop、<code>A4_NET_RUNNER_STEADY</code> 和
-<code>A4_DHCP_RENEW_OK</code>。脚本打印 <code>WS63 CONNECTIVITY SMOKE: PASS</code> 才算通过。</p>
+<p>严格契约按顺序要求 image/init/scan/connect/DHCP/neighbor/public-ping/summary/steady/renew
+阶段及对应 <code>A4_RADIO_EVENT</code>；缺失或乱序 marker、fatal marker、非零内部 queue drop /
+TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP 允许有可量化丢包，
+但必须有非零回复；gateway 不回应仍按已记录的 AP 环境边界处理。构建后先冻结
+<code>hisi-connectivity-artifact/v1</code>（profile、ELF SHA-256、marker contract），解析前再次复核；
+不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
+<code>EVIDENCE_DIR</code>，含凭据的临时 ELF/target 仍在退出时删除。</p>
+<p>普通 CI 的 QEMU target fixture 也执行同一 parser，但必须携带
+<code>RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only</code>。它只证明目标端 marker
+producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
+该 marker 若出现在真机 capture 中反而会 fail closed。</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2737,8 +2756,9 @@ guarded link，但该分支只作为迁移 oracle。</p>
 <tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/ping/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
 <tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
-<tr><td><code>PROBE_SPEED</code></td><td><code>1000</code></td><td>已验证的 WS63 download 速率；2 MHz page-program timeout 不作为固件失败</td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td><code>3000</code></td><td>connectivity lane 已验证的 WS63 download 速率；始终保留完整 readback verify，失败再显式降到 1000/500 kHz</td></tr>
 <tr><td><code>MONITOR</code></td><td><code>60</code></td><td>覆盖 connect、ping 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口</td></tr>
+<tr><td><code>EVIDENCE_DIR</code></td><td><code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code></td><td>保存 UART、artifact identity 与严格 contract summary；必须为空</td></tr>
 </tbody>
 </table>
 </div>

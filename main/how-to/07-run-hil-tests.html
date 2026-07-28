@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d1c637f0.js";
+            window.path_to_searchindex_js = "../searchindex-09ddc547.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -257,6 +257,16 @@ hil/hil-smoke.sh
 </div>
 <p>脚本当前检查的 UART smoke 子集和 grep 模式见 <a href="../reference/07-hil-markers.html">HIL 脚本与 runner 环境变量</a>；
 完整示例清单与真机状态见 <a href="../reference/02-examples.html">示例目录与验证标记串</a>。</p>
+<p>连接性不是一组散落的 <code>grep</code>。<code>hil/ws63-connectivity-smoke.sh</code> 会冻结 ELF/profile identity，
+采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：</p>
+<pre><code class="language-bash">uv run hil/ws63-connectivity-reset-matrix.py \
+    --analyze-dir /path/to/captures \
+    --stage connectivity \
+    --require-contract
+</code></pre>
+<p>若还要证明 capture 对应指定最终 ELF，追加 <code>--artifact-identity</code>、<code>--elf</code> 和
+<code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
+<code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
