@@ -208,6 +208,38 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(summary["a5b_metrics"]["complete_runs"], 1)
         self.assertEqual(summary["records"][0]["result"], "pass")
 
+    def test_connectivity_record_and_summary_use_stage_complete_metrics(self) -> None:
+        trailer = a5b_success_log().replace(
+            b"RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x00000009\n",
+            b"",
+        )
+        record = MATRIX.record_from_log(
+            1,
+            b"\n".join((connectivity_success_log(), trailer)),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            require_contract=True,
+            max_runner_step_ms=100,
+        )
+        summary = MATRIX.summarize_records(
+            [record],
+            port=None,
+            baud=115_200,
+            profile="rust",
+            stage="connectivity",
+            required_ap_mode=None,
+            timeout=90.0,
+            post_terminal_seconds=1.0,
+            reference_ping=None,
+        )
+        self.assertEqual(record["result"], "pass")
+        self.assertTrue(record["a5b_metrics"]["complete"])
+        self.assertEqual(record["a5b_metrics"]["missing"], [])
+        self.assertEqual(summary["a5b_metrics"]["complete_runs"], 1)
+        self.assertEqual(summary["a5b_metrics"]["missing_runs"], 0)
+
     def test_connectivity_contract_accepts_ordered_zero_error_log(self) -> None:
         log = connectivity_success_log()
         self.assertEqual(MATRIX.validate_rust_contract(log, "connectivity"), [])

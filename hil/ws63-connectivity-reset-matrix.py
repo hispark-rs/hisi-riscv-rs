@@ -936,7 +936,10 @@ def record_from_log(
         + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
         "ap_mode": detected_ap_mode(log),
         "ping": parse_ping_summaries(log),
-        "a5b_metrics": parse_a5b_metrics(log),
+        "a5b_metrics": parse_a5b_metrics(
+            log,
+            require_disconnect=stage == "connect",
+        ),
         "contract": {
             "schema": MARKER_CONTRACT,
             "required": require_contract,
