@@ -15,7 +15,7 @@ HIL 框架原理见 [HIL 测试框架](../explanation/07-hil-framework.md)；运
 | `hil/embedded-test-runner.sh` | `hisi-hal --test hil` 与 `tests-hil` 的 on-target test runner | `probe-rs run` + RISC-V semihosting，libtest 兼容输出 |
 | `hil/hil-smoke.sh` | WS63 示例级 UART smoke | UART0 grep 标记串 |
 | `hil/ws63-connectivity-smoke.sh` | WS63 A4/W2 connectivity gate | upstream profile: plain Cargo RF link；vendor oracle: guarded link；之后均为 planned-bin download + J-Link nRST + UART contract |
-| `hil/ws63-a5b-response-bound.sh` | A5B release-train response-bound gate | 当前 incremental WPA2 fixture：一次 verified download + 20 次 unchanged-image J-Link nRST + 100 ms fail-closed runner bound |
+| `hil/ws63-a5b-response-bound.sh` | A5B + connectivity final-image gate | 公开 `wifi_connectivity`：一次 verified download + 20 次 unchanged-image J-Link nRST + 完整网络 contract + 100 ms fail-closed runner bound |
 | `.agents/skills/hil-smoke/hil.sh` | CI/agent wrapper：preflight、chip 封装；WS63 全套委托 `hil/hil-smoke.sh` | UART0 grep 标记串 |
 | `hil/flash.sh` | 示例/固件烧录封装 | hisi-fwpkg plan + probe-rs bin download，或 hisiflash |
 | `hil/cargo-run-hw.sh` | 把单次 `cargo run` 改成烧真机 | hisi-fwpkg plan + probe-rs bin download，可选 UART stream |
@@ -73,9 +73,11 @@ cargo test -Zbuild-std=core,alloc -p hisi-hal --no-default-features --features c
 事实源；单次 `hil/ws63-connectivity-smoke.sh`、多次 unchanged-image nRST 和离线复算都调用
 同一 classifier。smoke 脚本与普通
 外设 smoke 分开，因为需要受控 Personal-mode AP、secret 和更长的 UART 窗口。
-`upstream-wpa2`/`upstream-wpa3` 直接使用 Cargo-delivered normalized archives，执行普通
+完整 `upstream-wpa2`/`upstream-wpa3` profile 构建公开 `wifi_connectivity` 示例。该示例
+只直接依赖 `hisi-rf`，使用 Cargo-delivered normalized archives，执行普通
 `cargo build --release`、final-ELF gate、`hisi-fwpkg plan`、probe-rs bin download 和
-J-Link nRST；不调用外部 RISC-V GCC 或 post-link patch。`vendor-wpa2` 仍从公开
+J-Link nRST；不调用外部 RISC-V GCC 或 post-link patch。credential-free init/scan 和
+crypto contention 仍使用 `wifi_init_smoke` maintainer fixture。`vendor-wpa2` 仍从公开
 `ws63-RF` release 下载固定 archive（或接受 `WS63_WPA_ARCHIVE`），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。
 
@@ -94,17 +96,18 @@ producer、artifact identity 和 classifier 契约可执行，不能替代真实
 
 A5B 上界不能靠事后肉眼看最大值。专用入口
 `hil/ws63-a5b-response-bound.sh` 使用一次性凭据文件构建当前 release closure 的
-`incremental_scan_profile`，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
-交给同一 parser 的 `--stage connect --require-contract --max-runner-step-ms 100`。只要缺少
-完整 A5B trailer、event/backend error 非零、出现 blocking fallback 或单步超过 100 ms，
-整轮即失败。该 gate 证明 transition/WPA2 profile 的迁移上界，不替代 pure-WPA3。
+`wifi_connectivity`，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
+交给同一 parser 的
+`--stage connectivity --require-contract --max-runner-step-ms 100`。只要缺少完整
+connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback 或单步超过
+100 ms，整轮即失败。该 gate 证明 transition/WPA2 profile 的迁移上界，不替代 pure-WPA3。
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
 | `PORT` | 必填 | WS63 UART0 |
 | `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
 | `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的一次性 `0600` 文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，成功读取后立即删除；不能与直接环境变量混用 |
-| `WS63_CONNECTIVITY_PROFILE` | `vendor-wpa2` | `vendor-wpa2` / `upstream-wpa2` / `upstream-wpa3`；正式 upstream 验证使用 plain Cargo lane |
+| `WS63_CONNECTIVITY_PROFILE` | `upstream-wpa2` | `upstream-wpa2` / `upstream-wpa3` / `vendor-wpa2`；正式 upstream 验证使用公开 facade 的 plain Cargo lane |
 | `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |

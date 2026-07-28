@@ -80,9 +80,12 @@ upstream hostap key cleanup, and WS63 WAL key programming/rollback are now
 covered across their exact production seams. Credential-free cancellation and
 timeout injection now also crosses the public controller, facade channels,
 incremental runner, and WS63 backend, with identical QEMU and silicon output.
-The remaining release gates are to rerun target response-bound evidence on the
-released A5B state machine and keep the complete QEMU/HIL evidence executable
-and fail-closed. Pure-WPA3 remains a separate external gate.
+The public `wifi_connectivity` example now composes the facade, incremental
+runner, scan/connect, DHCP, repeated ICMP and lease renewal in one final ELF.
+The response-bound and full connectivity scripts build that same image. The
+remaining release gate is the 20-reset on-target acceptance of this released
+closure, while keeping the QEMU/HIL evidence executable and fail-closed.
+Pure-WPA3 remains a separate external gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).

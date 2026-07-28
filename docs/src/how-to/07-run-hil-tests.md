@@ -93,8 +93,11 @@ METHOD=hisiflash PORT=/dev/ttyUSB0 \
 脚本当前检查的 UART smoke 子集和 grep 模式见 [HIL 脚本与 runner 环境变量](../reference/07-hil-markers.md)；
 完整示例清单与真机状态见 [示例目录与验证标记串](../reference/02-examples.md)。
 
-连接性不是一组散落的 `grep`。`hil/ws63-connectivity-smoke.sh` 会冻结 ELF/profile identity，
-采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：
+连接性不是一组散落的 `grep`。完整 upstream profile 默认构建公开
+`wifi_connectivity` 示例；它只直接依赖 `hisi-rf`，并让 init/scan、A5B response bound、
+connect、DHCP、重复 ping 和 lease renew 共享同一个最终 ELF。`wifi_init_smoke` 仅保留
+credential-free init/scan、crypto contention 和 vendor oracle 诊断。脚本会冻结
+ELF/profile identity，采集 UART 后调用同一个严格 parser；20-reset HIL 和离线复算也复用它：
 
 ```bash
 uv run hil/ws63-connectivity-reset-matrix.py \
@@ -115,8 +118,9 @@ PORT=/dev/cu.wchusbserial... \
     hil/ws63-a5b-response-bound.sh
 ```
 
-它固定使用当前 release closure、一次 verified download、同一 ELF 的 20 次 J-Link nRST，
-并要求每轮完整 diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
+它固定构建 `wifi_connectivity` 的当前 release closure，只做一次 verified download，
+随后对同一 ELF 执行 20 次 J-Link nRST；每轮同时要求完整 connectivity marker、
+diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
 立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
 closure、脱敏 UART 与 summary。
 

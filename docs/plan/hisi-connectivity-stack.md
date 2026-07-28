@@ -46,7 +46,8 @@ transition-mode 证据已闭合，pure-WPA3 等待外部 AP 条件。A5 已交�
 relocation、三平台 consumer、opt-in incremental protocol、caller-owned resources、
 typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
 
-1. A5B 的最终 release-train 镜像仍需重跑目标端 response-bound acceptance，证明
+1. 公开 `wifi_connectivity` 已把 A5B 与完整 connectivity contract 收敛到同一最终
+   release-train ELF；该镜像仍需重跑目标端 response-bound acceptance，证明
    control、L2、timer 和 diagnostics 在长操作期间保持可量化响应。该验收现在由
    `hil/ws63-a5b-response-bound.sh` 固定为“一次烧录、20 次 nRST、同一 ELF identity、
    100 ms fail-closed 上界”；仍需取得本轮结果。
@@ -55,7 +56,7 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
 3. QEMU/HIL gate 必须执行相同 marker contract，缺 marker、非零 drop/error、budget
    violation、ELF/profile/hash 不一致均应 fail closed。统一 parser、artifact identity、
    QEMU contract-only target fixture 和 credential-free HIL init/scan 已闭合；仍需最终
-   完整 connectivity 镜像执行同一 contract。
+   完整 `wifi_connectivity` 镜像执行同一 contract。
 
 这些项和 pure-WPA3 gate 都未闭合前，保持验证过的 WS63 blocking backend。BLE、SLE、
 TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
@@ -1479,6 +1480,58 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，不再属于用户 happy path，也不因
   pure-WPA3 external gate 被提前删除。
 
+#### A5UX -- 最终镜像验收后的公共 API 形态收敛
+
+**状态：排队，不阻塞当前 A5 最终镜像 20-reset HIL。** 先冻结并验收当前
+`wifi_connectivity` ELF；通过后再做下面的 API-only 收敛，并要求迁移前后使用同一
+connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 成本、长期 runner
+任务、runtime 选择或可失败资源准入。
+
+- [ ] 将迁移实现名 `init_incremental_after_blocking_bootstrap` 收敛为 facade 的长期
+  `hisi_rf::ws63::init` 入口。blocking bootstrap、incremental backend 和 archive/profile
+  选择留在 composition root 内；需要显式实验选择时使用命名 profile，不把实现阶段编码进
+  普通用户函数名。旧入口仅保留一个 alpha 迁移周期，并由 rustdoc/compile fixture 验证新
+  用户路径不引用它。
+- [ ] 将当前多参数 `hisi_rf::ws63::Resources::new(efuse, km, spacc, pke, trng, arena)`
+  收敛为 profile-aware typed builder 或等价能力构造器。缺少 profile 必需资源必须在编译期
+  或初始化前返回结构化 `Required/Available` 错误；WPA2 profile 不应被迫理解仅 WPA3/SAE
+  使用的能力，新增 DMA/keyslot/IRQ 也不得继续无限增长位置参数。builder 仍显式消费 HAL
+  peripheral token，不能重新引入 service locator 或隐藏软件回退。
+- [ ] 决定并冻结 `Storage<Profile, EVENTS>` 与 `RadioArenaStorage` 的长期所有权形态。
+  优先评估一个 caller-owned `RadioStorage<Profile, const EVENTS: usize>` composition
+  object，在内部持有 bounded event state、crypto scratch 和 arena claim；若因 linker
+  section/one-shot capability 必须保持分离，则提供单一 typed install/admission 入口并在
+  文档中说明原因。两种方案都必须保持 RAM/flash/task/queue 报告确定、静态且可审计。
+- [ ] 让事件容量属于 storage/resource report，而不是传播进常用控制面签名。普通业务函数
+  应能接收 `WifiController<'_>` 或等价 opaque handle，而不需要携带
+  `WifiController<const EVENTS: usize>`；容量仍由调用方在编译期选择，并继续接受 queue-full、
+  stale generation 和取消交错测试。
+- [ ] 冻结三层 timeout/cancellation 语义：协议 operation timeout、backend/vendor timeout
+  与应用等待 deadline 必须使用不同类型或明确命名，错误分别映射为稳定 stage/code；禁止
+  `ScanConfig` 内层 timeout 与外层 `with_timeout` 在文档中被描述成同一保证。外层取消必须
+  经过 production cancel/cleanup 路径，不能只丢弃 Future。
+- [ ] 将 station MAC 和 L2 capability 归属到 `WifiDevice`/`WifiParts` 的实例方法或只读
+  capability snapshot，删除普通用户路径对隐藏全局 `station_mac_address()` 的依赖；host
+  mock、多次初始化失败恢复和未来多 radio 实例不得共享无所有权的可变全局身份。
+- [ ] 提供 facade-owned、allocation-free 的统一只读诊断快照，组合 runner、wait、event、
+  blocking-call 和 resource 指标；现有细粒度诊断方法可作为内部来源，但不得要求应用用全局
+  `Mutex<Cell<Option<_>>>` 拼装一致快照。快照 schema 必须版本化、secret-redacted，并与
+  `hisi-rf-error/v2` 和 resource report 保持单向引用，不能复制第二份错误分类事实源。
+- [ ] 将最终用户 happy path 的可恢复初始化、配置和连接错误改为 typed `Result` 控制流；
+  HIL fixture 可以在记录结构化错误后 `halt`，但教程/template 不应把所有资源不足或网络失败
+  展示为 `expect`/panic。panic 只保留给违反静态/unsafe contract 的不可恢复状态。
+- [ ] WS63 runtime port 的用户级启动形态不在本节重复设计；按
+  [RTOS 未来架构 F2/F3](hisi-rtos-future-architecture.md#延期里程碑) 收敛为
+  `hisi_rtos::ws63::start(...)`、caller-owned `SchedulerStorage<N>` 与 Embassy adapter，
+  让应用退出手写 `SchedulerPort`、Timer/SWI callback 和全局中断启动时序。该迁移必须保持
+  A5 已冻结 ELF marker、15 dynamic-task 兼容容量和 Cooperative/Budgeted/Preemptive HIL
+  parity。
+
+验收要求：新增 crates.io-only 外部 consumer compile fixture 和 `cargo-public-api` gate；
+Linux/macOS/Windows clean/offline 构建通过；旧 API 在迁移窗口结束后不可从 facade rustdoc
+到达；同一 WS63 固件完成 init/scan/connect/DHCP/repeated-ping/renew，runner budget、
+resource report、typed diagnostics 与取消/超时资源守恒均不回归。
+
 #### A5 验收
 
 - [x] 增量 backend 的 `start`/`cancel` 只执行有界内存状态转换；vendor、transport 和硬件
@@ -1500,8 +1553,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
   当前 parser 已进一步收窄：声明 `--max-runner-step-ms` 时，缺少完整 A5B trailer 本身即
   contract violation，且 `connectivity` 阶段也执行同一上界检查。专用
-  `hil/ws63-a5b-response-bound.sh` 会冻结 release closure 与 ELF/profile identity、只烧录
-  一次并执行 20 次 J-Link nRST；脚本可执行不等于本轮 HIL 已通过。
+  `hil/ws63-a5b-response-bound.sh` 已改为构建公开 `wifi_connectivity` 示例，并在同一
+  最终 ELF 上同时执行 A5B 上界与完整 connectivity contract；它会冻结 release closure
+  与 ELF/profile identity、只烧录一次并执行 20 次 J-Link nRST。脚本可执行不等于本轮
+  HIL 已通过。
 - [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
   只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行
@@ -1566,7 +1621,11 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   host 18 项 negative/identity 回归和 QEMU contract-only target fixture 均通过。QEMU
   fixture 只证明 target marker producer 与 parser 可执行契约，不作为 RF 行为证据。该证据
   只关闭 parser、QEMU contract-only 与 HIL init/scan 子项；最终 connect/DHCP/renew
-  contract 尚未执行，因此本项保持未勾选。
+  contract 尚未执行，因此本项保持未勾选。新的公开 `wifi_connectivity` 示例已只通过
+  `hisi-rf 0.1.0-alpha.48` 组合完整增量 runner、scan/connect、smoltcp DHCP、gateway/public
+  五次 ping 与 lease renew；WPA2/WPA3 release link、37 项 ROM patch、零 vendor relocation
+  和 native-supplicant/legacy-boundary 检查均已通过。HIL 脚本和 response-bound 专用入口
+  现在构建同一个最终 ELF，但尚未取得本轮 20-reset 真机结果。
   证据见
   [A5 marker and artifact contract](evidence/ws63-rf-a5-marker-contract-2026-07-28.md)。
 - [ ] 同一最终镜像完成 init/scan、upstream WPA2、pure WPA3 SAE+PMF、DHCP/renew 和重复 ping
