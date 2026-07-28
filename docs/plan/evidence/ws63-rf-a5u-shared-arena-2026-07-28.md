@@ -71,8 +71,9 @@ The selected profile reserves 296 KiB with 16-byte alignment. `hisi-riscv-rt
 0.5.7` fixes the WS63 ACPU SRAM fact at 544 KiB, places the arena in a dedicated
 NOLOAD section, reserves a 32 KiB radio main stack, clears the arena before
 D-cache enable, and rejects overlap at link time. `hisi-rf-ws63
-0.1.0-alpha.27` owns the one-shot claim/install contract; `hisi-rf
-0.1.0-alpha.37` exposes it through the public facade.
+0.1.0-alpha.28` owns the one-shot claim/install contract and its actionable
+admission diagnostic; `hisi-rf 0.1.0-alpha.38` exposes both through the public
+facade.
 
 The independently linked final image had:
 
@@ -93,3 +94,21 @@ Caller-owned backing storage and pre-init memory admission are therefore
 closed. A pure-WPA3 run is still required to calibrate SAE-path peak usage and
 to close WPA3 reliability, but that external gate does not change the
 296 KiB profile contract without a new measured profile revision.
+
+## Resource-Shortage Diagnostic Parity
+
+The production admission path was also exercised with zero bytes of caller
+storage. QEMU and real WS63 emitted the same allocation-free
+`hisi-rf-error/v2` document before RF power-up or blob initialization:
+
+```text
+RFDBG_A5U_TYPED_ERROR_JSON {"schema":"hisi-rf-error/v2","code":"resource.unavailable","stage":"runtime","action":"provide_resources","backend_code":1462939650,"profile_revision":"ws63-wifi-2026-07-26","trace":[{"kind":"resource_required","value":303104},{"kind":"resource_available","value":0}],"trace_truncated":false,"docs":"errors-resource-unavailable"}
+RFDBG_A5U_TYPED_ERROR_OK code=resource.unavailable stage=runtime action=provide_resources
+```
+
+This closes QEMU/HIL stable-class parity for arena resource shortage without
+requiring an AP, RF activity, or credentials. The WS63 run retained full verify
+at 3 MHz and completed download in 2.28 seconds. Backend CI/publish runs were
+`30320681798`/`30320859956`; facade CI/publish runs were
+`30320968688`/`30321264555`. Association rejection, first-EAPOL timeout,
+cancellation and backend timeout remain separate open parity cases.

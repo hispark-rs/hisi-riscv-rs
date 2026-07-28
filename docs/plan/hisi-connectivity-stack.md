@@ -1344,10 +1344,11 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   两次 WPA3 transition 尝试则在 EAPOL 前失败，不能提供 SAE 峰值。两份历史镜像的 linker
   remainder 不同，证明“吃掉剩余 SRAM”不是稳定 profile contract。`hisi-riscv-rt 0.5.7`
   现将 WS63 ACPU SRAM 事实修正为 544 KiB，并提供固定 shared-arena/32 KiB radio-main-stack
-  linker contract、重叠断言和启动期清零；`hisi-rf-ws63 0.1.0-alpha.27` 提供 296 KiB、
+  linker contract、重叠断言和启动期清零；`hisi-rf-ws63 0.1.0-alpha.28` 提供 296 KiB、
   16-byte aligned、one-shot `RadioArenaStorage`，`claim_for().install()` 在 RF 电源与 blob
-  启动前完成 owner/profile/required/available 检查；`hisi-rf 0.1.0-alpha.37` 只通过 facade
-  re-export 该能力。最终 ELF 中 arena 结束于 `0xA7BE80`，32 KiB main stack 从 `0xA7CB00`
+  启动前完成 owner/profile/required/available 检查，并把失败转换为 versioned
+  `hisi-rf-error/v2`；`hisi-rf 0.1.0-alpha.38` 只通过 facade re-export 该能力。最终 ELF 中
+  arena 结束于 `0xA7BE80`，32 KiB main stack 从 `0xA7CB00`
   开始，保留 `0xC80` 间隔；3 MHz 完整 verify 后，真实 WS63 init/non-empty scan HIL 输出
   `RFDBG_A5B_SCAN_PROFILE_OK`，event drop/error 均为 0。pure-WPA3 峰值仍属外部阻塞证据，
   但不再阻塞静态 admission contract。完整边界见
@@ -1389,18 +1390,25 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   code 不修改既有 stable enum 判别语义，secret、passphrase、key material 不进入 `Debug`、
   Display 或 JSON。release chain 由 core main/publish runs `29947847220`/`29948082527`、backend
   runs `29948247748`/`29948416210` 和 facade runs `29948547164`/`29948895065` 闭合。
-- [ ] 对 association rejection、first-EAPOL timeout、cancel/resource/backend timeout 建立
+- [ ] 对 association rejection、first-EAPOL timeout、cancel/backend timeout 建立
   QEMU/HIL stable-class parity；UART/dump 的 redaction 与 bounded trace 仍需真机证据。
+  resource-shortage 子项已经闭合：生产 `ArenaAdmissionError` 在 QEMU 与真实 WS63 上逐字输出
+  相同的 `resource.unavailable` / `runtime` / `provide_resources`，并保留
+  `required=303104`、`available=0` 两项有界 trace；错误在 RF 电源和 blob 启动前产生，不需要
+  AP 或凭据。3 MHz 完整 verify 的真机下载为 2.28 秒。backend main/publish runs
+  `30320681798`/`30320859956`，facade main/publish runs
+  `30320968688`/`30321264555` 均通过。剩余 parity 范围因此收窄为 association rejection、
+  first-EAPOL timeout、cancel 和 backend timeout。
 - [x] facade example 与 crates.io-only consumer 已只展示：选择命名 profile、构造
   `Resources`/`Storage`、初始化 controller；在线、离线、只读 registry、含空格/非 ASCII 和
   并发 target 构建均使用发布 crate，不依赖父仓 patch。
 - [x] 更新 application template 和完整 Wi-Fi starter，使 happy path 只展示：选择一个已验证 profile、构造
   `Resources`/`Storage`、启动 runner、调用 async `scan/connect` 和交给标准 L2/IP stack；
   sys/blob/RTOS driver/linker 细节只保留在 maintainer reference。`hisi-rs-template
-  v0.7.0-alpha.7` 固定 `hisi-rf 0.1.0-alpha.37`、`hisi-rtos 0.1.0-alpha.13` 和
+  v0.7.0-alpha.8` 固定 `hisi-rf 0.1.0-alpha.38`、`hisi-rtos 0.1.0-alpha.13` 和
   `hisi-riscv-rt 0.5.7`，通过 facade macro 声明并安装 caller-owned arena，不再让应用直接
   依赖 `hisi-alloc`；init、runner startup 或控制面失败时先输出 `hisi-rf-error/v2` JSON。
-  CI run `30319763074` 已生成并构建
+  CI run `30321410853` 已生成并构建
   WS63 Wi-Fi 项目及 plan image；父仓旧 `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，
   不再属于用户 happy path，也不因 pure-WPA3 external gate 被提前删除。
 

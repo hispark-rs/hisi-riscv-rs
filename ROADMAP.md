@@ -82,9 +82,10 @@ HIL with no event drop or backend error.
 Evidence: [A5U task-stack allocation](docs/plan/evidence/ws63-rf-a5u-task-stack-allocation-2026-07-28.md).
 The shared-arena closure is recorded in
 [shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md).
-The remaining A5U gate is stable-class parity for association rejection,
-first-EAPOL timeout, cancellation/resource shortage and backend timeout across
-host fixtures, QEMU and HIL.
+The resource-shortage class now emits the same `hisi-rf-error/v2` diagnostic in
+QEMU and on real WS63 before RF startup. The remaining A5U gate is stable-class
+parity for association rejection, first-EAPOL timeout, cancellation and backend
+timeout across host fixtures, QEMU and HIL.
 
 ## LATER -- Triggered Product Directions
 
