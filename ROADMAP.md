@@ -9,9 +9,11 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
-externally blocked on a suitable SAE-only AP. A5U caller-owned resource admission
-and template/resource-report closure are complete, so the active no-board milestone
-is resource conservation under adversarial interleavings.
+externally blocked on a suitable SAE-only AP. A5U caller-owned resource admission,
+template/resource-report closure, host-side cancellation conservation, bounded
+response measurement and RTOS conformance are complete. Remaining A5 release
+gates require the externally blocked pure-WPA3 matrix before changing the
+default backend.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -87,12 +89,15 @@ Resource shortage, association rejection, first-EAPOL timeout, operation
 cancellation and backend timeout now emit the same production
 `hisi-rf-error/v2` diagnostics in host fixtures, QEMU and on real WS63.
 Operation cancellation and timeout also pass through the production
-incremental state machine and prove terminal-slot recovery. The current
-credential-free gate is broader resource conservation under adversarial
-interleavings. Template `v0.7.0-alpha.9` now generates the Wi-Fi firmware,
+incremental state machine and prove terminal-slot recovery. A production-path
+host regression now covers key-held cancellation, one retained replacement,
+late success suppression, timer cleanup and generation-safe slot reuse.
+Template `v0.7.0-alpha.9` now generates the Wi-Fi firmware,
 FlashPlan image and deterministic profile resource report from the same public
 `hisi-rf` dependency; native Linux, macOS and Windows CI all pass.
 Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operation-error-injection-2026-07-28.md).
+Resource-conservation evidence:
+[A5 incremental resource conservation](docs/plan/evidence/ws63-rf-a5-resource-conservation-2026-07-28.md).
 
 ## LATER -- Triggered Product Directions
 

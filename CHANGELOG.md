@@ -53,6 +53,13 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   backend-timeout paths. Cancellation and timeout now drive the real
   incremental operation state machine and prove terminal-slot recovery rather
   than only serializing preconstructed errors.
+- **Incremental resource conservation** — add a production-path adversarial
+  cancellation regression covering key release, bounded pending ownership,
+  timer cleanup, late-success suppression, and generation-safe slot reuse.
+- **A5 evidence reconciliation** — close the stale work-budget and RTOS
+  conformance checklist entries against their existing transition-profile HIL,
+  shared scenario, negative-test, Kani, TLA+, and real-silicon evidence while
+  retaining the pure-WPA3 external gate.
 - **Executable Wi-Fi template reports** — publish `hisi-rs-template
   v0.7.0-alpha.9`; generated Wi-Fi projects now use the same public `hisi-rf`
   dependency for firmware and a host-only resource-report helper, and `just

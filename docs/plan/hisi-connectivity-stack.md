@@ -5,8 +5,8 @@
 **执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。A5U
 的 caller-owned storage、task-stack/shared-arena 静态准入、typed-error
 production source-path 和 operation-level cancellation/backend-timeout injection
-均已完成 QEMU/HIL parity。pure-WPA3 HIL 门槛仍受外部条件阻塞；当前转入 A5
-资源生命周期守恒；template/resource-report 验收已由 `hisi-rs-template
+均已完成 QEMU/HIL parity。pure-WPA3 HIL 门槛仍受外部条件阻塞；A5 host-side
+cancellation conservation 已闭合，当前转入 bounded-response 收口；template/resource-report 验收已由 `hisi-rs-template
 v0.7.0-alpha.9` 闭合。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -15,8 +15,8 @@ v0.7.0-alpha.9` 闭合。跨计划优先级和依赖以
 A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
 已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛因缺少 SAE-only AP 标为
 **外部阻塞门槛**；A5F 的无板 facade/release、A5B 的 opt-in 增量原型和 A5U typed-error
-QEMU/HIL parity 已完成，当前 active milestone 是不依赖 pure-WPA3 AP 的 A5 资源生命周期
-守恒；template/resource-report 已完成可执行验收。
+QEMU/HIL parity 已完成，当前 active milestone 是不依赖 pure-WPA3 AP 的 A5 bounded-response
+收口；host-side 资源生命周期守恒和 template/resource-report 已完成可执行验收。
 每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
 
 目标架构参考 esp-rs 的
@@ -48,8 +48,8 @@ deterministic host interleaving、真实 scan/connect/disconnect work-budget 证
 adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
 memory admission、association rejection/first-EAPOL timeout 的生产构造路径、
 operation-level cancellation/backend-timeout injection，以及 resource/generic stable-class
-的目标序列化均已闭合。当前只推进 A5 resource ownership/conservation 的 deterministic
-negative tests；template/resource-report 已完成可执行验收，不改当前验证过的 WS63 blocking
+的目标序列化均已闭合。resource ownership/conservation 的 deterministic negative test
+和 template/resource-report 已完成；当前只推进 A5 bounded-response 的可量化验收，不改当前验证过的 WS63 blocking
 backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
 ### 已完成 -- A3 收口
@@ -1450,13 +1450,27 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 
 #### A5 验收
 
-- [ ] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
+- [x] 任一 backend step 在声明的 work budget 内返回；connect/SAE/EAPOL 等长操作期间，
   control cancellation、L2 RX/TX、timer 和 diagnostics 均能获得可量化的最大响应时间。
-- [ ] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
+  同一 transition-profile 镜像 20 次 nRST 中每次 100 ms budget 均无越界，runner step
+  最大 34--38 ms，最长 association ioctl 为 32 ms，queue/event drop 和 backend error
+  均为 0。该结果是当前固定 profile 的迁移上界，不扩大成任意 callback 或其他芯片的
+  公共实时保证。证据见
+  [A5B transition work-budget evidence](evidence/ws63-rf-a5b-transition-work-budget-2026-07-28.md)。
+- [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
   completion 不可观察为新操作成功；loom/Kani/TLA+ 是否使用按对应状态机风险决定，但不能
-  只靠 happy-path unit test。
-- [ ] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
+  只靠 happy-path unit test。提交 `26757c2` 通过生产 incremental adapter/driver 执行
+  key-held connect、replacement queue、cancel、late `AUTHORIZED`、final `DISCONNECTED` 和
+  generation-reuse 的对抗序列；WPA2/WPA3 host profile 分别通过 86/91 项测试，RV32 check
+  同时通过。证据见
+  [A5 incremental resource conservation](evidence/ws63-rf-a5-resource-conservation-2026-07-28.md)。
+- [x] `hisi-rtos` 通过完整 RF runtime conformance suite 和 invalid-context negative tests；
   archive compatibility suite、generic runtime suite 与真机 HIL 三层证据分开报告。
+  contract v1.1 的 22 个共享场景、production-core 56 项 host tests、Kani/TLA+ resource
+  lifecycle，以及 20/20 `A5R_RESOURCE_LIFECYCLE_OK` 真机矩阵已经分别留存；archive
+  priority/tick/return-code profile 仍由 hash-bound compatibility manifest 单独约束。
+  证据见
+  [A5R resource-lifecycle evidence](evidence/ws63-rtos-a5r-resource-lifecycle-2026-07-28.md)。
 - [x] 独立生成的 WS63 consumer manifest 在 RF 相关依赖中只列 `hisi-rf`，并以
   `features = ["chip-ws63", "profile-wifi-wpa3-smoltcp"]` 在三种开发主机上完成
   plain `cargo build`；最终 dependency graph 可含传递的 `hisi-rf-ws63`/
