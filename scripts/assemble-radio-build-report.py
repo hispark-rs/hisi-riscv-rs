@@ -20,6 +20,7 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v3",
     "hisi-rf-resource-report/v4",
     "hisi-rf-resource-report/v5",
+    "hisi-rf-resource-report/v6",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -59,6 +60,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if resource["schema"] in {
         "hisi-rf-resource-report/v4",
         "hisi-rf-resource-report/v5",
+        "hisi-rf-resource-report/v6",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -66,11 +68,59 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
                 raise ValueError(
                     f"resource report v4 requires non-negative integer {key}"
                 )
-    if resource["schema"] == "hisi-rf-resource-report/v5":
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v5",
+        "hisi-rf-resource-report/v6",
+    }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
             raise ValueError(
-                "resource report v5 requires positive integer shared_rf_arena_bytes"
+                f"resource report {resource['schema'].rsplit('/', 1)[-1]} "
+                "requires positive integer shared_rf_arena_bytes"
+            )
+    if resource["schema"] == "hisi-rf-resource-report/v6":
+        positive_keys = (
+            "event_capacity",
+            "caller_owned_bytes",
+            "control_storage_bytes",
+            "radio_state_bytes",
+            "crypto_dma_bytes",
+            "arena_storage_bytes",
+            "main_stack_bytes_required",
+            "dynamic_tasks_required",
+        )
+        non_negative_keys = (
+            "composition_handle_bytes",
+            "linker_packet_ram_bytes",
+        )
+        for key in positive_keys:
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                raise ValueError(
+                    f"resource report v6 requires positive integer {key}"
+                )
+        for key in non_negative_keys:
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ValueError(
+                    f"resource report v6 requires non-negative integer {key}"
+                )
+        if (
+            resource["caller_owned_bytes"]
+            != resource["control_storage_bytes"] + resource["arena_storage_bytes"]
+        ):
+            raise ValueError(
+                "resource report v6 caller_owned_bytes must equal "
+                "control_storage_bytes + arena_storage_bytes"
+            )
+        if resource["arena_storage_bytes"] < resource["shared_rf_arena_bytes"]:
+            raise ValueError(
+                "resource report v6 arena_storage_bytes must cover "
+                "shared_rf_arena_bytes"
+            )
+        if not isinstance(resource.get("runtime_resources_calibrated"), bool):
+            raise ValueError(
+                "resource report v6 requires boolean runtime_resources_calibrated"
             )
     missing = [key for key in PLAN_KEYS if key not in plan]
     if missing:
@@ -123,16 +173,26 @@ def self_test() -> None:
         resource_path.write_text(
             json.dumps(
                 {
-                    "schema": "hisi-rf-resource-report/v5",
+                    "schema": "hisi-rf-resource-report/v6",
                     "profile": "wifi-wpa2-smoltcp",
                     "profile_revision": "fixture-v1",
                     "runtime_contract": "hisi-rf-rtos-driver/v1.4-ported-cooperative",
                     "task_admission": "owner-bound-slot-stack-reservation",
                     "main_stack_bytes_required": 0x8000,
+                    "event_capacity": 8,
+                    "caller_owned_bytes": 311_712,
+                    "control_storage_bytes": 8_544,
+                    "composition_handle_bytes": 0,
+                    "radio_state_bytes": 2_168,
+                    "crypto_dma_bytes": 6_336,
+                    "arena_storage_bytes": 303_168,
+                    "linker_packet_ram_bytes": 0x24000,
+                    "dynamic_tasks_required": 6,
                     "runtime_internal_tasks": 2,
                     "task_stack_bytes": 6 * 24 * 1024,
                     "shared_rf_arena_bytes": 296 * 1024,
                     "flash_bytes": None,
+                    "runtime_resources_calibrated": False,
                 }
             ),
             encoding="utf-8",
@@ -160,6 +220,7 @@ def self_test() -> None:
         )
         assert persisted["resource"]["task_stack_bytes"] == 6 * 24 * 1024
         assert persisted["resource"]["shared_rf_arena_bytes"] == 296 * 1024
+        assert persisted["resource"]["caller_owned_bytes"] == 311_712
         assert persisted["artifact"]["elf_name"] == elf.name
         assert persisted["artifact"]["image_name"] == image.name
         assert str(root) not in output.read_text(encoding="utf-8")
@@ -174,7 +235,7 @@ def self_test() -> None:
             raise AssertionError("mismatched FlashPlan image_len was accepted")
 
         resource = load_object(resource_path, "resource report")
-        resource["schema"] = "hisi-rf-resource-report/v6"
+        resource["schema"] = "hisi-rf-resource-report/v7"
         resource_path.write_text(json.dumps(resource), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)
