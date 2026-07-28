@@ -3,8 +3,9 @@
 ## 状态
 
 **执行中 / P0。** A5B 非默认增量 backend 原型已闭合，不切换当前默认 backend。A5U
-的 caller-owned storage、task-stack/shared-arena 静态准入和 init/scan HIL 已闭合；当前唯一
-主要 WIP 是 A5U typed-error 的 QEMU/HIL parity。
+的 caller-owned storage、task-stack/shared-arena 静态准入和 init/scan HIL 已闭合；
+association rejection 与 first-EAPOL timeout 的生产构造路径也已完成 QEMU/HIL parity；
+当前唯一主要 WIP 是 A5U operation-level cancellation/backend-timeout injection。
 pure-WPA3 HIL 门槛仍受外部条件阻塞。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -43,9 +44,10 @@ transition-mode 证据已闭合，pure-WPA3 只等待外部 AP 条件。A5F 已�
 标准 relocation 与三平台 crates.io-only consumer；A5B 已闭合 opt-in core protocol、
 deterministic host interleaving、真实 scan/connect/disconnect work-budget 证据和非默认
 adapter。A5U 的 caller-owned storage、task-stack/shared-arena profile 和初始化前
-memory admission 已闭合；当前只推进 association rejection、first-EAPOL timeout、
-cancel/resource/backend timeout 的 QEMU/HIL stable-class parity，不改当前验证过的 WS63
-blocking backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5U 并行。
+memory admission、association rejection/first-EAPOL timeout 的生产构造路径 QEMU/HIL
+parity，以及 resource/generic stable-class 的目标序列化均已闭合；当前只推进
+operation-level cancellation/backend-timeout injection，不改当前验证过的 WS63 blocking
+backend。BLE、SLE、TLS、SoftAP 和 Enterprise 不与当前 A5U 并行。
 
 ### 已完成 -- A3 收口
 
@@ -1377,8 +1379,9 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   deterministic JSON 和 secret-redaction tests。vendor raw status、IEEE 802.11 status、hostap
   status 与 disconnect reason 使用不同 trace kind；WS63 status 30 映射到 PMF，association
   success 后 first-EAPOL stall 映射到 EAPOL，未知和负 status 均保真上报，不从 packed code 反推。
-  association rejection、first-EAPOL timeout、cancel/resource/backend timeout 的完整 fixture
-  matrix 及 host/QEMU/HIL stable-class parity 尚未闭合，因此本项保持未完成。
+  association rejection、first-EAPOL timeout、cancel/resource/backend timeout 的 fixture
+  matrix和目标序列化 parity 已闭合；真实 operation-level cancellation/backend-timeout
+  injection 尚未闭合，因此本项保持未完成。
 - [x] **闭合 host typed-error fixture parity**：`hisi-rf-core` 的公开 fixture matrix 覆盖
   association rejection、first-EAPOL timeout、cancel、resource shortage 和 runtime/backend
   timeout；`hisi-rf-ws63` commit `27af8f0` 又把 status 30/PMF rejection 与“association 成功但
@@ -1398,9 +1401,15 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `required=303104`、`available=0` 两项有界 trace；错误在 RF 电源和 blob 启动前产生，不需要
   AP 或凭据。3 MHz 完整 verify 的真机下载为 2.28 秒。backend main/publish runs
   `30320681798`/`30320859956`，facade main/publish runs
-  `30320968688`/`30321264555` 均通过。剩余 parity 范围因此收窄为 association rejection/
-  first-EAPOL timeout 的 production source path，以及 cancel/backend timeout 的
-  operation-level injection。
+  `30320968688`/`30321264555` 均通过。association rejection/first-EAPOL 子项随后由
+  `hisi-rf-ws63 0.1.0-alpha.30` 闭合：隐藏的 firmware-only fixture 直接调用生产 connect
+  loop 使用的 builder，不在 example 复制 status/stage 规则；同一 RV32 ELF 在 QEMU 与真实
+  WS63 上逐字输出 status 30/PMF 和 association-success/no-first-EAPOL/EAPOL timeout 的
+  stable code、recovery action、profile revision 与 bounded trace。3 MHz 完整 verify 下载为
+  2.65 秒。backend main/publish runs `30334902194`/`30335131492`、facade main/publish
+  runs `30335307515`/`30335653352` 均通过。该证据不冒充 live AP failure injection；
+  当前只剩 cancel/backend timeout 的 operation-level injection。完整边界见
+  [A5U connect-error source-path parity evidence](evidence/ws63-rf-a5u-connect-error-source-path-parity-2026-07-28.md)。
 - [x] **闭合通用 cancellation/backend-timeout 目标序列化 parity**：凭据无关的 production
   diagnostic fixture 在 QEMU 和真实 WS63 上逐字输出相同的
   `operation.cancelled`/`backend.timeout`、stage、recovery action、numeric backend code、

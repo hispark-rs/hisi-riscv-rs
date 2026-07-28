@@ -47,6 +47,11 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   and `hisi-rf 0.1.0-alpha.30` with secret-free, stage-level
   bootstrap metrics exposed through the safe facade. The default backend and
   blocking vendor initialization semantics remain unchanged.
+- **Actionable RF diagnostics** — publish `hisi-rf-ws63 0.1.0-alpha.30` and
+  `hisi-rf 0.1.0-alpha.40` with credential-free RV32/QEMU/WS63 parity for the
+  production association-rejection and first-EAPOL-timeout diagnostic builders.
+  The remaining A5U gate is real operation-level cancellation/backend-timeout
+  injection, not JSON or target serialization.
 
 ### Verification
 
@@ -62,6 +67,8 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   incremental builds, independent packaging, and Linux/macOS/Windows final
   linking; the facade additionally passes six crates.io-only consumer lanes,
   offline read-only registry rebuilds, and concurrent profile builds.
+- The same typed-error fixture emits identical PMF status-30 and EAPOL-timeout
+  diagnostics in QEMU and on WS63 after a 3 MHz fully verified download.
 
 ---
 
