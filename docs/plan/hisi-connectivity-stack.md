@@ -5,10 +5,11 @@
 **执行中 / P0。** A5F 单依赖 facade、A5B 非默认增量 backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
-release-train response-bound 和严格 QEMU/HIL marker contract 已经闭合，真实
+release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
 controller/connect/control source-path failure injection 也已在 host、QEMU 和真机闭合。
-当前执行槽位转入 A5UX 公共 API 形态收敛；pure-WPA3 HIL 另受外部条件阻塞。剩余门槛闭合前
-不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
+后续 unchanged-image 矩阵复现了 DHCP 成功后的数据面全丢反例，因此当前执行槽位重新收敛
+A5B 数据面可靠性，并并行完成不改变运行行为的 A5UX 诊断 API 收窄；pure-WPA3 HIL 另受
+外部条件阻塞。剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
@@ -46,10 +47,15 @@ transition-mode 证据已闭合，pure-WPA3 等待外部 AP 条件。A5 已交�
 relocation、三平台 consumer、opt-in incremental protocol、caller-owned resources、
 typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
 
-1. 公开 `wifi_connectivity` 已把 A5B 与完整 connectivity contract 收敛到同一最终
-   release-train ELF；`hil/ws63-a5b-response-bound.sh` 已用“一次烧录、20 次 nRST、
-   同一 ELF identity、100 ms fail-closed 上界”取得 20/20 结果。control、L2、timer、
-   diagnostics、DHCP renew 和重复 ping 均在同一证据中闭合。
+1. 公开 `wifi_connectivity` 已把 A5B 与完整 connectivity contract 收敛到同一
+   release-train ELF；较早矩阵曾取得 20/20，但 2026-07-29 的后续 unchanged-image
+   20-reset 矩阵只有 18/20 完整通过。两次失败均为 scan/connect/WPA/DHCP 成功后，
+   gateway 与 public ICMP 同时 `0/5`；20 轮均无 auth-response-2 timeout、event drop、
+   FRW 同步消息 timeout 或 DHCP 失败。当前同网段 Mac 强制 Wi-Fi interface 的 reference
+   为 gateway `20/20`、public `18/20`，所以 public loss 可归环境，target gateway
+   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v3` 已把 TX/RX、vendor TX
+   failure、ICMP/DHCP seam 和 IRQ 40/44/45 纳入统一 post-ping snapshot；必须用同一
+   镜像复现并闭合反例后，才能恢复 A5B 20/20 完成声明。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 已执行相同 marker contract，缺 marker、非零 drop/error、budget
@@ -1572,13 +1578,22 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   验证见
   [A5UX instance-owned L2 capability evidence](
   evidence/ws63-rf-a5ux-instance-l2-capabilities-2026-07-29.md)。
-- [ ] 提供 facade-owned、allocation-free 的统一只读诊断快照，组合 runner、wait、event、
+- [x] 提供 facade-owned、allocation-free 的统一只读诊断快照，组合 runner、wait、event、
   blocking-call 和 resource 指标；现有细粒度诊断方法可作为内部来源，但不得要求应用用全局
   `Mutex<Cell<Option<_>>>` 拼装一致快照。快照 schema 必须版本化、secret-redacted，并与
   `hisi-rf-error/v3` 和 resource report 保持单向引用，不能复制第二份错误分类事实源。
-- [ ] 将最终用户 happy path 的可恢复初始化、配置和连接错误改为 typed `Result` 控制流；
+  `hisi-rf 7aac78b` 将 schema 升级为 `hisi-rf-radio-diagnostics/v3`，统一包含
+  runner、control、wait、event、blocking-call、resource、RX queue、DHCP 以及 TX/RX/IRQ
+  data-path counters；`ws63-examples f705a9a` 的 post-ping 诊断只消费该 facade snapshot，
+  不再自行拼装第二条全局诊断路径。WPA2/WPA3 API snapshot parity、host tests、RV32
+  check 和 clippy 均通过；目标端 v3 计数矩阵仍属于上面重新打开的 A5B 可靠性 gate。
+- [x] 将最终用户 happy path 的可恢复初始化、配置和连接错误改为 typed `Result` 控制流；
   HIL fixture 可以在记录结构化错误后 `halt`，但教程/template 不应把所有资源不足或网络失败
   展示为 `expect`/panic。panic 只保留给违反静态/unsafe contract 的不可恢复状态。
+  `hisi-rs-template 821e5b5` 将配置、caller-owned storage、RTOS 启动、radio operation
+  和 application deadline 失败统一为版本化、可执行下一步的诊断后停机；panic/expect
+  只保留 scheduler contract、固定容量和初始化后硬件状态等不变量。CI 生成真实 WS63 Wi-Fi
+  项目并禁止恢复为旧 panic 文案，独立 crates.io 依赖项目的 RV32 release check 已通过。
 - [ ] WS63 runtime port 的用户级启动形态不在本节重复设计；按
   [RTOS 未来架构 F2/F3](hisi-rtos-future-architecture.md#延期里程碑) 收敛为
   `hisi_rtos::ws63::start(...)`、caller-owned `SchedulerStorage<N>` 与 Embassy adapter，
@@ -1614,10 +1629,11 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   A5B trailer 本身即 contract violation，且 `connectivity` 阶段也执行同一上界检查；
   长生命周期 IP runner 不要求仅 `connect` 阶段使用的 disconnect timing。专用
   `hil/ws63-a5b-response-bound.sh` 构建公开 `wifi_connectivity` 示例，并在同一最终
-  ELF 上同时执行 A5B 上界与完整 connectivity contract；2026-07-29 的最终矩阵冻结
-  release closure 与 ELF/profile identity、只烧录一次并执行 20 次 J-Link nRST，取得
+  ELF 上同时执行 A5B 上界与完整 connectivity contract；2026-07-29 的首轮矩阵冻结
+  release closure 与 ELF/profile identity、只烧录一次并执行 20 次 J-Link nRST，曾取得
   20/20 pass、零 auth response-2 timeout、零 event drop/runner error，runner step 最大
-  81 ms，association ioctl 最大 31 ms。证据见
+  81 ms，association ioctl 最大 31 ms。后续矩阵出现上面记录的 18/20 反例，因此该证据
+  只保留为成功基线，不再单独关闭数据面可靠性 gate。原始基线见
   [A5 final connectivity and response-bound evidence](
   evidence/ws63-rf-a5-final-connectivity-2026-07-29.md)。
 - [x] host 测试证明操作取消不会泄漏 owner、queue slot、timer 或 key state，旧 generation 的
@@ -1689,8 +1705,10 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   `hisi-rf 0.1.0-alpha.48` 组合完整增量 runner、scan/connect、smoltcp DHCP、gateway/public
   五次 ping 与 lease renew；WPA2/WPA3 release link、37 项 ROM patch、零 vendor relocation
   和 native-supplicant/legacy-boundary 检查均已通过。2026-07-29 的同一最终 ELF 又完成
-  20 次 unchanged-image nRST：init/scan/connect/DHCP/renew/repeated-ping marker 全部
-  通过，artifact identity 一致，且 parser 离线复算与在线分类同为 20/20。
+  20 次 unchanged-image nRST：init/scan/connect/DHCP/renew/repeated-ping marker 曾全部
+  通过，artifact identity 一致，且 parser 离线复算与在线分类同为 20/20。后续同路径
+  18/20 反例重新打开了数据面 gate；parser/identity contract 仍有效，但不能把分类器正确
+  识别失败误写成 RF 行为已稳定。
   证据见
   [A5 marker and artifact contract](evidence/ws63-rf-a5-marker-contract-2026-07-28.md)
   和
