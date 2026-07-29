@@ -275,14 +275,19 @@ DMI transport 阶段失败；它没有启动本次固件，也不计入 connecti
 - 20 次 `auth_rsp2_timeouts=0`，没有复现上一轮 scan operation timeout；
 - 1 次 `local_data_path_failure`，没有独立的 public-only ICMP loss 失败轮。
 
-失败的 run 10 已完成 scan、WPA2 connect 和 DHCP，但没有出现 neighbor-confirmed
-marker；gateway 与 AliDNS 均为 `0/5`。该轮 TX submission/complete、DMAC RX、
+失败的 run 10 已完成 scan、WPA2 connect 和 DHCP，但没有出现旧
+`RF5A_ARP_OK` marker；gateway 与 AliDNS 均为 `0/5`。该 marker 实际在收到首个
+ICMP reply 时输出，不是 ARP reply 或 neighbor cache 的直接观测，因此它的缺失不能
+证明 ARP reply 一定没有到。该轮 TX submission/complete、DMAC RX、
 vendor RX、WLMAC RX 和 IRQ45 都非零，STA/BSSID identity 正常，event queue drop
 为 0，ICMP RX 为 0。相邻 run 9/run 11 均为两个目标 `5/5`；同网络 Mac 经明确的
 Wi-Fi 接口到 gateway 也为 `5/5`。因此 run 10 保留为真实的 DHCP 后
-ARP/neighbor/RX 尾部反例，不能降级成公网 ICMP 策略问题。
+本地数据面尾部反例，不能降级成公网 ICMP 策略问题；具体卡在 ARP 还是后续 IPv4
+回包，旧证据无法区分。
 
 脱敏机器证据保存在
 `/private/tmp/ws63-a5b-public-icmp-gate-reset20-20260730-r2/contract`。A5B 仍未达到
-20/20；下一步需要增加 ARP request/reply、neighbor transition 和 L2 frame 分类诊断，
-同时保留 v7 scan snapshot 以捕获旧的 scan timeout。
+20/20。`hisi-rf-ws63 0.1.0-alpha.57` 和 `hisi-rf 0.1.0-alpha.66` 已增加并传播
+双向 ARP request/reply、IPv4、other frame 计数，`ws63-examples 10dee35` 输出
+`RFDBG_A5B_L2`，HIL parser 将其作为可选诊断字段保留。下一轮重复真机矩阵需用这些
+计数捕获反例，同时保留 v7 scan snapshot 以捕获旧的 scan timeout。

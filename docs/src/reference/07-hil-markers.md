@@ -81,10 +81,15 @@ crypto contention 仍使用 `wifi_init_smoke` maintainer fixture。`vendor-wpa2`
 `ws63-RF` release 下载固定 archive（或接受 `WS63_WPA_ARCHIVE`），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。
 
-严格契约按顺序要求 image/init/scan/connect/DHCP/neighbor/public-ping/summary/steady/renew
+严格契约按顺序要求 image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
 阶段及对应 `A4_RADIO_EVENT`；缺失或乱序 marker、fatal marker、非零内部 queue drop /
-TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP 允许有可量化丢包，
-但必须有非零回复；gateway 不回应仍按已记录的 AP 环境边界处理。构建后先冻结
+TX error / backend error、A5B runner budget 越界都会失败。当前本地硬门槛是 DHCP
+成功且 gateway 至少回复一次；公网 AliDNS ICMP 仅输出 TX/RX/loss 观测，`0/5` 不会
+单独令 HIL 失败。后续公网硬门槛将改为校验 transaction id 与合法响应的 UDP DNS
+查询，而不是依赖公共服务是否回复 ICMP。旧 `RF5A_ARP_OK` 是由首个 ICMP reply
+推导 neighbor 已可用的兼容 marker，不是 ARP cache 的直接快照；v8
+`RFDBG_A5B_L2` 另行记录双向 ARP request/reply、IPv4 与 other frame 计数，供失败
+归因，但在重复硅片证据闭合前不单独升级为硬门槛。构建后先冻结
 `hisi-connectivity-artifact/v1`（profile、ELF SHA-256、marker contract），解析前再次复核；
 不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
 `EVIDENCE_DIR`，含凭据的临时 ELF/target 仍在退出时删除。
@@ -109,7 +114,7 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 | `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的 `0600` 普通文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，默认保留且不能与直接环境变量混用 |
 | `WS63_WIFI_ENV_FILE_DISPOSITION` | `keep` | `keep` 保留本机凭据供后续复用；`delete` 在成功读取后删除真正的一次性文件 |
 | `WS63_CONNECTIVITY_PROFILE` | `upstream-wpa2` | `upstream-wpa2` / `upstream-wpa3` / `vendor-wpa2`；正式 upstream 验证使用公开 facade 的 plain Cargo lane |
-| `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
+| `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/local gateway/summary/renew gate并记录公网 ICMP；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
 | `PROBE_SPEED` | `3000` | connectivity lane 已验证的 WS63 download 速率；始终保留完整 readback verify，失败再显式降到 1000/500 kHz |

@@ -73,11 +73,15 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    随后的同镜像 20-reset 矩阵得到 19 次完整连接、gateway `95/95`、公网 `86/95`，
    另有 1 次两次 scan attempt 均 operation timeout。加入 v7 scan snapshot 并发布
    public-ICMP 重分类后，新一轮 20-reset 没有复现 scan timeout，但只有 19/20 通过：
-   gateway `94/100`、AliDNS ICMP `92/100`；run 10 完成 scan/connect/DHCP 后没有确认
-   neighbor，gateway/public 均 `0/5`，属于 `local_data_path_failure`。两轮都没有
-   auth-response-2 timeout。当前必须同时保留 scan reliability 和本地 ARP/RX 尾部风险：
-   前者用 v7 scan snapshot 定位，后者需要增加 ARP/neighbor 与 L2 frame 分类诊断，
-   均不能用增加盲目重试或放宽公网 ICMP 门槛掩盖。
+   gateway `94/100`、AliDNS ICMP `92/100`；run 10 完成 scan/connect/DHCP 后
+   gateway/public 均 `0/5`，属于 `local_data_path_failure`。旧
+   `RF5A_ARP_OK` 实际由首个 ICMP reply 触发，因此该轮只能证明没有 ICMP reply，
+   不能倒推出 ARP reply 一定没有到。两轮都没有 auth-response-2 timeout。当前必须
+   同时保留 scan reliability 和本地 ARP/RX 尾部风险：前者用 v7 scan snapshot
+   定位；`hisi-rf-radio-diagnostics/v8` 已增加双向 ARP request/reply、IPv4 和
+   other frame 分类计数，示例输出 `RFDBG_A5B_L2`，下一轮同镜像矩阵将用它区分
+   ARP 未完成与 ARP 后 IPv4 回包缺失。新计数尚未为旧反例提供真机归因，不能用
+   增加盲目重试或放宽公网 ICMP 门槛掩盖。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1190,9 +1194,12 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   timeout/retry 边界输出 native start/result/done、queue pending/drop 和 vendor
   active/done/status。随后 public-ICMP 重分类 release 的 20-reset 矩阵没有复现 scan
   timeout，但为 19/20：gateway `94/100`、AliDNS ICMP `92/100`，run 10 在 DHCP 后
-  neighbor 未确认且两个目标均 `0/5`，明确归为 `local_data_path_failure`。下一步应补
-  ARP request/reply、neighbor state 和 L2 frame 分类诊断，同时保留 v7 scan snapshot；
-  不增加总 timeout 或盲目 retry。
+  两个目标均 `0/5`，明确归为 `local_data_path_failure`。旧 marker 是由 ICMP reply
+  推导 neighbor，而不是 ARP/neighbor cache 的直接观测，因此不能把该轮进一步写成
+  “ARP reply 未到”。`hisi-rf-ws63 0.1.0-alpha.57` 与 `hisi-rf
+  0.1.0-alpha.66` 已发布 v8 L2 分类快照，`ws63-examples 10dee35` 输出
+  `RFDBG_A5B_L2`；重复真机矩阵仍待执行，同时保留 v7 scan snapshot，不增加总
+  timeout 或盲目 retry。
 - [ ] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
   发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
   冗余。DNS gate 落地前，DHCP + gateway reply 是临时本地硬门槛，公网 ICMP 丢包只计入

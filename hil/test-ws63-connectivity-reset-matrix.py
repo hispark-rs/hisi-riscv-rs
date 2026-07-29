@@ -70,7 +70,7 @@ def connectivity_success_log() -> bytes:
             b"W2D_WPA2_CONNECT_OK",
             b"A4_RADIO_EVENT kind=connected",
             b"RF5A_DHCP_OK addr=192.0.2.2",
-            b"RF5A_ARP_OK mode=smoltcp-neighbor-cache",
+            b"RF5A_ARP_OK evidence=icmp-reply-implies-neighbor",
             b"RF5C_LOCAL_DATA_PATH_OK gateway_rx=0x00000001 gateway_tx=0x00000005",
             (
                 b"RF5C_PING_TIMEOUT target=223.5.5.5 tx=0x00000005 rx=0x00000000 "
@@ -81,6 +81,11 @@ def connectivity_success_log() -> bytes:
                 b"gateway_rx=0x00000001 public_tx=0x00000005 "
                 b"public_rx=0x00000000 rx_queue_drop=0x00000000"
             ),
+            (
+                b"RFDBG_A5B_L2 rx_arp_req=0x00000001 rx_arp_reply=0x00000001 "
+                b"rx_ipv4=0x00000004 rx_other=0x00000000 tx_arp_req=0x00000001 "
+                b"tx_arp_reply=0x00000000 tx_ipv4=0x0000000c tx_other=0x00000000"
+            ),
             b"A4_NET_RUNNER_STEADY lease=managed neighbor_cache=managed",
             b"A4_DHCP_RENEW_OK client=0x00000001 server=0x00000001",
         )
@@ -88,6 +93,29 @@ def connectivity_success_log() -> bytes:
 
 
 class ClassifyTests(unittest.TestCase):
+    def test_connectivity_record_keeps_l2_protocol_diagnostics(self) -> None:
+        record = MATRIX.record_from_log(
+            1,
+            connectivity_success_log(),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+        )
+        self.assertEqual(
+            record["l2_protocol"],
+            {
+                "rx_arp_req": 1,
+                "rx_arp_reply": 1,
+                "rx_ipv4": 4,
+                "rx_other": 0,
+                "tx_arp_req": 1,
+                "tx_arp_reply": 0,
+                "tx_ipv4": 12,
+                "tx_other": 0,
+            },
+        )
+
     def test_pure_wpa3_gate_accepts_matching_success(self) -> None:
         log = b"\n".join(
             (

@@ -134,6 +134,16 @@ RUST_FATAL_MARKERS = (
 
 QEMU_CONTRACT_FIXTURE_MARKER = b"RFDBG_CONNECTIVITY_CONTRACT_FIXTURE"
 PUBLIC_ICMP_OBSERVATION_TARGET = "223.5.5.5"
+L2_PROTOCOL_FIELDS = (
+    "rx_arp_req",
+    "rx_arp_reply",
+    "rx_ipv4",
+    "rx_other",
+    "tx_arp_req",
+    "tx_arp_reply",
+    "tx_ipv4",
+    "tx_other",
+)
 
 RUST_STAGE_MARKERS = {
     "init-scan": (
@@ -654,6 +664,15 @@ def parse_a5b_metrics(
     return metrics
 
 
+def parse_l2_protocol_diagnostics(log: bytes) -> dict[str, int] | None:
+    """Parse the optional bounded Ethernet protocol-class snapshot."""
+    line = last_prefixed_line(log, b"RFDBG_A5B_L2 ")
+    if line is None:
+        return None
+    fields = parse_hex_fields(line)
+    return {field: fields[field] for field in L2_PROTOCOL_FIELDS if field in fields}
+
+
 def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object] | None:
     parsed = [
         metrics
@@ -933,6 +952,7 @@ def record_from_log(
         "ap_mode": detected_ap_mode(log),
         "ping": parse_ping_summaries(log),
         "public_icmp_observation": public_icmp_observation,
+        "l2_protocol": parse_l2_protocol_diagnostics(log),
         "a5b_metrics": parse_a5b_metrics(
             log,
             require_disconnect=stage == "connect",
