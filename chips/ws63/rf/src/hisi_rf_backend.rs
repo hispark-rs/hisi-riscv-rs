@@ -153,7 +153,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             .map_err(map_native_error)?;
 
         let scan = match self.wifi.as_mut() {
-            Some(wifi) => wifi.scan(&mut self.scans, config.timeout_ms()),
+            Some(wifi) => wifi.scan(&mut self.scans, config.operation_timeout().as_millis()),
             None => {
                 #[cfg(feature = "upstream-supplicant-port")]
                 if let Some(supplicant) = self.supplicant.as_mut() {
@@ -266,7 +266,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                     }
                 }
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at)
-                    >= config.timeout_ms() as u64
+                    >= config.operation_timeout().as_millis() as u64
                 {
                     if let Some(status) = last_disconnect_status {
                         let code = emit_backend_failure(supplicant, status);
@@ -277,7 +277,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                     let port_diagnostic = crate::upstream_supplicant::diagnostic_word();
                     let _ = supplicant.disconnect();
                     return Err(BackendError::new(
-                        BackendErrorClass::Timeout,
+                        BackendErrorClass::OperationTimeout,
                         0x8000_0000
                             | ((last_event_kind as u32 & 0x7) << 28)
                             | ((context_diagnostic & 0x0fff) << 16)
@@ -311,7 +311,7 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                 config.security(),
             )
             .map_err(map_error)?;
-            wifi.connect(&network, config.timeout_ms())
+            wifi.connect(&network, config.operation_timeout().as_millis())
                 .map(to_connection_info)
                 .map_err(map_error)
         }
@@ -340,9 +340,9 @@ impl WifiBackend for Ws63WifiBackend<'static> {
                     }
                 }
                 if crate::uapi::monotonic_ms().wrapping_sub(started_at)
-                    >= config.disconnect_timeout_ms as u64
+                    >= config.disconnect_timeout.as_millis() as u64
                 {
-                    return Err(BackendError::new(BackendErrorClass::Timeout, 2));
+                    return Err(BackendError::new(BackendErrorClass::BackendTimeout, 2));
                 }
                 hisi_rf_rtos_driver::sleep_ms(core::num::NonZeroU32::new(1).unwrap()).map_err(
                     |error| {
@@ -359,8 +359,8 @@ impl WifiBackend for Ws63WifiBackend<'static> {
             self.wifi
                 .as_mut()
                 .ok_or(not_initialized())?
-                .disconnect(config.disconnect_timeout_ms)
-                .map_err(map_error)
+                .disconnect(config.disconnect_timeout.as_millis())
+                .map_err(map_lifecycle_error)
         }
     }
 
@@ -439,7 +439,7 @@ fn map_error(error: Ws63Error) -> BackendError {
     let (class, code) = match error {
         Ws63Error::Initialize(code) => (BackendErrorClass::Initialize, code),
         Ws63Error::Busy => (BackendErrorClass::Busy, 1),
-        Ws63Error::Timeout => (BackendErrorClass::Timeout, 1),
+        Ws63Error::Timeout => (BackendErrorClass::OperationTimeout, 1),
         Ws63Error::UnsupportedSecurity(mode) => {
             (BackendErrorClass::UnsupportedSecurity, mode as u32)
         }
@@ -466,6 +466,15 @@ fn map_error(error: Ws63Error) -> BackendError {
         Ws63Error::UnsupportedTarget => (BackendErrorClass::Other, u32::MAX),
     };
     BackendError::new(class, code)
+}
+
+#[cfg(not(feature = "upstream-supplicant-port"))]
+fn map_lifecycle_error(error: Ws63Error) -> BackendError {
+    if matches!(error, Ws63Error::Timeout) {
+        BackendError::new(BackendErrorClass::BackendTimeout, 1)
+    } else {
+        map_error(error)
+    }
 }
 
 #[cfg(feature = "upstream-supplicant-port")]
