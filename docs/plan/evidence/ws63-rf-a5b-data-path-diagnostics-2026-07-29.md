@@ -185,6 +185,32 @@ vendor RX boundary。r3 又证明失败不是首轮启动特例，并同时保�
 1 MHz 下载和完整 verify 成功，耗时 140.53 s。该事件单列为 probe-rs transport
 可靠性，不计入 Wi-Fi 20-reset 矩阵。
 
+## WLMAC 过滤与地址语义修正
+
+后续自底向上审计确认，原 PAC 将 packed RX filter-control 寄存器误写成了 command
+语义，VAP0 station/BSSID 的 32-bit word 也被诊断层按主机整数顺序解释。修正链保持
+SVD 为寄存器事实源，HAL 只提供无副作用快照，RF 层只输出不泄露地址值的布尔状态：
+
+- `ws63-svd 604a159`：修正 WLMAC filter-control access/命名；
+- `ws63-pac 0.4.3`：重新生成 PAC；
+- `hisi-hal 0.7.0-alpha.6`：按网络字节序解码 station/BSSID；
+- `hisi-rf-ws63 0.1.0-alpha.54`：传播 filter/identity 诊断，
+  `0.1.0-alpha.55` 仅补 minimal profile 的 warning-free release closure；
+- `hisi-rf 0.1.0-alpha.64`：发布公开 facade closure；
+- `ws63-examples 39b7464`：公开 connectivity example 输出新的无秘密 marker。
+
+修正后的最终真机 smoke 得到：
+
+- `path_caps=0x3f`；
+- STA address match 与 BSSID programmed 均为 true；
+- packed RX filter-control 可观测且非零；
+- gateway 和 public ICMP 均为 `5/5`。
+
+这组结果证明诊断链不再因 packed register 语义或地址字节序制造假反例，并关闭该
+寄存器解释子问题。它只有一轮 connectivity smoke，不能覆盖上面的 `18/20`、
+`15/20` 和 PM-off 矩阵，因此 A5B 20-reset reliability gate 继续保持 open；它也不
+构成 pure-WPA3 证据。
+
 原始矩阵证据保存在
 `/private/tmp/ws63-a5b-pm-off-20260729-r2/contract`。本地凭据文件是外部秘密输入，
 不属于证据或仓库内容，并按用户要求继续保留供后续 HIL 使用。

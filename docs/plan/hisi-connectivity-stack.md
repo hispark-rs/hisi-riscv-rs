@@ -56,13 +56,16 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v5` 通过 capability
    mask 明确区分“已测量”和“当前不可观测”：窄诊断已覆盖 smoltcp TX、vendor TX
    submission、DMAC TX completion/RX prepare、vendor/Rust RX、WLMAC RX counters、
-   ICMP/DHCP seam 和 IRQ 40/44/45，当前 `path_caps=0x1f`。PAC/HAL 只读快照加入后的
+   ICMP/DHCP seam、IRQ 40/44/45、packed RX filter control，以及不泄露地址值的
+   STA/BSSID identity 状态，当前 `path_caps=0x3f`。PAC/HAL 只读快照加入后的
    两轮同镜像复测分别为 `18 pass + 2 ping timeout` 和
    `15 pass + 3 connect failure + 2 ping timeout`；失败轮的 WLMAC/DMAC/IRQ 仍持续
    计数。显式关闭 STA power save 的诊断 A/B 为
    `17 pass + 2 connect failure + 1 ping timeout`，没有超出基线波动，也没有消除
    gateway/public 同时全丢，因此省电不是已证实的唯一根因，正常 profile 保持 vendor
-   默认策略。
+   默认策略。随后自 SVD 向上修正 packed filter-control 语义和 VAP0 STA/BSSID
+   网络字节序，最终真机取得 gateway/public 各 `5/5`、STA address match 和 BSSID
+   programmed marker；这只关闭寄存器语义子问题，不替代重复 reset reliability gate。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1160,6 +1163,11 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   IRQ45 均继续增长，而 vendor RX 仅收到少量 DHCP/管理流量，ICMP reply 没有跨过
   vendor RX boundary。这排除了整个 RX engine 静止和 Rust queue drop，但尚不能区分
   AP 未发、关联后过滤/密钥状态、空口丢失或更深的 vendor RX 分类。
+  随后从 SVD/PAC/HAL 向上修正 packed RX filter-control 语义和 VAP0 STA/BSSID
+  网络字节序，并将 capability 扩为 `path_caps=0x3f`。修正后的公开 release-train
+  镜像在真机得到 STA address match、BSSID programmed，以及 gateway/public 各
+  `5/5`；该证据关闭“诊断自身误解寄存器或地址字节序”的子问题，但单轮 smoke
+  不能覆盖此前反例，也不关闭 A5B 20-reset reliability gate。
   关闭 STA power save 的隐藏诊断 feature 已在同一镜像 20 次 nRST 做 A/B；17/20
   完整通过，剩余 2 次 connect failure 和 1 次 ping 全丢，故不能把 PM-off 固化成
   production 默认或公开策略。下一步必须增加不改变关联策略的 attempt/PM/filter
