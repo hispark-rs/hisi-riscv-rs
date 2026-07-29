@@ -133,6 +133,7 @@ RUST_FATAL_MARKERS = (
 )
 
 QEMU_CONTRACT_FIXTURE_MARKER = b"RFDBG_CONNECTIVITY_CONTRACT_FIXTURE"
+PUBLIC_ICMP_OBSERVATION_TARGET = "223.5.5.5"
 
 RUST_STAGE_MARKERS = {
     "init-scan": (
@@ -159,7 +160,7 @@ RUST_STAGE_MARKERS = {
         ("connected_event", (b"A4_RADIO_EVENT kind=connected",)),
         ("dhcp", (b"RF5A_DHCP_OK",)),
         ("neighbor", (b"RF5A_ARP_OK",)),
-        ("public_ping", (b"RF5C_PING_OK target=1.1.1.1",)),
+        ("local_data_path", (b"RF5C_LOCAL_DATA_PATH_OK",)),
         ("summary", (b"RF5C_CONNECTIVITY_SUMMARY",)),
         ("steady", (b"A4_NET_RUNNER_STEADY",)),
         ("dhcp_renew", (b"A4_DHCP_RENEW_OK",)),
@@ -542,19 +543,17 @@ def validate_rust_contract(
             ):
                 if field not in summary:
                     violations.append(f"missing:summary.{field}")
-            if summary.get("public_tx", 0) <= 0:
-                violations.append("invalid:summary.public_tx")
-            if summary.get("public_rx", 0) <= 0:
-                violations.append("invalid:summary.public_rx")
+            if summary.get("gateway_tx", 0) <= 0:
+                violations.append("invalid:summary.gateway_tx")
+            if summary.get("gateway_rx", 0) <= 0:
+                violations.append("invalid:summary.gateway_rx")
             if summary.get("rx_queue_drop", 0) != 0:
                 violations.append("nonzero:summary.rx_queue_drop")
 
-        public_ping = parse_ping_summaries(log).get("1.1.1.1")
+        public_ping = parse_ping_summaries(log).get(PUBLIC_ICMP_OBSERVATION_TARGET)
         if public_ping is not None:
             if int(public_ping.get("tx", 0)) <= 0:
                 violations.append("invalid:public_ping.tx")
-            if int(public_ping.get("rx", 0)) <= 0:
-                violations.append("invalid:public_ping.rx")
             if int(public_ping.get("tx_error", 0)) != 0:
                 violations.append("nonzero:public_ping.tx_error")
             if int(public_ping.get("rx_queue_drop", 0)) != 0:
@@ -745,19 +744,10 @@ def classify(
         return pass_or_contract_violation()
     if stage == "connect" and b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
         return pass_or_contract_violation()
-    public_ping = parse_ping_summaries(log).get("1.1.1.1")
-    if public_ping is not None:
-        tx = int(public_ping.get("tx", 0))
-        rx = int(public_ping.get("rx", 0))
-        if tx > 0 and rx == tx:
-            return pass_or_contract_violation()
-        if rx > 0:
-            return (
-                pass_or_contract_violation()
-                if require_contract
-                else "ping_degraded"
-            )
-        return "ping_timeout"
+    if b"RF5C_LOCAL_DATA_PATH_OK" in log:
+        return pass_or_contract_violation()
+    if b"RF5C_LOCAL_DATA_PATH_ERR" in log:
+        return "local_data_path_failure"
     if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
         return "auth_rsp2_timeout"
     if (
@@ -920,6 +910,12 @@ def record_from_log(
         if require_contract and profile == "rust"
         else []
     )
+    public_ping = parse_ping_summaries(log).get(PUBLIC_ICMP_OBSERVATION_TARGET)
+    public_icmp_observation = "missing"
+    if public_ping is not None:
+        public_icmp_observation = (
+            "ok" if int(public_ping.get("rx", 0)) > 0 else "public_icmp_loss"
+        )
     return {
         "run": run,
         "result": classify(
@@ -936,6 +932,7 @@ def record_from_log(
         + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
         "ap_mode": detected_ap_mode(log),
         "ping": parse_ping_summaries(log),
+        "public_icmp_observation": public_icmp_observation,
         "a5b_metrics": parse_a5b_metrics(
             log,
             require_disconnect=stage == "connect",
@@ -967,9 +964,14 @@ def summarize_records(
     source_dir: Path | None = None,
 ) -> dict[str, object]:
     counts: dict[str, int] = {}
+    public_icmp_observations: dict[str, int] = {}
     for record in records:
         result = str(record["result"])
         counts[result] = counts.get(result, 0) + 1
+        observation = str(record.get("public_icmp_observation", "missing"))
+        public_icmp_observations[observation] = (
+            public_icmp_observations.get(observation, 0) + 1
+        )
 
     ping_totals: dict[str, dict[str, int]] = {}
     for record in records:
@@ -1001,6 +1003,7 @@ def summarize_records(
         "timeout_seconds": timeout,
         "post_terminal_seconds": post_terminal_seconds,
         "counts": counts,
+        "public_icmp_observations": public_icmp_observations,
         "ping_totals": ping_totals,
         "auth_rsp2_timeouts": sum(
             int(record["auth_rsp2_timeouts"]) for record in records

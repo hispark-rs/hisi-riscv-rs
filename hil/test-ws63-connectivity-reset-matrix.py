@@ -71,14 +71,15 @@ def connectivity_success_log() -> bytes:
             b"A4_RADIO_EVENT kind=connected",
             b"RF5A_DHCP_OK addr=192.0.2.2",
             b"RF5A_ARP_OK mode=smoltcp-neighbor-cache",
+            b"RF5C_LOCAL_DATA_PATH_OK gateway_rx=0x00000001 gateway_tx=0x00000005",
             (
-                b"RF5C_PING_OK target=1.1.1.1 tx=0x00000005 rx=0x00000004 "
-                b"drop=0x00000001 tx_error=0x00000000 rx_queue_drop=0x00000000"
+                b"RF5C_PING_TIMEOUT target=223.5.5.5 tx=0x00000005 rx=0x00000000 "
+                b"drop=0x00000005 tx_error=0x00000000 rx_queue_drop=0x00000000"
             ),
             (
                 b"RF5C_CONNECTIVITY_SUMMARY gateway_tx=0x00000005 "
-                b"gateway_rx=0x00000000 public_tx=0x00000005 "
-                b"public_rx=0x00000004 rx_queue_drop=0x00000000"
+                b"gateway_rx=0x00000001 public_tx=0x00000005 "
+                b"public_rx=0x00000000 rx_queue_drop=0x00000000"
             ),
             b"A4_NET_RUNNER_STEADY lease=managed neighbor_cache=managed",
             b"A4_DHCP_RENEW_OK client=0x00000001 server=0x00000001",
@@ -235,6 +236,10 @@ class ClassifyTests(unittest.TestCase):
             reference_ping=None,
         )
         self.assertEqual(record["result"], "pass")
+        self.assertEqual(record["public_icmp_observation"], "public_icmp_loss")
+        self.assertEqual(
+            summary["public_icmp_observations"], {"public_icmp_loss": 1}
+        )
         self.assertTrue(record["a5b_metrics"]["complete"])
         self.assertEqual(record["a5b_metrics"]["missing"], [])
         self.assertEqual(summary["a5b_metrics"]["complete_runs"], 1)
@@ -251,6 +256,36 @@ class ClassifyTests(unittest.TestCase):
                 require_contract=True,
             ),
             "pass",
+        )
+
+    def test_public_icmp_loss_does_not_fail_local_connectivity(self) -> None:
+        log = connectivity_success_log()
+        self.assertEqual(
+            MATRIX.classify(
+                log,
+                "rust",
+                "connectivity",
+                require_contract=True,
+            ),
+            "pass",
+        )
+
+    def test_gateway_loss_is_a_local_data_path_failure(self) -> None:
+        log = (
+            connectivity_success_log()
+            .replace(
+                b"RF5C_LOCAL_DATA_PATH_OK gateway_rx=0x00000001",
+                b"RF5C_LOCAL_DATA_PATH_ERR gateway_rx=0x00000000",
+            )
+            .replace(b"gateway_rx=0x00000001", b"gateway_rx=0x00000000")
+        )
+        self.assertEqual(
+            MATRIX.classify(log, "rust", "connectivity"),
+            "local_data_path_failure",
+        )
+        self.assertIn(
+            "missing:local_data_path",
+            MATRIX.validate_rust_contract(log, "connectivity"),
         )
 
     def test_connectivity_contract_fails_closed_on_missing_renew(self) -> None:

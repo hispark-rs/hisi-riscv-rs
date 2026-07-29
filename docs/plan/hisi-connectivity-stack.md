@@ -7,8 +7,9 @@ A5U caller-owned resource admission、typed diagnostics 和 template/resource-re
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
 controller/connect/control source-path failure injection 也已在 host、QEMU 和真机闭合。
-后续 unchanged-image 矩阵复现了 DHCP 成功后的数据面全丢反例，因此当前执行槽位重新收敛
-A5B 数据面可靠性，并并行完成不改变运行行为的 A5UX 诊断 API 收窄；pure-WPA3 HIL 另受
+后续 unchanged-image 矩阵同时记录了公网 ICMP 丢包、一次本地数据面全丢和 scan timeout，
+因此当前执行槽位重新收敛 A5B 可靠性与分类，并并行完成不改变运行行为的 A5UX 诊断 API
+收窄；pure-WPA3 HIL 另受
 外部条件阻塞。剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -49,23 +50,29 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
 
 1. 公开 `wifi_connectivity` 已把 A5B 与完整 connectivity contract 收敛到同一
    release-train ELF；较早矩阵曾取得 20/20，但 2026-07-29 的后续 unchanged-image
-   20-reset 矩阵只有 18/20 完整通过。两次失败均为 scan/connect/WPA/DHCP 成功后，
-   gateway 与 public ICMP 同时 `0/5`；20 轮均无 auth-response-2 timeout、event drop、
-   FRW 同步消息 timeout 或 DHCP 失败。当前同网段 Mac 强制 Wi-Fi interface 的 reference
-   为 gateway `20/20`、public `18/20`，所以 public loss 可归环境，target gateway
-   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v5` 通过 capability
+   20-reset 矩阵只有 18/20 完整通过。原始记录显示两次失败均已完成
+   scan/connect/WPA/DHCP，但 gateway 仍各收到 `1/5`，公网 ICMP 为 `0/5`；它们不能归类为
+   本地数据面全丢。另一轮 r3 的公网全丢样本分别仍有 gateway `2/5` 和 `5/5`。真正的
+   gateway/public 同时 `0/5` 只在后续 PM-off A/B 中复现一次，继续作为本地路径风险。
+   这些矩阵均无 auth-response-2 timeout、event drop、FRW 同步消息 timeout 或 DHCP
+   失败。公网 ICMP 不再作为硬 pass/fail gate；当前临时本地门槛为 DHCP 成功并至少收到
+   一次 gateway reply，公网 AliDNS ICMP 仅记录丢包。后续用 UDP DNS response 和受控
+   同 LAN echo 替换临时门槛。`hisi-rf-radio-diagnostics/v5` 通过 capability
    mask 明确区分“已测量”和“当前不可观测”：窄诊断已覆盖 smoltcp TX、vendor TX
    submission、DMAC TX completion/RX prepare、vendor/Rust RX、WLMAC RX counters、
    ICMP/DHCP seam、IRQ 40/44/45、packed RX filter control，以及不泄露地址值的
    STA/BSSID identity 状态，当前 `path_caps=0x3f`。PAC/HAL 只读快照加入后的
-   两轮同镜像复测分别为 `18 pass + 2 ping timeout` 和
-   `15 pass + 3 connect failure + 2 ping timeout`；失败轮的 WLMAC/DMAC/IRQ 仍持续
+   两轮同镜像复测分别为 `18 pass + 2 public ICMP loss` 和
+   `15 pass + 3 connect failure + 2 public ICMP loss`；失败轮的 WLMAC/DMAC/IRQ 仍持续
    计数。显式关闭 STA power save 的诊断 A/B 为
-   `17 pass + 2 connect failure + 1 ping timeout`，没有超出基线波动，也没有消除
+   `17 pass + 2 connect failure + 1 local data-path failure`，没有超出基线波动，也没有消除
    gateway/public 同时全丢，因此省电不是已证实的唯一根因，正常 profile 保持 vendor
    默认策略。随后自 SVD 向上修正 packed filter-control 语义和 VAP0 STA/BSSID
    网络字节序，最终真机取得 gateway/public 各 `5/5`、STA address match 和 BSSID
    programmed marker；这只关闭寄存器语义子问题，不替代重复 reset reliability gate。
+   随后的同镜像 20-reset 矩阵得到 19 次完整连接、gateway `95/95`、公网 `86/95`，
+   另有 1 次两次 scan attempt 均 operation timeout；当前下一步是用 v7 scan snapshot
+   区分 native callback、事件队列与 vendor driver completion，而不是增加盲目重试。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1170,8 +1177,18 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   不能覆盖此前反例，也不关闭 A5B 20-reset reliability gate。
   关闭 STA power save 的隐藏诊断 feature 已在同一镜像 20 次 nRST 做 A/B；17/20
   完整通过，剩余 2 次 connect failure 和 1 次 ping 全丢，故不能把 PM-off 固化成
-  production 默认或公开策略。下一步必须增加不改变关联策略的 attempt/PM/filter
-  状态证据，或使用空口/AP 侧观测裁决。
+  production 默认或公开策略。历史矩阵重新按本地和公网边界分类后，r2/r3 的四个
+  公网 `0/5` 样本均仍有 gateway reply，不能继续计为本地失败；PM-off 的一轮两者
+  `0/5` 才保留为 `local_data_path_failure`。
+  最新同镜像 20-reset 得到 19 次完整连接（gateway `95/95`、公网 `86/95`）和 1 次
+  scan operation timeout。`hisi-rf-radio-diagnostics/v7` 已增加 bounded scan snapshot，
+  timeout/retry 边界输出 native start/result/done、queue pending/drop 和 vendor
+  active/done/status；下一轮 HIL 用该证据定位 scan 丢失阶段，不增加总 timeout或盲目
+  retry。
+- [ ] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
+  发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
+  冗余。DNS gate 落地前，DHCP + gateway reply 是临时本地硬门槛，公网 ICMP 丢包只计入
+  `public_icmp_loss` 统计；后续再增加受控同 LAN UDP/TCP echo。
 
 #### A5R -- 可执行 RTOS 语义
 

@@ -41,7 +41,7 @@ getter，现已从窄快照移除。修正后的单轮 smoke 完整通过，随�
 
 ## 失败归因
 
-### Ping timeout
+### Local data-path failure
 
 该轮完成 scan、WPA2 connect 和 DHCP，随后 gateway 与 public ICMP 均为 `0/5`。
 关键快照：
@@ -57,7 +57,8 @@ getter，现已从窄快照移除。修正后的单轮 smoke 完整通过，随�
 
 这证明 Rust TX 没有在 vendor submission 之前丢失，vendor/Rust RX boundary 也没有
 出现内部计数分叉。由于 capability mask 不包含 MAC/DMAC，本证据不能继续断言帧已由
-DMAC 发出，也不能断言 MAC 是否收到 echo reply。A5B 数据面归因仍未闭合。
+DMAC 发出，也不能断言 MAC 是否收到 echo reply。该轮按新契约归类为
+`local_data_path_failure`，A5B 数据面归因仍未闭合。
 
 ### Connect operation timeout
 
@@ -137,17 +138,17 @@ pure-WPA3 gate 的保守结论。
 
 同一 release-train 镜像执行了两轮 unchanged-image 20-reset 矩阵：
 
-| 矩阵 | Pass | Connect failure | Ping timeout |
+| 矩阵 | 完整连接 | Connect failure | Public ICMP loss |
 | --- | ---: | ---: | ---: |
 | WLMAC r2 | 18 | 0 | 2 |
 | WLMAC r3 | 15 | 3 | 2 |
 
-r2 的两个 ping failure 都完成 scan/connect/WPA/DHCP。WLMAC successful/failed/filtered、
-DMAC RX prepare 和 IRQ45 持续增长，RX queue drop 为 0，但只有一个 ICMP reply 跨过
-vendor RX boundary。r3 又证明失败不是首轮启动特例，并同时保留了 association/control
-尾部失败这一独立类别。由此可以排除“整个 MAC/DMAC RX engine 停止”和“Rust RX queue
-溢出”，但不能从 target-only counters 判断 AP 是否发送 reply，也不能区分关联后 PM、
-过滤、密钥或 vendor frame classification。
+r2 的两个原 `ping_timeout` 都完成 scan/connect/WPA/DHCP；run 1/run 7 的 gateway
+各为 `1/5`，只有公网 `1.1.1.1` 为 `0/5`。r3 的 run 17 为 gateway `2/5`、公网
+`0/5`，run 19 为 gateway `5/5`、公网 `0/5`。因此这四轮都不是本地数据面完全中断，
+应分类为 `public_icmp_loss`，公网目标是否回复 ICMP 不能单独决定固件 HIL 成败。
+WLMAC successful/failed/filtered、DMAC RX prepare 和 IRQ45 持续增长，RX queue drop
+为 0，也与该分类一致。r3 的 3 次 association/control 尾部失败仍是独立类别。
 
 相关 release closure：
 
@@ -168,7 +169,8 @@ vendor RX boundary。r3 又证明失败不是首轮启动特例，并同时保�
 
 - 17 次完整 connectivity contract 通过；
 - 2 次在 connect/control 尾部失败；
-- 1 次完成 DHCP 后 gateway/public 均 `0/5`；
+- 1 次完成 DHCP 后 gateway/public 均 `0/5`，保留为真正的
+  `local_data_path_failure`；
 - 20 次 `auth_rsp2_timeouts=0`；
 - ping failure 中 `RFDBG_STA_PM_DIAG mode=off status=ok` 已出现；
 - ping failure 中 WLMAC/DMAC/IRQ 继续增长，vendor RX 为 6，ICMP RX 为 0。
@@ -210,6 +212,26 @@ SVD 为寄存器事实源，HAL 只提供无副作用快照，RF 层只输出不
 寄存器解释子问题。它只有一轮 connectivity smoke，不能覆盖上面的 `18/20`、
 `15/20` 和 PM-off 矩阵，因此 A5B 20-reset reliability gate 继续保持 open；它也不
 构成 pure-WPA3 证据。
+
+## 门槛重分类与最新矩阵
+
+公网 ICMP 现改为 AliDNS `223.5.5.5` 的观测项，记录 TX/RX/loss，但 `0/5`
+不再单独令 HIL 失败。当前临时硬门槛是 DHCP 成功并至少收到一次 gateway reply；
+后续将以校验 transaction id 和合法响应的 UDP DNS probe、以及受控同 LAN echo
+替换该临时门槛。matrix summary 分别记录 `local_data_path_failure` 和
+`public_icmp_loss`，不得再合并为笼统的 `ping_timeout`。
+
+2026-07-30 的 `path_caps=0x3f` 同镜像 20-reset 矩阵得到：
+
+- 19 次完成 scan/connect/DHCP/renew；
+- gateway `95/95`，公网 `86/95`；
+- 1 次两次 scan attempt 均 operation timeout；
+- 20 轮 `auth_rsp2_timeouts=0`。
+
+剩余 active 风险已转为 scan reliability。v7 aggregate diagnostics 在每次 scan
+timeout/retry 边界记录 native start/result/done、bounded queue pending/drop 和
+vendor driver active/done/result/status；下一轮矩阵必须用这些字段定位丢失阶段，
+不得用扩大 timeout 或增加盲目 retry 代替根因。
 
 原始矩阵证据保存在
 `/private/tmp/ws63-a5b-pm-off-20260729-r2/contract`。本地凭据文件是外部秘密输入，

@@ -148,7 +148,9 @@ storage/NVS 与 RTOS ownership 拆分，再按
   responder 只用于冻结 RF5C 数据面证据，不是正式 IP runner。
 - 2026-07-14 在修复 RTOS ported switch handoff 竞态后，同一镜像连续 20 次 J-Link
   nRST 得到 scan/WPA2 connect/DHCP 20/20、`WLAN_AUTH_RSP2_TIMEOUT` 0/20、异常 0/20；
-  公网 `1.1.1.1` ping 为 18/20，继续作为独立数据面可靠性风险跟踪。完整证据见
+  公网 `1.1.1.1` ping 为 18/20。该历史 ICMP 结果现在只作为环境丢包观测，不再单独
+  判定本地数据面失败；当前硬门槛和后续 UDP DNS 契约以
+  [connectivity stack](hisi-connectivity-stack.md) 为准。完整证据见
   [A3 switch-race and observability](evidence/ws63-rf-a3-switch-race-observability-2026-07-14.md)。
 - 同日把单次 ping 扩为每目标 5 次并重复 20 次 nRST：WPA2/DHCP/ARP 仍为 20/20，
   公网为 `88/100`、每轮至少收到一个 reply，gateway 为 `0/100`，认证超时和 TX error
