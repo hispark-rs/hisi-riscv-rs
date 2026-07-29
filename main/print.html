@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a2562f46.js";
+            window.path_to_searchindex_js = "searchindex-a0b9bb9a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -2765,10 +2765,16 @@ J-Link nRST；不调用外部 RISC-V GCC 或 post-link patch。credential-free i
 crypto contention 仍使用 <code>wifi_init_smoke</code> maintainer fixture。<code>vendor-wpa2</code> 仍从公开
 <code>ws63-RF</code> release 下载固定 archive（或接受 <code>WS63_WPA_ARCHIVE</code>），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。</p>
-<p>严格契约按顺序要求 image/init/scan/connect/DHCP/neighbor/public-ping/summary/steady/renew
+<p>严格契约按顺序要求 image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
 阶段及对应 <code>A4_RADIO_EVENT</code>；缺失或乱序 marker、fatal marker、非零内部 queue drop /
-TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP 允许有可量化丢包，
-但必须有非零回复；gateway 不回应仍按已记录的 AP 环境边界处理。构建后先冻结
+TX error / backend error、A5B runner budget 越界都会失败。当前本地硬门槛是 DHCP
+成功且 gateway 至少回复一次；公网 AliDNS ICMP 仅输出 TX/RX/loss 观测，<code>0/5</code> 不会
+单独令 HIL 失败。后续公网硬门槛将改为校验 transaction id 与合法响应的 UDP DNS
+查询，而不是依赖公共服务是否回复 ICMP。旧 <code>RF5A_ARP_OK</code> 是由首个 ICMP reply
+推导 neighbor 已可用的兼容 marker，不是 ARP cache 的直接快照；v8
+<code>RFDBG_A5B_L2</code> 另行记录双向 ARP request/reply、IPv4 与 other frame 计数，供失败
+归因，但在重复硅片证据闭合前不单独升级为硬门槛。reset-matrix summary 会汇总
+每个 L2 计数器在带 marker 轮次中的最小/最大值，并单列缺失 marker 的轮次。构建后先冻结
 <code>hisi-connectivity-artifact/v1</code>（profile、ELF SHA-256、marker contract），解析前再次复核；
 不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
 <code>EVIDENCE_DIR</code>，含凭据的临时 ELF/target 仍在退出时删除。</p>
@@ -2794,7 +2800,7 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 <tr><td><code>WS63_WIFI_ENV_FILE</code></td><td>空</td><td>本地手动 HIL 的 <code>0600</code> 普通文件；只接受 <code>WS63_WIFI_SSID=...</code> 和 <code>WS63_WIFI_PASSPHRASE=...</code>，不执行 shell 内容，默认保留且不能与直接环境变量混用</td></tr>
 <tr><td><code>WS63_WIFI_ENV_FILE_DISPOSITION</code></td><td><code>keep</code></td><td><code>keep</code> 保留本机凭据供后续复用；<code>delete</code> 在成功读取后删除真正的一次性文件</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_PROFILE</code></td><td><code>upstream-wpa2</code></td><td><code>upstream-wpa2</code> / <code>upstream-wpa3</code> / <code>vendor-wpa2</code>；正式 upstream 验证使用公开 facade 的 plain Cargo lane</td></tr>
-<tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/ping/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
+<tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/local gateway/summary/renew gate并记录公网 ICMP；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
 <tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
 <tr><td><code>PROBE_SPEED</code></td><td><code>3000</code></td><td>connectivity lane 已验证的 WS63 download 速率；始终保留完整 readback verify，失败再显式降到 1000/500 kHz</td></tr>
