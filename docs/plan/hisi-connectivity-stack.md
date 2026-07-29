@@ -53,10 +53,14 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    gateway 与 public ICMP 同时 `0/5`；20 轮均无 auth-response-2 timeout、event drop、
    FRW 同步消息 timeout 或 DHCP 失败。当前同网段 Mac 强制 Wi-Fi interface 的 reference
    为 gateway `20/20`、public `18/20`，所以 public loss 可归环境，target gateway
-   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v4` 已把 smoltcp TX、
-   vendor bridge TX、DMAC TX completion、vendor/Rust RX、MAC receive-engine、
-   ICMP/DHCP seam 和 IRQ 40/44/45 纳入统一 post-ping snapshot；必须用同一镜像复现并
-   闭合反例后，才能恢复 A5B 20/20 完成声明。
+   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v5` 通过 capability
+   mask 明确区分“已测量”和“当前不可观测”：窄诊断已覆盖 smoltcp TX、vendor TX
+   submission、vendor/Rust RX、ICMP/DHCP seam 和 IRQ 40/44/45，但不宣称已经测量
+   DMAC TX completion 或 MAC receive-engine。2026-07-29 的同镜像复测仍为 18/20：
+   一轮 connect operation deadline，一轮 DHCP 成功后 gateway/public 同时 `0/5`。
+   完整证据见
+   [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
+   闭合反例后才能恢复 A5B 20/20 完成声明。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 已执行相同 marker contract，缺 marker、非零 drop/error、budget
@@ -1132,6 +1136,15 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   event drop 均为 0，100 ms work budget 无越界。当前同步 bootstrap 的 WCT 被明确接受，
   netdev 创建、事件注册和 native supplicant create 等 vendor 调用仍不宣称可抢占；
   incremental adapter 继续保持非默认，默认路径切换仍受 A5 总体验收与 pure-WPA3 gate 约束。
+
+- [ ] 用无阻塞、能力标记的数据面快照闭合 unchanged-image 失败归因。2026-07-29
+  的 `path_caps=0x03` HIL 已证明 Rust 可观测的 vendor TX submission 与 RX boundary
+  在 ping 全丢轮仍持续前进，且 RX queue drop 为 0；当前证据尚不能越过 vendor
+  submission/RX boundary 归因到 DMAC 或 MAC。ROM
+  `hh503_get_mac_rx_statistics_data()` 在连接后、network runner 前的通用快照中会阻塞，
+  因此已从窄诊断移除；只有建立可调用上下文、超时和真机证据后才可重新声明 MAC
+  capability。见
+  [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 
 #### A5R -- 可执行 RTOS 语义
 
