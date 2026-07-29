@@ -21,6 +21,8 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v4",
     "hisi-rf-resource-report/v5",
     "hisi-rf-resource-report/v6",
+    "hisi-rf-resource-report/v7",
+    "hisi-rf-resource-report/v8",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -61,6 +63,8 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v4",
         "hisi-rf-resource-report/v5",
         "hisi-rf-resource-report/v6",
+        "hisi-rf-resource-report/v7",
+        "hisi-rf-resource-report/v8",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -71,6 +75,8 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if resource["schema"] in {
         "hisi-rf-resource-report/v5",
         "hisi-rf-resource-report/v6",
+        "hisi-rf-resource-report/v7",
+        "hisi-rf-resource-report/v8",
     }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
@@ -78,7 +84,11 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
                 f"resource report {resource['schema'].rsplit('/', 1)[-1]} "
                 "requires positive integer shared_rf_arena_bytes"
             )
-    if resource["schema"] == "hisi-rf-resource-report/v6":
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v6",
+        "hisi-rf-resource-report/v7",
+        "hisi-rf-resource-report/v8",
+    }:
         positive_keys = (
             "event_capacity",
             "caller_owned_bytes",
@@ -88,6 +98,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
             "arena_storage_bytes",
             "main_stack_bytes_required",
             "dynamic_tasks_required",
+            "task_stack_bytes",
         )
         non_negative_keys = (
             "composition_handle_bytes",
@@ -105,22 +116,68 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
                 raise ValueError(
                     f"resource report v6 requires non-negative integer {key}"
                 )
-        if (
-            resource["caller_owned_bytes"]
-            != resource["control_storage_bytes"] + resource["arena_storage_bytes"]
-        ):
-            raise ValueError(
-                "resource report v6 caller_owned_bytes must equal "
-                "control_storage_bytes + arena_storage_bytes"
-            )
         if resource["arena_storage_bytes"] < resource["shared_rf_arena_bytes"]:
             raise ValueError(
-                "resource report v6 arena_storage_bytes must cover "
+                f"resource report {resource['schema'].rsplit('/', 1)[-1]} "
+                "arena_storage_bytes must cover "
                 "shared_rf_arena_bytes"
             )
         if not isinstance(resource.get("runtime_resources_calibrated"), bool):
             raise ValueError(
-                "resource report v6 requires boolean runtime_resources_calibrated"
+                f"resource report {resource['schema'].rsplit('/', 1)[-1]} "
+                "requires boolean runtime_resources_calibrated"
+            )
+    if resource["schema"] == "hisi-rf-resource-report/v6":
+        expected = resource["control_storage_bytes"] + resource["arena_storage_bytes"]
+        if resource["caller_owned_bytes"] != expected:
+            raise ValueError(
+                "resource report v6 caller_owned_bytes must equal "
+                "control_storage_bytes + arena_storage_bytes"
+            )
+    if resource["schema"] == "hisi-rf-resource-report/v7":
+        stack_arena = resource.get("task_stack_arena_bytes")
+        if not isinstance(stack_arena, int) or isinstance(stack_arena, bool) or stack_arena <= 0:
+            raise ValueError(
+                "resource report v7 requires positive integer task_stack_arena_bytes"
+            )
+        if stack_arena < resource["task_stack_bytes"]:
+            raise ValueError(
+                "resource report v7 task_stack_arena_bytes must cover task_stack_bytes"
+            )
+        expected = (
+            resource["control_storage_bytes"]
+            + resource["arena_storage_bytes"]
+            + stack_arena
+        )
+        if resource["caller_owned_bytes"] != expected:
+            raise ValueError(
+                "resource report v7 caller_owned_bytes must equal control_storage_bytes "
+                "+ arena_storage_bytes + task_stack_arena_bytes"
+            )
+    if resource["schema"] == "hisi-rf-resource-report/v8":
+        for key in ("runtime_object_headroom_bytes", "runtime_arena_bytes"):
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                raise ValueError(
+                    f"resource report v8 requires positive integer {key}"
+                )
+        if (
+            resource["runtime_arena_bytes"]
+            < resource["task_stack_bytes"] + resource["runtime_object_headroom_bytes"]
+        ):
+            raise ValueError(
+                "resource report v8 runtime_arena_bytes must cover task_stack_bytes "
+                "+ runtime_object_headroom_bytes"
+            )
+        expected = (
+            resource["control_storage_bytes"]
+            + resource["arena_storage_bytes"]
+            + resource["runtime_arena_bytes"]
+        )
+        if resource["caller_owned_bytes"] != expected:
+            raise ValueError(
+                "resource report v8 caller_owned_bytes must equal control_storage_bytes "
+                "+ arena_storage_bytes + runtime_arena_bytes"
             )
     missing = [key for key in PLAN_KEYS if key not in plan]
     if missing:
@@ -173,24 +230,26 @@ def self_test() -> None:
         resource_path.write_text(
             json.dumps(
                 {
-                    "schema": "hisi-rf-resource-report/v6",
+                    "schema": "hisi-rf-resource-report/v8",
                     "profile": "wifi-wpa2-smoltcp",
                     "profile_revision": "fixture-v1",
                     "runtime_contract": "hisi-rf-rtos-driver/v1.4-ported-cooperative",
                     "task_admission": "owner-bound-slot-stack-reservation",
                     "main_stack_bytes_required": 0x8000,
                     "event_capacity": 8,
-                    "caller_owned_bytes": 311_712,
-                    "control_storage_bytes": 8_544,
+                    "caller_owned_bytes": 311_776,
+                    "control_storage_bytes": 8_608,
                     "composition_handle_bytes": 0,
-                    "radio_state_bytes": 2_168,
+                    "radio_state_bytes": 2_216,
                     "crypto_dma_bytes": 6_336,
-                    "arena_storage_bytes": 303_168,
+                    "arena_storage_bytes": 114_240,
                     "linker_packet_ram_bytes": 0x24000,
-                    "dynamic_tasks_required": 6,
+                    "dynamic_tasks_required": 7,
                     "runtime_internal_tasks": 2,
-                    "task_stack_bytes": 6 * 24 * 1024,
-                    "shared_rf_arena_bytes": 296 * 1024,
+                    "task_stack_bytes": 7 * 24 * 1024,
+                    "runtime_object_headroom_bytes": 16 * 1024,
+                    "runtime_arena_bytes": 188_928,
+                    "shared_rf_arena_bytes": 114_176,
                     "flash_bytes": None,
                     "runtime_resources_calibrated": False,
                 }
@@ -218,13 +277,43 @@ def self_test() -> None:
             persisted["resource"]["task_admission"]
             == "owner-bound-slot-stack-reservation"
         )
-        assert persisted["resource"]["task_stack_bytes"] == 6 * 24 * 1024
-        assert persisted["resource"]["shared_rf_arena_bytes"] == 296 * 1024
-        assert persisted["resource"]["caller_owned_bytes"] == 311_712
+        assert persisted["resource"]["task_stack_bytes"] == 7 * 24 * 1024
+        assert persisted["resource"]["runtime_object_headroom_bytes"] == 16 * 1024
+        assert persisted["resource"]["runtime_arena_bytes"] == 188_928
+        assert persisted["resource"]["shared_rf_arena_bytes"] == 114_176
+        assert persisted["resource"]["caller_owned_bytes"] == 311_776
         assert persisted["artifact"]["elf_name"] == elf.name
         assert persisted["artifact"]["image_name"] == image.name
         assert str(root) not in output.read_text(encoding="utf-8")
 
+        resource_v8 = load_object(resource_path, "resource report")
+        resource_v7 = dict(resource_v8)
+        resource_v7["schema"] = "hisi-rf-resource-report/v7"
+        resource_v7["task_stack_arena_bytes"] = 172_544
+        resource_v7["caller_owned_bytes"] = (
+            resource_v7["control_storage_bytes"]
+            + resource_v7["arena_storage_bytes"]
+            + resource_v7["task_stack_arena_bytes"]
+        )
+        resource_v7.pop("runtime_object_headroom_bytes")
+        resource_v7.pop("runtime_arena_bytes")
+        resource_path.write_text(json.dumps(resource_v7), encoding="utf-8")
+        assert assemble(resource_path, plan_path, elf, image)["resource"]["schema"].endswith(
+            "/v7"
+        )
+
+        resource_v6 = dict(resource_v7)
+        resource_v6["schema"] = "hisi-rf-resource-report/v6"
+        resource_v6["caller_owned_bytes"] = (
+            resource_v6["control_storage_bytes"] + resource_v6["arena_storage_bytes"]
+        )
+        resource_v6.pop("task_stack_arena_bytes")
+        resource_path.write_text(json.dumps(resource_v6), encoding="utf-8")
+        assert assemble(resource_path, plan_path, elf, image)["resource"]["schema"].endswith(
+            "/v6"
+        )
+
+        resource_path.write_text(json.dumps(resource_v8), encoding="utf-8")
         plan["image_len"] += 1
         plan_path.write_text(json.dumps(plan), encoding="utf-8")
         try:
@@ -234,9 +323,8 @@ def self_test() -> None:
         else:
             raise AssertionError("mismatched FlashPlan image_len was accepted")
 
-        resource = load_object(resource_path, "resource report")
-        resource["schema"] = "hisi-rf-resource-report/v7"
-        resource_path.write_text(json.dumps(resource), encoding="utf-8")
+        resource_v8["schema"] = "hisi-rf-resource-report/v9"
+        resource_path.write_text(json.dumps(resource_v8), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)
         except ValueError as error:
