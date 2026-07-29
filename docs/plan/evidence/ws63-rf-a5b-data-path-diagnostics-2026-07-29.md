@@ -120,3 +120,71 @@ auth-response-2 timeout，event queue drop 为 0。它没有进入 DHCP/data-pat
 
 这些发布证据只证明已验证的诊断实现可由公开依赖复现，不改变上文对旧反例根因和
 pure-WPA3 gate 的保守结论。
+
+## PAC/HAL WLMAC 只读观测
+
+后续没有恢复会阻塞的 ROM statistics helper，而是在 SVD 中建模 WLMAC statistics
+窗口，并由 PAC/HAL 暴露一次无副作用的只读快照。新增六个计数：
+
+- successful/failed non-AMPDU；
+- successful/failed MPDU in AMPDU；
+- RX AMPDU；
+- filtered RX。
+
+这使 capability mask 从 `0x1b` 增至 `0x1f`。HAL 快照只在短 critical section 中读取
+六个 RO 寄存器，不轮询、不等待、不调用 vendor 代码；RF 仍只在明确诊断 feature 下
+消费该能力。
+
+同一 release-train 镜像执行了两轮 unchanged-image 20-reset 矩阵：
+
+| 矩阵 | Pass | Connect failure | Ping timeout |
+| --- | ---: | ---: | ---: |
+| WLMAC r2 | 18 | 0 | 2 |
+| WLMAC r3 | 15 | 3 | 2 |
+
+r2 的两个 ping failure 都完成 scan/connect/WPA/DHCP。WLMAC successful/failed/filtered、
+DMAC RX prepare 和 IRQ45 持续增长，RX queue drop 为 0，但只有一个 ICMP reply 跨过
+vendor RX boundary。r3 又证明失败不是首轮启动特例，并同时保留了 association/control
+尾部失败这一独立类别。由此可以排除“整个 MAC/DMAC RX engine 停止”和“Rust RX queue
+溢出”，但不能从 target-only counters 判断 AP 是否发送 reply，也不能区分关联后 PM、
+过滤、密钥或 vendor frame classification。
+
+相关 release closure：
+
+- `ws63-svd f4e2d5b`；
+- `ws63-pac 0.4.1`；
+- `hisi-hal 0.7.0-alpha.4`；
+- `hisi-rf-ws63 0.1.0-alpha.51`；
+- `hisi-rf 0.1.0-alpha.62`。
+
+## STA power-save 诊断 A/B
+
+为检验关联后的 STA 省电是否导致 reply 接收窗口丢失，增加了一个隐藏且显式 opt-in
+的诊断 feature。它在 `Connected` event 后取得当前 STA VAP，并以 SDK 定义的
+`HOST/OFF` 参数关闭 station power save。调用成功 marker 必须出现，否则该轮停止，
+不进入网络统计。正常 profile 不启用该 feature，也不改变 vendor 默认 PM 策略。
+
+同一诊断镜像只烧录一次，随后执行 20 次 J-Link nRST：
+
+- 17 次完整 connectivity contract 通过；
+- 2 次在 connect/control 尾部失败；
+- 1 次完成 DHCP 后 gateway/public 均 `0/5`；
+- 20 次 `auth_rsp2_timeouts=0`；
+- ping failure 中 `RFDBG_STA_PM_DIAG mode=off status=ok` 已出现；
+- ping failure 中 WLMAC/DMAC/IRQ 继续增长，vendor RX 为 6，ICMP RX 为 0。
+
+结果没有超出前两轮 baseline 波动，也没有消除数据面反例。因此：
+
+- STA power save 不是已经证实的唯一根因；
+- 不把 PM-off 升格为默认行为或稳定配置；
+- 该 feature 只保留为可复现的诊断 A/B；
+- A5B reliability gate 继续保持 open。
+
+本轮第一次以 3 MHz 下载在 `0x00250000` page program 超时；硬件 nRST 后目标镜像只
+完成了部分写入，随后用官方完整 FWPKG 恢复并确认 RF calibration 正常。第二次以
+1 MHz 下载和完整 verify 成功，耗时 140.53 s。该事件单列为 probe-rs transport
+可靠性，不计入 Wi-Fi 20-reset 矩阵。
+
+原始矩阵证据保存在
+`/private/tmp/ws63-a5b-pm-off-20260729-r2/contract`。本地凭据文件是外部秘密输入，
+不属于证据或仓库内容，并按用户要求继续保留供后续 HIL 使用。

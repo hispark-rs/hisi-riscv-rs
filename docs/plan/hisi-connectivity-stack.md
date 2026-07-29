@@ -55,9 +55,14 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    为 gateway `20/20`、public `18/20`，所以 public loss 可归环境，target gateway
    全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v5` 通过 capability
    mask 明确区分“已测量”和“当前不可观测”：窄诊断已覆盖 smoltcp TX、vendor TX
-   submission、vendor/Rust RX、ICMP/DHCP seam 和 IRQ 40/44/45，但不宣称已经测量
-   DMAC TX completion 或 MAC receive-engine。2026-07-29 的同镜像复测仍为 18/20：
-   一轮 connect operation deadline，一轮 DHCP 成功后 gateway/public 同时 `0/5`。
+   submission、DMAC TX completion/RX prepare、vendor/Rust RX、WLMAC RX counters、
+   ICMP/DHCP seam 和 IRQ 40/44/45，当前 `path_caps=0x1f`。PAC/HAL 只读快照加入后的
+   两轮同镜像复测分别为 `18 pass + 2 ping timeout` 和
+   `15 pass + 3 connect failure + 2 ping timeout`；失败轮的 WLMAC/DMAC/IRQ 仍持续
+   计数。显式关闭 STA power save 的诊断 A/B 为
+   `17 pass + 2 connect failure + 1 ping timeout`，没有超出基线波动，也没有消除
+   gateway/public 同时全丢，因此省电不是已证实的唯一根因，正常 profile 保持 vendor
+   默认策略。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1138,9 +1143,8 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   incremental adapter 继续保持非默认，默认路径切换仍受 A5 总体验收与 pure-WPA3 gate 约束。
 
 - [ ] 用无阻塞、能力标记的数据面快照闭合 unchanged-image 失败归因。2026-07-29
-  的 `path_caps=0x03` HIL 已证明 Rust 可观测的 vendor TX submission 与 RX boundary
-  在 ping 全丢轮仍持续前进，且 RX queue drop 为 0；当前证据尚不能越过 vendor
-  submission/RX boundary 归因到 DMAC 或 MAC。ROM
+  的首轮 `path_caps=0x03` HIL 已证明 Rust 可观测的 vendor TX submission 与 RX
+  boundary 在 ping 全丢轮仍持续前进，且 RX queue drop 为 0。ROM
   `hh503_get_mac_rx_statistics_data()` 在连接后、network runner 前的通用快照中会阻塞，
   因此已从窄诊断移除；只有建立可调用上下文、超时和真机证据后才可重新声明 MAC
   capability。见
@@ -1151,6 +1155,15 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   离线复算一致。每轮 DMAC TX/RX 边界均稳定非零，但该轮没有复现先前反例，因此只证明
   新观测低扰动并缩小未来归因范围，不能把旧 ping/connect 失败倒推成已知根因，也不恢复
   不安全的 ROM MAC statistics getter。
+  后续通过 SVD/PAC/HAL 建模 WLMAC 的六个只读 RX counter，避免调用 ROM helper；
+  `path_caps=0x1f` 的反例轮显示 MAC successful/failed/filtered、DMAC RX prepare 与
+  IRQ45 均继续增长，而 vendor RX 仅收到少量 DHCP/管理流量，ICMP reply 没有跨过
+  vendor RX boundary。这排除了整个 RX engine 静止和 Rust queue drop，但尚不能区分
+  AP 未发、关联后过滤/密钥状态、空口丢失或更深的 vendor RX 分类。
+  关闭 STA power save 的隐藏诊断 feature 已在同一镜像 20 次 nRST 做 A/B；17/20
+  完整通过，剩余 2 次 connect failure 和 1 次 ping 全丢，故不能把 PM-off 固化成
+  production 默认或公开策略。下一步必须增加不改变关联策略的 attempt/PM/filter
+  状态证据，或使用空口/AP 侧观测裁决。
 
 #### A5R -- 可执行 RTOS 语义
 

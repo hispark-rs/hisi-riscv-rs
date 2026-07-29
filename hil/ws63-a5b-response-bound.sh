@@ -13,8 +13,8 @@ PROBE_SPEED="${PROBE_SPEED:-3000}"
 RUNS="${RUNS:-20}"
 TIMEOUT="${TIMEOUT:-90}"
 MAX_RUNNER_STEP_MS="${MAX_RUNNER_STEP_MS:-100}"
-PROFILE_ID="wifi-connectivity-upstream-wpa2"
-FEATURES="wpa2,data-path-diagnostics"
+PROFILE_ID="${A5B_PROFILE_ID:-wifi-connectivity-upstream-wpa2}"
+FEATURES="${A5B_FEATURES:-wpa2,data-path-diagnostics}"
 
 usage() {
     cat <<'EOF'
@@ -32,6 +32,8 @@ Optional:
   PROBE_DOWNLOAD_ATTEMPTS, PROBE_RETRY_SPEED, HISI_FWPKG,
   RUNS (default 20), TIMEOUT (default 90 seconds),
   MAX_RUNNER_STEP_MS (default 100),
+  A5B_FEATURES (default wpa2,data-path-diagnostics),
+  A5B_PROFILE_ID (default wifi-connectivity-upstream-wpa2),
   EVIDENCE_DIR (default timestamped directory under /private/tmp).
 EOF
 }
