@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-a6995cbc.js";
+            window.path_to_searchindex_js = "../searchindex-a2562f46.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -271,15 +271,16 @@ ELF/profile identity，采集 UART 后调用同一个严格 parser；20-reset HI
 <code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
 <code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
 <p>重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：</p>
-<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/local-0600.env \
 PORT=/dev/cu.wchusbserial... \
     hil/ws63-a5b-response-bound.sh
 </code></pre>
 <p>它固定构建 <code>wifi_connectivity</code> 的当前 release closure，只做一次 verified download，
 随后对同一 ELF 执行 20 次 J-Link nRST；每轮同时要求完整 connectivity marker、
-diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
-立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
-closure、脱敏 UART 与 summary。</p>
+diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件必须是当前用户拥有的
+<code>0600</code> 普通文件，默认保留以便后续 HIL 复用；真正的一次性文件可显式设置
+<code>WS63_WIFI_ENV_FILE_DISPOSITION=delete</code>。含凭据的临时 ELF/target 在脚本退出时删除，
+evidence 只保留 identity、release closure、脱敏 UART 与 summary。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a6995cbc.js";
+            window.path_to_searchindex_js = "searchindex-a2562f46.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1327,15 +1327,16 @@ ELF/profile identity，采集 UART 后调用同一个严格 parser；20-reset HI
 <code>--profile-id</code>。单次 smoke 默认把可复算的 UART、identity 和 summary 留在
 <code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code>；含 AP 凭据的临时构建目录仍自动删除。</p>
 <p>重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：</p>
-<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+<pre><code class="language-bash">WS63_WIFI_ENV_FILE=/path/to/local-0600.env \
 PORT=/dev/cu.wchusbserial... \
     hil/ws63-a5b-response-bound.sh
 </code></pre>
 <p>它固定构建 <code>wifi_connectivity</code> 的当前 release closure，只做一次 verified download，
 随后对同一 ELF 执行 20 次 J-Link nRST；每轮同时要求完整 connectivity marker、
-diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
-立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
-closure、脱敏 UART 与 summary。</p>
+diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件必须是当前用户拥有的
+<code>0600</code> 普通文件，默认保留以便后续 HIL 复用；真正的一次性文件可显式设置
+<code>WS63_WIFI_ENV_FILE_DISPOSITION=delete</code>。含凭据的临时 ELF/target 在脚本退出时删除，
+evidence 只保留 identity、release closure、脱敏 UART 与 summary。</p>
 <h2 id="读懂结果"><a class="header" href="#读懂结果">读懂结果</a></h2>
 <ul>
 <li><code>embedded-test</code> 路径：每个 Rust <code>#[test]</code> 以 libtest 风格输出 <code>ok</code> / <code>FAILED</code>；失败表示对应 HAL/PAC/CPU 事实没有在真板上闭合。</li>
@@ -2776,7 +2777,7 @@ TX error / backend error、A5B runner budget 越界都会失败。公网 ICMP �
 producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
 该 marker 若出现在真机 capture 中反而会 fail closed。</p>
 <p>A5B 上界不能靠事后肉眼看最大值。专用入口
-<code>hil/ws63-a5b-response-bound.sh</code> 使用一次性凭据文件构建当前 release closure 的
+<code>hil/ws63-a5b-response-bound.sh</code> 使用本机 <code>0600</code> 凭据文件构建当前 release closure 的
 <code>wifi_connectivity</code>，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
 交给同一 parser 的
 <code>--stage connectivity --require-contract --max-runner-step-ms 100</code>。只要缺少完整
@@ -2790,7 +2791,8 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 <tbody>
 <tr><td><code>PORT</code></td><td>必填</td><td>WS63 UART0</td></tr>
 <tr><td><code>WS63_WIFI_PASSPHRASE</code></td><td>必填</td><td>仅由 self-hosted secret 注入，不写入仓库或日志</td></tr>
-<tr><td><code>WS63_WIFI_ENV_FILE</code></td><td>空</td><td>本地手动 HIL 的一次性 <code>0600</code> 文件；只接受 <code>WS63_WIFI_SSID=...</code> 和 <code>WS63_WIFI_PASSPHRASE=...</code>，不执行 shell 内容，成功读取后立即删除；不能与直接环境变量混用</td></tr>
+<tr><td><code>WS63_WIFI_ENV_FILE</code></td><td>空</td><td>本地手动 HIL 的 <code>0600</code> 普通文件；只接受 <code>WS63_WIFI_SSID=...</code> 和 <code>WS63_WIFI_PASSPHRASE=...</code>，不执行 shell 内容，默认保留且不能与直接环境变量混用</td></tr>
+<tr><td><code>WS63_WIFI_ENV_FILE_DISPOSITION</code></td><td><code>keep</code></td><td><code>keep</code> 保留本机凭据供后续复用；<code>delete</code> 在成功读取后删除真正的一次性文件</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_PROFILE</code></td><td><code>upstream-wpa2</code></td><td><code>upstream-wpa2</code> / <code>upstream-wpa3</code> / <code>vendor-wpa2</code>；正式 upstream 验证使用公开 facade 的 plain Cargo lane</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/ping/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
