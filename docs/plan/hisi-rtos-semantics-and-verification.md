@@ -367,6 +367,73 @@ scheduler stress 和 Budgeted HIL 是 V0/V1/V2/V3/V5 的输入，不需要推倒
 scheduler state 或真机机制证据。Q2-Q4 的观测、archive profile 和
 group-quota gate 仍未完成；不得从现有 quota 逻辑隐式演化出 Reservation 契约。
 
+## 验证收口 Backlog
+
+以下条目属于 `hisi-rtos` 的配套 P1/触发式验证工作，不抢占 Connectivity 当前 active
+slot，也不改变已经冻结的调度语义。它们补齐现有形式化证据与产品机制证据之间的缺口；
+完成一项必须更新 requirement manifest 和 immutable evidence，不能只在计划中勾选。
+
+### C0 栈安全
+
+- 增加独立于 allocation size 的 stack fill/canary 和 high-water measurement；main、
+  idle、dynamic task、vendor worker 与 Embassy executor 必须能分别归属。
+- 栈边界破坏必须进入明确的 fail-stop/fault 路径，不能继续执行，也不能靠扩大默认栈
+  掩盖 composition 或深调用回归。
+- profile/resource report 同时输出 allocated、observed high-water、remaining margin 和
+  measurement state；从未运行过的 task 不得报告虚假的零使用量。
+- Host 测试覆盖初始化、扫描方向、边界值和 canary 损坏；QEMU/WS63 HIL 覆盖 vendor
+  bootstrap、RadioRunner、Embassy 和已知最深同步调用路径。每个发布 profile 的最小
+  余量必须由 HIL 校准并记录，未校准时保持 experimental。
+
+### C1 机制 HIL 矩阵
+
+- 对 context ABI 使用完整 GPR/FPR/FCSR/mstatus/mepc 哨兵，分别覆盖 cooperative
+  yield、software interrupt、timer interrupt、外层 IRQ epilogue、preemption、task
+  exit 和 fresh-task restore；offset/disassembly 检查不能替代运行证据。
+- 为 timer generation ticket 增加可重复真机场景：RTOS deadline 与 Embassy deadline
+  交错、re-arm 中插入 IRQ、stale ticket retry、counter wraparound；最终硬件 deadline
+  必须等于重新采样后的最早 deadline。
+- `Budgeted`、priority inheritance、Embassy coexistence、timer re-arm 和 context
+  sentinel 每项至少使用 unchanged image 完成 20 次 nRST，并补至少 3 次 cold boot。
+  T6 switch-intent 继续使用更严格的 100-reset gate，不能被本条降级。
+- 每轮保存 task/switch/timer/resource 守恒摘要；下载、probe 或串口故障单独分类，
+  不计入 RTOS 行为成功或失败率。
+
+### C2 模型与实现的可执行对应
+
+- 为 deterministic conformance 定义版本化 `Action` / `Observation` trace schema；同一
+  trace 同时驱动 readable reference model 和 production Rust core，逐步比较 task
+  identity/state、ready ownership、wait result、resource count、deadline 和 switch intent。
+- property/differential failure 必须 shrink 为可提交的最小 fixture，并绑定 requirement
+  ID；修复前的反例进入永久 regression corpus。
+- CI 必须证明 requirement 引用的 model action 与 production transition 仍可执行；
+  仅靠同名文字或人工链接不算 refinement evidence。这里建立的是有限状态 differential
+  correspondence，不宣称对汇编、MMIO 或完整 RTOS 做机器证明。
+
+### C3 覆盖质量
+
+- Host CI 生成 `cargo llvm-cov` line/branch report 并保存 artifact。覆盖率百分比先作为
+  可见性指标，不以追逐全局数字代替 requirement evidence。
+- 对 requirement-tagged 的错误恢复、timeout/cancel、generation mismatch、handoff、
+  budget throttle 和 timer retry 分支建立“不得无覆盖”的 gate；确实不可达的分支需要
+  `NotApplicable` 理由。
+- 对 scheduler/resource/wait 的关键判断运行定向 mutation testing；至少覆盖删除
+  generation check、反转 queue/priority 条件、跳过资源返还、重复 grant 和接受 stale
+  ticket。存活 mutation 必须补测试或记录模型边界，不能只报告 mutation score。
+
+### C4 故障注入与 Soak
+
+- Host deterministic backend 注入 delayed/missing timer IRQ、deferred SWI、scheduler
+  lock overrun、queue/task/stack exhaustion、callback re-entry、task panic/return 和
+  timeout/cancel/grant 竞态；每项必须有 fail-stop、恢复或 typed error 契约。
+- WS63 soak 使用固定固件持续至少 4 小时，循环 spawn/exit、wait/cancel、timer、
+  Embassy wake 和当前已验证的 RF workload；不通过重复烧录重置状态。
+- Soak 的通过条件至少包括：唯一 Running、无永久 pending/detached task、资源与 permit
+  守恒、无 stack canary 损坏、计数器不回退，以及 ready/IRQ/scheduler-lock latency
+  不超过 profile 记录的上界。
+- 首次基线记录最大 task 数、事件次数、栈水位和 latency 分布；后续 CI/HIL 比较相同
+  profile 的趋势。环境或负载改变必须重新校准，不能沿用旧阈值。
+
 ## 非目标
 
 - 不形式化证明整个 HAL、RF 协议栈或闭源 blob。
