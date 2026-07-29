@@ -25,9 +25,31 @@ WS63_WIFI_ENV_FILE="$valid"
 load_ws63_wifi_credentials
 [ "$WS63_WIFI_SSID" = "test network" ] || fail "SSID was not preserved"
 [ "$WS63_WIFI_PASSPHRASE" = "value=with spaces" ] || fail "passphrase was not preserved"
-[ ! -e "$valid" ] || fail "credential file was not consumed"
+[ -e "$valid" ] || fail "persistent credential file was consumed"
 [ -z "${WS63_WIFI_ENV_FILE:-}" ] || fail "credential file path remained exported"
 unset WS63_WIFI_SSID WS63_WIFI_PASSPHRASE
+
+one_shot="$TMP/one-shot.env"
+write_file "$one_shot" $'WS63_WIFI_SSID=test\nWS63_WIFI_PASSPHRASE=delete-me\n'
+WS63_WIFI_ENV_FILE="$one_shot"
+WS63_WIFI_ENV_FILE_DISPOSITION=delete
+load_ws63_wifi_credentials
+[ ! -e "$one_shot" ] || fail "one-shot credential file was retained"
+[ -z "${WS63_WIFI_ENV_FILE_DISPOSITION:-}" ] ||
+    fail "credential disposition remained exported"
+unset WS63_WIFI_SSID WS63_WIFI_PASSPHRASE
+
+invalid_disposition="$TMP/invalid-disposition.env"
+write_file "$invalid_disposition" $'WS63_WIFI_SSID=test\nWS63_WIFI_PASSPHRASE=keep-me\n'
+WS63_WIFI_ENV_FILE="$invalid_disposition"
+WS63_WIFI_ENV_FILE_DISPOSITION=invalid
+if load_ws63_wifi_credentials 2>"$TMP/invalid-disposition.err"; then
+    fail "invalid credential disposition was accepted"
+fi
+[ -e "$invalid_disposition" ] || fail "invalid-disposition credential file was consumed"
+grep -q 'must be keep or delete' "$TMP/invalid-disposition.err" ||
+    fail "invalid-disposition error was not actionable"
+unset WS63_WIFI_ENV_FILE WS63_WIFI_ENV_FILE_DISPOSITION
 
 insecure="$TMP/insecure.env"
 write_file "$insecure" $'WS63_WIFI_SSID=test\nWS63_WIFI_PASSPHRASE=not-a-secret\n' 644
@@ -83,10 +105,10 @@ fi
 help_file="$TMP/help.env"
 write_file "$help_file" $'WS63_WIFI_SSID=test\nWS63_WIFI_PASSPHRASE=not-a-secret\n'
 WS63_WIFI_ENV_FILE="$help_file" "$HERE/hil/ws63-connectivity-smoke.sh" --help >"$TMP/help.out"
-[ -e "$help_file" ] || fail "--help consumed the one-shot credential file"
+[ -e "$help_file" ] || fail "--help consumed the credential file"
 
 WS63_WIFI_ENV_FILE="$help_file" "$HERE/hil/ws63-a5b-response-bound.sh" --help \
     >"$TMP/a5b-help.out"
-[ -e "$help_file" ] || fail "A5B --help consumed the one-shot credential file"
+[ -e "$help_file" ] || fail "A5B --help consumed the credential file"
 
 echo "WS63 Wi-Fi credential contract: PASS"

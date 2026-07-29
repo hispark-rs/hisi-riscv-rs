@@ -113,16 +113,17 @@ uv run hil/ws63-connectivity-reset-matrix.py \
 重跑 A5B 目标端响应上界时，不要手工拼“构建、烧录、20 次 reset”：
 
 ```bash
-WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+WS63_WIFI_ENV_FILE=/path/to/local-0600.env \
 PORT=/dev/cu.wchusbserial... \
     hil/ws63-a5b-response-bound.sh
 ```
 
 它固定构建 `wifi_connectivity` 的当前 release closure，只做一次 verified download，
 随后对同一 ELF 执行 20 次 J-Link nRST；每轮同时要求完整 connectivity marker、
-diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件被有效读取后
-立即删除；含凭据的临时 ELF/target 在脚本退出时删除，evidence 只保留 identity、release
-closure、脱敏 UART 与 summary。
+diagnostic trailer 和不超过 100 ms 的 runner step。凭据文件必须是当前用户拥有的
+`0600` 普通文件，默认保留以便后续 HIL 复用；真正的一次性文件可显式设置
+`WS63_WIFI_ENV_FILE_DISPOSITION=delete`。含凭据的临时 ELF/target 在脚本退出时删除，
+evidence 只保留 identity、release closure、脱敏 UART 与 summary。
 
 ## 读懂结果
 

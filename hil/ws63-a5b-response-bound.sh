@@ -19,12 +19,13 @@ FEATURES="wpa2,data-path-diagnostics"
 usage() {
     cat <<'EOF'
 Usage:
-  WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+  WS63_WIFI_ENV_FILE=/path/to/local-0600.env \
   PORT=/dev/cu.wchusbserial... hil/ws63-a5b-response-bound.sh
 
-The credential file uses the same one-shot contract as connectivity smoke:
+The credential file uses the same local-secret contract as connectivity smoke:
 exactly WS63_WIFI_SSID=... and WS63_WIFI_PASSPHRASE=..., owned by the current
-user, mode 0600, no symlink. It is consumed before the build.
+user, mode 0600, no symlink. It is retained by default; set
+WS63_WIFI_ENV_FILE_DISPOSITION=delete for a one-shot file.
 
 Optional:
   PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED (default 3000),

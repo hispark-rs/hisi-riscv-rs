@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 
-# Load a one-shot local HIL credential file without evaluating it as shell code.
+# Load a local HIL credential file without evaluating it as shell code.
 # CI should continue to inject the two variables through its secret store.
 load_ws63_wifi_credentials() {
     local file="${WS63_WIFI_ENV_FILE:-}"
+    local disposition="${WS63_WIFI_ENV_FILE_DISPOSITION:-keep}"
     local mode line ssid="" passphrase=""
     local ssid_seen=0 passphrase_seen=0
 
     [ -n "$file" ] || return 0
+
+    case "$disposition" in
+        keep|delete) ;;
+        *)
+            echo "ERROR: WS63_WIFI_ENV_FILE_DISPOSITION must be keep or delete" >&2
+            return 1
+            ;;
+    esac
 
     if [ -n "${WS63_WIFI_SSID:-}" ] || [ -n "${WS63_WIFI_PASSPHRASE:-}" ]; then
         echo "ERROR: credential file and direct Wi-Fi environment variables are mutually exclusive" >&2
@@ -73,6 +82,9 @@ load_ws63_wifi_credentials() {
 
     WS63_WIFI_SSID="$ssid"
     WS63_WIFI_PASSPHRASE="$passphrase"
-    rm -f -- "$file"
+    if [ "$disposition" = delete ]; then
+        rm -f -- "$file"
+    fi
     unset WS63_WIFI_ENV_FILE
+    unset WS63_WIFI_ENV_FILE_DISPOSITION
 }

@@ -95,7 +95,7 @@ producer、artifact identity 和 classifier 契约可执行，不能替代真实
 该 marker 若出现在真机 capture 中反而会 fail closed。
 
 A5B 上界不能靠事后肉眼看最大值。专用入口
-`hil/ws63-a5b-response-bound.sh` 使用一次性凭据文件构建当前 release closure 的
+`hil/ws63-a5b-response-bound.sh` 使用本机 `0600` 凭据文件构建当前 release closure 的
 `wifi_connectivity`，冻结 ELF/profile identity，只烧录一次，再把 20 次 nRST capture
 交给同一 parser 的
 `--stage connectivity --require-contract --max-runner-step-ms 100`。只要缺少完整
@@ -106,7 +106,8 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 |------|------|------|
 | `PORT` | 必填 | WS63 UART0 |
 | `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
-| `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的一次性 `0600` 文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，成功读取后立即删除；不能与直接环境变量混用 |
+| `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的 `0600` 普通文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，默认保留且不能与直接环境变量混用 |
+| `WS63_WIFI_ENV_FILE_DISPOSITION` | `keep` | `keep` 保留本机凭据供后续复用；`delete` 在成功读取后删除真正的一次性文件 |
 | `WS63_CONNECTIVITY_PROFILE` | `upstream-wpa2` | `upstream-wpa2` / `upstream-wpa3` / `vendor-wpa2`；正式 upstream 验证使用公开 facade 的 plain Cargo lane |
 | `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/ping/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |

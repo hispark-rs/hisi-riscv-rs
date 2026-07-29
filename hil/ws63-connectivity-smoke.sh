@@ -35,7 +35,7 @@ usage() {
     cat <<'EOF'
 Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
        hil/ws63-connectivity-smoke.sh
-       WS63_WIFI_ENV_FILE=/path/to/one-shot-0600.env \
+       WS63_WIFI_ENV_FILE=/path/to/local-0600.env \
        PORT=/dev/ttyUSB0 hil/ws63-connectivity-smoke.sh
        hil/ws63-connectivity-smoke.sh --preflight
 
@@ -49,7 +49,8 @@ Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           WS63_CRYPTO_CONTENTION_HIL=1 for the diagnostic two-task mutex gate.
           WS63_WIFI_ENV_FILE is a local-only, non-symlink 0600 file containing
           exactly WS63_WIFI_SSID=... and WS63_WIFI_PASSPHRASE=...; it is parsed
-          without shell evaluation and deleted immediately after a valid load.
+          without shell evaluation and retained by default. Set
+          WS63_WIFI_ENV_FILE_DISPOSITION=delete for a one-shot file.
 EOF
 }
 
