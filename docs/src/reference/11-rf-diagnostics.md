@@ -2,8 +2,21 @@
 
 `hisi-rf` 的公共错误可通过 `Error::diagnostic()` 或
 `InitError::diagnostic()` 转为 allocation-free 的 `Diagnostic`。当前机器可读 schema 是
-`hisi-rf-error/v2`；其字段只包含稳定分类、阶段、恢复动作、数值 backend code、profile
+`hisi-rf-error/v3`；其字段只包含稳定分类、阶段、恢复动作、数值 backend code、profile
 revision 和最多 4 项数值 trace，不包含 SSID、passphrase、密钥或任意 backend 文本。
+
+## 三层时间边界
+
+| 层次 | 类型/事实源 | 超时结果 | 语义 |
+|---|---|---|---|
+| 协议操作 | `OperationTimeout` | `operation.timeout` | scan/connect 等协议状态机在约定时间内没有完成；取消必须进入 backend cleanup |
+| backend 生命周期 | `BackendTimeout` | `backend.timeout` | 初始化、断开或 RTOS/vendor 有界等待没有完成 |
+| 应用等待 | 应用自己的 deadline 类型 | 应用自定义结果 | 调用方不愿继续等待某个 Future；它不是 backend 错误，也不能覆盖内层诊断 |
+
+丢弃一个已被 backend 接受的 operation Future 会请求取消；实际 vendor/transport cleanup
+由 runner 在普通任务上下文推进，`Drop` 本身不执行 vendor 调用。模板使用独立的
+`ApplicationWaitDeadline`，并以 `hisi-rf-application-wait/v1` 输出脱敏 marker；该 schema
+属于生成应用，不属于 `hisi-rf-error/v3`。
 
 ## 字段
 
@@ -41,9 +54,16 @@ scan/connect/disconnect。
 <a id="errors-backend-timeout"></a>
 ## `backend.timeout`
 
-一个有界操作超过 deadline。先看 `stage`：`associate`、`eapol`、`pmf` 和 `runtime` 指向不同
-故障域。保留 backend code 与 trace，确认事件循环、timer、IRQ 和 AP 行为后再重试；不要只增大
-总 timeout 掩盖状态机缺口。
+backend 初始化、断开或 RTOS/vendor 有界等待超过 deadline。先看 `stage` 和 trace，确认
+事件循环、timer、IRQ 和硬件生命周期；不要把它与协议 operation timeout 或应用等待 deadline
+混为同一个保证。
+
+<a id="errors-operation-timeout"></a>
+## `operation.timeout`
+
+scan/connect 等协议操作超过自身的 `OperationTimeout`。保留 backend code 与 trace，按
+`associate`、`eapol`、`pmf` 等 stage 定位；不要只增大应用总等待时间掩盖状态机缺口。终止
+Future 后，runner 仍必须完成有界取消并回收 owner、queue slot、timer 和 key state。
 
 <a id="errors-operation-cancelled"></a>
 ## `operation.cancelled`

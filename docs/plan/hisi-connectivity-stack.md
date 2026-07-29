@@ -1545,17 +1545,28 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   泄漏到每个调用签名。crates.io-only WPA2/WPA3 consumer、RV32 final link、独立 package
   和 public-API/boundary gate 均已通过；WS63 example 与 template 已迁移到同一形态。证据见
   [A5UX opaque event capacity](evidence/ws63-rf-a5ux-opaque-event-capacity-2026-07-29.md)。
-- [ ] 冻结三层 timeout/cancellation 语义：协议 operation timeout、backend/vendor timeout
+- [x] 冻结三层 timeout/cancellation 语义：协议 operation timeout、backend/vendor timeout
   与应用等待 deadline 必须使用不同类型或明确命名，错误分别映射为稳定 stage/code；禁止
   `ScanConfig` 内层 timeout 与外层 `with_timeout` 在文档中被描述成同一保证。外层取消必须
-  经过 production cancel/cleanup 路径，不能只丢弃 Future。
+  经过 production cancel/cleanup 路径，不能只丢弃 Future。`hisi-rf-core
+  0.1.0-alpha.17` 引入 `OperationTimeout` / `BackendTimeout`、`operation.timeout` /
+  `backend.timeout` 和 `hisi-rf-error/v3`，并以 RAII drop guard 将已接受 Future 的丢弃转换为
+  有界 cancel 请求；vendor cleanup 仍只由 runner 在普通任务上下文执行。`hisi-rf-ws63
+  0.1.0-alpha.44` 完成 WS63 映射，`hisi-rf 0.1.0-alpha.54` 只通过 facade re-export；
+  `wifi_connectivity` 与 template `v0.7.0-alpha.15` 又把应用等待收敛到独立配置，其中模板使用
+  `ApplicationWaitDeadline` 和脱敏的 `hisi-rf-application-wait/v1` marker。host、clippy、
+  RV32、公共 API、standalone package、WPA2/WPA3 blocking/incremental 矩阵与 crates.io-only
+  consumer 已通过；最终 transition-profile HIL 仍需在同一 release train 镜像上重跑，不由
+  这些无板证据代替。证据见
+  [A5UX timeout and cancellation contract](
+  evidence/ws63-rf-a5ux-timeout-cancellation-2026-07-29.md)。
 - [ ] 将 station MAC 和 L2 capability 归属到 `WifiDevice`/`WifiParts` 的实例方法或只读
   capability snapshot，删除普通用户路径对隐藏全局 `station_mac_address()` 的依赖；host
   mock、多次初始化失败恢复和未来多 radio 实例不得共享无所有权的可变全局身份。
 - [ ] 提供 facade-owned、allocation-free 的统一只读诊断快照，组合 runner、wait、event、
   blocking-call 和 resource 指标；现有细粒度诊断方法可作为内部来源，但不得要求应用用全局
   `Mutex<Cell<Option<_>>>` 拼装一致快照。快照 schema 必须版本化、secret-redacted，并与
-  `hisi-rf-error/v2` 和 resource report 保持单向引用，不能复制第二份错误分类事实源。
+  `hisi-rf-error/v3` 和 resource report 保持单向引用，不能复制第二份错误分类事实源。
 - [ ] 将最终用户 happy path 的可恢复初始化、配置和连接错误改为 typed `Result` 控制流；
   HIL fixture 可以在记录结构化错误后 `halt`，但教程/template 不应把所有资源不足或网络失败
   展示为 `expect`/panic。panic 只保留给违反静态/unsafe contract 的不可恢复状态。

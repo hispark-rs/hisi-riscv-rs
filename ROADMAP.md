@@ -104,14 +104,16 @@ The shared-arena closure is recorded in
 [shared RF arena evidence](docs/plan/evidence/ws63-rf-a5u-shared-arena-2026-07-28.md).
 Resource shortage, association rejection, first-EAPOL timeout, operation
 cancellation and backend timeout now emit the same production
-`hisi-rf-error/v2` diagnostics in host fixtures, QEMU and on real WS63.
+`hisi-rf-error/v3` diagnostics in host fixtures, QEMU and on real WS63.
 Operation cancellation and timeout also pass through the production
 public controller and incremental state machine, then return through facade
 completion/event channels while proving terminal-slot recovery. A
 production-path host regression now covers key-held cancellation, one retained
 replacement, late success suppression, timer cleanup and generation-safe slot
 reuse.
-Template `v0.7.0-alpha.11` now generates the Wi-Fi firmware, FlashPlan image
+The protocol, backend and application waiting boundaries now use distinct
+`OperationTimeout`, `BackendTimeout` and application-owned deadline types.
+Template `v0.7.0-alpha.15` now generates the Wi-Fi firmware, FlashPlan image
 and deterministic profile resource report from the same public `hisi-rf`
 dependency. Generated projects carry their own pinned toolchain, target/linker
 and release-profile configuration; tag-gated native Linux, macOS and Windows CI

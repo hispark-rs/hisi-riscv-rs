@@ -82,6 +82,17 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   conservation, opaque facade/runtime selection, and strict QEMU/HIL gates
   exposed by adversarial review. Pure WPA3 remains a separate externally
   blocked gate rather than the only unfinished A5 item.
+- **Typed timeout and cancellation contract** — publish `hisi-rf-core
+  0.1.0-alpha.17`, `hisi-rf-ws63 0.1.0-alpha.44`, and `hisi-rf
+  0.1.0-alpha.54`. Protocol operations, backend lifecycle waits, and
+  application wait deadlines now use separate types and diagnostics; dropping
+  an accepted operation future requests production cancellation while vendor
+  cleanup remains runner-owned.
+- **Centralized Wi-Fi example configuration** — move profile timeouts, runner
+  budget, scan capacity, and compile-time credentials into each application's
+  configuration module. Template `v0.7.0-alpha.15` generates the same contract
+  and emits a separate, secret-free application-wait diagnostic instead of
+  relabeling an outer deadline as a backend failure.
 
 ### Verification
 
