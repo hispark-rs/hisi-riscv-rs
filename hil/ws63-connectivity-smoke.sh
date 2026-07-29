@@ -20,6 +20,7 @@ PORT="${PORT:-}"
 PROFILE="${WS63_CONNECTIVITY_PROFILE:-upstream-wpa2}"
 EXPECT="${WS63_CONNECTIVITY_EXPECT:-full}"
 CRYPTO_CONTENTION_HIL="${WS63_CRYPTO_CONTENTION_HIL:-0}"
+DATA_PATH_DIAGNOSTICS="${WS63_DATA_PATH_DIAGNOSTICS:-0}"
 if [ "$EXPECT" = init-scan ]; then
     MONITOR="${MONITOR:-35}"
     WS63_WIFI_SSID="${WS63_WIFI_SSID:-ci-fixture}"
@@ -46,6 +47,8 @@ Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           WS63_CONNECTIVITY_EXPECT={full|init-scan}; init-scan uses public
           fixture credentials and proves only image/startup/RF init/scan/runner,
           WS63_WIFI_AP_MODE={pure-wpa3|transition} for upstream-wpa3,
+          WS63_DATA_PATH_DIAGNOSTICS=1 to enable the example's aggregate
+          packet/IRQ/WLMAC diagnostic marker,
           WS63_CRYPTO_CONTENTION_HIL=1 for the diagnostic two-task mutex gate.
           WS63_WIFI_ENV_FILE is a local-only, non-symlink 0600 file containing
           exactly WS63_WIFI_SSID=... and WS63_WIFI_PASSPHRASE=...; it is parsed
@@ -114,6 +117,18 @@ preflight() {
             failed=1
             ;;
     esac
+    case "$DATA_PATH_DIAGNOSTICS" in
+        0|1) ;;
+        *)
+            echo "ERROR: WS63_DATA_PATH_DIAGNOSTICS must be 0 or 1" >&2
+            failed=1
+            ;;
+    esac
+    if [ "$DATA_PATH_DIAGNOSTICS" = 1 ] &&
+        { [ "$EXPECT" != full ] || [ "$PROFILE" = vendor-wpa2 ]; }; then
+        echo "ERROR: data-path diagnostics require a full upstream connectivity profile" >&2
+        failed=1
+    fi
     if [ "$CRYPTO_CONTENTION_HIL" = 1 ] && [ "$PROFILE" != upstream-wpa3 ]; then
         echo "ERROR: crypto contention HIL currently requires upstream-wpa3" >&2
         failed=1
@@ -226,6 +241,9 @@ case "$PROFILE" in
 esac
 if [ "$CRYPTO_CONTENTION_HIL" = 1 ]; then
     FEATURES="$FEATURES,rf-crypto-contention-diag"
+fi
+if [ "$DATA_PATH_DIAGNOSTICS" = 1 ]; then
+    FEATURES="$FEATURES,data-path-diagnostics"
 fi
 
 case "$PROFILE" in
