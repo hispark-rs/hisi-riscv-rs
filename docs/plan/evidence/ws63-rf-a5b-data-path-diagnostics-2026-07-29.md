@@ -73,3 +73,36 @@ auth-response-2 timeout，event queue drop 为 0。它没有进入 DHCP/data-pat
 - Rust 可观测 TX/RX 两端在 ping 全丢轮继续前进，但 MAC/DMAC 层仍缺安全观测点。
 - A5B 仍是 active：20/20 reliability gate 未完成，默认 backend 不因本证据切换。
 - probe-rs 3 MHz 完整 verify 成功；其下载稳定性继续作为独立工具链问题跟踪。
+
+## DMAC 边界补测
+
+同日补入两个只做 `AtomicU32` 递增并原样转发的 linker wrapper：
+
+- bit 3：`dmac_tx_complete_event_handler` 调用次数；
+- bit 4：`dmac_rx_prepare_data_patch` 调用次数。
+
+窄诊断 capability mask 因而从 `0x03` 扩为 `0x1b`。wrapper 不解析帧、不分配内存、
+不调用用户代码，也不读取曾阻塞的 ROM MAC statistics helper。TX completion 是 callback
+调用数，一次 callback 可能完成多个 descriptor；DMAC RX prepare 还包含管理帧和驱动内部
+流量，二者都不能与 Rust L2 frame 数一一对应。
+
+补测固件经 plain Cargo 单次链接，37 项 ROM patch 存在、vendor relocation 为 0。
+第一次 3 MHz 下载在首个 page write 超时，物理 nRST 恢复后重新执行；第二次 3 MHz
+完整 verify 成功，耗时 83.33 s。下载失败单列为 probe-rs transport 事件，没有计入
+网络矩阵。
+
+恢复后的同一最终镜像只烧录一次，随后完成 20 次 J-Link nRST：
+
+- 20/20 完整 connectivity contract 通过；
+- 20/20 `auth_rsp2_timeouts=0`；
+- 每轮 `path_caps=0x1b`；
+- vendor TX submission 为 13--14，DMAC TX completion callback 为 100--113；
+- DMAC RX prepare 为 333--513，最终 vendor/Rust RX 为 13--19；
+- `tx_failed=0`，event drop、runner error 和 100 ms runner budget violation 均为 0；
+- 在线分类与离线复算均为 `{"pass": 20}`。
+
+这证明新增 DMAC 观测边界在当前 WPA2 profile 上低扰动、持续有活动，并把未来失败的
+定位范围推进到 MAC/空口之前。由于本轮没有复现先前 ping/connect 反例，它不能反向证明
+旧失败根因，也不恢复 MAC statistics capability；A5B 的反例归因项继续保持 active。
+本机原始证据位于
+`/private/tmp/ws63-a5b-data-path-20260729-r2`。

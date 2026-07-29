@@ -1145,6 +1145,12 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   因此已从窄诊断移除；只有建立可调用上下文、超时和真机证据后才可重新声明 MAC
   capability。见
   [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
+  同日后续窄诊断以只递增 atomic 并原样转发的 wrapper 增加 DMAC TX completion 与
+  DMAC RX prepare，`path_caps=0x1b`；恢复后的同一最终镜像取得 20/20 connectivity
+  contract、零 auth response-2 timeout、零 TX reject/event drop/runner error，在线和
+  离线复算一致。每轮 DMAC TX/RX 边界均稳定非零，但该轮没有复现先前反例，因此只证明
+  新观测低扰动并缩小未来归因范围，不能把旧 ping/connect 失败倒推成已知根因，也不恢复
+  不安全的 ROM MAC statistics getter。
 
 #### A5R -- 可执行 RTOS 语义
 
