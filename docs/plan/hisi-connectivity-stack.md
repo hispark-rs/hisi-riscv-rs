@@ -1691,11 +1691,21 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   和 application deadline 失败统一为版本化、可执行下一步的诊断后停机；panic/expect
   只保留 scheduler contract、固定容量和初始化后硬件状态等不变量。CI 生成真实 WS63 Wi-Fi
   项目并禁止恢复为旧 panic 文案，独立 crates.io 依赖项目的 RV32 release check 已通过。
-- [ ] WS63 runtime port 的用户级启动形态不在本节重复设计；按
+- [x] WS63 runtime port 的第一阶段用户级启动 facade 已落地：
+  `hisi-rtos 0.1.0-alpha.15` 提供 `chip-ws63`、
+  `hisi_rtos::bind_interrupts!` 和 `hisi_rtos::ws63::start(...)`，统一消费 TIMER/SYS_CTL1、
+  安装 Timer/SWI handler、提供 24 MHz monotonic clock，并在 scheduler 完整安装后启用
+  全局中断。公开 `wifi_connectivity` 与 template `v0.7.0-alpha.18` 已退出手写
+  `SchedulerPort`、Timer/SWI callback 和全局中断启动时序；RTOS CI 覆盖
+  `chip-ws63` 与 `chip-ws63,embassy`，模板 CI 生成并构建真实 Wi-Fi 项目。相同
+  connectivity ELF 在真机完成 init/scan/WPA2 connect/DHCP/gateway ARP/UDP DNS/renew，
+  证据见
+  [WS63 RTOS port facade](evidence/ws63-rtos-port-facade-2026-07-30.md)。
+- [ ] WS63 runtime port 的剩余用户级形态不在本节重复设计；按
   [RTOS 未来架构 F2/F3](hisi-rtos-future-architecture.md#延期里程碑) 收敛为
-  `hisi_rtos::ws63::start(...)`、caller-owned `SchedulerStorage<N>` 与 Embassy adapter，
-  让应用退出手写 `SchedulerPort`、Timer/SWI callback 和全局中断启动时序。该迁移必须保持
-  A5 已冻结 ELF marker、15 dynamic-task 兼容容量和 Cooperative/Budgeted/Preemptive HIL
+  caller-owned `SchedulerStorage<N>` 与正式 Embassy adapter，移除应用提供的 allocator
+  callback，并让 RAM/task capacity 在类型和资源报告中可见。该迁移必须保持 A5 已冻结
+  ELF marker、15 dynamic-task 兼容容量和 Cooperative/Budgeted/Preemptive/Embassy HIL
   parity。
 
 验收要求：新增 crates.io-only 外部 consumer compile fixture 和 `cargo-public-api` gate；

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Release train anchor: `hisi-hal 0.7.0-alpha.3`.
+Release train anchor: `hisi-hal 0.7.0-alpha.6`.
 
 ### Changed
 
@@ -93,6 +93,15 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   configuration module. Template `v0.7.0-alpha.15` generates the same contract
   and emits a separate, secret-free application-wait diagnostic instead of
   relabeling an outer deadline as a backend failure.
+- **Protocol-based connectivity gate** — replace public ICMP as a hard HIL gate
+  with DHCP, direct gateway ARP, and a validated UDP DNS response. Public ICMP
+  remains an observational loss metric and no longer turns a working local
+  data path into a firmware failure.
+- **Native WS63 RTOS startup** — publish `hisi-rtos 0.1.0-alpha.15` with a
+  typed `hisi_rtos::ws63::start` facade that owns TIMER/SWI wiring, the 24 MHz
+  scheduler clock, interrupt handlers, and global-interrupt startup. WS63
+  connectivity examples and template `v0.7.0-alpha.18` no longer duplicate
+  those chip-port mechanisms.
 
 ### Verification
 
@@ -117,6 +126,14 @@ Release train anchor: `hisi-hal 0.7.0-alpha.3`.
   complete WS63 Wi-Fi project, build its release image and run the
   resource-report helper on native Linux, macOS and Windows. The successful tag
   run published `v0.7.0-alpha.11` as a non-draft prerelease.
+- RTOS CI run `30492759785` passed host, RV32 WS63/Embassy, Kani, and TLA+
+  checks; publish run `30492943437` released alpha.15. Template CI run
+  `30493223527` generated and built the new Wi-Fi starter and passed native
+  Linux/macOS/Windows resource-report jobs.
+- The RTOS-facade connectivity ELF passed full 1 MHz readback verification and
+  real-silicon init, scan, WPA2 connect, DHCP, direct gateway ARP, UDP DNS, and
+  lease renewal. A preceding 3 MHz first-page timeout was classified separately
+  as probe transport failure and recovered with the official full FWPKG.
 
 ---
 
