@@ -134,7 +134,7 @@ RUST_FATAL_MARKERS = (
 )
 
 QEMU_CONTRACT_FIXTURE_MARKER = b"RFDBG_CONNECTIVITY_CONTRACT_FIXTURE"
-PUBLIC_DNS_TARGET = "223.5.5.5"
+PUBLIC_DNS_TARGETS = ("223.5.5.5", "180.76.76.76")
 L2_PROTOCOL_FIELDS = (
     "rx_arp_req",
     "rx_arp_reply",
@@ -569,7 +569,7 @@ def validate_rust_contract(
 
         dns = parse_dns_summary(log)
         if dns is not None:
-            if dns.get("target") != PUBLIC_DNS_TARGET:
+            if dns.get("target") not in PUBLIC_DNS_TARGETS:
                 violations.append("invalid:public_dns.target")
             if dns.get("status") != "ok":
                 violations.append("invalid:public_dns.status")

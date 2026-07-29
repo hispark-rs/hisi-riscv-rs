@@ -75,10 +75,13 @@ def connectivity_success_log() -> bytes:
                 b"RF5C_LOCAL_DATA_PATH_OK arp_reply=0x00000001 "
                 b"arp_request=0x00000001 gateway=192.0.2.1"
             ),
-            b"RF5C_PUBLIC_DNS_BEGIN target=223.5.5.5 attempts=0x00000003",
+            (
+                b"RF5C_PUBLIC_DNS_BEGIN primary=223.5.5.5 "
+                b"secondary=180.76.76.76 attempts=0x00000004"
+            ),
             (
                 b"RF5C_PUBLIC_DNS_SAMPLE attempt=0x00000001 txid=0x00005754 "
-                b"status=ok answers=0x00000001"
+                b"target=223.5.5.5 status=ok answers=0x00000001"
             ),
             (
                 b"RF5C_PUBLIC_DNS_OK target=223.5.5.5 attempts=0x00000001 "
@@ -340,6 +343,13 @@ class ClassifyTests(unittest.TestCase):
             ),
             "pass",
         )
+
+    def test_secondary_public_dns_response_passes_connectivity(self) -> None:
+        log = connectivity_success_log().replace(
+            b"RF5C_PUBLIC_DNS_OK target=223.5.5.5",
+            b"RF5C_PUBLIC_DNS_OK target=180.76.76.76",
+        )
+        self.assertEqual(MATRIX.validate_rust_contract(log, "connectivity"), [])
 
     def test_gateway_loss_is_a_local_data_path_failure(self) -> None:
         log = (
