@@ -7,9 +7,9 @@ A5U caller-owned resource admission、typed diagnostics 和 template/resource-re
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
 controller/connect/control source-path failure injection 也已在 host、QEMU 和真机闭合。
-后续 unchanged-image 矩阵同时记录了公网 ICMP 丢包、一次本地数据面全丢和 scan timeout，
-因此当前执行槽位重新收敛 A5B 可靠性与分类，并并行完成不改变运行行为的 A5UX 诊断 API
-收窄；pure-WPA3 HIL 另受
+后续 unchanged-image 矩阵曾记录公网 ICMP 丢包、一次本地数据面全丢和 scan timeout。
+当前 release closure 已改用直接 ARP 与冗余 UDP DNS contract，并取得 20/20；
+A5UX 诊断 API 收窄继续按计划推进，pure-WPA3 HIL 另受
 外部条件阻塞。剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -86,6 +86,15 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    1937 ms、association ioctl 最大 2040 ms，event drop 和 auth-response-2 timeout
    均为 0。新矩阵未复现旧本地反例，A5B 仍未达到 20/20；不能用增加盲目重试或
    放宽公网 ICMP 门槛掩盖。
+   marker-contract-v2 随后以直接 L2 ARP reply 作为本地门槛，以 AliDNS/Baidu DNS
+   固定 A 查询作为公网协议门槛。单目标首轮矩阵为
+   `17 pass + 2 public_dns_failure + 1 connect_error`：两个 DNS 失败轮均有 DHCP、
+   ARP reply、零 queue drop 和三次无 tx error 的 AliDNS timeout；connect failure
+   仍停在 association。加入第二 DNS 交替冗余后，同一 release closure 以 1 MHz
+   verified download 烧录一次，再连续 20 次 nRST，得到 `20 pass`、20/20 合法 DNS
+   response、20/20 ARP reply、`auth_rsp2_timeouts=0`、queue/backend error 为 0，
+   runner 单步最大 37 ms。该结果关闭当前 A5B release acceptance；旧 ICMP/本地尾部
+   反例仍保留为历史诊断证据，不再定义现行 pass/fail marker。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1208,10 +1217,11 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   `backend.other`，没有进入 DHCP/L2；parser 已改为让显式 fatal marker 优先于
   不完整 A5B trailer，避免将其误报为 `missing_a5b_metrics`。该矩阵没有复现旧
   `local_data_path_failure`，因此旧反例仍保持 open。
-- [ ] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
+- [x] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
   发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
-  冗余。DNS gate 落地前，DHCP + gateway reply 是临时本地硬门槛，公网 ICMP 丢包只计入
-  `public_icmp_loss` 统计；后续再增加受控同 LAN UDP/TCP echo。
+  `180.76.76.76:53` 交替冗余。当前 gate 同时要求 DHCP、直接 gateway ARP reply、
+  至少一个合法 DNS response、零 DNS TX error/queue drop，并保留受控同 LAN
+  UDP/TCP echo 为后续增强而非当前 blocker。
 
 #### A5R -- 可执行 RTOS 语义
 

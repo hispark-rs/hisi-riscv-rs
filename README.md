@@ -13,7 +13,7 @@ runnable **without hardware** on the sister project
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** The WS63 path now completes real WPA2 scan,
-> connect, DHCP, smoltcp neighbor discovery, public ICMP and DHCP renewal on
+> connect, DHCP, smoltcp neighbor discovery, validated public UDP DNS and DHCP renewal on
 > silicon. The active A4 work is release and compatibility/HIL closeout for the
 > new chip-neutral `hisi-rf` vertical slice; BLE/SLE and BS2X connectivity remain
 > deferred. Current priorities are in [`ROADMAP.md`](ROADMAP.md), and dated

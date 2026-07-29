@@ -32,7 +32,7 @@ HIL runner 与脚本环境变量见 [HIL 脚本与 runner 环境变量](07-hil-m
 | `embassy_async_io` | embassy GPIO Wait + async UART + Timer | UART | `EMBASSY ASYNC IO: PASS` | 否¹ | ✅ | ⚠️ |
 | `embassy_multitask` | embassy 双任务 `Timer::after` | UART | `EMBASSY MULTITASK: PASS` | 否 | ✅ | ⚠️ |
 | `net_ping` | smoltcp over ws63-netmac + SLIRP（ARP/ICMP/UDP） | UART | `NET PING: PASS` | 否⁵ | ✅ | ❌⁶ |
-| `wifi_connectivity` | `hisi-rf` facade：增量 runner → scan/connect → DHCP → 重复 ICMP → lease renew | UART | `RF5C_CONNECTIVITY_SUMMARY`、`A4_DHCP_RENEW_OK`、`RFDBG_A5B_CONNECT_PROFILE_OK` | 否⁷ | ❌ | ⚠️⁷ |
+| `wifi_connectivity` | `hisi-rf` facade：增量 runner → scan/connect → DHCP → ARP + 冗余 UDP DNS → lease renew | UART | `RF5C_PUBLIC_DNS_OK`、`RF5C_CONNECTIVITY_SUMMARY`、`A4_DHCP_RENEW_OK`、`RFDBG_A5B_CONNECT_PROFILE_OK` | 否⁷ | ❌ | ⚠️⁷ |
 | `reset_demo` | `software_reset` + `reset_reason` 端到端 | UART | `OK: software reset observed` | 否 | ✅ | ⚠️ |
 | `rf_port_demo` | maintainer fixture：旧 porting allocator/securec/log 契约 | UART | `RF PORT DEMO: PASS` | 否 | ✅ | ⚠️ |
 | `semihost_selftest` | CPU 自检（M/F 扩展、mcycle），半主机退出码 | semihosting | 退出码 `0`，console `semihost_selftest: PASS` | 否⁸ | ✅ | ❌⁸ |
@@ -53,7 +53,8 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 6. `net_ping` 依赖 ws63-qemu 合成 MAC（`ws63-netmac @ 0x4421_0000`），真机无此通道。
 7. `wifi_blob_link` 只验证 archive/link 契约；`wifi_init_smoke` 保留 init/scan 与诊断
    fixture。`wifi_connectivity` 才是最终用户级完整镜像；它需要受控 AP 和临时注入的凭据，
-   当前 WPA2/WPA3 构建与 ELF 边界检查已通过，最终同镜像 20-reset 真机验收仍未闭合。
+   当前 WPA2/WPA3 构建与 ELF 边界检查已通过；WPA2 marker-contract-v2 的同镜像
+   20-reset 真机验收为 20/20，pure-WPA3 仍受外部 AP 条件阻塞。
 8. `semihost_selftest` 需 QEMU `-semihosting`；真机半主机陷阱为 no-op，`exit` 只自旋。
 9. `xip_flash_clk_hazard` 是破坏性教学例：成功条件是打印切换前标记后挂死，且不应出现切换后标记；真机会干扰调试/烧录会话，
     常规 HIL 不运行它。
@@ -73,7 +74,7 @@ HAL 驱动级 embedded-test HIL 是另一条轨道：stable API 证据、用例�
 | `embassy_async_io` | `EMBASSY ASYNC IO: PASS` |
 | `embassy_multitask` | `EMBASSY MULTITASK: PASS` |
 | `net_ping` | `NET PING: PASS` |
-| `wifi_connectivity` | `RF5C_CONNECTIVITY_SUMMARY`、`A4_DHCP_RENEW_OK`、`RFDBG_A5B_CONNECT_PROFILE_OK` |
+| `wifi_connectivity` | `RF5C_PUBLIC_DNS_OK`、`RF5C_CONNECTIVITY_SUMMARY`、`A4_DHCP_RENEW_OK`、`RFDBG_A5B_CONNECT_PROFILE_OK` |
 | `reset_demo` | `OK: software reset observed` |
 | `rf_port_demo` | `RF PORT DEMO: PASS` |
 | `semihost_selftest` | console `semihost_selftest: PASS`（半主机退出码 0） |

@@ -41,12 +41,13 @@ A4 delivered one coherent Wi-Fi path:
 - separate `WifiController` and `WifiDevice`;
 - a bounded event queue with no user callbacks in IRQ or critical sections;
 - a long-lived smoltcp or embassy-net runner covering lease renewal,
-  ARP/neighbor cache, and repeated ICMP;
+  ARP/neighbor cache, and routed UDP DNS;
 - parity with the frozen init/scan/connect/ping markers and A0/A3 link/image
   evidence.
 
 The complete slice passes on WS63: WPA2 connect, a long-lived smoltcp
-runner, DHCP, neighbor discovery, repeated public ICMP, zero RX-queue drops, and
+runner, DHCP, direct ARP reply evidence, validated public UDP DNS responses,
+zero RX-queue drops, and
 an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
 committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
@@ -81,10 +82,13 @@ covered across their exact production seams. Credential-free cancellation and
 timeout injection now also crosses the public controller, facade channels,
 incremental runner, and WS63 backend, with identical QEMU and silicon output.
 The public `wifi_connectivity` example now composes the facade, incremental
-runner, scan/connect, DHCP, repeated ICMP and lease renewal in one final ELF.
+runner, scan/connect, DHCP, direct ARP evidence, redundant public UDP DNS and lease renewal
+in one final ELF.
 The response-bound and full connectivity scripts build that same image. The
-remaining release gate is the 20-reset on-target acceptance of this released
-closure, while keeping the QEMU/HIL evidence executable and fail-closed.
+released closure now passes the fail-closed marker-contract-v2 QEMU fixture and a
+20/20 unchanged-image on-target matrix with zero authentication timeout, queue
+drop or backend error. Historical ICMP evidence remains dated evidence rather
+than the current pass/fail contract.
 Pure-WPA3 remains a separate external gate.
 
 The application migration contract is documented in

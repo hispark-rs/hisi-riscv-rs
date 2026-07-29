@@ -328,3 +328,37 @@ association/connect reliability，不能计入公网 ICMP 或本地数据面失�
 `/private/tmp/ws63-a5b-l2-reset20-20260730-reanalysis-v2`。本轮证明 v8 L2 观测
 低扰动并给出正常路径范围，但没有捕获旧本地反例，因此 A5B 20/20 reliability gate
 继续保持 open。
+
+## UDP DNS marker-contract-v2 与冗余复验
+
+当前 gate 已从公共 ICMP 观测迁移到固定、无秘密的 UDP DNS A 查询。固件校验响应来源、
+transaction id、QR/opcode、TC、rcode、完整 question 与非零 answer count；HIL parser
+使用同一 `ws63-connectivity-markers/v2` 契约。gateway 本地门槛同时改为
+`RFDBG_A5B_L2` 的直接 ARP reply，不再由 ICMP reply 间接推导。
+
+第一版只查询 AliDNS `223.5.5.5:53`。3 MHz probe-rs 下载在
+`0x00240000` page program timeout，500 kHz 回退因 DMI transport 无法连接而结束；
+没有产生网络样本。随后以官方完整 FWPKG/460800 串口恢复板卡，原厂启动与 RF calibration
+正常；1 MHz 下载和完整 verify 成功，耗时 141.16 s。该镜像 20 次 nRST 得到：
+
+- `17 pass + 2 public_dns_failure + 1 connect_error`；
+- 两个 DNS 失败轮均完成 DHCP 与直接 ARP reply，三次 query 无 tx error、invalid response
+  或 queue drop，但 AliDNS 没有回包；
+- connect failure 停在 association `backend.other`，未进入 DHCP/L2；
+- 20 轮 `auth_rsp2_timeouts=0`。
+
+根据既定冗余设计，固件随后在 AliDNS 与 Baidu DNS `180.76.76.76:53` 间交替，仍只使用
+一个 UDP socket 和同一固定容量，不扩大 SRAM profile。host parser 30/30、目标构建和
+QEMU contract fixture 均通过。最终镜像以 1 MHz 下载、完整 verify，耗时 143.06 s；
+同一镜像连续 20 次 nRST 得到：
+
+- `20 pass`，20 个合法 DNS response，invalid/tx error 均为 0；
+- 20 轮直接 ARP reply 均为 1，RX IPv4 为 3--6，RX queue drop 为 0；
+- event/backend error 为 0，runner 单步最大 37 ms；
+- `auth_rsp2_timeouts=0`，没有 association、scan 或 local-data-path failure。
+
+本轮 20 个 response 都由首个 AliDNS attempt 返回，Baidu DNS 作为故障冗余没有被迫命中；
+它证明冗余版没有引入行为回归，但不单独证明第二目标在本网络的可达率。脱敏机器证据位于
+`/private/tmp/ws63-dns-connectivity-reset20-20260730-r2/contract` 与
+`/private/tmp/ws63-dns-redundant-reset20-20260730/contract`。凭据文件未写入证据，并按
+本地 HIL 契约继续保留。
