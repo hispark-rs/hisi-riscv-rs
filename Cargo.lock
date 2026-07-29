@@ -943,11 +943,12 @@ version = "0.1.0-alpha.2"
 
 [[package]]
 name = "hisi-rtos"
-version = "0.1.0-alpha.14"
+version = "0.1.0-alpha.15"
 dependencies = [
  "critical-section",
  "embassy-time-driver",
  "embassy-time-queue-utils",
+ "hisi-hal",
  "hisi-rf-rtos-driver",
  "trybuild",
 ]
