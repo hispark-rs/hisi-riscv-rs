@@ -291,3 +291,40 @@ Wi-Fi 接口到 gateway 也为 `5/5`。因此 run 10 保留为真实的 DHCP 后
 双向 ARP request/reply、IPv4、other frame 计数，`ws63-examples 10dee35` 输出
 `RFDBG_A5B_L2`，HIL parser 将其作为可选诊断字段保留。下一轮重复真机矩阵需用这些
 计数捕获反例，同时保留 v7 scan snapshot 以捕获旧的 scan timeout。
+
+## v8 L2 分类矩阵
+
+发布 `hisi-rf-ws63 0.1.0-alpha.57`、`hisi-rf 0.1.0-alpha.66` 和
+`ws63-examples 10dee35` 后，公开 `wifi_connectivity` 先完成一次真机 smoke：
+
+- 1 MHz probe-rs binary download 和完整 verify 成功，耗时 142.04 s；
+- 37 项 ROM patch、0 个 vendor relocation；
+- gateway 与 AliDNS 均为 `5/5`，RX queue drop 为 0；
+- `RFDBG_A5B_L2` 为 RX ARP request 4、ARP reply 1、IPv4 15，
+  TX ARP request 1、IPv4 12，其余计数为 0。
+
+首次 3 MHz 下载在第一个 app page 失败，500 kHz 自动重试随后遇到 DMI transport
+错误；该尝试没有产生网络样本。物理 nRST 后 DMI read 恢复，因此没有用 transport
+故障污染 RF 分类，也没有为了得到成功样本而改网络 timeout。
+
+同一 1 MHz verified image 随后连续执行 20 次 J-Link nRST，不重复下载。修正后的
+共享在线/离线 classifier 得到：
+
+- `19 pass + 1 connect_error`；
+- 19 个成功轮 gateway `95/95`，AliDNS ICMP `94/95`；
+- 20 轮 `auth_rsp2_timeouts=0`；
+- 19 个成功轮都有 L2 snapshot，RX ARP reply 恒为 1，RX IPv4 为 12--44，
+  TX ARP request 恒为 1，TX IPv4 恒为 12；
+- 没有复现 DHCP 后 gateway/public 同时全丢的 `local_data_path_failure`。
+
+失败的 run 2 在 association operation 返回
+`backend.other (0x5732b003)`，未进入 DHCP、neighbor 或 L2 probe。其 event queue
+drop 为 0；runner 单步最大 1937 ms，association ioctl 最大 2040 ms。原 parser
+先检查 A5B trailer 完整性，曾将显式 `RF5B_CONNECT_ERR` 掩盖成
+`missing_a5b_metrics`；现已改为 fatal marker 优先，并增加回归测试。该轮应归为
+association/connect reliability，不能计入公网 ICMP 或本地数据面失败。
+
+脱敏证据位于 `/private/tmp/ws63-a5b-l2-smoke-20260730-r2` 和
+`/private/tmp/ws63-a5b-l2-reset20-20260730-reanalysis-v2`。本轮证明 v8 L2 观测
+低扰动并给出正常路径范围，但没有捕获旧本地反例，因此 A5B 20/20 reliability gate
+继续保持 open。

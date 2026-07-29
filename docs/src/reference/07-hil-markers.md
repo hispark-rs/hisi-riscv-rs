@@ -89,7 +89,8 @@ TX error / backend error、A5B runner budget 越界都会失败。当前本地�
 查询，而不是依赖公共服务是否回复 ICMP。旧 `RF5A_ARP_OK` 是由首个 ICMP reply
 推导 neighbor 已可用的兼容 marker，不是 ARP cache 的直接快照；v8
 `RFDBG_A5B_L2` 另行记录双向 ARP request/reply、IPv4 与 other frame 计数，供失败
-归因，但在重复硅片证据闭合前不单独升级为硬门槛。构建后先冻结
+归因，但在重复硅片证据闭合前不单独升级为硬门槛。reset-matrix summary 会汇总
+每个 L2 计数器在带 marker 轮次中的最小/最大值，并单列缺失 marker 的轮次。构建后先冻结
 `hisi-connectivity-artifact/v1`（profile、ELF SHA-256、marker contract），解析前再次复核；
 不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
 `EVIDENCE_DIR`，含凭据的临时 ELF/target 仍在退出时删除。

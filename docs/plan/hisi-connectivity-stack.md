@@ -79,9 +79,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    不能倒推出 ARP reply 一定没有到。两轮都没有 auth-response-2 timeout。当前必须
    同时保留 scan reliability 和本地 ARP/RX 尾部风险：前者用 v7 scan snapshot
    定位；`hisi-rf-radio-diagnostics/v8` 已增加双向 ARP request/reply、IPv4 和
-   other frame 分类计数，示例输出 `RFDBG_A5B_L2`，下一轮同镜像矩阵将用它区分
-   ARP 未完成与 ARP 后 IPv4 回包缺失。新计数尚未为旧反例提供真机归因，不能用
-   增加盲目重试或放宽公网 ICMP 门槛掩盖。
+   other frame 分类计数，示例输出 `RFDBG_A5B_L2`。v8 同镜像矩阵的 19 个成功轮
+   全部带 L2 快照：gateway `95/95`、AliDNS `94/95`，ARP reply 每轮为 1，
+   RX IPv4 为 12--44；唯一失败轮在 association operation 返回 `backend.other`，
+   未进入 DHCP/L2，不能归类为公网 ICMP 或本地数据面失败。该轮 runner 单步最大
+   1937 ms、association ioctl 最大 2040 ms，event drop 和 auth-response-2 timeout
+   均为 0。新矩阵未复现旧本地反例，A5B 仍未达到 20/20；不能用增加盲目重试或
+   放宽公网 ICMP 门槛掩盖。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1198,8 +1202,12 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   推导 neighbor，而不是 ARP/neighbor cache 的直接观测，因此不能把该轮进一步写成
   “ARP reply 未到”。`hisi-rf-ws63 0.1.0-alpha.57` 与 `hisi-rf
   0.1.0-alpha.66` 已发布 v8 L2 分类快照，`ws63-examples 10dee35` 输出
-  `RFDBG_A5B_L2`；重复真机矩阵仍待执行，同时保留 v7 scan snapshot，不增加总
-  timeout 或盲目 retry。
+  `RFDBG_A5B_L2`。最新 unchanged-image 20-reset 矩阵得到 `19 pass + 1
+  connect_error`；19 个成功轮 gateway `95/95`、AliDNS `94/95`，L2 快照均存在，
+  ARP reply 每轮为 1、RX IPv4 为 12--44。失败轮在 association operation 返回
+  `backend.other`，没有进入 DHCP/L2；parser 已改为让显式 fatal marker 优先于
+  不完整 A5B trailer，避免将其误报为 `missing_a5b_metrics`。该矩阵没有复现旧
+  `local_data_path_failure`，因此旧反例仍保持 open。
 - [ ] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
   发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
   冗余。DNS gate 落地前，DHCP + gateway reply 是临时本地硬门槛，公网 ICMP 丢包只计入

@@ -93,6 +93,18 @@ def connectivity_success_log() -> bytes:
 
 
 class ClassifyTests(unittest.TestCase):
+    def test_connect_error_is_not_masked_by_incomplete_a5b_metrics(self) -> None:
+        log = b"\n".join(
+            (
+                b"RF5B_CONNECT_ERR: code=backend.other stage=operation backend=0x5732b003",
+                b"RFDBG_A5B_CONNECT_PROFILE_OK",
+            )
+        )
+        self.assertEqual(
+            MATRIX.classify(log, "rust", "connectivity"),
+            "connect_error",
+        )
+
     def test_connectivity_record_keeps_l2_protocol_diagnostics(self) -> None:
         record = MATRIX.record_from_log(
             1,
@@ -114,6 +126,29 @@ class ClassifyTests(unittest.TestCase):
                 "tx_ipv4": 12,
                 "tx_other": 0,
             },
+        )
+
+    def test_l2_protocol_aggregate_reports_ranges_and_missing_runs(self) -> None:
+        record = MATRIX.record_from_log(
+            1,
+            connectivity_success_log(),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+        )
+        aggregate = MATRIX.aggregate_l2_protocol_diagnostics(
+            [record, {"l2_protocol": None}]
+        )
+        self.assertEqual(aggregate["runs_with_markers"], 1)
+        self.assertEqual(aggregate["runs_without_markers"], 1)
+        self.assertEqual(
+            aggregate["ranges"]["rx_arp_reply"],
+            {"min": 1, "max": 1},
+        )
+        self.assertEqual(
+            aggregate["ranges"]["tx_ipv4"],
+            {"min": 12, "max": 12},
         )
 
     def test_pure_wpa3_gate_accepts_matching_success(self) -> None:

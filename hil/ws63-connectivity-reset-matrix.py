@@ -704,6 +704,34 @@ def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object]
     }
 
 
+def aggregate_l2_protocol_diagnostics(
+    records: list[dict[str, object]],
+) -> dict[str, object] | None:
+    parsed = [
+        diagnostics
+        for record in records
+        if isinstance((diagnostics := record.get("l2_protocol")), dict)
+    ]
+    if not parsed:
+        return None
+
+    ranges: dict[str, dict[str, int]] = {}
+    for field in L2_PROTOCOL_FIELDS:
+        values = [
+            value
+            for diagnostics in parsed
+            if isinstance((value := diagnostics.get(field)), int)
+        ]
+        if values:
+            ranges[field] = {"min": min(values), "max": max(values)}
+
+    return {
+        "runs_with_markers": len(parsed),
+        "runs_without_markers": len(records) - len(parsed),
+        "ranges": ranges,
+    }
+
+
 def classify(
     log: bytes,
     profile: str,
@@ -736,6 +764,28 @@ def classify(
         if observed_ap_mode is None and success_evidence:
             return "missing_ap_mode"
 
+    if b"RF5C_LOCAL_DATA_PATH_ERR" in log:
+        return "local_data_path_failure"
+    if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
+        return "auth_rsp2_timeout"
+    if (
+        b"RF5B_WPA_CONNECT_ERR:" in log
+        or b"RF5B_CONNECT_ERR:" in log
+        or b"W2D_WPA2_CONNECT_ERR" in log
+        or b"W2E_WPA3_CONNECT_ERR" in log
+        or b"RFDBG_A5B_CONNECT_ERR" in log
+        or b"A4_NET_ERR" in log
+    ):
+        return "connect_error"
+    if b"RF5B_AP_NOT_FOUND" in log:
+        return "ap_not_found"
+    if b"RF3_SCAN_ERR" in log or b"RFDBG_A5B_SCAN_ERR" in log:
+        return "scan_error"
+    if b"RF2_INIT_ERR:" in log:
+        return "init_error"
+    if b"RFDBG_EXCEPTION" in log:
+        return "exception"
+
     if b"RFDBG_A5B_CONNECT_PROFILE_OK" in log:
         metrics = parse_a5b_metrics(
             log,
@@ -765,27 +815,6 @@ def classify(
         return pass_or_contract_violation()
     if b"RF5C_LOCAL_DATA_PATH_OK" in log:
         return pass_or_contract_violation()
-    if b"RF5C_LOCAL_DATA_PATH_ERR" in log:
-        return "local_data_path_failure"
-    if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
-        return "auth_rsp2_timeout"
-    if (
-        b"RF5B_WPA_CONNECT_ERR:" in log
-        or b"RF5B_CONNECT_ERR:" in log
-        or b"W2D_WPA2_CONNECT_ERR" in log
-        or b"W2E_WPA3_CONNECT_ERR" in log
-        or b"RFDBG_A5B_CONNECT_ERR" in log
-        or b"A4_NET_ERR" in log
-    ):
-        return "connect_error"
-    if b"RF5B_AP_NOT_FOUND" in log:
-        return "ap_not_found"
-    if b"RF3_SCAN_ERR" in log or b"RFDBG_A5B_SCAN_ERR" in log:
-        return "scan_error"
-    if b"RF2_INIT_ERR:" in log:
-        return "init_error"
-    if b"RFDBG_EXCEPTION" in log:
-        return "exception"
     return "capture_timeout"
 
 
@@ -1030,6 +1059,7 @@ def summarize_records(
         ),
         "reference_ping": reference_ping,
         "a5b_metrics": aggregate_a5b_metrics(records),
+        "l2_protocol": aggregate_l2_protocol_diagnostics(records),
         "records": records,
     }
     if source_dir is not None:
