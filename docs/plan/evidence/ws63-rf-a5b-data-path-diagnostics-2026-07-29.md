@@ -260,3 +260,29 @@ DMI transport 阶段失败；它没有启动本次固件，也不计入 connecti
 `/private/tmp/ws63-connectivity-public-icmp-contract-20260730-r2/contract`。
 本轮是单次发布复验，不替代下一轮带 v7 scan diagnostics 的 20-reset reliability
 矩阵。
+
+## Public-ICMP 重分类 20-reset 矩阵
+
+第一次矩阵尝试在 `0x00260000` page program 阶段发生 probe-rs timeout，自动硬复位
+后的降速重试又无法重新建立 DMI transport；没有任何 nRST 网络样本产生。随后用
+官方完整 FWPKG 在 460800 波特率恢复，硬复位后原厂系统和 RF calibration 正常。再次
+构建并以 1 MHz 下载同一 release closure，完整 verify 成功，耗时约 142 秒。
+
+该镜像随后连续执行 20 次 J-Link nRST：
+
+- 19 次完整 connectivity contract 通过；
+- gateway 合计 `94/100`，AliDNS ICMP 合计 `92/100`；
+- 20 次 `auth_rsp2_timeouts=0`，没有复现上一轮 scan operation timeout；
+- 1 次 `local_data_path_failure`，没有独立的 public-only ICMP loss 失败轮。
+
+失败的 run 10 已完成 scan、WPA2 connect 和 DHCP，但没有出现 neighbor-confirmed
+marker；gateway 与 AliDNS 均为 `0/5`。该轮 TX submission/complete、DMAC RX、
+vendor RX、WLMAC RX 和 IRQ45 都非零，STA/BSSID identity 正常，event queue drop
+为 0，ICMP RX 为 0。相邻 run 9/run 11 均为两个目标 `5/5`；同网络 Mac 经明确的
+Wi-Fi 接口到 gateway 也为 `5/5`。因此 run 10 保留为真实的 DHCP 后
+ARP/neighbor/RX 尾部反例，不能降级成公网 ICMP 策略问题。
+
+脱敏机器证据保存在
+`/private/tmp/ws63-a5b-public-icmp-gate-reset20-20260730-r2/contract`。A5B 仍未达到
+20/20；下一步需要增加 ARP request/reply、neighbor transition 和 L2 frame 分类诊断，
+同时保留 v7 scan snapshot 以捕获旧的 scan timeout。

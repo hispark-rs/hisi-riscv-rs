@@ -71,8 +71,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    网络字节序，最终真机取得 gateway/public 各 `5/5`、STA address match 和 BSSID
    programmed marker；这只关闭寄存器语义子问题，不替代重复 reset reliability gate。
    随后的同镜像 20-reset 矩阵得到 19 次完整连接、gateway `95/95`、公网 `86/95`，
-   另有 1 次两次 scan attempt 均 operation timeout；当前下一步是用 v7 scan snapshot
-   区分 native callback、事件队列与 vendor driver completion，而不是增加盲目重试。
+   另有 1 次两次 scan attempt 均 operation timeout。加入 v7 scan snapshot 并发布
+   public-ICMP 重分类后，新一轮 20-reset 没有复现 scan timeout，但只有 19/20 通过：
+   gateway `94/100`、AliDNS ICMP `92/100`；run 10 完成 scan/connect/DHCP 后没有确认
+   neighbor，gateway/public 均 `0/5`，属于 `local_data_path_failure`。两轮都没有
+   auth-response-2 timeout。当前必须同时保留 scan reliability 和本地 ARP/RX 尾部风险：
+   前者用 v7 scan snapshot 定位，后者需要增加 ARP/neighbor 与 L2 frame 分类诊断，
+   均不能用增加盲目重试或放宽公网 ICMP 门槛掩盖。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
    闭合反例后才能恢复 A5B 20/20 完成声明。
@@ -1180,11 +1185,14 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   production 默认或公开策略。历史矩阵重新按本地和公网边界分类后，r2/r3 的四个
   公网 `0/5` 样本均仍有 gateway reply，不能继续计为本地失败；PM-off 的一轮两者
   `0/5` 才保留为 `local_data_path_failure`。
-  最新同镜像 20-reset 得到 19 次完整连接（gateway `95/95`、公网 `86/95`）和 1 次
+  一轮同镜像 20-reset 得到 19 次完整连接（gateway `95/95`、公网 `86/95`）和 1 次
   scan operation timeout。`hisi-rf-radio-diagnostics/v7` 已增加 bounded scan snapshot，
   timeout/retry 边界输出 native start/result/done、queue pending/drop 和 vendor
-  active/done/status；下一轮 HIL 用该证据定位 scan 丢失阶段，不增加总 timeout或盲目
-  retry。
+  active/done/status。随后 public-ICMP 重分类 release 的 20-reset 矩阵没有复现 scan
+  timeout，但为 19/20：gateway `94/100`、AliDNS ICMP `92/100`，run 10 在 DHCP 后
+  neighbor 未确认且两个目标均 `0/5`，明确归为 `local_data_path_failure`。下一步应补
+  ARP request/reply、neighbor state 和 L2 frame 分类诊断，同时保留 v7 scan snapshot；
+  不增加总 timeout 或盲目 retry。
 - [ ] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
   发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
   冗余。DNS gate 落地前，DHCP + gateway reply 是临时本地硬门槛，公网 ICMP 丢包只计入
