@@ -14,7 +14,7 @@ RUNS="${RUNS:-20}"
 TIMEOUT="${TIMEOUT:-90}"
 MAX_RUNNER_STEP_MS="${MAX_RUNNER_STEP_MS:-100}"
 PROFILE_ID="wifi-connectivity-upstream-wpa2"
-FEATURES="wpa2"
+FEATURES="wpa2,data-path-diagnostics"
 
 usage() {
     cat <<'EOF'
