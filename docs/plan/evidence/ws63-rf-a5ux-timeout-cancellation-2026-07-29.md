@@ -28,7 +28,7 @@ The generated application uses `ApplicationWaitDeadline` and
 | `hisi-rf-core` | `c762481` | `v0.1.0-alpha.17` | `30408159872` |
 | `hisi-rf-ws63` | `c82eab9` | `v0.1.0-alpha.44` | `30408770547` |
 | `hisi-rf` | `c14a8c4` | `v0.1.0-alpha.54` | `30409208054` |
-| `hisi-rs-template` | `284825d` | `v0.7.0-alpha.15` | pending at evidence creation |
+| `hisi-rs-template` | `284825d` | `v0.7.0-alpha.15` | `30409845884` |
 
 The WS63 examples consume facade `alpha.54` at commit `4bb1d08`. The facade's
 external consumer fixture was advanced on main in commit `189457d`.
