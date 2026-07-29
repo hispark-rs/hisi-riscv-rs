@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-18670b0c.js";
+            window.path_to_searchindex_js = "searchindex-a6995cbc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1942,7 +1942,7 @@ cargo tree -i hisi-rf-rtos-driver
 <tr><td><a href="#hil-脚本与-runner-环境变量">HIL 脚本与 runner 环境变量</a></td><td><code>embedded-test</code> runner、HIL 脚本消费的环境变量；示例标记串以示例参考页为事实源</td></tr>
 <tr><td><a href="#cli-工具速查">CLI 工具速查</a></td><td><code>hisi-fwpkg</code>、补丁版 <code>probe-rs</code>、QEMU、<code>hisiflash</code> 命令与仓库清单</td></tr>
 <tr><td><a href="#已知问题索引">已知问题索引</a></td><td>工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue</td></tr>
-<tr><td><a href="#rf-错误与诊断契约">RF 错误与诊断契约</a></td><td><code>hisi-rf-error/v2</code> 字段、稳定错误码、阶段、恢复动作和文档 fragment</td></tr>
+<tr><td><a href="#rf-错误与诊断契约">RF 错误与诊断契约</a></td><td><code>hisi-rf-error/v3</code>、三层 timeout/cancellation、稳定错误码、阶段、恢复动作和文档 fragment</td></tr>
 </tbody>
 </table>
 </div>
@@ -3081,8 +3081,25 @@ client 优先级注意事项见 <a href="#如何安装官方-rust-工具链">安
 <h1 id="rf-错误与诊断契约"><a class="header" href="#rf-错误与诊断契约">RF 错误与诊断契约</a></h1>
 <p><code>hisi-rf</code> 的公共错误可通过 <code>Error::diagnostic()</code> 或
 <code>InitError::diagnostic()</code> 转为 allocation-free 的 <code>Diagnostic</code>。当前机器可读 schema 是
-<code>hisi-rf-error/v2</code>；其字段只包含稳定分类、阶段、恢复动作、数值 backend code、profile
+<code>hisi-rf-error/v3</code>；其字段只包含稳定分类、阶段、恢复动作、数值 backend code、profile
 revision 和最多 4 项数值 trace，不包含 SSID、passphrase、密钥或任意 backend 文本。</p>
+<h2 id="三层时间边界"><a class="header" href="#三层时间边界">三层时间边界</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>层次</th><th>类型/事实源</th><th>超时结果</th><th>语义</th></tr>
+</thead>
+<tbody>
+<tr><td>协议操作</td><td><code>OperationTimeout</code></td><td><code>operation.timeout</code></td><td>scan/connect 等协议状态机在约定时间内没有完成；取消必须进入 backend cleanup</td></tr>
+<tr><td>backend 生命周期</td><td><code>BackendTimeout</code></td><td><code>backend.timeout</code></td><td>初始化、断开或 RTOS/vendor 有界等待没有完成</td></tr>
+<tr><td>应用等待</td><td>应用自己的 deadline 类型</td><td>应用自定义结果</td><td>调用方不愿继续等待某个 Future；它不是 backend 错误，也不能覆盖内层诊断</td></tr>
+</tbody>
+</table>
+</div>
+<p>丢弃一个已被 backend 接受的 operation Future 会请求取消；实际 vendor/transport cleanup
+由 runner 在普通任务上下文推进，<code>Drop</code> 本身不执行 vendor 调用。模板使用独立的
+<code>ApplicationWaitDeadline</code>，并以 <code>hisi-rf-application-wait/v1</code> 输出脱敏 marker；该 schema
+属于生成应用，不属于 <code>hisi-rf-error/v3</code>。</p>
 <h2 id="字段"><a class="header" href="#字段">字段</a></h2>
 <div class="table-wrapper">
 <table>
@@ -3116,9 +3133,14 @@ reason 和 runtime code 使用不同 <code>trace.kind</code>。日志文本只�
 scan/connect/disconnect。</p>
 <p><a id="errors-backend-timeout"></a></p>
 <h2 id="backendtimeout"><a class="header" href="#backendtimeout"><code>backend.timeout</code></a></h2>
-<p>一个有界操作超过 deadline。先看 <code>stage</code>：<code>associate</code>、<code>eapol</code>、<code>pmf</code> 和 <code>runtime</code> 指向不同
-故障域。保留 backend code 与 trace，确认事件循环、timer、IRQ 和 AP 行为后再重试；不要只增大
-总 timeout 掩盖状态机缺口。</p>
+<p>backend 初始化、断开或 RTOS/vendor 有界等待超过 deadline。先看 <code>stage</code> 和 trace，确认
+事件循环、timer、IRQ 和硬件生命周期；不要把它与协议 operation timeout 或应用等待 deadline
+混为同一个保证。</p>
+<p><a id="errors-operation-timeout"></a></p>
+<h2 id="operationtimeout"><a class="header" href="#operationtimeout"><code>operation.timeout</code></a></h2>
+<p>scan/connect 等协议操作超过自身的 <code>OperationTimeout</code>。保留 backend code 与 trace，按
+<code>associate</code>、<code>eapol</code>、<code>pmf</code> 等 stage 定位；不要只增大应用总等待时间掩盖状态机缺口。终止
+Future 后，runner 仍必须完成有界取消并回收 owner、queue slot、timer 和 key state。</p>
 <p><a id="errors-operation-cancelled"></a></p>
 <h2 id="operationcancelled"><a class="header" href="#operationcancelled"><code>operation.cancelled</code></a></h2>
 <p>调用方取消了尚未完成的操作。等待取消完成或重新发起操作；旧 operation generation 的完成
