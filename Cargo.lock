@@ -824,7 +824,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.4"
+version = "0.7.0-alpha.6"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.63"
+version = "0.1.0-alpha.64"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -893,7 +893,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.52"
+version = "0.1.0-alpha.55"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
@@ -2167,7 +2167,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-pac"
-version = "0.4.1"
+version = "0.4.3"
 dependencies = [
  "critical-section",
  "riscv",
