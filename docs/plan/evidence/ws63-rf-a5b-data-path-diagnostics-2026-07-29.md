@@ -236,3 +236,27 @@ vendor driver active/done/result/status；下一轮矩阵必须用这些字段�
 原始矩阵证据保存在
 `/private/tmp/ws63-a5b-pm-off-20260729-r2/contract`。本地凭据文件是外部秘密输入，
 不属于证据或仓库内容，并按用户要求继续保留供后续 HIL 使用。
+
+## Public-ICMP 重分类发布复验
+
+门槛重分类随 `hisi-rf 0.1.0-alpha.65`、`hisi-rf-ws63
+0.1.0-alpha.56` 和 `ws63-examples 32ceaca` 发布/合入后，以公开
+`wifi_connectivity` facade 做了一轮真机 smoke：
+
+- plain Cargo 最终链接仍为 37 个 ROM patch、0 个 vendor relocation；
+- scan 返回 4 个结果，WPA2 connect、DHCP 和 lease renewal 均完成；
+- gateway `192.168.3.1` 为 `5/5`，硬门槛输出
+  `RF5C_LOCAL_DATA_PATH_OK`；
+- AliDNS `223.5.5.5` 本轮为 `5/5`，只输出
+  `RF5C_PUBLIC_ICMP_OBSERVED`，不参与硬门槛；
+- RX queue drop 为 0，runner 进入 steady state。
+
+第一次下载在 flash algorithm 初始化阶段超时，硬件 nRST 后的自动降速重试又在
+DMI transport 阶段失败；它没有启动本次固件，也不计入 connectivity 样本。再次
+硬件 nRST 后，1 MHz 下载、完整 verify、启动和上述 smoke 全部通过，下载耗时约
+141 秒。这再次证明下载可靠性必须与 RF/network 结果分开统计。
+
+脱敏机器证据保存在
+`/private/tmp/ws63-connectivity-public-icmp-contract-20260730-r2/contract`。
+本轮是单次发布复验，不替代下一轮带 v7 scan diagnostics 的 20-reset reliability
+矩阵。
