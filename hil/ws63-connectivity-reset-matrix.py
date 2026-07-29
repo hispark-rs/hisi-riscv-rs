@@ -49,8 +49,8 @@ RUST_TIMED_MARKERS = (
     b"W2E_WPA3_CONNECT_OK",
     b"RF5A_DHCP_OK",
     b"RF5A_ARP_OK",
-    b"RF5C_PING_SERIES_BEGIN",
-    b"RF5C_PING_OK",
+    b"RF5C_PUBLIC_DNS_BEGIN",
+    b"RF5C_PUBLIC_DNS_OK",
     b"RF5C_CONNECTIVITY_SUMMARY",
 )
 
@@ -111,7 +111,7 @@ A5B_METRIC_MARKERS = {
 }
 
 ARTIFACT_IDENTITY_SCHEMA = "hisi-connectivity-artifact/v1"
-MARKER_CONTRACT = "ws63-connectivity-markers/v1"
+MARKER_CONTRACT = "ws63-connectivity-markers/v2"
 
 RUST_FATAL_MARKERS = (
     b"A4_NET_ERR",
@@ -126,6 +126,7 @@ RUST_FATAL_MARKERS = (
     b"RFDBG_A5B_CONNECT_ERR",
     b"RFDBG_A5B_RUNNER_ERR",
     b"RFDBG_A5B_WAIT_ERR",
+    b"RF5C_PUBLIC_DNS_ERR",
     b"RFDBG_EXCEPTION",
     b"panicked at",
     b"scheduler contract violation",
@@ -133,7 +134,7 @@ RUST_FATAL_MARKERS = (
 )
 
 QEMU_CONTRACT_FIXTURE_MARKER = b"RFDBG_CONNECTIVITY_CONTRACT_FIXTURE"
-PUBLIC_ICMP_OBSERVATION_TARGET = "223.5.5.5"
+PUBLIC_DNS_TARGET = "223.5.5.5"
 L2_PROTOCOL_FIELDS = (
     "rx_arp_req",
     "rx_arp_reply",
@@ -171,6 +172,7 @@ RUST_STAGE_MARKERS = {
         ("dhcp", (b"RF5A_DHCP_OK",)),
         ("neighbor", (b"RF5A_ARP_OK",)),
         ("local_data_path", (b"RF5C_LOCAL_DATA_PATH_OK",)),
+        ("public_dns", (b"RF5C_PUBLIC_DNS_OK",)),
         ("summary", (b"RF5C_CONNECTIVITY_SUMMARY",)),
         ("steady", (b"A4_NET_RUNNER_STEADY",)),
         ("dhcp_renew", (b"A4_DHCP_RENEW_OK",)),
@@ -269,13 +271,12 @@ def pulse_nrst(jlink: str) -> None:
         command_path.unlink(missing_ok=True)
 
 
-def parse_ping_summaries(log: bytes) -> dict[str, dict[str, int | str]]:
-    summaries: dict[str, dict[str, int | str]] = {}
-    for line in log.splitlines():
-        if not line.startswith((b"RF5C_PING_OK ", b"RF5C_PING_TIMEOUT ")):
+def parse_dns_summary(log: bytes) -> dict[str, int | str] | None:
+    for line in reversed(log.splitlines()):
+        if not line.startswith((b"RF5C_PUBLIC_DNS_OK ", b"RF5C_PUBLIC_DNS_ERR ")):
             continue
         fields: dict[str, int | str] = {
-            "status": "ok" if line.startswith(b"RF5C_PING_OK ") else "timeout"
+            "status": "ok" if line.startswith(b"RF5C_PUBLIC_DNS_OK ") else "error"
         }
         for token in line.decode(errors="replace").split()[1:]:
             if "=" not in token:
@@ -288,10 +289,8 @@ def parse_ping_summaries(log: bytes) -> dict[str, dict[str, int | str]]:
                     fields[key] = int(value, 16)
                 except ValueError:
                     continue
-        target = fields.get("target")
-        if isinstance(target, str):
-            summaries[target] = fields
-    return summaries
+        return fields
+    return None
 
 
 def run_reference_ping(target: str, count: int, output: Path) -> dict[str, object]:
@@ -545,29 +544,41 @@ def validate_rust_contract(
         if summary_line is not None:
             summary = parse_hex_fields(summary_line)
             for field in (
-                "gateway_tx",
-                "gateway_rx",
-                "public_tx",
-                "public_rx",
+                "arp_request",
+                "arp_reply",
+                "dns_attempts",
+                "dns_responses",
+                "dns_invalid",
+                "dns_tx_error",
                 "rx_queue_drop",
             ):
                 if field not in summary:
                     violations.append(f"missing:summary.{field}")
-            if summary.get("gateway_tx", 0) <= 0:
-                violations.append("invalid:summary.gateway_tx")
-            if summary.get("gateway_rx", 0) <= 0:
-                violations.append("invalid:summary.gateway_rx")
+            if summary.get("arp_request", 0) <= 0:
+                violations.append("invalid:summary.arp_request")
+            if summary.get("arp_reply", 0) <= 0:
+                violations.append("invalid:summary.arp_reply")
+            if summary.get("dns_attempts", 0) <= 0:
+                violations.append("invalid:summary.dns_attempts")
+            if summary.get("dns_responses", 0) <= 0:
+                violations.append("invalid:summary.dns_responses")
+            if summary.get("dns_tx_error", 0) != 0:
+                violations.append("nonzero:summary.dns_tx_error")
             if summary.get("rx_queue_drop", 0) != 0:
                 violations.append("nonzero:summary.rx_queue_drop")
 
-        public_ping = parse_ping_summaries(log).get(PUBLIC_ICMP_OBSERVATION_TARGET)
-        if public_ping is not None:
-            if int(public_ping.get("tx", 0)) <= 0:
-                violations.append("invalid:public_ping.tx")
-            if int(public_ping.get("tx_error", 0)) != 0:
-                violations.append("nonzero:public_ping.tx_error")
-            if int(public_ping.get("rx_queue_drop", 0)) != 0:
-                violations.append("nonzero:public_ping.rx_queue_drop")
+        dns = parse_dns_summary(log)
+        if dns is not None:
+            if dns.get("target") != PUBLIC_DNS_TARGET:
+                violations.append("invalid:public_dns.target")
+            if dns.get("status") != "ok":
+                violations.append("invalid:public_dns.status")
+            if int(dns.get("attempts", 0)) <= 0:
+                violations.append("invalid:public_dns.attempts")
+            if int(dns.get("responses", 0)) <= 0:
+                violations.append("invalid:public_dns.responses")
+            if int(dns.get("tx_error", 0)) != 0:
+                violations.append("nonzero:public_dns.tx_error")
 
         renew_line = last_prefixed_line(log, b"A4_DHCP_RENEW_OK ")
         if renew_line is not None:
@@ -759,13 +770,15 @@ def classify(
         success_evidence = (
             b"W2E_WPA3_CONNECT_OK" in log
             or b"RFDBG_A5B_CONNECT_PROFILE_OK" in log
-            or bool(parse_ping_summaries(log))
+            or parse_dns_summary(log) is not None
         )
         if observed_ap_mode is None and success_evidence:
             return "missing_ap_mode"
 
     if b"RF5C_LOCAL_DATA_PATH_ERR" in log:
         return "local_data_path_failure"
+    if b"RF5C_PUBLIC_DNS_ERR" in log:
+        return "public_dns_failure"
     if b"RF5B_WPA_CONNECT_ERR:0x00001451" in log:
         return "auth_rsp2_timeout"
     if (
@@ -873,7 +886,7 @@ def capture_run(
                 b"W2E_WPA3_CONNECT_OK",
             )
         else:
-            # The final connectivity contract includes lease renewal. A ping
+            # The final connectivity contract includes lease renewal. A DNS
             # summary is therefore progress, not a terminal success marker.
             terminal_markers = (*failure_markers, b"A4_DHCP_RENEW_OK")
     elif stage == "connect":
@@ -958,12 +971,7 @@ def record_from_log(
         if require_contract and profile == "rust"
         else []
     )
-    public_ping = parse_ping_summaries(log).get(PUBLIC_ICMP_OBSERVATION_TARGET)
-    public_icmp_observation = "missing"
-    if public_ping is not None:
-        public_icmp_observation = (
-            "ok" if int(public_ping.get("rx", 0)) > 0 else "public_icmp_loss"
-        )
+    dns = parse_dns_summary(log)
     return {
         "run": run,
         "result": classify(
@@ -979,8 +987,7 @@ def record_from_log(
         "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
         + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
         "ap_mode": detected_ap_mode(log),
-        "ping": parse_ping_summaries(log),
-        "public_icmp_observation": public_icmp_observation,
+        "dns": dns,
         "l2_protocol": parse_l2_protocol_diagnostics(log),
         "a5b_metrics": parse_a5b_metrics(
             log,
@@ -1013,34 +1020,32 @@ def summarize_records(
     source_dir: Path | None = None,
 ) -> dict[str, object]:
     counts: dict[str, int] = {}
-    public_icmp_observations: dict[str, int] = {}
+    dns_observations: dict[str, int] = {}
     for record in records:
         result = str(record["result"])
         counts[result] = counts.get(result, 0) + 1
-        observation = str(record.get("public_icmp_observation", "missing"))
-        public_icmp_observations[observation] = (
-            public_icmp_observations.get(observation, 0) + 1
+        dns = record.get("dns")
+        observation = (
+            str(dns.get("status", "missing"))
+            if isinstance(dns, dict)
+            else "missing"
         )
+        dns_observations[observation] = dns_observations.get(observation, 0) + 1
 
-    ping_totals: dict[str, dict[str, int]] = {}
+    dns_totals = {
+        "attempts": 0,
+        "responses": 0,
+        "invalid": 0,
+        "tx_error": 0,
+    }
     for record in records:
-        ping = record.get("ping", {})
-        if not isinstance(ping, dict):
+        dns = record.get("dns")
+        if not isinstance(dns, dict):
             continue
-        for target, metrics in ping.items():
-            if not isinstance(metrics, dict):
-                continue
-            totals = ping_totals.setdefault(
-                str(target), {"tx": 0, "rx": 0, "drop": 0, "tx_error": 0}
-            )
-            for field in totals:
-                value = metrics.get(field, 0)
-                if isinstance(value, int):
-                    totals[field] += value
-    for totals in ping_totals.values():
-        totals["loss_pct"] = (
-            totals["drop"] * 100 // totals["tx"] if totals["tx"] else 100
-        )
+        for field in dns_totals:
+            value = dns.get(field, 0)
+            if isinstance(value, int):
+                dns_totals[field] += value
 
     summary: dict[str, object] = {
         "port": port,
@@ -1052,8 +1057,8 @@ def summarize_records(
         "timeout_seconds": timeout,
         "post_terminal_seconds": post_terminal_seconds,
         "counts": counts,
-        "public_icmp_observations": public_icmp_observations,
-        "ping_totals": ping_totals,
+        "dns_observations": dns_observations,
+        "dns_totals": dns_totals,
         "auth_rsp2_timeouts": sum(
             int(record["auth_rsp2_timeouts"]) for record in records
         ),

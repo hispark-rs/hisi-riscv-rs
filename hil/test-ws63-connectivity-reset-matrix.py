@@ -70,16 +70,25 @@ def connectivity_success_log() -> bytes:
             b"W2D_WPA2_CONNECT_OK",
             b"A4_RADIO_EVENT kind=connected",
             b"RF5A_DHCP_OK addr=192.0.2.2",
-            b"RF5A_ARP_OK evidence=icmp-reply-implies-neighbor",
-            b"RF5C_LOCAL_DATA_PATH_OK gateway_rx=0x00000001 gateway_tx=0x00000005",
+            b"RF5A_ARP_OK evidence=l2-arp-reply",
             (
-                b"RF5C_PING_TIMEOUT target=223.5.5.5 tx=0x00000005 rx=0x00000000 "
-                b"drop=0x00000005 tx_error=0x00000000 rx_queue_drop=0x00000000"
+                b"RF5C_LOCAL_DATA_PATH_OK arp_reply=0x00000001 "
+                b"arp_request=0x00000001 gateway=192.0.2.1"
+            ),
+            b"RF5C_PUBLIC_DNS_BEGIN target=223.5.5.5 attempts=0x00000003",
+            (
+                b"RF5C_PUBLIC_DNS_SAMPLE attempt=0x00000001 txid=0x00005754 "
+                b"status=ok answers=0x00000001"
             ),
             (
-                b"RF5C_CONNECTIVITY_SUMMARY gateway_tx=0x00000005 "
-                b"gateway_rx=0x00000001 public_tx=0x00000005 "
-                b"public_rx=0x00000000 rx_queue_drop=0x00000000"
+                b"RF5C_PUBLIC_DNS_OK target=223.5.5.5 attempts=0x00000001 "
+                b"responses=0x00000001 invalid=0x00000000 tx_error=0x00000000"
+            ),
+            (
+                b"RF5C_CONNECTIVITY_SUMMARY arp_request=0x00000001 "
+                b"arp_reply=0x00000001 dns_attempts=0x00000001 "
+                b"dns_responses=0x00000001 dns_invalid=0x00000000 "
+                b"dns_tx_error=0x00000000 rx_queue_drop=0x00000000"
             ),
             (
                 b"RFDBG_A5B_L2 rx_arp_req=0x00000001 rx_arp_reply=0x00000001 "
@@ -299,10 +308,9 @@ class ClassifyTests(unittest.TestCase):
             reference_ping=None,
         )
         self.assertEqual(record["result"], "pass")
-        self.assertEqual(record["public_icmp_observation"], "public_icmp_loss")
-        self.assertEqual(
-            summary["public_icmp_observations"], {"public_icmp_loss": 1}
-        )
+        self.assertEqual(record["dns"]["status"], "ok")
+        self.assertEqual(summary["dns_observations"], {"ok": 1})
+        self.assertEqual(summary["dns_totals"]["responses"], 1)
         self.assertTrue(record["a5b_metrics"]["complete"])
         self.assertEqual(record["a5b_metrics"]["missing"], [])
         self.assertEqual(summary["a5b_metrics"]["complete_runs"], 1)
@@ -321,7 +329,7 @@ class ClassifyTests(unittest.TestCase):
             "pass",
         )
 
-    def test_public_icmp_loss_does_not_fail_local_connectivity(self) -> None:
+    def test_valid_public_dns_response_passes_connectivity(self) -> None:
         log = connectivity_success_log()
         self.assertEqual(
             MATRIX.classify(
@@ -337,10 +345,10 @@ class ClassifyTests(unittest.TestCase):
         log = (
             connectivity_success_log()
             .replace(
-                b"RF5C_LOCAL_DATA_PATH_OK gateway_rx=0x00000001",
-                b"RF5C_LOCAL_DATA_PATH_ERR gateway_rx=0x00000000",
+                b"RF5C_LOCAL_DATA_PATH_OK arp_reply=0x00000001",
+                b"RF5C_LOCAL_DATA_PATH_ERR arp_reply=0x00000000",
             )
-            .replace(b"gateway_rx=0x00000001", b"gateway_rx=0x00000000")
+            .replace(b"arp_reply=0x00000001", b"arp_reply=0x00000000")
         )
         self.assertEqual(
             MATRIX.classify(log, "rust", "connectivity"),
@@ -349,6 +357,16 @@ class ClassifyTests(unittest.TestCase):
         self.assertIn(
             "missing:local_data_path",
             MATRIX.validate_rust_contract(log, "connectivity"),
+        )
+
+    def test_dns_failure_is_not_masked_by_local_connectivity(self) -> None:
+        log = connectivity_success_log().replace(
+            b"RF5C_PUBLIC_DNS_OK target=",
+            b"RF5C_PUBLIC_DNS_ERR target=",
+        )
+        self.assertEqual(
+            MATRIX.classify(log, "rust", "connectivity"),
+            "public_dns_failure",
         )
 
     def test_connectivity_contract_fails_closed_on_missing_renew(self) -> None:
@@ -377,7 +395,18 @@ class ClassifyTests(unittest.TestCase):
         )
         violations = MATRIX.validate_rust_contract(log, "connectivity")
         self.assertIn("nonzero:summary.rx_queue_drop", violations)
-        self.assertIn("nonzero:public_ping.rx_queue_drop", violations)
+
+    def test_connectivity_contract_rejects_dns_tx_error(self) -> None:
+        log = connectivity_success_log().replace(
+            b"dns_tx_error=0x00000000",
+            b"dns_tx_error=0x00000001",
+        ).replace(
+            b"tx_error=0x00000000",
+            b"tx_error=0x00000001",
+        )
+        violations = MATRIX.validate_rust_contract(log, "connectivity")
+        self.assertIn("nonzero:summary.dns_tx_error", violations)
+        self.assertIn("nonzero:public_dns.tx_error", violations)
 
     def test_qemu_fixture_is_contract_only_and_rejected_as_silicon(self) -> None:
         log = b"\n".join(
