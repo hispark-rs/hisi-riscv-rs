@@ -96,8 +96,7 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    runner 单步最大 37 ms。该结果关闭当前 A5B release acceptance；旧 ICMP/本地尾部
    反例仍保留为历史诊断证据，不再定义现行 pass/fail marker。
    完整证据见
-   [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)；
-   闭合反例后才能恢复 A5B 20/20 完成声明。
+   [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 已执行相同 marker contract，缺 marker、非零 drop/error、budget
@@ -1174,7 +1173,7 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   netdev 创建、事件注册和 native supplicant create 等 vendor 调用仍不宣称可抢占；
   incremental adapter 继续保持非默认，默认路径切换仍受 A5 总体验收与 pure-WPA3 gate 约束。
 
-- [ ] 用无阻塞、能力标记的数据面快照闭合 unchanged-image 失败归因。2026-07-29
+- [x] 用无阻塞、能力标记的数据面快照闭合 unchanged-image 失败归因。2026-07-29
   的首轮 `path_caps=0x03` HIL 已证明 Rust 可观测的 vendor TX submission 与 RX
   boundary 在 ping 全丢轮仍持续前进，且 RX queue drop 为 0。ROM
   `hh503_get_mac_rx_statistics_data()` 在连接后、network runner 前的通用快照中会阻塞，
@@ -1216,7 +1215,11 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   ARP reply 每轮为 1、RX IPv4 为 12--44。失败轮在 association operation 返回
   `backend.other`，没有进入 DHCP/L2；parser 已改为让显式 fatal marker 优先于
   不完整 A5B trailer，避免将其误报为 `missing_a5b_metrics`。该矩阵没有复现旧
-  `local_data_path_failure`，因此旧反例仍保持 open。
+  `local_data_path_failure`。marker-contract-v2 随后改用直接 L2 ARP reply 作为本地
+  硬门槛，并以 AliDNS/Baidu DNS 的合法 UDP DNS response 作为公网协议门槛；同一
+  release closure 连续 20 次 nRST 得到 20/20 ARP reply、20/20 DNS response、零
+  queue/backend error，关闭了当前 release 的 unchanged-image 数据面验收。旧 ICMP
+  反例继续作为历史诊断样本保留，但不再保持为现行 blocker。
 - [x] 将公网验证从 ICMP 观测升级为 UDP DNS contract：向 AliDNS `223.5.5.5:53`
   发送固定、无秘密查询并校验 transaction id、QR/rcode 和响应来源；可用第二 DNS
   `180.76.76.76:53` 交替冗余。当前 gate 同时要求 DHCP、直接 gateway ARP reply、
