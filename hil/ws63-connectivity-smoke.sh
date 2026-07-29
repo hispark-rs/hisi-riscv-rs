@@ -330,7 +330,11 @@ if ! uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" "${contract_args[@]}";
     exit 1
 fi
 
-if [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; then
+if { [ "$PROFILE" = upstream-wpa2 ] || [ "$PROFILE" = upstream-wpa3 ]; } &&
+    [ "$USE_FINAL_CONNECTIVITY" = 0 ]; then
+    # The migration init/scan fixture owns this legacy marker. The final
+    # connectivity ELF is gated above by the native final-link boundary plus
+    # its W2D/W2E connect and A5B runner contract markers.
     if ! grep -q 'W2D_NATIVE_RUNNER_RX_READY' "$LOG"; then
         echo "WS63 UPSTREAM RUNNER CONTRACT: FAIL" >&2
         tail -80 "$LOG" >&2
