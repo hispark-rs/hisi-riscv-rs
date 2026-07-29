@@ -53,9 +53,10 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    gateway 与 public ICMP 同时 `0/5`；20 轮均无 auth-response-2 timeout、event drop、
    FRW 同步消息 timeout 或 DHCP 失败。当前同网段 Mac 强制 Wi-Fi interface 的 reference
    为 gateway `20/20`、public `18/20`，所以 public loss 可归环境，target gateway
-   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v3` 已把 TX/RX、vendor TX
-   failure、ICMP/DHCP seam 和 IRQ 40/44/45 纳入统一 post-ping snapshot；必须用同一
-   镜像复现并闭合反例后，才能恢复 A5B 20/20 完成声明。
+   全丢仍是待归因的数据面风险。`hisi-rf-radio-diagnostics/v4` 已把 smoltcp TX、
+   vendor bridge TX、DMAC TX completion、vendor/Rust RX、MAC receive-engine、
+   ICMP/DHCP seam 和 IRQ 40/44/45 纳入统一 post-ping snapshot；必须用同一镜像复现并
+   闭合反例后，才能恢复 A5B 20/20 完成声明。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 已执行相同 marker contract，缺 marker、非零 drop/error、budget
@@ -1586,7 +1587,10 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   runner、control、wait、event、blocking-call、resource、RX queue、DHCP 以及 TX/RX/IRQ
   data-path counters；`ws63-examples f705a9a` 的 post-ping 诊断只消费该 facade snapshot，
   不再自行拼装第二条全局诊断路径。WPA2/WPA3 API snapshot parity、host tests、RV32
-  check 和 clippy 均通过；目标端 v3 计数矩阵仍属于上面重新打开的 A5B 可靠性 gate。
+  check 和 clippy 均通过。随后 `hisi-rf-ws63 d7680a8`、`hisi-rf 7f2a168` 和
+  `ws63-examples 0465cab` 将 schema 升至 v4，补齐 vendor bridge、DMAC completion、
+  最终 vendor RX 和 MAC receive-engine 计数；目标端 v4 计数矩阵仍属于上面重新打开的
+  A5B 可靠性 gate。
 - [x] 将最终用户 happy path 的可恢复初始化、配置和连接错误改为 typed `Result` 控制流；
   HIL fixture 可以在记录结构化错误后 `halt`，但教程/template 不应把所有资源不足或网络失败
   展示为 `expect`/panic。panic 只保留给违反静态/unsafe contract 的不可恢复状态。
