@@ -862,11 +862,21 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.57"
+version = "0.1.0-alpha.59"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9c983b53fa764f105b200e5c0d73fa7d2e5ae549adf722160fa159753c262aa"
+dependencies = [
+ "hisi-rf-core",
+ "hisi-rf-ws63 0.1.0-alpha.48",
+]
+
+[[package]]
+name = "hisi-rf"
+version = "0.1.0-alpha.60"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
- "hisi-rf-ws63",
+ "hisi-rf-ws63 0.1.0-alpha.49",
  "hisi-riscv-rt",
 ]
 
@@ -893,7 +903,33 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.47"
+version = "0.1.0-alpha.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2883f5cc34635a33ecc92a9953c0ae4d18eaaef845016e07ff55a3de003b92a"
+dependencies = [
+ "ar_archive_writer",
+ "critical-section",
+ "embassy-sync",
+ "embassy-time",
+ "hisi-alloc",
+ "hisi-crypto",
+ "hisi-crypto-ws63",
+ "hisi-hal",
+ "hisi-nvs",
+ "hisi-rf-core",
+ "hisi-rf-rtos-driver",
+ "hisi-storage",
+ "object",
+ "portable-atomic",
+ "smoltcp",
+ "static_cell",
+ "ws63-radio-sys",
+ "zeroize",
+]
+
+[[package]]
+name = "hisi-rf-ws63"
+version = "0.1.0-alpha.49"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
@@ -2080,7 +2116,7 @@ dependencies = [
  "embassy-time",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf",
+ "hisi-rf 0.1.0-alpha.59",
  "hisi-riscv-rt",
  "hisi-rtos",
  "smoltcp",
