@@ -1502,6 +1502,12 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   runtime internal/flash 字节继续保持 `null`/`runtime_resources_calibrated=false`，不伪造估算。运行期 RF heap
   live/peak 指标另由 `hisi_rf::ws63::rf_heap_metrics()` 提供；静态 report 不把一次运行的
   watermark 回写成 profile 保证。
+  schema v8 进一步把 caller-owned scheduler arena 拆成 172,032 B task-stack payload、
+  512 B allocator metadata 和 16,384 B runtime-object headroom；可用 RF arena 相应缩至
+  114,176 B，二者仍共享原有 303,168 B NOLOAD envelope。stack-only v7 在真机初始化时
+  发生 15 次 RTOS allocation failure，而 v8 在同一完整 connectivity contract 下通过；
+  见 [WS63 caller-owned scheduler storage evidence](
+  evidence/ws63-rtos-caller-owned-storage-2026-07-30.md)。
 - [x] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
   build/CI artifact；人类摘要、文档表格和 agent JSON 从该 report 生成或校验，不维护第二份值。
   父仓 `scripts/assemble-radio-build-report.py` 将 versioned profile resource JSON、
@@ -1701,12 +1707,14 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   connectivity ELF 在真机完成 init/scan/WPA2 connect/DHCP/gateway ARP/UDP DNS/renew，
   证据见
   [WS63 RTOS port facade](evidence/ws63-rtos-port-facade-2026-07-30.md)。
-- [ ] WS63 runtime port 的剩余用户级形态不在本节重复设计；按
-  [RTOS 未来架构 F2/F3](hisi-rtos-future-architecture.md#延期里程碑) 收敛为
-  caller-owned `SchedulerStorage<N>` 与正式 Embassy adapter，移除应用提供的 allocator
-  callback，并让 RAM/task capacity 在类型和资源报告中可见。该迁移必须保持 A5 已冻结
-  ELF marker、15 dynamic-task 兼容容量和 Cooperative/Budgeted/Preemptive/Embassy HIL
-  parity。
+- [x] WS63 runtime port 已收敛到 caller-owned `SchedulerStorage<15>`、
+  `SchedulerArena<N>` 与正式 Embassy adapter，应用不再提供 allocator callback；
+  task capacity、stack payload、runtime-object headroom 和 RF arena 均进入 versioned
+  resource report。`hisi-rtos 0.1.0-alpha.17` 的 CI/Kani/TLA+ 与真实 WS63
+  connectivity HIL 已通过，保留 15 dynamic-task 兼容容量和既有
+  Cooperative/Budgeted/Preemptive/Embassy 契约。更远期可变 TCB backing、manifest 生成和
+  protection-domain storage 仍按
+  [RTOS 未来架构](hisi-rtos-future-architecture.md#延期里程碑) deferred，不反向打开本项。
 
 验收要求：新增 crates.io-only 外部 consumer compile fixture 和 `cargo-public-api` gate；
 Linux/macOS/Windows clean/offline 构建通过；旧 API 在迁移窗口结束后不可从 facade rustdoc
