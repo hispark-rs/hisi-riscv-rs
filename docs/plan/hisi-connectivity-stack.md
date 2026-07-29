@@ -1560,9 +1560,18 @@ connect/DHCP/ping/renew marker contract。不得为了缩短示例而隐藏 RAM 
   这些无板证据代替。证据见
   [A5UX timeout and cancellation contract](
   evidence/ws63-rf-a5ux-timeout-cancellation-2026-07-29.md)。
-- [ ] 将 station MAC 和 L2 capability 归属到 `WifiDevice`/`WifiParts` 的实例方法或只读
+- [x] 将 station MAC 和 L2 capability 归属到 `WifiDevice`/`WifiParts` 的实例方法或只读
   capability snapshot，删除普通用户路径对隐藏全局 `station_mac_address()` 的依赖；host
   mock、多次初始化失败恢复和未来多 radio 实例不得共享无所有权的可变全局身份。
+  `hisi-rf-core 0.1.0-alpha.18` 将 capability state 放入每个 `RadioState`，初始化成功后
+  才发布经校验的 station MAC；失败初始化不会留下部分状态，两个独立 radio 的 identity
+  测试互不串扰。`hisi-rf-ws63 0.1.0-alpha.45` 从实例 backend 返回该 snapshot，并将底层
+  netif accessor 收窄为 crate-private；`hisi-rf 0.1.0-alpha.55` 删除全局 facade 函数。
+  WS63 example 与 template `v0.7.0-alpha.16` 都改由自己的 `WifiDevice` 读取 MAC，配置项仍
+  集中在各自配置模块。host、RV32、public API、package、crates.io-only 与三平台 consumer
+  验证见
+  [A5UX instance-owned L2 capability evidence](
+  evidence/ws63-rf-a5ux-instance-l2-capabilities-2026-07-29.md)。
 - [ ] 提供 facade-owned、allocation-free 的统一只读诊断快照，组合 runner、wait、event、
   blocking-call 和 resource 指标；现有细粒度诊断方法可作为内部来源，但不得要求应用用全局
   `Mutex<Cell<Option<_>>>` 拼装一致快照。快照 schema 必须版本化、secret-redacted，并与
