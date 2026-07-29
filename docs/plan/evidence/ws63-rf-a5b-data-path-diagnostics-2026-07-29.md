@@ -106,3 +106,17 @@ auth-response-2 timeout，event queue drop 为 0。它没有进入 DHCP/data-pat
 旧失败根因，也不恢复 MAC statistics capability；A5B 的反例归因项继续保持 active。
 本机原始证据位于
 `/private/tmp/ws63-a5b-data-path-20260729-r2`。
+
+## 发布与依赖传播
+
+- `hisi-rf-ws63 0.1.0-alpha.50` 已发布；main CI
+  `30456386488` 和 publish workflow `30456912965` 均通过。
+- `hisi-rf 0.1.0-alpha.61` 已精确选择该 backend；main CI
+  `30457654110` 覆盖 host/RV32、公开 API、package 和
+  macOS/Linux/Windows crates.io-only consumer，publish workflow
+  `30458080639` 通过。
+- `ws63-examples` commit `1238b4e` 已将公开 connectivity example
+  更新到 facade alpha.61，fmt workflow `30458266768` 通过。
+
+这些发布证据只证明已验证的诊断实现可由公开依赖复现，不改变上文对旧反例根因和
+pure-WPA3 gate 的保守结论。
