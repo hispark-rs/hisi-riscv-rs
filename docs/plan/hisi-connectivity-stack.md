@@ -1505,7 +1505,13 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   schema v8 进一步把 caller-owned scheduler arena 拆成 172,032 B task-stack payload、
   512 B allocator metadata 和 16,384 B runtime-object headroom；可用 RF arena 相应缩至
   114,176 B，二者仍共享原有 303,168 B NOLOAD envelope。stack-only v7 在真机初始化时
-  发生 15 次 RTOS allocation failure，而 v8 在同一完整 connectivity contract 下通过；
+  发生 15 次 RTOS allocation failure，而 v8 在同一完整 connectivity contract 下通过。
+  后续同一 WPA2 最终镜像 20 次 nRST 均完成 local gateway、DHCP renew 与严格资源 marker：
+  RTOS/RF allocation failure 均为 0，最坏峰值分别为 172,660 / 188,928 B 和
+  59,672 / 114,176 B；因此 `hisi-rf-ws63 0.1.0-alpha.60` 只把 WPA2 profile 标记为
+  `runtime_resources_calibrated=true`，WPA3 保持 false，不继承尚未获得的硅片证据。
+  同轮公网 UDP DNS 为 17/20，三次失败均仍完成本地门槛，继续单列为公网 connectivity
+  风险，不回写成 allocator/local-data-path failure；
   见 [WS63 caller-owned scheduler storage evidence](
   evidence/ws63-rtos-caller-owned-storage-2026-07-30.md)。
 - [x] **闭合构建产物报告**：把 runtime admission 和最终 ELF/image flash size 合并到同一
@@ -1593,6 +1599,11 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   workflow 只有在完整矩阵成功后才发布 GitHub prerelease。父仓旧
   `wifi_init_smoke`/`rf_port_demo` 等仍作为迁移 oracle，不再属于用户 happy path，也不因
   pure-WPA3 external gate 被提前删除。
+  2026-07-30 的校准 release train 进一步将 `hisi-rf-ws63 0.1.0-alpha.60`
+  的 profile revision `ws63-wifi-2026-07-30-r6` 经 `hisi-rf 0.1.0-alpha.70`
+  传播到 `hisi-rs-template v0.7.0-alpha.22` 和公开 `wifi_connectivity`
+  示例；Linux/macOS/Windows template resource-report CI 均验证 WPA2
+  `runtime_resources_calibrated=true`，而 WPA3 保持 false。
 
 #### A5UX -- 最终镜像验收后的公共 API 形态收敛
 

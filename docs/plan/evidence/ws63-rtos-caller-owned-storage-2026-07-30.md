@@ -74,11 +74,42 @@ A4_DHCP_RENEW_OK client=0x00000001 server=0x00000001
 The reset-matrix contract summary was `{"pass": 1}`. The retained local
 credential file was not copied into the evidence or repository.
 
+## Repeated WPA2 Calibration
+
+A follow-up final-image matrix added a fail-closed resource calibration
+contract. Every successful DHCP renewal emits both the compiled profile
+contract (`RFDBG_RESOURCE`) and the live scheduler/RF heap watermark
+(`RFDBG_HEAP`). The classifier rejects missing markers, arena mismatches,
+invalid used/free/peak relationships, or any allocation failure.
+
+- Evidence directory:
+  `/private/tmp/ws63-runtime-resource-calibration-20260730-r2`.
+- Artifact SHA-256:
+  `911d44eb0e47df352da2796a7d489040393e39aa4c8890682d21b174d56ed5d0`.
+- One 1 MHz download completed full verification in 144.53 seconds; all 20
+  samples then used the unchanged image and J-Link nRST.
+- All 20 runs completed WPA2 association, DHCP, direct gateway ARP, DHCP
+  renewal, and the strict resource contract with zero authentication-response-2
+  timeouts, zero RTOS allocation failures, and zero RF allocation failures.
+- Scheduler peak usage ranged from 172,616 to 172,660 bytes out of 188,928,
+  leaving at least 16,268 bytes.
+- RF peak usage ranged from 50,392 to 59,672 bytes out of 114,176, leaving at
+  least 54,504 bytes.
+- The public UDP DNS observation was 17/20. Runs 7, 10 and 12 still completed
+  the local gateway and resource gates but received no response from either
+  public DNS target. They remain `public_dns_failure` connectivity evidence and
+  are not rewritten as allocator or local-data-path failures.
+
+`hisi-rf-ws63 0.1.0-alpha.60` therefore marks only the
+`wifi-wpa2-smoltcp` runtime resources calibrated. The WPA3 profile remains
+uncalibrated until its separate silicon gate is available.
+
 ## Remaining Boundary
 
 `SchedulerStorage<15>` now makes the dynamic-task quota caller-owned and
 `SchedulerArena<N>` makes scheduler allocation bytes caller-owned. The internal
-TCB representation is still fixed to the current maximum, and profile numbers
-remain subject to later HIL calibration. Future manifest-generated storage may
+TCB representation is still fixed to the current maximum. The WPA2 profile has
+repeated-silicon calibration; WPA3 and future profiles require their own
+evidence rather than inheriting that bit. Future manifest-generated storage may
 replace this shape without weakening the current initialization-time admission
 or one-owner contract.
