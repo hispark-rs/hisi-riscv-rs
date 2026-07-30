@@ -104,6 +104,26 @@ def connectivity_success_log() -> bytes:
     )
 
 
+def resource_calibration_log() -> bytes:
+    return b"\n".join(
+        (
+            (
+                b"RFDBG_RESOURCE schema=hisi-rf-resource-report/v8 "
+                b"revision=ws63-wifi-test runtime_arena=0x0002e200 "
+                b"rf_arena=0x0001be00 calibrated=0x00000000"
+            ),
+            (
+                b"RFDBG_HEAP rtos_arena=0x0002e200 rtos_used=0x0002a1c4 "
+                b"rtos_free=0x0000403c rtos_peak=0x0002b000 "
+                b"rtos_allocs=0x0000001b rtos_failures=0x00000000 "
+                b"rf_arena=0x0001be00 rf_used=0x00001668 "
+                b"rf_free=0x0001a798 rf_peak=0x00002538 "
+                b"rf_failures=0x00000000"
+            ),
+        )
+    )
+
+
 class ClassifyTests(unittest.TestCase):
     def test_connect_error_is_not_masked_by_incomplete_a5b_metrics(self) -> None:
         log = b"\n".join(
@@ -417,6 +437,72 @@ class ClassifyTests(unittest.TestCase):
         violations = MATRIX.validate_rust_contract(log, "connectivity")
         self.assertIn("nonzero:summary.dns_tx_error", violations)
         self.assertIn("nonzero:public_dns.tx_error", violations)
+
+    def test_resource_calibration_accepts_matching_zero_failure_metrics(self) -> None:
+        calibration = MATRIX.parse_resource_calibration(resource_calibration_log())
+        self.assertIsNotNone(calibration)
+        assert calibration is not None
+        self.assertTrue(calibration["complete"])
+        self.assertEqual(calibration["violations"], [])
+        self.assertEqual(calibration["heap"]["rtos_peak"], 0x2B000)
+
+    def test_resource_calibration_fails_closed_on_missing_marker(self) -> None:
+        violations = MATRIX.validate_rust_contract(
+            connectivity_success_log(),
+            "connectivity",
+            require_resource_calibration=True,
+        )
+        self.assertIn("missing:resource_calibration", violations)
+
+    def test_resource_calibration_rejects_failures_and_arena_drift(self) -> None:
+        log = (
+            resource_calibration_log()
+            .replace(b"rtos_failures=0x00000000", b"rtos_failures=0x00000001")
+            .replace(b"rf_arena=0x0001be00 rf_used", b"rf_arena=0x0001bd00 rf_used")
+            .replace(b"rf_free=0x0001a798", b"rf_free=0x0001a698")
+        )
+        calibration = MATRIX.parse_resource_calibration(log)
+        self.assertIsNotNone(calibration)
+        assert calibration is not None
+        self.assertIn("nonzero:rtos.failures", calibration["violations"])
+        self.assertIn("mismatch:rf.arena", calibration["violations"])
+
+    def test_resource_calibration_summary_reports_peak_headroom(self) -> None:
+        record = MATRIX.record_from_log(
+            1,
+            b"\n".join(
+                (
+                    connectivity_success_log(),
+                    a5b_success_log().replace(
+                        b"RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x00000009\n",
+                        b"",
+                    ),
+                    resource_calibration_log(),
+                )
+            ),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            require_contract=True,
+            max_runner_step_ms=100,
+            require_resource_calibration=True,
+        )
+        summary = MATRIX.summarize_records(
+            [record],
+            port=None,
+            baud=115_200,
+            profile="rust",
+            stage="connectivity",
+            required_ap_mode=None,
+            timeout=90.0,
+            post_terminal_seconds=1.0,
+            reference_ping=None,
+        )
+        calibration = summary["resource_calibration"]
+        self.assertEqual(calibration["complete_runs"], 1)
+        self.assertEqual(calibration["runtime_headroom_remaining_bytes"], 0x3200)
+        self.assertEqual(calibration["rf_headroom_remaining_bytes"], 0x198C8)
 
     def test_qemu_fixture_is_contract_only_and_rejected_as_silicon(self) -> None:
         log = b"\n".join(

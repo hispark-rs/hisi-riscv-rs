@@ -232,6 +232,14 @@ def parse_args() -> argparse.Namespace:
         help="maximum accepted A5B runner turn when --require-contract is set",
     )
     parser.add_argument(
+        "--require-resource-calibration",
+        action="store_true",
+        help=(
+            "require the firmware resource contract and runtime heap metrics, "
+            "with matching arenas and zero allocation failures"
+        ),
+    )
+    parser.add_argument(
         "--write-artifact-identity",
         type=Path,
         help="write a deterministic ELF/profile identity manifest and exit",
@@ -341,6 +349,15 @@ def parse_hex_fields(line: bytes) -> dict[str, int]:
     return fields
 
 
+def parse_text_fields(line: bytes) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for token in line.decode(errors="replace").split()[1:]:
+        if "=" in token:
+            key, value = token.split("=", 1)
+            fields[key] = value
+    return fields
+
+
 def parse_hex_values(line: bytes) -> list[int]:
     values: list[int] = []
     for token in line.decode(errors="replace").split()[1:]:
@@ -351,6 +368,63 @@ def parse_hex_values(line: bytes) -> list[int]:
         except ValueError:
             continue
     return values
+
+
+def parse_resource_calibration(log: bytes) -> dict[str, object] | None:
+    resource_line = last_prefixed_line(log, b"RFDBG_RESOURCE ")
+    heap_line = last_prefixed_line(log, b"RFDBG_HEAP ")
+    if resource_line is None and heap_line is None:
+        return None
+
+    resource_text = parse_text_fields(resource_line or b"")
+    resource = parse_hex_fields(resource_line or b"")
+    heap = parse_hex_fields(heap_line or b"")
+    violations: list[str] = []
+    if resource_line is None:
+        violations.append("missing:resource_contract")
+    if heap_line is None:
+        violations.append("missing:heap_metrics")
+
+    resource_runtime = resource.get("runtime_arena", 0)
+    resource_rf = resource.get("rf_arena", 0)
+    if resource_line is not None:
+        if not resource_text.get("schema"):
+            violations.append("missing:resource.schema")
+        if not resource_text.get("revision"):
+            violations.append("missing:resource.revision")
+        if resource_runtime <= 0:
+            violations.append("invalid:resource.runtime_arena")
+        if resource_rf <= 0:
+            violations.append("invalid:resource.rf_arena")
+
+    for prefix in ("rtos", "rf"):
+        arena = heap.get(f"{prefix}_arena", 0)
+        used = heap.get(f"{prefix}_used", 0)
+        free = heap.get(f"{prefix}_free", 0)
+        peak = heap.get(f"{prefix}_peak", 0)
+        failures = heap.get(f"{prefix}_failures", 0)
+        if heap_line is not None:
+            if arena <= 0:
+                violations.append(f"invalid:{prefix}.arena")
+            if used + free != arena:
+                violations.append(f"invalid:{prefix}.used_free")
+            if peak < used or peak > arena:
+                violations.append(f"invalid:{prefix}.peak")
+            if failures != 0:
+                violations.append(f"nonzero:{prefix}.failures")
+
+    if resource_line is not None and heap_line is not None:
+        if heap.get("rtos_arena") != resource_runtime:
+            violations.append("mismatch:rtos.arena")
+        if heap.get("rf_arena") != resource_rf:
+            violations.append("mismatch:rf.arena")
+
+    return {
+        "resource": {**resource_text, **resource},
+        "heap": heap,
+        "violations": violations,
+        "complete": not violations,
+    }
 
 
 def sha256_path(path: Path) -> str:
@@ -478,6 +552,7 @@ def validate_rust_contract(
     stage: str,
     max_runner_step_ms: int | None = None,
     qemu_contract_fixture: bool = False,
+    require_resource_calibration: bool = False,
 ) -> list[str]:
     """Return fail-closed marker/diagnostic violations for one Rust boot."""
     violations: list[str] = []
@@ -587,6 +662,13 @@ def validate_rust_contract(
                 violations.append("invalid:dhcp_renew.client")
             if renew.get("server", 0) <= 0:
                 violations.append("invalid:dhcp_renew.server")
+
+    if require_resource_calibration:
+        calibration = parse_resource_calibration(log)
+        if calibration is None:
+            violations.append("missing:resource_calibration")
+        else:
+            violations.extend(str(item) for item in calibration["violations"])
 
     return violations
 
@@ -751,6 +833,7 @@ def classify(
     require_contract: bool = False,
     max_runner_step_ms: int | None = None,
     qemu_contract_fixture: bool = False,
+    require_resource_calibration: bool = False,
 ) -> str:
     if profile == "official-liteos":
         if stage == "connect" and b"+NOTICE:CONNECTED" in log:
@@ -808,8 +891,12 @@ def classify(
             return "missing_a5b_metrics"
 
     def pass_or_contract_violation() -> str:
-        if require_contract and validate_rust_contract(
-            log, stage, max_runner_step_ms, qemu_contract_fixture
+        if (require_contract or require_resource_calibration) and validate_rust_contract(
+            log,
+            stage,
+            max_runner_step_ms,
+            qemu_contract_fixture,
+            require_resource_calibration,
         ):
             return "contract_violation"
         return "pass"
@@ -963,12 +1050,17 @@ def record_from_log(
     require_contract: bool = False,
     max_runner_step_ms: int | None = None,
     qemu_contract_fixture: bool = False,
+    require_resource_calibration: bool = False,
 ) -> dict[str, object]:
     contract_violations = (
         validate_rust_contract(
-            log, stage, max_runner_step_ms, qemu_contract_fixture
+            log,
+            stage,
+            max_runner_step_ms,
+            qemu_contract_fixture,
+            require_resource_calibration,
         )
-        if require_contract and profile == "rust"
+        if (require_contract or require_resource_calibration) and profile == "rust"
         else []
     )
     dns = parse_dns_summary(log)
@@ -982,6 +1074,7 @@ def record_from_log(
             require_contract,
             max_runner_step_ms,
             qemu_contract_fixture,
+            require_resource_calibration,
         ),
         "bytes": len(log),
         "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
@@ -993,9 +1086,10 @@ def record_from_log(
             log,
             require_disconnect=stage == "connect",
         ),
+        "resource_calibration": parse_resource_calibration(log),
         "contract": {
             "schema": MARKER_CONTRACT,
-            "required": require_contract,
+            "required": require_contract or require_resource_calibration,
             "evidence_scope": (
                 "contract-only" if qemu_contract_fixture else "silicon"
             ),
@@ -1047,6 +1141,49 @@ def summarize_records(
             if isinstance(value, int):
                 dns_totals[field] += value
 
+    calibrations = [
+        value
+        for record in records
+        if isinstance((value := record.get("resource_calibration")), dict)
+    ]
+    resource_calibration = None
+    if calibrations:
+        heap_fields = (
+            "rtos_used",
+            "rtos_free",
+            "rtos_peak",
+            "rtos_allocs",
+            "rtos_failures",
+            "rf_used",
+            "rf_free",
+            "rf_peak",
+            "rf_failures",
+        )
+        ranges = {
+            field: {
+                "min": min(int(value["heap"].get(field, 0)) for value in calibrations),
+                "max": max(int(value["heap"].get(field, 0)) for value in calibrations),
+            }
+            for field in heap_fields
+        }
+        resource_calibration = {
+            "runs_with_markers": len(calibrations),
+            "runs_without_markers": len(records) - len(calibrations),
+            "complete_runs": sum(value.get("complete") is True for value in calibrations),
+            "resource": calibrations[0]["resource"],
+            "ranges": ranges,
+            "runtime_headroom_remaining_bytes": min(
+                int(value["heap"].get("rtos_arena", 0))
+                - int(value["heap"].get("rtos_peak", 0))
+                for value in calibrations
+            ),
+            "rf_headroom_remaining_bytes": min(
+                int(value["heap"].get("rf_arena", 0))
+                - int(value["heap"].get("rf_peak", 0))
+                for value in calibrations
+            ),
+        }
+
     summary: dict[str, object] = {
         "port": port,
         "baud": baud,
@@ -1065,6 +1202,7 @@ def summarize_records(
         "reference_ping": reference_ping,
         "a5b_metrics": aggregate_a5b_metrics(records),
         "l2_protocol": aggregate_l2_protocol_diagnostics(records),
+        "resource_calibration": resource_calibration,
         "records": records,
     }
     if source_dir is not None:
@@ -1152,6 +1290,7 @@ def main() -> int:
                 require_contract=args.require_contract,
                 max_runner_step_ms=args.max_runner_step_ms,
                 qemu_contract_fixture=args.qemu_contract_fixture,
+                require_resource_calibration=args.require_resource_calibration,
             )
             for run, log_path in enumerate(source_logs, start=1)
         ]
@@ -1218,6 +1357,7 @@ def main() -> int:
                 args.require_contract,
                 args.max_runner_step_ms,
                 args.qemu_contract_fixture,
+                args.require_resource_calibration,
             )
             records.append(record)
             print(

@@ -168,6 +168,7 @@ uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" \
     --timeout "$TIMEOUT" \
     --stage connectivity \
     --require-contract \
+    --require-resource-calibration \
     --max-runner-step-ms "$MAX_RUNNER_STEP_MS" \
     --artifact-identity "$IDENTITY" \
     --elf "$ELF" \
