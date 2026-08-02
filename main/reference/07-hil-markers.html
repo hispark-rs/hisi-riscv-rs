@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e6c602d1.js";
+            window.path_to_searchindex_js = "../searchindex-06f73f51.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -316,7 +316,7 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 <tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/public UDP DNS/summary/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
 <tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
-<tr><td><code>PROBE_SPEED</code></td><td><code>3000</code></td><td>首选 WS63 download 速率；始终保留完整 readback verify。2026-07-30 大镜像在 3 MHz 曾 page timeout，当前可靠证据使用 1 MHz，失败再降到 500 kHz</td></tr>
+<tr><td><code>PROBE_SPEED</code></td><td><code>3000</code></td><td>首选 WS63 download 速率；始终保留完整 readback verify。2026-08-03 的 r8 RF init/scan 镜像在 3 MHz 完整验证成功（98.95 秒）；历史上大镜像曾出现 page timeout，失败时依次降到 1000/500 kHz，不得关闭 verify</td></tr>
 <tr><td><code>MONITOR</code></td><td><code>60</code></td><td>覆盖 connect、UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口</td></tr>
 <tr><td><code>EVIDENCE_DIR</code></td><td><code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code></td><td>保存 UART、artifact identity 与严格 contract summary；必须为空</td></tr>
 </tbody>
