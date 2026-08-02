@@ -1135,6 +1135,17 @@ CPU ownership，不等价于不可中断 C 调用在 100 ms 墙钟时间内返�
 preemption、cancel、late completion 和 connectivity parity 前，A5B 仍保持非默认且下方
 silicon gate 不勾选。
 
+r8 首次真机 init/scan 揭示了一个独立准入回归：profile 已原子预留 7 个 vendor slot 和
+1 个 Rust worker slot，但 vendor bootstrap 仍用总数 8 检查预留后的剩余容量，因而以
+`0x21000807`（required=8, available=7）提前失败。`hisi-rf-ws63
+0.1.0-alpha.64` 将 vendor bootstrap 的 7-slot contract 与 profile 的 8-slot total
+明确拆开；106 项精确 feature host tests、strict clippy、WPA3 RV32 final link 和真实 WS63
+无凭据 init/scan HIL 均通过。真机输出到达 `RF2_INIT_OK`、`RF3_SCAN_OK count=4` 和
+`W2D_NATIVE_RUNNER_RX_READY`，公共 fixture 随后按预期报告 `W2E_AP_NOT_FOUND`；3 MHz
+下载保留完整 verify，耗时 98.95 秒。该证据只关闭 worker bootstrap/init/scan 准入回归，
+不替代 connect/ping、取消、late completion 或 pure-WPA3 gate。完整记录见
+[A5B worker admission evidence](evidence/ws63-rf-a5b-worker-admission-2026-08-03.md)。
+
 该矩阵使用的 status-30 恢复 ABI 已随 `ws63-radio-sys 0.1.0-alpha.8` 发布；release-unit CI
 `30299853553` 与 publish workflow `30300012911` 通过。`hisi-rf-ws63 0.1.0-alpha.25`
 随后精确依赖该 sys release 并固化 100 ms fixture，CI `30300680338` 覆盖 package、

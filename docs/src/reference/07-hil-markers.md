@@ -122,7 +122,7 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 | `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/public UDP DNS/summary/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
-| `PROBE_SPEED` | `3000` | 首选 WS63 download 速率；始终保留完整 readback verify。2026-07-30 大镜像在 3 MHz 曾 page timeout，当前可靠证据使用 1 MHz，失败再降到 500 kHz |
+| `PROBE_SPEED` | `3000` | 首选 WS63 download 速率；始终保留完整 readback verify。2026-08-03 的 r8 RF init/scan 镜像在 3 MHz 完整验证成功（98.95 秒）；历史上大镜像曾出现 page timeout，失败时依次降到 1000/500 kHz，不得关闭 verify |
 | `MONITOR` | `60` | 覆盖 connect、UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口 |
 | `EVIDENCE_DIR` | `/private/tmp/ws63-connectivity-smoke-<timestamp>` | 保存 UART、artifact identity 与严格 contract summary；必须为空 |
 
