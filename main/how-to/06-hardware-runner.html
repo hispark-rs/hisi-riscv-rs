@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d629fd7f.js";
+            window.path_to_searchindex_js = "../searchindex-e6c602d1.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -207,6 +207,16 @@
 PORT=/dev/ttyUSB0 \
     cargo run -p uart_hello --release
 </code></pre>
+<p>连接多块 WS63 时，必须把下载探针、硬件复位探针和 UART 显式绑定到同一块板。不要依赖
+USB 枚举顺序：</p>
+<pre><code class="language-bash">CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh \
+PROBE_RS_PROBE='&lt;VID:PID:SERIAL&gt;' \
+JLINK_SERIAL='&lt;decimal-jlink-serial&gt;' \
+PORT='&lt;uart-device&gt;' \
+    cargo run -p uart_hello --release
+</code></pre>
+<p>建议在本机的临时环境文件中按 <code>rig-a</code> / <code>rig-b</code> 保存这组三元组；设备身份属于本机
+实验台配置，不提交到仓库。AP/STA 或后续 BLE/SLE 双板测试也使用同一身份绑定。</p>
 <h2 id="环境变量"><a class="header" href="#环境变量">环境变量</a></h2>
 <div class="table-wrapper">
 <table>
@@ -215,11 +225,13 @@ PORT=/dev/ttyUSB0 \
 </thead>
 <tbody>
 <tr><td><code>PROBE_RS</code></td><td>probe-rs 二进制</td><td>PATH 里的 <code>probe-rs</code></td></tr>
+<tr><td><code>PROBE_RS_PROBE</code></td><td><code>probe-rs --probe</code> 选择器；多探针时必填</td><td>空</td></tr>
 <tr><td><code>PROBE_CHIP</code></td><td><code>probe-rs --chip</code> 值</td><td><code>WS63</code></td></tr>
 <tr><td><code>PROBE_YAML</code></td><td><code>--chip-description-path</code> yaml</td><td>空 = 用内置数据库</td></tr>
 <tr><td><code>PROBE_SPEED</code></td><td>调试传输时钟，单位 kHz</td><td><code>2000</code></td></tr>
 <tr><td><code>HISI_FWPKG</code></td><td>hisi-fwpkg 二进制</td><td>PATH 里的 <code>hisi-fwpkg</code></td></tr>
 <tr><td><code>PORT</code></td><td>复位后要抓的板子 UART0</td><td>空 = 不抓串口</td></tr>
+<tr><td><code>JLINK_SERIAL</code></td><td>执行硬件 nRST 的 J-Link 十进制序列号；多探针时必填</td><td>空</td></tr>
 <tr><td><code>UART_BAUD</code></td><td>抓串口的波特率</td><td><code>115200</code></td></tr>
 <tr><td><code>MONITOR</code></td><td>抓串口的秒数</td><td><code>10</code></td></tr>
 </tbody>
