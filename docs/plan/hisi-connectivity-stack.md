@@ -104,6 +104,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    QEMU contract-only target fixture、credential-free HIL init/scan 和最终完整
    `wifi_connectivity` 20-reset 镜像均已闭合。
 
+2026-08-02 起实验台具备两块独立 WS63，可分别承担 AP/STA，后续也可用于 BLE/SLE
+对端测试。双板并不自动关闭 pure-WPA3 门槛：当前外部 AP 没有 SAE-only 模式，WS63
+SoftAP 的 WPA3 authenticator 也尚未实现和验证。先把每个 rig 的 probe-rs selector、
+J-Link serial、UART 与角色显式绑定；禁止依赖 USB 枚举顺序。完成 W3 SoftAP 后，优先用
+受控 WS63 AP + WS63 STA 建立本地 ARP/UDP echo、WPA2 parity 和 SAE-only 20-reset
+矩阵；BLE/SLE 仍遵守 WIP=1，在当前 Wi-Fi A5 收口后再启动。
+
 这些项和 pure-WPA3 gate 都未闭合前，保持验证过的 WS63 blocking backend。BLE、SLE、
 TLS、SoftAP 和 Enterprise 不与当前 A5 并行。
 
@@ -1096,6 +1103,38 @@ WPA2 profile 在同一份镜像上连续 20 次 J-Link nRST 全部完成 connect
 因此 pure-WPA3 20-reset gate 仍标记 external blocked，不能据此切换默认 backend 或宣称
 WPA3 stable。
 
+2026-07-30 使用当前发布链进行 transition-WPA3 单轮复测时，3 MHz 下载与完整 verify
+成功，但 connect 的后续 supplicant/eloop poll 耗时 179 ms，随后被内部错误
+`0x5732b003` 误报为 operation failure。按 runner phase 与底层计时重新对齐后，
+connect configure/submit 两轮分别约 59/28 ms，association ioctl 最大 24 ms；179 ms
+发生在下一轮 eloop work，当前高概率范围是 SAE/P-256 或同一 handler 内的同步工作，
+不能再笼统归因到 association ioctl。旧实现因事后计时超过 100 ms 清空 active
+operation，使后续 authorization event 无主可归。
+`hisi-rf-core 0.1.0-alpha.20` 与 WS63 backend 的对应修复把事件数量保留为硬上限，把
+不可抢占调用的时间超限报告为
+可观测 `budget_exhausted`，并用确定性 host test 证明 179 ms 超限后 operation 仍能接收
+AUTHORIZED 并完成。该修复已通过 core 52 项、WS63 93 项 host tests、双 crate clippy 与
+RV32 check；尚未重新取得真机 connect 证据，因此不能把这一项写成 HIL 闭合。长期门槛仍是
+拆开或异步化该 eloop handler 的长工作，使 100 ms 成为可执行上界，而不只是返回后的
+超限观测。
+
+`hisi-rf-ws63 0.1.0-alpha.62` 进一步完成无板实现：启用
+`incremental-embassy-wait` 时，runner-facing backend 只向 caller-owned 固定邮箱提交
+start/poll/cancel；唯一 RTOS worker 持有 supplicant backend，并在 task 进入 ready queue 前
+原子安装 100/200 ms `Budgeted` 周期 CPU quota。取消只记录 generation-tagged intent 并
+wake worker，vendor/hostap 调用、scan result copy 和 completion publish 均不在 IRQ 或
+critical section 内执行。该路径要求 runtime contract v1.5，并增加第 8 个 dynamic task。
+`hisi-rf-ws63 0.1.0-alpha.63` 随后修正完整应用的 SRAM 模型：7 个 vendor task 各使用
+24 KiB 栈，incremental worker 使用 8 KiB 栈，并由两份 owner-bound reservation 分别消费；
+worker control state 也从共享 RF arena 中显式扣除。未校准 profile revision 因此升为
+`ws63-wifi-2026-08-03-r8`，精确 task stack 为 180,224 bytes、runtime arena 为
+197,120 bytes、shared RF arena 为 101,888 bytes。102 项 feature host tests、严格 clippy、
+WPA2/WPA3 RV32 检查，以及使用 crates.io `hisi-rf 0.1.0-alpha.73` 的完整
+`wifi_connectivity` release ELF 与 offline locked 重建均已通过。此 quota 约束的是单 hart
+CPU ownership，不等价于不可中断 C 调用在 100 ms 墙钟时间内返回；在双板 HIL 完成 worker
+preemption、cancel、late completion 和 connectivity parity 前，A5B 仍保持非默认且下方
+silicon gate 不勾选。
+
 该矩阵使用的 status-30 恢复 ABI 已随 `ws63-radio-sys 0.1.0-alpha.8` 发布；release-unit CI
 `30299853553` 与 publish workflow `30300012911` 通过。`hisi-rf-ws63 0.1.0-alpha.25`
 随后精确依赖该 sys release 并固化 100 ms fixture，CI `30300680338` 覆盖 package、
@@ -1142,9 +1181,16 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
 - [x] 用 generation-tagged `OperationId` 和显式状态机替代“调用直到完成”：backend 提供
   `start_*`、有界 `poll(reason, budget)`、`next_deadline()`、`cancel(operation)` 和 bounded
   event drain；具体命名可在 `hisi-rf` alpha API review 中调整，但不得退回隐式全程等待。
-- [x] `WorkBudget` 同时限制单次 poll 的事件数和可消耗时间；backend 必须返回
-  made-progress、pending/deadline、terminal result 或 budget-exhausted，禁止内部无界循环、
-  固定 `sleep_ms(1)` busy polling 或等待外部 RF/AP 进展。
+- [x] `WorkBudget` 对事件数量实施硬上限，并对单次 poll 的时间 grant 做返回后计时；
+  backend 必须返回 made-progress、pending/deadline、terminal result 或
+  budget-exhausted，禁止内部无界循环、固定 `sleep_ms(1)` busy polling 或等待外部
+  RF/AP 进展。不可抢占平台调用若返回时已经超限，必须保留 operation ownership 并报告
+  overrun，不能伪装成可回滚的 backend failure。
+- [x] 把同步 supplicant/vendor seam 移入独立 RTOS worker；caller-owned 固定邮箱提供
+  backpressure，worker 在 spawn 时原子绑定周期 CPU quota，runner 不再直接进入该 seam。
+- [ ] 在 A5B 成为默认路径前，以双板 HIL 校准 worker 的 100 ms CPU ownership、取消、
+  late completion 和 connectivity parity；周期 quota 不能被表述成单次 C 调用的墙钟返回
+  保证，事后 `WorkReport` overrun 仍须保留并归因。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。
