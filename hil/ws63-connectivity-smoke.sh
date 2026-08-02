@@ -41,7 +41,7 @@ Usage: PORT=/dev/ttyUSB0 WS63_WIFI_SSID=... WS63_WIFI_PASSPHRASE=... \
        hil/ws63-connectivity-smoke.sh --preflight
 
 Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
-          HISI_FWPKG, UART_BAUD, MONITOR,
+          PROBE_RS_PROBE, JLINK_SERIAL, HISI_FWPKG, UART_BAUD, MONITOR,
           EVIDENCE_DIR (default: timestamped directory under /private/tmp),
           WS63_CONNECTIVITY_PROFILE={upstream-wpa2|upstream-wpa3|vendor-wpa2},
           WS63_CONNECTIVITY_EXPECT={full|init-scan}; init-scan uses public
@@ -54,6 +54,8 @@ Optional: WS63_WPA_ARCHIVE, PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED,
           exactly WS63_WIFI_SSID=... and WS63_WIFI_PASSPHRASE=...; it is parsed
           without shell evaluation and retained by default. Set
           WS63_WIFI_ENV_FILE_DISPOSITION=delete for a one-shot file.
+          With multiple rigs, PROBE_RS_PROBE and JLINK_SERIAL must identify
+          the same board as PORT; device enumeration order is not a contract.
 EOF
 }
 
@@ -181,7 +183,7 @@ preflight() {
         fi
     fi
     [ "$failed" -eq 0 ] || return 1
-    echo "connectivity-smoke: preflight PASS (profile=$PROFILE, expect=$EXPECT, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s)"
+    echo "connectivity-smoke: preflight PASS (profile=$PROFILE, expect=$EXPECT, probe=${PROBE_SPEED}kHz, monitor=${MONITOR}s, explicit_probe=$([ -n "${PROBE_RS_PROBE:-}" ] && printf yes || printf no), explicit_nrst=$([ -n "${JLINK_SERIAL:-}" ] && printf yes || printf no))"
 }
 
 case "${1:-}" in

@@ -8,6 +8,7 @@
 #
 # Env (all optional, sensible defaults):
 #   PROBE_RS     probe-rs binary                    (default: `probe-rs` in PATH)
+#   PROBE_RS_PROBE probe-rs --probe selector         (required when multiple probes exist)
 #   PROBE_CHIP   probe-rs --chip value              (default WS63)
 #   PROBE_YAML   --chip-description-path YAML       (default: empty = built-in DB)
 #   PROBE_SPEED  debug transport speed in kHz       (default 2000)
@@ -17,6 +18,7 @@
 #   PORT         board UART0 to capture             (default: none = don't capture)
 #   UART_BAUD    UART baud                          (default 115200)
 #   MONITOR      seconds to capture UART            (default 10)
+#   JLINK_SERIAL J-Link serial used for hardware nRST (required when multiple J-Links exist)
 set -euo pipefail
 
 ELF="${1:?cargo passes the built ELF path as \$1}"
@@ -60,7 +62,8 @@ for ((attempt = 1; attempt <= PROBE_DOWNLOAD_ATTEMPTS; attempt++)); do
     speed="$PROBE_SPEED"
     [ "$attempt" -eq 1 ] || speed="$PROBE_RETRY_SPEED"
     echo "run-hw: downloading planned image via probe-rs bin path @ $BASE_ADDRESS (${speed} kHz, attempt ${attempt}/${PROBE_DOWNLOAD_ATTEMPTS})"
-    probe_args=(download --chip "$PROBE_CHIP" --speed "$speed")
+    probe_args=(download --non-interactive --chip "$PROBE_CHIP" --speed "$speed")
+    [ -z "${PROBE_RS_PROBE:-}" ] || probe_args+=(--probe "$PROBE_RS_PROBE")
     [ -z "${PROBE_YAML:-}" ] || probe_args+=(--chip-description-path "$PROBE_YAML")
     probe_args+=(--verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMAGE")
     if "$PROBE_RS" "${probe_args[@]}"; then

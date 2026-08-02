@@ -113,6 +113,8 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 | 变量 | 默认 | 说明 |
 |------|------|------|
 | `PORT` | 必填 | WS63 UART0 |
+| `PROBE_RS_PROBE` | 空 | `probe-rs --probe` 选择器；多板实验必须与 `PORT` 指向同一 rig |
+| `JLINK_SERIAL` | 空 | J-Link 十进制序列号；多板实验必须与 `PROBE_RS_PROBE`、`PORT` 指向同一 rig |
 | `WS63_WIFI_PASSPHRASE` | 必填 | 仅由 self-hosted secret 注入，不写入仓库或日志 |
 | `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的 `0600` 普通文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，默认保留且不能与直接环境变量混用 |
 | `WS63_WIFI_ENV_FILE_DISPOSITION` | `keep` | `keep` 保留本机凭据供后续复用；`delete` 在成功读取后删除真正的一次性文件 |
@@ -139,6 +141,8 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 | `PROBE_RS_YAML` | 必填 | probe-rs | fork 的芯片描述 YAML（`HiSilicon_WS63.yaml`） |
 | `BASE_ADDRESS` | 未设 | probe-rs | 可选 app 分区覆盖值；未设则读取 `hisi-fwpkg plan` 的 `base_addr` |
 | `PROBE_RS` | `probe-rs` | probe-rs | probe-rs 二进制名 |
+| `PROBE_RS_PROBE` | 空 | probe-rs | `probe-rs --probe` 选择器；多探针时必填 |
+| `PROBE_SPEED` | `2000` | probe-rs | 调试传输时钟，单位 kHz |
 | `PORT` | 自动探测 | hisiflash | 串口（导出为 `HISIFLASH_PORT`） |
 | `BAUD` | hisiflash 默认 921600 | hisiflash | 烧录波特（`HISIFLASH_BAUD`） |
 | `LOADERBOOT` | 必填 | hisiflash | 厂商 LoaderBoot 二进制（取自 fbb_ws63 产物） |
@@ -175,13 +179,20 @@ Cargo 以 `<runner> <built-elf>` 调用，脚本执行 `hisi-fwpkg plan --image-
 | 变量 | 默认 | 说明 |
 |------|------|------|
 | `PROBE_RS` | `probe-rs` | probe-rs 二进制名 |
+| `PROBE_RS_PROBE` | 空 | `probe-rs --probe` 选择器；多探针时必填 |
 | `PROBE_CHIP` | `WS63` | probe-rs `--chip` 值 |
 | `PROBE_YAML` | 空 | `--chip-description-path` YAML |
 | `PROBE_SPEED` | `2000` | 调试传输时钟，单位 kHz |
 | `HISI_FWPKG` | `hisi-fwpkg` | hisi-fwpkg 二进制名 |
 | `PORT` | 无 | 复位后流式 UART0 的端口 |
+| `JLINK_SERIAL` | 空 | 硬件 nRST 使用的 J-Link 十进制序列号；多探针时必填 |
 | `UART_BAUD` | `115200` | 流式 UART 波特 |
 | `MONITOR` | `10` | 流式 UART 秒数 |
 
 > 启用：`CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh cargo run -p blinky --release`
 >（或 `just run-hw`）。
+
+多板 HIL 的 rig 身份是
+`PROBE_RS_PROBE + JLINK_SERIAL + PORT`。三者必须绑定同一块板，不能把系统 USB
+枚举顺序当作稳定身份；reset matrix 同样接受 `JLINK_SERIAL`，因此不会复位一块板却读取
+另一块板的 UART。

@@ -27,6 +27,7 @@
 #   PROBE_RS_YAML chip-description YAML from the fork (REQUIRED — HiSilicon_WS63.yaml).
 #   BASE_ADDRESS  optional app-partition override; otherwise read from hisi-fwpkg plan.
 #   PROBE_RS      the probe-rs binary (default `probe-rs` in PATH).
+#   PROBE_RS_PROBE probe-rs --probe selector (required when multiple probes exist).
 #   PROBE_SPEED   debug transport speed in kHz (default 2000).
 # Env (hisiflash path):
 #   PORT          serial port (exported as HISIFLASH_PORT). Auto-detected if unset.
@@ -74,11 +75,15 @@ if [ "$METHOD" = "probe-rs" ]; then
     PLAN="${IMG%.img}.plan.json"
     BASE_ADDRESS="$(uv run "$HERE/scripts/read-flash-plan-base.py" "$PLAN")"
 
+    probe_args=()
+    [ -n "${PROBE_RS_PROBE:-}" ] && probe_args=(--probe "$PROBE_RS_PROBE")
     echo "==> probe-rs download $IMG -> chip=$CHIP @ $BASE_ADDRESS, ${PROBE_SPEED} kHz (plan=$PLAN, yaml=$PROBE_RS_YAML)"
-    "$PROBE_RS" download --chip "$CHIP" --speed "$PROBE_SPEED" --chip-description-path "$PROBE_RS_YAML" \
+    "$PROBE_RS" download --non-interactive --chip "$CHIP" --speed "$PROBE_SPEED" \
+        "${probe_args[@]}" --chip-description-path "$PROBE_RS_YAML" \
         --verify --binary-format bin --base-address "$BASE_ADDRESS" "$IMG"
     echo "==> probe-rs reset"
-    exec "$PROBE_RS" reset --chip "$CHIP" --chip-description-path "$PROBE_RS_YAML"
+    exec "$PROBE_RS" reset --non-interactive --chip "$CHIP" "${probe_args[@]}" \
+        --chip-description-path "$PROBE_RS_YAML"
 fi
 
 # ---- vendor hisiflash path ----

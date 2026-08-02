@@ -90,6 +90,10 @@ probe-rs reset    --chip WS63 --chip-description-path HiSilicon_WS63.yaml
 脚本始终启用完整 readback verify；性能数据与 repeated-DMI 的 target capability 边界以
 [`docs/src/how-to/04-flash-probe-rs.md`](../docs/src/how-to/04-flash-probe-rs.md#ws63-下载性能基线)为唯一详细记录。
 
+两块或更多 WS63 同时连接时，还必须显式设置 `PROBE_RS_PROBE`、`JLINK_SERIAL` 和
+`PORT`，让下载、硬件 nRST 与 UART 指向同一 rig。不要依赖 J-Link 或串口枚举顺序；
+本机序列号/设备路径保存在本机临时配置中，不提交仓库。
+
 ## 烧录路径 B：hisiflash YMODEM（厂商路径）
 
 走串口/YMODEM（@230400）。两个**必须按板子确认**的量（写错可能烧不进 / 烧错位置）：
@@ -169,6 +173,7 @@ CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/embedded-test-runner.sh \
 
 runner（`hil/embedded-test-runner.sh`）环境变量（均可选，对齐 `cargo-run-hw.sh`）：
 `PROBE_RS`（probe-rs 二进制，需补丁 fork `hispark-rs/probe-rs` branch `add-hisilicon-ws63-bs21-hil-baseline`）、
+`PROBE_RS_PROBE`（多探针时必填的 `--probe` 选择器）、
 `PROBE_CHIP`（默认 `WS63`）、`PROBE_YAML`（`--chip-description-path` 的 YAML，默认空=内置库）、
 `PROBE_SPEED`（默认 `2000`，单位 kHz）、
 `HISI_FWPKG`（默认 `hisi-fwpkg`）。runner 先 `hisi-fwpkg patch-hash <elf>`（原地补头），

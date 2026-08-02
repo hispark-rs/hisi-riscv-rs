@@ -29,6 +29,8 @@ WS63_WIFI_ENV_FILE_DISPOSITION=delete for a one-shot file.
 
 Optional:
   PROBE_RS, PROBE_YAML, PROBE_CHIP, PROBE_SPEED (default 3000),
+  PROBE_RS_PROBE and JLINK_SERIAL (required to bind one board when multiple
+  rigs are attached; both must refer to the board whose UART is PORT),
   PROBE_DOWNLOAD_ATTEMPTS, PROBE_RETRY_SPEED, HISI_FWPKG,
   RUNS (default 20), TIMEOUT (default 90 seconds),
   MAX_RUNNER_STEP_MS (default 100),
@@ -162,18 +164,21 @@ echo "==> flash once through the canonical FlashPlan bin path"
 )
 
 echo "==> run unchanged-image response-bound connectivity matrix"
-uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" \
-    --port "$PORT" \
-    --runs "$RUNS" \
-    --timeout "$TIMEOUT" \
-    --stage connectivity \
-    --require-contract \
-    --require-resource-calibration \
-    --max-runner-step-ms "$MAX_RUNNER_STEP_MS" \
-    --artifact-identity "$IDENTITY" \
-    --elf "$ELF" \
-    --profile-id "$PROFILE_ID" \
+matrix_args=(
+    --port "$PORT"
+    --runs "$RUNS"
+    --timeout "$TIMEOUT"
+    --stage connectivity
+    --require-contract
+    --require-resource-calibration
+    --max-runner-step-ms "$MAX_RUNNER_STEP_MS"
+    --artifact-identity "$IDENTITY"
+    --elf "$ELF"
+    --profile-id "$PROFILE_ID"
     --output "$SUMMARY_DIR"
+)
+[ -z "${JLINK_SERIAL:-}" ] || matrix_args+=(--jlink-serial "$JLINK_SERIAL")
+uv run "$HERE/hil/ws63-connectivity-reset-matrix.py" "${matrix_args[@]}"
 
 echo "a5b-response-bound: evidence saved at $EVIDENCE_DIR"
 echo "WS63 A5B RESPONSE BOUND: PASS"

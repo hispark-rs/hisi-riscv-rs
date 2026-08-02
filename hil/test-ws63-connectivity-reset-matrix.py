@@ -125,6 +125,26 @@ def resource_calibration_log() -> bytes:
 
 
 class ClassifyTests(unittest.TestCase):
+    def test_jlink_argv_selects_exact_probe_in_multi_rig_setup(self) -> None:
+        self.assertEqual(
+            MATRIX.jlink_argv(
+                "JLinkExe", Path("reset.jlink"), "12345678"
+            ),
+            [
+                "JLinkExe",
+                "-NoGui",
+                "1",
+                "-SelectEmuBySN",
+                "12345678",
+                "-CommandFile",
+                "reset.jlink",
+            ],
+        )
+
+    def test_jlink_argv_rejects_non_decimal_serial(self) -> None:
+        with self.assertRaisesRegex(ValueError, "decimal digits"):
+            MATRIX.jlink_argv("JLinkExe", Path("reset.jlink"), "--help")
+
     def test_connect_error_is_not_masked_by_incomplete_a5b_metrics(self) -> None:
         log = b"\n".join(
             (

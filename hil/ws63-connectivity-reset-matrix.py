@@ -14,10 +14,11 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import tempfile
 import time
 
 import serial
+
+from jlink_nrst import jlink_argv, pulse_nrst
 
 
 RUST_TERMINAL_MARKERS = (
@@ -211,6 +212,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--jlink", default="JLinkExe")
     parser.add_argument(
+        "--jlink-serial",
+        default=os.environ.get("JLINK_SERIAL"),
+        help="J-Link serial number; required to select the reset probe in a multi-rig setup",
+    )
+    parser.add_argument(
         "--reference-target",
         help="optional same-network target to ping once from the host (for example the AP gateway)",
     )
@@ -255,28 +261,6 @@ def parse_args() -> argparse.Namespace:
         help="build profile covered by the identity manifest",
     )
     return parser.parse_args()
-
-
-def pulse_nrst(jlink: str) -> None:
-    with tempfile.NamedTemporaryFile("w", suffix=".jlink", delete=False) as command_file:
-        command_file.write("SetRESET\n")
-        command_file.write("sleep 200\n")
-        command_file.write("ClrRESET\n")
-        command_file.write("sleep 100\n")
-        command_file.write("q\n")
-        command_path = Path(command_file.name)
-    try:
-        result = subprocess.run(
-            [jlink, "-NoGui", "1", "-CommandFile", str(command_path)],
-            capture_output=True,
-            timeout=10,
-            check=False,
-        )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout).decode(errors="replace").strip()
-            raise RuntimeError(f"J-Link nRST failed with {result.returncode}: {detail}")
-    finally:
-        command_path.unlink(missing_ok=True)
 
 
 def parse_dns_summary(log: bytes) -> dict[str, int | str] | None:
@@ -930,6 +914,7 @@ def post_terminal_elapsed(
 def capture_run(
     port: serial.Serial,
     jlink: str,
+    jlink_serial: str | None,
     timeout: float,
     post_terminal_seconds: float,
     profile: str,
@@ -937,7 +922,7 @@ def capture_run(
 ) -> tuple[bytes, dict[str, float]]:
     port.reset_input_buffer()
     started = time.monotonic()
-    pulse_nrst(jlink)
+    pulse_nrst(jlink, jlink_serial)
     log = bytearray()
     marker_times: dict[str, float] = {}
     deadline = started + timeout
@@ -1013,7 +998,7 @@ def capture_run(
             boot_seen = False
             log.clear()
             marker_times.clear()
-            pulse_nrst(jlink)
+            pulse_nrst(jlink, jlink_serial)
             continue
         if not chunk:
             continue
@@ -1339,6 +1324,7 @@ def main() -> int:
             log, marker_times = capture_run(
                 port,
                 args.jlink,
+                args.jlink_serial,
                 args.timeout,
                 args.post_terminal_seconds,
                 args.profile,

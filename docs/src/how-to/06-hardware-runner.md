@@ -33,16 +33,32 @@ PORT=/dev/ttyUSB0 \
     cargo run -p uart_hello --release
 ```
 
+连接多块 WS63 时，必须把下载探针、硬件复位探针和 UART 显式绑定到同一块板。不要依赖
+USB 枚举顺序：
+
+```bash
+CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUNNER=hil/cargo-run-hw.sh \
+PROBE_RS_PROBE='<VID:PID:SERIAL>' \
+JLINK_SERIAL='<decimal-jlink-serial>' \
+PORT='<uart-device>' \
+    cargo run -p uart_hello --release
+```
+
+建议在本机的临时环境文件中按 `rig-a` / `rig-b` 保存这组三元组；设备身份属于本机
+实验台配置，不提交到仓库。AP/STA 或后续 BLE/SLE 双板测试也使用同一身份绑定。
+
 ## 环境变量
 
 | 变量 | 含义 | 默认 |
 | --- | --- | --- |
 | `PROBE_RS` | probe-rs 二进制 | PATH 里的 `probe-rs` |
+| `PROBE_RS_PROBE` | `probe-rs --probe` 选择器；多探针时必填 | 空 |
 | `PROBE_CHIP` | `probe-rs --chip` 值 | `WS63` |
 | `PROBE_YAML` | `--chip-description-path` yaml | 空 = 用内置数据库 |
 | `PROBE_SPEED` | 调试传输时钟，单位 kHz | `2000` |
 | `HISI_FWPKG` | hisi-fwpkg 二进制 | PATH 里的 `hisi-fwpkg` |
 | `PORT` | 复位后要抓的板子 UART0 | 空 = 不抓串口 |
+| `JLINK_SERIAL` | 执行硬件 nRST 的 J-Link 十进制序列号；多探针时必填 | 空 |
 | `UART_BAUD` | 抓串口的波特率 | `115200` |
 | `MONITOR` | 抓串口的秒数 | `10` |
 
