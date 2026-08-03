@@ -71,10 +71,10 @@ vendor relocations.
 
 ## Silicon Evidence
 
-The credential-free `incremental_scan_profile` was downloaded to a WS63 board
-at 3 MHz with full write verification. The first attempt completed in 90.34
-seconds. After paired J-Link reset with UART capture already active, the same
-image emitted:
+The credential-free `incremental_scan_profile` was downloaded to two independent
+WS63 boards at 3 MHz with full write verification. The same final ELF was used
+for both boards; downloads completed in 90.34 and 82.59 seconds. After each
+board's paired J-Link reset with UART capture already active, the image emitted:
 
 - `RFDBG_A5B_BOOTSTRAP_OK`;
 - `RFDBG_A5B_INITIALIZE_OK`;
@@ -82,9 +82,12 @@ image emitted:
 - `RFDBG_A5B_WORKER_RTOS_OK` with an 8 KiB worker stack;
 - `RFDBG_A5B_SCAN_PROFILE_OK`.
 
-The event queue reported zero drops. No task-slot or task-stack admission
-failure occurred. This is a true incremental-worker scan, not the older
-blocking comparison path.
+The event queue reported zero drops on both boards. The second board returned
+four scan results, completed both operations with zero backend errors, and
+reported an 8 KiB worker stack, 3 ms maximum continuous run, and 1 ms maximum
+ready latency. Neither board encountered a task-slot or task-stack admission
+failure. These are true incremental-worker scans, not the older blocking
+comparison path.
 
 ## Release Units
 
