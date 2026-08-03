@@ -107,6 +107,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    A5B repeated dual-board local connectivity parity，不替代 Rust SoftAP、routed UDP DNS
    或 pure-WPA3 gate。证据见
    [A5B dual-board local-neighbor parity](evidence/ws63-rf-a5b-dual-board-local-neighbor-2026-08-03.md)。
+   随后双板对端从 C SDK oracle 切换为仓库内 Rust `wifi_softap`：AP 自身提供固定
+   `192.168.4.1/24`、DHCP 和 bounded UDP echo，STA 通过公开 facade 完成 upstream
+   WPA2、DHCP、direct ARP、sequence-checked UDP echo 和 lease renew，RX queue drop
+   与 AP vendor TX failure 均为 0。该隔离 fixture 有意不下发默认路由，因此公网 DNS
+   继续按契约跳过。测试顺序冻结为 AP 常驻、重复复位 STA；同时复位两板会混入 AP
+   安全状态恢复，不计入稳定性矩阵。证据见
+   [A5B Rust SoftAP local connectivity](evidence/ws63-rf-a5b-rust-softap-local-connectivity-2026-08-03.md)。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续

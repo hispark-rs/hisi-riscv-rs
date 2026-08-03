@@ -2127,6 +2127,7 @@ dependencies = [
  "hisi-rf-ws63",
  "hisi-riscv-rt",
  "hisi-rtos",
+ "smoltcp",
 ]
 
 [[package]]
