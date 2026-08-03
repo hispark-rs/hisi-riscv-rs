@@ -862,7 +862,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.78"
+version = "0.1.0-alpha.80"
 dependencies = [
  "hisi-hal",
  "hisi-rf-core",
@@ -2124,7 +2124,7 @@ version = "0.1.0"
 dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-ws63",
+ "hisi-rf",
  "hisi-riscv-rt",
  "hisi-rtos",
  "smoltcp",
