@@ -34,10 +34,11 @@ Three defects were exposed in sequence:
    while every vendor reservation remains 24 KiB. The facade and applications
    derive the RTOS setting from this profile fact rather than duplicating it.
 
-The resulting resource-report schema is v9. The physical storage owner,
-profile minimum and runtime configuration now agree for this fixture. A future
-structured resource tree must derive composition totals from child plans and
-atomically dry-run allocator reservations before touching RF hardware.
+The initial fix produced resource-report schema v9. It was later superseded by
+the v10 structured resource tree, which derives composition totals from child
+plans and atomically dry-runs allocator reservations before touching RF
+hardware. See [A5U structured resource plan evidence](
+ws63-rf-a5u-structured-resource-plan-2026-08-03.md).
 
 ## Automated Verification
 

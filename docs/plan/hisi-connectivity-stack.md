@@ -1573,7 +1573,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `RFDBG_A5B_SCAN_PROFILE_OK`，event drop/error 均为 0。pure-WPA3 峰值仍属外部阻塞证据，
   但不再阻塞静态 admission contract。完整边界见
   [A5U shared RF arena evidence](evidence/ws63-rf-a5u-shared-arena-2026-07-28.md)。
-- [ ] **闭合结构化资源树与物理容量一致性**：把当前分散在 profile constants、composition、
+- [x] **闭合结构化资源树与物理容量一致性**：把当前分散在 profile constants、composition、
   linker NOLOAD section、allocator 和 RTOS admission 中的事实收敛为
   `WifiResourcePlan { vendor, worker, queues, runtime_objects, rf_heap_min }` 或等价结构。
   composition total 必须由 child plan checked-sum 派生，不能再同时手写 vendor/worker/total；
@@ -1583,8 +1583,18 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   owner/group、required、available 与 largest-contiguous，并保证 no partial init。
   CI 需要证明 resource report 等于最终 linker symbols/section，total 等于 children sum，且
   allocator 能按真实顺序完成所有异构 reservation；HIL 只校准 peak/headroom，不把一次观测
-  反写为结构事实。本轮 alpha.65 的双板 worker init/scan 已修正旧 shared-heap fixture 与
-  heterogeneous minimum stack，但尚未完成上述统一 capability，因此该项保持未勾选。
+  反写为结构事实。`hisi-alloc 0.1.0-alpha.3`、`hisi-rf-rtos-driver
+  0.1.0-alpha.19`、`hisi-rtos 0.1.0-alpha.19` 和 `hisi-rf-ws63
+  0.1.0-alpha.66` 已闭合该契约：v10 resource plan 从 7 个 24 KiB vendor stack 与 1 个
+  8 KiB incremental-worker stack 派生总量，RTOS 在 scheduler critical section 外完成
+  heterogeneous dry-run，再在一个临界区原子发布全部 group；任何失败均回滚并报告 owner、
+  required、available、largest-contiguous。host negative tests 覆盖第二 group 失败且第一 group
+  无残留，build-report gate 同时核对 child sum 与最终 ELF `.hisi_shared_arenas`。plain Cargo
+  profile 精确链接 303,168 B；incremental profile 精确链接 299,072 B，其中 runtime arena
+  197,120 B、task-stack payload 180,224 B。3 MHz 完整 verify 后，真实 WS63 输出
+  `RFDBG_A5B_WORKER_RTOS_OK` 和 `RFDBG_A5B_SCAN_PROFILE_OK`，worker stack 为 8 KiB，未出现
+  slot/stack admission failure。完整证据见
+  [A5U structured resource plan evidence](evidence/ws63-rf-a5u-structured-resource-plan-2026-08-03.md)。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。schema v5 已把 144 KiB task-stack reservation、296 KiB
