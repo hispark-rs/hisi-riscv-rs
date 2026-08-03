@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-06f73f51.js";
+            window.path_to_searchindex_js = "../searchindex-30955ef3.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -275,12 +275,16 @@ crypto contention 仍使用 <code>wifi_init_smoke</code> maintainer fixture。<c
 <code>ws63-RF</code> release 下载固定 archive（或接受 <code>WS63_WPA_ARCHIVE</code>），校验 SHA-256 后走
 guarded link，但该分支只作为迁移 oracle。</p>
 <p>严格契约 <code>ws63-connectivity-markers/v2</code> 按顺序要求
-image/init/scan/connect/DHCP/local-data-path/public-DNS/summary/steady/renew
-阶段及对应 <code>A4_RADIO_EVENT</code>；缺失或乱序 marker、fatal marker、非零内部 queue drop /
-TX error / backend error、A5B runner budget 越界都会失败。当前本地硬门槛是 DHCP
-成功且 <code>RFDBG_A5B_L2</code> 记录 gateway ARP reply；公网硬门槛向 AliDNS
-<code>223.5.5.5:53</code> 与 Baidu DNS <code>180.76.76.76:53</code> 交替发送固定 A 查询，至少一项必须返回
-来源、transaction id、QR/opcode、TC、rcode、question 和 answer count 均合法的响应。
+image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
+阶段及对应 <code>A4_RADIO_EVENT</code>；DHCP 之后还必须给出公网路由处置 marker。缺失或乱序
+marker、fatal marker、非零内部 queue drop / TX error / backend error、A5B runner budget
+越界都会失败。本地硬门槛是 DHCP 成功，并通过 UDP 发送触发 neighbor discovery，要求
+<code>RFDBG_A5B_L2</code> 记录 ARP reply；目标优先使用 DHCP router，没有 router 时使用 DHCP server。
+有默认路由的 profile 还必须向 AliDNS <code>223.5.5.5:53</code> 与 Baidu DNS
+<code>180.76.76.76:53</code> 交替发送固定 A 查询，至少一项返回来源、transaction id、QR/opcode、
+TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有下发默认路由时，
+必须输出精确的 <code>RF5C_PUBLIC_DNS_SKIP reason=no-default-route</code>，同时 DNS 尝试/响应计数必须
+为零；这只跳过不可路由的公网探针，不放宽 DHCP、本地 ARP、summary、steady 或续租门槛。
 <code>RF5C_PUBLIC_DNS_ERR</code> 单独分类为 <code>public_dns_failure</code>，不与
 <code>local_data_path_failure</code> 或 association failure 混合。v8
 <code>RFDBG_A5B_L2</code> 另行记录双向 ARP request/reply、IPv4 与 other frame 计数，供失败
@@ -313,11 +317,11 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 <tr><td><code>WS63_WIFI_ENV_FILE</code></td><td>空</td><td>本地手动 HIL 的 <code>0600</code> 普通文件；只接受 <code>WS63_WIFI_SSID=...</code> 和 <code>WS63_WIFI_PASSPHRASE=...</code>，不执行 shell 内容，默认保留且不能与直接环境变量混用</td></tr>
 <tr><td><code>WS63_WIFI_ENV_FILE_DISPOSITION</code></td><td><code>keep</code></td><td><code>keep</code> 保留本机凭据供后续复用；<code>delete</code> 在成功读取后删除真正的一次性文件</td></tr>
 <tr><td><code>WS63_CONNECTIVITY_PROFILE</code></td><td><code>upstream-wpa2</code></td><td><code>upstream-wpa2</code> / <code>upstream-wpa3</code> / <code>vendor-wpa2</code>；正式 upstream 验证使用公开 facade 的 plain Cargo lane</td></tr>
-<tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/ARP/public UDP DNS/summary/renew gate；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
+<tr><td><code>WS63_CONNECTIVITY_EXPECT</code></td><td><code>full</code></td><td><code>full</code> 保持完整 connect/DHCP/local ARP/route disposition/summary/renew gate；有默认路由时还要求 public UDP DNS，没有默认路由时要求精确 SKIP；<code>init-scan</code> 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret</td></tr>
 <tr><td><code>WS63_WIFI_AP_MODE</code></td><td>空</td><td><code>upstream-wpa3</code> 必须显式为 <code>transition</code> 或 <code>pure-wpa3</code></td></tr>
 <tr><td><code>WS63_WPA_ARCHIVE</code></td><td>公开 release asset</td><td>可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash</td></tr>
 <tr><td><code>PROBE_SPEED</code></td><td><code>3000</code></td><td>首选 WS63 download 速率；始终保留完整 readback verify。2026-08-03 的 r8 RF init/scan 镜像在 3 MHz 完整验证成功（98.95 秒）；历史上大镜像曾出现 page timeout，失败时依次降到 1000/500 kHz，不得关闭 verify</td></tr>
-<tr><td><code>MONITOR</code></td><td><code>60</code></td><td>覆盖 connect、UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口</td></tr>
+<tr><td><code>MONITOR</code></td><td><code>60</code></td><td>覆盖 connect、本地 neighbor、可选 UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口</td></tr>
 <tr><td><code>EVIDENCE_DIR</code></td><td><code>/private/tmp/ws63-connectivity-smoke-&lt;timestamp&gt;</code></td><td>保存 UART、artifact identity 与严格 contract summary；必须为空</td></tr>
 </tbody>
 </table>
