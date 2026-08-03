@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = []
+# dependencies = ["pyelftools==0.32"]
 # ///
 """Merge RF profile resources and a hisi-fwpkg FlashPlan into one CI artifact."""
 
@@ -14,6 +14,8 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
+from elftools.elf.elffile import ELFFile
+
 
 SCHEMA = "hisi-rf-build-report/v1"
 RESOURCE_SCHEMAS = {
@@ -24,6 +26,7 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v7",
     "hisi-rf-resource-report/v8",
     "hisi-rf-resource-report/v9",
+    "hisi-rf-resource-report/v10",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -67,6 +70,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v7",
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
+        "hisi-rf-resource-report/v10",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -80,6 +84,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v7",
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
+        "hisi-rf-resource-report/v10",
     }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
@@ -92,6 +97,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v7",
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
+        "hisi-rf-resource-report/v10",
     }:
         positive_keys = (
             "event_capacity",
@@ -161,6 +167,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if resource["schema"] in {
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
+        "hisi-rf-resource-report/v10",
     }:
         schema_revision = resource["schema"].rsplit("/", 1)[-1]
         for key in ("runtime_object_headroom_bytes", "runtime_arena_bytes"):
@@ -189,7 +196,10 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
                 "control_storage_bytes "
                 "+ arena_storage_bytes + runtime_arena_bytes"
             )
-    if resource["schema"] == "hisi-rf-resource-report/v9":
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v9",
+        "hisi-rf-resource-report/v10",
+    }:
         minimum_stack = resource.get("minimum_task_stack_bytes")
         if (
             not isinstance(minimum_stack, int)
@@ -197,7 +207,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
             or minimum_stack <= 0
         ):
             raise ValueError(
-                "resource report v9 requires positive integer minimum_task_stack_bytes"
+                "resource report v9+ requires positive integer minimum_task_stack_bytes"
             )
     missing = [key for key in PLAN_KEYS if key not in plan]
     if missing:
@@ -209,8 +219,51 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if plan["image_len"] != image.stat().st_size:
         raise ValueError("FlashPlan image_len does not match the generated image")
 
+    if resource["schema"] == "hisi-rf-resource-report/v10":
+        positive_keys = (
+            "vendor_task_slots",
+            "vendor_stack_bytes_per_task",
+        )
+        non_negative_keys = (
+            "worker_task_slots",
+            "worker_stack_bytes_per_task",
+        )
+        for key in positive_keys:
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                raise ValueError(f"resource report v10 requires positive integer {key}")
+        for key in non_negative_keys:
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ValueError(f"resource report v10 requires non-negative integer {key}")
+        child_slots = resource["vendor_task_slots"] + resource["worker_task_slots"]
+        child_stacks = (
+            resource["vendor_task_slots"] * resource["vendor_stack_bytes_per_task"]
+            + resource["worker_task_slots"] * resource["worker_stack_bytes_per_task"]
+        )
+        if resource["dynamic_tasks_required"] != child_slots:
+            raise ValueError("resource report v10 task total does not equal child groups")
+        if resource["task_stack_bytes"] != child_stacks:
+            raise ValueError("resource report v10 stack total does not equal child groups")
+        with elf.open("rb") as stream:
+            parsed = ELFFile(stream)
+            section = parsed.get_section_by_name(".hisi_shared_arenas")
+            if section is None:
+                raise ValueError("ELF is missing .hisi_shared_arenas")
+            linked_shared_arena_bytes = int(section["sh_size"])
+        expected_shared_arena_bytes = (
+            resource["arena_storage_bytes"] + resource["runtime_arena_bytes"]
+        )
+        if linked_shared_arena_bytes != expected_shared_arena_bytes:
+            raise ValueError(
+                "ELF .hisi_shared_arenas size does not match resource report: "
+                f"linked={linked_shared_arena_bytes}, expected={expected_shared_arena_bytes}"
+            )
+
     resolved_resource = dict(resource)
     resolved_resource["flash_bytes"] = plan["image_len"]
+    if resource["schema"] == "hisi-rf-resource-report/v10":
+        resolved_resource["linked_shared_arena_bytes"] = linked_shared_arena_bytes
     return {
         "schema": SCHEMA,
         "profile": resource.get("profile"),
@@ -353,7 +406,9 @@ def self_test() -> None:
         else:
             raise AssertionError("mismatched FlashPlan image_len was accepted")
 
-        resource_v9["schema"] = "hisi-rf-resource-report/v10"
+        plan["image_len"] = image.stat().st_size
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        resource_v9["schema"] = "hisi-rf-resource-report/v11"
         resource_path.write_text(json.dumps(resource_v9), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)
