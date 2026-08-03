@@ -106,14 +106,16 @@ rustup toolchain install nightly-2026-07-09 \
 
 ```bash
 cargo build -Zbuild-std=core,alloc                  # libraries + default-member examples
-cargo check -Zbuild-std=core,alloc --workspace      # full workspace (incl. flashboot)
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap   # AP role is a separate feature-unification lane
 cargo build -Zbuild-std=core,alloc -p blinky --release
 ```
 
 Lint / format:
 
 ```bash
-cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 cargo fmt --all -- --check
 ```
 

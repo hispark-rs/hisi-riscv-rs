@@ -92,15 +92,17 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 - **default-members = 库 + WS63 示例集合**。根 `Cargo.toml` 的 `default-members` 是构建事实源；当前示例清单与状态见
   [示例目录与验证标记串](../../reference/02-examples.md)。各示例经 hisi-riscv-rt 导出的链接脚本可正常链接
   （`hisi-riscv-rt/build.rs` 用 `cargo:rustc-link-search` 导出脚本目录 + `hisi-riscv-link.x` 包装脚本，示例侧 `build.rs`
-  以 `-Thisi-riscv-link.x` 引入）。实验性的 `ws63-flashboot` 不在默认构建里，仍是 `member`，`cargo check --workspace`
-  覆盖。
+  以 `-Thisi-riscv-link.x` 引入）。实验性的 `ws63-flashboot` 不在默认构建里，仍由 workspace lane 覆盖；
+  SoftAP 因与 STA target archive 互斥而单独检查。
 
 常用命令：
 
 ```bash
 cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```

@@ -48,9 +48,14 @@ RISC-V 构建命令需要带 build-std：
 
 ```bash
 cargo build -Zbuild-std=core,alloc --release
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 ```
+
+SoftAP 与 STA 使用互斥的 target archive，所以分成两次命令是构建契约的一部分，
+不是临时绕过。
 
 `hisi-rs-template` 生成的新项目已经把这个细节封装进 `just build` / `just run` / `just image`，所以应用开发者通常不需要手写 `-Zbuild-std=core,alloc`。
 

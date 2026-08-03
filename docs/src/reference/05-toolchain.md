@@ -52,10 +52,16 @@ rustflags = ["-C", "link-arg=--no-relax"]
 因为 std 组件尚未由 rustup 分发，RISC-V 命令必须显式构建 `core` / `alloc`：
 
 ```bash
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
 cargo build -Zbuild-std=core,alloc --release
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 ```
+
+`wifi_softap` 与 STA 固件选择互斥的 target archive。Cargo 会在单次命令中合并
+workspace features，因此 AP 必须作为独立固件角色检查；不能通过关闭
+`ws63-radio-sys` 的互斥门禁来伪造“全 workspace 同时可构建”。
 
 不要把 build-std 写成全局 Cargo 配置。host unit tests 需要在 `stable` + `x86_64-unknown-linux-gnu` 上运行；全局 `[unstable] build-std` 会污染 host 目标。
 
