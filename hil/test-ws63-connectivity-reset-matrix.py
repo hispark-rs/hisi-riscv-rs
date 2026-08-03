@@ -384,6 +384,45 @@ class ClassifyTests(unittest.TestCase):
             "pass",
         )
 
+    def test_isolated_softap_accepts_local_neighbor_without_public_route(self) -> None:
+        log = connectivity_success_log()
+        for line in (
+            (
+                b"RF5C_PUBLIC_DNS_BEGIN primary=223.5.5.5 "
+                b"secondary=180.76.76.76 attempts=0x00000004"
+            ),
+            (
+                b"RF5C_PUBLIC_DNS_SAMPLE attempt=0x00000001 txid=0x00005754 "
+                b"target=223.5.5.5 status=ok answers=0x00000001"
+            ),
+            (
+                b"RF5C_PUBLIC_DNS_OK target=223.5.5.5 attempts=0x00000001 "
+                b"responses=0x00000001 invalid=0x00000000 tx_error=0x00000000"
+            ),
+        ):
+            log = log.replace(line, b"")
+        log = log.replace(
+            b"RF5A_ARP_OK evidence=l2-arp-reply",
+            b"RF5C_PUBLIC_DNS_SKIP reason=no-default-route\n"
+            b"RF5A_ARP_OK evidence=l2-arp-reply",
+        )
+        log = log.replace(
+            b"RF5C_CONNECTIVITY_SUMMARY arp_request=0x00000001 "
+            b"arp_reply=0x00000001 dns_attempts=0x00000001 "
+            b"dns_responses=0x00000001 dns_invalid=0x00000000 "
+            b"dns_tx_error=0x00000000 rx_queue_drop=0x00000000",
+            b"RF5C_CONNECTIVITY_SUMMARY arp_request=0x00000001 "
+            b"arp_reply=0x00000001 dns_attempts=0x00000000 "
+            b"dns_responses=0x00000000 dns_invalid=0x00000000 "
+            b"dns_tx_error=0x00000000 rx_queue_drop=0x00000000",
+        )
+
+        self.assertEqual(MATRIX.validate_rust_contract(log, "connectivity"), [])
+        self.assertEqual(
+            MATRIX.classify(log, "rust", "connectivity", require_contract=True),
+            "pass",
+        )
+
     def test_secondary_public_dns_response_passes_connectivity(self) -> None:
         log = connectivity_success_log().replace(
             b"RF5C_PUBLIC_DNS_OK target=223.5.5.5",

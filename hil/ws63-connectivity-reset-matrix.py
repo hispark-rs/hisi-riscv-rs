@@ -52,6 +52,7 @@ RUST_TIMED_MARKERS = (
     b"RF5A_ARP_OK",
     b"RF5C_PUBLIC_DNS_BEGIN",
     b"RF5C_PUBLIC_DNS_OK",
+    b"RF5C_PUBLIC_DNS_SKIP",
     b"RF5C_CONNECTIVITY_SUMMARY",
 )
 
@@ -173,7 +174,6 @@ RUST_STAGE_MARKERS = {
         ("dhcp", (b"RF5A_DHCP_OK",)),
         ("neighbor", (b"RF5A_ARP_OK",)),
         ("local_data_path", (b"RF5C_LOCAL_DATA_PATH_OK",)),
-        ("public_dns", (b"RF5C_PUBLIC_DNS_OK",)),
         ("summary", (b"RF5C_CONNECTIVITY_SUMMARY",)),
         ("steady", (b"A4_NET_RUNNER_STEADY",)),
         ("dhcp_renew", (b"A4_DHCP_RENEW_OK",)),
@@ -265,16 +265,23 @@ def parse_args() -> argparse.Namespace:
 
 def parse_dns_summary(log: bytes) -> dict[str, int | str] | None:
     for line in reversed(log.splitlines()):
-        if not line.startswith((b"RF5C_PUBLIC_DNS_OK ", b"RF5C_PUBLIC_DNS_ERR ")):
+        if not line.startswith(
+            (
+                b"RF5C_PUBLIC_DNS_OK ",
+                b"RF5C_PUBLIC_DNS_ERR ",
+                b"RF5C_PUBLIC_DNS_SKIP ",
+            )
+        ):
             continue
-        fields: dict[str, int | str] = {
-            "status": "ok" if line.startswith(b"RF5C_PUBLIC_DNS_OK ") else "error"
-        }
+        status = "ok" if line.startswith(b"RF5C_PUBLIC_DNS_OK ") else "error"
+        if line.startswith(b"RF5C_PUBLIC_DNS_SKIP "):
+            status = "skipped"
+        fields: dict[str, int | str] = {"status": status}
         for token in line.decode(errors="replace").split()[1:]:
             if "=" not in token:
                 continue
             key, value = token.split("=", 1)
-            if key == "target":
+            if key in ("target", "reason"):
                 fields[key] = value
             elif value.lower().startswith("0x"):
                 try:
@@ -594,11 +601,17 @@ def validate_rust_contract(
             violations.append("missing:connect")
 
     if stage == "connectivity":
+        if not any(
+            marker in log
+            for marker in (b"RF5C_PUBLIC_DNS_OK", b"RF5C_PUBLIC_DNS_SKIP")
+        ):
+            violations.append("missing:public_dns")
         if (
             b"W2E_WPA3_CONNECT_OK" in log
             and b"W2E_WPA3_CONNECT_OK pmf=required" not in log
         ):
             violations.append("invalid:wpa3.pmf")
+        public_dns_skipped = b"RF5C_PUBLIC_DNS_SKIP reason=no-default-route" in log
         summary_line = last_prefixed_line(log, b"RF5C_CONNECTIVITY_SUMMARY ")
         if summary_line is not None:
             summary = parse_hex_fields(summary_line)
@@ -617,10 +630,16 @@ def validate_rust_contract(
                 violations.append("invalid:summary.arp_request")
             if summary.get("arp_reply", 0) <= 0:
                 violations.append("invalid:summary.arp_reply")
-            if summary.get("dns_attempts", 0) <= 0:
-                violations.append("invalid:summary.dns_attempts")
-            if summary.get("dns_responses", 0) <= 0:
-                violations.append("invalid:summary.dns_responses")
+            if public_dns_skipped:
+                if summary.get("dns_attempts", 0) != 0:
+                    violations.append("nonzero:summary.dns_attempts")
+                if summary.get("dns_responses", 0) != 0:
+                    violations.append("nonzero:summary.dns_responses")
+            else:
+                if summary.get("dns_attempts", 0) <= 0:
+                    violations.append("invalid:summary.dns_attempts")
+                if summary.get("dns_responses", 0) <= 0:
+                    violations.append("invalid:summary.dns_responses")
             if summary.get("dns_tx_error", 0) != 0:
                 violations.append("nonzero:summary.dns_tx_error")
             if summary.get("rx_queue_drop", 0) != 0:
@@ -628,16 +647,20 @@ def validate_rust_contract(
 
         dns = parse_dns_summary(log)
         if dns is not None:
-            if dns.get("target") not in PUBLIC_DNS_TARGETS:
-                violations.append("invalid:public_dns.target")
-            if dns.get("status") != "ok":
-                violations.append("invalid:public_dns.status")
-            if int(dns.get("attempts", 0)) <= 0:
-                violations.append("invalid:public_dns.attempts")
-            if int(dns.get("responses", 0)) <= 0:
-                violations.append("invalid:public_dns.responses")
-            if int(dns.get("tx_error", 0)) != 0:
-                violations.append("nonzero:public_dns.tx_error")
+            if dns.get("status") == "skipped":
+                if dns.get("reason") != "no-default-route":
+                    violations.append("invalid:public_dns.skip_reason")
+            else:
+                if dns.get("target") not in PUBLIC_DNS_TARGETS:
+                    violations.append("invalid:public_dns.target")
+                if dns.get("status") != "ok":
+                    violations.append("invalid:public_dns.status")
+                if int(dns.get("attempts", 0)) <= 0:
+                    violations.append("invalid:public_dns.attempts")
+                if int(dns.get("responses", 0)) <= 0:
+                    violations.append("invalid:public_dns.responses")
+                if int(dns.get("tx_error", 0)) != 0:
+                    violations.append("nonzero:public_dns.tx_error")
 
         renew_line = last_prefixed_line(log, b"A4_DHCP_RENEW_OK ")
         if renew_line is not None:
