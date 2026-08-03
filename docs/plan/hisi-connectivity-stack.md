@@ -95,6 +95,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    response、20/20 ARP reply、`auth_rsp2_timeouts=0`、queue/backend error 为 0，
    runner 单步最大 37 ms。该结果关闭当前 A5B release acceptance；旧 ICMP/本地尾部
    反例仍保留为历史诊断证据，不再定义现行 pass/fail marker。
+   2026-08-03 又完成一轮双 WS63 角色分离验证：一块板运行 C SDK SoftAP oracle，另一块
+   运行公开 `wifi_connectivity` 增量路径。STA 完成 upstream WPA2、DHCP、本地 ARP 和
+   lease renew；该隔离 AP 未下发默认路由，因此严格契约要求
+   `RF5C_PUBLIC_DNS_SKIP reason=no-default-route` 与零 DNS 计数，而不是伪造公网成功。
+   本轮关闭单次双板 local-neighbor parity，不替代 20-reset reliability、Rust SoftAP、
+   routed UDP DNS 或 pure-WPA3 gate。证据见
+   [A5B dual-board local-neighbor parity](evidence/ws63-rf-a5b-dual-board-local-neighbor-2026-08-03.md)。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
@@ -1225,7 +1232,8 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   自然产生了相同时序。v10 结构化资源 release closure 随后用同一最终 ELF 在两板重跑该
   fixture：3 MHz 完整 verify 均成功，两板均为 3 operations / 2 completed / 1 cancelled /
   1 stale injection / 1 discard / 0 errors，最长连续 worker 执行均为 3 ms，证明 allocator/
-  admission 重构没有让这些边界回退。当前只剩 repeated connectivity parity 未勾选。
+  admission 重构没有让这些边界回退。双板单轮 WPA2/DHCP/local-neighbor parity 已通过，
+  但当前仍只剩 repeated connectivity parity 未勾选。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。

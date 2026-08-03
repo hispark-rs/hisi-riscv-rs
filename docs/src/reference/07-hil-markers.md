@@ -82,12 +82,16 @@ crypto contention 仍使用 `wifi_init_smoke` maintainer fixture。`vendor-wpa2`
 guarded link，但该分支只作为迁移 oracle。
 
 严格契约 `ws63-connectivity-markers/v2` 按顺序要求
-image/init/scan/connect/DHCP/local-data-path/public-DNS/summary/steady/renew
-阶段及对应 `A4_RADIO_EVENT`；缺失或乱序 marker、fatal marker、非零内部 queue drop /
-TX error / backend error、A5B runner budget 越界都会失败。当前本地硬门槛是 DHCP
-成功且 `RFDBG_A5B_L2` 记录 gateway ARP reply；公网硬门槛向 AliDNS
-`223.5.5.5:53` 与 Baidu DNS `180.76.76.76:53` 交替发送固定 A 查询，至少一项必须返回
-来源、transaction id、QR/opcode、TC、rcode、question 和 answer count 均合法的响应。
+image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
+阶段及对应 `A4_RADIO_EVENT`；DHCP 之后还必须给出公网路由处置 marker。缺失或乱序
+marker、fatal marker、非零内部 queue drop / TX error / backend error、A5B runner budget
+越界都会失败。本地硬门槛是 DHCP 成功，并通过 UDP 发送触发 neighbor discovery，要求
+`RFDBG_A5B_L2` 记录 ARP reply；目标优先使用 DHCP router，没有 router 时使用 DHCP server。
+有默认路由的 profile 还必须向 AliDNS `223.5.5.5:53` 与 Baidu DNS
+`180.76.76.76:53` 交替发送固定 A 查询，至少一项返回来源、transaction id、QR/opcode、
+TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有下发默认路由时，
+必须输出精确的 `RF5C_PUBLIC_DNS_SKIP reason=no-default-route`，同时 DNS 尝试/响应计数必须
+为零；这只跳过不可路由的公网探针，不放宽 DHCP、本地 ARP、summary、steady 或续租门槛。
 `RF5C_PUBLIC_DNS_ERR` 单独分类为 `public_dns_failure`，不与
 `local_data_path_failure` 或 association failure 混合。v8
 `RFDBG_A5B_L2` 另行记录双向 ARP request/reply、IPv4 与 other frame 计数，供失败
@@ -119,11 +123,11 @@ connectivity/A5B trailer、event/backend error 非零、出现 blocking fallback
 | `WS63_WIFI_ENV_FILE` | 空 | 本地手动 HIL 的 `0600` 普通文件；只接受 `WS63_WIFI_SSID=...` 和 `WS63_WIFI_PASSPHRASE=...`，不执行 shell 内容，默认保留且不能与直接环境变量混用 |
 | `WS63_WIFI_ENV_FILE_DISPOSITION` | `keep` | `keep` 保留本机凭据供后续复用；`delete` 在成功读取后删除真正的一次性文件 |
 | `WS63_CONNECTIVITY_PROFILE` | `upstream-wpa2` | `upstream-wpa2` / `upstream-wpa3` / `vendor-wpa2`；正式 upstream 验证使用公开 facade 的 plain Cargo lane |
-| `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/ARP/public UDP DNS/summary/renew gate；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
+| `WS63_CONNECTIVITY_EXPECT` | `full` | `full` 保持完整 connect/DHCP/local ARP/route disposition/summary/renew gate；有默认路由时还要求 public UDP DNS，没有默认路由时要求精确 SKIP；`init-scan` 使用公开 fixture，仅证明 image/startup/RF init/scan/native runner，不需要 AP secret |
 | `WS63_WIFI_AP_MODE` | 空 | `upstream-wpa3` 必须显式为 `transition` 或 `pure-wpa3` |
 | `WS63_WPA_ARCHIVE` | 公开 release asset | 可覆盖为 runner 本地缓存路径；内容仍须匹配固定 hash |
 | `PROBE_SPEED` | `3000` | 首选 WS63 download 速率；始终保留完整 readback verify。2026-08-03 的 r8 RF init/scan 镜像在 3 MHz 完整验证成功（98.95 秒）；历史上大镜像曾出现 page timeout，失败时依次降到 1000/500 kHz，不得关闭 verify |
-| `MONITOR` | `60` | 覆盖 connect、UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口 |
+| `MONITOR` | `60` | 覆盖 connect、本地 neighbor、可选 UDP DNS 与 smoke-only 20 秒 DHCP lease renew 的 UART 窗口 |
 | `EVIDENCE_DIR` | `/private/tmp/ws63-connectivity-smoke-<timestamp>` | 保存 UART、artifact identity 与严格 contract summary；必须为空 |
 
 ## 环境变量
