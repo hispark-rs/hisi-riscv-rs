@@ -18,8 +18,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.6`.
   `RFDBG_A5B_SCAN_PROFILE_OK` on two WS63 boards at 3 MHz with full verify;
   a second dual-board fixture drives a real scan through public-future drop,
   observes terminal cancellation, reuses the operation slot, and reaches
-  `RFDBG_A5B_CANCEL_PROFILE_OK`. Late-success injection, CPU-ownership
-  calibration, and connectivity parity remain explicit follow-up gates.
+  `RFDBG_A5B_CANCEL_PROFILE_OK`. The production RTOS snapshot on both boards
+  identifies the 8 KiB worker with its 100/200 ms periodic quota and observes a
+  3 ms maximum continuous run with no budget-lock overrun. Late-success
+  injection and connectivity parity remain explicit follow-up gates.
 - **HAL package migration** — renamed the active HAL package, Rust crate, GitHub
   repository, and parent submodule path from `hisi-riscv-hal` /
   `hisi_riscv_hal` / `crates/hisi-riscv-hal` to `hisi-hal` / `hisi_hal` /

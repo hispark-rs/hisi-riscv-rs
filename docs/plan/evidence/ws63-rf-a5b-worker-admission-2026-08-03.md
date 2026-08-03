@@ -99,9 +99,37 @@ This closes active cancellation delivery, terminal cleanup, and operation-slot
 reuse on silicon. It does not prove the stronger adversarial case where a
 successful old-generation completion arrives after replacement has started.
 
+## Worker CPU-Ownership Observation
+
+The cancellation fixture was extended to inspect the production RTOS task
+snapshot. It fails closed unless exactly one task matches the worker contract:
+an 8 KiB stack with a `Budgeted` 100/200 ms periodic CPU quota. It also rejects
+an observed uninterrupted run over 100 ms or any budget expiry deferred by a
+scheduler lock.
+
+The updated ELF was downloaded to both boards at 3 MHz with full verification.
+Both boards retained the cancellation and replacement markers and emitted
+`RFDBG_A5B_WORKER_RTOS_OK`:
+
+| Metric | Board A | Board B |
+|---|---:|---:|
+| worker stack | 8 KiB | 8 KiB |
+| worker CPU time | 15 ms | 11 ms |
+| worker IRQ time | 1 ms | 0 ms |
+| worker dispatches | 17 | 16 |
+| maximum continuous run | 3 ms | 3 ms |
+| maximum ready latency | 2 ms | 2 ms |
+| maximum scheduler-lock hold | 1 ms | 1 ms |
+| budget-lock overruns | 0 | 0 |
+
+This calibrates CPU ownership for the credential-free init/scan/cancel workload
+and confirms that the configured worker, rather than a blocking comparison
+path, produced the result. It does not claim that an individual synchronous
+vendor call returns within 100 ms, and this sample did not deliberately force a
+quota exhaustion.
+
 ## Remaining Gate
 
 A5B remains opt-in. Late-completion suppression under an actually arriving
-stale success, repeated connectivity parity, and the 100 ms CPU-ownership policy
-still need dedicated silicon evidence before the incremental path can become
-the default.
+stale success and repeated connectivity parity still need dedicated silicon
+evidence before the incremental path can become the default.
