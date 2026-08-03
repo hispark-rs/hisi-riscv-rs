@@ -152,6 +152,24 @@ mailbox, runner, and generation boundary suppress the adversarial ordering. It
 does not claim that the vendor firmware naturally produced that exact timing in
 these two runs.
 
+## Structured Resource Release Regression
+
+After the v10 structured resource tree was released, the same cancellation and
+stale-generation fixture was rebuilt against `hisi-rf-ws63 0.1.0-alpha.66`,
+`hisi-rtos 0.1.0-alpha.19`, and `hisi-rf-rtos-driver 0.1.0-alpha.19`. The same
+final ELF was downloaded to both boards at 3 MHz with full verification; the
+downloads completed in 82.23 and 82.48 seconds.
+
+Both boards again reported three operations, two completions, one delivered
+cancellation, one cancelled terminal state, one injected stale response, one
+discarded stale response, zero runner errors, and zero event drops. Both emitted
+`RFDBG_A5B_WORKER_RTOS_OK`, `RFDBG_A5B_CANCEL_CONTRACT_OK`,
+`RFDBG_A5B_STALE_COMPLETION_OK`, and `RFDBG_A5B_CANCEL_PROFILE_OK`. Maximum
+continuous worker execution was 3 ms on both boards; maximum ready latency and
+scheduler-lock hold were each 1 ms. This confirms that the allocator/admission
+refactor did not regress the previously closed cancellation, operation reuse, or
+late-completion boundaries.
+
 ## Remaining Gate
 
 A5B remains opt-in. Repeated connectivity parity still needs dedicated silicon

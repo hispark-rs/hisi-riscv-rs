@@ -1222,7 +1222,10 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   两板均精确观测 1 次 injection / 1 次 discard、0 runner error，replacement scan 正常完成并
   输出 `RFDBG_A5B_STALE_COMPLETION_OK`。这关闭 production worker/mailbox/runner 边界的
   late-success suppression；它是受控硅片 contract injection，不宣称 vendor firmware 在这两轮
-  自然产生了相同时序。当前只剩 repeated connectivity parity 未勾选。
+  自然产生了相同时序。v10 结构化资源 release closure 随后用同一最终 ELF 在两板重跑该
+  fixture：3 MHz 完整 verify 均成功，两板均为 3 operations / 2 completed / 1 cancelled /
+  1 stale injection / 1 discard / 0 errors，最长连续 worker 执行均为 3 ms，证明 allocator/
+  admission 重构没有让这些边界回退。当前只剩 repeated connectivity parity 未勾选。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。
