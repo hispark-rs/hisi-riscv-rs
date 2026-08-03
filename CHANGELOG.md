@@ -10,10 +10,13 @@ Release train anchor: `hisi-hal 0.7.0-alpha.6`.
 
 ### Changed
 
-- **A5B worker admission** — publish `hisi-rf-ws63 0.1.0-alpha.64` and
-  `hisi-rf 0.1.0-alpha.74`, separating the seven-slot vendor bootstrap from
-  the optional eighth Rust worker slot. A credential-free WS63 init/scan HIL
-  now reaches the bounded native runner under the r8 resource profile.
+- **A5B worker admission** — publish `hisi-rf-ws63 0.1.0-alpha.65` and
+  `hisi-rf 0.1.0-alpha.75`, separating the seven-slot vendor bootstrap from
+  the optional eighth Rust worker, moving the fixture to caller-owned RTOS
+  storage, and deriving its heterogeneous minimum stack from the v9 profile.
+  The same credential-free incremental-scan ELF now reaches
+  `RFDBG_A5B_SCAN_PROFILE_OK` on two WS63 boards at 3 MHz with full verify;
+  cancellation and connectivity parity remain explicit follow-up gates.
 - **HAL package migration** — renamed the active HAL package, Rust crate, GitHub
   repository, and parent submodule path from `hisi-riscv-hal` /
   `hisi_riscv_hal` / `crates/hisi-riscv-hal` to `hisi-hal` / `hisi_hal` /
