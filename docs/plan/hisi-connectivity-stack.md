@@ -1135,15 +1135,21 @@ CPU ownership，不等价于不可中断 C 调用在 100 ms 墙钟时间内返�
 preemption、cancel、late completion 和 connectivity parity 前，A5B 仍保持非默认且下方
 silicon gate 不勾选。
 
-r8 首次真机 init/scan 揭示了一个独立准入回归：profile 已原子预留 7 个 vendor slot 和
-1 个 Rust worker slot，但 vendor bootstrap 仍用总数 8 检查预留后的剩余容量，因而以
-`0x21000807`（required=8, available=7）提前失败。`hisi-rf-ws63
-0.1.0-alpha.64` 将 vendor bootstrap 的 7-slot contract 与 profile 的 8-slot total
-明确拆开；106 项精确 feature host tests、strict clippy、WPA3 RV32 final link 和真实 WS63
-无凭据 init/scan HIL 均通过。真机输出到达 `RF2_INIT_OK`、`RF3_SCAN_OK count=4` 和
-`W2D_NATIVE_RUNNER_RX_READY`，公共 fixture 随后按预期报告 `W2E_AP_NOT_FOUND`；3 MHz
-下载保留完整 verify，耗时 98.95 秒。该证据只关闭 worker bootstrap/init/scan 准入回归，
-不替代 connect/ping、取消、late completion 或 pure-WPA3 gate。完整记录见
+r8 首次真机 init/scan 依次揭示了三项准入问题：vendor bootstrap 用 composition 总数 8
+重复检查已经单独预留的 worker slot；诊断 fixture 仍从 shared RF heap 分配 7 个 24 KiB
+vendor 栈，只能提供 98,304/172,032 bytes；RTOS 全局 24 KiB minimum 又拒绝了 profile
+明确预留的 8 KiB worker 栈。`hisi-rf-ws63 0.1.0-alpha.64` 先拆开 7-slot vendor contract
+与 8-slot composition total；alpha.65 再让 fixture 使用 caller-owned `SchedulerStorage` /
+`SchedulerArena`，并由 v9 profile 导出 heterogeneous minimum task stack。facade
+`hisi-rf 0.1.0-alpha.75`、公开示例和 template alpha.26 均从同一 profile 配置 RTOS，vendor
+栈仍逐个保留 24 KiB，不以缩栈掩盖问题。
+
+同一 credential-free incremental-scan ELF 随后在两块 WS63 上以 3 MHz、完整 verify 分别
+下载 90.86/90.71 秒，两板均输出 `RFDBG_A5B_SCAN_PROFILE_OK`。scan count 分别为 3/4，
+runner invocations 为 14/12、completed 均为 2、budget-exhausted 为 3/2，backend error、
+event drop 与 blocking scan/poll 均为 0。这是实际 RTOS worker 证据；此前 blocking 双板
+init/scan 只保留为对照。该证据关闭无凭据 worker bootstrap/init/scan gate，不替代
+connect/ping、主动取消、late completion 或 pure-WPA3 gate。完整记录见
 [A5B worker admission evidence](evidence/ws63-rf-a5b-worker-admission-2026-08-03.md)。
 
 该矩阵使用的 status-30 恢复 ABI 已随 `ws63-radio-sys 0.1.0-alpha.8` 发布；release-unit CI
@@ -1552,6 +1558,18 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   `RFDBG_A5B_SCAN_PROFILE_OK`，event drop/error 均为 0。pure-WPA3 峰值仍属外部阻塞证据，
   但不再阻塞静态 admission contract。完整边界见
   [A5U shared RF arena evidence](evidence/ws63-rf-a5u-shared-arena-2026-07-28.md)。
+- [ ] **闭合结构化资源树与物理容量一致性**：把当前分散在 profile constants、composition、
+  linker NOLOAD section、allocator 和 RTOS admission 中的事实收敛为
+  `WifiResourcePlan { vendor, worker, queues, runtime_objects, rf_heap_min }` 或等价结构。
+  composition total 必须由 child plan checked-sum 派生，不能再同时手写 vendor/worker/total；
+  vendor task stack 大小来自 pinned archive 的 task-create inventory，不凭经验统一缩小。
+  caller-owned `Storage<Profile>` 应同时决定静态字节、linker section、task slots、异构 task
+  stacks、对象容量和机器报告，并在触碰 RF 前原子 dry-run/预留全部资源。失败必须携带
+  owner/group、required、available 与 largest-contiguous，并保证 no partial init。
+  CI 需要证明 resource report 等于最终 linker symbols/section，total 等于 children sum，且
+  allocator 能按真实顺序完成所有异构 reservation；HIL 只校准 peak/headroom，不把一次观测
+  反写为结构事实。本轮 alpha.65 的双板 worker init/scan 已修正旧 shared-heap fixture 与
+  heterogeneous minimum stack，但尚未完成上述统一 capability，因此该项保持未勾选。
 - [x] **资源报告第一阶段**：`Storage::report()` 产生 allocation-free、versioned、确定性的 JSON，
   覆盖 profile/revision/security/network、event capacity、caller-owned/radio/crypto-DMA、packet
   RAM 和观测到的 dynamic tasks。schema v5 已把 144 KiB task-stack reservation、296 KiB
