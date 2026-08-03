@@ -1207,7 +1207,13 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   backpressure，worker 在 spawn 时原子绑定周期 CPU quota，runner 不再直接进入该 seam。
 - [ ] 在 A5B 成为默认路径前，以双板 HIL 校准 worker 的 100 ms CPU ownership、取消、
   late completion 和 connectivity parity；周期 quota 不能被表述成单次 C 调用的墙钟返回
-  保证，事后 `WorkReport` overrun 仍须保留并归因。
+  保证，事后 `WorkReport` overrun 仍须保留并归因。2026-08-03 的 credential-free
+  cancellation profile 已在两块 WS63 上闭合其中的主动取消子项：真实 scan future 在 100 ms
+  被丢弃，两板 runner 均按序观测 `cancel_requested -> cancelled -> replacement completed`，
+  指标均为 3 operations / 2 completed / 1 cancelled / 0 errors，并输出
+  `RFDBG_A5B_CANCEL_PROFILE_OK`。这证明 worker 消费取消、terminal cleanup 和 operation-slot
+  reuse；它没有制造“旧 generation 成功结果在 replacement 开始后到达”的反例，因此
+  late-success suppression、100 ms CPU ownership 和 connectivity parity 仍未勾选。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。

@@ -16,7 +16,10 @@ Release train anchor: `hisi-hal 0.7.0-alpha.6`.
   storage, and deriving its heterogeneous minimum stack from the v9 profile.
   The same credential-free incremental-scan ELF now reaches
   `RFDBG_A5B_SCAN_PROFILE_OK` on two WS63 boards at 3 MHz with full verify;
-  cancellation and connectivity parity remain explicit follow-up gates.
+  a second dual-board fixture drives a real scan through public-future drop,
+  observes terminal cancellation, reuses the operation slot, and reaches
+  `RFDBG_A5B_CANCEL_PROFILE_OK`. Late-success injection, CPU-ownership
+  calibration, and connectivity parity remain explicit follow-up gates.
 - **HAL package migration** — renamed the active HAL package, Rust crate, GitHub
   repository, and parent submodule path from `hisi-riscv-hal` /
   `hisi_riscv_hal` / `crates/hisi-riscv-hal` to `hisi-hal` / `hisi_hal` /

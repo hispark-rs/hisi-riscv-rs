@@ -73,10 +73,35 @@ The bounded runner observations were:
 This is true incremental-worker evidence. Earlier two-board init/scan runs used
 the blocking bootstrap path and are retained only as a comparison baseline.
 
+## Active Cancellation Result
+
+A follow-up credential-free fixture used the public `WifiController::scan`
+future itself: it let a real firmware scan run for 100 ms, dropped the future,
+waited for native cancellation to quiesce, and then required a replacement scan
+to complete. The final marker was accepted only when runner diagnostics also
+reported at least one delivered cancellation and one cancelled terminal state.
+
+The same ELF passed on both boards at 3 MHz with full verification. Downloads
+took 90.54 and 90.49 seconds. Both runs observed the ordered sequence
+`cancel_requested -> cancelled -> replacement completed` and emitted
+`RFDBG_A5B_CANCEL_PROFILE_OK`.
+
+| Metric | Board A | Board B |
+|---|---:|---:|
+| operations started | 3 | 3 |
+| operations completed | 2 | 2 |
+| cancellations requested | 1 | 1 |
+| operations cancelled | 1 | 1 |
+| runner errors | 0 | 0 |
+| blocking scan/poll calls | 0 | 0 |
+
+This closes active cancellation delivery, terminal cleanup, and operation-slot
+reuse on silicon. It does not prove the stronger adversarial case where a
+successful old-generation completion arrives after replacement has started.
+
 ## Remaining Gate
 
-A5B remains opt-in. Active cancellation, late-completion suppression, repeated
-connectivity parity, and the 100 ms CPU-ownership policy still need dedicated
-silicon evidence before the incremental path can become the default. Host tests
-cover generation-safe cancellation, but this run did not request cancellation
-and therefore cannot close that HIL gate.
+A5B remains opt-in. Late-completion suppression under an actually arriving
+stale success, repeated connectivity parity, and the 100 ms CPU-ownership policy
+still need dedicated silicon evidence before the incremental path can become
+the default.
