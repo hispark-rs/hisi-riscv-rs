@@ -833,14 +833,19 @@ WPA3 profile 使用同一 builder，但必须在 `build()` 前显式 `.pke(pke)`
 5. **W3 SoftAP**：分别验证 open AP、WPA2-Personal authenticator、WPA3-SAE AP；覆盖
    beacon、STA join/leave、GTK rekey、多客户端和 Wi-Fi/BT coexistence。AP authenticator
    与 STA supplicant 使用独立 feature 和任务资源预算，不能为了 SoftAP 把 hostapd/EAP
-   server 对象重新塞入默认 STA archive。
+   server 对象重新塞入默认 STA archive。双 WS63 HIL 使用两个独立固件角色：AP 固件
+   创建受控测试网络，STA 固件连接该网络；两者从示例拥有的同一份非生产 fixture
+   配置生成 SSID、安全模式、信道和测试口令，不读取开发机环境文件，也不依赖外部
+   路由器。fixture 值必须明确标注仅用于测试，模板和用户应用不得继承为生产默认值。
 6. **W4 Enterprise**：最后接入 EAP/TLS、证书/私钥存储、可信时间和 server validation；
    WPA2-Enterprise 与 WPA3-Enterprise 分开 gate。TLS provider 独立于 WPA2/WPA3 personal
    crypto provider。默认 backend 固定为 mbedTLS，可选 `embedded-tls`；两者必须复用同一
    async BIO、entropy/time/allocator contract，不得把“能链接 TLS”当作认证证据。
 
-W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。测试 SSID 和
-passphrase 只从 self-hosted runner secret 注入，不进入源码、日志或 evidence artifact。
+W0-W4 可以在 A1-A4 拆分期间逐项迁移，但每一步必须保留上一阶段 HIL。外部 AP 的
+SSID/passphrase 只通过临时 secret 注入，不进入源码、日志或 evidence artifact；双板
+受控 HIL 则使用仓库内明确标为非生产用途的固定 fixture，避免凭据文件和外部网络成为
+可复现性前置条件。两条路径不得复用同一个配置入口。
 
 ### H0 -- 将 `hisi-riscv-hal` 重命名为 `hisi-hal`
 
