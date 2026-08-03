@@ -1217,9 +1217,12 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   均为 3 ms、最大 ready latency 均为 2 ms、最长 scheduler lock 均为 1 ms，且
   budget-lock overrun 均为 0，最终输出 `RFDBG_A5B_WORKER_RTOS_OK`。这关闭当前
   init/scan/cancel workload 的 CPU-ownership 校准，但不承诺单次同步 vendor 调用在 100 ms
-  内返回，也没有故意制造 quota exhaustion。fixture 仍未制造“旧 generation 成功结果在
-  replacement 开始后到达”的反例，因此 late-success suppression 与 connectivity parity
-  仍未勾选。
+  内返回，也没有故意制造 quota exhaustion。随后 opt-in contract fixture 在 replacement
+  operation 启动后、第一次 backend poll 前注入一次旧 generation 的成功 worker response；
+  两板均精确观测 1 次 injection / 1 次 discard、0 runner error，replacement scan 正常完成并
+  输出 `RFDBG_A5B_STALE_COMPLETION_OK`。这关闭 production worker/mailbox/runner 边界的
+  late-success suppression；它是受控硅片 contract injection，不宣称 vendor firmware 在这两轮
+  自然产生了相同时序。当前只剩 repeated connectivity parity 未勾选。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。

@@ -128,8 +128,30 @@ path, produced the result. It does not claim that an individual synchronous
 vendor call returns within 100 ms, and this sample did not deliberately force a
 quota exhaustion.
 
+## Adversarial Stale-Generation Injection
+
+The worker proxy previously treated any response whose `OperationId` differed
+from the operation currently being polled as a protocol error. A stale terminal
+response could also clear the replacement's active identity. The proxy now
+discards such responses before copying scan output and keeps the replacement
+active.
+
+An opt-in diagnostic profile cancels a real scan, waits for terminal cleanup,
+starts its replacement, and injects one successful old-generation worker
+response immediately before the replacement's first backend poll. On both
+boards the fixture observed exactly one injection and one discard, zero runner
+errors, and a successful replacement scan. Both emitted:
+
+- `RFDBG_A5B_STALE_COMPLETION_ARMED`
+- `RFDBG_A5B_STALE_COMPLETION_OK`
+- `RFDBG_A5B_CANCEL_PROFILE_OK`
+
+This is an on-silicon contract injection: it proves that the production worker,
+mailbox, runner, and generation boundary suppress the adversarial ordering. It
+does not claim that the vendor firmware naturally produced that exact timing in
+these two runs.
+
 ## Remaining Gate
 
-A5B remains opt-in. Late-completion suppression under an actually arriving
-stale success and repeated connectivity parity still need dedicated silicon
+A5B remains opt-in. Repeated connectivity parity still needs dedicated silicon
 evidence before the incremental path can become the default.
