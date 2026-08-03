@@ -99,8 +99,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    运行公开 `wifi_connectivity` 增量路径。STA 完成 upstream WPA2、DHCP、本地 ARP 和
    lease renew；该隔离 AP 未下发默认路由，因此严格契约要求
    `RF5C_PUBLIC_DNS_SKIP reason=no-default-route` 与零 DNS 计数，而不是伪造公网成功。
-   本轮关闭单次双板 local-neighbor parity，不替代 20-reset reliability、Rust SoftAP、
-   routed UDP DNS 或 pure-WPA3 gate。证据见
+   随后修复 scan retry 未消费前次 terminal event 的队列所有权问题，并保持公开 scan
+   marker 的既有顺序。对同一已验证 STA 镜像连续执行 20 次 nRST，得到 20/20 完整
+   upstream WPA2、DHCP、direct ARP、local-data-path 和 lease-renew contract，零
+   auth-response-2 timeout、event drop、runner error 或 allocation failure；runner 单步
+   最大 35 ms。隔离 AP 未下发默认路由，因此 20 轮均按契约跳过公网 DNS。该矩阵关闭
+   A5B repeated dual-board local connectivity parity，不替代 Rust SoftAP、routed UDP DNS
+   或 pure-WPA3 gate。证据见
    [A5B dual-board local-neighbor parity](evidence/ws63-rf-a5b-dual-board-local-neighbor-2026-08-03.md)。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
@@ -1212,7 +1217,7 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   overrun，不能伪装成可回滚的 backend failure。
 - [x] 把同步 supplicant/vendor seam 移入独立 RTOS worker；caller-owned 固定邮箱提供
   backpressure，worker 在 spawn 时原子绑定周期 CPU quota，runner 不再直接进入该 seam。
-- [ ] 在 A5B 成为默认路径前，以双板 HIL 校准 worker 的 100 ms CPU ownership、取消、
+- [x] 在 A5B 成为默认路径前，以双板 HIL 校准 worker 的 100 ms CPU ownership、取消、
   late completion 和 connectivity parity；周期 quota 不能被表述成单次 C 调用的墙钟返回
   保证，事后 `WorkReport` overrun 仍须保留并归因。2026-08-03 的 credential-free
   cancellation profile 已在两块 WS63 上闭合其中的主动取消子项：真实 scan future 在 100 ms
@@ -1233,7 +1238,11 @@ wake/deadline wait；backend 的 scan/connect/disconnect 原型尚未覆盖 init
   fixture：3 MHz 完整 verify 均成功，两板均为 3 operations / 2 completed / 1 cancelled /
   1 stale injection / 1 discard / 0 errors，最长连续 worker 执行均为 3 ms，证明 allocator/
   admission 重构没有让这些边界回退。双板单轮 WPA2/DHCP/local-neighbor parity 已通过，
-  但当前仍只剩 repeated connectivity parity 未勾选。
+  repeated connectivity parity 最后由同一已验证 STA ELF 的 20 次 nRST 矩阵闭合：
+  20/20 完成 WPA2、DHCP、direct ARP、local-data-path 和 lease renew，零 auth-response-2
+  timeout、event drop、runner error 或 allocation failure，runner 单步最大 35 ms。隔离
+  AP 没有默认路由，因此公网 DNS 20/20 按契约跳过；这不冒充 routed 或 pure-WPA3
+  证据。
 - [x] opt-in `IncrementalRadioRunner` 提供统一 wait intent 与 executor-neutral `wait_ready()`：
   control command、backend/callback wake、L2 RX、timer deadline 和 cancellation 共用一次等待；
   无事件时休眠，有事件时按公平、可观测的批次推进。平台错误和未订阅 wake source fail closed。
