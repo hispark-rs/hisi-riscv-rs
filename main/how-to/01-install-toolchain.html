@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-30955ef3.js";
+            window.path_to_searchindex_js = "../searchindex-b1e0b7b8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -210,9 +210,13 @@
 <h2 id="构建方式"><a class="header" href="#构建方式">构建方式</a></h2>
 <p>RISC-V 构建命令需要带 build-std：</p>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 </code></pre>
+<p>SoftAP 与 STA 使用互斥的 target archive，所以分成两次命令是构建契约的一部分，
+不是临时绕过。</p>
 <p><code>hisi-rs-template</code> 生成的新项目已经把这个细节封装进 <code>just build</code> / <code>just run</code> / <code>just image</code>，所以应用开发者通常不需要手写 <code>-Zbuild-std=core,alloc</code>。</p>
 <h2 id="排错"><a class="header" href="#排错">排错</a></h2>
 <ul>

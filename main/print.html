@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-30955ef3.js";
+            window.path_to_searchindex_js = "searchindex-b1e0b7b8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -860,9 +860,13 @@ grep 模式。它是 QEMU 冒烟测试在真硅片上的对应物；无 UART 或
 <h2 id="构建方式"><a class="header" href="#构建方式">构建方式</a></h2>
 <p>RISC-V 构建命令需要带 build-std：</p>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 </code></pre>
+<p>SoftAP 与 STA 使用互斥的 target archive，所以分成两次命令是构建契约的一部分，
+不是临时绕过。</p>
 <p><code>hisi-rs-template</code> 生成的新项目已经把这个细节封装进 <code>just build</code> / <code>just run</code> / <code>just image</code>，所以应用开发者通常不需要手写 <code>-Zbuild-std=core,alloc</code>。</p>
 <h2 id="排错"><a class="header" href="#排错">排错</a></h2>
 <ul>
@@ -2501,10 +2505,15 @@ rustflags = ["-C", "link-arg=--no-relax"]
 </div>
 <h2 id="risc-v-构建命令"><a class="header" href="#risc-v-构建命令">RISC-V 构建命令</a></h2>
 <p>因为 std 组件尚未由 rustup 分发，RISC-V 命令必须显式构建 <code>core</code> / <code>alloc</code>：</p>
-<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
+<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
 cargo build -Zbuild-std=core,alloc --release
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 </code></pre>
+<p><code>wifi_softap</code> 与 STA 固件选择互斥的 target archive。Cargo 会在单次命令中合并
+workspace features，因此 AP 必须作为独立固件角色检查；不能通过关闭
+<code>ws63-radio-sys</code> 的互斥门禁来伪造“全 workspace 同时可构建”。</p>
 <p>不要把 build-std 写成全局 Cargo 配置。host unit tests 需要在 <code>stable</code> + <code>x86_64-unknown-linux-gnu</code> 上运行；全局 <code>[unstable] build-std</code> 会污染 host 目标。</p>
 <h2 id="原子与-critical-section"><a class="header" href="#原子与-critical-section">原子与 critical-section</a></h2>
 <p>WS63 当前路径是单 hart + 无 A 扩展：目标不得发射 <code>lr/sc/amo*</code>。原子 load/store 降为普通 load/store；RMW/CAS 语义由 <code>portable-atomic</code> 通过 <code>critical-section-single-hart</code> 提供。更完整的同步策略见<a href="#稳定--不稳定-api-门控">稳定 / 不稳定 API 门控</a>中的 critical-section 纪律。</p>
@@ -4392,13 +4401,15 @@ RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不
 <li><strong>default-members = 库 + WS63 示例集合</strong>。根 <code>Cargo.toml</code> 的 <code>default-members</code> 是构建事实源；当前示例清单与状态见
 <a href="#示例目录与验证标记串">示例目录与验证标记串</a>。各示例经 hisi-riscv-rt 导出的链接脚本可正常链接
 （<code>hisi-riscv-rt/build.rs</code> 用 <code>cargo:rustc-link-search</code> 导出脚本目录 + <code>hisi-riscv-link.x</code> 包装脚本，示例侧 <code>build.rs</code>
-以 <code>-Thisi-riscv-link.x</code> 引入）。实验性的 <code>ws63-flashboot</code> 不在默认构建里，仍是 <code>member</code>，<code>cargo check --workspace</code>
-覆盖。</li>
+以 <code>-Thisi-riscv-link.x</code> 引入）。实验性的 <code>ws63-flashboot</code> 不在默认构建里，仍由 workspace lane 覆盖；
+SoftAP 因与 STA target archive 互斥而单独检查。</li>
 </ul>
 <p>常用命令：</p>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>

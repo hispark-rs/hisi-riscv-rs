@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-30955ef3.js";
+            window.path_to_searchindex_js = "../searchindex-b1e0b7b8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-91c64007.js"></script>
@@ -234,10 +234,15 @@ rustflags = ["-C", "link-arg=--no-relax"]
 </div>
 <h2 id="risc-v-构建命令"><a class="header" href="#risc-v-构建命令">RISC-V 构建命令</a></h2>
 <p>因为 std 组件尚未由 rustup 分发，RISC-V 命令必须显式构建 <code>core</code> / <code>alloc</code>：</p>
-<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63
+<pre><code class="language-bash">cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
 cargo build -Zbuild-std=core,alloc --release
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 </code></pre>
+<p><code>wifi_softap</code> 与 STA 固件选择互斥的 target archive。Cargo 会在单次命令中合并
+workspace features，因此 AP 必须作为独立固件角色检查；不能通过关闭
+<code>ws63-radio-sys</code> 的互斥门禁来伪造“全 workspace 同时可构建”。</p>
 <p>不要把 build-std 写成全局 Cargo 配置。host unit tests 需要在 <code>stable</code> + <code>x86_64-unknown-linux-gnu</code> 上运行；全局 <code>[unstable] build-std</code> 会污染 host 目标。</p>
 <h2 id="原子与-critical-section"><a class="header" href="#原子与-critical-section">原子与 critical-section</a></h2>
 <p>WS63 当前路径是单 hart + 无 A 扩展：目标不得发射 <code>lr/sc/amo*</code>。原子 load/store 降为普通 load/store；RMW/CAS 语义由 <code>portable-atomic</code> 通过 <code>critical-section-single-hart</code> 提供。更完整的同步策略见<a href="../explanation/policies/02-stable-unstable.html">稳定 / 不稳定 API 门控</a>中的 critical-section 纪律。</p>

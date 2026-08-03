@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-30955ef3.js";
+            window.path_to_searchindex_js = "../../searchindex-b1e0b7b8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-91c64007.js"></script>
@@ -292,13 +292,15 @@ RMW 走 <code>portable-atomic</code> 的 critical-section polyfill，<strong>不
 <li><strong>default-members = 库 + WS63 示例集合</strong>。根 <code>Cargo.toml</code> 的 <code>default-members</code> 是构建事实源；当前示例清单与状态见
 <a href="../../reference/02-examples.html">示例目录与验证标记串</a>。各示例经 hisi-riscv-rt 导出的链接脚本可正常链接
 （<code>hisi-riscv-rt/build.rs</code> 用 <code>cargo:rustc-link-search</code> 导出脚本目录 + <code>hisi-riscv-link.x</code> 包装脚本，示例侧 <code>build.rs</code>
-以 <code>-Thisi-riscv-link.x</code> 引入）。实验性的 <code>ws63-flashboot</code> 不在默认构建里，仍是 <code>member</code>，<code>cargo check --workspace</code>
-覆盖。</li>
+以 <code>-Thisi-riscv-link.x</code> 引入）。实验性的 <code>ws63-flashboot</code> 不在默认构建里，仍由 workspace lane 覆盖；
+SoftAP 因与 STA target archive 互斥而单独检查。</li>
 </ul>
 <p>常用命令：</p>
 <pre><code class="language-bash">cargo build -Zbuild-std=core,alloc --release          # 构建库 + default-member WS63 示例
-cargo check -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63        # 检查全部（含 blinky/flashboot，不链接）
-cargo clippy -Zbuild-std=core,alloc --workspace --features hisi-rf/chip-ws63 -- -D warnings
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+cargo check -Zbuild-std=core,alloc -p wifi_softap
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
