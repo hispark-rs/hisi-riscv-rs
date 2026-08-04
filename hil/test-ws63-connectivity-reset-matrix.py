@@ -125,6 +125,39 @@ def resource_calibration_log() -> bytes:
 
 
 class ClassifyTests(unittest.TestCase):
+    def test_peer_serial_is_polled_when_driver_reports_no_waiting_bytes(self) -> None:
+        class DelayedSerial:
+            in_waiting = 0
+
+            def __init__(self) -> None:
+                self.requested = 0
+
+            def read(self, size: int) -> bytes:
+                self.requested = size
+                return b"RFDBG_SOFTAP_READY\n"
+
+        port = DelayedSerial()
+        self.assertEqual(
+            MATRIX.drain_serial(port),
+            b"RFDBG_SOFTAP_READY\n",
+        )
+        self.assertEqual(port.requested, 4096)
+
+    def test_peer_serial_drains_only_the_reported_queue_when_ready(self) -> None:
+        class ReadySerial:
+            in_waiting = 7
+
+            def __init__(self) -> None:
+                self.requested = 0
+
+            def read(self, size: int) -> bytes:
+                self.requested = size
+                return b"1234567"
+
+        port = ReadySerial()
+        self.assertEqual(MATRIX.drain_serial(port), b"1234567")
+        self.assertEqual(port.requested, 7)
+
     def test_jlink_argv_selects_exact_probe_in_multi_rig_setup(self) -> None:
         self.assertEqual(
             MATRIX.jlink_argv(
@@ -265,6 +298,25 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(
             record["echo_correlation"]["submitted_without_sta_receive"],
             [1],
+        )
+
+    def test_required_peer_capture_fails_closed_without_softap_ready(self) -> None:
+        record = MATRIX.record_from_log(
+            1,
+            connectivity_success_log() + b"\n" + resource_calibration_log(),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            require_contract=True,
+            require_resource_calibration=True,
+            peer_log=b"",
+            peer_log_name="run-01.peer.uart.log",
+        )
+        self.assertEqual(record["result"], "contract_violation")
+        self.assertIn(
+            "missing peer RFDBG_SOFTAP_READY marker",
+            record["contract"]["violations"],
         )
 
     def test_irq45_lifecycle_is_preserved_for_both_boards(self) -> None:

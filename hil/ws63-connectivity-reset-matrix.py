@@ -1136,7 +1136,10 @@ def drain_serial(port: serial.Serial | None) -> bytes:
     if port is None:
         return b""
     waiting = port.in_waiting
-    return port.read(waiting) if waiting else b""
+    # CH340 drivers can report zero queued bytes until a read advances the USB
+    # receive path. The peer port has a short timeout, so an explicit bounded
+    # read is safe and avoids silently producing empty peer evidence.
+    return port.read(waiting if waiting else 4096)
 
 
 def current_boot_log(log: bytes) -> bytes:
@@ -1314,6 +1317,24 @@ def record_from_log(
         if (require_contract or require_resource_calibration) and profile == "rust"
         else []
     )
+    if (
+        require_contract
+        and peer_log is not None
+        and b"RFDBG_SOFTAP_READY" not in peer_log
+    ):
+        contract_violations.append("missing peer RFDBG_SOFTAP_READY marker")
+    result = classify(
+        log,
+        profile,
+        stage,
+        required_ap_mode,
+        require_contract,
+        max_runner_step_ms,
+        qemu_contract_fixture,
+        require_resource_calibration,
+    )
+    if result == "pass" and contract_violations:
+        result = "contract_violation"
     dns = parse_dns_summary(log)
     local_echo_path = parse_local_echo_path(log)
     peer_echo_path = parse_softap_echo_path(peer_log or b"")
@@ -1323,16 +1344,7 @@ def record_from_log(
     )
     return {
         "run": run,
-        "result": classify(
-            log,
-            profile,
-            stage,
-            required_ap_mode,
-            require_contract,
-            max_runner_step_ms,
-            qemu_contract_fixture,
-            require_resource_calibration,
-        ),
+        "result": result,
         "bytes": len(log),
         "auth_rsp2_timeouts": log.count(AUTH_RSP2_TIMEOUT_EVENT)
         + log.count(OFFICIAL_AUTH_RSP2_TIMEOUT_EVENT),
@@ -1627,7 +1639,7 @@ def main() -> int:
     # observable. Keep the descriptor open across runs to avoid driver churn.
     assert args.port is not None
     peer_port = (
-        serial.Serial(args.peer_port, args.peer_baud, timeout=0)
+        serial.Serial(args.peer_port, args.peer_baud, timeout=0.02)
         if args.peer_port is not None
         else None
     )
