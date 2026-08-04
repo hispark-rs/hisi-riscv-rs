@@ -87,6 +87,9 @@ image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
 marker、fatal marker、非零内部 queue drop / TX error / backend error、A5B runner budget
 越界都会失败。本地硬门槛是 DHCP 成功，并通过 UDP 发送触发 neighbor discovery，要求
 `RFDBG_A5B_L2` 记录 ARP reply；目标优先使用 DHCP router，没有 router 时使用 DHCP server。
+当 peer 是仓库内受控 Rust SoftAP 时，本地 UDP echo 不再沿用“任意一包返回即通过”的临时
+门槛：STA 最多发送 10 个带 sequence 的请求，必须收到至少 5 个不同 sequence 的回复；
+重复回复不计数，`RF5C_LOCAL_ECHO_OK/ERR` 同时记录 attempts 与 replies。
 有默认路由的 profile 还必须向 AliDNS `223.5.5.5:53` 与 Baidu DNS
 `180.76.76.76:53` 交替发送固定 A 查询，至少一项返回来源、transaction id、QR/opcode、
 TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有下发默认路由时，
@@ -100,6 +103,18 @@ TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有
 `hisi-connectivity-artifact/v1`（profile、ELF SHA-256、marker contract），解析前再次复核；
 不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
 `EVIDENCE_DIR`，含凭据的临时 ELF/target 仍在退出时删除。
+
+双 WS63 SoftAP/STA 可靠性矩阵还应同时传入 `--peer-port`、`--peer-baud` 与
+`--peer-jlink-serial`。runner 在复位 STA 之前先复位 AP，并从复位前就打开两路 UART；每轮
+分别保存 `run-NN.uart.log` 与 `run-NN.peer.uart.log`。启用
+`data-path-diagnostics` 后，STA 的 `RFDBG_LOCAL_ECHO_PATH` 以 `sequence` 和
+`phase=send|receive|timeout` 标记每次本地 UDP echo，AP 的
+`RFDBG_SOFTAP_ECHO_PATH` 记录同一 sequence 的 vendor submit、TX complete、MAC IRQ 与
+completion-status 增量。summary 中的 `echo_correlation` 因而可以区分“STA 请求未到 AP”、
+“AP 已提交回复但 STA 未收到”和正常闭环；单路 STA 日志不能证明这条因果链。
+发布 gate 还必须同时提供 target 的 `--artifact-identity/--elf/--profile-id` 和 peer 的
+`--peer-artifact-identity/--peer-elf/--peer-profile-id`；任一组三项不完整或哈希漂移都会在
+复位前失败，summary 分别保存两块板的 manifest SHA-256。
 
 普通 CI 的 QEMU target fixture 也执行同一 parser，但必须携带
 `RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only`。它只证明目标端 marker

@@ -203,6 +203,128 @@ class ClassifyTests(unittest.TestCase):
             {"min": 12, "max": 12},
         )
 
+    def test_local_echo_path_preserves_samples_and_step_deltas(self) -> None:
+        log = b"\n".join(
+            (
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000000 phase=send mac_ok=0x00000010 "
+                b"dmac_rx=0x00000020 vendor_rx=0x00000003 rust_rx=0x00000003",
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000001 phase=send mac_ok=0x00000012 "
+                b"dmac_rx=0x00000024 vendor_rx=0x00000004 rust_rx=0x00000004",
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000002 phase=send mac_ok=0x00000015 "
+                b"dmac_rx=0x00000029 vendor_rx=0x00000004 rust_rx=0x00000004",
+            )
+        )
+        record = MATRIX.record_from_log(
+            1, log, "rust", "connectivity", None, "run-01.uart.log"
+        )
+        self.assertEqual(len(record["local_echo_path"]), 3)
+        aggregate = MATRIX.aggregate_local_echo_path(
+            [record, {"local_echo_path": None}]
+        )
+        self.assertEqual(aggregate["runs_with_markers"], 1)
+        self.assertEqual(aggregate["runs_without_markers"], 1)
+        self.assertEqual(aggregate["samples"], {"min": 3, "max": 3})
+        self.assertEqual(
+            aggregate["step_delta_ranges"]["mac_ok"],
+            {"min": 2, "max": 3},
+        )
+        self.assertEqual(
+            aggregate["step_delta_ranges"]["vendor_rx"],
+            {"min": 0, "max": 1},
+        )
+
+    def test_dual_uart_echo_correlation_finds_submitted_reply_loss(self) -> None:
+        sta_log = b"\n".join(
+            (
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000000 phase=send mac_ok=0x1",
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000000 phase=receive mac_ok=0x2",
+                b"RFDBG_LOCAL_ECHO_PATH sequence=0x00000001 phase=send mac_ok=0x2",
+            )
+        )
+        ap_log = b"\n".join(
+            (
+                b"RFDBG_SOFTAP_READY",
+                b"RFDBG_SOFTAP_ECHO_PATH sequence=0x00000000 vendor_tx_delta=0x1 "
+                b"tx_complete_delta=0x1 tx_status_delta=0x1,0x0,",
+                b"RFDBG_SOFTAP_ECHO_PATH sequence=0x00000001 vendor_tx_delta=0x1 "
+                b"tx_complete_delta=0x1 tx_status_delta=0x1,0x0,",
+            )
+        )
+        record = MATRIX.record_from_log(
+            1,
+            sta_log,
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            peer_log=ap_log,
+            peer_log_name="run-01.peer.uart.log",
+        )
+        self.assertTrue(record["peer_ready"])
+        self.assertEqual(record["peer_echo_path"][0]["tx_status_delta"], [1, 0])
+        self.assertEqual(
+            record["echo_correlation"]["submitted_without_sta_receive"],
+            [1],
+        )
+
+    def test_irq45_lifecycle_is_preserved_for_both_boards(self) -> None:
+        sta_log = (
+            b"RFDBG_A5B_DATA_PATH tx=0x1 irq45=0x20 "
+            b"irq45_en_calls=0x1 irq45_dis_calls=0x0 irq45_clr_calls=0x1f "
+            b"irq45_enabled=0x1 irq45_pending=0x0"
+        )
+        ap_log = (
+            b"RFDBG_SOFTAP_STATE event=0x1 irq45=0x30 "
+            b"irq45_en_calls=0x1 irq45_dis_calls=0x1 irq45_clr_calls=0x2f "
+            b"irq45_enabled=0x0 irq45_pending=0x1"
+        )
+        record = MATRIX.record_from_log(
+            1,
+            sta_log,
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            peer_log=ap_log,
+            peer_log_name="run-01.peer.uart.log",
+        )
+        self.assertEqual(record["irq45_lifecycle"]["irq45"], 0x20)
+        self.assertEqual(record["peer_irq45_lifecycle"]["irq45_pending"], 1)
+
+        summary = MATRIX.summarize_records(
+            [record],
+            port=None,
+            baud=115_200,
+            profile="rust",
+            stage="connectivity",
+            required_ap_mode=None,
+            timeout=1,
+            post_terminal_seconds=0,
+            reference_ping=None,
+        )
+        self.assertEqual(summary["irq45_lifecycle"]["disabled_runs"], 0)
+        self.assertEqual(summary["peer_irq45_lifecycle"]["disabled_runs"], 1)
+        self.assertEqual(summary["peer_irq45_lifecycle"]["pending_runs"], 1)
+
+    def test_irq45_lifecycle_requires_all_fields(self) -> None:
+        self.assertIsNone(
+            MATRIX.parse_irq45_lifecycle(
+                b"RFDBG_A5B_DATA_PATH irq45=0x20 irq45_enabled=0x1",
+                b"RFDBG_A5B_DATA_PATH ",
+            )
+        )
+
+    def test_offline_discovery_does_not_count_peer_logs_as_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "run-01.uart.log").write_bytes(b"sta")
+            (root / "run-01.peer.uart.log").write_bytes(b"ap")
+            (root / "run-02.uart.log").write_bytes(b"sta")
+            self.assertEqual(
+                [path.name for path in MATRIX.measured_uart_logs(root)],
+                ["run-01.uart.log", "run-02.uart.log"],
+            )
+
     def test_pure_wpa3_gate_accepts_matching_success(self) -> None:
         log = b"\n".join(
             (
@@ -699,6 +821,27 @@ class ClassifyTests(unittest.TestCase):
                 MATRIX.verify_artifact_identity(
                     identity_path, elf, "upstream-wpa2"
                 )
+
+    def test_optional_peer_identity_is_all_or_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            elf = root / "peer.elf"
+            identity_path = root / "peer.identity.json"
+            elf.write_bytes(b"peer")
+            MATRIX.write_artifact_identity(identity_path, elf, "softap-wpa3")
+            self.assertIsNone(
+                MATRIX.verify_optional_identity(None, None, None, label="peer")
+            )
+            with self.assertRaisesRegex(ValueError, "peer identity requires"):
+                MATRIX.verify_optional_identity(
+                    identity_path, elf, None, label="peer"
+                )
+            verified = MATRIX.verify_optional_identity(
+                identity_path, elf, "softap-wpa3", label="peer"
+            )
+            self.assertIsNotNone(verified)
+            assert verified is not None
+            self.assertEqual(verified["profile_id"], "softap-wpa3")
 
     def test_terminal_capture_can_finish_while_uart_is_silent(self) -> None:
         self.assertFalse(MATRIX.post_terminal_elapsed(None, 2.0, 100.0))

@@ -147,6 +147,14 @@ L2_PROTOCOL_FIELDS = (
     "tx_ipv4",
     "tx_other",
 )
+IRQ45_LIFECYCLE_FIELDS = (
+    "irq45_en_calls",
+    "irq45_dis_calls",
+    "irq45_clr_calls",
+    "irq45",
+    "irq45_enabled",
+    "irq45_pending",
+)
 
 RUST_STAGE_MARKERS = {
     "init-scan": (
@@ -221,6 +229,11 @@ def parse_args() -> argparse.Namespace:
         help="optional peer/AP J-Link serial to reset before each measured target boot",
     )
     parser.add_argument(
+        "--peer-port",
+        help="optional peer/AP UART captured alongside each measured target boot",
+    )
+    parser.add_argument("--peer-baud", type=int, default=115_200)
+    parser.add_argument(
         "--peer-settle-seconds",
         type=float,
         default=3.0,
@@ -270,6 +283,13 @@ def parse_args() -> argparse.Namespace:
         "--profile-id",
         help="build profile covered by the identity manifest",
     )
+    parser.add_argument(
+        "--peer-artifact-identity",
+        type=Path,
+        help="verify the peer/AP identity manifest before paired-board capture",
+    )
+    parser.add_argument("--peer-elf", type=Path, help="peer/AP ELF covered by its identity")
+    parser.add_argument("--peer-profile-id", help="peer/AP build profile identity")
     return parser.parse_args()
 
 
@@ -480,6 +500,24 @@ def verify_artifact_identity(
         )
     actual["manifest_sha256"] = sha256_path(path)
     return actual
+
+
+def verify_optional_identity(
+    manifest: Path | None,
+    elf: Path | None,
+    profile_id: str | None,
+    *,
+    label: str,
+) -> dict[str, str] | None:
+    provided = (manifest is not None, elf is not None, profile_id is not None)
+    if not any(provided):
+        return None
+    if not all(provided):
+        raise ValueError(
+            f"{label} identity requires manifest, ELF and profile id together"
+        )
+    assert manifest is not None and elf is not None and profile_id is not None
+    return verify_artifact_identity(manifest, elf, profile_id)
 
 
 def marker_group_position(
@@ -783,6 +821,94 @@ def parse_l2_protocol_diagnostics(log: bytes) -> dict[str, int] | None:
     return {field: fields[field] for field in L2_PROTOCOL_FIELDS if field in fields}
 
 
+def parse_local_echo_path(log: bytes) -> list[dict[str, int | str]] | None:
+    """Parse per-attempt MAC-to-Rust receive-path snapshots."""
+    samples = []
+    for line in log.splitlines():
+        if not line.startswith(b"RFDBG_LOCAL_ECHO_PATH "):
+            continue
+        sample: dict[str, int | str] = parse_hex_fields(line)
+        phase = parse_text_fields(line).get("phase")
+        if phase is not None:
+            sample["phase"] = phase
+        samples.append(sample)
+    return samples or None
+
+
+def parse_softap_echo_path(log: bytes) -> list[dict[str, object]] | None:
+    """Parse per-echo SoftAP TX submission/completion snapshots."""
+    samples: list[dict[str, object]] = []
+    for line in log.splitlines():
+        if not line.startswith(b"RFDBG_SOFTAP_ECHO_PATH "):
+            continue
+        sample: dict[str, object] = parse_hex_fields(line)
+        encoded_statuses = parse_text_fields(line).get("tx_status_delta", "")
+        statuses = []
+        for encoded in encoded_statuses.split(","):
+            if not encoded:
+                continue
+            try:
+                statuses.append(int(encoded, 16))
+            except ValueError:
+                statuses = []
+                break
+        sample["tx_status_delta"] = statuses
+        samples.append(sample)
+    return samples or None
+
+
+def parse_irq45_lifecycle(log: bytes, prefix: bytes) -> dict[str, int] | None:
+    """Parse the optional WLMAC IRQ lifecycle snapshot from one trailer."""
+    line = last_prefixed_line(log, prefix)
+    if line is None:
+        return None
+    fields = parse_hex_fields(line)
+    if not all(field in fields for field in IRQ45_LIFECYCLE_FIELDS):
+        return None
+    return {field: fields[field] for field in IRQ45_LIFECYCLE_FIELDS}
+
+
+def correlate_echo_paths(
+    sta_samples: object, ap_samples: object
+) -> dict[str, object] | None:
+    """Correlate sequence-tagged STA sends/receives with SoftAP TX evidence."""
+    if not isinstance(sta_samples, list) or not isinstance(ap_samples, list):
+        return None
+
+    def sequences(samples: list[object], phase: str | None = None) -> set[int]:
+        values = set()
+        for sample in samples:
+            if not isinstance(sample, dict):
+                continue
+            if phase is not None and sample.get("phase") != phase:
+                continue
+            sequence = sample.get("sequence")
+            if isinstance(sequence, int):
+                values.add(sequence)
+        return values
+
+    sent = sequences(sta_samples, "send")
+    received = sequences(sta_samples, "receive")
+    ap_observed = sequences(ap_samples)
+    ap_submitted = {
+        int(sample["sequence"])
+        for sample in ap_samples
+        if isinstance(sample, dict)
+        and isinstance(sample.get("sequence"), int)
+        and isinstance(sample.get("vendor_tx_delta"), int)
+        and int(sample["vendor_tx_delta"]) > 0
+    }
+    return {
+        "sta_sent": sorted(sent),
+        "sta_received": sorted(received),
+        "ap_observed": sorted(ap_observed),
+        "ap_submitted": sorted(ap_submitted),
+        "sent_missing_at_ap": sorted(sent - ap_observed),
+        "ap_without_sta_send": sorted(ap_observed - sent),
+        "submitted_without_sta_receive": sorted(ap_submitted - received),
+    }
+
+
 def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object] | None:
     parsed = [
         metrics
@@ -839,6 +965,68 @@ def aggregate_l2_protocol_diagnostics(
         "runs_with_markers": len(parsed),
         "runs_without_markers": len(records) - len(parsed),
         "ranges": ranges,
+    }
+
+
+def aggregate_local_echo_path(
+    records: list[dict[str, object]],
+) -> dict[str, object] | None:
+    parsed = [
+        samples
+        for record in records
+        if isinstance((samples := record.get("local_echo_path")), list)
+    ]
+    if not parsed:
+        return None
+
+    delta_ranges: dict[str, dict[str, int]] = {}
+    for samples in parsed:
+        for previous, current in zip(samples, samples[1:]):
+            if not isinstance(previous, dict) or not isinstance(current, dict):
+                continue
+            for field, current_value in current.items():
+                previous_value = previous.get(field)
+                if field == "sequence" or not isinstance(previous_value, int):
+                    continue
+                delta = (current_value - previous_value) & 0xFFFF_FFFF
+                aggregate = delta_ranges.setdefault(
+                    field, {"min": delta, "max": delta}
+                )
+                aggregate["min"] = min(aggregate["min"], delta)
+                aggregate["max"] = max(aggregate["max"], delta)
+
+    sample_counts = [len(samples) for samples in parsed]
+    return {
+        "runs_with_markers": len(parsed),
+        "runs_without_markers": len(records) - len(parsed),
+        "samples": {"min": min(sample_counts), "max": max(sample_counts)},
+        "step_delta_ranges": delta_ranges,
+    }
+
+
+def aggregate_irq45_lifecycle(
+    records: list[dict[str, object]], key: str
+) -> dict[str, object] | None:
+    parsed = [
+        diagnostics
+        for record in records
+        if isinstance((diagnostics := record.get(key)), dict)
+    ]
+    if not parsed:
+        return None
+
+    return {
+        "runs_with_markers": len(parsed),
+        "runs_without_markers": len(records) - len(parsed),
+        "disabled_runs": sum(value["irq45_enabled"] == 0 for value in parsed),
+        "pending_runs": sum(value["irq45_pending"] != 0 for value in parsed),
+        "ranges": {
+            field: {
+                "min": min(value[field] for value in parsed),
+                "max": max(value[field] for value in parsed),
+            }
+            for field in IRQ45_LIFECYCLE_FIELDS
+        },
     }
 
 
@@ -944,8 +1132,29 @@ def post_terminal_elapsed(
     )
 
 
+def drain_serial(port: serial.Serial | None) -> bytes:
+    if port is None:
+        return b""
+    waiting = port.in_waiting
+    return port.read(waiting) if waiting else b""
+
+
+def current_boot_log(log: bytes) -> bytes:
+    boot_start = log.find(b"boot.\r\n")
+    return log[boot_start:] if boot_start >= 0 else log
+
+
+def measured_uart_logs(directory: Path) -> list[Path]:
+    return sorted(
+        path
+        for path in directory.glob("run-*.uart.log")
+        if ".peer.uart.log" not in path.name
+    )
+
+
 def capture_run(
     port: serial.Serial,
+    peer_port: serial.Serial | None,
     jlink: str,
     jlink_serial: str | None,
     peer_jlink_serial: str | None,
@@ -954,11 +1163,17 @@ def capture_run(
     post_terminal_seconds: float,
     profile: str,
     stage: str,
-) -> tuple[bytes, dict[str, float]]:
+) -> tuple[bytes, bytes, dict[str, float]]:
     port.reset_input_buffer()
+    if peer_port is not None:
+        peer_port.reset_input_buffer()
+    peer_log = bytearray()
     if peer_jlink_serial is not None:
         pulse_nrst(jlink, peer_jlink_serial)
-        time.sleep(peer_settle_seconds)
+        settle_deadline = time.monotonic() + peer_settle_seconds
+        while time.monotonic() < settle_deadline:
+            peer_log.extend(drain_serial(peer_port))
+            time.sleep(0.02)
     started = time.monotonic()
     pulse_nrst(jlink, jlink_serial)
     log = bytearray()
@@ -1035,12 +1250,19 @@ def capture_run(
             terminal_seen_at = None
             boot_seen = False
             log.clear()
+            peer_log.clear()
             marker_times.clear()
             if peer_jlink_serial is not None:
+                if peer_port is not None:
+                    peer_port.reset_input_buffer()
                 pulse_nrst(jlink, peer_jlink_serial)
-                time.sleep(peer_settle_seconds)
+                settle_deadline = time.monotonic() + peer_settle_seconds
+                while time.monotonic() < settle_deadline:
+                    peer_log.extend(drain_serial(peer_port))
+                    time.sleep(0.02)
             pulse_nrst(jlink, jlink_serial)
             continue
+        peer_log.extend(drain_serial(peer_port))
         if not chunk:
             continue
         log.extend(chunk)
@@ -1062,7 +1284,8 @@ def capture_run(
         if terminal_seen_at is None and any(marker in log for marker in terminal_markers):
             terminal_seen_at = time.monotonic()
 
-    return bytes(log), marker_times
+    peer_log.extend(drain_serial(peer_port))
+    return bytes(log), current_boot_log(bytes(peer_log)), marker_times
 
 
 def record_from_log(
@@ -1077,6 +1300,8 @@ def record_from_log(
     max_runner_step_ms: int | None = None,
     qemu_contract_fixture: bool = False,
     require_resource_calibration: bool = False,
+    peer_log: bytes | None = None,
+    peer_log_name: str | None = None,
 ) -> dict[str, object]:
     contract_violations = (
         validate_rust_contract(
@@ -1090,6 +1315,12 @@ def record_from_log(
         else []
     )
     dns = parse_dns_summary(log)
+    local_echo_path = parse_local_echo_path(log)
+    peer_echo_path = parse_softap_echo_path(peer_log or b"")
+    irq45_lifecycle = parse_irq45_lifecycle(log, b"RFDBG_A5B_DATA_PATH ")
+    peer_irq45_lifecycle = parse_irq45_lifecycle(
+        peer_log or b"", b"RFDBG_SOFTAP_STATE "
+    )
     return {
         "run": run,
         "result": classify(
@@ -1108,6 +1339,15 @@ def record_from_log(
         "ap_mode": detected_ap_mode(log),
         "dns": dns,
         "l2_protocol": parse_l2_protocol_diagnostics(log),
+        "local_echo_path": local_echo_path,
+        "irq45_lifecycle": irq45_lifecycle,
+        "peer_bytes": len(peer_log) if peer_log is not None else None,
+        "peer_ready": (
+            b"RFDBG_SOFTAP_READY" in peer_log if peer_log is not None else None
+        ),
+        "peer_echo_path": peer_echo_path,
+        "peer_irq45_lifecycle": peer_irq45_lifecycle,
+        "echo_correlation": correlate_echo_paths(local_echo_path, peer_echo_path),
         "a5b_metrics": parse_a5b_metrics(
             log,
             require_disconnect=stage == "connect",
@@ -1123,6 +1363,7 @@ def record_from_log(
         },
         "marker_seconds": marker_times or {},
         "log": log_name,
+        "peer_log": peer_log_name,
     }
 
 
@@ -1138,6 +1379,8 @@ def summarize_records(
     post_terminal_seconds: float,
     reference_ping: dict[str, object] | None,
     source_dir: Path | None = None,
+    peer_port: str | None = None,
+    peer_baud: int | None = None,
 ) -> dict[str, object]:
     counts: dict[str, int] = {}
     dns_observations: dict[str, int] = {}
@@ -1226,8 +1469,16 @@ def summarize_records(
             int(record["auth_rsp2_timeouts"]) for record in records
         ),
         "reference_ping": reference_ping,
+        "peer_port": peer_port,
+        "peer_baud": peer_baud,
+        "peer_ready_runs": sum(record.get("peer_ready") is True for record in records),
         "a5b_metrics": aggregate_a5b_metrics(records),
         "l2_protocol": aggregate_l2_protocol_diagnostics(records),
+        "local_echo_path": aggregate_local_echo_path(records),
+        "irq45_lifecycle": aggregate_irq45_lifecycle(records, "irq45_lifecycle"),
+        "peer_irq45_lifecycle": aggregate_irq45_lifecycle(
+            records, "peer_irq45_lifecycle"
+        ),
         "resource_calibration": resource_calibration,
         "records": records,
     }
@@ -1283,43 +1534,55 @@ def main() -> int:
         raise SystemExit("--required-ap-mode is only valid with --profile rust")
     if args.max_runner_step_ms is not None and args.max_runner_step_ms <= 0:
         raise SystemExit("--max-runner-step-ms must be positive")
-    identity = None
-    if args.artifact_identity is not None:
-        if args.elf is None or args.profile_id is None:
-            raise SystemExit("--artifact-identity requires --elf and --profile-id")
-        try:
-            identity = verify_artifact_identity(
-                args.artifact_identity, args.elf, args.profile_id
-            )
-        except ValueError as error:
-            raise SystemExit(str(error)) from error
-    elif args.elf is not None or args.profile_id is not None:
-        raise SystemExit("--elf/--profile-id require --artifact-identity")
+    try:
+        identity = verify_optional_identity(
+            args.artifact_identity,
+            args.elf,
+            args.profile_id,
+            label="target",
+        )
+        peer_identity = verify_optional_identity(
+            args.peer_artifact_identity,
+            args.peer_elf,
+            args.peer_profile_id,
+            label="peer",
+        )
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
     if args.analyze_dir is None and args.port is None:
         raise SystemExit("--port or PORT is required unless --analyze-dir is used")
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     if args.analyze_dir is not None:
-        source_logs = sorted(args.analyze_dir.glob("run-*.uart.log"))
+        source_logs = measured_uart_logs(args.analyze_dir)
         if not source_logs:
             raise SystemExit(f"no run-*.uart.log files in {args.analyze_dir}")
         output = args.output or args.analyze_dir / f"reanalysis-{timestamp}"
         output.mkdir(parents=True, exist_ok=False)
-        records = [
-            record_from_log(
-                run,
-                log_path.read_bytes(),
-                args.profile,
-                args.stage,
-                args.required_ap_mode,
-                log_path.name,
-                require_contract=args.require_contract,
-                max_runner_step_ms=args.max_runner_step_ms,
-                qemu_contract_fixture=args.qemu_contract_fixture,
-                require_resource_calibration=args.require_resource_calibration,
+        records = []
+        for run, log_path in enumerate(source_logs, start=1):
+            peer_log_path = log_path.with_name(
+                log_path.name.replace(".uart.log", ".peer.uart.log")
             )
-            for run, log_path in enumerate(source_logs, start=1)
-        ]
+            peer_log = peer_log_path.read_bytes() if peer_log_path.exists() else None
+            records.append(
+                record_from_log(
+                    run,
+                    log_path.read_bytes(),
+                    args.profile,
+                    args.stage,
+                    args.required_ap_mode,
+                    log_path.name,
+                    require_contract=args.require_contract,
+                    max_runner_step_ms=args.max_runner_step_ms,
+                    qemu_contract_fixture=args.qemu_contract_fixture,
+                    require_resource_calibration=args.require_resource_calibration,
+                    peer_log=peer_log,
+                    peer_log_name=(
+                        peer_log_path.name if peer_log is not None else None
+                    ),
+                )
+            )
         summary = summarize_records(
             records,
             port=None,
@@ -1331,8 +1594,11 @@ def main() -> int:
             post_terminal_seconds=args.post_terminal_seconds,
             reference_ping=None,
             source_dir=args.analyze_dir,
+            peer_port=args.peer_port,
+            peer_baud=args.peer_baud if args.peer_port is not None else None,
         )
         summary["artifact_identity"] = identity
+        summary["peer_artifact_identity"] = peer_identity
         summary["evidence_scope"] = (
             "contract-only" if args.qemu_contract_fixture else "silicon"
         )
@@ -1360,40 +1626,55 @@ def main() -> int:
     # Open UART before every reset pulse so boot and early failure markers are
     # observable. Keep the descriptor open across runs to avoid driver churn.
     assert args.port is not None
-    with serial.Serial(args.port, args.baud, timeout=0.2) as port:
-        for run in range(1, args.runs + 1):
-            log, marker_times = capture_run(
-                port,
-                args.jlink,
-                args.jlink_serial,
-                args.peer_jlink_serial,
-                args.peer_settle_seconds,
-                args.timeout,
-                args.post_terminal_seconds,
-                args.profile,
-                args.stage,
-            )
-            log_path = output / f"run-{run:02d}.uart.log"
-            log_path.write_bytes(log)
-            record = record_from_log(
-                run,
-                log,
-                args.profile,
-                args.stage,
-                args.required_ap_mode,
-                log_path.name,
-                marker_times,
-                args.require_contract,
-                args.max_runner_step_ms,
-                args.qemu_contract_fixture,
-                args.require_resource_calibration,
-            )
-            records.append(record)
-            print(
-                f"run {run:02d}/{args.runs}: {record['result']} "
-                f"(auth_rsp2_timeouts={record['auth_rsp2_timeouts']}, {len(log)} bytes)",
-                flush=True,
-            )
+    peer_port = (
+        serial.Serial(args.peer_port, args.peer_baud, timeout=0)
+        if args.peer_port is not None
+        else None
+    )
+    try:
+        with serial.Serial(args.port, args.baud, timeout=0.2) as port:
+            for run in range(1, args.runs + 1):
+                log, peer_log, marker_times = capture_run(
+                    port,
+                    peer_port,
+                    args.jlink,
+                    args.jlink_serial,
+                    args.peer_jlink_serial,
+                    args.peer_settle_seconds,
+                    args.timeout,
+                    args.post_terminal_seconds,
+                    args.profile,
+                    args.stage,
+                )
+                log_path = output / f"run-{run:02d}.uart.log"
+                log_path.write_bytes(log)
+                peer_log_path = output / f"run-{run:02d}.peer.uart.log"
+                if peer_port is not None:
+                    peer_log_path.write_bytes(peer_log)
+                record = record_from_log(
+                    run,
+                    log,
+                    args.profile,
+                    args.stage,
+                    args.required_ap_mode,
+                    log_path.name,
+                    marker_times,
+                    args.require_contract,
+                    args.max_runner_step_ms,
+                    args.qemu_contract_fixture,
+                    args.require_resource_calibration,
+                    peer_log=peer_log if peer_port is not None else None,
+                    peer_log_name=peer_log_path.name if peer_port is not None else None,
+                )
+                records.append(record)
+                print(
+                    f"run {run:02d}/{args.runs}: {record['result']} "
+                    f"(auth_rsp2_timeouts={record['auth_rsp2_timeouts']}, {len(log)} bytes)",
+                    flush=True,
+                )
+    finally:
+        if peer_port is not None:
+            peer_port.close()
 
     summary = summarize_records(
         records,
@@ -1405,8 +1686,11 @@ def main() -> int:
         timeout=args.timeout,
         post_terminal_seconds=args.post_terminal_seconds,
         reference_ping=reference_ping,
+        peer_port=args.peer_port,
+        peer_baud=args.peer_baud if args.peer_port is not None else None,
     )
     summary["artifact_identity"] = identity
+    summary["peer_artifact_identity"] = peer_identity
     summary["evidence_scope"] = (
         "contract-only" if args.qemu_contract_fixture else "silicon"
     )

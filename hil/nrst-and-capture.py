@@ -29,6 +29,17 @@ def nrst_jlink(serial_number: str | None):
     pulse_nrst("JLinkExe", serial_number)
 
 
+def capture_uart():
+    """Capture UART without changing the target's reset or run state."""
+    with serial.Serial(PORT, BAUD, timeout=0.3) as ser:
+        deadline = time.time() + MONITOR
+        while time.time() < deadline:
+            data = ser.read(4096)
+            if data:
+                sys.stdout.buffer.write(data)
+                sys.stdout.flush()
+
+
 def reset_and_capture_uart(serial_number: str | None):
     # Open and drain UART before nRST so early boot ROM and firmware markers
     # cannot be discarded between the reset pulse and serial open.
@@ -44,10 +55,14 @@ def reset_and_capture_uart(serial_number: str | None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reset-only", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--reset-only", action="store_true")
+    mode.add_argument("--capture-only", action="store_true")
     parser.add_argument("--jlink-serial", default=JLINK_SERIAL)
     args = parser.parse_args()
     if args.reset_only:
         nrst_jlink(args.jlink_serial)
+    elif args.capture_only:
+        capture_uart()
     else:
         reset_and_capture_uart(args.jlink_serial)
