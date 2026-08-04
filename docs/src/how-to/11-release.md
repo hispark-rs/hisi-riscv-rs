@@ -73,7 +73,7 @@ package 验证也必须传入该 crate 的最小发布 feature，而不是使用
 
 ```bash
 uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
-  --package --features chip-ws63
+  --package --features chip-ws63,profile-wifi-wpa2-smoltcp
 ```
 
 - 改 public API 时同步更新 rustdoc/手册。HAL stable/unstable 变化必须同步更新 [Stable API 清单](../reference/10-stable-api.md)，并有对应真机 HIL 证据。
@@ -165,7 +165,7 @@ bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
 preflight；不要用 `--no-verify` 绕过：
 
 ```bash
-PACKAGE_FEATURES=chip-ws63 \
+PACKAGE_FEATURES=chip-ws63,profile-wifi-wpa2-smoltcp \
   bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
 ```
 

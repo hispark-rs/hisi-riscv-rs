@@ -67,7 +67,7 @@ cd /root/ws63-qemu        && bash /root/ws63-rs/.agents/skills/release-train/tra
 cd /root/ws63-rs/crates/hisi-hal && bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.3.1
 
 # A facade that deliberately rejects an empty chip selection
-cd /root/ws63-rs/crates/hisi-rf && PACKAGE_FEATURES=chip-ws63 \
+cd /root/ws63-rs/crates/hisi-rf && PACKAGE_FEATURES=chip-ws63,profile-wifi-wpa2-smoltcp \
   bash /root/ws63-rs/.agents/skills/release-train/train.sh v0.1.0-alpha.20
 ```
 
