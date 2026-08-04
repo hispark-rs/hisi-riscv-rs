@@ -217,6 +217,16 @@ def parse_args() -> argparse.Namespace:
         help="J-Link serial number; required to select the reset probe in a multi-rig setup",
     )
     parser.add_argument(
+        "--peer-jlink-serial",
+        help="optional peer/AP J-Link serial to reset before each measured target boot",
+    )
+    parser.add_argument(
+        "--peer-settle-seconds",
+        type=float,
+        default=3.0,
+        help="time allowed for the peer/AP to return before resetting the measured target",
+    )
+    parser.add_argument(
         "--reference-target",
         help="optional same-network target to ping once from the host (for example the AP gateway)",
     )
@@ -938,12 +948,17 @@ def capture_run(
     port: serial.Serial,
     jlink: str,
     jlink_serial: str | None,
+    peer_jlink_serial: str | None,
+    peer_settle_seconds: float,
     timeout: float,
     post_terminal_seconds: float,
     profile: str,
     stage: str,
 ) -> tuple[bytes, dict[str, float]]:
     port.reset_input_buffer()
+    if peer_jlink_serial is not None:
+        pulse_nrst(jlink, peer_jlink_serial)
+        time.sleep(peer_settle_seconds)
     started = time.monotonic()
     pulse_nrst(jlink, jlink_serial)
     log = bytearray()
@@ -1021,6 +1036,9 @@ def capture_run(
             boot_seen = False
             log.clear()
             marker_times.clear()
+            if peer_jlink_serial is not None:
+                pulse_nrst(jlink, peer_jlink_serial)
+                time.sleep(peer_settle_seconds)
             pulse_nrst(jlink, jlink_serial)
             continue
         if not chunk:
@@ -1348,6 +1366,8 @@ def main() -> int:
                 port,
                 args.jlink,
                 args.jlink_serial,
+                args.peer_jlink_serial,
+                args.peer_settle_seconds,
                 args.timeout,
                 args.post_terminal_seconds,
                 args.profile,
