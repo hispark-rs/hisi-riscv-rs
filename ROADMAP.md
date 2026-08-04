@@ -8,11 +8,11 @@ that goal. This ecosystem is still moving quickly: when roadmap text, docs,
 examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
-**WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 is
-externally blocked on a suitable SAE-only AP. The current A5 window is limited to
-correctness and release-contract findings exposed by adversarial review; it does
-not open a second product direction. Changing the default backend still requires
-both those unblocked findings and the external pure-WPA3 matrix to close.
+**WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 now
+uses a repository-owned two-WS63 AP/STA fixture. Its three 20-reset matrices proved
+SAE/PMF 60/60 but exposed two local reply-path failures, so reliability remains the
+active gate. The current A5 window is limited to that diagnosis and release-contract
+closure; it does not open a second product direction.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -52,7 +52,7 @@ an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
 committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
 
-## EXTERNAL BLOCKED -- W2 Upstream Supplicant And WPA3-Personal
+## RELIABILITY OPEN -- W2 Upstream Supplicant And WPA3-Personal
 
 The single execution ledger, current evidence, and W2A-W2F gates live in
 [Connectivity stack W2](docs/plan/hisi-connectivity-stack.md#w2-upstream-supplicant-and-wpa3personal).
@@ -63,10 +63,18 @@ and a 20/20 transition-mode SAE+required-PMF reset matrix. Its release unit is
 published through tag CI, and the upstream WPA2/WPA3 firmware now performs one
 stock-rust-lld link through ordinary Cargo on Linux, macOS and Windows. The same
 plain-link image now passes an on-silicon init/non-empty-scan/native-runner gate;
-full transition-mode connect parity, pure WPA3 SAE+PMF and migration retirement
-remain open. Historical guarded linking is retained only for the vendor oracle.
+transition-mode connect parity is closed. Matching repository-owned Rust WPA3
+SoftAP and upstream-native WPA3 STA profiles now run a fixed non-production fixture.
+Across three unchanged-image 20-reset matrices, SAE/PMF/association/DHCP completed
+60/60 with no authentication-response-2 timeout, but one matrix recorded two local
+echo reply-path failures. The latest two matrices were 20/20; they do not erase
+those counterexamples. Evidence:
+[dual-board pure-WPA3 reliability](docs/plan/evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md).
+Migration retirement remains open.
+Historical guarded linking is retained only for the vendor oracle.
 
-BLE, SLE, TLS, SoftAP and Enterprise do not run in parallel with W2.
+BLE, SLE, TLS, Enterprise and broader user-facing SoftAP productization do not run
+in parallel with W2; the bounded SoftAP used as the HIL peer is part of this gate.
 
 ## NOW -- A5 Correctness And Release Closure
 
@@ -89,7 +97,7 @@ released closure now passes the fail-closed marker-contract-v2 QEMU fixture and 
 20/20 unchanged-image on-target matrix with zero authentication timeout, queue
 drop or backend error. Historical ICMP evidence remains dated evidence rather
 than the current pass/fail contract.
-Pure-WPA3 remains a separate external gate.
+Pure-WPA3 local data-path reliability remains the final two-board HIL gate.
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).

@@ -163,7 +163,7 @@ critical thread。
 
 <a id="ported-switch-intentticket-protocol-deferred"></a>
 
-### Ported Switch Intent/Ticket 协议（T0-T5 已完成，T6-T7 延期）
+### Ported Switch Intent/Ticket 协议（ticket 生命周期已证明，创建决策待补）
 
 当前 `recover_completed_switch_request` 已修复并通过真机证明“thread mode 选出 target
 后、提交 SWI 前，IRQ 已完成切换并又恢复 previous”的高频竞态。它是近期正确性修复，
@@ -205,6 +205,40 @@ crates.io publish run `30208614225` 成功。T4 当前仍用有界 `ready_contai
 detached ownership；显式 `ReadyDetached { intent_sequence }` 和删除 bounded scan
 属于 T7 之后的独立优化，不是当前正确性前置。`max-age` 与 100-reset 静止点统计仍归
 T6 真机门槛，不能由当前 host/形式化结果替代。
+
+#### T8 -- Intent 创建前的 `switch_away` TOCTOU（connectivity gate 后执行）
+
+alpha.12 的 `SwitchIntent` 模型和 Kani harness 从 intent 已经创建的状态开始，因此证明的是
+ticket 的 commit/cancel/consume 生命周期，而不是“当前是否仍应创建 ticket”的决策。
+实际逃逸缺陷位于更早的线性化边界：source 已被标记为 non-running 后，旧实现曾在两个
+critical section 之间允许 IRQ 完成 switch 并恢复 source，随后 thread mode 仍可能弹出
+ready target 并创建一个新的 intent。这是 specification boundary 缺失，不是证明器失效。
+
+在当前 connectivity 双板 gate 闭合后，按以下顺序补齐；不得以扩大 critical section 作为
+需求描述，关键是让 source 状态判断、target ownership transfer 和 ticket commit 共享一个
+原子 `prepare-or-observe-resume` 线性化点：
+
+1. 扩展 `RTOS-PORT-004` 和 requirement mapping，使 `switch_away` 与 production atomic
+   helper 成为实现事实源。后置条件只能是：提交唯一 pending ticket 并由其拥有 detached
+   target；或观察到 source 已恢复并返回 `NoSwitch`，ready ownership 保持不变。
+2. 扩展 `SwitchIntent.tla` 覆盖 `MarkedNonRunning`、`IRQSwitch`、`IRQResume` 和
+   `PrepareOrObserveResume`。旧 `Precheck`/`Prepare` 两阶段模型必须产生受控反例；修复模型
+   必须保持唯一 `Running`、`current` 一致、target 唯一归属、`NoSwitch` 不改变 ready
+   ownership、pending 单次消费以及静止点计数守恒。
+3. Kani 直接验证 production helper：source 已恢复时不 detach、不提交；合法 blocked/
+   sleeping/throttled/free source 精确提交一次；stale identity/resume generation fail closed
+   并恢复 target；idle 不进入普通 ready queue。
+4. deterministic host regression 精确重放 mark non-running、IRQ 切到 target、IRQ 再恢复
+   source 并增加 resume generation、随后 atomic prepare 返回 `NoSwitch`，并覆盖 sleep、
+   semaphore、mutex 和 task exit 的真实入口。
+5. HIL 在 Cooperative/Budgeted/Preemptive/Embassy 与 WPA3 SoftAP/STA 压力下记录
+   created/committed/cancelled/completed/pending、race recovery 和 max pending age；要求无
+   panic、永久 pending、detached target 丢失或双 `Running`，并把证据绑定修复 commit 与
+   ELF hash。alpha.21/alpha.22 的旧证据不能自动关闭这一新增 requirement。
+
+该工作不改变公开 API、`RunPolicy`、quota 或 Reservation，也不阻塞当前 connectivity
+收口。完成后，最终汇报必须分别说明“ticket lifetime proof”和“ticket creation decision
+proof”，不能再把两者合并表述为完整 port 线性化证明。
 
 ### Scheduler Lock 与中断
 
