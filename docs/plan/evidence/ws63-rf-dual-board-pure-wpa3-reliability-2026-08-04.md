@@ -8,6 +8,12 @@ SAE-only 能力证明，但发布可靠性门槛仍未关闭。三个 unchanged-
 scan、SAE、required PMF、association 和 DHCP，`WLAN_AUTH_RSP2_TIMEOUT=0`。
 
 后两轮各为 20/20，只说明后续观测窗口未复现，不能覆盖第一轮的两个反例。
+随后两组针对性矩阵再次复现本地回包失败，因此该门槛仍明确打开：关闭 STA power
+save 的 A/B 为 `15 pass + 5 local_data_path_failure`；加入 late-disconnect 消费和
+双向 IRQ/TX 诊断后的提交态矩阵为
+`16 pass + 3 local_data_path_failure + 1 scan_error`。这两组均为
+`auth_rsp2_timeouts=0`，证明省电不是根因，也不能用连接生命周期修复解释全部 TX/RX
+反例。
 
 ## 版本边界
 
@@ -23,6 +29,16 @@ scan、SAE、required PMF、association 和 DHCP，`WLAN_AUTH_RSP2_TIMEOUT=0`。
 本轮矩阵没有生成 artifact-identity manifest，因此这些记录是诊断证据，不替代
 最终 release gate 所需的提交态 ELF hash 与 immutable identity。
 
+后续 link-lifecycle 诊断矩阵已经补齐 artifact identity：
+
+- STA `ws63-examples` commit `3e598552ffcfda4ecc02f8becc575e7e4d7720c8`，
+  ELF SHA-256 `248ba24e421159610f0f31ccc4db2eb1f8efdc77c33e68a8af72a7fc2efbb0fa`；
+- AP `ws63-examples` commit `3fc9cbbe335c25f02486b33e4e958c5006437865`，
+  ELF SHA-256 `55ce2016b1523c00ff15dfdc44cf5baa961c79af07a99c30ce9ca100e996e6a5`；
+- 父仓 closure commit `4c7f59a299d20358f653ecbd885927419df219f6`；
+- 两块板均通过 probe-rs 3 MHz 完整 readback verify，分别耗时 91.92 s 与
+  99.61 s，随后只使用 J-Link nRST 重跑同一镜像。
+
 ## 矩阵结果
 
 | 矩阵 | 结果 | 认证超时 | 新增观测 |
@@ -30,6 +46,8 @@ scan、SAE、required PMF、association 和 DHCP，`WLAN_AUTH_RSP2_TIMEOUT=0`。
 | safe TX status | 18/20 | 0 | STA DMAC completion status histogram |
 | AP TX status observation | 20/20 | 0 | AP vendor TX 与 bounded echo 计数 |
 | ROM WLMAC TX counters | 20/20 | 0 | AP high/normal MPDU 与 TX-complete interrupt |
+| STA PM-off A/B | 15/20 | 0 | 关闭 STA power save 未消除本地反例 |
+| link lifecycle + IRQ45 | 16/20 | 0 | 3 次本地回包不足、1 次 scan timeout |
 
 第一轮 run 6 与 run 11 的共同路径：
 
@@ -54,6 +72,21 @@ pbuf reference，排除了调用方过早释放 pbuf 这一候选原因。
 整个 MAC/RX/IRQ 进度冻结、AP 收不到 request。当前新增的 IRQ45 lifecycle 快照会记录
 enable/disable/clear/dispatch 计数及最终 enabled/pending 状态，用来在下一轮真机矩阵中
 区分 vendor teardown、控制器 pending 卡住和 MAC source 不再产生中断。
+
+link-lifecycle 矩阵中的 3 次本地失败均已完成 pure-WPA3、DHCP 和 direct ARP，STA
+BSSID 仍 programmed，IRQ45 enabled 且无 pending；10 次 sequence-checked echo 中分别
+只收到 4、2、4 次。该矩阵没有出现此前“BSSID 清零后继续使用旧 lease”的形态，说明
+网络 runner 消费 `Disconnected` 并停止旧 IP 生命周期的修复是必要的，但不是 AP reply
+可靠性的充分修复。另一次失败是两轮 scan 均 operation timeout，必须继续单独保留 scan
+可靠性风险。
+
+SoftAP 调度快照同时发现：应用主线程仍为 Cooperative 时，优先级 0 的 vendor task
+曾处于 Ready 最长约 340 ms，应用主线程单次连续运行也达到约 341 ms。后续只把 adopted
+SoftAP application thread 改为 5 ms `Preemptive`，不改变 vendor task profile；该 A/B 的
+新 AP ELF SHA-256 为
+`2f67af71c311caa444c3459cdce88a13f6b31294b651d66c6baaeeb65ec66ceb`，父仓 commit 为
+`8eeb631b7c66acd0bd6727f06de983008c67e677`。该镜像已通过 3 MHz 完整 verify，只有新的
+20-reset 矩阵通过后才能判断调度延迟是否为 AP TX stall 根因。
 
 ## 未关闭门槛
 

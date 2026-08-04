@@ -10,8 +10,8 @@ controller/connect/control source-path failure injection 也已在 host、QEMU �
 后续 unchanged-image 矩阵曾记录公网 ICMP 丢包、一次本地数据面全丢和 scan timeout。
 当前 release closure 已改用直接 ARP 与冗余 UDP DNS contract，并取得 20/20；
 A5UX 无板/API 收窄已经完成。仓库内 Rust SoftAP/STA 已完成 pure-WPA3
-SAE/PMF 60/60，但三轮 20-reset 矩阵累计为 58/60，仍有两次本地 echo reply-path
-失败需要归因。
+SAE/PMF 能力证明，但后续 PM-off 与 link-lifecycle 诊断矩阵仍复现本地 echo
+reply-path 失败；当前正验证 SoftAP application thread 调度延迟这一候选根因。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -128,6 +128,16 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    echo request 的另一种形态；该轮 TX pbuf ownership 正常，BSSID 清零发生在 RX 冻结后。
    下一提交态矩阵必须同时采集两板 echo correlation 与 IRQ45 lifecycle，不能把两类反例
    合并为一个未经证明的根因。
+   关闭 STA power save 的 20-reset A/B 只有 `15 pass + 5 local_data_path_failure`，因此
+   power save 已被排除为充分根因。随后 STA 网络 runner 开始在 DHCP、local echo、DNS 和
+   steady-state 全阶段消费 late `Disconnected`，断链时终止旧 IP 生命周期并复用已扫描
+   BSS 重连。对应提交态矩阵为
+   `16 pass + 3 local_data_path_failure + 1 scan_error`；3 个本地失败均保留 programmed
+   BSSID、enabled IRQ45 和部分 echo reply，说明 lifecycle 修复关闭了 stale-link 缺口，
+   但没有关闭 AP reply 可靠性。SoftAP RTOS snapshot 又发现优先级 0 vendor task 的
+   `max_ready_latency_ms` 约 340 ms；当前 A/B 只把 adopted application thread 设为 5 ms
+   `Preemptive`，vendor task profile 保持不变。新 AP 已完成 3 MHz 完整 verify，20-reset
+   结果仍待验收；在结果出来前不能把调度候选写成根因。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
