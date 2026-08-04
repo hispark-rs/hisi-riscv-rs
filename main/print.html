@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b1e0b7b8.js";
+            window.path_to_searchindex_js = "searchindex-7a1e437d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1697,7 +1697,7 @@ git diff --exit-code -- Cargo.lock
 package 验证也必须传入该 crate 的最小发布 feature，而不是使用
 <code>--no-verify</code> 跳过验证。例如：</p>
 <pre><code class="language-bash">uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
-  --package --features chip-ws63
+  --package --features chip-ws63,profile-wifi-wpa2-smoltcp
 </code></pre>
 <ul>
 <li>改 public API 时同步更新 rustdoc/手册。HAL stable/unstable 变化必须同步更新 <a href="#stable-api-清单与门控状态">Stable API 清单</a>，并有对应真机 HIL 证据。</li>
@@ -1762,7 +1762,7 @@ bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
 </code></pre>
 <p>如果 crate 要求显式选择 chip/profile，则把同一个最小 feature 集传给自动
 preflight；不要用 <code>--no-verify</code> 绕过：</p>
-<pre><code class="language-bash">PACKAGE_FEATURES=chip-ws63 \
+<pre><code class="language-bash">PACKAGE_FEATURES=chip-ws63,profile-wifi-wpa2-smoltcp \
   bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
 </code></pre>
 <p>crates.io 没有 GitHub release asset；<code>publish.yml</code> 成功就是发布信号。若下游马上要依赖这个版本，等 crates.io index 能解析到它后再继续。</p>
@@ -2793,6 +2793,9 @@ image/init/scan/connect/DHCP/local-data-path/summary/steady/renew
 marker、fatal marker、非零内部 queue drop / TX error / backend error、A5B runner budget
 越界都会失败。本地硬门槛是 DHCP 成功，并通过 UDP 发送触发 neighbor discovery，要求
 <code>RFDBG_A5B_L2</code> 记录 ARP reply；目标优先使用 DHCP router，没有 router 时使用 DHCP server。
+当 peer 是仓库内受控 Rust SoftAP 时，本地 UDP echo 不再沿用“任意一包返回即通过”的临时
+门槛：STA 最多发送 10 个带 sequence 的请求，必须收到至少 5 个不同 sequence 的回复；
+重复回复不计数，<code>RF5C_LOCAL_ECHO_OK/ERR</code> 同时记录 attempts 与 replies。
 有默认路由的 profile 还必须向 AliDNS <code>223.5.5.5:53</code> 与 Baidu DNS
 <code>180.76.76.76:53</code> 交替发送固定 A 查询，至少一项返回来源、transaction id、QR/opcode、
 TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有下发默认路由时，
@@ -2806,6 +2809,17 @@ TC、rcode、question 和 answer count 均合法的响应。隔离 SoftAP 没有
 <code>hisi-connectivity-artifact/v1</code>（profile、ELF SHA-256、marker contract），解析前再次复核；
 不一致时拒绝把 UART 结果归到该镜像。成功或失败都把 raw UART、identity 和 summary 留在
 <code>EVIDENCE_DIR</code>，含凭据的临时 ELF/target 仍在退出时删除。</p>
+<p>双 WS63 SoftAP/STA 可靠性矩阵还应同时传入 <code>--peer-port</code>、<code>--peer-baud</code> 与
+<code>--peer-jlink-serial</code>。runner 在复位 STA 之前先复位 AP，并从复位前就打开两路 UART；每轮
+分别保存 <code>run-NN.uart.log</code> 与 <code>run-NN.peer.uart.log</code>。启用
+<code>data-path-diagnostics</code> 后，STA 的 <code>RFDBG_LOCAL_ECHO_PATH</code> 以 <code>sequence</code> 和
+<code>phase=send|receive|timeout</code> 标记每次本地 UDP echo，AP 的
+<code>RFDBG_SOFTAP_ECHO_PATH</code> 记录同一 sequence 的 vendor submit、TX complete、MAC IRQ 与
+completion-status 增量。summary 中的 <code>echo_correlation</code> 因而可以区分“STA 请求未到 AP”、
+“AP 已提交回复但 STA 未收到”和正常闭环；单路 STA 日志不能证明这条因果链。
+发布 gate 还必须同时提供 target 的 <code>--artifact-identity/--elf/--profile-id</code> 和 peer 的
+<code>--peer-artifact-identity/--peer-elf/--peer-profile-id</code>；任一组三项不完整或哈希漂移都会在
+复位前失败，summary 分别保存两块板的 manifest SHA-256。</p>
 <p>普通 CI 的 QEMU target fixture 也执行同一 parser，但必须携带
 <code>RFDBG_CONNECTIVITY_CONTRACT_FIXTURE scope=contract-only</code>。它只证明目标端 marker
 producer、artifact identity 和 classifier 契约可执行，不能替代真实 RF、AP 或硅片 HIL；
