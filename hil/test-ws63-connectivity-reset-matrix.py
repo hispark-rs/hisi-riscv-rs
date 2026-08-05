@@ -636,6 +636,51 @@ class ClassifyTests(unittest.TestCase):
             record["contract"]["violations"],
         )
 
+    def test_ready_ownership_hil_marker_requires_paired_zero_contract(self) -> None:
+        peer_log = (
+            b"RFDBG_SOFTAP_READY\n"
+            b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000000 "
+            b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+            b"ready_bad_link=0x00000000\n"
+        )
+        record = MATRIX.record_from_log(
+            1,
+            connectivity_success_log(),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            require_contract=True,
+            peer_log=peer_log,
+            peer_log_name="run-01.peer.uart.log",
+        )
+        summary = MATRIX.summarize_records(
+            [record],
+            port=None,
+            baud=115_200,
+            profile="rust",
+            stage="connectivity",
+            required_ap_mode=None,
+            timeout=90.0,
+            post_terminal_seconds=1.0,
+            reference_ping=None,
+        )
+        self.assertEqual(summary["evidence_markers"], ["A5R_READY_OWNERSHIP_OK"])
+
+        record["peer_ready_ownership"]["ready_dup"] = 1
+        summary = MATRIX.summarize_records(
+            [record],
+            port=None,
+            baud=115_200,
+            profile="rust",
+            stage="connectivity",
+            required_ap_mode=None,
+            timeout=90.0,
+            post_terminal_seconds=1.0,
+            reference_ping=None,
+        )
+        self.assertEqual(summary["evidence_markers"], [])
+
     def test_valid_public_dns_response_passes_connectivity(self) -> None:
         log = connectivity_success_log()
         self.assertEqual(

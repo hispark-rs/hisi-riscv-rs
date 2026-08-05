@@ -615,6 +615,28 @@ def validate_ready_ownership(log: bytes, role: str) -> list[str]:
     return violations
 
 
+def ready_ownership_hil_passed(records: list[dict[str, object]]) -> bool:
+    """Return true when every paired-board v3 contract proves zero drift."""
+    if not records:
+        return False
+    for record in records:
+        contract = record.get("contract")
+        if (
+            record.get("result") != "pass"
+            or not isinstance(contract, dict)
+            or contract.get("required") is not True
+            or contract.get("violations") != []
+        ):
+            return False
+        for field in ("ready_ownership", "peer_ready_ownership"):
+            snapshot = record.get(field)
+            if not isinstance(snapshot, dict):
+                return False
+            if any(snapshot.get(name) != 0 for name in READY_OWNERSHIP_FIELDS):
+                return False
+    return True
+
+
 def validate_rust_contract(
     log: bytes,
     stage: str,
@@ -1575,6 +1597,9 @@ def summarize_records(
         "resource_calibration": resource_calibration,
         "records": records,
     }
+    summary["evidence_markers"] = (
+        ["A5R_READY_OWNERSHIP_OK"] if ready_ownership_hil_passed(records) else []
+    )
     if source_dir is not None:
         summary["source_dir"] = str(source_dir.resolve())
     return summary
