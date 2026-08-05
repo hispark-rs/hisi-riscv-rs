@@ -176,13 +176,57 @@ credit/flow-control 和 completion IRQ 继续诊断；不得用增加 echo 次�
 `/private/tmp/ws63-tx-timeline-20260805-r14/` 与
 `/private/tmp/ws63-tx-timeline-20260805-r15/`。
 
+## 2026-08-05 scan 线性化修复与第二轮 TX completion 矩阵
+
+新增 scan timing 诊断最初在 vendor callback 中读取 ROM 单调时钟，违反 callback
+只发布有界状态的约束，并使 scan 路径停滞。时间读取移到普通 runner 后，真机又捕获到
+一个独立 TOCTOU：vendor completion 已发布，但 callback 可能在 backend 最后一次只读
+检查之后、timeout commit 之前到达，导致已完成 scan 被错误清理为 timeout。
+`hisi-rf-ws63` commit `5daed542888b82fa1eaae2c3ad459db7a6a45bbe`
+将 completion 与 timeout 改为对同一 `NATIVE_SCAN_ACTIVE` transaction 的原子认领，
+并增加直接覆盖该窗口的 host 回归；106 项 host test 和完整 RV32 release link 通过。
+
+修复后的不可变产物为：
+
+- AP ELF SHA-256
+  `ee232a5ec7065e3d606dacd982e84cfcd9dee3041620caf5a08756ac72bb1b9d`，
+  identity profile `pure-wpa3-softap-data-completion-queue-v4`；
+- STA ELF SHA-256
+  `d742dffede81b45972f5165f9da5499f4f50254b0ad38597bff4598e4642a905`，
+  identity profile `pure-wpa3-sta-atomic-scan-timeout-v6`；
+- 父仓 closure commit `617bb5d1d`；
+- AP/STA 均以 probe-rs 3 MHz 完整 readback verify 烧录一次，耗时分别为
+  91.46 s 和 106.82 s；随后 20 轮只执行配对 J-Link nRST。
+
+第二轮矩阵结果为 `18 capture_timeout + 2 local_data_path_failure`。这里的
+`capture_timeout` 不是 scan、SAE 或 association timeout：20/20 均输出 `RF3_SCAN_OK`、
+`W2E_WPA3_CONNECT_OK` 和 `RF5A_DHCP_OK`，且
+`WLAN_AUTH_RSP2_TIMEOUT=0`。两种分类只表示固件是否在 120 s 采集窗内完成本地探针
+总结；20 轮都没有达到 local-data-path pass gate。
+
+跨 20 轮的 AP 终态一致：
+
+1. AP 每轮向 vendor data TX 提交 3--5 个帧，`data_tx_submit_total` 与 `data_tx`
+   一致；
+2. 过滤后的 data completion 始终为
+   `data_tx_completion_total=0`，虽然管理帧 completion/IRQ 继续增长；
+3. 每轮至少一个 hardware data queue snapshot 保持非空，19 轮为
+   `0x80010101`，1 轮为 `0x80010202`；
+4. `mac_tx_norm` 和 `mac_tx_irq` 均增长，证明 MAC/IRQ 并非整体停止；
+5. 20 轮均无 scan failure、认证超时或 DHCP failure。
+
+因此最新高置信边界不再是泛化的“AP 软件队列到硬件队列”：描述符已进入 hardware
+data queue，但对应 data completion 和回收没有发生。下一步应对照原厂 ROM/DMAC
+调度路径检查 queue ownership、credit、调度 hook/触发与 completion 分类，修复后重新执行
+同一 20-reset contract；不得把延长 capture timeout 当作修复。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
-并进一步记录 AP 软件队列出队资格、硬件队列提交、credit/flow-control 与 completion IRQ。
-不能再用 5 ms 的即时 delta 代替异步 completion 归属，也不能靠增加 echo 次数掩盖
-`0/10` 反例。配对复位仍是发布 gate；可另跑 AP 常驻、只复位 STA 的差分矩阵，用于识别
-AP 启动时序或残留状态，但不能替代发布 gate。
+并聚焦 hardware data queue 已非空但 data completion 为 0 的 credit、调度触发、queue
+ownership 与 completion 分类。不能再用 5 ms 的即时 delta 代替异步 completion 归属，
+也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
+常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
 
 最终验收必须使用提交态同一镜像、写入 artifact identity，并至少完成 20 次
 unchanged-image nRST：无本地数据面失败、无永久 pending、无 queue drop、无

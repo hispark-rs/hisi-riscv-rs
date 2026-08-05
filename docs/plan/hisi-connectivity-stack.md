@@ -12,8 +12,10 @@ controller/connect/control source-path failure injection 也已在 host、QEMU �
 A5UX 无板/API 收窄已经完成。仓库内 Rust SoftAP/STA 已完成 pure-WPA3
 SAE/PMF 能力证明，但后续 PM-off、link-lifecycle 与 OSAL receive-wait 诊断矩阵仍复现
 本地 echo reply-path 失败。最新矩阵已经证伪 FRW worker 永久漏唤醒，并证明 adopted
-SoftAP application thread 的旧长运行窗口不是充分根因；当前正关联 AP RX、异步 TX
-completion 与 STA lower-RX 的逐 sequence 时间线。
+SoftAP application thread 的旧长运行窗口不是充分根因。最新提交态第二轮 20-reset
+矩阵已证明 scan/SAE/association/DHCP 为 20/20，但 AP 每轮 3--5 个 data submission
+进入非空 hardware data queue 后，过滤后的 data completion 始终为 0；当前门槛已收窄到
+AP hardware data queue 的 credit/调度触发/ownership/completion 边界。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -146,8 +148,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    packet number + timestamp 绑定异步 TX 归属，再区分 AP MAC completion、空口与 STA
    lower-RX，不能用 5 ms 即时 delta 代替修复。随后门槛修正后的提交态矩阵仍为
    `18 pass + 2 local_data_path_failure`，两次均是真实 `0/10`；AP 已生成并提交 reply，
-   软件 q0 仍持有 7 个 PPDU/MPDU，硬件 data queue 为空且 TX completion 为 0。当前下一
-   诊断边界因此收敛为 AP 软件队列到硬件调度/出队，而不是继续泛化为整个 RX/TX 路径。
+   软件 q0 仍持有 7 个 PPDU/MPDU，硬件 data queue 为空且 TX completion 为 0。随后修复
+   scan completion/timeout 的原子线性化，并以不可变 AP/STA identity 执行第二轮
+   20-reset：20/20 完成 scan、pure-WPA3 association 和 DHCP，但结果为
+   `18 capture_timeout + 2 local_data_path_failure`。AP 每轮提交 3--5 个 data frame，
+   hardware data queue 每轮保持非空（主要为 `0x80010101`），过滤后的 data completion
+   则始终为 0。因此当前诊断边界已越过软件队列出队，收敛为 hardware data queue 的
+   credit、调度触发、ownership 与 completion 分类，而不是继续泛化为整个 RX/TX 路径。
    reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
    [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
