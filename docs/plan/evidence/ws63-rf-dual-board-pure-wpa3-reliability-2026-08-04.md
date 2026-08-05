@@ -286,6 +286,37 @@ runner error 均为 0。STA 共发送 40 个 sequence-checked 本地 echo；AP �
 `/private/tmp/ws63-dual-board-20reset-round2-repeat-20260805/`；临时目录只作为本机原始
 采集位置，本页记录可长期复核的产物身份和聚合结果。
 
+### AP init 回归修复与提交态 20-reset 复验
+
+后续逐指令差分发现，`32ece62` 并未完全恢复 r18 的已验证热路径：
+`snapshot_dmac_tx_queues()` 仍在 enqueue/init 路径读取 ROM callback table。该读取使
+最终 `.text` 相对 r18 增长 32 bytes，并在 vendor `dmac_tx_process_data_event` 路径稳定
+触发 store-access trap。将 callback ID 239 的只读采样推迟到 TX completion 后，最终
+布局恢复到 r18 的 section 边界；唯一预期指令差异是使用已核实的 callback ID 239，
+而不是旧诊断中的 242。修复由 `hisi-rf-ws63` commit `261a132` 提交。
+
+提交态 AP ELF profile 为
+`pure-wpa3-softap-deferred-callback-sample-v7`，SHA-256 为
+`c8eb3cc17f8d0d905ed46d90a5baaf35cece3665904f17034b0e841f996c5bbf`。
+该镜像以 probe-rs 3 MHz、完整 readback verify 烧录，耗时 91.22 s；单轮 nRST
+预检恢复 `RFDBG_SOFTAP_READY` 与 `RFDBG_SOFTAP_NET_READY`，没有 init trap。
+
+随后保持 STA r17 镜像不变，对提交态 AP 执行 20 次 unchanged-image 配对 nRST：
+
+- `20/20` AP ready、`RF1_IMAGE_OK`、`RF2_INIT_OK`、`RF3_SCAN_OK`、
+  `W2E_WPA3_CONNECT_OK` 与 `RF5A_DHCP_OK`；
+- `WLAN_AUTH_RSP2_TIMEOUT=0`，两侧均无 panic；event queue drop 与 runner error
+  均为 0，最大 runner step 为 95--99 ms；
+- 顶层分类为 `19 capture_timeout + 1 local_data_path_failure`，因此 connectivity
+  gate 仍未通过；
+- 19 个带 echo marker 的样本中，STA 发送 38，AP 观察并提交 38，STA 接收 0；
+  `sent_missing_at_ap=0`，`submitted_without_sta_receive=38`。
+
+这轮关闭的是 AP init 回归，不是本地数据面问题。相较前一轮 `20/40` 请求在 AP 前
+不可见，本轮请求方向为 `38/38`，剩余失败更集中在 AP 已提交 reply 到 STA Rust RX
+之间。原始证据位于
+`/private/tmp/ws63-dual-board-20reset-commit-fix-matrix-20260805/`。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
