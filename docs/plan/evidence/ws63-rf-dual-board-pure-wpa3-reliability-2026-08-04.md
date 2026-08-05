@@ -417,6 +417,16 @@ completion-reschedule 的真实线性化点。最新失败轮已经重新证明 
 不能沿用早先“所有 completion 稳定存在”的结论，也不应先扩大 STA RX 日志。
 由于仅增加 event-return 诊断代码就能改变行为，观测方式必须保持最终布局，或先关闭
 normalized ELF 的布局契约。
+当前首要可证伪假设是 delayed reschedule timer 的 liveness：原厂 q0 dequeue/聚合路径通过
+`frw_dmac_timer_create_timer` 创建延迟调度，运行时链路为 OSAL base timer -> FRW message
+55 -> DMAC timeout list -> `dmac_tx_sched_timer_handler` -> `dmac_tx_schedule`。此前
+event-return 检查时 q0 尚为空，因此 `dmac_schedule_hook=0` 不能否证这条延迟链。
+下一次复现 stalled 终态时，应先用 debugger 只读检查 `0x181434` 起的 base timer 与
+`0x181450` timeout-list head，并只跟随有限节点，确认是否存在指向 q0 且已 overdue 的
+timer。只有得到该证据后，才受控触发一次现有 timeout/message 55 链或
+`dmac_tx_schedule(device, 0)`，观察 software queue、completion 与 STA reply 是否恢复。
+这些地址来自当前 pinned ROM/SDK oracle，不是跨 archive 的稳定 ABI；使用前必须再次绑定
+ELF/archive hash。
 不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。

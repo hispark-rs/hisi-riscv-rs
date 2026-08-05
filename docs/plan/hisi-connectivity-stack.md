@@ -189,7 +189,12 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    software queue。故当前剩余 blocker 是 AP queue-0 lost-kick/调度闭环，不是 smoltcp
    socket burst、STA PM 或已经完成的 queue-3 completion 分类。一次 event-return 后的
    scheduler 补踢实验因检查时 queue 0 仍为空且 text layout 改变而 `0/3`，已撤销；后续
-   诊断必须保留最终布局并观测真实 enqueue/schedule 线性化点。
+   诊断必须保留最终布局并观测真实 enqueue/schedule 线性化点。当前首要可证伪假设是
+   queue-0 的 delayed reschedule timer 丢失或未重臂：原厂链路经 OSAL base timer、FRW
+   message 55、DMAC timeout list，最终调用 `dmac_tx_sched_timer_handler ->
+   dmac_tx_schedule`。下一次 stalled 终态先用 debugger 只读检查 timer 与有限 timeout
+   list；只有确认对应 q0 timer 已 overdue，才受控触发一次既有 timeout/message 或
+   `dmac_tx_schedule(device, 0)`。这项诊断不得先修改 RF text 或改变最终布局。
    reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
    [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
