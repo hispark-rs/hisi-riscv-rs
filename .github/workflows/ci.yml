@@ -172,7 +172,7 @@ jobs:
             .records[0].contract.violations == []
           ' "$evidence/contract/summary.json" >/dev/null
       - name: Upload contract-only QEMU evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ws63-connectivity-contract-qemu
           path: ${{ runner.temp }}/connectivity-contract-evidence
@@ -257,7 +257,7 @@ jobs:
           --output target/plain-radio-${{ matrix.profile }}/rf-build-report.json
       - name: Upload the unified RF build report
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rf-build-report-${{ matrix.profile }}
           path: |
