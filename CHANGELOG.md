@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Release train anchor: `hisi-hal 0.7.0-alpha.6`.
+Release train anchor: `hisi-hal 0.7.0-alpha.7`.
 
 ### Changed
+
+- **Bounded connectivity release closure** — publish `hisi-rf-ws63
+  0.1.0-alpha.71`, `hisi-rf 0.1.0-alpha.83`, `hisi-rtos 0.1.0-alpha.23`,
+  `ws63-pac 0.4.4`, and `hisi-hal 0.7.0-alpha.7`; update the WS63 examples and
+  template to the same dependency train. Separate immutable WPA2 and pure-WPA3
+  images from this closure each pass a two-board 20-reset matrix with 200/200
+  local UDP echo replies, zero authentication-response timeout, zero event
+  drop, and zero backend error. The RTOS detached-target diagnostics remain in
+  place, but their mutation counters stayed zero in these runs, so the evidence
+  does not assign the historical failure to a single fix.
 
 - **A5B worker admission** — publish `hisi-rf-ws63 0.1.0-alpha.65` and
   `hisi-rf 0.1.0-alpha.75`, separating the seven-slot vendor bootstrap from

@@ -93,17 +93,21 @@ incremental runner, and WS63 backend, with identical QEMU and silicon output.
 The public `wifi_connectivity` example now composes the facade, incremental
 runner, scan/connect, DHCP, direct ARP evidence, redundant public UDP DNS and lease renewal
 in one final ELF.
-The response-bound and full connectivity scripts build that same image. The
-released closure now passes the fail-closed marker-contract-v2 QEMU fixture and a
-20/20 unchanged-image on-target matrix with zero authentication timeout, queue
-drop or backend error. Historical ICMP evidence remains dated evidence rather
-than the current pass/fail contract.
-Pure-WPA3 local data-path reliability remains the final two-board HIL gate.
+The response-bound and full connectivity scripts build immutable profile-specific
+images from the same release closure; WPA2 and pure-WPA3 are not one ELF. The
+pinned release-candidate closure now passes the fail-closed marker-contract-v2
+QEMU fixture plus separate WPA2 and pure-WPA3 two-board 20-reset matrices. Both
+profiles reached 20/20 with 200/200 local echo replies, zero authentication
+timeout, queue drop, or backend error. Historical ICMP evidence remains dated
+evidence rather than the current pass/fail contract. Exact artifacts and the
+remaining causality boundary are recorded in the
+[release-closure evidence](docs/plan/evidence/ws63-rf-release-closure-wpa2-wpa3-2026-08-06.md).
 
 The application migration contract is documented in
 [`ws63-rf-rs` to `hisi-rf`](docs/src/how-to/12-migrate-ws63-rf-to-hisi-rf.md).
-The project closes those findings one at a time while keeping the verified
-blocking backend as the default. It does not remove the vendor oracle, claim
+`hisi-rf-ws63 0.1.0-alpha.71` and `hisi-rf 0.1.0-alpha.83` make the bounded runner
+the named-profile default; the blocking backend remains only behind an explicit
+migration feature. This does not remove the vendor oracle, claim
 WPA3 stability, or start BLE/SLE/TLS/NVS work while the A5 window is active.
 
 Task-stack and shared-arena admission are now closed before hardware startup:
