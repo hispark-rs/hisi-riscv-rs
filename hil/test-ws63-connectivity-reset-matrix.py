@@ -25,6 +25,11 @@ def a5b_success_log() -> bytes:
     return b"\n".join(
         (
             b"W2E_AP_SECURITY mode=transition",
+            (
+                b"RFDBG_A5B_SCHED ready_owner_err=0x00000000 "
+                b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+                b"ready_bad_link=0x00000000"
+            ),
             b"RFDBG_A5B_INITIALIZE_OK elapsed_ms=0x00000024",
             b"RFDBG_A5B_SCAN_OK elapsed_ms=0x00000620 count=0x00000009 truncated=0x00000000",
             b"RFDBG_A5B_CONNECT_OK elapsed_ms=0x0000002a",
@@ -63,6 +68,11 @@ def connectivity_success_log() -> bytes:
     return b"\n".join(
         (
             b"RF1_IMAGE_OK",
+            (
+                b"RFDBG_A5B_SCHED ready_owner_err=0x00000000 "
+                b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+                b"ready_bad_link=0x00000000"
+            ),
             b"RF2_INIT_OK ifname=hisi-rf",
             b"A4_RADIO_EVENT kind=initialized",
             b"RF3_SCAN_OK count=0x00000003",
@@ -574,6 +584,15 @@ class ClassifyTests(unittest.TestCase):
         log = connectivity_success_log()
         self.assertEqual(MATRIX.validate_rust_contract(log, "connectivity"), [])
         self.assertEqual(
+            MATRIX.parse_ready_ownership(log),
+            {
+                "ready_owner_err": 0,
+                "ready_dup": 0,
+                "ready_wrong_bucket": 0,
+                "ready_bad_link": 0,
+            },
+        )
+        self.assertEqual(
             MATRIX.classify(
                 log,
                 "rust",
@@ -581,6 +600,40 @@ class ClassifyTests(unittest.TestCase):
                 require_contract=True,
             ),
             "pass",
+        )
+
+    def test_connectivity_contract_rejects_ready_ownership_violation(self) -> None:
+        log = connectivity_success_log().replace(
+            b"ready_owner_err=0x00000000",
+            b"ready_owner_err=0x00000001",
+        )
+        self.assertIn(
+            "nonzero:sta.ready_ownership.ready_owner_err=1",
+            MATRIX.validate_rust_contract(log, "connectivity"),
+        )
+
+    def test_peer_contract_rejects_ready_queue_link_violation(self) -> None:
+        peer_log = (
+            b"RFDBG_SOFTAP_READY\n"
+            b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000000 "
+            b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+            b"ready_bad_link=0x00000001\n"
+        )
+        record = MATRIX.record_from_log(
+            1,
+            connectivity_success_log(),
+            "rust",
+            "connectivity",
+            None,
+            "run-01.uart.log",
+            require_contract=True,
+            peer_log=peer_log,
+            peer_log_name="run-01.peer.uart.log",
+        )
+        self.assertEqual(record["result"], "contract_violation")
+        self.assertIn(
+            "nonzero:peer.ready_ownership.ready_bad_link=1",
+            record["contract"]["violations"],
         )
 
     def test_valid_public_dns_response_passes_connectivity(self) -> None:

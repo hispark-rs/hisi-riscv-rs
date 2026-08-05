@@ -113,7 +113,7 @@ A5B_METRIC_MARKERS = {
 }
 
 ARTIFACT_IDENTITY_SCHEMA = "hisi-connectivity-artifact/v1"
-MARKER_CONTRACT = "ws63-connectivity-markers/v2"
+MARKER_CONTRACT = "ws63-connectivity-markers/v3"
 
 RUST_FATAL_MARKERS = (
     b"A4_NET_ERR",
@@ -154,6 +154,12 @@ IRQ45_LIFECYCLE_FIELDS = (
     "irq45",
     "irq45_enabled",
     "irq45_pending",
+)
+READY_OWNERSHIP_FIELDS = (
+    "ready_owner_err",
+    "ready_dup",
+    "ready_wrong_bucket",
+    "ready_bad_link",
 )
 
 RUST_STAGE_MARKERS = {
@@ -586,6 +592,29 @@ def validate_a5b_metrics(
     return violations
 
 
+def parse_ready_ownership(log: bytes) -> dict[str, int] | None:
+    line = last_prefixed_line(log, b"RFDBG_A5B_SCHED ")
+    if line is None:
+        line = last_prefixed_line(log, b"RFDBG_SOFTAP_SCHED ")
+    return parse_hex_fields(line) if line is not None else None
+
+
+def validate_ready_ownership(log: bytes, role: str) -> list[str]:
+    snapshot = parse_ready_ownership(log)
+    if snapshot is None:
+        return [f"missing:{role}.ready_ownership"]
+
+    violations: list[str] = []
+    for field in READY_OWNERSHIP_FIELDS:
+        if field not in snapshot:
+            violations.append(f"missing:{role}.ready_ownership.{field}")
+        elif snapshot[field] != 0:
+            violations.append(
+                f"nonzero:{role}.ready_ownership.{field}={snapshot[field]}"
+            )
+    return violations
+
+
 def validate_rust_contract(
     log: bytes,
     stage: str,
@@ -626,6 +655,7 @@ def validate_rust_contract(
                 violations.append("invalid:scan.count")
 
     if stage in ("connect", "connectivity"):
+        violations.extend(validate_ready_ownership(log, "sta"))
         violations.extend(
             validate_a5b_metrics(
                 log,
@@ -1369,6 +1399,8 @@ def record_from_log(
         and b"RFDBG_SOFTAP_READY" not in peer_log
     ):
         contract_violations.append("missing peer RFDBG_SOFTAP_READY marker")
+    if require_contract and peer_log is not None:
+        contract_violations.extend(validate_ready_ownership(peer_log, "peer"))
     result = classify(
         log,
         profile,
@@ -1399,12 +1431,14 @@ def record_from_log(
         "l2_protocol": parse_l2_protocol_diagnostics(log),
         "local_echo_path": local_echo_path,
         "irq45_lifecycle": irq45_lifecycle,
+        "ready_ownership": parse_ready_ownership(log),
         "peer_bytes": len(peer_log) if peer_log is not None else None,
         "peer_ready": (
             b"RFDBG_SOFTAP_READY" in peer_log if peer_log is not None else None
         ),
         "peer_echo_path": peer_echo_path,
         "peer_irq45_lifecycle": peer_irq45_lifecycle,
+        "peer_ready_ownership": parse_ready_ownership(peer_log or b""),
         "echo_correlation": correlate_echo_paths(local_echo_path, peer_echo_path),
         "a5b_metrics": parse_a5b_metrics(
             log,
