@@ -220,6 +220,20 @@ data queue，但对应 data completion 和回收没有发生。下一步应对�
 调度路径检查 queue ownership、credit、调度 hook/触发与 completion 分类，修复后重新执行
 同一 20-reset contract；不得把延长 capture timeout 当作修复。
 
+后续 ROM callback table 只读核对又修正了一项诊断误差。当前 build profile 中
+`FRD_ROM_TX_SCH` 的实际 ID 是 239，对应 callback `dmac_tx_schedule_cb`；ID 238 为空。
+因此早先 `dmac_schedule_hook=0` 只是读取了错误 slot，不能作为“scheduler hook 未安装”
+的证据。硅片 callback table 的 ID 239 为非零，且与原厂最终 ELF 中的 callback symbol
+一致。
+
+尝试用 linker `--wrap` 观测 `dmac_tx_need_schedule` / `dmac_tx_schedule` 时，AP 连续停在
+`RFDBG_SOFTAP_INIT_BEGIN`。二分到仅保留一个 wrap、再完全移除 wrap 后发现：只有完整撤销
+该诊断增量、恢复已验证的 RF/example 树内容，AP 才重新输出 `RFDBG_SOFTAP_READY`，STA
+也重新完成 scan、pure-WPA3 association 和 DHCP。故这组侵入式诊断已由
+`hisi-rf-ws63` commit `9e7b872` 和父仓 commit `3b11c7e83` 移除；它不进入发布路径。
+后续调度归因必须采用不改变 ROM symbol resolution 和最终布局的只读手段，并继续绑定
+ELF hash 与 artifact identity。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，

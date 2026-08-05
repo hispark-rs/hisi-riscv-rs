@@ -155,6 +155,10 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    hardware data queue 每轮保持非空（主要为 `0x80010101`），过滤后的 data completion
    则始终为 0。因此当前诊断边界已越过软件队列出队，收敛为 hardware data queue 的
    credit、调度触发、ownership 与 completion 分类，而不是继续泛化为整个 RX/TX 路径。
+   ROM callback table 的后续只读核对确认当前 profile 的 TX scheduler callback ID 为
+   239 且已安装；此前读取 ID 238 得到 0 是诊断错误，不能说明 hook 缺失。直接用 linker
+   `--wrap` 观测 ROM scheduler symbol 会让 AP 停在 init，已从默认路径移除；后续只允许
+   不改变 ROM symbol resolution、RF layout 和 artifact identity 的诊断方式。
    reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
    [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
