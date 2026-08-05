@@ -15,7 +15,10 @@ block/sleep/exit 的状态转换、target detach 和 pending ticket commit 现�
 queue。固定 AP/STA ELF 的最新配对 20-reset 矩阵达到 `20/20`，STA 本地 echo
 `200/200`，AP 最终 echo 计数每轮达到 `10/10`，timer worker 持续前进。该结果关闭当前
 release candidate 的可复现本地数据面反例，但不能从成功矩阵反推旧 run 4/run 10 的
-唯一根因；形式化验证仍需分别覆盖 ticket 创建决策与完整 ready ownership 不变量。
+唯一根因。`hisi-rtos` commit `7cbcd48` 已把 ticket 创建前的
+`prepare-or-observe-resume` 决策纳入 production helper、受控 TLA+ 旧设计反例、Kani
+和入口级 host regression，并由同一提交的 RTOS profile 与双板矩阵完成真机 parity；
+完整 ready ownership 不变量仍按后续独立任务推进。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -1521,7 +1524,7 @@ A5R 后续排期和验收顺序。
   RV32 build/clippy、requirements gate 和 CI run `30208473782` 全绿，publish run
   `30208614225` 成功。已有 `switch_race_recoveries` 仍保留；只有 T6 真机 parity
   完成后才允许执行 T7 删除。
-- [ ] **A5R-F4B -- Switch intent 创建决策线性化**：alpha.12 的证明从 intent 已创建
+- [x] **A5R-F4B -- Switch intent 创建决策线性化**：alpha.12 的证明从 intent 已创建
   开始，覆盖 commit/cancel/consume 与 detached ownership；它没有覆盖 `switch_away`
   将 source 标记为 non-running 后、准备 intent 前被 IRQ 切换并恢复 source 的 TOCTOU。
   connectivity 最终双板 gate 闭合后，扩展 `RTOS-PORT-004`，把 task-state transition、
@@ -1531,8 +1534,13 @@ A5R 后续排期和验收顺序。
   TLA+ 必须让旧两阶段设计产生受控反例并让新模型通过；Kani 必须直接验证 production
   helper；host regression 必须覆盖 sleep、semaphore、mutex 和 task exit；最终以
   Cooperative/Budgeted/Preemptive/Embassy 加 WPA3 SoftAP/STA 压力矩阵绑定修复 commit、
-  ELF hash、intent 守恒计数和最大 pending age。完成前不得把 F4 写成覆盖 ticket creation
-  decision，也不得删除现有 `recover_completed_switch_request` 防线。
+  ELF hash、intent ownership 和 pending 状态。`hisi-rtos` commit `7cbcd48` 已完成上述
+  production、TLA+、Kani、host、RV32 与 CI gate；固定 AP/STA ELF 的 20-reset 矩阵为
+  20/20，STA echo 200/200，100 个 AP scheduler snapshot 均无 pending target，timer
+  worker dispatch 单调前进，detached priority/policy mutation 计数均为 0。完整证据见
+  [switch-intent creation evidence](evidence/ws63-rtos-switch-intent-creation-2026-08-06.md)。
+  该结果证明修复和 parity，不把旧 run 4/run 10 归因为单一根因；连续 max-pending-age
+  计量归入 observability 改进，现有 `recover_completed_switch_request` 防线继续保留。
 - [x] **A5R-F5 -- 证据门槛**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
