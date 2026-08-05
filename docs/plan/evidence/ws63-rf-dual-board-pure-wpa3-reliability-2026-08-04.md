@@ -464,7 +464,32 @@ metadata 已经生效，AP completion 后的 vendor-private snapshot 也早已�
 `20/20 capture_timeout` 固定 ELF，v18 还跨越 PM profile、UDP capacity 和多轮 RF 诊断
 清理，是多变量对照，不能用于声称 RTOS 单点因果。
 
-## 未关闭门槛
+### Detached mutation 因果探针
+
+为验证旧实现的 detached target 缺陷是否在当前 upstream-native SoftAP 负载中真实触发，
+`hisi-rtos` 在 priority/policy mutation 入口增加两个只读饱和计数器。计数条件严格限定为：
+task 为 `Ready`、不在 ready queue，且恰为当前 pending switch target。host 回归分别构造
+priority inheritance 与 policy mutation 路径，并确认计数和 detached ownership 同时保持。
+
+诊断 AP ELF SHA-256 为
+`5cb1a67f72efd0b8875dc5e751ae044868e838d3ec86a2e744bd49ea67d79fc7`，profile 为
+`pure-wpa3-softap-detached-mutation-diag-v19`；STA 继续使用上述 v18 ELF 和 profile，避免
+重烧或修改 STA。先执行 3-reset，再用同一产物执行 20-reset：
+
+- 两组分别为 `3/3` 与 `20/20`，`auth_rsp2_timeouts=0`；
+- 20-reset 的 STA sequence-checked echo 为 `200 sent / 200 received`，每轮 `10/10`；
+- 所有 AP scheduler snapshot 中 `detached_prio_mut=0`、`detached_policy_mut=0`；
+- 没有 panic、永久 pending 或本地数据面失败。
+
+原始证据位于
+`/private/tmp/ws63-rtos-detached-mutation-diag-3reset-20260805/` 和
+`/private/tmp/ws63-rtos-detached-mutation-diag-20reset-20260805/`。这项负证据说明：修复的
+ownership 缺陷真实且可由 host test 构造，但该 20-reset 工作负载没有观测到其生产触发
+条件。因而 v18/v19 的稳定结果不能唯一归因于 priority inheritance 或 policy mutation；
+若历史形态再次出现，应扩展 ready bucket、membership multiplicity 与有界链诊断，而不是
+把零计数解释成“缺陷不存在”。
+
+## 剩余因果与发布门槛
 
 下一诊断必须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
 但先聚焦 AP queue-0 enqueue、`dmac_tx_need_schedule`、`dmac_tx_schedule` 与

@@ -2087,8 +2087,14 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   最新提交态 socket-capacity 矩阵已把普通 burst 丢包从应用测量中移除：三轮为
   `30/30`，20-reset 中 17 轮 `10/10`、一轮 `7/10`、两轮 `0/10`。两个零回复反例的 AP
   queue 0 software queue 非空、hardware queue 空闲且 queue-0 completion 为 0；成功轮
-  则有十个 queue-0 completion。下一项必须关闭该调度闭环反例，不能再把它归为 STA
-  lower-RX，也不能用提高 socket 容量掩盖。
+  则有十个 queue-0 completion。后续 `hisi-rtos fac6dd4` 收窄 switch-away 线性化并修复
+  pending target 的 detached ready ownership 后，固定 v18 产物完成 20/20、STA echo
+  `200/200`，timer worker 不再冻结。追加 v19 只读因果计数器后，同一 STA、仅替换 AP 的
+  20-reset 仍为 20/20、`200/200`，但 detached pending target 的 priority/policy mutation
+  计数始终为 0。因此当前组合已关闭复现门槛，却没有证明旧反例实际命中了该 mutation
+  路径；不得把相关性改写成单一根因，也不能用提高 socket 容量掩盖历史反例。详细变量
+  边界与原始证据见
+  [pure-WPA3 reliability evidence](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)。
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 
