@@ -15,6 +15,11 @@ save 的 A/B 为 `15 pass + 5 local_data_path_failure`；加入 late-disconnect 
 `auth_rsp2_timeouts=0`，证明省电不是根因，也不能用连接生命周期修复解释全部 TX/RX
 反例。
 
+2026-08-05 又完成一轮带两板 OSAL wait/wakeup 终态快照的提交态矩阵，结果为
+`18 pass + 2 local_data_path_failure`。两次失败仍分别收到 `4/10` 和 `3/10`
+sequence-checked UDP reply；认证、DHCP、ARP、IRQ45 和 vendor worker 都持续运行。
+因此该轮证伪了“FRW worker 永久漏唤醒/睡死”这一候选，但没有关闭本地数据路径门槛。
+
 ## 版本边界
 
 - `hisi-rf-ws63`: `0ae1f80b7c193c626c71cdda857953ee6da84b02`
@@ -39,6 +44,18 @@ save 的 A/B 为 `15 pass + 5 local_data_path_failure`；加入 late-disconnect 
 - 两块板均通过 probe-rs 3 MHz 完整 readback verify，分别耗时 91.92 s 与
   99.61 s，随后只使用 J-Link nRST 重跑同一镜像。
 
+OSAL receive-wait 诊断矩阵同样绑定不可变产物：
+
+- AP `ws63-examples` commit `9126643a7674f969e8e78668dce18adc8fee1423`，
+  ELF SHA-256 `f5fffb13f7f227aee51894499378948ae79ca5c7069e5c9479fe19f809284908`；
+- STA `ws63-examples` commit `2295978cb5ba43a5b3cbaae05778bfc91b899ae6`，
+  ELF SHA-256 `8b3095bba31ec08f064089dc62e7a6920503134d3f91bfed34d3c6eb91dd3f8b`；
+- facade diagnostic re-export 为 `hisi-rf` commit
+  `1a401fafc3d2d1c9a1be9d8e29856394c3f3b49a`，父仓 closure commit 为
+  `02a0ed36f`；
+- AP/STA 分别以 3 MHz 完整 readback verify 烧录一次，耗时 91.27 s 与
+  99.63 s；之后 20 轮只执行配对 J-Link nRST。
+
 ## 矩阵结果
 
 | 矩阵 | 结果 | 认证超时 | 新增观测 |
@@ -48,6 +65,7 @@ save 的 A/B 为 `15 pass + 5 local_data_path_failure`；加入 late-disconnect 
 | ROM WLMAC TX counters | 20/20 | 0 | AP high/normal MPDU 与 TX-complete interrupt |
 | STA PM-off A/B | 15/20 | 0 | 关闭 STA power save 未消除本地反例 |
 | link lifecycle + IRQ45 | 16/20 | 0 | 3 次本地回包不足、1 次 scan timeout |
+| OSAL receive-wait terminal snapshot | 18/20 | 0 | 两次部分回包；FRW wait/wakeup 与 task dispatch 持续前进 |
 
 第一轮 run 6 与 run 11 的共同路径：
 
@@ -85,19 +103,32 @@ SoftAP 调度快照同时发现：应用主线程仍为 Cooperative 时，优先
 SoftAP application thread 改为 5 ms `Preemptive`，不改变 vendor task profile；该 A/B 的
 新 AP ELF SHA-256 为
 `2f67af71c311caa444c3459cdce88a13f6b31294b651d66c6baaeeb65ec66ceb`，父仓 commit 为
-`8eeb631b7c66acd0bd6727f06de983008c67e677`。该镜像已通过 3 MHz 完整 verify，只有新的
-20-reset 矩阵通过后才能判断调度延迟是否为 AP TX stall 根因。
+`8eeb631b7c66acd0bd6727f06de983008c67e677`。后续 OSAL 诊断矩阵继续使用该
+Preemptive application-thread 方向仍只有 18/20，因此 adopted main 的旧长运行窗口不是
+充分根因。
+
+## 2026-08-05 OSAL 与逐序列归因
+
+run 6 收到 sequence `0,1,4,5`，AP 观察并提交 `0,1,2,4,5,6`；run 19 收到
+`0,2,4`，AP 则观察并提交全部 `0..9`。两轮 STA 的 IRQ45 均保持 enabled、无 pending，
+DMAC/HMAC/vendor/Rust RX 计数在探测期仍增长。AP 与 STA 的 `frw_task_thread` wait slot
+也持续表现为 `blocks = wakeups + 1` 的正常阻塞终态，task dispatch 数在失败前后继续增长，
+没有永久 pending、queue drop 或 worker 消失。
+
+这把当前风险进一步拆成两类：run 6 中有 4 个 request 在 AP Rust echo 层不可见；run 19
+中 AP 已提交全部 reply，但只有 3 个进入 STA Rust-visible RX。AP 每个 reply 后 5 ms
+窗口内的 TX-complete 增量与收到的 sequence 有较强相关性，但该窗口不能证明缺少增量的
+packet 永久未完成：异步 completion 可能落入下一 sequence 的窗口。下一轮必须给 AP
+RX、reply submission、completion packet number 和 STA RX 使用同一 sequence/timestamp
+时间线，才能区分 MAC completion 延迟、空口丢失和 STA lower-RX 丢失。
 
 ## 未关闭门槛
 
-下一诊断镜像须把 AP echo reply 区间与 ROM WLMAC normal-MPDU/TX-complete
-增量逐轮关联，并同时保留 STA/AP IRQ45 lifecycle。若失败轮的 ROM 计数未覆盖 10 个
-reply，继续定位 AP vendor enqueue 到 MAC；若计数覆盖，则转向空口 ACK、STA lower
-RX/filter/IRQ。若 STA MAC/RX/IRQ 计数整体冻结，则先用 enabled/pending 与 lifecycle
-调用计数裁决控制器状态，再检查 MAC source 与 link-loss 时间线。
-STA 同时按每次 echo 窗口记录 MAC、DMAC、HMAC、vendor RX 与 Rust L2 的累计快照，
-由 matrix 计算相邻窗口增量。配对复位仍是发布 gate；可另跑 AP 常驻、只复位 STA 的
-差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
+下一诊断镜像须把 AP echo request 接收、reply submission、completion packet number 与
+STA reply 接收放进同一有界时间线，并保留两板 IRQ45 lifecycle 和 OSAL wait 终态。
+不能再用 5 ms 的即时 delta 代替异步 completion 归属，也不能靠增加 echo 次数或降低
+required replies 掩盖反例。配对复位仍是发布 gate；可另跑 AP 常驻、只复位 STA 的差分
+矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
 
 最终验收必须使用提交态同一镜像、写入 artifact identity，并至少完成 20 次
 unchanged-image nRST：无本地数据面失败、无永久 pending、无 queue drop、无

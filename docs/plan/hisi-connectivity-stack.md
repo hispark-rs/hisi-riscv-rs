@@ -10,8 +10,10 @@ controller/connect/control source-path failure injection 也已在 host、QEMU �
 后续 unchanged-image 矩阵曾记录公网 ICMP 丢包、一次本地数据面全丢和 scan timeout。
 当前 release closure 已改用直接 ARP 与冗余 UDP DNS contract，并取得 20/20；
 A5UX 无板/API 收窄已经完成。仓库内 Rust SoftAP/STA 已完成 pure-WPA3
-SAE/PMF 能力证明，但后续 PM-off 与 link-lifecycle 诊断矩阵仍复现本地 echo
-reply-path 失败；当前正验证 SoftAP application thread 调度延迟这一候选根因。
+SAE/PMF 能力证明，但后续 PM-off、link-lifecycle 与 OSAL receive-wait 诊断矩阵仍复现
+本地 echo reply-path 失败。最新矩阵已经证伪 FRW worker 永久漏唤醒，并证明 adopted
+SoftAP application thread 的旧长运行窗口不是充分根因；当前正关联 AP RX、异步 TX
+completion 与 STA lower-RX 的逐 sequence 时间线。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -136,8 +138,13 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    BSSID、enabled IRQ45 和部分 echo reply，说明 lifecycle 修复关闭了 stale-link 缺口，
    但没有关闭 AP reply 可靠性。SoftAP RTOS snapshot 又发现优先级 0 vendor task 的
    `max_ready_latency_ms` 约 340 ms；当前 A/B 只把 adopted application thread 设为 5 ms
-   `Preemptive`，vendor task profile 保持不变。新 AP 已完成 3 MHz 完整 verify，20-reset
-   结果仍待验收；在结果出来前不能把调度候选写成根因。
+   `Preemptive`，vendor task profile 保持不变。新 AP/STA 均完成 3 MHz 完整 verify，随后
+   OSAL receive-wait 终态矩阵得到 `18 pass + 2 local_data_path_failure`。失败轮分别收到
+   `4/10` 与 `3/10` reply；两板 FRW wait/wakeup、task dispatch、IRQ45 与 HMAC RX 都继续
+   前进，因此永久漏唤醒和 adopted-main 旧调度延迟都不是充分根因。run 6 有 4 个 request
+   未到 AP Rust echo 层；run 19 中 AP 已观察并提交全部 10 个 reply。下一步必须用 completion
+   packet number + timestamp 绑定异步 TX 归属，再区分 AP MAC completion、空口与 STA
+   lower-RX，不能用 5 ms 即时 delta 或放宽 reply 门槛代替修复。
    完整证据见
    [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续

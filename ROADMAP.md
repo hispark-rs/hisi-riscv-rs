@@ -65,10 +65,11 @@ stock-rust-lld link through ordinary Cargo on Linux, macOS and Windows. The same
 plain-link image now passes an on-silicon init/non-empty-scan/native-runner gate;
 transition-mode connect parity is closed. Matching repository-owned Rust WPA3
 SoftAP and upstream-native WPA3 STA profiles now run a fixed non-production fixture.
-Across three unchanged-image 20-reset matrices, SAE/PMF/association/DHCP completed
-60/60 with no authentication-response-2 timeout, but one matrix recorded two local
-echo reply-path failures. The latest two matrices were 20/20; they do not erase
-those counterexamples. Evidence:
+Across the original three unchanged-image 20-reset matrices,
+SAE/PMF/association/DHCP completed 60/60 with no authentication-response-2 timeout,
+but one matrix recorded two local echo reply-path failures. Later targeted matrices
+reproduced partial reply loss. The latest OSAL-instrumented matrix was 18/20 and
+ruled out a permanently sleeping FRW worker without closing the data-path gate. Evidence:
 [dual-board pure-WPA3 reliability](docs/plan/evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md).
 Migration retirement remains open.
 Historical guarded linking is retained only for the vendor oracle.
