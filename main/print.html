@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-7a1e437d.js";
+            window.path_to_searchindex_js = "searchindex-0471372e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1669,6 +1669,9 @@ cargo build -p myperiph_demo --release     # 示例能编出 ELF
 <li><code>hisi-riscv-rs v0.6.0</code> 的 anchor 可以是 HAL stable API <code>0.6.0</code>。</li>
 <li>当前改名列车 <code>hisi-riscv-rs v0.7.0-alpha.1</code> 的 anchor 是
 <code>hisi-hal 0.7.0-alpha.1</code>；它证明生态消费者已从旧 package 迁移。</li>
+<li><code>hisi-riscv-rs v0.7.0-alpha.7</code> 的 anchor 是 <code>hisi-hal 0.7.0-alpha.7</code>；
+它冻结 bounded <code>hisi-rf</code> 默认路径、双板 WPA2/WPA3 连接性和
+<code>ws63-rf-rs</code> 的一个迁移发布窗口。</li>
 <li>未来如果 runtime 做大改，父仓也可以 anchor 到 RT/HAL 的组合，而不是
 单独跟 HAL。</li>
 </ul>
