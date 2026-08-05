@@ -992,7 +992,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rtos"
-version = "0.1.0-alpha.23"
+version = "0.1.0-alpha.24"
 dependencies = [
  "critical-section",
  "embassy-time-driver",
@@ -1508,7 +1508,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
 ]
 
 [[package]]
@@ -1523,7 +1523,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
  "static_cell",
 ]
 
@@ -1537,7 +1537,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
 ]
 
 [[package]]
@@ -1550,7 +1550,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
 ]
 
 [[package]]
@@ -1563,7 +1563,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
 ]
 
 [[package]]
@@ -2142,7 +2142,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
  "smoltcp",
  "static_cell",
 ]
@@ -2158,7 +2158,7 @@ dependencies = [
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rom-sys",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
  "object 0.37.3",
  "smoltcp",
  "static_cell",
@@ -2174,7 +2174,7 @@ dependencies = [
  "hisi-panic-handler",
  "hisi-rf",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
  "smoltcp",
 ]
 
@@ -2282,7 +2282,7 @@ dependencies = [
  "hisi-rf-core",
  "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.23",
+ "hisi-rtos 0.1.0-alpha.24",
  "hisi-storage",
  "portable-atomic",
  "smoltcp",
