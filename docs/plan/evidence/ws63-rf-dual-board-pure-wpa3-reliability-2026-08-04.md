@@ -208,17 +208,20 @@ credit/flow-control 和 completion IRQ 继续诊断；不得用增加 echo 次�
 
 1. AP 每轮向 vendor data TX 提交 3--5 个帧，`data_tx_submit_total` 与 `data_tx`
    一致；
-2. 过滤后的 data completion 始终为
-   `data_tx_completion_total=0`，虽然管理帧 completion/IRQ 继续增长；
+2. 过滤后的 queue-0 completion 始终为
+   `data_tx_completion_total=0`；该计数器当时错误地只接受 BE queue 0，不能代表全部
+   单播数据 completion；
 3. 每轮至少一个 hardware data queue snapshot 保持非空，19 轮为
    `0x80010101`，1 轮为 `0x80010202`；
 4. `mac_tx_norm` 和 `mac_tx_irq` 均增长，证明 MAC/IRQ 并非整体停止；
 5. 20 轮均无 scan failure、认证超时或 DHCP failure。
 
-因此最新高置信边界不再是泛化的“AP 软件队列到硬件队列”：描述符已进入 hardware
-data queue，但对应 data completion 和回收没有发生。下一步应对照原厂 ROM/DMAC
-调度路径检查 queue ownership、credit、调度 hook/触发与 completion 分类，修复后重新执行
-同一 20-reset contract；不得把延长 capture timeout 当作修复。
+原厂 `hal_tx_queue_type_enum` 明确 BE/BK/VI/VO 分别为 queue 0--3，HI/MC 才是
+queue 4/5。恢复预检中，三个 echo reply 提交后 raw completion 从 15 增到 21，
+`mac_tx_norm` 从 2 增到 8，hardware snapshot 则落在 queue 3。因此第二轮矩阵能够证明
+描述符进入 hardware data queue 且本地 echo 未闭合，但不能再据 queue-0-only 计数器断言
+“硬件没有 data completion”。下一步必须先区分 queue 0--3 的真实 completion、STA RX 和
+echo correlation，再归因 queue ownership/credit；不得把延长 capture timeout 当作修复。
 
 后续 ROM callback table 只读核对又修正了一项诊断误差。当前 build profile 中
 `FRD_ROM_TX_SCH` 的实际 ID 是 239，对应 callback `dmac_tx_schedule_cb`；ID 238 为空。
@@ -234,11 +237,21 @@ data queue，但对应 data completion 和回收没有发生。下一步应对�
 后续调度归因必须采用不改变 ROM symbol resolution 和最终布局的只读手段，并继续绑定
 ELF hash 与 artifact identity。
 
+进一步把 `is_normal_data_queue()` 从只接受 queue 0 修正为接受 queue 0--3，即使没有新增
+静态状态或 linker wrap，新 AP 仍停在 `RFDBG_SOFTAP_INIT_BEGIN`。真机反例由
+`hisi-rf-ws63` commit `ea4cff0` 产生，随后以 commit `32ece62` 撤销；父仓对应为
+`ba0829646` 与 `6b217662c`。已验证 r18 AP 镜像重新以 probe-rs 3 MHz 完整 verify 烧录，
+耗时 99.46 s，恢复预检再次达到 AP ready、STA pure-WPA3 association 和 DHCP 基线。
+这说明当前风险不只是 wrapper 改变 ROM 符号解析，而是最终 RF ELF 对普通 text layout
+变化也敏感。在 normalized relocation/布局契约闭合前，目标端诊断不得通过增加或调整
+默认镜像代码来“顺手修正”。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
-并聚焦 hardware data queue 已非空但 data completion 为 0 的 credit、调度触发、queue
-ownership 与 completion 分类。不能再用 5 ms 的即时 delta 代替异步 completion 归属，
+并聚焦 hardware data queue 已非空、queue 0--3 completion 分类、STA RX 与 echo
+correlation；只有实际 completion 缺失时才继续归因 credit、调度触发和 queue ownership。
+不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
 

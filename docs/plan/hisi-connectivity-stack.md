@@ -14,8 +14,12 @@ SAE/PMF 能力证明，但后续 PM-off、link-lifecycle 与 OSAL receive-wait �
 本地 echo reply-path 失败。最新矩阵已经证伪 FRW worker 永久漏唤醒，并证明 adopted
 SoftAP application thread 的旧长运行窗口不是充分根因。最新提交态第二轮 20-reset
 矩阵已证明 scan/SAE/association/DHCP 为 20/20，但 AP 每轮 3--5 个 data submission
-进入非空 hardware data queue 后，过滤后的 data completion 始终为 0；当前门槛已收窄到
-AP hardware data queue 的 credit/调度触发/ownership/completion 边界。
+进入非空 hardware data queue 后，本地 echo 仍未闭合。随后原厂枚举与真机 raw counter
+证明旧计数器只接受 queue 0，漏掉同属单播数据的 BK/VI/VO queue 1--3；raw completion
+和 MAC normal-TX 在 echo 提交后实际继续增长。当前门槛因此收窄到准确的 per-AC
+completion、STA RX 与 echo correlation，不能先验归因为整个 hardware completion 停滞。
+普通 text predicate 变化也足以使 AP 初始化停滞，进一步侵入式目标诊断必须等待 normalized
+relocation 和最终布局稳定契约。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -2040,6 +2044,12 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
 - [ ] 同一最终镜像完成 init/scan、upstream WPA2、pure WPA3 SAE+PMF、DHCP/renew 和重复 ping
   parity；至少 20 次 unchanged-image nRST 无 runner starvation、永久 pending、stale
   completion、event drop 或 scheduler invariant failure。
+  第二轮 pure-WPA3 矩阵的 `data_tx_completion_total=0` 仅代表 queue 0：WS63 原厂
+  `hal_tx_queue_type_enum` 将 BE/BK/VI/VO 定义为 queue 0--3，恢复预检中三个 echo reply
+  提交后 raw completion 与 `mac_tx_norm` 均增加 6，hardware snapshot 位于 queue 3。
+  后续 gate 必须先按全部单播 AC 关联 submission/completion，再检查 STA RX；不能沿用
+  “hardware data completion 为 0”的旧归因。一次只改变 queue predicate 的镜像已在真机
+  停于 SoftAP init，并被提交态撤销，故进一步 target instrumentation 依赖布局稳定化。
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 
