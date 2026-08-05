@@ -188,16 +188,16 @@ jobs:
         include:
           - os: ubuntu-latest
             profile: wpa2
-            features: chip-ws63,wifi,smoltcp,wpa2-personal
+            features: chip-ws63,profile-wifi-wpa2-smoltcp
           - os: ubuntu-latest
             profile: wpa3
-            features: chip-ws63,wifi,smoltcp,wpa3-personal
+            features: chip-ws63,profile-wifi-wpa3-smoltcp
           - os: macos-14
             profile: wpa3
-            features: chip-ws63,wifi,smoltcp,wpa3-personal
+            features: chip-ws63,profile-wifi-wpa3-smoltcp
           - os: windows-latest
             profile: wpa3
-            features: chip-ws63,wifi,smoltcp,wpa3-personal
+            features: chip-ws63,profile-wifi-wpa3-smoltcp
     env:
       CARGO_TARGET_DIR: target/plain-radio-${{ matrix.profile }}
       CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUSTFLAGS: -C link-arg=-Thisi-riscv-link.x -C link-arg=--no-relax
