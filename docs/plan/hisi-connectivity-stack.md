@@ -2055,7 +2055,10 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   恢复 r18 AP 后的另一轮固定产物 20-reset 全部完成 scan、pure-WPA3 association 与 DHCP，
   `WLAN_AUTH_RSP2_TIMEOUT=0`，但 40 个 STA 本地探针均被 AP 观察并提交、STA 收到 0，
   最终为 `20 capture_timeout`。这把当前 blocker 固定为 AP vendor TX submission 之后到
-  STA RX 之前的数据路径；仍未达到 connectivity pass gate。
+  STA RX 之前的数据路径；仍未达到 connectivity pass gate。对相同 AP/STA ELF 的第二轮
+  20-reset 仍为 20/20 scan、association、DHCP 成功和 `20 capture_timeout`，但关联计数
+  进一步显示 STA 发送 40、AP 观察/提交 20、STA 收到 0。当前 blocker 因此必须同时覆盖
+  STA request 到 AP RX 与 AP reply submission 到 STA RX，不能只修单向 AP TX 后半段。
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 

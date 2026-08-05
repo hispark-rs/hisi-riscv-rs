@@ -271,11 +271,27 @@ errors 为 0，最大 runner step 为 95--98 ms。每轮发送两个本地 echo�
 不是偶发复现，而是稳定证明问题位于 AP 已接收请求并向 vendor TX 提交回复之后、STA
 Rust RX 看到回复之前。它仍未达到 connectivity pass gate，不能作为 WPA3 stable 证据。
 
+随后对同一 r18 AP / r17 STA 产物执行了第二轮独立 20 次配对 nRST。AP 在测试前以
+probe-rs 3 MHz 完整 readback verify 恢复，耗时 99.15 s；STA 镜像保持不变。artifact
+identity 再次校验为 AP
+`85df680138aef81799d7c0e3baa7c79400bf6313557927bfe1cd383cc17d11b7`、STA
+`d742dffede81b45972f5165f9da5499f4f50254b0ad38597bff4598e4642a905`。
+
+该轮仍为 `20 capture_timeout`：20/20 AP ready，20/20 scan、pure-WPA3 association
+和 DHCP 成功，`WLAN_AUTH_RSP2_TIMEOUT=0`，无 panic，event/control queue drop 和
+runner error 均为 0。STA 共发送 40 个 sequence-checked 本地 echo；AP 只观察并提交
+其中 20 个，另 20 个在到达 AP echo 层前不可见；AP 已提交的 20 个 reply 在 STA 侧仍为
+0 个可见。第二轮因此把风险拆成两个必须分别关闭的边界：STA 到 AP 的请求路径存在
+`20/40` 丢失，AP 到 STA 的已提交回复路径为 `0/20`。原始证据位于
+`/private/tmp/ws63-dual-board-20reset-round2-repeat-20260805/`；临时目录只作为本机原始
+采集位置，本页记录可长期复核的产物身份和聚合结果。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
-并聚焦 hardware data queue 已非空、queue 0--3 completion 分类、STA RX 与 echo
-correlation；只有实际 completion 缺失时才继续归因 credit、调度触发和 queue ownership。
+同时覆盖 STA request 到 AP RX 与 AP reply submission 到 STA RX 两个方向，并聚焦
+hardware data queue 已非空、queue 0--3 completion 分类、STA/AP RX 与 echo correlation；
+只有实际 completion 缺失时才继续归因 credit、调度触发和 queue ownership。
 不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
