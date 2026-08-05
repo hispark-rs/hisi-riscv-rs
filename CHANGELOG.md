@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Release train anchor: not selected.
+
+## [0.7.0-alpha.7] - 2026-08-06
+
 Release train anchor: `hisi-hal 0.7.0-alpha.7`.
 
 ### Changed
@@ -19,6 +23,14 @@ Release train anchor: `hisi-hal 0.7.0-alpha.7`.
   drop, and zero backend error. The RTOS detached-target diagnostics remain in
   place, but their mutation counters stayed zero in these runs, so the evidence
   does not assign the historical failure to a single fix.
+
+- **RTOS ready-ownership closure** — publish `hisi-rtos 0.1.0-alpha.24` with
+  fail-closed ready-queue, pending-target, bucket and link audits. A fixed
+  pure-WPA3 AP/STA image pair passes a further 20-reset matrix with 200/200
+  local echo replies and zero ownership, duplicate, wrong-bucket, bad-link,
+  detached-mutation, runner or allocator errors. TLA+, Kani and deterministic
+  host regressions cover the bounded safety contract; the HIL matrix remains
+  integration evidence rather than a mathematical liveness or timing proof.
 
 - **A5B worker admission** — publish `hisi-rf-ws63 0.1.0-alpha.65` and
   `hisi-rf 0.1.0-alpha.75`, separating the seven-slot vendor bootstrap from

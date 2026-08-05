@@ -22,6 +22,8 @@ Current release train:
 - `hisi-riscv-rs v0.6.0-rc.1` anchor: `hisi-riscv-hal 0.6.0-rc.1`.
 - `hisi-riscv-rs v0.6.0` anchor: `hisi-riscv-hal 0.6.0`.
 - `hisi-riscv-rs v0.7.0-alpha.1` anchor: `hisi-hal 0.7.0-alpha.1`.
+- `hisi-riscv-rs v0.7.0-alpha.7` anchor: `hisi-hal 0.7.0-alpha.7`; this is the
+  bounded-connectivity migration release for the `hisi-rf` facade.
 
 Only cut a parent tag when the docs, submodule pointers, template contracts,
 toolchain policy, image tooling, and firmware assets should become a versioned
@@ -93,6 +95,7 @@ Exit 0 only if the run concluded `success` **and** the asset check passed.
 |------|----------|--------|-------|
 | `hisi-riscv-rust-toolchain` | `build.yml` | no release assets; this repo is now official nightly radar | — |
 | `hisi-riscv-qemu` | `release.yml` | `hisi-riscv-qemu-<host>.{tar.gz,zip}` × 4 + legacy binary + `SHA256SUMS` + src tarball | 7 |
+| `hisi-riscv-rs` | `release.yml` | `blinky.bin` + `blinky.elf` + `SHA256SUMS` | 3 |
 | `hisi-hal` / `-rt` / `ws63-pac` / `bs2x-pac` | `publish.yml` | none (crates.io) | — |
 
 Hosts = `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `aarch64-apple-darwin`,

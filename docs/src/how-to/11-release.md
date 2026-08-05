@@ -39,6 +39,9 @@ PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
 - `hisi-riscv-rs v0.6.0` 的 anchor 可以是 HAL stable API `0.6.0`。
 - 当前改名列车 `hisi-riscv-rs v0.7.0-alpha.1` 的 anchor 是
   `hisi-hal 0.7.0-alpha.1`；它证明生态消费者已从旧 package 迁移。
+- `hisi-riscv-rs v0.7.0-alpha.7` 的 anchor 是 `hisi-hal 0.7.0-alpha.7`；
+  它冻结 bounded `hisi-rf` 默认路径、双板 WPA2/WPA3 连接性和
+  `ws63-rf-rs` 的一个迁移发布窗口。
 - 未来如果 runtime 做大改，父仓也可以 anchor 到 RT/HAL 的组合，而不是
   单独跟 HAL。
 

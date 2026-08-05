@@ -48,6 +48,13 @@ jobs:
             echo "packaged $(basename "$elf").bin / .elf"
           done
 
+      - name: Generate firmware checksums
+        run: |
+          set -euo pipefail
+          OUT=target/riscv32imfc-unknown-none-elf/release
+          cd "$OUT"
+          sha256sum blinky.bin blinky.elf > SHA256SUMS
+
       - name: Generate changelog
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v6
@@ -66,6 +73,7 @@ jobs:
           files: |
             target/riscv32imfc-unknown-none-elf/release/blinky.bin
             target/riscv32imfc-unknown-none-elf/release/blinky.elf
+            target/riscv32imfc-unknown-none-elf/release/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,14 +85,17 @@ jobs:
       - name: Seed existing versioned docs site
         run: scripts/seed-docs-site.sh --out site
 
+      - name: Resolve published latest docs version
+        run: echo "LATEST_VERSION=$(uv run scripts/read-doc-latest.py --site site --candidate \"${GITHUB_REF_NAME}\")" >> "$GITHUB_ENV"
+
       - name: Build mdBook handbook
         run: mdbook build docs
         env:
           DOC_VERSION: ${{ github.ref_name }}
-          LATEST_VERSION: ${{ github.ref_name }}
+          LATEST_VERSION: ${{ env.LATEST_VERSION }}
 
       - name: Assemble versioned handbook
-        run: uv run scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${GITHUB_REF_NAME}" --book docs/book --out site
+        run: uv run scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${LATEST_VERSION}" --book docs/book --out site
 
       - name: Refresh shared docs theme assets
         run: uv run scripts/sync-doc-theme-assets.py --book docs/book --site site
@@ -92,7 +103,7 @@ jobs:
       - name: Build versioned API documentation
         run: scripts/build-rustdoc-site.sh --version "${GITHUB_REF_NAME}" --out site
         env:
-          LATEST_VERSION: ${{ github.ref_name }}
+          LATEST_VERSION: ${{ env.LATEST_VERSION }}
 
       - name: Check versioned docs site
         run: uv run scripts/check-versioned-docs.py site
@@ -123,7 +134,7 @@ jobs:
         run: >-
           uv run scripts/check-live-docs.py
           --version "${GITHUB_REF_NAME}"
-          --latest-version "${GITHUB_REF_NAME}"
+          --latest-version "${LATEST_VERSION}"
 
   # ── crates.io publishing is OWNED BY EACH CRATE'S OWN REPO ─────────────────
   # The monorepo tag only cuts the firmware GitHub Release above. Each library
