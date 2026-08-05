@@ -300,6 +300,43 @@ class ClassifyTests(unittest.TestCase):
             [1],
         )
 
+    def test_dual_uart_echo_correlation_aggregate_splits_results(self) -> None:
+        passing = {
+            "result": "pass",
+            "echo_correlation": {
+                "sta_sent": [0, 1],
+                "sta_received": [0],
+                "ap_observed": [0, 1],
+                "ap_submitted": [0, 1],
+                "sent_missing_at_ap": [],
+                "submitted_without_sta_receive": [1],
+            },
+        }
+        failing = {
+            "result": "local_data_path_failure",
+            "echo_correlation": {
+                "sta_sent": [0, 1],
+                "sta_received": [],
+                "ap_observed": [0],
+                "ap_submitted": [0],
+                "sent_missing_at_ap": [1],
+                "submitted_without_sta_receive": [0],
+            },
+        }
+        aggregate = MATRIX.aggregate_echo_correlation(
+            [passing, failing, {"result": "pass", "echo_correlation": None}]
+        )
+        self.assertEqual(aggregate["runs_with_markers"], 2)
+        self.assertEqual(aggregate["runs_without_markers"], 1)
+        self.assertEqual(aggregate["totals"]["sta_sent"], 4)
+        self.assertEqual(aggregate["totals"]["sta_received"], 1)
+        self.assertEqual(aggregate["by_result"]["pass"]["runs"], 1)
+        self.assertEqual(
+            aggregate["by_result"]["local_data_path_failure"]
+            ["sent_missing_at_ap"],
+            1,
+        )
+
     def test_required_peer_capture_fails_closed_without_softap_ready(self) -> None:
         record = MATRIX.record_from_log(
             1,

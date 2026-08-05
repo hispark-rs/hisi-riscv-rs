@@ -909,6 +909,52 @@ def correlate_echo_paths(
     }
 
 
+def aggregate_echo_correlation(
+    records: list[dict[str, object]],
+) -> dict[str, object] | None:
+    """Summarize sequence ownership across both UART captures."""
+    parsed = [
+        (str(record.get("result", "unknown")), correlation)
+        for record in records
+        if isinstance((correlation := record.get("echo_correlation")), dict)
+    ]
+    if not parsed:
+        return None
+
+    fields = (
+        "sta_sent",
+        "sta_received",
+        "ap_observed",
+        "ap_submitted",
+        "sent_missing_at_ap",
+        "submitted_without_sta_receive",
+    )
+
+    def totals(entries: list[dict[str, object]]) -> dict[str, int]:
+        return {
+            field: sum(
+                len(value)
+                for entry in entries
+                if isinstance((value := entry.get(field)), list)
+            )
+            for field in fields
+        }
+
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for result, correlation in parsed:
+        grouped.setdefault(result, []).append(correlation)
+
+    return {
+        "runs_with_markers": len(parsed),
+        "runs_without_markers": len(records) - len(parsed),
+        "totals": totals([correlation for _, correlation in parsed]),
+        "by_result": {
+            result: {"runs": len(entries), **totals(entries)}
+            for result, entries in sorted(grouped.items())
+        },
+    }
+
+
 def aggregate_a5b_metrics(records: list[dict[str, object]]) -> dict[str, object] | None:
     parsed = [
         metrics
@@ -1487,6 +1533,7 @@ def summarize_records(
         "a5b_metrics": aggregate_a5b_metrics(records),
         "l2_protocol": aggregate_l2_protocol_diagnostics(records),
         "local_echo_path": aggregate_local_echo_path(records),
+        "echo_correlation": aggregate_echo_correlation(records),
         "irq45_lifecycle": aggregate_irq45_lifecycle(records, "irq45_lifecycle"),
         "peer_irq45_lifecycle": aggregate_irq45_lifecycle(
             records, "peer_irq45_lifecycle"
