@@ -24,7 +24,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | 双 WS63 pure-WPA3 已完成 SAE/PMF 60/60；三轮矩阵累计 58/60 完整通过 | 关闭两次 AP reply submission 到 STA L2 RX 的本地数据面反例；通过前不删除 migration oracle 或切唯一默认 backend |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5 bounded facade/release closure 与 WPA2/WPA3 双板 20/20、200/200 已闭合 | 当前 WIP=B0：固定 BLE archives、required symbols、ABI 与资源 ownership；B0 前不启动 BLE runtime/API |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
@@ -46,17 +46,17 @@ flowchart LR
     REPORT --> CLI["P2 cargo-hisi 触发条件"]
     A5R["Done A5R 语义收口"] --> A5
     A5F["A5F opaque facade 与 runtime 解耦"] --> A5
-    WPA3["待关闭：双 WS63 本地回包可靠性"] --> A5
-    A5 --> PRODUCT["选择一个后续产品方向"]
-    PRODUCT --> NVS["NVS N0-N3"]
-    PRODUCT --> BLE["BLE"]
-    PRODUCT --> TLS["TLS"]
-    PRODUCT --> SLE["SLE"]
+    WPA3["Done 双 WS63 WPA2/WPA3 release gate"] --> A5
+    A5 --> B0["NOW B0 BLE archive/ABI closure"]
+    B0 --> B1["B1 controller/host init"]
+    B1 --> B2["B2 advertise/scan"]
+    B2 --> B3["B3 GATT"]
+    B3 --> NEXT["选择 SLE/NVS/TLS/coex 下一方向"]
 ```
 
-这张图记录 A5 已交付的基础能力仍有对抗式审计复开的门槛；pure-WPA3 认证能力已证明，
-但本地回包可靠性仍是最后一条双板 HIL 门槛。任何一条未闭合时都不能把局部完成写成整个 A5 已验收，也不借此并行启动第二个
-产品方向。
+这张图记录 A5 已完成并把唯一执行槽交给 B0。历史 Wi-Fi 反例仍保留为回归证据，但不再
+伪装成未完成门槛；BLE 必须按 B0 -> B1 -> B2 -> B3 顺序推进，不能与 SLE/NVS/TLS
+并行铺开。
 
 ## 维护契约
 

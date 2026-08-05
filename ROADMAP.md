@@ -8,11 +8,10 @@ that goal. This ecosystem is still moving quickly: when roadmap text, docs,
 examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
-**WIP limit:** one major milestone at a time. A0-A4 are frozen; W2 pure-WPA3 now
-uses a repository-owned two-WS63 AP/STA fixture. Its three 20-reset matrices proved
-SAE/PMF 60/60 but exposed two local reply-path failures, so reliability remains the
-active gate. The current A5 window is limited to that diagnosis and release-contract
-closure; it does not open a second product direction.
+**WIP limit:** one major milestone at a time. A0-A5 and the repository-owned
+two-WS63 WPA2/WPA3 release gate are frozen. The active slot is now B0 BLE
+archive/symbol/ABI closure; it must not grow into BLE runtime or public API before
+the machine-owned archive and resource contracts exist.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -52,7 +51,7 @@ an observed DHCP renew REQUEST/ACK. `hisi-rf 0.1.0-alpha.1` is published and the
 committed self-hosted workflow is green. Evidence:
 [A4 vertical slice](docs/plan/evidence/ws63-rf-a4-vertical-slice-2026-07-14.md).
 
-## RELIABILITY OPEN -- W2 Upstream Supplicant And WPA3-Personal
+## Completed -- W2 Upstream Supplicant And WPA3-Personal
 
 The single execution ledger, current evidence, and W2A-W2F gates live in
 [Connectivity stack W2](docs/plan/hisi-connectivity-stack.md#w2-upstream-supplicant-and-wpa3personal).
@@ -68,16 +67,19 @@ SoftAP and upstream-native WPA3 STA profiles now run a fixed non-production fixt
 Across the original three unchanged-image 20-reset matrices,
 SAE/PMF/association/DHCP completed 60/60 with no authentication-response-2 timeout,
 but one matrix recorded two local echo reply-path failures. Later targeted matrices
-reproduced partial reply loss. The latest OSAL-instrumented matrix was 18/20 and
-ruled out a permanently sleeping FRW worker without closing the data-path gate. Evidence:
+reproduced partial reply loss and drove socket-capacity and RTOS ownership fixes.
+The final pinned release closure passes separate WPA2 and pure-WPA3 20-reset matrices,
+each with 200/200 local echo and zero authentication, backend, queue or ownership
+errors. Historical failures remain evidence and are not assigned to one unproven cause. Evidence:
 [dual-board pure-WPA3 reliability](docs/plan/evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md).
-Migration retirement remains open.
+Migration retirement remains version-gated: one parent migration release must exist,
+and `ws63-rf-rs` removal is not earlier than parent v0.8.0.
 Historical guarded linking is retained only for the vendor oracle.
 
 BLE, SLE, TLS, Enterprise and broader user-facing SoftAP productization do not run
 in parallel with W2; the bounded SoftAP used as the HIL peer is part of this gate.
 
-## NOW -- A5 Correctness And Release Closure
+## Completed -- A5 Correctness And Release Closure
 
 A5F has delivered the single-dependency facade, normalized-link artifact and
 macOS/Linux/Windows crates.io-only build path. A5U exposes named profiles,
@@ -139,11 +141,19 @@ Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operati
 Resource-conservation evidence:
 [A5 incremental resource conservation](docs/plan/evidence/ws63-rf-a5-resource-conservation-2026-07-28.md).
 
+## NOW -- B0 BLE Archive And ABI Closure
+
+B0 fixes the exact WS63 BLE archive/profile inputs before any runtime or user API
+is added. It inventories the vendor controller/host/GAP/GATT/SMP closure, pins
+archive hashes, generates the undefined-symbol manifest, and maps each symbol to
+its RTOS, NVS, crypto, allocator, transport or coexistence owner. CI must fail on
+an unreviewed symbol or ABI/layout change. B1 controller/host initialization only
+starts after this contract is reviewable and reproducible.
+
 ## LATER -- Triggered Product Directions
 
-After W2, choose exactly one direction from measured product demand:
+After B0-B3, choose exactly one direction from measured product demand:
 
-- BLE for a concrete peripheral or central scenario;
 - NVS N0-N3 when the release image must stop depending on the vendor NV
   generator;
 - TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;

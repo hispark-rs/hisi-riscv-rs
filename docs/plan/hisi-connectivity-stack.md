@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0，当前 WIP=B0。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -24,18 +24,20 @@ release candidate 的可复现本地数据面反例，但不能从成功矩阵�
 唯一根因。
 `hisi-rf-ws63 0.1.0-alpha.71` 与 `hisi-rf 0.1.0-alpha.83` 已把命名 WS63
 station profile 切到 bounded runner；legacy blocking backend 只在显式
-`legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。剩余门槛不再阻止
-bounded 默认路径，但仍阻止删除 vendor/migration oracle、宣称 WPA3 stable 或退役旧 facade。
+`legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
+release contract 和双板 WPA2/WPA3 gate 已闭合；当前先发布父仓 `v0.7.0-alpha.7` migration
+snapshot，再按 WIP=1 进入 B0 BLE archive/symbol/ABI closure。vendor oracle 与旧 facade
+仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛约束；它们不会被 B0 扩张。
 跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
 ## 概要
 
-A0-A4 的 **Wi-Fi connect → ping** 基线已经冻结，独立 `hisi-rf` 垂直切片
-已经通过提交态真机 HIL。W2 的 pure-WPA3 最终门槛已从外部 AP 依赖迁移为仓库内
-双 WS63 fixture：一块板运行 Rust WPA3 SoftAP，另一块板运行 upstream-native WPA3 STA。
-当前只关闭该本地数据面可靠性反例与 release contract，不并行开启另一个产品方向。
-每一步都必须保留 A4 的真实硅片连接性证据，不能为了架构迁移打断北极星。
+A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独立 `hisi-rf`
+垂直切片、pure-WPA3 双 WS63 fixture、bounded runner、资源准入和严格 release contract
+均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE，先只执行 B0 的 archive、
+symbol、ABI 和资源事实闭包；B1 init 之前不得添加面向用户的空 API。每一步都必须保留
+A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
 `esp-radio → esp-radio-rtos-driver ← esp-rtos`、`esp-rom-sys` 和
@@ -57,13 +59,19 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：A5 审计收口
+## 当前执行窗口：B0 BLE archive 与 ABI closure
 
-本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。A4 已冻结；W2
-transition-mode 证据已闭合，pure-WPA3 双板 fixture 的认证能力和当前 release candidate
-本地回包矩阵均已闭合；旧 run 4/run 10 的唯一根因仍未被反推证明。A5 已交付 facade、标准
-relocation、三平台 consumer、opt-in incremental protocol、caller-owned resources、
-typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可独立推进：
+本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 只交付：固定实际使用的
+BLE vendor archive/hash；由 `nm -u` 生成 required-symbol manifest；记录 controller/host/
+GAP/GATT/SMP、NVS、crypto、RTOS、heap 与 coex 的 ABI/resource ownership；建立 host/CI
+drift gate。B0 不启动 controller、advertising、scan 或 GATT，不新增 LiteOS backend，
+也不让 `hisi-rf` 暴露尚不能运行的 BLE public feature。B0 完成后才进入 B1。
+
+### A5 收口证据账本
+
+A4/W2/A5 已交付 facade、标准 relocation、三平台 consumer、bounded protocol、
+caller-owned resources、typed diagnostics、template/report 和严格双板 release gate。以下
+保留历史反例与收口证据，不能把旧失败改写成单一根因，也不再作为当前 WIP：
 
 1. 公开 `wifi_connectivity` 已把 A5B 与完整 connectivity contract 收敛到同一
    release-train ELF；较早矩阵曾取得 20/20，但 2026-07-29 的后续 unchanged-image
@@ -101,7 +109,7 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    RX IPv4 为 12--44；唯一失败轮在 association operation 返回 `backend.other`，
    未进入 DHCP/L2，不能归类为公网 ICMP 或本地数据面失败。该轮 runner 单步最大
    1937 ms、association ioctl 最大 2040 ms，event drop 和 auth-response-2 timeout
-   均为 0。新矩阵未复现旧本地反例，A5B 仍未达到 20/20；不能用增加盲目重试或
+   均为 0。该阶段的新矩阵未复现旧本地反例，但 A5B 当时仍未达到 20/20；不能用增加盲目重试或
    放宽公网 ICMP 门槛掩盖。
    marker-contract-v2 随后以直接 L2 ARP reply 作为本地门槛，以 AliDNS/Baidu DNS
    固定 A 查询作为公网协议门槛。单目标首轮矩阵为
@@ -190,7 +198,7 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    提交态 20-reset 仍为 `18 pass + 2 local_data_path_failure`：正常轮中 17 轮 `10/10`、
    一轮 `7/10`，两个失败轮 `0/10`。失败 AP 已生成 echo，但 queue 0 没有 completion，
    software queue 非空且 hardware queue 空闲；成功轮则有十个 queue-0 completion 并清空
-   software queue。故当前剩余 blocker 是 AP queue-0 lost-kick/调度闭环，不是 smoltcp
+   software queue。故该阶段剩余 blocker 是 AP queue-0 lost-kick/调度闭环，不是 smoltcp
    socket burst、STA PM 或已经完成的 queue-3 completion 分类。一次 event-return 后的
    scheduler 补踢实验因检查时 queue 0 仍为空且 text layout 改变而 `0/3`，已撤销；后续
    诊断必须保留最终布局并观测真实 enqueue/schedule 线性化点。当前首要可证伪假设是
@@ -250,7 +258,7 @@ renew。`hisi-rf 0.1.0-alpha.1` 已发布，迁移 facade 有明确删除窗口�
 `ws63-hil` workflow 已 PASS。冻结证据见
 [A4 Wi-Fi vertical slice](evidence/ws63-rf-a4-vertical-slice-2026-07-14.md)。
 
-### HIL 待验收 -- W2 上游 Supplicant 与 WPA3-Personal
+### 已完成 -- W2 上游 Supplicant 与 WPA3-Personal
 
 W2 的当前状态、提交证据和完成门槛只维护在
 [W2A-W2F 执行账本](#w2-upstream-supplicant-and-wpa3personal)；本 Active Window 不复制
@@ -693,7 +701,7 @@ WPA3 profile 使用同一 builder，但必须在 `build()` 前显式 `.pke(pke)`
      [W2D 原生 runner 与 RX bridge](evidence/ws63-rf-w2d-native-runner-rx-2026-07-14.md)，
      WPA2 parity 收口见
      [W2E upstream WPA2 parity](evidence/ws63-rf-w2e-upstream-wpa2-parity-2026-07-14.md)。
-   - **W2E 一致性 HIL（部分完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
+   - **W2E 一致性 HIL（已完成）**：upstream-native path 已重现 A4 WPA2 connect、DHCP、
      ARP、重复 ping 和 lease-renew marker。host gate 已在固定 hostap 2.11 上覆盖 WPA2
      PMK-to-PTK、EAPOL M2 MIC、WPA2/WPA3/transition RSNE 与 PMF、SAE group 19 HnP/H2E
      双端 roundtrip，并重放 upstream 的 5 个 SAE corpus fixtures；证据见
@@ -728,11 +736,15 @@ WPA3 profile 使用同一 builder，但必须在 `build()` 前显式 `.pke(pke)`
      unchanged-image 20-reset：认证、PMF、association 和 DHCP 为 60/60，但完整 contract
      为 58/60；两次失败均位于本地 echo reply-path，详见
      [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)。
-     最终 gate 必须使用
+     最终 gate 使用
      `ws63-connectivity-reset-matrix.py --required-ap-mode pure-wpa3`；classifier 会逐轮校验
-     固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。在该 gate
-     闭合前，不删除 vendor supplicant oracle/`wpa_compat.rs`，不宣称 WPA3 stable，也不把
-     新 backend 切为唯一默认路径或退役旧 facade。
+     固件从 scan RSNE 得出的 `pure-wpa3` marker，transition 成功不得计入通过。后续固定
+     release-closure ELF 上，WPA2 与 pure-WPA3 各完成 20/20，STA 各取得 200/200 本地
+     echo，认证 timeout、event/backend error 和 ready-ownership 指标均为零。证据见
+     [WPA2/WPA3 release closure](evidence/ws63-rf-release-closure-wpa2-wpa3-2026-08-06.md)
+     与 [ready ownership closure](evidence/ws63-rtos-ready-ownership-2026-08-06.md)。这关闭
+     W2E/A5 的 release gate，但不自动删除 vendor oracle、宣称 stable API 或绕过
+     `ws63-rf-rs` 不早于父仓 v0.8.0 的迁移窗口。
    - **W2E-H 握手密码能力硬件加速（已完成，2026-07-17）**：第一项
      PBKDF2-HMAC-SHA1 已由 `hisi-crypto-ws63` 直接驱动 PAC 建模的 WS63 KM/RKP，并通过
      唯一 `KM`/`TRNG` token、双层互斥、有界轮询、寄存器清零和 fail-closed 错误传播建立
@@ -1606,8 +1618,9 @@ A5R 后续排期和验收顺序。
   当前模板、迁移 how-to 和跨 OS 外部 consumer 已只使用 facade；父仓现存直接依赖已冻结成
   不可扩张的 maintainer
   allowlist：`wifi_init_smoke`/`rf_port_demo`/`wifi_blob_link` 是迁移 oracle，RTOS 示例是
-  conformance fixture，`net_ping` 是 QEMU 合成 L2 fixture。pure-WPA3 gate 闭合前不为清单整洁
-  删除 oracle；新增 application manifest 直接依赖底层 crate 会由 CI 拒绝。
+  conformance fixture，`net_ping` 是 QEMU 合成 L2 fixture。pure-WPA3 gate 已闭合，但 oracle
+  删除仍须先形成父仓 migration release 并满足 v0.8.0 窗口；新增 application manifest
+  直接依赖底层 crate 会由 CI 拒绝。
 - [x] 增加当前 WS63 dependency-boundary gate：`hisi-rf` release unit 已解析 Cargo
   metadata，证明应用只直依赖 facade，`sys/blob/RTOS driver` 只沿
   `hisi-rf -> hisi-rf-ws63 -> ws63-radio-sys -> ws63-radio-blob` 传递出现，且相关 package
@@ -1872,7 +1885,7 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
 
 #### A5UX -- 最终镜像验收后的公共 API 形态收敛
 
-**状态：无板/API 收敛已完成，最终双板 HIL 待验收。** 冻结的 pre-migration
+**状态：已完成。** 无板/API 收敛与最终双板 HIL 均已闭合。冻结的 pre-migration
 `wifi_connectivity` ELF 已通过 20-reset response-bound/connectivity HIL；下面的 API-only
 收敛均已落地，并要求迁移前后使用同一 connect/DHCP/ping/renew marker contract。不得为了
 缩短示例而隐藏 RAM 成本、长期 runner 任务、runtime 选择或可失败资源准入。
