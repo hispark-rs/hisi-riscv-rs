@@ -317,12 +317,58 @@ runner error 均为 0。STA 共发送 40 个 sequence-checked 本地 echo；AP �
 之间。原始证据位于
 `/private/tmp/ws63-dual-board-20reset-commit-fix-matrix-20260805/`。
 
+### 全 WMM data completion 分类与提交态 20-reset
+
+受控 queue histogram 证明，同一轮 normal-TX completion 分布为 queue 0 两项、
+queue 3 八项，management queue 4 另有 32 项；因此旧
+`is_normal_data_queue()` 只接受 queue 0 会漏掉 VO queue 3。直接放宽旧条件又会同时在
+queue 1--3 completion 后执行 vendor-private queue/VAP snapshot，并连续三轮破坏
+association。跳过该 snapshot 后 association 恢复，说明 timeline 分类与私有布局读取
+必须解耦。
+
+`hisi-rf-ws63` commit `0e679e00721251f2577cacd957a10226c9d4e292` 因此完成两项窄修复：
+
+1. completion timeline 接受 BE/BK/VI/VO queue 0--3，继续排除 HI/MC queue 4/5；
+2. 删除 completion handler 返回后的 vendor-private queue snapshot，保留 data-event
+   enqueue 阶段既有的只读 snapshot。
+
+34 项 host test、`clippy -D warnings` 与普通 Cargo RV32 release link 均通过。源码构建
+AP 以 probe-rs 3 MHz、完整 readback verify 烧录成功，耗时 91.10 s，并恢复
+`RFDBG_SOFTAP_READY`。单轮配对预检已捕获 queue 3 与 queue 0 completion，且没有再次
+破坏 pure-WPA3 association。
+
+父仓 closure commit 为 `6cca7d227`。不可变产物为：
+
+- AP ELF SHA-256
+  `6f9c7b0a3ae32e8d617a136cbbff0b060dfebe5ff23f8ad5688b1e2f8c7cd9f7`，
+  profile `pure-wpa3-softap-unicast-completion-v12`；
+- STA ELF SHA-256
+  `d742dffede81b45972f5165f9da5499f4f50254b0ad38597bff4598e4642a905`，
+  profile `pure-wpa3-sta-atomic-scan-timeout-v6`。
+
+保持两侧镜像不变执行 20 次配对 nRST，结果为：
+
+- `20/20` AP ready、scan、pure-WPA3 association 和 DHCP；
+- `auth_rsp2_timeouts=0`，A5B event/control queue drop 与 runner error 为 0；
+- 顶层分类为 `20 capture_timeout`，没有一轮达到 local-data-path success marker；
+- `20/20` AP 均收到并提交两个 sequence-checked echo reply；
+- `20/20` AP 均记录 `data_tx_submit_total=5`、`data_tx_completion_total=10`；
+- 每轮 bounded completion timeline 均恰好包含 queue 3 八项和 queue 0 两项；
+- STA 对已提交 reply 仍为 0 个 Rust-visible receive。
+
+该矩阵否定了“AP hardware data completion 缺失”作为当前根因。现有证据只允许把问题
+放在 completion 之后、STA Rust-visible L2 RX 之前；下一步须关联空口 TX、STA MAC/DMAC
+RX/filter、CCMP/key search 与 lower-RX callback，不能继续围绕 queue credit 或增加
+capture timeout。原始证据位于
+`/private/tmp/ws63-dual-board-20reset-unicast-completion-commit-20260805/`。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
 同时覆盖 STA request 到 AP RX 与 AP reply submission 到 STA RX 两个方向，并聚焦
-hardware data queue 已非空、queue 0--3 completion 分类、STA/AP RX 与 echo correlation；
-只有实际 completion 缺失时才继续归因 credit、调度触发和 queue ownership。
+AP completion 之后的空口、STA MAC/DMAC RX/filter/decrypt、lower-RX callback 与
+Rust-visible RX correlation。queue 0--3 completion 已由提交态 20-reset 证明稳定存在，
+除非新证据再次显示 completion 缺失，不再归因 credit、调度触发和 queue ownership。
 不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。

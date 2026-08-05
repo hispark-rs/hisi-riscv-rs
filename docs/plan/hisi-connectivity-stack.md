@@ -18,8 +18,11 @@ SoftAP application thread 的旧长运行窗口不是充分根因。最新提交
 证明旧计数器只接受 queue 0，漏掉同属单播数据的 BK/VI/VO queue 1--3；raw completion
 和 MAC normal-TX 在 echo 提交后实际继续增长。当前门槛因此收窄到准确的 per-AC
 completion、STA RX 与 echo correlation，不能先验归因为整个 hardware completion 停滞。
-普通 text predicate 变化也足以使 AP 初始化停滞，进一步侵入式目标诊断必须等待 normalized
-relocation 和最终布局稳定契约。
+随后提交态诊断把 completion 时间线覆盖到 BE/BK/VI/VO，并移除会扰动 association 的
+completion 后私有队列快照。新一轮 20-reset 中，AP 每轮都收到并提交两个 echo reply，
+且每轮稳定记录 10 个普通数据 completion（queue 3 为 8、queue 0 为 2），STA 仍未收到
+reply。这已经否定“AP hardware data completion 缺失”作为当前根因；剩余边界收窄到
+completion 之后的空口交付、STA lower RX/filter/decrypt 与 Rust-visible RX 之间。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -163,6 +166,16 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    239 且已安装；此前读取 ID 238 得到 0 是诊断错误，不能说明 hook 缺失。直接用 linker
    `--wrap` 观测 ROM scheduler symbol 会让 AP 停在 init，已从默认路径移除；后续只允许
    不改变 ROM symbol resolution、RF layout 和 artifact identity 的诊断方式。
+   `hisi-rf-ws63` commit `0e679e0` 随后把 completion 时间线扩展到四个 WMM data AC，
+   并删除 completion callback 返回后的 vendor-private queue/VAP snapshot。父仓 closure
+   为 `6cca7d227`，AP ELF SHA-256 为
+   `6f9c7b0a3ae32e8d617a136cbbff0b060dfebe5ff23f8ad5688b1e2f8c7cd9f7`。
+   对该 AP 与不变的 r17 STA 执行 20 次配对 nRST，20/20 完成 AP ready、scan、
+   pure-WPA3 association 和 DHCP，`auth_rsp2_timeouts=0`；顶层仍为
+   `20 capture_timeout`。AP 每轮都收到并提交两个 echo reply，并稳定记录
+   `data_tx_submit_total=5`、`data_tx_completion_total=10`，其中 queue 3 八项、queue 0
+   两项；STA 仍没有 local-data-path success marker。当前风险因此已越过 AP hardware
+   completion，后续聚焦空口与 STA lower-RX/filter/decrypt 交付。
    reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
    [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
