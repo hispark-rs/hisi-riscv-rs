@@ -176,6 +176,20 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    `data_tx_submit_total=5`、`data_tx_completion_total=10`，其中 queue 3 八项、queue 0
    两项；STA 仍没有 local-data-path success marker。当前风险因此已越过 AP hardware
    completion，后续聚焦空口与 STA lower-RX/filter/decrypt 交付。
+   后续 A/B 修正了这项归因。上述 STA profile 在 association 前启用了无响应的
+   `diagnostic-disable-sta-pm`；移除该 feature、但保留全部 data-path diagnostics 后，
+   当前源码先后达到 `3/3` 与 `19/20`。然而在失败 ELF 中等长旁路 PM UAPI 调用仍为
+   `0/3`，因此只能判定该诊断 profile（含布局变化）不可靠，不能把根因缩写为 PM UAPI
+   本身。随后发现 smoltcp 共享 UDP socket 只有一个 RX metadata 槽，SoftAP echo socket
+   只有两个；扩大为 bounded burst 容量后，三轮从 `30 sent / 19 received` 恢复为
+   `30/30`。修复由 ws63-examples commit `ca5c978`、父仓 closure `ef96628bf` 提交。
+   提交态 20-reset 仍为 `18 pass + 2 local_data_path_failure`：正常轮中 17 轮 `10/10`、
+   一轮 `7/10`，两个失败轮 `0/10`。失败 AP 已生成 echo，但 queue 0 没有 completion，
+   software queue 非空且 hardware queue 空闲；成功轮则有十个 queue-0 completion 并清空
+   software queue。故当前剩余 blocker 是 AP queue-0 lost-kick/调度闭环，不是 smoltcp
+   socket burst、STA PM 或已经完成的 queue-3 completion 分类。一次 event-return 后的
+   scheduler 补踢实验因检查时 queue 0 仍为空且 text layout 改变而 `0/3`，已撤销；后续
+   诊断必须保留最终布局并观测真实 enqueue/schedule 线性化点。
    reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
    [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
@@ -2072,6 +2086,11 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   20-reset 仍为 20/20 scan、association、DHCP 成功和 `20 capture_timeout`，但关联计数
   进一步显示 STA 发送 40、AP 观察/提交 20、STA 收到 0。当前 blocker 因此必须同时覆盖
   STA request 到 AP RX 与 AP reply submission 到 STA RX，不能只修单向 AP TX 后半段。
+  最新提交态 socket-capacity 矩阵已把普通 burst 丢包从应用测量中移除：三轮为
+  `30/30`，20-reset 中 17 轮 `10/10`、一轮 `7/10`、两轮 `0/10`。两个零回复反例的 AP
+  queue 0 software queue 非空、hardware queue 空闲且 queue-0 completion 为 0；成功轮
+  则有十个 queue-0 completion。下一项必须关闭该调度闭环反例，不能再把它归为 STA
+  lower-RX，也不能用提高 socket 容量掩盖。
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 

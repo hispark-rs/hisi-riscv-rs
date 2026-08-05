@@ -362,13 +362,61 @@ RX/filter、CCMP/key search 与 lower-RX callback，不能继续围绕 queue cre
 capture timeout。原始证据位于
 `/private/tmp/ws63-dual-board-20reset-unicast-completion-commit-20260805/`。
 
+### STA PM profile 与 smoltcp burst 容量 A/B
+
+后续证据推翻了上一节“已越过 AP completion”的当前归因。此前所有 `20 capture_timeout`
+矩阵均复用 STA r17 ELF；该 profile 在 association 前调用
+`uapi_wifi_set_pm_switch(false)`。原厂实现只用无响应 WAL 消息投递配置，返回 0 不证明
+HMAC/DMAC 已应用。旧 STA ELF 在当前 AP 上先达到 `3/3`；当前源码保留
+`data-path-diagnostics`、只移除 `diagnostic-disable-sta-pm` 后也达到 `3/3`，随后 20-reset
+为 `19 pass + 1 local_data_path_failure`。不过该 feature 同时改变最终布局：在失败 ELF
+原地址用等长指令旁路 UAPI 调用、保留 feature 和所有地址后仍为 `0/3 capture_timeout`。
+因此当前证据只足以将这个 PM 诊断 profile 移出默认 HIL，不能把 `0/20` 单独归因于运行时
+PM 调用。
+
+无 PM profile 的前三轮又给出独立的应用层事实：STA L2 每轮收到 12 个 IPv4 packet，
+其中 3 个是 DHCP、9 个是 AP echo reply，但应用仅收到 `7/6/6`。原因是 STA 复用的
+smoltcp UDP socket 只有一个 RX metadata 槽；`Interface::poll()` 在应用 `recv` 前连续处理
+burst，后续 datagram 因 packet buffer full 被丢弃。SoftAP echo socket 同样只有两个槽。
+ws63-examples commit `ca5c978698ea1d721e3ee5df8b61afd1f360a9dd` 将 STA metadata
+容量绑定到十次 bounded local probe，并把 AP echo metadata 扩为 16；父仓 closure 为
+`ef96628bf`。由于 WS63 SRAM 接近链接边界，STA DNS payload storage同时收窄为 128 bytes，
+没有扩大 shared arena 或越过固定 stacks。
+
+提交前 3-reset 的不可变产物为：
+
+- AP ELF SHA-256
+  `0b9b2e563cd4a078bdce6ce7f278682cc0a1617beac0a66cfcf3371af92044b8`，
+  profile `pure-wpa3-softap-udp-rx-capacity-v15`；
+- STA ELF SHA-256
+  `8cf50198770ed016642afe233e43f3aa277d7d2a871ff75060466236577ef217`，
+  profile `pure-wpa3-sta-no-pm-udp-rx-capacity-v15`。
+
+两侧均以 probe-rs 3 MHz 完整 readback verify 烧录。3-reset 为 `3/3 pass`，STA
+`30 sent / 30 received`，每轮 L2 `rx_ipv4=13`（3 DHCP + 10 echo）；AP 最终计数每轮
+`echo_rx=10 echo_tx=10`。summary 中 AP per-echo marker 少计三项是 UART 行交错造成的采集
+下计；AP 最终计数与 STA sequence 去重结果一致。
+
+同一产物不重烧执行提交态 20-reset，结果为 `18 pass + 2 local_data_path_failure`，
+`auth_rsp2_timeouts=0`。STA 共发送 200、收到 177；17 轮为 `10/10`，一轮为 `7/10`，
+run 4 与 run 10 为 `0/10`。这两个反例不是 socket overflow：失败 AP 的 queue-0 software
+queue 非空、hardware queue 空闲，completion timeline 只有 queue-3 项而没有 queue-0；
+成功轮则明确出现十个 `0x180...` queue-0 completion 并清空 software queue。一次在
+DMAC event callback 返回后执行 `need_schedule -> schedule` 的低侵入实验为 `0/3`，且
+`dmac_schedule_hook=0`，说明检查时 queue 0 尚为空；该未提交实验同时再次触发 text-layout
+敏感性，已经撤销并恢复上述提交态 AP 镜像。原始证据分别位于
+`/private/tmp/ws63-udp-rx-capacity-3reset-20260805/`、
+`/private/tmp/ws63-udp-rx-capacity-20reset-commit-20260805/` 和
+`/private/tmp/ws63-q0-reschedule-ab-3reset-20260805/`。
+
 ## 未关闭门槛
 
-下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
-同时覆盖 STA request 到 AP RX 与 AP reply submission 到 STA RX 两个方向，并聚焦
-AP completion 之后的空口、STA MAC/DMAC RX/filter/decrypt、lower-RX callback 与
-Rust-visible RX correlation。queue 0--3 completion 已由提交态 20-reset 证明稳定存在，
-除非新证据再次显示 completion 缺失，不再归因 credit、调度触发和 queue ownership。
+下一诊断必须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
+但先聚焦 AP queue-0 enqueue、`dmac_tx_need_schedule`、`dmac_tx_schedule` 与
+completion-reschedule 的真实线性化点。最新失败轮已经重新证明 queue-0 completion 缺失，
+不能沿用早先“所有 completion 稳定存在”的结论，也不应先扩大 STA RX 日志。
+由于仅增加 event-return 诊断代码就能改变行为，观测方式必须保持最终布局，或先关闭
+normalized ELF 的布局契约。
 不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
