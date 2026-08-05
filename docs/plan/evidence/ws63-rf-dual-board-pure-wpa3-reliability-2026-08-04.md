@@ -427,6 +427,32 @@ timer。只有得到该证据后，才受控触发一次现有 timeout/message 5
 `dmac_tx_schedule(device, 0)`，观察 software queue、completion 与 STA reply 是否恢复。
 这些地址来自当前 pinned ROM/SDK oracle，不是跨 archive 的稳定 ABI；使用前必须再次绑定
 ELF/archive hash。
+
+对本轮 AP ELF `/private/tmp/ws63-udp-rx-capacity-20260805/ap.elf`，最小只读取证集合为
+`g_tx_sched_timer` 36 bytes、`g_timer` 16 bytes、对应 Rust timer slot 24 bytes、DMAC
+timer-list head 8 bytes，以及 `g_dmac_frw_stat` 56 bytes。下列符号地址仅是该 ELF 的
+已知值，抓取前必须用该次 ELF 的 `nm` 重新确认：`g_tx_sched_timer=0x00180f18`、
+`g_timer=0x00181434`、list head `0x00181450`、`g_dmac_frw_stat=0x00180fd0`、Rust
+`timer::TIMERS=0x00a15b78`（32 个 24-byte slot）、timer-worker started flag
+`0x00a152a2`。`g_timer + 0` 是 `(slot_index + 1)`，slot 布局为 `used/active/periodic`
+三个 byte、`timer_ptr +4`、`deadline u64 +8`、`interval u64 +16`。
+
+`g_tx_sched_timer` 按 36-byte `frw_timeout_stru` 解码：argument `+0`、callback `+4`
+（本 ELF 预期 `0x14cab8`）、deadline `+8`、timeout `+12`、registered/periodic/enabled
+`+16..+18`、callback-private `+24`、list next/prev `+28/+32`。argument 非零时再只读
+`argument + 78` 的 queue（预期 0）与 `+80` 的 retry interval。stall 保持数秒后的判定为：
+
+| 终态 | 判定 | 下一步 |
+|---|---|---|
+| list 非空，base slot inactive | timer 已触发，但 message 55 未被 FRW 处理或重臂 | 查 callback 投递与 FRW wake |
+| list 非空，slot active，deadline 已过 | Rust timer worker 或时间比较未执行 | 查 worker started、wake 与 deadline poll |
+| list 非空，slot active，deadline 异常远 | 重臂 deadline 可能被 stale overwrite | 查 arm/rearm 线性化 |
+| list 为空，q0 仍 stranded | 该 frame 没有建立 deferred timer | 查 completion-reschedule ownership；此时单次 `dmac_tx_schedule(device, 0)` 才是有效 A/B |
+| timer object callback/queue 匹配且已 overdue | q0 delayed retry liveness 基本成立 | 沿 message 55 和 timer worker 闭环根因 |
+
+读取 list 时最多跟随少量节点；`frw_timeout_stru` 的 list entry 位于 object `+28`，不得
+对未知指针做无界遍历。成功与失败终态各抓一份相同集合，先做强差分，再决定是否执行
+一次受控调度调用。
 不能再用 5 ms 的即时 delta 代替异步 completion 归属，
 也不能靠增加 echo 次数或观察时间掩盖 `0/10` 反例。配对复位仍是发布 gate；可另跑 AP
 常驻、只复位 STA 的差分矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
