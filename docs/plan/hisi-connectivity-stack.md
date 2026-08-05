@@ -7,22 +7,15 @@ A5U caller-owned resource admission、typed diagnostics 和 template/resource-re
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
 controller/connect/control source-path failure injection 也已在 host、QEMU 和真机闭合。
-后续 unchanged-image 矩阵曾记录公网 ICMP 丢包、一次本地数据面全丢和 scan timeout。
-当前 release closure 已改用直接 ARP 与冗余 UDP DNS contract，并取得 20/20；
-A5UX 无板/API 收窄已经完成。仓库内 Rust SoftAP/STA 已完成 pure-WPA3
-SAE/PMF 能力证明，但后续 PM-off、link-lifecycle 与 OSAL receive-wait 诊断矩阵仍复现
-本地 echo reply-path 失败。最新矩阵已经证伪 FRW worker 永久漏唤醒，并证明 adopted
-SoftAP application thread 的旧长运行窗口不是充分根因。最新提交态第二轮 20-reset
-矩阵已证明 scan/SAE/association/DHCP 为 20/20，但 AP 每轮 3--5 个 data submission
-进入非空 hardware data queue 后，本地 echo 仍未闭合。随后原厂枚举与真机 raw counter
-证明旧计数器只接受 queue 0，漏掉同属单播数据的 BK/VI/VO queue 1--3；raw completion
-和 MAC normal-TX 在 echo 提交后实际继续增长。当前门槛因此收窄到准确的 per-AC
-completion、STA RX 与 echo correlation，不能先验归因为整个 hardware completion 停滞。
-随后提交态诊断把 completion 时间线覆盖到 BE/BK/VI/VO，并移除会扰动 association 的
-completion 后私有队列快照。新一轮 20-reset 中，AP 每轮都收到并提交两个 echo reply，
-且每轮稳定记录 10 个普通数据 completion（queue 3 为 8、queue 0 为 2），STA 仍未收到
-reply。这已经否定“AP hardware data completion 缺失”作为当前根因；剩余边界收窄到
-completion 之后的空口交付、STA lower RX/filter/decrypt 与 Rust-visible RX 之间。
+A5UX 无板/API 收窄已经完成。仓库内 Rust SoftAP/STA 已完成 pure-WPA3 SAE/PMF
+能力证明；后续矩阵又暴露过 PM 诊断时序、smoltcp burst 容量和 AP queue-0 停摆等彼此
+独立的反例。UDP metadata 容量修正后，RTOS 审计进一步收窄 switch target ownership：
+block/sleep/exit 的状态转换、target detach 和 pending ticket commit 现在属于同一调度器
+临界区；对 detached pending target 修改优先级或 policy 时不再错误地重新插入 ready
+queue。固定 AP/STA ELF 的最新配对 20-reset 矩阵达到 `20/20`，STA 本地 echo
+`200/200`，AP 最终 echo 计数每轮达到 `10/10`，timer worker 持续前进。该结果关闭当前
+release candidate 的可复现本地数据面反例，但不能从成功矩阵反推旧 run 4/run 10 的
+唯一根因；形式化验证仍需分别覆盖 ticket 创建决策与完整 ready ownership 不变量。
 剩余门槛闭合前不切换当前默认 backend，也不删除 vendor/migration oracle。跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 

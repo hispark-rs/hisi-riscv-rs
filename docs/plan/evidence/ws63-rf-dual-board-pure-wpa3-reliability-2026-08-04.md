@@ -409,6 +409,61 @@ DMAC event callback 返回后执行 `need_schedule -> schedule` 的低侵入实�
 `/private/tmp/ws63-udp-rx-capacity-20reset-commit-20260805/` 和
 `/private/tmp/ws63-q0-reschedule-ab-3reset-20260805/`。
 
+### RTOS switch ownership 收窄与 20-reset closure
+
+旧失败轮的 SoftAP RTOS snapshot 显示 priority-0 timer worker 已成为 `Ready`，但
+dispatch count 停止增长，同时低优先级 adopted main 和全局 switch count 仍持续增长。
+这使调查从 DMAC timer 本身上移到 RTOS ready ownership。代码审计确认两个独立边界：
+
+1. block、sleep、mutex/semaphore wait 与 task exit 过去先把 source 标为 non-running，
+   再在后续 scheduler 临界区 detach target 并提交 switch ticket。当前实现把这三个动作
+   合并为一个明确的线性化点；这是契约与形式化模型边界的收窄。
+2. `set_effective_priority` 和 `set_run_policy` 曾把所有 `State::Ready` 都当作 ready-queue
+   成员。pending switch 合法拥有的 detached target 同样是 `Ready`；旧代码会把它重新
+   入队，使 ready queue 与 pending ticket 双重拥有同一 task。修正后只有实际
+   `ready_contains(task)` 的 task 才会 remove/reinsert，并有优先级、policy 两条回归。
+
+`hisi-rtos` commit `fac6dd4` 包含上述修复与 `ready_queued` / `pending_switch_target`
+诊断；`ws63-examples` commit `dec215e` 将诊断输出接入 SoftAP。host test 为 `81/81`，
+UI compile-fail test、host clippy `-D warnings` 和 RV32 check 均通过。
+
+最终不可变产物为：
+
+- AP ELF SHA-256
+  `0cc232ce341906da617735c363f03189e25657ffeb6305e5800b4244ba459618`，
+  profile `pure-wpa3-softap-rtos-ownership-v18`；
+- STA ELF SHA-256
+  `b30d5176705096165817a96d9ca82a90b3c618459aeae64345bca59d1ce66587`，
+  profile `pure-wpa3-sta-rtos-ownership-v18`。
+
+两侧均通过 probe-rs 3 MHz 完整 readback verify；AP 下载约 90 s，STA 约 106 s。
+同一镜像先完成 `3/3` 预检，再执行 20 次配对 nRST，不重复烧录：
+
+- `20/20` 完整 connectivity contract，`auth_rsp2_timeouts=0`；
+- STA sequence-checked echo 为 `200 sent / 200 received`，每轮 `10/10`；
+- AP 最终 echo counter 每轮达到 `10/10`（个别逐包 UART marker 因并发行交错下计，
+  不作为无线丢包计数）；
+- timer worker 在采样中保持 sleeping/running 循环且 dispatch count 持续增长；没有再次
+  出现 `Ready` 冻结、panic、永久 pending 或本地数据面失败。
+
+原始脱敏证据位于
+`/private/tmp/ws63-rtos-ownership-v18-3reset-20260805/` 和
+`/private/tmp/ws63-rtos-ownership-v18-20reset-20260805/`。这组证据证明当前补丁组合关闭了
+现有复现门槛，但不能唯一证明旧 run 4/run 10 由上述任一单点触发：旧两段临界区已有
+resume check，而 detached priority/policy mutation 的生产 call graph 触发频率仍需单独
+证明。后续形式化工作必须将 ticket creation decision 与 ticket lifetime 分开建模，并
+增加“非 idle Ready task 的 owner 恰为 ready queue xor pending target”的 invariant；
+不得把这次 20/20 改写成未经证实的单一根因叙述。
+
+变量比较必须选择正确基线。相对直接前驱 `ef96628bf` 的
+`18 pass + 2 local_data_path_failure` 固定镜像，STA PM override 已经关闭，十槽 UDP
+metadata 已经生效，AP completion 后的 vendor-private snapshot 也早已移除；v18 的生产
+逻辑变化只有 `hisi-rtos fac6dd4`，另有 `dec215e` 增加只读 ownership marker。因此这轮
+支持“RTOS 变更与反例消失相关”，但 `fac6dd4` 内仍同时包含 atomic switch-away 契约收窄
+和 detached priority/policy ownership 修复，尚不能在二者之间唯一归因。相对更早的
+`20/20 capture_timeout` 固定 ELF，v18 还跨越 PM profile、UDP capacity 和多轮 RF 诊断
+清理，是多变量对照，不能用于声称 RTOS 单点因果。
+
 ## 未关闭门槛
 
 下一诊断必须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
