@@ -2049,7 +2049,13 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   提交后 raw completion 与 `mac_tx_norm` 均增加 6，hardware snapshot 位于 queue 3。
   后续 gate 必须先按全部单播 AC 关联 submission/completion，再检查 STA RX；不能沿用
   “hardware data completion 为 0”的旧归因。一次只改变 queue predicate 的镜像已在真机
-  停于 SoftAP init，并被提交态撤销，故进一步 target instrumentation 依赖布局稳定化。
+  停于 SoftAP init；随后只增加轻量 queue histogram、保持 queue 1--3 不进入 timeline/
+  PAC snapshot 的 ELF 也在新增 callback 尚未执行前停于相同位置。两次实验均已撤销，
+  故进一步 target instrumentation 依赖 normalized relocation 与最终布局契约稳定化。
+  恢复 r18 AP 后的另一轮固定产物 20-reset 全部完成 scan、pure-WPA3 association 与 DHCP，
+  `WLAN_AUTH_RSP2_TIMEOUT=0`，但 40 个 STA 本地探针均被 AP 观察并提交、STA 收到 0，
+  最终为 `20 capture_timeout`。这把当前 blocker 固定为 AP vendor TX submission 之后到
+  STA RX 之前的数据路径；仍未达到 connectivity pass gate。
 - [ ] 只有上述 gate 全部通过，WS63 默认路径才删除 blocking `WifiBackend` adapter，并发布
   对应 `hisi-rf` / `hisi-rf-rtos-driver` breaking alpha 版本；A4/W2 旧版本文档保持历史事实。
 

@@ -246,6 +246,31 @@ ELF hash 与 artifact identity。
 变化也敏感。在 normalized relocation/布局契约闭合前，目标端诊断不得通过增加或调整
 默认镜像代码来“顺手修正”。
 
+2026-08-05 又做了一次更窄的可证伪实验：新镜像只增加 8 个原子计数桶，在 DMAC
+completion callback 中按 queue 编号自增；queue 1--3 不读取时钟、不匹配 submission，
+也不读取 PAC queue snapshot。该 ELF 通过 plain-Cargo 检查，包含 37 项 ROM patch、零
+vendor relocation，但真机仍在任何新增 completion callback 可能执行之前停于
+`RFDBG_SOFTAP_INIT_BEGIN`。实验 ELF SHA-256 为
+`092d0a8f2755c6877199f035668b60c7a320fda4fc136e560a552341374f3bfc`。这否定了
+“只有 callback 内重诊断导致 init 卡住”的解释，并进一步支持当前 normalized RF ELF
+存在布局敏感缺口。失败实验未提交；AP 随后恢复到 r18 已验证 ELF，并再次以 3 MHz
+完整 readback verify 烧录，耗时 99.13 s。
+
+同日使用恢复后的 r18 AP 与不变的 r17 STA 执行了另一轮 20 次配对 nRST。产物身份为：
+
+- AP `85df680138aef81799d7c0e3baa7c79400bf6313557927bfe1cd383cc17d11b7`，
+  profile `pure-wpa3-softap-correct-tx-scheduler-callback-v6`；
+- STA `d742dffede81b45972f5165f9da5499f4f50254b0ad38597bff4598e4642a905`，
+  profile `pure-wpa3-sta-atomic-scan-timeout-v6`。
+
+结果为 `20 capture_timeout`，但分类不能解释为 scan、SAE、association 或 DHCP 失败：
+20/20 AP ready，20/20 scan、pure-WPA3 association 与 DHCP 完成，DHCP marker 出现在
+3.251--3.473 s，`WLAN_AUTH_RSP2_TIMEOUT=0`。A5B event/control queue 均无 drop，runner
+errors 为 0，最大 runner step 为 95--98 ms。每轮发送两个本地 echo，汇总为 STA 发送
+40、AP 观察 40、AP 提交 40、STA 收到 0；`submitted_without_sta_receive=40`。因此这轮
+不是偶发复现，而是稳定证明问题位于 AP 已接收请求并向 vendor TX 提交回复之后、STA
+Rust RX 看到回复之前。它仍未达到 connectivity pass gate，不能作为 WPA3 stable 证据。
+
 ## 未关闭门槛
 
 下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
