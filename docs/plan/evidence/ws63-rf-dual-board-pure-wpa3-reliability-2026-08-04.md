@@ -20,6 +20,12 @@ save 的 A/B 为 `15 pass + 5 local_data_path_failure`；加入 late-disconnect 
 sequence-checked UDP reply；认证、DHCP、ARP、IRQ45 和 vendor worker 都持续运行。
 因此该轮证伪了“FRW worker 永久漏唤醒/睡死”这一候选，但没有关闭本地数据路径门槛。
 
+随后完成的 DMAC 队列诊断与门槛修正矩阵再次得到 `18 pass + 2
+local_data_path_failure`。两次失败均为真实 `0/10`，而不是公网 ICMP 丢包或部分回包；
+AP 已生成并提交全部 reply，但软件描述符队列仍有积压、硬件数据队列为空且 TX completion
+保持为 0。当前风险因此进一步收窄到 AP 软件队列向硬件调度/出队的边界，A5B 发布门槛
+仍未关闭。
+
 ## 版本边界
 
 - `hisi-rf-ws63`: `0ae1f80b7c193c626c71cdda857953ee6da84b02`
@@ -122,13 +128,61 @@ packet 永久未完成：异步 completion 可能落入下一 sequence 的窗口
 RX、reply submission、completion packet number 和 STA RX 使用同一 sequence/timestamp
 时间线，才能区分 MAC completion 延迟、空口丢失和 STA lower-RX 丢失。
 
+## 2026-08-05 DMAC 软件/硬件队列归因
+
+第一轮正确配置的 pure-WPA3 DMAC 队列矩阵使用：
+
+- AP ELF SHA-256
+  `2cd1454a429e458ac051ec2cbd914c59985f5e0aa8c579a9f640023fba665537`，
+  identity profile 为 `pure-wpa3-softap-dmac-queue-snapshot`；
+- AP 以 probe-rs 3 MHz、完整 readback verify 烧录，耗时 91.81 s；
+- 20 轮保持镜像不变，只执行配对 J-Link nRST。
+
+该轮按旧的“至少 5/10 reply”分类得到 `15 pass + 5 local_data_path_failure`。其中 run 2
+与 run 6 实际分别收到 `4/10` 和 `2/10`，已经证明 DHCP、ARP 和双向本地数据路径可达，
+应作为 packet-loss observation，而不是本地路径完全失败；run 8、18、20 才是真实
+`0/10`。这促使 HIL contract 把硬门槛收敛为“DHCP 成功、neighbor/ARP 成功且至少收到
+一个 sequence-checked 本地 reply”，同时继续完整记录 attempts/replies/lost。该调整不把
+`0/10` 降级为成功，也不以公网 ICMP 作为本地数据面门槛。
+
+修正门槛后的提交态矩阵绑定以下 closure：
+
+- 父仓 commit `6948d266b`；
+- STA ELF SHA-256
+  `ecd0e4c7d779f4a32c052285bf3b08eb5900b2631d3339d3f88ba097752de93d`，
+  identity profile 为 `pure-wpa3-sta-pm-off-local-reachability-v2`；
+- AP 继续使用上述 pure-WPA3 DMAC queue snapshot ELF；
+- STA 以 probe-rs 3 MHz、完整 readback verify 烧录，耗时 99.52 s；随后 20 轮只执行
+  配对 J-Link nRST。
+
+最终结果为 `18 pass + 2 local_data_path_failure`，20 轮
+`WLAN_AUTH_RSP2_TIMEOUT=0`。失败 run 4 与 run 7 都满足：
+
+1. pure-WPA3 SAE、required PMF、association、DHCP 和 ARP 已完成；
+2. STA 执行 10 次本地 echo，结果均为 `attempts=10 replies=0 lost=10`；
+3. AP 已收到并生成 10 个 reply，FRW send 与 DMAC event 调用持续成功；
+4. AP 软件队列 q0 终态为 `0x80000707`，仍持有 7 个 PPDU/MPDU；硬件 data queue
+   为空，`data_tx_completion_total=0`；
+5. 没有 auth response timeout、应用有界队列 drop 或 worker 永久 pending。
+
+因此当前高置信边界是 AP DMAC 软件描述符队列到硬件调度队列之间，而不是 SAE、DHCP、
+ARP、echo 应用层或 STA 发包。下一步应沿 dequeue eligibility、调度触发、queue ownership、
+credit/flow-control 和 completion IRQ 继续诊断；不得用增加 echo 次数或继续放宽门槛代替
+修复。
+
+另有一轮误用 `wifi_softap` 默认 WPA2 feature、但 identity 文本写成 pure-WPA3 的 r13
+实验。该轮配置与身份不一致，已整体排除，不计入任何 pure-WPA3 能力或可靠性统计。
+本节原始证据保存在
+`/private/tmp/ws63-tx-timeline-20260805-r14/` 与
+`/private/tmp/ws63-tx-timeline-20260805-r15/`。
+
 ## 未关闭门槛
 
-下一诊断镜像须把 AP echo request 接收、reply submission、completion packet number 与
-STA reply 接收放进同一有界时间线，并保留两板 IRQ45 lifecycle 和 OSAL wait 终态。
-不能再用 5 ms 的即时 delta 代替异步 completion 归属，也不能靠增加 echo 次数或降低
-required replies 掩盖反例。配对复位仍是发布 gate；可另跑 AP 常驻、只复位 STA 的差分
-矩阵，用于识别 AP 启动时序或残留状态，但不能替代发布 gate。
+下一诊断镜像须继续保留两板 sequence/timestamp、IRQ45 lifecycle 和 OSAL wait 终态，
+并进一步记录 AP 软件队列出队资格、硬件队列提交、credit/flow-control 与 completion IRQ。
+不能再用 5 ms 的即时 delta 代替异步 completion 归属，也不能靠增加 echo 次数掩盖
+`0/10` 反例。配对复位仍是发布 gate；可另跑 AP 常驻、只复位 STA 的差分矩阵，用于识别
+AP 启动时序或残留状态，但不能替代发布 gate。
 
 最终验收必须使用提交态同一镜像、写入 artifact identity，并至少完成 20 次
 unchanged-image nRST：无本地数据面失败、无永久 pending、无 queue drop、无

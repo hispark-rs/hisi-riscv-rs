@@ -144,9 +144,14 @@ typed diagnostics 和 template/report 基线，但审计确认以下门槛仍可
    前进，因此永久漏唤醒和 adopted-main 旧调度延迟都不是充分根因。run 6 有 4 个 request
    未到 AP Rust echo 层；run 19 中 AP 已观察并提交全部 10 个 reply。下一步必须用 completion
    packet number + timestamp 绑定异步 TX 归属，再区分 AP MAC completion、空口与 STA
-   lower-RX，不能用 5 ms 即时 delta 或放宽 reply 门槛代替修复。
+   lower-RX，不能用 5 ms 即时 delta 代替修复。随后门槛修正后的提交态矩阵仍为
+   `18 pass + 2 local_data_path_failure`，两次均是真实 `0/10`；AP 已生成并提交 reply，
+   软件 q0 仍持有 7 个 PPDU/MPDU，硬件 data queue 为空且 TX completion 为 0。当前下一
+   诊断边界因此收敛为 AP 软件队列到硬件调度/出队，而不是继续泛化为整个 RX/TX 路径。
+   reply 门槛只把 `2/10`、`4/10` 归为可达但有丢包，绝不把 `0/10` 放行。
    完整证据见
-   [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
+   [双板 pure-WPA3 可靠性](evidence/ws63-rf-dual-board-pure-wpa3-reliability-2026-08-04.md)
+   和 [A5B data-path diagnostics](evidence/ws63-rf-a5b-data-path-diagnostics-2026-07-29.md)。
 2. A5U 的失败注入必须穿过真实 production control/connect 路径；外部 fixture 必须持续
    精确锁定当前 facade release 和其 core/backend release closure。
 3. QEMU/HIL gate 已执行相同 marker contract，缺 marker、非零 drop/error、budget
