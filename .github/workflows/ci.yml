@@ -381,7 +381,7 @@ jobs:
       # taiki-e/install-action (composite, Node-24 era) which fetches a prebuilt
       # binary. cargo-audit just parses Cargo.lock + the advisory DB.
       - name: Install cargo-audit
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-audit
       - name: Run cargo audit
