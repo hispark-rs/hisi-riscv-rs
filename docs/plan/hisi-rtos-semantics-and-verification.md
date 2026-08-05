@@ -260,6 +260,61 @@ ownership/duplicate/wrong-bucket/bad-link 与 detached mutation 最大值均为�
 bounded snapshot 与当前 connectivity workload 的 requirement gate；continuous trace、
 100-reset max-pending-age、soak 和未来 SMP ownership 仍是各自独立的 triggered gate。
 
+#### T10 -- Proof completeness：Safety 之后的 Liveness、Timing 与事件守恒（延期）
+
+`RTOS-STATE-004` 当前闭合的是有界状态下的 safety requirement：坏的 ready ownership
+状态不可达或能被 fail-closed audit 检出。20/20 reset 与 200/200 本地 echo 是固定镜像、
+固定环境中的 integration/statistical evidence，用于验证模型假设和防止回归；它们不是
+数学证明，也不证明 RF、AP 或外部网络永不丢包。后续 requirement 必须在
+`requirements.toml` 中显式记录以下证据类别，不得再用一个“verified”状态混写：
+
+- **Safety**：坏状态不可达，例如重复 ownership、stale handle 生效或 permit 凭空产生；
+- **Liveness**：在写明 weak fairness、scheduler-lock 有界、SWI/timer/IRQ 最终交付和硬件
+  最终进展等环境假设后，持续 eligible 的工作最终推进；
+- **Timing**：scheduler/critical lock、IRQ-to-dispatch、timer wake 和 budget accounting
+  的可测量时间上界；
+- **Integration/statistical evidence**：QEMU、真机 HIL、cold boot/reset matrix 和 soak，
+  只证明指定产物、负载与样本中的机制 parity 和失败率边界。
+
+每条新增 requirement 必须分别给出 `assumptions`、`property`、implementation owner、
+proof bounds 和明确的 `not_covered`；证据链继续强制为：requirement -> production
+implementation -> deterministic host tests -> TLA+ -> Kani -> QEMU/HIL marker，并绑定
+immutable evidence commit 与 ELF hash。TLA+ 的 weak-fairness/进展动作必须列出环境假设并
+保留旧设计或故障注入反例；Kani 必须直接调用 production helper、记录 unwind/对象/步骤
+bounds，不能只证明重新抄写的纯模型。Host regression 至少穿过 sleep、semaphore、mutex、
+task exit、timer、IRQ 和 event queue 的生产入口。
+
+按以下 requirement 顺序推进；编号在写入 manifest 时保持稳定：
+
+1. **RTOS-LIVE-001 -- Eligible task progress**：持续 eligible 的 Ready task 在 bounded
+   scheduler lock、最终 SWI/timer/IRQ delivery 与硬件进展假设下最终 Running。
+   `Cooperative` 只在显式 yield/block/exit/handoff 后承诺推进；`Budgeted` 还受 quota
+   replenishment 约束；`Preemptive` 才承诺高优先级 ready 后的 ported dispatch。
+2. **RTOS-EVENT-001 -- Event conservation**：按 generation/sequence 串起 IRQ -> enqueue
+   -> wake -> Ready -> Running -> consume/drop，始终满足
+   `accepted = processed + explicitly_dropped + pending`。任何 accepted event 未归入三类
+   之一必须 fail closed，禁止 queue、IRQ epilogue 或 runner 静默丢失。
+3. **RTOS-LOCK-001 -- Bounded lock latency**：为 scheduler lock 与 interrupt-masking
+   critical section 定义 profile 上界、测量方式和超限 diagnostics/fault；“最终 unlock”
+   不能作为无界 liveness 假设。
+4. **RTOS-TIMER-004 -- Deadline-to-runnable progress**：deadline 到期后的 wake 必须最终
+   进入可调度状态，并与 stale re-arm ticket、IRQ epilogue、pending switch 和时间回绕组合
+   验证；分别记录 timer delivery、Ready ownership 与 dispatch 的首次断点。
+5. **RTOS-PORT-005 -- Trap/context mechanism parity**：覆盖统一 272-byte frame、`mret`、
+   GPR/FPR/FCSR、`mstatus`/`mepc` 和 trap ABI。compile-time offset/disassembly 只证明布局；
+   QEMU/HIL sentinel 与 unchanged-image stress 才证明目标机制 parity，host model 不替代它。
+
+事件与数据路径证据必须按 sequence 输出 conservation 和首次断链位置，使内部 scheduler/
+event loss 与 RF/environment loss 可区分。RTOS 只承诺自身 ownership、wake、queue 和 dispatch
+链；即使 `RTOS-EVENT-001` 闭合，也不能将无线帧未到达解释为 RTOS 事件丢失，更不能从
+一次 20/20 矩阵推导网络无损。
+
+执行顺序为：P0 冻结 requirement/assumption；P1 实现 event conservation 与 deterministic
+host model；P2 增加带显式公平性的 TLA+ liveness 和 legacy counterexample；P3 用 Kani
+验证 production helper；P4 对齐 QEMU/WS63 trace 与 immutable evidence；P5 再依据失败率
+和风险决定是否提高 reset/soak 压力。此轨道在当前 connectivity/release closure 之后触发，
+不重开已经完成的 A5 gate，也不与 Reservation、SMP 或 BLE/SLE 产品方向捆绑。
+
 ### Scheduler Lock 与中断
 
 规范必须区分 interrupt masking、per-hart preemption guard 和 global kernel lock。
