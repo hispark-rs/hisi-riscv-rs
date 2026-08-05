@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GpioSwOutSpec"],"type":["GpioSwOutR","GpioSwOutW","R","W"]};

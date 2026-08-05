@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["PwmFreqH0Spec"],"type":["PwmFreqH0R","PwmFreqH0W","R","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgSarSpd3Spec"],"type":["R","W"]};

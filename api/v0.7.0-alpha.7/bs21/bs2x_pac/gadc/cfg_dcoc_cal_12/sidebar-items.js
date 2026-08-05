@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgDcocCal12Spec"],"type":["R","W"]};

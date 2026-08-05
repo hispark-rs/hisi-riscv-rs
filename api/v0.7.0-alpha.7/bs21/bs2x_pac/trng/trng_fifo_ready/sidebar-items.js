@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TrngFifoReadySpec"],"type":["R","TrngDoneR","TrngDoneW","TrngReadyR","TrngReadyW","W"]};

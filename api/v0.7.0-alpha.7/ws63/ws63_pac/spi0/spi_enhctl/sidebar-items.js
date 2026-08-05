@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SpiEnhctlSpec"],"type":["AaitfR","AaitfW","AddrlenR","AddrlenW","DdrenR","DdrenW","IddrenR","IddrenW","IlenR","IlenW","R","RdsenR","RdsenW","W","WaitnumR","WaitnumW"]};

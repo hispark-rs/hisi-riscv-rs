@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IpAutoCgBypassSpec"],"type":["DmaClkOnR","DmaClkOnW","R","W"]};

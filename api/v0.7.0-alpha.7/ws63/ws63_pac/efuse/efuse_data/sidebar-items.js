@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EfuseDataSpec"],"type":["DataR","DataW","R","W"]};

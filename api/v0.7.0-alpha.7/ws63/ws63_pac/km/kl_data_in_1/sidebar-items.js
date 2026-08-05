@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KlDataIn1Spec"],"type":["DataW","R","W"]};

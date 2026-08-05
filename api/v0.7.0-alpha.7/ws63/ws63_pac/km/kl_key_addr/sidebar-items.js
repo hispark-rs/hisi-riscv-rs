@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["KlKeyAddrSpec"],"type":["KeyAddrR","KeyAddrW","R","W"]};

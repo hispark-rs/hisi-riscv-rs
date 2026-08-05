@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InSymChnCtrlSpec"],"type":["R","SymChnDsR","SymChnDsW","SymChnEnR","SymChnEnW","SymChnSsR","SymChnSsW","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RxFilterControlSpec"],"type":["ControlR","R"]};

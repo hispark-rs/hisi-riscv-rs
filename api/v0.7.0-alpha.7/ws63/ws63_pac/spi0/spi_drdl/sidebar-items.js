@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SpiDrdlSpec"],"type":["DmaRxDataLevelR","DmaRxDataLevelW","R","W"]};

@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/hisi-hal/src/km.rs`."><title>km.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hisi_hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (14cae6813 2026-07-08)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">hisi_hal/</div>km.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! KM (Key Management) driver for WS63.
+<a href=#2 id=2 data-nosnippet>2</a>//!
+<a href=#3 id=3 data-nosnippet>3</a>//! The KM peripheral manages cryptographic keys, providing:
+<a href=#4 id=4 data-nosnippet>4</a>//! - KLAD (Key Loading and Distribution)
+<a href=#5 id=5 data-nosnippet>5</a>//! - Keyslot locking mechanisms
+<a href=#6 id=6 data-nosnippet>6</a>//! - RKP (Root Key Provisioning)
+<a href=#7 id=7 data-nosnippet>7</a>
+<a href=#8 id=8 data-nosnippet>8</a></span><span class="kw">use </span><span class="kw">crate</span>::peripherals::Km;
+<a href=#9 id=9 data-nosnippet>9</a>
+<a href=#10 id=10 data-nosnippet>10</a><span class="doccomment">/// Number of available keyslots.
+<a href=#11 id=11 data-nosnippet>11</a></span><span class="kw">pub const </span>KEYSLOT_COUNT: u8 = <span class="number">8</span>;
+<a href=#12 id=12 data-nosnippet>12</a>
+<a href=#13 id=13 data-nosnippet>13</a><span class="doccomment">/// KM driver.
+<a href=#14 id=14 data-nosnippet>14</a></span><span class="kw">pub struct </span>KmDriver&lt;<span class="lifetime">'d</span>&gt; {
+<a href=#15 id=15 data-nosnippet>15</a>    _km: Km&lt;<span class="lifetime">'d</span>&gt;,
+<a href=#16 id=16 data-nosnippet>16</a>}
+<a href=#17 id=17 data-nosnippet>17</a>
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">impl</span>&lt;<span class="lifetime">'d</span>&gt; KmDriver&lt;<span class="lifetime">'d</span>&gt; {
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="doccomment">/// Create a new KM driver.
+<a href=#20 id=20 data-nosnippet>20</a>    </span><span class="kw">pub fn </span>new(km: Km&lt;<span class="lifetime">'d</span>&gt;) -&gt; <span class="self">Self </span>{
+<a href=#21 id=21 data-nosnippet>21</a>        <span class="self">Self </span>{ _km: km }
+<a href=#22 id=22 data-nosnippet>22</a>    }
+<a href=#23 id=23 data-nosnippet>23</a>
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">fn </span>regs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">crate</span>::soc::pac::km::RegisterBlock {
+<a href=#25 id=25 data-nosnippet>25</a>        <span class="comment">// SAFETY: PAC peripheral pointer is a static physical MMIO address, always valid
+<a href=#26 id=26 data-nosnippet>26</a>        </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>Km::ptr() }
+<a href=#27 id=27 data-nosnippet>27</a>    }
+<a href=#28 id=28 data-nosnippet>28</a>
+<a href=#29 id=29 data-nosnippet>29</a>    <span class="doccomment">/// Enable the KM peripheral.
+<a href=#30 id=30 data-nosnippet>30</a>    </span><span class="kw">pub fn </span>enable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#31 id=31 data-nosnippet>31</a>        <span class="kw">unsafe </span>{
+<a href=#32 id=32 data-nosnippet>32</a>            <span class="self">self</span>.regs().kl_com_ctrl().write(|w| w.bits(<span class="number">0x01</span>));
+<a href=#33 id=33 data-nosnippet>33</a>        }
+<a href=#34 id=34 data-nosnippet>34</a>    }
+<a href=#35 id=35 data-nosnippet>35</a>
+<a href=#36 id=36 data-nosnippet>36</a>    <span class="doccomment">/// Check if a keyslot is locked (read-only after lock).
+<a href=#37 id=37 data-nosnippet>37</a>    ///
+<a href=#38 id=38 data-nosnippet>38</a>    /// Implements the vendor SDK `inner_kslot_chn_is_locked` sequence:
+<a href=#39 id=39 data-nosnippet>39</a>    /// 1. Write `KC_RD_SLOT_NUM` to select the keyslot and type (mcipher)
+<a href=#40 id=40 data-nosnippet>40</a>    /// 2. Read `KC_RD_LOCK_STATUS` to get the lock owner
+<a href=#41 id=41 data-nosnippet>41</a>    /// 3. Keyslot is locked if `rd_lock_status != 0` (non-zero = some CPU owns the lock)
+<a href=#42 id=42 data-nosnippet>42</a>    </span><span class="kw">pub fn </span>is_keyslot_locked(<span class="kw-2">&amp;</span><span class="self">self</span>, slot: u8) -&gt; bool {
+<a href=#43 id=43 data-nosnippet>43</a>        <span class="macro">assert!</span>(slot &lt; KEYSLOT_COUNT, <span class="string">"keyslot {} out of range (max {})"</span>, slot, KEYSLOT_COUNT);
+<a href=#44 id=44 data-nosnippet>44</a>        <span class="comment">// Select keyslot to query: mcipher type (bit 15 = 0), slot number in bits [9:0]
+<a href=#45 id=45 data-nosnippet>45</a>        </span><span class="kw">unsafe </span>{
+<a href=#46 id=46 data-nosnippet>46</a>            <span class="self">self</span>.regs().kc_rd_slot_num().write(|w| {
+<a href=#47 id=47 data-nosnippet>47</a>                w.slot_num_cfg().bits(slot <span class="kw">as </span>u16);
+<a href=#48 id=48 data-nosnippet>48</a>                w.slot_cfg_type().clear_bit()
+<a href=#49 id=49 data-nosnippet>49</a>            });
+<a href=#50 id=50 data-nosnippet>50</a>        }
+<a href=#51 id=51 data-nosnippet>51</a>        <span class="comment">// Read lock status: non-zero rd_lock_status field means locked
+<a href=#52 id=52 data-nosnippet>52</a>        </span><span class="self">self</span>.regs().kc_rd_lock_status().read().rd_lock_status().bits() != <span class="number">0
+<a href=#53 id=53 data-nosnippet>53</a>    </span>}
+<a href=#54 id=54 data-nosnippet>54</a>
+<a href=#55 id=55 data-nosnippet>55</a>    <span class="doccomment">/// Lock a keyslot (prevents further writes).
+<a href=#56 id=56 data-nosnippet>56</a>    ///
+<a href=#57 id=57 data-nosnippet>57</a>    /// Writes to `KC_REECPU_LOCK_CMD` — the REE CPU keyslot lock command register
+<a href=#58 id=58 data-nosnippet>58</a>    /// (main application processor = REE). Uses mcipher keyslot type.
+<a href=#59 id=59 data-nosnippet>59</a>    ///
+<a href=#60 id=60 data-nosnippet>60</a>    /// After locking, the keyslot cannot be modified until the next system reset.
+<a href=#61 id=61 data-nosnippet>61</a>    </span><span class="kw">pub fn </span>lock_keyslot(<span class="kw-2">&amp;mut </span><span class="self">self</span>, slot: u8) {
+<a href=#62 id=62 data-nosnippet>62</a>        <span class="macro">assert!</span>(slot &lt; KEYSLOT_COUNT, <span class="string">"keyslot {} out of range (max {})"</span>, slot, KEYSLOT_COUNT);
+<a href=#63 id=63 data-nosnippet>63</a>        <span class="comment">// Vendor SDK: write key_slot_num (bits [9:0]) and lock_cmd=1 (bit 20),
+<a href=#64 id=64 data-nosnippet>64</a>        // flush_hmac_kslot_ind=0 (mcipher), tscipher_ind=0
+<a href=#65 id=65 data-nosnippet>65</a>        </span><span class="kw">unsafe </span>{
+<a href=#66 id=66 data-nosnippet>66</a>            <span class="self">self</span>.regs().kc_reecpu_lock_cmd().write(|w| {
+<a href=#67 id=67 data-nosnippet>67</a>                w.key_slot_num().bits(slot <span class="kw">as </span>u16);
+<a href=#68 id=68 data-nosnippet>68</a>                w.lock_cmd().set_bit()
+<a href=#69 id=69 data-nosnippet>69</a>            });
+<a href=#70 id=70 data-nosnippet>70</a>        }
+<a href=#71 id=71 data-nosnippet>71</a>    }
+<a href=#72 id=72 data-nosnippet>72</a>
+<a href=#73 id=73 data-nosnippet>73</a>    <span class="doccomment">/// Get the number of available keyslots.
+<a href=#74 id=74 data-nosnippet>74</a>    </span><span class="kw">pub fn </span>keyslot_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
+<a href=#75 id=75 data-nosnippet>75</a>        KEYSLOT_COUNT
+<a href=#76 id=76 data-nosnippet>76</a>    }
+<a href=#77 id=77 data-nosnippet>77</a>}
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a><span class="comment">// ── Tests ──────────────────────────────────────────────────────
+<a href=#80 id=80 data-nosnippet>80</a>
+<a href=#81 id=81 data-nosnippet>81</a></span><span class="attr">#[cfg(all(test, not(target_arch = <span class="string">"riscv32"</span>)))]
+<a href=#82 id=82 data-nosnippet>82</a></span><span class="kw">mod </span>tests {
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="attr">#[test]
+<a href=#84 id=84 data-nosnippet>84</a>    </span><span class="kw">fn </span>test_keyslot_lock_bit_position() {
+<a href=#85 id=85 data-nosnippet>85</a>        <span class="comment">// lock_keyslot writes key_slot_num in bits [9:0], lock_cmd=1 at bit 20
+<a href=#86 id=86 data-nosnippet>86</a>        </span><span class="kw">let </span>slot: u16 = <span class="number">3</span>;
+<a href=#87 id=87 data-nosnippet>87</a>        <span class="kw">let </span>lock_cmd_bit: u32 = <span class="number">1 </span>&lt;&lt; <span class="number">20</span>;
+<a href=#88 id=88 data-nosnippet>88</a>        <span class="kw">let </span>val: u32 = (slot <span class="kw">as </span>u32) | lock_cmd_bit;
+<a href=#89 id=89 data-nosnippet>89</a>        <span class="macro">assert_eq!</span>(val &amp; <span class="number">0x3FF</span>, <span class="number">3</span>); <span class="comment">// key_slot_num = 3 in bits [9:0]
+<a href=#90 id=90 data-nosnippet>90</a>        </span><span class="macro">assert_eq!</span>((val &gt;&gt; <span class="number">20</span>) &amp; <span class="number">1</span>, <span class="number">1</span>); <span class="comment">// lock_cmd = 1 at bit 20
+<a href=#91 id=91 data-nosnippet>91</a>    </span>}
+<a href=#92 id=92 data-nosnippet>92</a>
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="attr">#[test]
+<a href=#94 id=94 data-nosnippet>94</a>    </span><span class="kw">fn </span>test_keyslot_lock_status_is_enum_not_bitmask() {
+<a href=#95 id=95 data-nosnippet>95</a>        <span class="comment">// rd_lock_status is a 3-bit enum (bits [2:0]):
+<a href=#96 id=96 data-nosnippet>96</a>        // 0=unlocked, 1=REE, 2=TEE, 4=PCPU, 6=AIDSP
+<a href=#97 id=97 data-nosnippet>97</a>        // is_keyslot_locked should check rd_lock_status != 0, NOT (status &amp; (1 &lt;&lt; slot))
+<a href=#98 id=98 data-nosnippet>98</a>        </span><span class="kw">let </span>unlocked: u8 = <span class="number">0</span>;
+<a href=#99 id=99 data-nosnippet>99</a>        <span class="kw">let </span>ree_locked: u8 = <span class="number">1</span>;
+<a href=#100 id=100 data-nosnippet>100</a>        <span class="kw">let </span>tee_locked: u8 = <span class="number">2</span>;
+<a href=#101 id=101 data-nosnippet>101</a>        <span class="macro">assert_eq!</span>(unlocked != <span class="number">0</span>, <span class="bool-val">false</span>); <span class="comment">// unlocked → not locked
+<a href=#102 id=102 data-nosnippet>102</a>        </span><span class="macro">assert_eq!</span>(ree_locked != <span class="number">0</span>, <span class="bool-val">true</span>); <span class="comment">// REE locked → locked
+<a href=#103 id=103 data-nosnippet>103</a>        </span><span class="macro">assert_eq!</span>(tee_locked != <span class="number">0</span>, <span class="bool-val">true</span>); <span class="comment">// TEE locked → locked
+<a href=#104 id=104 data-nosnippet>104</a>    </span>}
+<a href=#105 id=105 data-nosnippet>105</a>
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="attr">#[test]
+<a href=#107 id=107 data-nosnippet>107</a>    </span><span class="kw">fn </span>test_keyslot_count() {
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="macro">assert_eq!</span>(<span class="kw">super</span>::KEYSLOT_COUNT, <span class="number">8</span>);
+<a href=#109 id=109 data-nosnippet>109</a>    }
+<a href=#110 id=110 data-nosnippet>110</a>
+<a href=#111 id=111 data-nosnippet>111</a>    <span class="attr">#[test]
+<a href=#112 id=112 data-nosnippet>112</a>    </span><span class="kw">fn </span>test_all_keyslots_lockable() {
+<a href=#113 id=113 data-nosnippet>113</a>        <span class="comment">// All 8 keyslots (0-7) must produce valid lock values
+<a href=#114 id=114 data-nosnippet>114</a>        </span><span class="kw">for </span>slot <span class="kw">in </span><span class="number">0</span>..<span class="number">8u16 </span>{
+<a href=#115 id=115 data-nosnippet>115</a>            <span class="kw">let </span>val: u32 = (slot <span class="kw">as </span>u32) | (<span class="number">1 </span>&lt;&lt; <span class="number">20</span>);
+<a href=#116 id=116 data-nosnippet>116</a>            <span class="macro">assert_eq!</span>(val &amp; <span class="number">0x3FF</span>, slot <span class="kw">as </span>u32); <span class="comment">// key_slot_num in bits [9:0]
+<a href=#117 id=117 data-nosnippet>117</a>            </span><span class="macro">assert_eq!</span>((val &gt;&gt; <span class="number">20</span>) &amp; <span class="number">1</span>, <span class="number">1</span>); <span class="comment">// lock_cmd at bit 20
+<a href=#118 id=118 data-nosnippet>118</a>            </span><span class="macro">assert!</span>(slot &lt; <span class="kw">super</span>::KEYSLOT_COUNT <span class="kw">as </span>u16); <span class="comment">// within valid range
+<a href=#119 id=119 data-nosnippet>119</a>        </span>}
+<a href=#120 id=120 data-nosnippet>120</a>    }
+<a href=#121 id=121 data-nosnippet>121</a>}
+<a href=#122 id=122 data-nosnippet>122</a>
+<a href=#123 id=123 data-nosnippet>123</a><span class="comment">// ── Property-based fuzz tests ──────────────────────────────────
+<a href=#124 id=124 data-nosnippet>124</a>
+<a href=#125 id=125 data-nosnippet>125</a></span><span class="attr">#[cfg(all(test, not(target_arch = <span class="string">"riscv32"</span>)))]
+<a href=#126 id=126 data-nosnippet>126</a></span><span class="kw">mod </span>proptests {
+<a href=#127 id=127 data-nosnippet>127</a>    <span class="kw">use </span><span class="kw">super</span>::KEYSLOT_COUNT;
+<a href=#128 id=128 data-nosnippet>128</a>    <span class="kw">use </span>proptest::prelude::<span class="kw-2">*</span>;
+<a href=#129 id=129 data-nosnippet>129</a>
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="doccomment">/// Re-derives the `KC_REECPU_LOCK_CMD` word that `lock_keyslot` writes:
+<a href=#131 id=131 data-nosnippet>131</a>    /// `key_slot_num` in bits [9:0], `lock_cmd` = 1 at bit 20, all other
+<a href=#132 id=132 data-nosnippet>132</a>    /// fields (flush_hmac_kslot_ind, tscipher_ind, …) left zero.
+<a href=#133 id=133 data-nosnippet>133</a>    </span><span class="kw">fn </span>lock_cmd_word(slot: u8) -&gt; u32 {
+<a href=#134 id=134 data-nosnippet>134</a>        (slot <span class="kw">as </span>u32) | (<span class="number">1u32 </span>&lt;&lt; <span class="number">20</span>)
+<a href=#135 id=135 data-nosnippet>135</a>    }
+<a href=#136 id=136 data-nosnippet>136</a>
+<a href=#137 id=137 data-nosnippet>137</a>    <span class="doccomment">/// Re-derives the `KC_RD_SLOT_NUM` word that `is_keyslot_locked` writes to
+<a href=#138 id=138 data-nosnippet>138</a>    /// select a keyslot: `slot_num_cfg` (a u16) in bits [9:0], `slot_cfg_type`
+<a href=#139 id=139 data-nosnippet>139</a>    /// = 0 (mcipher) at bit 15.
+<a href=#140 id=140 data-nosnippet>140</a>    </span><span class="kw">fn </span>rd_slot_select_word(slot: u8) -&gt; u16 {
+<a href=#141 id=141 data-nosnippet>141</a>        slot <span class="kw">as </span>u16 <span class="comment">// slot_num_cfg, slot_cfg_type cleared (bit 15 = 0)
+<a href=#142 id=142 data-nosnippet>142</a>    </span>}
+<a href=#143 id=143 data-nosnippet>143</a>
+<a href=#144 id=144 data-nosnippet>144</a>    <span class="macro">proptest!</span> {
+<a href=#145 id=145 data-nosnippet>145</a>        <span class="doccomment">/// Fuzz: for every valid keyslot the lock command never panics and lands
+<a href=#146 id=146 data-nosnippet>146</a>        /// `key_slot_num` exactly in bits [9:0] (round-trip via mask).
+<a href=#147 id=147 data-nosnippet>147</a>        </span><span class="attr">#[test]
+<a href=#148 id=148 data-nosnippet>148</a>        </span><span class="kw">fn </span>lock_cmd_slot_round_trips(slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#149 id=149 data-nosnippet>149</a>            <span class="kw">let </span>w = lock_cmd_word(slot);
+<a href=#150 id=150 data-nosnippet>150</a>            <span class="macro">prop_assert_eq!</span>(w &amp; <span class="number">0x3FF</span>, slot <span class="kw">as </span>u32);
+<a href=#151 id=151 data-nosnippet>151</a>        }
+<a href=#152 id=152 data-nosnippet>152</a>
+<a href=#153 id=153 data-nosnippet>153</a>        <span class="doccomment">/// Fuzz: the lock command always asserts `lock_cmd` at bit 20 and sets
+<a href=#154 id=154 data-nosnippet>154</a>        /// NO stray bits outside the two documented fields ([9:0] | bit 20).
+<a href=#155 id=155 data-nosnippet>155</a>        </span><span class="attr">#[test]
+<a href=#156 id=156 data-nosnippet>156</a>        </span><span class="kw">fn </span>lock_cmd_has_no_stray_bits(slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#157 id=157 data-nosnippet>157</a>            <span class="kw">let </span>w = lock_cmd_word(slot);
+<a href=#158 id=158 data-nosnippet>158</a>            <span class="macro">prop_assert_eq!</span>((w &gt;&gt; <span class="number">20</span>) &amp; <span class="number">1</span>, <span class="number">1</span>); <span class="comment">// lock_cmd asserted at bit 20
+<a href=#159 id=159 data-nosnippet>159</a>            // The slot field never collides with lock_cmd (bit 20) or type (bit 15).
+<a href=#160 id=160 data-nosnippet>160</a>            </span><span class="kw">let </span>documented = <span class="number">0x3FFu32 </span>| (<span class="number">1u32 </span>&lt;&lt; <span class="number">20</span>);
+<a href=#161 id=161 data-nosnippet>161</a>            <span class="macro">prop_assert_eq!</span>(w &amp; !documented, <span class="number">0</span>, <span class="string">"stray bits in lock word {:#x}"</span>, w);
+<a href=#162 id=162 data-nosnippet>162</a>        }
+<a href=#163 id=163 data-nosnippet>163</a>
+<a href=#164 id=164 data-nosnippet>164</a>        <span class="doccomment">/// Fuzz: the slot index always fits the [9:0] field, never reaching the
+<a href=#165 id=165 data-nosnippet>165</a>        /// `slot_cfg_type` selector at bit 15 — so a valid slot can never be
+<a href=#166 id=166 data-nosnippet>166</a>        /// mis-decoded as the tscipher keyslot type.
+<a href=#167 id=167 data-nosnippet>167</a>        </span><span class="attr">#[test]
+<a href=#168 id=168 data-nosnippet>168</a>        </span><span class="kw">fn </span>slot_index_never_reaches_type_bit(slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#169 id=169 data-nosnippet>169</a>            <span class="kw">let </span>w = lock_cmd_word(slot);
+<a href=#170 id=170 data-nosnippet>170</a>            <span class="macro">prop_assert_eq!</span>((w &gt;&gt; <span class="number">15</span>) &amp; <span class="number">1</span>, <span class="number">0</span>); <span class="comment">// bit 15 (type) stays clear
+<a href=#171 id=171 data-nosnippet>171</a>            </span><span class="macro">prop_assert!</span>(slot <span class="kw">as </span>u32 &lt;= <span class="number">0x3FF</span>);
+<a href=#172 id=172 data-nosnippet>172</a>        }
+<a href=#173 id=173 data-nosnippet>173</a>
+<a href=#174 id=174 data-nosnippet>174</a>        <span class="doccomment">/// Fuzz: the read-slot-select word puts the slot in bits [9:0] with the
+<a href=#175 id=175 data-nosnippet>175</a>        /// type selector (bit 15) cleared, for every valid slot.
+<a href=#176 id=176 data-nosnippet>176</a>        </span><span class="attr">#[test]
+<a href=#177 id=177 data-nosnippet>177</a>        </span><span class="kw">fn </span>rd_slot_select_encodes_mcipher(slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#178 id=178 data-nosnippet>178</a>            <span class="kw">let </span>w = rd_slot_select_word(slot);
+<a href=#179 id=179 data-nosnippet>179</a>            <span class="macro">prop_assert_eq!</span>(w &amp; <span class="number">0x3FF</span>, slot <span class="kw">as </span>u16);
+<a href=#180 id=180 data-nosnippet>180</a>            <span class="macro">prop_assert_eq!</span>((w &gt;&gt; <span class="number">15</span>) &amp; <span class="number">1</span>, <span class="number">0</span>); <span class="comment">// slot_cfg_type = 0 → mcipher
+<a href=#181 id=181 data-nosnippet>181</a>        </span>}
+<a href=#182 id=182 data-nosnippet>182</a>
+<a href=#183 id=183 data-nosnippet>183</a>        <span class="doccomment">/// Fuzz: the lock-status decode is "non-zero owner ⇒ locked", NOT a
+<a href=#184 id=184 data-nosnippet>184</a>        /// per-slot bitmask. For ANY 3-bit owner value (0=unlocked, else a CPU
+<a href=#185 id=185 data-nosnippet>185</a>        /// owns it) the `status != 0` rule equals "owner present", which a
+<a href=#186 id=186 data-nosnippet>186</a>        /// buggy `status &amp; (1 &lt;&lt; slot)` test would get wrong for owners like
+<a href=#187 id=187 data-nosnippet>187</a>        /// TEE(2)/AIDSP(6) on slots whose bit isn't set.
+<a href=#188 id=188 data-nosnippet>188</a>        </span><span class="attr">#[test]
+<a href=#189 id=189 data-nosnippet>189</a>        </span><span class="kw">fn </span>lock_status_is_owner_nonzero_not_bitmask(status <span class="kw">in </span>any::&lt;u8&gt;(), slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#190 id=190 data-nosnippet>190</a>            <span class="kw">let </span>locked = status != <span class="number">0</span>;
+<a href=#191 id=191 data-nosnippet>191</a>            <span class="macro">prop_assert_eq!</span>(locked, status &gt; <span class="number">0</span>);
+<a href=#192 id=192 data-nosnippet>192</a>            <span class="comment">// The buggy bitmask interpretation must NOT be relied upon: it would
+<a href=#193 id=193 data-nosnippet>193</a>            // call a real lock "unlocked" whenever the owner enum's bit for this
+<a href=#194 id=194 data-nosnippet>194</a>            // slot happens to be clear. Demonstrate they genuinely disagree.
+<a href=#195 id=195 data-nosnippet>195</a>            </span><span class="kw">let </span>buggy_bitmask = (status &amp; (<span class="number">1u8 </span>&lt;&lt; (slot &amp; <span class="number">7</span>))) != <span class="number">0</span>;
+<a href=#196 id=196 data-nosnippet>196</a>            <span class="kw">if </span>status != <span class="number">0 </span>&amp;&amp; !buggy_bitmask {
+<a href=#197 id=197 data-nosnippet>197</a>                <span class="macro">prop_assert!</span>(locked &amp;&amp; !buggy_bitmask,
+<a href=#198 id=198 data-nosnippet>198</a>                    <span class="string">"owner {} on slot {} is locked but bitmask says unlocked"</span>, status, slot);
+<a href=#199 id=199 data-nosnippet>199</a>            }
+<a href=#200 id=200 data-nosnippet>200</a>        }
+<a href=#201 id=201 data-nosnippet>201</a>
+<a href=#202 id=202 data-nosnippet>202</a>        <span class="doccomment">/// Fuzz: every keyslot the driver accepts is strictly below the count,
+<a href=#203 id=203 data-nosnippet>203</a>        /// matching the `assert!(slot &lt; KEYSLOT_COUNT)` guard in lock/query.
+<a href=#204 id=204 data-nosnippet>204</a>        </span><span class="attr">#[test]
+<a href=#205 id=205 data-nosnippet>205</a>        </span><span class="kw">fn </span>valid_slots_are_below_count(slot <span class="kw">in </span><span class="number">0u8</span>..KEYSLOT_COUNT) {
+<a href=#206 id=206 data-nosnippet>206</a>            <span class="macro">prop_assert!</span>(slot &lt; KEYSLOT_COUNT);
+<a href=#207 id=207 data-nosnippet>207</a>        }
+<a href=#208 id=208 data-nosnippet>208</a>    }
+<a href=#209 id=209 data-nosnippet>209</a>}
+</code></pre></div></section></main></body></html>

@@ -1,0 +1,349 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ws63-RF - HiSilicon RISC-V Rust 嵌入式开发手册</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="HiSilicon RISC-V 芯片的 Rust 嵌入式生态：HAL、运行时、工具链、QEMU 与硬件在环测试。按 Diátaxis 框架组织。">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../theme/hisi-docs-5dcc79d1.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex-0471372e.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc-91c64007.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">HiSilicon RISC-V Rust 嵌入式开发手册</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/explanation/components/09-ws63-rf.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}, {"id": "v0.7.0-alpha.7", "label": "v0.7.0-alpha.7", "kind": "release", "book_base": "/hisi-riscv-rs/v0.7.0-alpha.7/", "api_base": "/hisi-riscv-rs/api/v0.7.0-alpha.7/"}]}}</script>
+<h1 id="ws63-rf-架构"><a class="header" href="#ws63-rf-架构">ws63-RF 架构</a></h1>
+<blockquote>
+<p>本文是 ws63-rs 组件深入文档的一部分，聚焦当前架构、职责边界和设计原因。当前优先级见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">ROADMAP</a>。</p>
+</blockquote>
+<h2 id="职责与边界"><a class="header" href="#职责与边界">职责与边界</a></h2>
+<p><code>ws63-RF</code> 是嵌套在 <code>crates/chips/ws63/ws63-radio-sys/</code> 下的语言中立 git submodule，定位是<strong>连接性（Wi-Fi/BT/BLE/SLE）的 vendor payload</strong>。<code>ws63-radio-sys</code> 固定其版本并拥有 archive/ABI/post-link contract。payload 本身负责两件事：</p>
+<ol>
+<li><strong>重分发 vendor 闭源协议栈</strong>——7 个从 HiSilicon WS63 SDK 抽取的预编译 RISC-V 静态库 <code>lib/*.a</code>（合计约 3.1 MB），包含完整的 Wi-Fi MAC 协议栈（HMAC + DMAC + RF 前端控制）与 BLE/SLE 主机协议栈（GAP/GATT/SMP/L2CAP、SLE/GLE）。</li>
+<li><strong>提供 porting 接口契约</strong>——<code>include/port/port_*.h</code> 共 8 个头文件，约 70 个 OS/IPC/缓冲管理抽象函数，外加 <code>include/api/</code>（公开 API 头）与 <code>include/internal/</code>（blob 内部依赖的类型头）。</li>
+</ol>
+<p>它<strong>不负责</strong>：</p>
+<ul>
+<li>不提供 Rust 绑定或 Cargo package；这些由 <code>ws63-radio-sys</code> 提供，payload 自身仍对 Cargo workspace 不可见。</li>
+<li>不实现 porting 层本身——<code>port_*.h</code> 只是接口声明，实现由下游 in-tree crate <strong><code>ws63-rf-rs</code></strong> 填充，<strong>现已实现</strong>（见下）。</li>
+<li>不提供链接脚本——<code>port_linker.h</code> 仅以 <code>extern</code> 声明 blob 期望的链接符号，实际的 <code>SECTIONS</code> / 内存区段需调用方在 linker script 中给出。</li>
+</ul>
+<p>子模块内自带 <code>ARCHITECTURE.md</code>。其中早期“连接性 0% / 尚无 Rust 绑定”的结论已经
+过时：<code>ws63-rf-rs</code> 已实现 WS63 porting/ABI adapter，调度与 IPC 已下沉到
+<code>hisi-rf-rtos-driver</code> + <code>hisi-rtos</code>，芯片中立控制面位于独立 <code>hisi-rf</code>。完整 init closure
+由 stock-<code>rust-lld</code> layout 驱动的受控 relocation patch lane 生成，并在 final link 后校验
+section 地址；原厂 linker 只保留为诊断 oracle。真实 WS63 EVB 已完成主动扫描、
+WPA2-Personal 关联、DHCP、smoltcp neighbor discovery、公共 ICMP 和 DHCP renew。</p>
+<h2 id="在依赖链中的位置"><a class="header" href="#在依赖链中的位置">在依赖链中的位置</a></h2>
+<p>ws63-RF（blob）先经 <strong><code>ws63-radio-sys</code> / <code>hisi-rf-link</code></strong> 固定 ABI、archive profile 与
+relocation；过渡 crate <strong><code>ws63-rf-rs</code></strong> 实现芯片 adapter，<code>hisi-rf</code> 提供用户控制面和
+L2 device，IP stack 由应用选择 smoltcp 或 Embassy Net：</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph 主链["已接入的 Rust 主链"]
+        SVD[crates/chips/ws63/ws63-pac/ws63-svd] --&gt; PAC[ws63-pac]
+        PAC --&gt; HAL[hisi-hal]
+        HAL --&gt; EX[ws63-examples]
+        RT[hisi-riscv-rt] -.启动/链接脚本.-&gt; EX
+    end
+    subgraph RF["crates/chips/ws63/ws63-radio-sys/ws63-RF（vendor payload）"]
+        BLOB["lib/*.a 闭源协议栈"]
+        PORT["include/port/port_*.h&lt;br/&gt;~77 个 porting 接口契约"]
+        PORT -.接口契约.-&gt; BLOB
+    end
+    SYS["ws63-radio-sys + hisi-rf-link&lt;br/&gt;ABI / archive / relocation contract"]
+    PLATFORM["ws63-rf-rs&lt;br/&gt;WS63 ABI / OSAL / netif adapter"]
+    DRIVER["hisi-rf-rtos-driver"]
+    RTOS["hisi-rtos"]
+    API["hisi-rf&lt;br/&gt;controller / runner / L2 device"]
+    NET["Application IP stack&lt;br/&gt;smoltcp / Embassy Net"]
+    HAL --&gt; PLATFORM
+    PORT --&gt; SYS
+    SYS --&gt; PLATFORM
+    PLATFORM --&gt; DRIVER
+    DRIVER --&gt; RTOS
+    API --&gt; PLATFORM
+    NET --&gt;|消费 L2 device| API
+    PLATFORM --&gt;|实现契约 + 链接 blob| BLOB
+    BLOB -.HIL:真机连接性示例.-&gt; EX
+
+    classDef done fill:#d5f5d5,stroke:#2a2;
+    classDef hil fill:#fff3cd,stroke:#cc9;
+    class SVD,PAC,HAL,EX,RT,PORT,PLATFORM,DRIVER,RTOS,API,NET done;
+    class BLOB hil;
+</code></pre>
+<ul>
+<li><strong>上游</strong>：blob 由 vendor SDK（<code>fbb_ws63</code>，参考实现在 <code>src/drivers/chips/ws63/porting/</code>）编译而来，本仓库只做重分发。</li>
+<li><strong>下游</strong>：Wi-Fi 用户入口已经迁到 <code>hisi-rf</code> 的 controller/runner/device vertical slice；
+<code>wifi_init_smoke</code> 在真机通过 WPA2 connect、DHCP、neighbor cache、ICMP 和 renew。
+BLE/SLE/coexistence 仍是后续里程碑，不能由 Wi-Fi 证据外推。</li>
+<li>架构上 WS63 是<strong>单核 RISC-V</strong>（一个自研应用核——核过 fbb_ws63：<code>ch2_system.md</code>「系统提供一个自研 RISC-V 处理器作为主控 CPU」、<code>platform_core.h</code> 标题 <em>Application Core</em>、<code>rom_config/</code> 仅 <code>acore</code>、全 SDK 无 <code>dcore</code>）。Wi-Fi 协议栈的 <strong>HMAC（上层/host MAC）与 DMAC（下层/device MAC）是链接进同一应用镜像的软件库</strong>（<code>libwifi_driver_hmac.a</code> / <code>libwifi_driver_dmac.a</code> 同在 <code>ws63-liteos-app/</code>），都跑在这一颗核上、驱动 Wi-Fi MAC/PHY 硬件。HCC 的 host/device-CPU 语义是 HiSilicon 跨产品线的<strong>通用框架模型</strong>——真正两颗 CPU 是「外接主控 MCU + WS63 模组」拓扑，<strong>不是 WS63 片内有第二颗 RISC-V 核</strong>。（更正：早期 README/本文曾写成「ACORE/DCORE 双核」，不准确。）</li>
+</ul>
+<h2 id="关键设计"><a class="header" href="#关键设计">关键设计</a></h2>
+<h3 id="三层产物blob--内部头--porting-头"><a class="header" href="#三层产物blob--内部头--porting-头">三层产物：blob / 内部头 / porting 头</a></h3>
+<ul>
+<li><strong>闭源 <code>.a</code>（<code>lib/</code>）</strong>：<code>libwifi_driver_dmac.a</code>（629 KB，Wi-Fi device MAC + HAL + RF 前端）、<code>libwifi_rom_data.a</code>（3 KB）、<code>libbt_host.a</code>（1.1 MB，BLE host）、<code>libbt_app.a</code>、<code>libbth_gle.a</code>（821 KB，SLE/GLE）、<code>libbth_sdk.a</code>、<code>libbg_common.a</code>。README 的“Library Catalog“表与磁盘实际大小逐项吻合（<code>ls -la lib/</code> 核实）。</li>
+<li><strong>internal 头（<code>include/internal/</code>）</strong>：blob 内部代码依赖的类型/消息定义（<code>osal_types.h</code>、<code>frw_msg_rom.h</code>、<code>wlan_msg.h</code>、<code>hcc_*.h</code> 等），porting 头里的不透明结构（如 <code>struct frw_msg</code>）正是在此定义。</li>
+<li><strong>porting 头（<code>include/port/</code>）</strong>：调用方必须实现的 8 组接口（每个文件均以 <code>port_*.h</code> 命名）。</li>
+</ul>
+<h3 id="porting-接口分解readme-的-dependencies-count-表与头文件逐一核对"><a class="header" href="#porting-接口分解readme-的-dependencies-count-表与头文件逐一核对">porting 接口分解（README 的 “Dependencies Count” 表，与头文件逐一核对）</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>头文件</th><th>函数数</th><th>职责（file 证据）</th></tr>
+</thead>
+<tbody>
+<tr><td><code>port_osal.h</code></td><td>24</td><td>OS 抽象：中断 <code>osal_irq_*</code>、线程 <code>osal_kthread_*</code>、内存 <code>osal_kmalloc/kfree</code>、等待 <code>osal_wait_*</code>、<code>osal_udelay</code>、<code>osal_flush_cache</code>、<code>osal_printk</code>（<code>port_osal.h:44-160</code>）</td></tr>
+<tr><td><code>port_frw.h</code></td><td>15</td><td>Wi-Fi 消息分发框架 + 定时器：<code>frw_main_init</code>、<code>frw_fetch_msg_node</code>、<code>frw_send_msg_to_device</code>、<code>frw_task_thread</code>、<code>frw_dmac_timer_*</code>（<code>port_frw.h:28-99</code>）</td></tr>
+<tr><td><code>port_wlan.h</code></td><td>11</td><td>共享内存 ring buffer + RF 时钟：<code>wlan_open/close_wifi_abb_rf_clk</code>、<code>wlan_msg_h2d_*</code>、<code>oal_ring_write/read</code>（<code>port_wlan.h:25-110</code>）</td></tr>
+<tr><td><code>port_hcc.h</code></td><td>6</td><td>HCC IPC 传输：<code>hcc_dmac_config_bus_ini</code>、<code>hcc_dmac_service_adapt_start</code>、<code>hcc_wifi_msg_register/send</code>（<code>port_hcc.h:35-77</code>）</td></tr>
+<tr><td><code>port_oal.h</code></td><td>7</td><td>48 KB Wi-Fi packet 缓冲池：<code>oal_memory_init</code>、<code>oal_mem_rsv</code>、<code>oal_get_netbuf_pool_len</code>（<code>port_oal.h:39-79</code>）</td></tr>
+<tr><td><code>port_uapi.h</code></td><td>3</td><td>平台服务：<code>uapi_nv_read</code>（RF 校准/MAC）、<code>uapi_tsensor_get_current_temp</code>（热保护退避）、<code>uapi_systick_get_ms</code>（<code>port_uapi.h:30-72</code>）</td></tr>
+<tr><td><code>port_log.h</code></td><td>7</td><td>日志 + 安全 C 库：<code>log_event_wifi_print0/1/2/4</code>、<code>memset_s/memcpy_s/snprintf_s</code>（<code>port_log.h:30-50</code>）</td></tr>
+<tr><td><code>port_linker.h</code></td><td>20+ 符号</td><td>链接符号声明：<code>__wifi_pkt_ram_begin__/end__</code>、TCM/SRAM 区段、<code>__divdi3/__udivdi3</code>（<code>port_linker.h:38-77</code>）</td></tr>
+</tbody>
+</table>
+</div>
+<p>合计约 70 个外部符号——README 的 “Key insight”（“所有硬件寄存器访问 hal_<em>/fe_hal_</em>/hh503_* 自包含于 <code>libwifi_driver_dmac.a</code>，~70 个外部符号都是标准 OS 抽象/IPC/缓冲管理”）方向正确。</p>
+<h3 id="hcc-共享内存-ipc连接性的核心机制"><a class="header" href="#hcc-共享内存-ipc连接性的核心机制">HCC 共享内存 IPC（连接性的核心机制）</a></h3>
+<p><code>port_hcc.h:8-22</code>：HCC 是 host（HMAC/BLE host）与 device（DMAC/BT controller）之间的传输抽象，是 HiSilicon 跨产品线的通用模型。<strong>两种拓扑要分清</strong>：(a) WS63 作为模组接在外部主控 MCU 后面时，host=外部 MCU、device=WS63，走 SDIO/SPI bus driver——这才是「两颗 CPU」；(b) WS63 独立运行（ws63-rs 的场景），HMAC 与 DMAC 都在这一颗应用核上，HCC 退化为片内软件层间 + 到 Wi-Fi MAC 硬件的消息通路，<strong>没有第二颗核</strong>。<code>port_wlan.h</code> 的 <code>oal_ring_ctrl</code>（<code>port_wlan.h:78-84</code>，带 <code>read_idx_addr</code>/<code>write_idx_addr</code>/<code>ring_depth</code>）是该 HCC 传输的无锁环形缓冲控制块。</p>
+<h3 id="与参考实现的关系"><a class="header" href="#与参考实现的关系">与参考实现的关系</a></h3>
+<p>porting 层的语义对标 vendor SDK <code>fbb_ws63/src/drivers/chips/ws63/porting/</code>（README “References” 明确指向）。这与本仓库其余部分对标 esp-hal 的取向不同——RF 连接性不重写协议栈，而是复用 blob + 移植 OS/IPC 抽象，这一战略判断是正确的（数千行 MAC/BLE 状态机用 Rust 重写既无必要也不现实）。</p>
+<h2 id="注记bs2x-多芯片支持bs21bs22bs20"><a class="header" href="#注记bs2x-多芯片支持bs21bs22bs20">注记：BS2X 多芯片支持（BS21/BS22/BS20）</a></h2>
+<p>WS63-RF 中的 blob + porting 层当前<strong>专为 WS63 设计</strong>（所有路径、符号、校准数据指向 WS63 HMAC/DMAC/RF 前端）。BS2X 系列（BS21/BS22/BS20 统称为 BS2X，含不同内核配置与外设集的变体）有<strong>独立的 blob</strong> (<code>bs2x-pac</code> + <code>chips/bs2x/</code> 目录结构)。</p>
+<ul>
+<li><strong>WS63 blob</strong>：<code>crates/chips/ws63/ws63-radio-sys/ws63-RF/lib/libwifi_driver_dmac.a</code> 等 vendor archives，覆盖 Wi-Fi MAC/RF/BLE/SLE。</li>
+<li><strong>BS2X blob</strong>：QEMU <code>-M bs21/bs22/bs20</code> 及其上的 vendor LiteOS 栈（部分由 hisi-riscv-qemu 虚拟）。QEMU 侧已验证 SPI/GADC/I2C/KEYSCAN/QDEC/RTC/TRNG/WDT/DMA/PDM audio/USB enumeration 的完整功能外设覆盖；真机 BS2X 连接性与 WS63 路线并行，后续由 BS2X 团队跟进。</li>
+<li><strong>hisi-hal 多芯片</strong>：HAL standalone 无默认 chip；WS63 下游显式启用 <code>chip-ws63</code>，实验性 <code>chip-bs21</code> 还需 <code>unstable</code>。porting 层（ws63-rf-rs）当前绑 WS63，BS2X 连接性交付另行规划。</li>
+</ul>
+<p>详见 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/ROADMAP.md">当前 ROADMAP</a>、
+<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/hisi-connectivity-stack.md">A4 connectivity plan</a>
+与 <a href="01-overview.html">overview.md</a>。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../explanation/components/08-ws63-flashboot.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../../explanation/components/10-ws63-guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../explanation/components/08-ws63-flashboot.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../../explanation/components/10-ws63-guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../../mark-09e88c2c.min.js"></script>
+        <script src="../../searcher-09f2665d.js"></script>
+
+        <script src="../../clipboard-1626706a.min.js"></script>
+        <script src="../../highlight-abc7f01d.js"></script>
+        <script src="../../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../theme/hisi-docs-d2dc7ae4.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

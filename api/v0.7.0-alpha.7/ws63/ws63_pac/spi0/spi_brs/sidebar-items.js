@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SpiBrsSpec"],"type":["FrdvR","FrdvW","R","W"]};

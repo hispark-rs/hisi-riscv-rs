@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AfeAdcLdoCfgSpec"],"type":["R","S2dAfeldo1EnDlyR","S2dAfeldo1EnDlyW","S2dAfeldo1EnR","S2dAfeldo1EnW","S2dAfeldo2EnDlyR","S2dAfeldo2EnDlyW","S2dAfeldo2EnR","S2dAfeldo2EnW","S2dAfeldo3EnDlyR","S2dAfeldo3EnDlyW","S2dAfeldo3EnR","S2dAfeldo3EnW","S2dAfeldoIsoEnNR","S2dAfeldoIsoEnNW","W"]};

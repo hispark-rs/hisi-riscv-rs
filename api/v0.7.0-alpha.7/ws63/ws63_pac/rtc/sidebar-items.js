@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["rtc_control","rtc_current_value","rtc_eoi","rtc_int_status","rtc_load_count"],"struct":["RegisterBlock"],"type":["RtcControl","RtcCurrentValue","RtcEoi","RtcIntStatus","RtcLoadCount"]};

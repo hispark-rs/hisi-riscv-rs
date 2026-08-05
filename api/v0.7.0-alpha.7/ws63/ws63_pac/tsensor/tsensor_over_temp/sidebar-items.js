@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TsensorOverTempSpec"],"type":["OverTempEnR","OverTempEnW","OverTempR","OverTempW","R","W"]};

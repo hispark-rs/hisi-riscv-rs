@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TrngAllRegLockSpec"],"type":["R","TrngAllRegLockR","TrngAllRegLockW","W"]};

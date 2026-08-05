@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SpiSlenrSpec"],"type":["R","SlaveEnableR","SlaveEnableW","W"]};

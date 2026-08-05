@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["StpCtlSpec"],"type":["R","RxSpR","RxSpW","StpModeR","StpModeW","TxSpR","TxSpW","W"]};

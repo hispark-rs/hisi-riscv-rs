@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["QdecAccdblReadSpec"],"type":["DblRdValShadowR","DblRdValShadowW","R","W"]};

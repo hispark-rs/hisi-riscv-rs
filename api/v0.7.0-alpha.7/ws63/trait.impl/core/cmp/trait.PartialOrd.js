@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["hisi_hal",[["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/uart/struct.BaudRate.html\" title=\"struct hisi_hal::uart::BaudRate\">BaudRate</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/time/struct.Duration.html\" title=\"struct hisi_hal::time::Duration\">Duration</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/pwm/struct.Duty.html\" title=\"struct hisi_hal::pwm::Duty\">Duty</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/efuse/struct.EfuseByteAddress.html\" title=\"struct hisi_hal::efuse::EfuseByteAddress\">EfuseByteAddress</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/time/struct.Instant.html\" title=\"struct hisi_hal::time::Instant\">Instant</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/interrupt/struct.Priority.html\" title=\"struct hisi_hal::interrupt::Priority\">Priority</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/pwm/struct.PwmPeriod.html\" title=\"struct hisi_hal::pwm::PwmPeriod\">PwmPeriod</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/spi/struct.SpiHz.html\" title=\"struct hisi_hal::spi::SpiHz\">SpiHz</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/interrupt/struct.Threshold.html\" title=\"struct hisi_hal::interrupt::Threshold\">Threshold</a>",0],["impl PartialOrd for <a class=\"struct\" href=\"hisi_hal/wdt/struct.WdtTimeout.html\" title=\"struct hisi_hal::wdt::WdtTimeout\">WdtTimeout</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1490]}

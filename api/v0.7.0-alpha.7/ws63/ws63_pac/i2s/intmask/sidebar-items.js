@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IntmaskSpec"],"type":["R","RxIntMaskR","RxIntMaskW","RxOverflowMaskR","RxOverflowMaskW","TxIntMaskR","TxIntMaskW","TxUnderflowMaskR","TxUnderflowMaskW","W"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RemapLenSpec"],"type":["R","W"]};

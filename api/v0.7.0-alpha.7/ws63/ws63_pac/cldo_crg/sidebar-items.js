@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["cken_ctl0","cken_ctl1","clk_sel","div_ctl0","div_ctl10","div_ctl3","div_ctl4","div_ctl5","div_ctl7","div_ctl9","i2s_div_cfg","rst_soft_cfg0","rst_soft_cfg1"],"struct":["RegisterBlock"],"type":["CkenCtl0","CkenCtl1","ClkSel","DivCtl0","DivCtl10","DivCtl3","DivCtl4","DivCtl5","DivCtl7","DivCtl9","I2sDivCfg","RstSoftCfg0","RstSoftCfg1"]};

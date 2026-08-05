@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgFreg0Spec"],"type":["CfgVrefldoIctrTrimR","CfgVrefldoIctrTrimW","CfgVrefldoIdummyTrimR","CfgVrefldoIdummyTrimW","CfgVrefldoReservedR","CfgVrefldoReservedW","CfgVrefldoRpolyTrimR","CfgVrefldoRpolyTrimW","CfgVrefldoVsetTrimR","CfgVrefldoVsetTrimW","R","W"]};

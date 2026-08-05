@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EfuseStsSpec"],"type":["Boot0DoneR","Boot1DoneR","Boot2DoneR","ManStsR","R","W"]};

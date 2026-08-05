@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EfuseAvddCtlSpec"],"type":["AvddSwR","AvddSwW","R","W"]};

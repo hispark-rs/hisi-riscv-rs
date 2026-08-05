@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InHashChnNodeWrPointSpec"],"type":["R","W","WritePointerR","WritePointerW"]};

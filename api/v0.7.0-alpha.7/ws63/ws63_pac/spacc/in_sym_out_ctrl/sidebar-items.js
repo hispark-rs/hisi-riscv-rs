@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InSymOutCtrlSpec"],"type":["DmaCopyR","DmaCopyW","R","W"]};

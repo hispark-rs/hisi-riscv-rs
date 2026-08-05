@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TimerChannel","TimerError","TimerMode"],"struct":["OneShotTimer","PeriodicTimer","TimerAlarm0","TimerDriver"]};

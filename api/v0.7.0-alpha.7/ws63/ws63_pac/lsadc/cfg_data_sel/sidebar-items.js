@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CfgDataSelSpec"],"type":["DataSelR","DataSelW","R","W"]};

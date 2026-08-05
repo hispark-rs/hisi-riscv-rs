@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SoftIntClrSpec"],"type":["SoftInt0ClrW","SoftInt1ClrW","SoftInt2ClrW","SoftInt3ClrW","W"]};
