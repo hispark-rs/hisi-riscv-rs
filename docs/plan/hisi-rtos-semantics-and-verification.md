@@ -206,7 +206,7 @@ detached ownership；显式 `ReadyDetached { intent_sequence }` 和删除 bounde
 属于 T7 之后的独立优化，不是当前正确性前置。`max-age` 与 100-reset 静止点统计仍归
 T6 真机门槛，不能由当前 host/形式化结果替代。
 
-#### T8 -- Intent 创建前的 `switch_away` TOCTOU（connectivity gate 后执行）
+#### T8 -- Intent 创建前的 `switch_away` TOCTOU（已闭合）
 
 alpha.12 的 `SwitchIntent` 模型和 Kani harness 从 intent 已经创建的状态开始，因此证明的是
 ticket 的 commit/cancel/consume 生命周期，而不是“当前是否仍应创建 ticket”的决策。
@@ -239,6 +239,26 @@ ready target 并创建一个新的 intent。这是 specification boundary 缺失
 该工作不改变公开 API、`RunPolicy`、quota 或 Reservation，也不阻塞当前 connectivity
 收口。完成后，最终汇报必须分别说明“ticket lifetime proof”和“ticket creation decision
 proof”，不能再把两者合并表述为完整 port 线性化证明。
+
+`hisi-rtos` commit `7cbcd48` 已把 production `prepare-or-observe-resume`、旧设计受控
+TLA+ 反例、Kani 和四类入口 regression 对齐；配套 RTOS profile 与 pure-WPA3 双板矩阵
+完成 parity。该证据关闭 ticket creation decision 缺口，但没有把历史 AP queue-0 stall
+归因为这一条路径；ticket lifetime proof 与 creation decision proof 仍保持独立记录。
+
+#### T9 -- Ready ownership 全量不变量（已闭合）
+
+`RTOS-STATE-004` 现要求稳定 snapshot 中每个非 idle Ready task 恰由 ordinary ready queue
+或未消费 pending target 之一持有，并同时约束唯一 membership、effective-priority bucket、
+有界 link 和 `current`/`Running` 一致性。`hisi-rtos 0.1.0-alpha.24` 的 production audit、
+host tests、Kani 与 TLA+ 已闭合软件证据；parent marker contract v3 又在缺失或非零 AP/STA
+诊断时 fail closed。
+
+固定 pure-WPA3 AP/STA ELF 的 20 次 paired nRST 为 20/20，STA echo 200/200，两侧
+ownership/duplicate/wrong-bucket/bad-link 与 detached mutation 最大值均为零，最终生成
+`A5R_READY_OWNERSHIP_OK`。证据与因果边界见
+[WS63 ready-ownership evidence](evidence/ws63-rtos-ready-ownership-2026-08-06.md)。这关闭
+bounded snapshot 与当前 connectivity workload 的 requirement gate；continuous trace、
+100-reset max-pending-age、soak 和未来 SMP ownership 仍是各自独立的 triggered gate。
 
 ### Scheduler Lock 与中断
 

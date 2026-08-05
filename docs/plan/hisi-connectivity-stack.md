@@ -18,7 +18,10 @@ release candidate 的可复现本地数据面反例，但不能从成功矩阵�
 唯一根因。`hisi-rtos` commit `7cbcd48` 已把 ticket 创建前的
 `prepare-or-observe-resume` 决策纳入 production helper、受控 TLA+ 旧设计反例、Kani
 和入口级 host regression，并由同一提交的 RTOS profile 与双板矩阵完成真机 parity；
-完整 ready ownership 不变量仍按后续独立任务推进。
+`hisi-rtos 0.1.0-alpha.24` 又把完整 ready ownership 不变量落成有界诊断、host/Kani/TLA+
+证据和严格双板 HIL 合同；pure-WPA3 固定 ELF 的 20-reset 矩阵为 20/20、STA echo
+200/200，两侧 ownership/duplicate/bucket/link 计数均为零。该结果仍不反推旧反例的
+唯一根因。
 `hisi-rf-ws63 0.1.0-alpha.71` 与 `hisi-rf 0.1.0-alpha.83` 已把命名 WS63
 station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。剩余门槛不再阻止
@@ -1486,7 +1489,7 @@ profile 切到 bounded 路径，legacy blocking 只由显式 feature 选择。
   scenario inventory 由 driver crate 定义并由 `hisi-rtos` production-core adapter 执行；
   profile 缺失或不满足 adapter requirement 时在初始化前 fail closed。
 
-##### A5R-F -- 形式化模型覆盖收口（延期）
+##### A5R-F -- 形式化模型覆盖收口（已闭合）
 
 当前形式化基线只覆盖 `Budgeted` quota 与 scheduler-lock 交互：TLA+ 检查
 single-running、budget bound、exhausted eligibility 和 lock-deferred exhaustion，Kani 验证
@@ -1548,6 +1551,15 @@ A5R 后续排期和验收顺序。
   [switch-intent creation evidence](evidence/ws63-rtos-switch-intent-creation-2026-08-06.md)。
   该结果证明修复和 parity，不把旧 run 4/run 10 归因为单一根因；连续 max-pending-age
   计量归入 observability 改进，现有 `recover_completed_switch_request` 防线继续保留。
+- [x] **A5R-F4C -- Ready ownership 全量审计**：`hisi-rtos 0.1.0-alpha.24` 对全部
+  32 个优先级 bucket 做 17-slot 有界遍历，并以 `RTOS-STATE-004` 固定 ordinary queue、
+  pending target、idle、`current`/`Running` 的唯一归属。host regression 覆盖 detached、
+  duplicate、wrong-bucket、double-owned 和损坏链；Kani 直接验证 production audit，TLA+
+  同时保留 legacy 受控反例。AP/STA marker contract v3 对缺失或非零诊断 fail closed；
+  固定 pure-WPA3 ELF 的 3/3 预检和 20/20 矩阵取得 STA echo 200/200、两侧六项最大值全零、
+  runner/allocator error 全零，并生成 `A5R_READY_OWNERSHIP_OK`。完整 commit、ELF hash、
+  3 MHz verified download 和因果边界见
+  [ready-ownership evidence](evidence/ws63-rtos-ready-ownership-2026-08-06.md)。
 - [x] **A5R-F5 -- 证据门槛**：TLC/Kani 使用 pin 版本进入 CI，保存模型参数、
   状态空间统计、反例和 harness inventory；相同 requirement ID 必须能追溯到
   normative spec、abstract model、Rust harness、conformance scenario 和必要的 HIL marker。
