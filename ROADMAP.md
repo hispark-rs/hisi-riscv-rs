@@ -9,9 +9,9 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A5 and the repository-owned
-two-WS63 WPA2/WPA3 release gate are frozen. The active slot is now B0 BLE
-archive/symbol/ABI closure; it must not grow into BLE runtime or public API before
-the machine-owned archive and resource contracts exist.
+two-WS63 WPA2/WPA3 release gate and B0 BLE archive/ABI contract are frozen. The
+active slot is now B1 BLE controller/host initialization; it must not grow into
+advertising, scanning, GATT, or public BLE API before initialization works on silicon.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -141,14 +141,22 @@ Evidence: [A5U operation error injection](docs/plan/evidence/ws63-rf-a5u-operati
 Resource-conservation evidence:
 [A5 incremental resource conservation](docs/plan/evidence/ws63-rf-a5-resource-conservation-2026-07-28.md).
 
-## NOW -- B0 BLE Archive And ABI Closure
+## Completed -- B0 BLE Archive And ABI Closure
 
 B0 fixes the exact WS63 BLE archive/profile inputs before any runtime or user API
 is added. It inventories the vendor controller/host/GAP/GATT/SMP closure, pins
 archive hashes, generates the undefined-symbol manifest, and maps each symbol to
 its RTOS, NVS, crypto, allocator, transport or coexistence owner. CI must fail on
-an unreviewed symbol or ABI/layout change. B1 controller/host initialization only
-starts after this contract is reviewable and reproducible.
+an unreviewed symbol or ABI/layout change. The contract is published as
+`ws63-radio-sys 0.1.0-alpha.12`; evidence is recorded in
+[BLE B0 archive/ABI closure](docs/plan/evidence/ws63-ble-b0-archive-abi-2026-08-06.md).
+
+## NOW -- B1 BLE Controller And Host Init
+
+B1 resolves only the fixed B0 archives' controller/host initialization closure:
+shared transport, NVS identity/bonding reads, allocator and RTOS capabilities,
+resource admission, and an on-silicon init marker. Advertising, scanning, GATT,
+SLE/GLE, coexistence, and public BLE API remain outside this window.
 
 ## LATER -- Triggered Product Directions
 

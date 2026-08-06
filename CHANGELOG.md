@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Release train anchor: not selected.
 
+### Changed
+
+- **BLE B0 archive/ABI closure** — publish `ws63-radio-sys
+  0.1.0-alpha.12`, `hisi-rf-ws63 0.1.0-alpha.72`, `hisi-rf
+  0.1.0-alpha.84`, and `hisi-rs-template v0.7.0-alpha.29`. The release chain
+  pins the redistributable WS63 BLE controller/host archives, generated symbol
+  ownership manifest, ABI fingerprint, normalized relocation inventory, and
+  submodule-free Linux/macOS/Windows consumer contract. No BLE runtime or
+  public BLE API is claimed; the active milestone advances only to B1
+  controller/host initialization.
+
 ## [0.7.0-alpha.7] - 2026-08-06
 
 Release train anchor: `hisi-hal 0.7.0-alpha.7`.
