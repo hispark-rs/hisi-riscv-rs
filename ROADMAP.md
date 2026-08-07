@@ -9,9 +9,9 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
-two-WS63 WPA2/WPA3 release gate, BLE B0-B3, and SLE S0-S2 are frozen. The active
-slot is S3 SLE SSAP client/server; it must not grow into coexistence, pairing UX,
-or a stable public SLE API before the bounded two-board data lifecycle works.
+two-WS63 WPA2/WPA3 release gate, BLE B0-B3, and SLE S0-S3 are frozen. S3 closed
+the bounded two-board SSAP read/notification lifecycle; the major WIP slot now
+stays empty until the next product-direction gate is selected.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -172,24 +172,28 @@ B3 delivered GATT client/server, notification/indication, and disconnect
 cleanup in a fixed-image paired 20-reset matrix. Evidence is recorded in
 [BLE B3 GATT](docs/plan/evidence/ws63-ble-b3-gatt-2026-08-07.md).
 
-## Completed -- S0-S2 SLE Archive, Discovery And Connection
+## Completed -- S0-S3 SLE Archive, Connection And SSAP
 
 S0 pins the redistributable normalized SLE archives, symbol/ABI ownership and
 cross-platform Cargo contract. S1 adds independent `enable_sle` initialization,
 announce/seek, bounded copied events, and a paired two-board 20-reset matrix.
-S2 adds connect/disconnect state, bounded connection events, and a second paired
-20-reset matrix.
+S2 adds connect/disconnect state and bounded connection events. S3 adds SSAP
+exchange, service discovery, property read, server notification, and clean
+disconnect; it deliberately does not claim pairing, authenticated SSAP, or
+client write.
 Evidence is recorded in
 [SLE S0 archive/ABI closure](docs/plan/evidence/ws63-sle-s0-archive-abi-2026-08-07.md)
 and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-07.md),
-plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md).
+plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
+and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- S3 SLE SSAP Client And Server
+## NOW -- Select The Next Product Gate
 
-S3 is limited to a two-board SSAP client/server data lifecycle and bounded data
-events. Coexistence, pairing UX and a stable public API remain outside this
-window; the detailed acceptance contract lives in
-[the connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
+No new major implementation direction is active. The next gate must select one
+measured product need without reopening completed A5/B/S evidence. Pairing UX,
+stable BLE/SLE facades, DLI/SLB productization and coexistence remain deferred
+until explicitly selected; their detailed contracts live in the
+[connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
 
 ## LATER -- Triggered Product Directions
 
@@ -212,7 +216,8 @@ These designs remain documented, but are not active TODO checklists:
 - group Reservation and guaranteed-service scheduling;
 - RTOS protection/PMP/TES/SMP, host replay, `hisi-rtos-cli`, and IDE support;
 - NVS factory/write/GC/encryption and complete hardware key-slot/crypto support;
-- Enterprise Wi-Fi, broader SoftAP productization, pairing UX, SLE SSAP, and coexistence;
+- Enterprise Wi-Fi, broader SoftAP productization, pairing UX, stable BLE/SLE API,
+  DLI/SLB productization, and coexistence;
 - BSP/board-manager, mdBook i18n, Hi3322 runtime, and AP1 probe-rs fast-path
   integration.
 

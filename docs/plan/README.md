@@ -24,7 +24,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3 与 SLE S0-S2 双板证据已闭合 | 下一 WIP=S3：SLE SSAP client/server 与 bounded data events |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3 与 SLE S0-S3 双板证据已闭合 | 当前只选择下一产品 gate；尚未启动新的实现里程碑 |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
@@ -54,13 +54,13 @@ flowchart LR
     B3 --> S0["Done S0 archive/ABI"]
     S0 --> S1["Done S1 announce/seek"]
     S1 --> S2["Done S2 connect/disconnect"]
-    S2 --> S3["NOW S3 SSAP client/server"]
-    S3 --> NEXT["选择 NVS/TLS/coex 下一方向"]
+    S2 --> S3["Done S3 SSAP read/notification"]
+    S3 --> NEXT["NOW 选择下一产品方向"]
 ```
 
-这张图记录 A5、BLE B0-B3 和 SLE S0-S2 已完成，并把唯一执行槽交给 S3。历史 Wi-Fi
-反例仍保留为回归证据，但不再伪装成未完成门槛；S3 必须先闭合双板 SSAP 数据闭环，不能
-与 NVS/TLS/coex 并行铺开。
+这张图记录 A5、BLE B0-B3 和 SLE S0-S3 已完成。历史 Wi-Fi 反例仍保留为回归证据，
+但不再伪装成未完成门槛；当前 major WIP 槽空闲，下一方向必须先经过产品 gate，不能把
+NVS/TLS/coex/pairing/API 收敛并行铺开。
 
 ## 维护契约
 

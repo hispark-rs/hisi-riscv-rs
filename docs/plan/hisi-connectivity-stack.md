@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0，S2 已完成，下一 WIP=S3。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0：S3 已完成，当前只选择下一产品 gate。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -27,9 +27,9 @@ station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
 release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` migration snapshot
 与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 与 B2
-advertising/scanning、B3 GATT、S0 SLE archive/ABI closure、S1 announce/seek 与 S2
-connect/disconnect 已完成；下一执行窗口是 S3 SSAP client/server，但不得与其他
-major milestone 并行。
+advertising/scanning、B3 GATT、S0 SLE archive/ABI closure、S1 announce/seek、S2
+connect/disconnect 与 S3 SSAP read/notification 已完成。下一 major milestone 必须先经过
+产品方向 gate，不因 S3 闭合自动启动 coexistence、pairing 或稳定 API 工作。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
 跨计划优先级和依赖以
@@ -41,8 +41,9 @@ A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独
 垂直切片、pure-WPA3 双 WS63 fixture、bounded runner、资源准入和严格 release contract
 均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE；B0 已冻结 archive、symbol、
 ABI 和资源事实闭包，B1 已完成 controller/host init，B2 已完成 advertising/scanning，
-B3 已完成 GATT client/server、notification/indication、断连清理和双板 20-reset HIL。
-下一 WIP 只推进 S3 SLE SSAP client/server。每一步都必须保留
+B3 已完成 GATT client/server、notification/indication、断连清理和双板 20-reset HIL；
+S3 也已完成 SSAP exchange、service discovery、read、notification 和断连的双板 20-reset
+HIL。下一方向启动前仍必须保留
 A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
@@ -65,7 +66,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：S3 SLE SSAP Client/Server
+## 当前执行窗口：S3 已闭合，等待下一产品 gate
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -108,9 +109,16 @@ server/client 镜像先通过 3/3 shape gate，再完成 20/20 paired nRST matri
 到 connected/disconnected，missing callback、command error 与 event drop 均为零。完整证据见
 [SLE S2 connect/disconnect](evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)。
 
-当前唯一 WIP 切换为 S3：只建立 SSAP client/server 的最小数据闭环和 bounded data event，
-不提前实现 coexistence、通用 pairing UX 或稳定 API，不新增 LiteOS backend。面向用户的
-`hisi-rf` SLE surface 仍必须由真实双板行为驱动，不能先发布空 API。
+S3 已建立 SSAP exchange、primary-service discovery、property read、server notification、
+client disconnect 和 bounded data event。固定 server/client 镜像先通过 3/3 shape gate，
+再以同一镜像完成 20/20 paired nRST matrix；所有轮次 missing marker、command error 与
+event drop 均为零。完整证据见
+[SLE S3 SSAP](evidence/ws63-sle-s3-ssap-2026-08-07.md)。
+
+本证据不包含 pairing、authenticated SSAP 或 client write。中间 pairing 诊断镜像稳定返回
+`0x8000600c` (`ERRCODE_SLE_AUTH_FAIL`)，且两板 TRNG 均为 152 bytes、7 requests、0 failures；
+因此 pairing 被移出 S3 临界路径并保留给独立 security/UX gate，而不是被标记为成功。
+当前 major WIP 槽保持空闲，直到注册表选择下一个产品方向。
 
 ### A5 收口证据账本
 
@@ -505,6 +513,66 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
 - `hisi-rf` 的公共概念保持芯片中立；WS63 FFI/blob/ABI 只存在于
   `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
+
+### Radio UX/API convergence（延期）
+
+S3 只冻结 backend 行为，不把当前 `BleB*` / `SleS*` 阶段类型直接改名后稳定发布。
+未来用户只依赖 `hisi-rf`，由唯一 `RadioController` 初始化共享 RF、IRQ、blob、arena 与
+coexistence resources；`split()` 只为编译期启用的协议生成 handle，`RadioRunner` 是唯一
+长期推进任务。`hisi-rf-ws63`、`ws63-radio-sys` 和 RTOS driver 保持隐藏实现。
+
+- BLE 公共形态为 `BleController`、`BleConnection`、`Advertiser`、`Scanner`、
+  `GattClient`/`GattServer`/`Subscription`；SLE 独立使用 `SleController`、`SleLink`、
+  `Announcer`、`Seeker`、`SsapClient`/`SsapServer`/`Subscription`，不创造统一 Scanner 或
+  Connection trait 抹平协议语义。
+- 操作使用 `&mut self`、generation-tagged `OperationId` 和 connection handle。取消必须由
+  runner 收口 late completion；`#[must_use]` guard 提供 async stop/disconnect，`Drop` 只
+  提交非阻塞 best-effort cleanup。断连后的 stale handle 必须 fail closed。
+- 配置使用 validated address/role/PHY/power/interval/channel/security newtype；scan/seek
+  使用调用者结果 buffer，GATT/SSAP database 使用静态 builder/macro 和 typed handle。
+  caller-owned `Storage<NamedProfile>` 与 `ResourceReport` 使 task/queue/RAM 成本可见。
+- 内部 command completion 与公开 unsolicited event 使用不同的 bounded queue。callback/
+  IRQ 只复制事件并 wake；事件满必须报告 dropped/peak，绝不运行用户 callback。
+- BLE pairing/bonding 以后通过 `SecurityConfig`、pairing responder、`hisi-keystore` 与脱敏
+  secret 完成；SLE security 按真实协议独立建模。vendor host 不伪造 controller-only
+  `bt-hci`，SLE 也不伪装成 BLE HCI。
+- 命名 profile 为 `profile-ble-peripheral/central/dual-role`、
+  `profile-sle-announce/seek/ssap`；Wi-Fi coexistence profile 只有并发 HIL 后才开放。
+
+里程碑保持 deferred：U0 冻结 B3/S3 行为与迁移映射；U1 统一 controller/runner；U2
+typed GAP/announce/seek；U3 静态 GATT/SSAP database；U4 async event/cancellation；U5
+pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
+coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
+host interleaving/event conservation 和双板证据，不能由当前纵向切片自动毕业。
+
+### WS63 GLE HCI / DLI 分层（延期）
+
+TXS-10003 的 SLE DLI 在 WS63 SDK 中没有公开 `dli/` 源码目录；厂商产物称为 GLE HCI。
+Host 侧事实源是 `libbth_gle.a` 的 `gle_hci_cmd/ev/data/send_data/core/qos` 对象，Controller
+侧事实源是 `libbgtp.a` 的 `hci_if`、`hci_gle`、`dts_hci` 和 DM/LM/event-task 对象。
+最终固件已确认 `gle_hci_command_encode_send_tl -> api_h2c_write -> hci_gle_*`，反向经
+`api_c2h_write` callback；`0xA2/0xA3/0xA4` 分别承载 event、ACB async、ICB sync data。
+当前单芯片主路径是进程内函数/callback transport，`dts_hci` 不能与协议语义混为一层。
+
+依赖固定为 `Application -> hisi-rf::sle -> chip-neutral SLE contracts ->
+hisi-rf-ws63 -> ws63-radio-sys::dli -> WS63 GLE HCI/controller blob`：
+
+- `ws63-radio-sys::dli` 拥有 raw `repr(C)` header/packet、opcode/event mapping、ACB/ICB
+  framing、command/data credit、callback ABI、archive hash/symbol manifest 和 unsafe FFI。
+- `hisi-rf-ws63` 把 WS63 command/event/data 转成 generation/correlation 驱动的芯片中立
+  内部事件，并接入 `RadioRunner` 与 bounded queues。
+- `hisi-rf::sle` 只暴露 announce/seek/connect/SSAP/async/sync data 等安全语义，不公开
+  WS63 packet type、opcode、credit、archive symbol 或 `void *` callback。
+- transport 只负责完整 packet lifecycle；in-process、UART、USB 等后端不拥有 DLI
+  opcode 语义。只有真正 BLE controller-only 边界才可能实现
+  `bt_hci::controller::Controller`。
+
+后续 D0-D9 仍为 triggered backlog：D0 建立 TXS-10003/厂商 archive/OpenHarmony 三方
+opcode/event/schema/勘误清单；D1 no_std codec 与 golden/fuzz/property packets；D2 credit、
+correlation、timeout/recovery 和事件守恒；D3 transport lifecycle/loopback；D4 BLE vendor-host
+slice；D5 SLE announce/seek/connect/pair/SSAP；D6 SLE async/sync data；D7 SLB logical channel；
+D8 Basic Service Layer Port/TCID/TransportChannel；D9 coexistence/capability stabilization。
+在 archive、golden frame 与双板 HIL 校准前，不宣称 WS63 GLE HCI 完全符合 DLI。
 <a id="native-supplicant-dependency-contract"></a>
 
 - 新 supplicant 路径固定为 `hostap 2.11 固定源码 -> os_hisi_rtos /
@@ -2425,8 +2493,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
    nRST matrix 已闭合。
 3. S2（完成）：connect/disconnect 与 bounded connection events 已由固定 server/client
    ELF 完成 20/20 paired nRST matrix。
-4. S3（执行中）：SSAP 客户端/服务端必须继续使用双板 marker 和 fail-closed
-   callback/profile gate。
+4. S3（完成）：SSAP exchange、primary-service discovery、read、notification 和 disconnect
+   已由固定 server/client ELF 完成 3/3 shape gate 与 20/20 paired nRST matrix。pairing、
+   authenticated SSAP 和 client write 不属于本证据。
 
 ### X0 与 R0 -- 共存和发布
 
