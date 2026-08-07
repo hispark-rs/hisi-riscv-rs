@@ -548,7 +548,9 @@ coexistence resources；`split()` 只为编译期启用的协议生成 handle，
   `profile-sle-announce/seek/ssap`；Wi-Fi coexistence profile 只有并发 HIL 后才开放。
 
 里程碑状态：U0 冻结 B3/S3 行为与迁移映射（完成）；U1 统一 controller/runner
-composition（完成，控制面仍为空）；U2 typed GAP/announce/seek（当前）；U3 静态
+composition（完成，控制面仍为空）；U2 typed GAP/announce/seek（当前，chip-neutral
+validated config 层已由 `hisi-rf-core` commits `dcaacdf`、`148f92a` 完成；bounded command、
+runner dispatch 和 backend adapter 尚未完成）；U3 静态
 GATT/SSAP database；U4 async event/cancellation；U5
 pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
 coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
