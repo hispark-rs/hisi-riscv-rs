@@ -151,12 +151,20 @@ an unreviewed symbol or ABI/layout change. The contract is published as
 `ws63-radio-sys 0.1.0-alpha.12`; evidence is recorded in
 [BLE B0 archive/ABI closure](docs/plan/evidence/ws63-ble-b0-archive-abi-2026-08-06.md).
 
-## NOW -- B1 BLE Controller And Host Init
+## Completed -- B1 BLE Controller And Host Init
 
 B1 resolves only the fixed B0 archives' controller/host initialization closure:
 shared transport, NVS identity/bonding reads, allocator and RTOS capabilities,
 resource admission, and an on-silicon init marker. Advertising, scanning, GATT,
 SLE/GLE, coexistence, and public BLE API remain outside this window.
+
+## NOW -- B2 BLE Advertising And Scanning
+
+B2 adds only advertising, scanning, a bounded event queue, and real-silicon
+markers on top of the B1 controller/host baseline. GATT, pairing, user callbacks,
+SLE/GLE, and coexistence remain outside this window; the detailed acceptance
+contract lives in
+[the connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
 
 ## LATER -- Triggered Product Directions
 
