@@ -10,6 +10,15 @@ Release train anchor: not selected.
 
 ### Changed
 
+- **BLE B1 controller/host initialization** — advance the WS63 normalized BLE
+  archive profile to revision 28, restore the radio ROM-data and IRQ-dispatch
+  contracts, and complete the fixed four-task controller/host initialization
+  through the native `hisi-rtos` backend. The default committed ELF passes a
+  3 MHz full-verify download and three further unchanged-image nRST cycles,
+  each reaching `RFDBG_BLE_B1_INIT_OK`. This closes initialization only;
+  advertising, scanning, GATT, pairing, and a stable public BLE API remain B2+
+  work.
+
 - **BLE B0 archive/ABI closure** — publish `ws63-radio-sys
   0.1.0-alpha.12`, `hisi-rf-ws63 0.1.0-alpha.72`, `hisi-rf
   0.1.0-alpha.84`, and `hisi-rs-template v0.7.0-alpha.29`. The release chain

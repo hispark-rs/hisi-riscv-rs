@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0，当前 WIP=B1。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0，当前 WIP=B2。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -26,9 +26,10 @@ release candidate 的可复现本地数据面反例，但不能从成功矩阵�
 station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
 release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` migration snapshot
-与 B0 BLE archive/symbol/ABI closure 均已发布。当前按 WIP=1 进入 B1 controller/host init。
+与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 已在提交态默认
+镜像上完成，当前按 WIP=1 进入 B2 advertising/scanning。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
-约束；它们不会被 B1 扩张。
+约束；它们不会被后续 BLE 里程碑扩张。
 跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -37,7 +38,8 @@ vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早�
 A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独立 `hisi-rf`
 垂直切片、pure-WPA3 双 WS63 fixture、bounded runner、资源准入和严格 release contract
 均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE；B0 已冻结 archive、symbol、
-ABI 和资源事实闭包，B1 只推进 controller/host init。B2 前不得添加面向用户的空 API。每一步都必须保留
+ABI 和资源事实闭包，B1 已完成 controller/host init，B2 只推进 advertising/scanning 和
+有界事件。B2 真机行为闭合前不得添加面向用户的空 API。每一步都必须保留
 A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
@@ -60,17 +62,24 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：B1 BLE controller/host init
+## 当前执行窗口：B2 BLE advertising/scanning
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
 `ws63-radio-sys 0.1.0-alpha.12` 发布。完整证据见
 [BLE B0 archive/ABI closure](evidence/ws63-ble-b0-archive-abi-2026-08-06.md)。
 
-B1 只交付 controller/host init、共享 transport、NVS identity/bonding 读取边界和实际 blob
-所需的 RTOS capability closure。它必须先从固定 B0 symbol/profile 建立最小 init 调用图和
-资源准入，再在真机产生可定位的 init marker。B1 不启动 advertising、scan 或 GATT，不新增
-LiteOS backend，也不让 `hisi-rf` 暴露尚不能运行的 BLE public feature；这些只能在 B2 开始。
+B1 已交付 controller/host init、共享 transport、identity/NVS 读取边界和实际 blob 所需的
+RTOS capability closure。`hisi-rf-ws63` commit `6cb2faf`、`ws63-radio-sys` commit
+`4fa4e3f` 与 `hisi-riscv-rt` commit `760fe7d` 组成提交态闭包；默认 B1 ELF 在 3 MHz 完整
+verify 后连续三次仅 nRST 均输出 `RFDBG_BLE_B1_INIT_OK`，异常为零。诊断路径曾证明 2 KiB
+snapshot task 栈会下溢到相邻 calibration BSS，现已隔离为 opt-in 4 KiB 诊断栈；默认镜像
+不链接异常/阶段 wrapper。完整证据见
+[BLE B1 controller/host init](evidence/ws63-ble-b1-controller-host-init-2026-08-07.md)。
+
+B2 只交付 advertising/scanning、bounded event queue 和真机 marker。它不得提前扩张到
+GATT、pairing 或用户 callback，不新增 LiteOS backend；面向用户的 `hisi-rf` BLE surface
+必须由真实 advertising/scan 行为与事件所有权证据驱动，不能先发布空 API。
 
 ### A5 收口证据账本
 
@@ -2370,8 +2379,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
 1. B0（完成）：对 `libbg_common`、`libbt_host`、`libbt_app`、`libbth_sdk` 做 symbol closure、
    archive/version hash、ABI layout 和 memory-profile 清单；证据绑定 `ws63-radio-sys
    0.1.0-alpha.12`。
-2. B1（当前）：完成 controller/host init、transport、NVS identity/bonding 和 RTOS contract。
-3. B2：实现 advertising/scanning、bounded event queue 和 HIL marker。
+2. B1（完成）：controller/host init、transport、identity/NVS 读取边界和 RTOS contract
+   已由提交态默认镜像完成 3/3 nRST HIL；证据绑定 commit 与 ELF/image hash。
+3. B2（当前）：实现 advertising/scanning、bounded event queue 和 HIL marker。
 4. B3：实现 GATT client/server、notification/indication 和断连清理。Classic BR/EDR
    不在本轮范围。
 
