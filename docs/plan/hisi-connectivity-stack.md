@@ -603,6 +603,58 @@ timing、handle 或 status；raw DLI 类型不越过 `ws63-radio-sys`；metadata
 vendor header drift report；unknown/reserved decoder；const positive/compile-fail negative；
 示例 semantic magic-hex 扫描（custom UUID/vendor extension 需显式 allowlist）。
 
+### Wi-Fi 上层生态补全（NET0-NET5，延期）
+
+当前 Wi-Fi 主干保持 `Application -> hisi-rf facade -> RadioController::split() ->
+WifiController + WifiDevice + RadioRunner -> hisi-rf-ws63`。已有控制与 L2 纵向切片包括：
+唯一 controller、非 `Clone` 控制句柄、caller-owned scan buffer、bounded event queue、
+generation/cancellation、typed SSID/凭据/超时/Personal security、WPA3 PMF 和 transition
+降级约束、named WS63 profiles、`smoltcp::phy::Device`，以及 WPA2/WPA3、DHCP、ARP、
+local UDP、public UDP DNS、lease renew 的 HIL 证据。该证据不等于 Embassy Net 已接入；
+`incremental-embassy-wait` 只证明 Embassy wait backend。
+
+层次边界固定如下：`hisi-rf` 只拥有 Wi-Fi 控制、连接状态和 Ethernet L2；
+Embassy Net/smoltcp 拥有 IP、ARP/ND、DHCP、DNS、ICMP、TCP、UDP 和 multicast；
+`hisi-tls` 拥有 TLS backend、证书验证和 async stream；HTTP/MQTT/CoAP/mDNS/SNTP/OTA
+由应用协议或 service crate 负责。`embedded-svc::wifi` 只能是兼容 adapter，不能成为核心
+API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个独立消费者证明共用边界后，
+才评估提取 `hisi-net-adapters`。
+
+- **NET0 -- L2 contract closure**：让 `WifiDevice` 拥有 hardware address、link state、MTU/
+  capability、RX/TX wake 和 backpressure 契约；以 `MacAddress`、`WifiChannel`、
+  `CenterFrequency`、`RssiDbm`、`DisconnectReason` 等类型替换 public raw 数字，补齐
+  negotiated security/PMF/channel/PHY/rate；收窄 `inner/inner_mut/into_inner` escape hatch。
+  host tests 必须覆盖 link up/down、wake、queue conservation 和 saturation。
+- **NET1 -- Embassy Net primary adapter**：优先实现 `embassy_net_driver::Driver`，先评估
+  `embassy-net-driver-channel`，只有其复制、RAM 或零拷贝模型不合适才直接实现 driver。
+  `hisi-rf-core` 只依赖 driver contract，不依赖主 `embassy-net` crate；smoltcp adapter
+  继续作为可选低层入口和既有 HIL oracle。工作 backend 存在前不得暴露虚假的
+  `profile-wifi-*-embassy-net`。HIL 覆盖 DHCP、DNS、TCP echo、UDP、renew、link flap、
+  reconnect、burst RX 与 backpressure。
+- **NET2 -- socket ecosystem adapters**：TCP/TLS stream 在 IP/TLS 层实现
+  `embedded_io_async::{Read, Write}`，`WifiDevice` 本身不得实现 stream。优先复用
+  Embassy Net 与 `embedded-nal-async` 的 TCP/UDP/DNS contract；blocking embedded-nal
+  仅在真实消费者出现后增加。`WifiEvent` 可选实现 `futures_core::Stream`，最小 API 仍是
+  `next_event().await`。
+- **NET3 -- TLS**：保持 `Application -> hisi-tls -> hisi-crypto`，默认
+  `hisi-tls-mbedtls`、可选 `hisi-tls-embedded`。`TlsStream<T>` 实现 async Read/Write；
+  certificate time、entropy/DRBG、server-name verification、caller-owned buffers、取消、
+  timeout 与错误恢复必须显式建模。WPA supplicant 不经过 TLS，只有 EAP-TLS 依赖该层。
+- **NET4 -- application protocols**：按真实需求评估 reqwless HTTP client、picoserve
+  SoftAP server、minimq、edge-net/edge-mdns/edge-dhcp、sntpc；CoAP 因 alpha、flow-control
+  与 dedup 风险后置。OTA 是 HTTP/TLS + `hisi-storage`/`hisi-fwpkg` service，不归 RF。
+- **NET5 -- UX and evidence**：template 最终提供 Embassy Net 默认 happy path，用户只选
+  chip/profile 和静态网络资源；生成机器可读 RAM/socket/packet-buffer report。验收覆盖
+  repeated reset/cold boot、DHCP renew、AP disappear/reappear、DNS/TCP/UDP burst、queue
+  saturation、TLS/MQTT reconnect。HIL 只能证明固定环境下的内部 queue/stack conservation
+  与行为 parity，不能宣称外部网络永不丢包。
+
+NET0-NET5 是 U2 和当前 connectivity evidence 收口后的 triggered backlog，不与当前 BLE/SLE
+U2 并行。STA 与 SoftAP 可以使用不同 backend，但 composition、storage、runner、typed error、
+diagnostics 和 network lifecycle UX 必须对齐；example 中手写的 smoltcp
+`Interface/SocketSet/DHCP/UDP/DNS/renew` 在形成第二个消费者前继续作为可执行 composition
+oracle，不下沉进 `hisi-rf`。
+
 ### WS63 GLE HCI / DLI 分层（延期）
 
 TXS-10003 的 SLE DLI 在 WS63 SDK 中没有公开 `dli/` 源码目录；厂商产物称为 GLE HCI。
