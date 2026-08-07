@@ -158,12 +158,19 @@ shared transport, NVS identity/bonding reads, allocator and RTOS capabilities,
 resource admission, and an on-silicon init marker. Advertising, scanning, GATT,
 SLE/GLE, coexistence, and public BLE API remain outside this window.
 
-## NOW -- B2 BLE Advertising And Scanning
+## Completed -- B2 BLE Advertising And Scanning
 
 B2 adds only advertising, scanning, a bounded event queue, and real-silicon
-markers on top of the B1 controller/host baseline. GATT, pairing, user callbacks,
-SLE/GLE, and coexistence remain outside this window; the detailed acceptance
-contract lives in
+markers on top of the B1 controller/host baseline. The fixed release ELF passed
+a paired two-board 20-reset discovery matrix with no callback, command, or event
+queue failures. Evidence is recorded in
+[BLE B2 advertising/scanning](docs/plan/evidence/ws63-ble-b2-advertising-scanning-2026-08-07.md).
+
+## NOW -- B3 BLE GATT
+
+B3 is limited to GATT client/server, notification/indication, and disconnect
+cleanup. Pairing UX, SLE/GLE, and coexistence remain outside this window; the
+detailed acceptance contract lives in
 [the connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
 
 ## LATER -- Triggered Product Directions
