@@ -548,13 +548,60 @@ coexistence resources；`split()` 只为编译期启用的协议生成 handle，
   `profile-sle-announce/seek/ssap`；Wi-Fi coexistence profile 只有并发 HIL 后才开放。
 
 里程碑状态：U0 冻结 B3/S3 行为与迁移映射（完成）；U1 统一 controller/runner
-composition（完成，控制面仍为空）；U2 typed GAP/announce/seek（当前，chip-neutral
-validated config 层已由 `hisi-rf-core` commits `dcaacdf`、`148f92a` 完成；bounded command、
-runner dispatch 和 backend adapter 尚未完成）；U3 静态
+composition（完成）；U2 typed GAP/announce/seek（当前，chip-neutral validated config、
+单命令 bounded mailbox、controller/runner ownership、WS63 backend adapter 和同步
+accept/reject completion 已形成实现，并通过 BLE/SLE host、clippy、RV32 `no_std` 与 public API
+drift 检查；尚待 release train、双板 HIL 和 lifecycle event 证据，因此不标完成）；U3 静态
 GATT/SSAP database；U4 async event/cancellation；U5
 pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
 coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
 host interleaving/event conservation 和双板证据，不能由当前纵向切片自动毕业。
+
+### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
+
+当前 BLE GAP 和 SLE announce/seek validated types 是 TYP1 的起点，不把原厂 C enum 直接
+`repr` 复制成最终用户 API。层次固定为 `Application -> hisi-rf safe API -> hisi-rf-core
+domain types -> hisi-rf-ws63 conversion -> ws63-radio-sys::dli::raw -> controller archive`。
+十六进制 wire value 只能出现在 raw ABI、经审核的 metadata 和 golden tests；正常示例不得
+要求用户记忆 DLI opcode、位图、单位刻度或哨兵值。
+
+- `hisi-rf-core` 拥有芯片中立语义：`AnnounceMode`、BLE/SLE PHY 与 channel bitflags、
+  `TxPower::ControllerDefault`、`Option<RssiDbm>`、duration/interval/window newtype、typed
+  permission/security、dynamic TCID 和 generation-tagged capability handle。raw connection、
+  service、property、server ID 不进入安全 facade。
+- `hisi-rf-ws63` 集中实现 safe type 与 WS63 raw ABI 的双向转换，并按 runtime capability
+  裁剪。unknown controller output 可保留为 `Unknown(raw)` 供诊断；reserved value 和安全
+  配置输入必须 fail closed，不能接受任意 raw 数字。
+- 动态配置使用 `try_new` / `try_from_duration -> Result`；静态配置提供 `const fn` 构造器或
+  const builder，使非法常量在 const evaluation 失败。typestate 仅表达 connectable mode
+  必须携带连接参数、directed announce 必须有 peer 等结构约束，不把短暂连接状态扩散成泛型。
+- 组合校验至少覆盖 `min <= max`、`seek_window <= seek_interval`、mode/peer/connection 参数、
+  PHY timing、supervision timeout 与 interval/latency 关系，以及 SSAP/GATT
+  property/permission/descriptor/payload 的一致性。错误必须给出 field/relation、supported
+  range、chip capability 和 recovery action，而不是只返回 vendor status。
+- 普通 announce/seek/connect 继续使用 typed builder。宏只用于复杂静态 schema，例如
+  `ssap_service!` 和可选 `static_ble_gatt_service!`；生成 UUID/typed handle、codec 与容量需求，
+  并在编译期拒绝重复 UUID、缺失 notify descriptor、permission 冲突、长度不符和 profile
+  capacity 超限。宏必须展开为普通公开类型，不形成第二套运行时。
+
+标准 metadata 是人工审核、机器可读的派生事实源，记录标准条款标识、raw value、unit/range、
+reserved bits、cross-field constraint、WS63 支持状态和 vendor/silicon evidence。输入至少对照
+TXS-10002、TXS-10003、TXS-20002、WS63 public headers、archive/nm/map/asm 与双板 HIL；
+Cargo build 不解析 PDF，也不复制不可重分发正文。生成物包括 raw constants/decoder、public
+newtype 文档、boundary/property tests、DLI golden frames 和 standard/vendor/silicon 差异报告。
+标准允许范围与 WS63 实际范围发生冲突时两者都记录，stable API 只承诺真机证据交集。
+
+后续里程碑保持 deferred，不插入当前 U2 WIP：TYP0 inventory 扫描 public headers 中所有
+raw enum/flags/unit/handle/sentinel；TYP1 完成 core values、typed errors 和 API snapshot；TYP2
+完成 WS63 conversion、capability 与 golden frame gate；TYP3 迁移 facade/examples 并让旧
+stage/raw API 保留一个 migration release；TYP4 交付 SSAP/GATT schema、caller-owned storage
+和 compile-fail capacity tests；TYP5 用 BLE GAP/GATT 与 SLE announce/seek/SSAP 双板 HIL
+裁决稳定毕业。
+
+CI drift gate 必须检查：安全 public API 不用裸 `u8/u16/u32` 表达模式、PHY、permission、
+timing、handle 或 status；raw DLI 类型不越过 `ws63-radio-sys`；metadata 生成 `--check`；
+vendor header drift report；unknown/reserved decoder；const positive/compile-fail negative；
+示例 semantic magic-hex 扫描（custom UUID/vendor extension 需显式 allowlist）。
 
 ### WS63 GLE HCI / DLI 分层（延期）
 
@@ -562,7 +609,9 @@ TXS-10003 的 SLE DLI 在 WS63 SDK 中没有公开 `dli/` 源码目录；厂商�
 Host 侧事实源是 `libbth_gle.a` 的 `gle_hci_cmd/ev/data/send_data/core/qos` 对象，Controller
 侧事实源是 `libbgtp.a` 的 `hci_if`、`hci_gle`、`dts_hci` 和 DM/LM/event-task 对象。
 最终固件已确认 `gle_hci_command_encode_send_tl -> api_h2c_write -> hci_gle_*`，反向经
-`api_c2h_write` callback；`0xA2/0xA3/0xA4` 分别承载 event、ACB async、ICB sync data。
+`api_c2h_write` callback。raw packet type `0xA1..0xA5` 只归
+`ws63-radio-sys::dli::raw`：command、event、async unicast、sync unicast、async multicast；
+当前固件实证链已覆盖 `0xA2/0xA3/0xA4` 的 event、ACB async、ICB sync data。
 当前单芯片主路径是进程内函数/callback transport，`dts_hci` 不能与协议语义混为一层。
 
 依赖固定为 `Application -> hisi-rf::sle -> chip-neutral SLE contracts ->

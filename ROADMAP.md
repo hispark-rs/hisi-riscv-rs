@@ -218,8 +218,9 @@ These designs remain documented, but are not active TODO checklists:
 - group Reservation and guaranteed-service scheduling;
 - RTOS protection/PMP/TES/SMP, host replay, `hisi-rtos-cli`, and IDE support;
 - NVS factory/write/GC/encryption and complete hardware key-slot/crypto support;
-- Enterprise Wi-Fi, broader SoftAP productization, pairing UX, stable BLE/SLE API,
-  DLI/SLB productization, and coexistence;
+- Enterprise Wi-Fi, broader SoftAP productization, pairing UX, BLE/SLE typed
+  metadata/schema graduation, stable BLE/SLE API, DLI/SLB productization, and
+  coexistence;
 - BSP/board-manager, mdBook i18n, Hi3322 runtime, and AP1 probe-rs fast-path
   integration.
 
