@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0，S1 已完成，下一 WIP=S2。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0，S2 已完成，下一 WIP=S3。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -27,8 +27,8 @@ station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
 release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` migration snapshot
 与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 与 B2
-advertising/scanning、B3 GATT、S0 SLE archive/ABI closure 与 S1 announce/seek 已完成；
-下一执行窗口是 S2 connect/disconnect，但不得与其他
+advertising/scanning、B3 GATT、S0 SLE archive/ABI closure、S1 announce/seek 与 S2
+connect/disconnect 已完成；下一执行窗口是 S3 SSAP client/server，但不得与其他
 major milestone 并行。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
@@ -42,7 +42,7 @@ A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独
 均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE；B0 已冻结 archive、symbol、
 ABI 和资源事实闭包，B1 已完成 controller/host init，B2 已完成 advertising/scanning，
 B3 已完成 GATT client/server、notification/indication、断连清理和双板 20-reset HIL。
-下一 WIP 只推进 S2 SLE connect/disconnect。每一步都必须保留
+下一 WIP 只推进 S3 SLE SSAP client/server。每一步都必须保留
 A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
@@ -65,7 +65,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：S2 SLE Connect/Disconnect
+## 当前执行窗口：S3 SLE SSAP Client/Server
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -103,8 +103,13 @@ announce/seek 镜像完成 3/3 shape gate 和 20/20 paired nRST matrix；每轮�
 seek-ready 和 peer-match marker 完整，missing callback、command error 与 event drop 均为零。
 完整证据见 [SLE S1 announce/seek](evidence/ws63-sle-s1-announce-seek-2026-08-07.md)。
 
-当前唯一 WIP 切换为 S2：只建立 connect/disconnect 状态、bounded connection event 与双板
-marker，不提前实现 SSAP、coexistence 或通用 pairing UX，不新增 LiteOS backend。面向用户的
+S2 已建立 connect/disconnect 状态、bounded connection event 与双板 marker。固定
+server/client 镜像先通过 3/3 shape gate，再完成 20/20 paired nRST matrix；每轮双方均观察
+到 connected/disconnected，missing callback、command error 与 event drop 均为零。完整证据见
+[SLE S2 connect/disconnect](evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)。
+
+当前唯一 WIP 切换为 S3：只建立 SSAP client/server 的最小数据闭环和 bounded data event，
+不提前实现 coexistence、通用 pairing UX 或稳定 API，不新增 LiteOS backend。面向用户的
 `hisi-rf` SLE surface 仍必须由真实双板行为驱动，不能先发布空 API。
 
 ### A5 收口证据账本
@@ -2418,8 +2423,10 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
    envelope、normalized artifact 与三平台 Cargo consumer contract 已闭合。
 2. S1（完成）：独立 rooted init、announce/seek、bounded event queue 和双板 20/20 paired
    nRST matrix 已闭合。
-3. S2（执行中）：connect/disconnect；S3：SSAP 客户端/服务端。两者必须继续使用双板
-   marker 和 fail-closed callback/profile gate。
+3. S2（完成）：connect/disconnect 与 bounded connection events 已由固定 server/client
+   ELF 完成 20/20 paired nRST matrix。
+4. S3（执行中）：SSAP 客户端/服务端必须继续使用双板 marker 和 fail-closed
+   callback/profile gate。
 
 ### X0 与 R0 -- 共存和发布
 

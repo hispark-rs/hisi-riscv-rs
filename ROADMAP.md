@@ -9,9 +9,9 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
-two-WS63 WPA2/WPA3 release gate, BLE B0-B3, and SLE S0-S1 are frozen. The active
-slot is S2 SLE connect/disconnect; it must not grow into SSAP, coexistence, or a
-stable public SLE API before the bounded two-board connection lifecycle works.
+two-WS63 WPA2/WPA3 release gate, BLE B0-B3, and SLE S0-S2 are frozen. The active
+slot is S3 SLE SSAP client/server; it must not grow into coexistence, pairing UX,
+or a stable public SLE API before the bounded two-board data lifecycle works.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -172,20 +172,23 @@ B3 delivered GATT client/server, notification/indication, and disconnect
 cleanup in a fixed-image paired 20-reset matrix. Evidence is recorded in
 [BLE B3 GATT](docs/plan/evidence/ws63-ble-b3-gatt-2026-08-07.md).
 
-## Completed -- S0/S1 SLE Archive, Announce And Seek
+## Completed -- S0-S2 SLE Archive, Discovery And Connection
 
 S0 pins the redistributable normalized SLE archives, symbol/ABI ownership and
 cross-platform Cargo contract. S1 adds independent `enable_sle` initialization,
 announce/seek, bounded copied events, and a paired two-board 20-reset matrix.
+S2 adds connect/disconnect state, bounded connection events, and a second paired
+20-reset matrix.
 Evidence is recorded in
 [SLE S0 archive/ABI closure](docs/plan/evidence/ws63-sle-s0-archive-abi-2026-08-07.md)
-and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-07.md).
+and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-07.md),
+plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md).
 
-## NOW -- S2 SLE Connect And Disconnect
+## NOW -- S3 SLE SSAP Client And Server
 
-S2 is limited to two-board connect/disconnect state and bounded connection
-events. SSAP, coexistence, pairing UX and a stable public API remain outside
-this window; the detailed acceptance contract lives in
+S3 is limited to a two-board SSAP client/server data lifecycle and bounded data
+events. Coexistence, pairing UX and a stable public API remain outside this
+window; the detailed acceptance contract lives in
 [the connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
 
 ## LATER -- Triggered Product Directions
@@ -195,7 +198,7 @@ After B0-B3, choose exactly one direction from measured product demand:
 - NVS N0-N3 when the release image must stop depending on the vendor NV
   generator;
 - TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;
-- SLE SSAP after S2 connect/disconnect is reproducible on the two-board rig.
+- coexistence only after S3 SSAP is reproducible on the two-board rig.
 
 WPA3-Personal was selected at the A4 product gate; the remaining choices stay
 triggered rather than pre-booked as concurrent work.
