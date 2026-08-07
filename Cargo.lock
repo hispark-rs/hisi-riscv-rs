@@ -898,8 +898,11 @@ version = "0.1.0"
 name = "hisi-rf"
 version = "0.1.0-alpha.86"
 dependencies = [
+ "critical-section",
  "hisi-hal",
+ "hisi-panic-handler",
  "hisi-rf-core",
+ "hisi-rf-rtos-driver",
  "hisi-rf-ws63",
  "hisi-riscv-rt",
  "hisi-rtos",
@@ -917,7 +920,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-link"
-version = "0.1.0-alpha.16"
+version = "0.1.0-alpha.17"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
@@ -2234,7 +2237,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-blob"
-version = "0.1.0-alpha.16"
+version = "0.1.0-alpha.17"
 dependencies = [
  "ruzstd",
  "serde",
@@ -2244,7 +2247,7 @@ dependencies = [
 
 [[package]]
 name = "ws63-radio-sys"
-version = "0.1.0-alpha.16"
+version = "0.1.0-alpha.17"
 dependencies = [
  "hisi-rf-link",
  "hisi-rom-sys-ws63",

@@ -187,14 +187,15 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- Radio UX/API U2
+## NOW -- Radio UX/API U3
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
 `RadioController`, compile-time protocol parts, and `RadioRunner` ownership.
-The single active milestone is U2: typed BLE GAP and SLE announce/seek control
-contracts. Pairing, DLI/SLB, coexistence and stable graduation remain deferred;
-their detailed contracts live in the
+U2 typed BLE GAP and SLE announce/seek control has passed separate two-board
+20-reset matrices. The single active milestone is U3: static typed GATT/SSAP
+databases and handles. Pairing, DLI/SLB, coexistence and stable graduation
+remain deferred; their detailed contracts and U2 evidence live in the
 [connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
 
 ## LATER -- Triggered Product Directions

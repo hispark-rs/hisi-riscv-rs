@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0：U0/U1 已完成，当前唯一 WIP 是 U2 typed GAP/announce/seek。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0：U0-U2 已完成，当前唯一 WIP 是 U3 static GATT/SSAP database。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -29,8 +29,9 @@ release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` mi
 与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 与 B2
 advertising/scanning、B3 GATT、S0 SLE archive/ABI closure、S1 announce/seek、S2
 connect/disconnect 与 S3 SSAP read/notification 已完成。产品 gate 已选择先收敛用户可见
-radio API；U0 冻结迁移输入，U1 建立 facade-owned BLE/SLE composition preview。当前只推进
-U2 typed GAP/announce/seek，不自动启动 coexistence、pairing 或稳定 API 工作。
+radio API；U0 冻结迁移输入，U1 建立 facade-owned BLE/SLE composition preview，U2 已用
+双板 20-reset 关闭 typed GAP/announce/seek。当前只推进 U3 static GATT/SSAP database，
+不自动启动 coexistence、pairing 或稳定 API 工作。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
 跨计划优先级和依赖以
@@ -67,7 +68,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U2 typed GAP/announce/seek
+## 当前执行窗口：U3 static GATT/SSAP database
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -127,6 +128,13 @@ resources、`RadioController::split()`、协议 handle 和 backend-owning `Radio
 public-api gate 明确拒绝泄漏 `hisi-rf-ws63`、raw sys 或 RTOS-driver 类型。U1 不提供假的
 控制命令或事件流；typed control/event 仍属于当前 U2-U4。完整证据见
 [Radio U0/U1 facade ownership](evidence/ws63-radio-u0-u1-facade-2026-08-07.md)。
+
+U2 已把 chip-neutral validated BLE GAP 与 SLE announce/seek 配置、单命令 bounded mailbox、
+controller/runner ownership 和 WS63 backend adapter 接入 facade。固定四个 ELF 先分别完成
+3/3 shape gate，再完成 BLE 与 SLE 各 20/20 paired nRST matrix；每轮均到达 facade-owned
+advertise/scan 或 announce/seek marker，missing marker、command error、panic 与 event drop
+均为零。完整证据见
+[Radio U2 typed control](evidence/ws63-radio-u2-typed-control-2026-08-07.md)。
 
 ### A5 收口证据账本
 
@@ -522,7 +530,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
 
-### Radio UX/API convergence（执行中：U2）
+### Radio UX/API convergence（执行中：U3）
 
 S3 只冻结 backend 行为，不把当前 `BleB*` / `SleS*` 阶段类型直接改名后稳定发布。
 未来用户只依赖 `hisi-rf`，由唯一 `RadioController` 初始化共享 RF、IRQ、blob、arena 与
@@ -548,11 +556,10 @@ coexistence resources；`split()` 只为编译期启用的协议生成 handle，
   `profile-sle-announce/seek/ssap`；Wi-Fi coexistence profile 只有并发 HIL 后才开放。
 
 里程碑状态：U0 冻结 B3/S3 行为与迁移映射（完成）；U1 统一 controller/runner
-composition（完成）；U2 typed GAP/announce/seek（当前，chip-neutral validated config、
-单命令 bounded mailbox、controller/runner ownership、WS63 backend adapter 和同步
-accept/reject completion 已形成实现，并通过 BLE/SLE host、clippy、RV32 `no_std` 与 public API
-drift 检查；尚待 release train、双板 HIL 和 lifecycle event 证据，因此不标完成）；U3 静态
-GATT/SSAP database；U4 async event/cancellation；U5
+composition（完成）；U2 typed GAP/announce/seek（完成：chip-neutral validated config、
+单命令 bounded mailbox、controller/runner ownership、WS63 backend adapter、同步
+accept/reject completion、host/RV32/clippy/public API gate，以及 BLE/SLE 各 20/20 双板
+HIL）；U3 静态 GATT/SSAP database（当前）；U4 async event/cancellation；U5
 pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
 coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
 host interleaving/event conservation 和双板证据，不能由当前纵向切片自动毕业。
