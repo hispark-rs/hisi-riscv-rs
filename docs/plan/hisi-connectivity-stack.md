@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0，B2 已完成，下一 WIP=B3。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0，B3 已完成，下一 WIP=S0。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -27,7 +27,8 @@ station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
 release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` migration snapshot
 与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 与 B2
-advertising/scanning 已在提交态默认镜像上完成；下一执行窗口是 B3 GATT，但不得与其他
+advertising/scanning 与 B3 GATT 已在提交态默认镜像上完成；下一执行窗口是 S0 SLE
+archive/symbol/ABI closure，但不得与其他
 major milestone 并行。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
@@ -39,9 +40,9 @@ vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早�
 A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独立 `hisi-rf`
 垂直切片、pure-WPA3 双 WS63 fixture、bounded runner、资源准入和严格 release contract
 均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE；B0 已冻结 archive、symbol、
-ABI 和资源事实闭包，B1 已完成 controller/host init，B2 已完成 advertising/scanning 和
-有界事件的双板 20-reset HIL。B3 只推进 GATT client/server、notification/indication 与
-断连清理。每一步都必须保留
+ABI 和资源事实闭包，B1 已完成 controller/host init，B2 已完成 advertising/scanning，
+B3 已完成 GATT client/server、notification/indication、断连清理和双板 20-reset HIL。
+下一 WIP 只推进 S0 SLE archive/symbol/ABI closure。每一步都必须保留
 A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
@@ -64,7 +65,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：B3 BLE GATT
+## 当前执行窗口：S0 SLE Closure
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -85,9 +86,16 @@ B2 已交付 advertising/scanning、bounded event queue 和真机 marker。提�
 missing callback、command error 或 event drop。完整证据见
 [BLE B2 advertising/scanning](evidence/ws63-ble-b2-advertising-scanning-2026-08-07.md)。
 
-B3 只交付 GATT client/server、notification/indication 和断连清理，不提前扩张到 SLE、
-coexistence 或通用 pairing UX，不新增 LiteOS backend。面向用户的 `hisi-rf` BLE surface
-继续由真实双板行为与事件所有权证据驱动，不能先发布空 API。
+B3 已交付 GATT client/server、notification/indication 和断连清理。固定 v55
+server/client ELF 先完成 1/1 与 3/3 shape gate，再以同一镜像完成 20/20 paired nRST
+matrix；每轮完整经过 scan、connect、service/characteristic/descriptor discovery、notify、
+indicate confirmation 和 disconnect，且 missing callback、event drop 与 command error 均为零。
+完整证据见 [BLE B3 GATT](evidence/ws63-ble-b3-gatt-2026-08-07.md)。
+
+当前唯一 WIP 切换为 S0：只完成 `libbth_gle` 及共享 BT archives 的 symbol closure、
+archive/hash、ABI、memory profile 和 required callback 清单，不提前实现 announce/seek、
+connection、SSAP、coexistence 或通用 pairing UX，不新增 LiteOS backend。面向用户的
+`hisi-rf` SLE surface 仍必须由后续真实双板行为与事件所有权证据驱动，不能先发布空 API。
 
 ### A5 收口证据账本
 
@@ -2391,8 +2399,8 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
    已由提交态默认镜像完成 3/3 nRST HIL；证据绑定 commit 与 ELF/image hash。
 3. B2（完成）：advertising/scanning、bounded event queue 和双板 HIL marker 已由固定
    ELF 完成 20/20 paired nRST matrix。
-4. B3（下一 WIP）：实现 GATT client/server、notification/indication 和断连清理。Classic BR/EDR
-   不在本轮范围。
+4. B3（完成）：GATT client/server、notification/indication 和断连清理由固定 v55
+   server/client ELF 完成 20/20 paired nRST matrix。Classic BR/EDR 不在本轮范围。
 
 ### S0-S3 -- SLE 移植
 
