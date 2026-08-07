@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0，B3 已完成，下一 WIP=S0。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**执行中 / P0，S0 已完成，下一 WIP=S1。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -27,8 +27,8 @@ station profile 切到 bounded runner；legacy blocking backend 只在显式
 `legacy-blocking-backend` feature 下保留一个迁移周期作为 oracle。A5 的 bounded 默认路径、
 release contract 和双板 WPA2/WPA3 gate 已闭合；父仓 `v0.7.0-alpha.7` migration snapshot
 与 B0 BLE archive/symbol/ABI closure 均已发布。B1 controller/host init 与 B2
-advertising/scanning 与 B3 GATT 已在提交态默认镜像上完成；下一执行窗口是 S0 SLE
-archive/symbol/ABI closure，但不得与其他
+advertising/scanning、B3 GATT 与 S0 SLE archive/ABI closure 已完成；下一执行窗口是
+S1 announce/seek，但不得与其他
 major milestone 并行。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
@@ -42,7 +42,7 @@ A0-A5 的 **Wi-Fi connect → sustained local traffic** 基线已经冻结，独
 均已通过提交态真机 HIL。当前产品方向按既定顺序选择 BLE；B0 已冻结 archive、symbol、
 ABI 和资源事实闭包，B1 已完成 controller/host init，B2 已完成 advertising/scanning，
 B3 已完成 GATT client/server、notification/indication、断连清理和双板 20-reset HIL。
-下一 WIP 只推进 S0 SLE archive/symbol/ABI closure。每一步都必须保留
+下一 WIP 只推进 S1 SLE announce/seek。每一步都必须保留
 A4/A5 的 Wi-Fi 真机证据，不能为了协议扩张打断北极星。
 
 目标架构参考 esp-rs 的
@@ -65,7 +65,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：S0 SLE Closure
+## 当前执行窗口：S1 SLE Announce/Seek
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -92,10 +92,15 @@ matrix；每轮完整经过 scan、connect、service/characteristic/descriptor d
 indicate confirmation 和 disconnect，且 missing callback、event drop 与 command error 均为零。
 完整证据见 [BLE B3 GATT](evidence/ws63-ble-b3-gatt-2026-08-07.md)。
 
-当前唯一 WIP 切换为 S0：只完成 `libbth_gle` 及共享 BT archives 的 symbol closure、
-archive/hash、ABI、memory profile 和 required callback 清单，不提前实现 announce/seek、
-connection、SSAP、coexistence 或通用 pairing UX，不新增 LiteOS backend。面向用户的
-`hisi-rf` SLE surface 仍必须由后续真实双板行为与事件所有权证据驱动，不能先发布空 API。
+S0 已固定 `libbth_gle` 及共享 BT archives 的 hash、target ABI、external owner、标准
+relocation 产物和保守 memory envelope。`ws63-radio-blob` 通过 Cargo 分发 normalized
+`libbth_gle.a`，`ws63-radio-sys --features sle` 校验精确 profile revision；Linux、macOS、
+Windows consumer CI 均使用同一 Cargo contract。完整证据见
+[SLE S0 archive/ABI closure](evidence/ws63-sle-s0-archive-abi-2026-08-07.md)。
+
+当前唯一 WIP 切换为 S1：只建立 rooted init、announce/seek、bounded event ownership 与
+双板 marker，不提前实现 connection、SSAP、coexistence 或通用 pairing UX，不新增 LiteOS
+backend。面向用户的 `hisi-rf` SLE surface 仍必须由真实双板行为驱动，不能先发布空 API。
 
 ### A5 收口证据账本
 
@@ -2404,9 +2409,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
 
 ### S0-S3 -- SLE 移植
 
-1. S0：对 `libbth_gle` 及共享 BT archives 做 closure，明确 BLE/SLE 共享 transport、
-   heap、NVS 和 coex state。
-2. S1：announce/seek；S2：connect/disconnect；S3：SSAP 客户端/服务端。
+1. S0（完成）：`libbth_gle` 及共享 BT archives 的 hash、ABI、external owner、memory
+   envelope、normalized artifact 与三平台 Cargo consumer contract 已闭合。
+2. S1（执行中）：announce/seek；S2：connect/disconnect；S3：SSAP 客户端/服务端。
 3. 自动连接与数据收发 HIL 需要第二块 WS63；单板只能作为 init/announce 证据。
 
 ### X0 与 R0 -- 共存和发布
