@@ -136,6 +136,16 @@ advertise/scan 或 announce/seek marker，missing marker、command error、panic
 均为零。完整证据见
 [Radio U2 typed control](evidence/ws63-radio-u2-typed-control-2026-08-07.md)。
 
+U3 已完成无板实现闭包：`hisi-rf-core` commit `e6e52ca` 定义静态 typed GATT/SSAP
+database，`hisi-rf-ws63` commit `f0626ac` 集中完成 WS63 raw ABI 转换与 backend-owned
+value storage，`hisi-rf` commit `f2fad72` 只暴露 facade command 和 opaque server handle。
+host tests、host clippy、RV32 check 与 public-api leak gate 均通过。固定 BLE source/observer
+镜像已在 3 MHz 完整 verify 后通过 3/3 shape gate 与 20/20 paired nRST matrix；每轮均完成
+typed GATT registration、advertising 和 peer scan。SLE source/observer 已构建并固定 hash，
+但本轮切换烧录被执行环境的 USB/J-Link 提权额度阻塞，尚未执行 3/3 与 20/20；因此 U3
+仍保持执行中，不进入 U4。当前精确证据与剩余 gate 见
+[Radio U3 static databases](evidence/ws63-radio-u3-static-databases-2026-08-08.md)。
+
 ### A5 收口证据账本
 
 A4/W2/A5 已交付 facade、标准 relocation、三平台 consumer、bounded protocol、

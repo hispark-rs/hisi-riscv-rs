@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["pyserial"]
 # ///
-"""Host tests for the paired-board hisi-rf U2 marker contract."""
+"""Host tests for the paired-board hisi-rf U2/U3 marker contract."""
 
 from __future__ import annotations
 
@@ -33,6 +33,21 @@ class ClassifyTests(unittest.TestCase):
     def test_sle_lifecycle_passes(self) -> None:
         source, observer = self.complete_logs("sle")
         self.assertTrue(MATRIX.classify("sle", source, observer)["pass"])
+
+    def test_u3_typed_database_contracts_pass(self) -> None:
+        for protocol in ("u3-ble", "u3-sle"):
+            with self.subTest(protocol=protocol):
+                source, observer = self.complete_logs(protocol)
+                self.assertTrue(MATRIX.classify(protocol, source, observer)["pass"])
+
+    def test_u3_inherits_u2_backend_failure_markers(self) -> None:
+        source, observer = self.complete_logs("u3-ble")
+        observer += b"\nRFDBG_RADIO_U2_BLE_EVENT_DROP"
+        result = MATRIX.classify("u3-ble", source, observer)
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["failure_markers"], ["RFDBG_RADIO_U2_BLE_EVENT_DROP"]
+        )
 
     def test_missing_observer_marker_fails(self) -> None:
         source, _ = self.complete_logs("ble")

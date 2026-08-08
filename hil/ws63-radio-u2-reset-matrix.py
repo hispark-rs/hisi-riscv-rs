@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["pyserial"]
 # ///
-"""Run paired-board WS63 hisi-rf U2 BLE or SLE lifecycle reset matrices."""
+"""Run paired-board WS63 hisi-rf U2/U3 BLE or SLE reset matrices."""
 
 from __future__ import annotations
 
@@ -21,12 +21,22 @@ PROTOCOLS = {
     "ble": {
         "source_marker": b"RFDBG_RADIO_U2_BLE_ADV_OK",
         "observer_marker": b"RFDBG_RADIO_U2_BLE_SCAN_OK",
-        "failure_prefix": b"RFDBG_RADIO_U2_BLE_",
+        "failure_prefixes": (b"RFDBG_RADIO_U2_BLE_",),
     },
     "sle": {
         "source_marker": b"RFDBG_RADIO_U2_SLE_ANNOUNCE_OK",
         "observer_marker": b"RFDBG_RADIO_U2_SLE_SEEK_OK",
-        "failure_prefix": b"RFDBG_RADIO_U2_SLE_",
+        "failure_prefixes": (b"RFDBG_RADIO_U2_SLE_",),
+    },
+    "u3-ble": {
+        "source_marker": b"RFDBG_RADIO_U3_BLE_GATT_OK",
+        "observer_marker": b"RFDBG_RADIO_U2_BLE_SCAN_OK",
+        "failure_prefixes": (b"RFDBG_RADIO_U3_BLE_", b"RFDBG_RADIO_U2_BLE_"),
+    },
+    "u3-sle": {
+        "source_marker": b"RFDBG_RADIO_U3_SLE_SSAP_OK",
+        "observer_marker": b"RFDBG_RADIO_U2_SLE_SEEK_OK",
+        "failure_prefixes": (b"RFDBG_RADIO_U3_SLE_", b"RFDBG_RADIO_U2_SLE_"),
     },
 }
 COMMON_MARKER = b"RFDBG_RADIO_U2_INIT_OK"
@@ -51,9 +61,12 @@ def drain(port: serial.Serial) -> bytes:
 
 
 def failure_markers(protocol: str) -> tuple[bytes, ...]:
-    prefix = PROTOCOLS[protocol]["failure_prefix"]
-    assert isinstance(prefix, bytes)
-    return (*COMMON_FAILURE_MARKERS, *(prefix + suffix for suffix in FAILURE_SUFFIXES))
+    prefixes = PROTOCOLS[protocol]["failure_prefixes"]
+    assert isinstance(prefixes, tuple)
+    return (
+        *COMMON_FAILURE_MARKERS,
+        *(prefix + suffix for prefix in prefixes for suffix in FAILURE_SUFFIXES),
+    )
 
 
 def classify(protocol: str, source: bytes, observer: bytes) -> dict[str, object]:
