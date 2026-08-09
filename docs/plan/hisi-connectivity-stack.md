@@ -646,6 +646,17 @@ key-generation contract。WS63 SPACC 已完成 typed SM3/HMAC-SM3 与 AES-128-CM
 6/6。该证据证明确定性 P-256 public/ECDH，但不证明随机 keygen：WS63 仍需显式、经健康检查
 并可重播种的生产 DRBG，不能把 raw TRNG 提升为 CSPRNG；超时/错误恢复、BLE C hook 与
 pairing HIL 也仍未完成。
+
+随后 exact-UAPI diagnostic HIL 进一步通过 archive-facing HMAC-SM3、RFC 4493
+AES-128-CMAC、P-256 scalar 2 public-key derivation 与 ECDH known-answer vectors。
+release ELF SHA-256 为
+`d431abb8fae70a531926feb55d2d2c20337e8a66ec435c55499b7bc839a8961b`；3 MHz
+probe-rs 完整 verify 后连续两次硬件 nRST 均出现
+`RFDBG_BLE_U5B_CRYPTO_COMPAT_OK`、`RFDBG_BLE_B1_INIT_OK` 与
+`RFDBG_BLE_B2_COMMANDS_OK`。证据见
+[WS63 BLE U5B crypto compatibility](evidence/ws63-ble-u5b-crypto-compat-2026-08-09.md)。
+这关闭的是确定性 archive C hook/KAT 门，不关闭 production DRBG、硬件错误恢复、
+pairing/bond keystore 或双板 authenticated-pairing gate。
 `0.1.0-alpha.5` release-prep commit `da8bee2` 及后续 P-256 commit `6e1dfd1`
 已通过 standalone locked package、host tests、clippy 与 RV32 default/no-default build，但
 尚未推送/tag。`hisi-crypto-ws63` 的 standalone lock 仍解析 crates.io
