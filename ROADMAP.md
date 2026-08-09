@@ -221,7 +221,9 @@ These designs remain documented, but are not active TODO checklists:
 - NVS factory/write/GC/encryption and complete hardware key-slot/crypto support;
 - Enterprise Wi-Fi, broader SoftAP productization, pairing UX, BLE/SLE typed
   metadata/schema graduation, stable BLE/SLE API, DLI/SLB productization,
-  Wi-Fi L2/Embassy Net/TLS/application-protocol ecosystem closure, and coexistence;
+  Wi-Fi L2/Embassy Net/TLS/application-protocol ecosystem closure
+  ([NET0-NET5](docs/plan/hisi-connectivity-stack.md#wi-fi-上层生态补全net0-net5延期)),
+  and coexistence;
 - BSP/board-manager, mdBook i18n, Hi3322 runtime, and AP1 probe-rs fast-path
   integration.
 

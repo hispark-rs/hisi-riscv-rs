@@ -669,8 +669,9 @@ API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个�
   saturation、TLS/MQTT reconnect。HIL 只能证明固定环境下的内部 queue/stack conservation
   与行为 parity，不能宣称外部网络永不丢包。
 
-NET0-NET5 是 U2 和当前 connectivity evidence 收口后的 triggered backlog，不与当前 BLE/SLE
-U2 并行。STA 与 SoftAP 可以使用不同 backend，但 composition、storage、runner、typed error、
+NET0-NET5 是当前 U4 async event/cancellation/lifecycle 与 connectivity evidence 收口后的
+triggered backlog，不与当前 Radio UX/API WIP 并行。STA 与 SoftAP 可以使用不同 backend，
+但 composition、storage、runner、typed error、
 diagnostics 和 network lifecycle UX 必须对齐；example 中手写的 smoltcp
 `Interface/SocketSet/DHCP/UDP/DNS/renew` 在形成第二个消费者前继续作为可执行 composition
 oracle，不下沉进 `hisi-rf`。
