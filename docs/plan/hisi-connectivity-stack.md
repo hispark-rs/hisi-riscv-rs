@@ -33,6 +33,12 @@ radio API；U0 冻结迁移输入，U1 建立 facade-owned BLE/SLE composition p
 双板 20-reset 关闭 typed GAP/announce/seek，U3 又以 BLE/SLE 各 20/20 关闭 static typed
 GATT/SSAP database。当前只推进 U4 async event/cancellation/lifecycle，
 不自动启动 coexistence、pairing 或稳定 API 工作。
+U4 的无板实现已由 `hisi-rf-core` commit `fc7435f`、`hisi-rf-ws63`
+commit `e04565a` 与 `hisi-rf` commit `a9401fd` 形成闭包：bounded event plane、
+generation-tagged active guard、显式 `stop(self).await`、Drop best-effort cleanup、
+重复 start/stale lifecycle fail-closed、backend stop callback 和 public API leak gate
+均已通过 host tests、clippy 与 BLE/SLE RV32 check。双板 lifecycle/cancellation HIL
+尚未执行，因此 U4 仍是当前唯一 WIP，不能标为完成或稳定。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
 跨计划优先级和依赖以
@@ -576,6 +582,13 @@ storage、BLE/SLE 各 20/20 双板 HIL）；U4 async event/cancellation（当前
 pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
 coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
 host interleaving/event conservation 和双板证据，不能由当前纵向切片自动毕业。
+
+U4 当前状态分为两道门：无板/API 门已完成，覆盖独立 command completion 与 unsolicited
+event queue、generation-correlated lifecycle ownership、显式 stop、guard Drop cleanup、
+duplicate start、stale generation、event overflow cleanup、host clippy、RV32 build 和
+public API snapshot；真机门仍待使用两块 WS63 验证 BLE advertise/scan 与 SLE
+announce/seek 的 start -> active guard -> explicit stop/Drop cleanup -> matching completion
+闭环，并检查 event conservation、late completion 和重复 reset。真机门完成前不切换到 U5。
 
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
 
