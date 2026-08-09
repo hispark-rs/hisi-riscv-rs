@@ -154,6 +154,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmac"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8543454e3c3f5126effff9cd44d562af4e31fb8ce1cc0d3dcd8f084515dbc1aa"
+dependencies = [
+ "cipher",
+ "dbl",
+ "digest",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -337,6 +348,15 @@ dependencies = [
  "darling_core 0.24.0",
  "quote",
  "syn 3.0.3",
+]
+
+[[package]]
+name = "dbl"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd2735a791158376708f9347fe8faba9667589d82427ef3aed6794a8981de3d9"
+dependencies = [
+ "generic-array",
 ]
 
 [[package]]
@@ -834,6 +854,7 @@ name = "hisi-crypto"
 version = "0.1.0-alpha.4"
 dependencies = [
  "aes",
+ "cmac",
  "crypto-bigint 0.6.1",
  "hmac",
  "p256",
@@ -841,6 +862,7 @@ dependencies = [
  "rand_core 0.9.5",
  "sha1",
  "sha2",
+ "sm3",
  "zeroize",
 ]
 
@@ -1715,6 +1737,15 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "sm3"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebb9a3b702d0a7e33bc4d85a14456633d2b165c2ad839c5fd9a8417c1ab15860"
+dependencies = [
+ "digest",
+]
 
 [[package]]
 name = "smallvec"

@@ -617,9 +617,10 @@ U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hook
 
 U5B 的 archive census 已确认实际 primitive 是 HMAC-SM3、AES-CMAC 和 P-256 ECDH/keygen，
 不能把现有 SHA-1/SHA-256 `TryHash<N>` / `TryMac<N>` 按输出长度复用成 BLE 契约。
-`hisi-crypto` commit `3c0af78` 只完成第一步：新增“算法类型 + 输出长度”的可失败 hash/MAC
-capability，并让既有 SHA-1/SHA-256 软件 oracle 兼容该契约。SM3/CMAC 软件向量、WS63
-SPACC/PKE 逐项接线、超时/错误恢复和 pairing HIL 仍未完成；在 `hisi-crypto` 新契约发布前，
+`hisi-crypto` commits `3c0af78`、`7edbb93` 已完成前两步：新增“算法类型 + 输出长度”的
+可失败 hash/MAC capability，并提供 SM3、HMAC-SM3 与 AES-CMAC 的软件 oracle；测试分别
+绑定标准摘要、独立 OpenSSL HMAC 结果和 RFC 4493 CMAC 向量。WS63 SPACC/PKE 逐项接线、
+超时/错误恢复和 pairing HIL 仍未完成；在 `hisi-crypto` 新契约发布前，
 `hisi-crypto-ws63` 不依赖父仓 path patch 偷渡该 API，保持 standalone crates.io build 可验证。
 
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
