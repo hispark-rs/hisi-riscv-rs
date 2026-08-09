@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["pyserial"]
 # ///
-"""Run paired-board WS63 hisi-rf U2/U3 BLE or SLE reset matrices."""
+"""Run paired-board WS63 hisi-rf U2/U3/U4 BLE or SLE reset matrices."""
 
 from __future__ import annotations
 
@@ -38,6 +38,16 @@ PROTOCOLS = {
         "observer_marker": b"RFDBG_RADIO_U2_SLE_SEEK_OK",
         "failure_prefixes": (b"RFDBG_RADIO_U3_SLE_", b"RFDBG_RADIO_U2_SLE_"),
     },
+    "u4-ble": {
+        "source_marker": b"RFDBG_RADIO_U4_BLE_ADV_LIFECYCLE_OK",
+        "observer_marker": b"RFDBG_RADIO_U4_BLE_SCAN_LIFECYCLE_OK",
+        "failure_prefixes": (b"RFDBG_RADIO_U4_BLE_",),
+    },
+    "u4-sle": {
+        "source_marker": b"RFDBG_RADIO_U4_SLE_ANNOUNCE_LIFECYCLE_OK",
+        "observer_marker": b"RFDBG_RADIO_U4_SLE_SEEK_LIFECYCLE_OK",
+        "failure_prefixes": (b"RFDBG_RADIO_U4_SLE_",),
+    },
 }
 COMMON_MARKER = b"RFDBG_RADIO_U2_INIT_OK"
 FAILURE_SUFFIXES = (
@@ -48,6 +58,7 @@ FAILURE_SUFFIXES = (
     b"RUNNER_ERR",
     b"LIFECYCLE_ERR",
     b"EVENT_DROP",
+    b"STOP_ERR",
 )
 COMMON_FAILURE_MARKERS = (
     b"RFDBG_MISSING_ROM_CALLBACK",
