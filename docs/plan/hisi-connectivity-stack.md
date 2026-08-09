@@ -2,7 +2,7 @@
 
 ## 状态
 
-**执行中 / P0：U0-U3 已完成，当前唯一 WIP 是 U4 async event/cancellation/lifecycle。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**当前执行窗口已闭合：U0-U4 已完成，下一产品 gate 尚未自动启动。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -31,14 +31,14 @@ advertising/scanning、B3 GATT、S0 SLE archive/ABI closure、S1 announce/seek�
 connect/disconnect 与 S3 SSAP read/notification 已完成。产品 gate 已选择先收敛用户可见
 radio API；U0 冻结迁移输入，U1 建立 facade-owned BLE/SLE composition preview，U2 已用
 双板 20-reset 关闭 typed GAP/announce/seek，U3 又以 BLE/SLE 各 20/20 关闭 static typed
-GATT/SSAP database。当前只推进 U4 async event/cancellation/lifecycle，
-不自动启动 coexistence、pairing 或稳定 API 工作。
+GATT/SSAP database，U4 又以 BLE/SLE 各 20/20 双板矩阵闭合 async
+event/cancellation/lifecycle。不自动启动 coexistence、pairing 或稳定 API 工作。
 U4 的无板实现已由 `hisi-rf-core` commit `fc7435f`、`hisi-rf-ws63`
 commit `e04565a` 与 `hisi-rf` commit `a9401fd` 形成闭包：bounded event plane、
 generation-tagged active guard、显式 `stop(self).await`、Drop best-effort cleanup、
 重复 start/stale lifecycle fail-closed、backend stop callback 和 public API leak gate
-均已通过 host tests、clippy 与 BLE/SLE RV32 check。双板 lifecycle/cancellation HIL
-尚未执行，因此 U4 仍是当前唯一 WIP，不能标为完成或稳定。
+均已通过 host tests、clippy 与 BLE/SLE RV32 check。固定 BLE/SLE lifecycle 镜像又分别
+通过 3/3 shape gate 与 20/20 paired nRST matrix，因此 U4 已完成；这仍不表示 API stable。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。
 跨计划优先级和依赖以
@@ -75,7 +75,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U4 async event/cancellation/lifecycle
+## 当前执行窗口：U4 已闭合，等待下一产品 gate
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -153,6 +153,14 @@ FlashPlan + 3 MHz + 完整 verify 契约烧录，并通过 3/3 shape gate 与 20
 matrix；每轮均完成 typed SSAP registration 和 peer seek，missing/failure marker 为空。
 U3 至此关闭，唯一 WIP 切换到 U4。完整证据见
 [Radio U3 static databases](evidence/ws63-radio-u3-static-databases-2026-08-08.md)。
+
+U4 已完成实现与真机闭包：`hisi-rf-core` commit `fc7435f` 提供 bounded protocol event
+transport，`hisi-rf-ws63` commit `e04565a` 接入可取消 BLE/SLE lifecycle，`hisi-rf`
+commit `a9401fd` 提供 generation-tagged active guards、显式 `stop(self).await` 与 Drop
+best-effort cleanup；fixture scheduler handoff 由 commit `cdcac5c` 固定。四个固定 ELF 在
+3 MHz 完整 verify 后，BLE 与 SLE 分别通过 3/3 shape gate 和 20/20 paired nRST matrix，
+missing/failure marker 均为空。U4 至此关闭；完整证据见
+[Radio U4 lifecycle](evidence/ws63-radio-u4-lifecycle-2026-08-09.md)。
 
 ### A5 收口证据账本
 
@@ -548,7 +556,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
 
-### Radio UX/API convergence（执行中：U4）
+### Radio UX/API convergence（U0-U4 已完成）
 
 S3 只冻结 backend 行为，不把当前 `BleB*` / `SleS*` 阶段类型直接改名后稳定发布。
 未来用户只依赖 `hisi-rf`，由唯一 `RadioController` 初始化共享 RF、IRQ、blob、arena 与
@@ -578,17 +586,19 @@ composition（完成）；U2 typed GAP/announce/seek（完成：chip-neutral val
 单命令 bounded mailbox、controller/runner ownership、WS63 backend adapter、同步
 accept/reject completion、host/RV32/clippy/public API gate，以及 BLE/SLE 各 20/20 双板
 HIL）；U3 静态 GATT/SSAP database（完成：typed schema、opaque handle、backend-owned
-storage、BLE/SLE 各 20/20 双板 HIL）；U4 async event/cancellation（当前）；U5
+storage、BLE/SLE 各 20/20 双板 HIL）；U4 async event/cancellation（完成：bounded event
+plane、generation guard、显式/Drop cleanup、BLE/SLE 各 20/20 双板 HIL）；U5
 pairing/bonding/keystore；U6 profile/storage/report/template；U7 三平台 consumer 与双板/
 coexistence gate；U8 再评审 stable graduation。每一阶段都需要 compile-fail 生命周期测试、
 host interleaving/event conservation 和双板证据，不能由当前纵向切片自动毕业。
 
-U4 当前状态分为两道门：无板/API 门已完成，覆盖独立 command completion 与 unsolicited
+U4 两道门均已完成：无板/API 门覆盖独立 command completion 与 unsolicited
 event queue、generation-correlated lifecycle ownership、显式 stop、guard Drop cleanup、
 duplicate start、stale generation、event overflow cleanup、host clippy、RV32 build 和
-public API snapshot；真机门仍待使用两块 WS63 验证 BLE advertise/scan 与 SLE
-announce/seek 的 start -> active guard -> explicit stop/Drop cleanup -> matching completion
-闭环，并检查 event conservation、late completion 和重复 reset。真机门完成前不切换到 U5。
+public API snapshot；真机门使用两块 WS63 验证 BLE advertise/scan 与 SLE announce/seek
+的 start -> active guard -> explicit stop/Drop cleanup -> matching completion 闭环，并以
+各 20/20 paired reset 检查 event conservation、late completion 和重复 reset。下一 gate
+必须单独选择；U4 完成不会自动启动 U5 或稳定毕业。
 
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
 
