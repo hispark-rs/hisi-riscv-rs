@@ -38,7 +38,7 @@ hisi-crypto-ws63 = {
     version = "0.1.0-alpha.3",
     optional = true,
     default-features = false,
-    features = ["hash"],
+    features = ["cipher", "hash"],
 }
 # hisi-riscv-rt provides the startup + critical-section impl + the riscv-rt
 # runtime that calls embedded-test's exported `main` (see tests/hil.rs). Chip
