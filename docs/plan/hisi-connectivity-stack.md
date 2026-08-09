@@ -615,6 +615,13 @@ U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hook
 双板 authenticated pairing/bond restore/remove 的 20-reset 证据与事件守恒。U5A 通过
 编译和 host tests 不代表 BLE pairing 可用，更不代表 U5 完成或 API stable。
 
+2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
+archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
+`hisi-crypto-ws63` `CryptoService`。该兼容子集严格校验 curve、32-byte descriptor 和
+P-256 私钥范围；`input_priv_key == NULL` 仍 fail closed，因为原始 TRNG 不能替代生产
+DRBG。host BLE ABI tests、WS63 backend/facade host tests 及 RV32 clippy 已通过；这仍不
+覆盖 HMAC-SM3/AES-CMAC KLAD handle lifecycle、随机 keygen、错误恢复或真实 pairing HIL。
+
 U5B 的 archive census 已确认实际 primitive 是 HMAC-SM3、AES-CMAC 和 P-256 ECDH/keygen，
 不能把现有 SHA-1/SHA-256 `TryHash<N>` / `TryMac<N>` 按输出长度复用成 BLE 契约。
 `hisi-crypto` commits `3c0af78`、`7edbb93`、`6e1dfd1` 已完成芯片中立能力：新增
