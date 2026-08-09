@@ -622,6 +622,13 @@ P-256 私钥范围；`input_priv_key == NULL` 仍 fail closed，因为原始 TRN
 DRBG。host BLE ABI tests、WS63 backend/facade host tests 及 RV32 clippy 已通过；这仍不
 覆盖 HMAC-SM3/AES-CMAC KLAD handle lifecycle、随机 keygen、错误恢复或真实 pairing HIL。
 
+同日后续提交已补齐 archive 实际可达子集的 bounded KM/keyslot/KLAD handle lifecycle，
+以及单次 `start -> update -> finish` 的 HMAC-SM3 和 AES-128-CMAC bridge。handle 带
+generation，key material 在 destroy/error 路径清零，重复 update、stale handle、未知算法、
+错误 keyslot/destination/engine 组合均 fail closed；SPACC 调用在 critical section 外并复用
+既有 runtime mutex。host 45 tests 与 host/RV32 clippy 通过，但在 diagnostic HIL known-vector
+和真实 pairing 完成前仍只算 ABI/构建证据。
+
 U5B 的 archive census 已确认实际 primitive 是 HMAC-SM3、AES-CMAC 和 P-256 ECDH/keygen，
 不能把现有 SHA-1/SHA-256 `TryHash<N>` / `TryMac<N>` 按输出长度复用成 BLE 契约。
 `hisi-crypto` commits `3c0af78`、`7edbb93`、`6e1dfd1` 已完成芯片中立能力：新增
