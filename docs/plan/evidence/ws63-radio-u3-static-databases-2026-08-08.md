@@ -2,10 +2,9 @@
 
 ## Status
 
-U3 implementation and the BLE paired-board gate are complete. The SLE paired-board gate is
-pending because the execution environment rejected the required USB/J-Link escalation after its
-approval quota was exhausted. This is not a firmware, probe, build, or board failure. U3 remains
-open until the fixed SLE images pass both the 3-reset shape gate and 20-reset matrix.
+U3 implementation and both paired-board gates are complete. The fixed BLE and SLE artifacts each
+passed a 3-reset shape gate followed by a 20-reset matrix. U3 is closed; the active product API
+milestone can move to U4 async event, cancellation and lifecycle semantics.
 
 ## Immutable Inputs
 
@@ -51,11 +50,17 @@ The four fixed ELF artifacts are:
   `RFDBG_RADIO_U3_BLE_GATT_REGISTERED`, `RFDBG_RADIO_U3_BLE_GATT_OK`, and observer
   `RFDBG_RADIO_U2_BLE_SCAN_OK`; no failure marker, panic, missing ROM callback, or event drop was
   observed.
+- SLE source and observer were downloaded through the same FlashPlan binary path at 3 MHz with
+  complete probe-rs verification. Both downloads succeeded on the first attempt in approximately
+  90 seconds per image.
+- SLE passed `/private/tmp/ws63-radio-u3-20260809-sle-3reset` at 3/3 and
+  `/private/tmp/ws63-radio-u3-20260809-sle-20reset` at 20/20. Every round contains source
+  `RFDBG_RADIO_U3_SLE_SSAP_OK` and observer `RFDBG_RADIO_U2_SLE_SEEK_OK`; every summary record has
+  empty missing-marker and failure-marker sets.
 
-## Remaining Gate
+## Boundary
 
-Flash the two fixed SLE artifacts through the same FlashPlan binary path at 3 MHz with complete
-verify, then run protocol `u3-sle` through the paired reset harness for 3 and 20 resets. Required
-markers are source `RFDBG_RADIO_U3_SLE_SSAP_OK` and observer
-`RFDBG_RADIO_U2_SLE_SEEK_OK`. Only a 3/3 plus 20/20 result closes U3 and permits the plan to move to
-U4.
+This evidence proves the reviewed static one-service database path reaches the real BLE and SLE
+vendor stacks repeatedly on two WS63 boards. It does not prove U4 cancellation, late-completion,
+stale-handle or unsolicited-event conservation semantics, and it does not graduate the API to
+stable.
