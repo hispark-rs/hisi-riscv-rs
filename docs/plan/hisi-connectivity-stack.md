@@ -617,18 +617,27 @@ U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hook
 
 U5B 的 archive census 已确认实际 primitive 是 HMAC-SM3、AES-CMAC 和 P-256 ECDH/keygen，
 不能把现有 SHA-1/SHA-256 `TryHash<N>` / `TryMac<N>` 按输出长度复用成 BLE 契约。
-`hisi-crypto` commits `3c0af78`、`7edbb93` 已完成前两步：新增“算法类型 + 输出长度”的
+`hisi-crypto` commits `3c0af78`、`7edbb93`、`6e1dfd1` 已完成芯片中立能力：新增
+“算法类型 + 输出长度”的
 可失败 hash/MAC capability，并提供 SM3、HMAC-SM3 与 AES-CMAC 的软件 oracle；测试分别
-绑定标准摘要、独立 OpenSSL HMAC 结果和 RFC 4493 CMAC 向量。WS63 SPACC 已完成 typed
-SM3/HMAC-SM3 与 AES-128-CMAC 接线。前两项由
+绑定标准摘要、独立 OpenSSL HMAC 结果和 RFC 4493 CMAC 向量；P-256 增加 range-checked、
+zeroizing private/shared-secret、public derivation、ECDH 和只接受显式 `TryCryptoRng` 的
+key-generation contract。WS63 SPACC 已完成 typed SM3/HMAC-SM3 与 AES-128-CMAC 接线，
+`hisi-crypto-ws63` commit `fbb1913` 让现有 PKE session 通过同一 point-multiply capability
+获得 typed public/ECDH，不增加第二套驱动。前两项由
 `tests-hil::spacc_sm3_hmac_sm3_known_answer_vectors` 通过标准向量，CMAC 由
 `tests-hil::spacc_aes_cmac_known_answer_vector` 在真实 WS63 覆盖 RFC 4493 的 0/16/40/64
-字节四组向量；两者均走 3 MHz probe 路径，更新后的完整 suite 为 5/5。该证据只证明这些
-primitive，P-256 ECDH/keygen、超时/错误恢复和 pairing HIL 仍未完成。
-`0.1.0-alpha.5` release-prep commit `da8bee2`
-已通过 standalone lock/package、host tests、clippy 与 RV32 no-default build，但尚未推送/tag；
-在该版本发布前，
-`hisi-crypto-ws63` 不依赖父仓 path patch 偷渡该 API，保持 standalone crates.io build 可验证。
+字节四组向量；PKE 由 `tests-hil::pke_p256_public_key_and_ecdh_known_answer` 以 scalar 2
+验证 public `2G` 与 ECDH shared-x。三类能力均走 3 MHz probe 路径，更新后的完整 suite 为
+6/6。该证据证明确定性 P-256 public/ECDH，但不证明随机 keygen：WS63 仍需显式、经健康检查
+并可重播种的生产 DRBG，不能把 raw TRNG 提升为 CSPRNG；超时/错误恢复、BLE C hook 与
+pairing HIL 也仍未完成。
+`0.1.0-alpha.5` release-prep commit `da8bee2` 及后续 P-256 commit `6e1dfd1`
+已通过 standalone locked package、host tests、clippy 与 RV32 default/no-default build，但
+尚未推送/tag。`hisi-crypto-ws63` 的 standalone lock 仍解析 crates.io
+`hisi-crypto 0.1.0-alpha.4`，因此 release 顺序固定为：先发布 alpha.5，再独立刷新 WS63 backend lock、
+执行 package/CI，最后发布 backend；父仓 path patch 只能用于本轮集成/HIL，不能作为 release
+证据。
 
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
 

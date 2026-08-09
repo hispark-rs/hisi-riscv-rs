@@ -182,6 +182,54 @@ mod tests {
         }
     }
 
+    /// Proves that the typed public-key and ECDH contract executes through the
+    /// WS63 PKE engine. Scalar 2 and the standard generator make both outputs
+    /// independently checkable as the SEC 2 `2G` point. TRNG is used only for
+    /// the PKE masking sequence; this test does not claim random key generation.
+    #[cfg(feature = "chip-ws63")]
+    #[test]
+    fn pke_p256_public_key_and_ecdh_known_answer(p: hisi_hal::peripherals::Peripherals) {
+        use hisi_crypto::p256::{P256_GENERATOR, P256PrivateKey, TryP256KeyAgreement};
+        use hisi_crypto_ws63::{Ws63Crypto, Ws63CryptoResources, Ws63CryptoStorage, Ws63P256};
+        use static_cell::StaticCell;
+
+        const TWO_G_X: [u8; 32] = [
+            0x7c, 0xf2, 0x7b, 0x18, 0x8d, 0x03, 0x4f, 0x7e, 0x8a, 0x52, 0x38, 0x03, 0x04, 0xb5,
+            0x1a, 0xc3, 0xc0, 0x89, 0x69, 0xe2, 0x77, 0xf2, 0x1b, 0x35, 0xa6, 0x0b, 0x48, 0xfc,
+            0x47, 0x66, 0x99, 0x78,
+        ];
+        const TWO_G_Y: [u8; 32] = [
+            0x07, 0x77, 0x55, 0x10, 0xdb, 0x8e, 0xd0, 0x40, 0x29, 0x3d, 0x9a, 0xc6, 0x9f, 0x74,
+            0x30, 0xdb, 0xba, 0x7d, 0xad, 0xe6, 0x3c, 0xe9, 0x82, 0x29, 0x9e, 0x04, 0xb7, 0x9d,
+            0x22, 0x78, 0x73, 0xd1,
+        ];
+
+        static STORAGE: StaticCell<Ws63CryptoStorage> = StaticCell::new();
+
+        let storage = STORAGE.init(Ws63CryptoStorage::new());
+        let crypto = Ws63Crypto::new(Ws63CryptoResources::new(p.KM, p.SPACC, p.TRNG, storage));
+        let pke = Ws63P256::new(p.PKE);
+        let session = pke.session(&crypto);
+        let mut scalar = [0u8; 32];
+        scalar[31] = 2;
+        let private = P256PrivateKey::try_from_be_bytes(scalar).expect("scalar 2 must be valid");
+
+        let public = session
+            .try_public_from_private(&private)
+            .expect("WS63 PKE public-key derivation failed");
+        assert_eq!(public.x, TWO_G_X, "WS63 PKE public-key x mismatch");
+        assert_eq!(public.y, TWO_G_Y, "WS63 PKE public-key y mismatch");
+
+        let shared = session
+            .try_agree(&private, &P256_GENERATOR)
+            .expect("WS63 PKE ECDH failed");
+        assert_eq!(
+            shared.expose_secret(),
+            &TWO_G_X,
+            "WS63 PKE ECDH shared x mismatch"
+        );
+    }
+
     /// CPU-only invariants: M-extension multiply, F-extension hard-float (ilp32f)
     /// arithmetic, and the `mcycle` CSR advancing. Mirrors
     /// examples/ws63/semihost_selftest. `black_box` stops the optimiser folding
