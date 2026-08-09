@@ -697,13 +697,16 @@ API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个�
   capability、RX/TX wake 和 backpressure 契约；以 `MacAddress`、`WifiChannel`、
   `CenterFrequency`、`RssiDbm`、`DisconnectReason` 等类型替换 public raw 数字，补齐
   negotiated security/PMF/channel/PHY/rate；收窄 `inner/inner_mut/into_inner` escape hatch。
-  host tests 必须覆盖 link up/down、wake、queue conservation 和 saturation。
+  host tests 必须覆盖 link up/down、wake、queue conservation 和 saturation。L2 ownership
+  必须属于具体 `RadioController` instance；现有 static/global bridge 只能是迁移实现，不能
+  成为多实例 API 或资源模型的事实源。
 - **NET1 -- Embassy Net primary adapter**：优先实现 `embassy_net_driver::Driver`，先评估
   `embassy-net-driver-channel`，只有其复制、RAM 或零拷贝模型不合适才直接实现 driver。
   `hisi-rf-core` 只依赖 driver contract，不依赖主 `embassy-net` crate；smoltcp adapter
   继续作为可选低层入口和既有 HIL oracle。工作 backend 存在前不得暴露虚假的
-  `profile-wifi-*-embassy-net`。HIL 覆盖 DHCP、DNS、TCP echo、UDP、renew、link flap、
-  reconnect、burst RX 与 backpressure。
+  `profile-wifi-wpa2-embassy-net` / `profile-wifi-wpa3-embassy-net`。HIL 覆盖 DHCP、DNS、
+  TCP echo、UDP、lease renew、link-down 时 IP/DHCP deconfigure、reconnect 后重新配置、
+  AP disappear/reappear、burst RX 与 backpressure。
 - **NET2 -- socket ecosystem adapters**：TCP/TLS stream 在 IP/TLS 层实现
   `embedded_io_async::{Read, Write}`，`WifiDevice` 本身不得实现 stream。优先复用
   Embassy Net 与 `embedded-nal-async` 的 TCP/UDP/DNS contract；blocking embedded-nal
@@ -719,8 +722,9 @@ API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个�
 - **NET5 -- UX and evidence**：template 最终提供 Embassy Net 默认 happy path，用户只选
   chip/profile 和静态网络资源；生成机器可读 RAM/socket/packet-buffer report。验收覆盖
   repeated reset/cold boot、DHCP renew、AP disappear/reappear、DNS/TCP/UDP burst、queue
-  saturation、TLS/MQTT reconnect。HIL 只能证明固定环境下的内部 queue/stack conservation
-  与行为 parity，不能宣称外部网络永不丢包。
+  saturation、TLS/MQTT reconnect，并以 crates.io-only external consumer 在 macOS/Linux/
+  Windows 验证 facade、profile 与 caller-owned storage 契约。HIL 只能证明固定环境下的
+  内部 queue/stack conservation 与行为 parity，不能宣称外部网络永不丢包。
 
 NET0-NET5 是当前 U4 async event/cancellation/lifecycle 与 connectivity evidence 收口后的
 triggered backlog，不与当前 Radio UX/API WIP 并行。STA 与 SoftAP 可以使用不同 backend，
