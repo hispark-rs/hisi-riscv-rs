@@ -600,6 +600,21 @@ public API snapshot；真机门使用两块 WS63 验证 BLE advertise/scan 与 S
 各 20/20 paired reset 检查 event conservation、late completion 和重复 reset。下一 gate
 必须单独选择；U4 完成不会自动启动 U5 或稳定毕业。
 
+U5 当前只进入 **U5A 安全控制面**，尚未完成：`hisi-rf-core` 定义显式
+`SecurityConfig`、`Bonding`、`IoCapability`、`SecurityRequirement` 与 typed
+`PairingState`；WS63 adapter 把它们映射到经审核的四字节 GAP security ABI，并提供
+pair/query/remove-bond 命令；facade 保持 command completion 与 unsolicited pairing/auth
+event 分离。认证 callback 只复制 peer、status 和“是否存在 key material”，LTK 字节不会
+进入 public event、日志或 Debug。host tests、ABI size gate 与 RV32 check 已覆盖该边界。
+
+U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
+`hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
+也不得在 IRQ/critical section/scheduler lock 中等待。U5C 再引入独立 `hisi-keystore`
+的不可导出 `KeyHandle`、用途权限和 bond lifecycle；`hisi-nvs` 只提供普通存储格式，不
+拥有密钥策略。U5D 需要 pairing responder/cancellation/stale connection generation、
+双板 authenticated pairing/bond restore/remove 的 20-reset 证据与事件守恒。U5A 通过
+编译和 host tests 不代表 BLE pairing 可用，更不代表 U5 完成或 API stable。
+
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
 
 当前 BLE GAP 和 SLE announce/seek validated types 是 TYP1 的起点，不把原厂 C enum 直接
