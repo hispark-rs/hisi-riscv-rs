@@ -619,8 +619,10 @@ U5B 的 archive census 已确认实际 primitive 是 HMAC-SM3、AES-CMAC 和 P-2
 不能把现有 SHA-1/SHA-256 `TryHash<N>` / `TryMac<N>` 按输出长度复用成 BLE 契约。
 `hisi-crypto` commits `3c0af78`、`7edbb93` 已完成前两步：新增“算法类型 + 输出长度”的
 可失败 hash/MAC capability，并提供 SM3、HMAC-SM3 与 AES-CMAC 的软件 oracle；测试分别
-绑定标准摘要、独立 OpenSSL HMAC 结果和 RFC 4493 CMAC 向量。WS63 SPACC/PKE 逐项接线、
-超时/错误恢复和 pairing HIL 仍未完成。`0.1.0-alpha.5` release-prep commit `da8bee2`
+绑定标准摘要、独立 OpenSSL HMAC 结果和 RFC 4493 CMAC 向量。WS63 SPACC 已完成 typed
+SM3/HMAC-SM3 接线，并由 `tests-hil::spacc_sm3_hmac_sm3_known_answer_vectors` 在真实 WS63
+以 3 MHz probe 路径通过单项及完整 4/4 suite；这只证明两项 hash/MAC primitive，AES-CMAC、
+P-256、超时/错误恢复和 pairing HIL 仍未完成。`0.1.0-alpha.5` release-prep commit `da8bee2`
 已通过 standalone lock/package、host tests、clippy 与 RV32 no-default build，但尚未推送/tag；
 在该版本发布前，
 `hisi-crypto-ws63` 不依赖父仓 path patch 偷渡该 API，保持 standalone crates.io build 可验证。

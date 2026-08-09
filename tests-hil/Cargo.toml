@@ -33,6 +33,13 @@ bs2x-pac = { version = "0.1", optional = true }
 # selection is deferred to the chip feature (default-features off; the chip
 # feature turns on the matching `chip-*` + `rt`).
 hisi-hal = { path = "../crates/hisi-hal", default-features = false }
+hisi-crypto = { version = "0.1.0-alpha.5", optional = true, default-features = false }
+hisi-crypto-ws63 = {
+    version = "0.1.0-alpha.3",
+    optional = true,
+    default-features = false,
+    features = ["hash"],
+}
 # hisi-riscv-rt provides the startup + critical-section impl + the riscv-rt
 # runtime that calls embedded-test's exported `main` (see tests/hil.rs). Chip
 # selection (and, for WS63, the `boot-header` feature that bakes the 0x300
@@ -44,6 +51,7 @@ hisi-riscv-rt = { path = "../crates/hisi-riscv-rt", default-features = false }
 # embedded-test (via `semihosting`) needs a real critical-section impl in graph.
 portable-atomic = { version = "1", default-features = false, features = ["critical-section"] }
 critical-section = "1"
+static_cell = { version = "2", optional = true }
 
 [features]
 # Chip selection mirrors hisi-hal: exactly one chip, WS63 the default. Each
@@ -54,6 +62,9 @@ critical-section = "1"
 default = ["chip-ws63"]
 chip-ws63 = [
     "dep:ws63-pac",
+    "dep:hisi-crypto",
+    "dep:hisi-crypto-ws63",
+    "dep:static_cell",
     "hisi-hal/chip-ws63",
     "hisi-hal/rt",
     "hisi-riscv-rt/chip-ws63",

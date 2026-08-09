@@ -1860,9 +1860,12 @@ dependencies = [
  "critical-section",
  "embedded-test",
  "embedded-test-linker-script",
+ "hisi-crypto",
+ "hisi-crypto-ws63",
  "hisi-hal",
  "hisi-riscv-rt",
  "portable-atomic",
+ "static_cell",
  "ws63-pac",
 ]
 

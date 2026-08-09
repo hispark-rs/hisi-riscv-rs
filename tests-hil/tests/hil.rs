@@ -56,13 +56,57 @@ mod tests {
     #[cfg(feature = "chip-ws63")]
     use ws63_pac as pac;
 
-    /// `#[init]` runs before every test. It takes the singleton `Peripherals`
-    /// once and hands them to each test as shared state — proving the PAC's
-    /// critical-section-guarded `take()` (backed by hisi-riscv-rt's
-    /// single-hart critical-section impl) works on-target.
+    /// `#[init]` runs before every test. It takes the HAL singleton once and
+    /// hands it to tests that exercise owned peripheral capabilities. The HAL
+    /// obtains this state through the PAC's critical-section-guarded `take()`,
+    /// so the underlying singleton remains unique.
     #[init]
-    fn init() -> pac::Peripherals {
-        pac::Peripherals::take().expect("PAC Peripherals::take() returned None on first call")
+    fn init() -> hisi_hal::peripherals::Peripherals {
+        hisi_hal::peripherals::Peripherals::take()
+            .expect("HAL Peripherals::take() returned None on first call")
+    }
+
+    /// Proves the PAC-driven WS63 SPACC implementation against public SM3 and
+    /// HMAC-SM3 known-answer vectors. This is silicon evidence for the typed
+    /// algorithm capability; host tests only prove the software oracle and
+    /// register configuration model.
+    #[cfg(feature = "chip-ws63")]
+    #[test]
+    fn spacc_sm3_hmac_sm3_known_answer_vectors(p: hisi_hal::peripherals::Peripherals) {
+        use hisi_crypto::{TryHashAlgorithm, TryMacAlgorithm, algorithm};
+        use hisi_crypto_ws63::{Ws63Crypto, Ws63CryptoResources, Ws63CryptoStorage};
+        use static_cell::StaticCell;
+
+        static STORAGE: StaticCell<Ws63CryptoStorage> = StaticCell::new();
+
+        let storage = STORAGE.init(Ws63CryptoStorage::new());
+        let crypto = Ws63Crypto::new(Ws63CryptoResources::new(p.KM, p.SPACC, p.TRNG, storage));
+
+        let mut digest = [0u8; 32];
+        TryHashAlgorithm::<algorithm::Sm3, 32>::hash(&crypto, &[b"abc"], &mut digest)
+            .expect("WS63 SPACC SM3 operation failed");
+        assert_eq!(
+            digest,
+            [
+                0x66, 0xc7, 0xf0, 0xf4, 0x62, 0xee, 0xed, 0xd9, 0xd1, 0xf2, 0xd4, 0x6b, 0xdc, 0x10,
+                0xe4, 0xe2, 0x41, 0x67, 0xc4, 0x87, 0x5c, 0xf2, 0xf7, 0xa2, 0x29, 0x7d, 0xa0, 0x2b,
+                0x8f, 0x4b, 0xa8, 0xe0,
+            ],
+            "WS63 SPACC SM3 digest mismatch"
+        );
+
+        let mut mac = [0u8; 32];
+        TryMacAlgorithm::<algorithm::Sm3, 32>::mac(&crypto, &[0x0b; 20], &[b"abc"], &mut mac)
+            .expect("WS63 SPACC HMAC-SM3 operation failed");
+        assert_eq!(
+            mac,
+            [
+                0x8e, 0xc4, 0xd9, 0xf9, 0xe5, 0x15, 0x9d, 0x52, 0xd8, 0xb7, 0xf8, 0xe8, 0xe6, 0x81,
+                0xa6, 0x2e, 0xcd, 0x2f, 0xb0, 0xcb, 0x58, 0xba, 0x55, 0x4e, 0xe5, 0x6c, 0x96, 0x2d,
+                0x0f, 0xa5, 0xda, 0xa1,
+            ],
+            "WS63 SPACC HMAC-SM3 mismatch"
+        );
     }
 
     /// CPU-only invariants: M-extension multiply, F-extension hard-float (ilp32f)
