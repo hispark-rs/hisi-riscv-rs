@@ -656,6 +656,30 @@ observer`；在真机证明 manual mode 会阻断 vendor NV 写入、Rust record
 `hisi-keystore::KeyStore`。后续 WS63 bond-record backend 负责该 opaque serialization，
 `hisi-keystore` 继续只负责不可导出 key handle、用途权限和 secret-free bond metadata。
 
+2026-08-12 的后续实现把这个允许模式补成了可执行但仍隐藏的 lifecycle。`ws63-radio-sys`
+commit `805a9bc` 新增固定 8-record、Drop-zeroizing 的 `SmpRecordSet`，通过
+`ble_get_all_smp_keys` 建立 bounded snapshot；archive 报告 count 超过 profile capacity 时
+fail closed，`Debug` 只输出 count 和 `[REDACTED]`。`hisi-rf-ws63` commit `a1ad842` 在
+`VendorManaged` 边界内增加 count 与 `snapshot -> sapi_ble_recover_smp_keys` replay，空表是
+明确 no-op，facade 不接触 opaque bytes。`hisi-rf` commit `0d0a144` 只以 `#[doc(hidden)]`
+暴露 secret-free restore count，并让 U5 central/peripheral fixture 在每次启动打印互斥的
+`BOND_EMPTY` / `BOND_RESTORED` marker；父仓 commit `190074efc` 将该状态纳入 paired reset
+matrix schema v2，restore error、缺失状态或同轮两个状态都会失败。
+
+该增量已通过 raw BLE persistence 6 tests、backend 46 host tests、facade 9 host tests、三仓
+clippy、raw/backend RV32 check，以及两份 U5 RV32 release ELF 构建；matrix 5 个 host tests
+与 Python uv contract 也通过。它仍不是硅片 restore 证据：下一 gate 必须重新构建并绑定
+ELF hash，完整 verify 烧录两块 WS63，先跑 3-reset，再跑 20-reset，并证明首次空表配对后
+后续 reset 出现 restore marker、pair/auth/bond event 守恒且 remove 后重新变为空表。在该
+证据完成前 U5C 状态保持 **implementation complete / silicon gate pending**，不宣称
+`RustManaged`、authenticated pairing 或 stable graduation。
+
+独立发布顺序也已实测：`hisi-keystore 0.1.0-alpha.1` 的 7 host tests、clippy 和 locked
+package 通过，`hisi-rf-core 0.1.0-alpha.22` locked package 通过；`hisi-rf-ws63
+0.1.0-alpha.75` 必须等待尚未发布的 `hisi-crypto 0.1.0-alpha.5`，`hisi-rf
+0.1.0-alpha.87` 必须等待 `hisi-rf-core 0.1.0-alpha.22` 和 backend。父仓 path patch 只证明
+集成构建，不能替代上述 crates.io release-order gate。
+
 2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
 archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
 `hisi-crypto-ws63` `CryptoService`。该兼容子集严格校验 curve、32-byte descriptor 和
