@@ -712,6 +712,25 @@ peripheral/central SHA-256 分别为
 在获得绑定哈希的明确授权前不得烧录；下一 gate 仍是先 3-reset，只有 3/3 后才进入同一
 镜像的 20-reset。
 
+上述 `fe868982` / `095491ca` 镜像随后已按持续 HIL 授权烧录，3 MHz 完整 verify
+分别耗时 58.51 秒与 58.58 秒。3-reset 仍为 0/3，因此没有进入 20-reset；但该结果证明
+第一项修复有效：旧 `ra=0x0014819e` 不再出现，run 1/2 均继续执行到新的
+`RFDBG_MISSING_ROM_CALLBACK ra=0x001481f2`。只读提取并反汇编真实 WS63 ROM
+`smp_calc_x_confirm` 表明：`0x001481f0` 的 compressed call 进入 `0x00148246` helper，
+后者经 ordered callback 调用 `smp_xor`。当前最终 ELF 已有真实 `smp_xor` provider，
+但和 `new0fun` 一样，ROM 间接控制流不在普通 archive undefined-symbol census 中，因此
+旧 veneer 仍错误落到 missing sentinel。run 3 在 scan/connect 前出现独立 central error，
+不与该稳定 SMP 断点混为一个根因。
+
+`hisi-rf-ws63` commit `f0ad449` 不再逐个追赶 ROM trap，而是按固定 callback manifest、
+原厂 map 与最终 ELF provider census 一次性绑定经审核的 `smp_aes128`、
+`smp_cmac_reverse`、`smp_reverse_octets` 与 `smp_xor`；`smp_rand` 继续走已验证的 WS63
+TRNG UAPI。构建期断言要求四项映射存在，最终 ELF 反汇编也逐项证明 veneer 尾跳到真实
+archive provider。再次重建的 peripheral/central SHA-256 为
+`ad5a451fe55b8f5344b3e57c217500e739b08ca9d35b4d7ce8a4b7aeaef6c5ea` 与
+`206436255a2ded9d2798efae0a1d1cd092b79761a6d645ec10909bed6917784e`；下一轮继续遵守
+完整 verify、先 3-reset、仅 3/3 后进入 20-reset 的同一镜像门槛。
+
 remove 的无板契约也已收窄：`hisi-rf` commit `a02438e` 要求同步 remove acceptance 后的
 下一次 facade pairing-state query 返回 `NotPaired`，并通过 host 9/9、clippy 与 RV32
 check。该证据只证明命令/state-machine 语义；vendor NVS 中的关系是否跨 nRST 保持删除，
