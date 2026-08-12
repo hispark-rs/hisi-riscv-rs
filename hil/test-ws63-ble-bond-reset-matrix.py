@@ -59,6 +59,31 @@ class ClassificationTests(unittest.TestCase):
             result["failure_markers"],
         )
 
+    def test_lifecycle_failure_fails_closed(self) -> None:
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
+        central += b"\nRFDBG_RADIO_U5_BLE_SCAN_STOP_ERR"
+        result = MATRIX.classify(peripheral, central)
+        self.assertFalse(result["pass"])
+        self.assertIn(
+            "RFDBG_RADIO_U5_BLE_SCAN_STOP_ERR", result["failure_markers"]
+        )
+
+    def test_swapped_uart_roles_are_reported_directly(self) -> None:
+        peripheral = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central)
+        self.assertFalse(result["pass"])
+        self.assertTrue(result["role_mismatch"])
+
     def test_missing_or_ambiguous_restore_state_fails(self) -> None:
         peripheral = b"\n".join(MATRIX.PERIPHERAL_MARKERS)
         central = b"\n".join(

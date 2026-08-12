@@ -49,6 +49,8 @@ FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_ERR",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_ERR",
     b"RFDBG_RADIO_U5_BLE_COMMAND_ERR",
+    b"RFDBG_RADIO_U5_BLE_SCAN_LIFECYCLE_ERR",
+    b"RFDBG_RADIO_U5_BLE_SCAN_STOP_ERR",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORE_ERR",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORE_ERR",
     b"panicked at",
@@ -86,17 +88,23 @@ def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
     central_startup = [
         marker.decode() for marker in CENTRAL_STARTUP_MARKERS if marker in central
     ]
+    role_mismatch = (
+        any(marker in peripheral for marker in CENTRAL_STARTUP_MARKERS)
+        or any(marker in central for marker in PERIPHERAL_STARTUP_MARKERS)
+    )
     startup_valid = len(peripheral_startup) == 1 and len(central_startup) == 1
     return {
         "pass": not peripheral_missing
         and not central_missing
         and not failures
+        and not role_mismatch
         and startup_valid,
         "peripheral_missing": peripheral_missing,
         "central_missing": central_missing,
         "failure_markers": failures,
         "peripheral_startup": peripheral_startup,
         "central_startup": central_startup,
+        "role_mismatch": role_mismatch,
         "peripheral_bytes": len(peripheral),
         "central_bytes": len(central),
     }
