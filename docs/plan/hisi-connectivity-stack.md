@@ -600,20 +600,35 @@ public API snapshot；真机门使用两块 WS63 验证 BLE advertise/scan 与 S
 各 20/20 paired reset 检查 event conservation、late completion 和重复 reset。下一 gate
 必须单独选择；U4 完成不会自动启动 U5 或稳定毕业。
 
-U5 当前只进入 **U5A 安全控制面**，尚未完成：`hisi-rf-core` 定义显式
+U5A 安全控制面与 U5B 密码能力已经闭合，当前单一 WIP 是 **U5C keystore/bond
+lifecycle**：`hisi-rf-core` 定义显式
 `SecurityConfig`、`Bonding`、`IoCapability`、`SecurityRequirement` 与 typed
 `PairingState`；WS63 adapter 把它们映射到经审核的四字节 GAP security ABI，并提供
 pair/query/remove-bond 命令；facade 保持 command completion 与 unsolicited pairing/auth
-event 分离。认证 callback 只复制 peer、status 和“是否存在 key material”，LTK 字节不会
-进入 public event、日志或 Debug。host tests、ABI size gate 与 RV32 check 已覆盖该边界。
+event 分离。认证 callback 只公开 peer、status 和 `ltk_present`；LTK 字节不会进入 public
+event、日志或 Debug。这个名称是有意的：原厂 `ble_auth_info_evt_t` 只有 `ltk_len +
+ltk[16]`，并不包含 IRK、CSRK 或完整可恢复 bond。host tests、ABI size gate 与 RV32 check
+已覆盖该边界。
 
-U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
+U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
-也不得在 IRQ/critical section/scheduler lock 中等待。U5C 再引入独立 `hisi-keystore`
-的不可导出 `KeyHandle`、用途权限和 bond lifecycle；`hisi-nvs` 只提供普通存储格式，不
-拥有密钥策略。U5D 需要 pairing responder/cancellation/stale connection generation、
+也不得在 IRQ/critical section/scheduler lock 中等待。U5C 已建立独立 `hisi-keystore`
+候选 release unit：不可导出、generation-tagged `KeyHandle`，显式 kind/usage/persistence，
+caller-owned `BondTable<N>`，以及容量先行的 `reserve -> import keys -> commit` 两阶段事务。
+容量不足在导入 secret 前失败，放弃 reservation 不改变旧 bond，替换返回旧 opaque handles
+供 backend 清理。该 crate 保持 `no_std`、无堆、芯片中立；`hisi-nvs` 只提供普通存储格式，
+不拥有密钥策略。U5D 需要 pairing responder/cancellation/stale connection generation、
 双板 authenticated pairing/bond restore/remove 的 20-reset 证据与事件守恒。U5A 通过
 编译和 host tests 不代表 BLE pairing 可用，更不代表 U5 完成或 API stable。
+
+U5C 的 WS63 restore gate 仍未闭合。原厂认证完成 callback 运行在 BTS service context，
+其指针由 vendor service 管理，Rust 只能在 callback 内做有界复制并 wake runner，不能在
+callback 中导入持久存储或执行用户逻辑。更重要的是，原厂 auto-save 路径维护约 79-byte
+SMP record，而公开 callback 只提供 LTK；当前不得据此伪造 IRK/CSRK 或宣称 Rust keystore
+能够跨重启恢复 vendor bond。下一步必须先从固定 archive/header/map/asm 建立完整、版本化的
+manual-save/import/restore ABI，或明确让 vendor host 继续拥有完整 SMP persistence、Rust
+keystore 只持有协议上确实可见的 LTK capability。两种 ownership 模式必须显式选择，禁止
+双写且禁止把 vendor auto-save 成功误记为 Rust keystore restore 证据。
 
 2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
 archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
