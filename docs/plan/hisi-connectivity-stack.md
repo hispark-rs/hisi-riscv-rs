@@ -630,6 +630,23 @@ manual-save/import/restore ABI，或明确让 vendor host 继续拥有完整 SMP
 keystore 只持有协议上确实可见的 LTK capability。两种 ownership 模式必须显式选择，禁止
 双写且禁止把 vendor auto-save 成功误记为 Rust keystore restore 证据。
 
+2026-08-12 的 archive/asm 审计进一步把该边界收窄：internal GAP event 19 和
+`sapi_ble_recover_smp_keys` 使用相同的 71-byte record；已证明 bytes 0..5 是 peer address，
+byte 70 是 remote initial-address type，bytes 8..69 会进入 vendor 的 79-byte ACPU persistence
+slot，但其余 secret 字段在没有独立字段语义证据前保持 opaque。`ws63-radio-sys`
+`0.1.0-alpha.18` 因此只定义 Debug-redacted、Drop-zeroizing raw record、枚举/恢复入口和
+internal callback ABI；`hisi-rf-ws63` 只增加 callback 内单次复制的 bounded observer queue，
+并记录 `received = processed + dropped + pending`。该 observer 在 `enable_ble` 接受 startup
+后注册，不在 callback 中分配、阻塞、持久化或调用用户代码。
+
+同一审计也否定了仅凭 `GAP_BLE_SAVE_SMP_KEYS_MANU` 宣称 ownership 已转移的做法：固定
+archive 中 `g_ble_save_smp_keys_mode` 只被 getter/setter 访问，而 service manager 仍独立、
+无条件注册 event-19 auto-save callback。当前唯一允许的模式仍是 `VendorManaged + Rust
+observer`；在真机证明 manual mode 会阻断 vendor NV 写入、Rust record store 可恢复并删除
+同一 bond 之前，不启用 `RustManaged`，也不把 71-byte chip serialization 塞进芯片中立的
+`hisi-keystore::KeyStore`。后续 WS63 bond-record backend 负责该 opaque serialization，
+`hisi-keystore` 继续只负责不可导出 key handle、用途权限和 secret-free bond metadata。
+
 2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
 archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
 `hisi-crypto-ws63` `CryptoService`。该兼容子集严格校验 curve、32-byte descriptor 和
