@@ -639,6 +639,11 @@ internal callback ABI；`hisi-rf-ws63` 只增加 callback 内单次复制的 bou
 并记录 `received = processed + dropped + pending`。该 observer 在 `enable_ble` 接受 startup
 后注册，不在 callback 中分配、阻塞、持久化或调用用户代码。
 
+该 release unit 随后把 copied record 的清零收敛到 `zeroize` 契约，并为 archive restore
+入口增加 bounded safe adapter：只接受 1..=8 个完整 71-byte records，checked 计算长度，
+vendor 非零状态原样上送，host 构建明确返回 unsupported。这个 adapter 只闭合调用边界，
+不会切换 save mode、不会写 NVS，也不构成 `RustManaged` persistence 的完成证据。
+
 同一审计也否定了仅凭 `GAP_BLE_SAVE_SMP_KEYS_MANU` 宣称 ownership 已转移的做法：固定
 archive 中 `g_ble_save_smp_keys_mode` 只被 getter/setter 访问，而 service manager 仍独立、
 无条件注册 event-19 auto-save callback。当前唯一允许的模式仍是 `VendorManaged + Rust
