@@ -35,12 +35,22 @@ CENTRAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OBSERVED",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK",
 )
+PERIPHERAL_STARTUP_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_EMPTY",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORED",
+)
+CENTRAL_STARTUP_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_EMPTY",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORED",
+)
 FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_EVENT_DROP",
     b"RFDBG_RADIO_U5_BLE_BOND_CONSERVATION_ERR",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_ERR",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_ERR",
     b"RFDBG_RADIO_U5_BLE_COMMAND_ERR",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORE_ERR",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORE_ERR",
     b"panicked at",
 )
 
@@ -70,11 +80,23 @@ def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
         for marker in FAILURE_MARKERS
         if marker in peripheral or marker in central
     ]
+    peripheral_startup = [
+        marker.decode() for marker in PERIPHERAL_STARTUP_MARKERS if marker in peripheral
+    ]
+    central_startup = [
+        marker.decode() for marker in CENTRAL_STARTUP_MARKERS if marker in central
+    ]
+    startup_valid = len(peripheral_startup) == 1 and len(central_startup) == 1
     return {
-        "pass": not peripheral_missing and not central_missing and not failures,
+        "pass": not peripheral_missing
+        and not central_missing
+        and not failures
+        and startup_valid,
         "peripheral_missing": peripheral_missing,
         "central_missing": central_missing,
         "failure_markers": failures,
+        "peripheral_startup": peripheral_startup,
+        "central_startup": central_startup,
         "peripheral_bytes": len(peripheral),
         "central_bytes": len(central),
     }
@@ -172,11 +194,23 @@ def main() -> int:
                 print(f"run {run:02d}/{args.runs}: {state}", flush=True)
 
     passed = sum(record["pass"] is True for record in records)
+    peripheral_restored = sum(
+        PERIPHERAL_STARTUP_MARKERS[1].decode() in record["peripheral_startup"]
+        for record in records
+    )
+    central_restored = sum(
+        CENTRAL_STARTUP_MARKERS[1].decode() in record["central_startup"]
+        for record in records
+    )
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "runs": args.runs,
         "passed": passed,
         "failed": args.runs - passed,
+        "vendor_restore": {
+            "peripheral_restored_runs": peripheral_restored,
+            "central_restored_runs": central_restored,
+        },
         "peripheral": {
             "port": args.peripheral_port,
             "jlink": args.peripheral_jlink,

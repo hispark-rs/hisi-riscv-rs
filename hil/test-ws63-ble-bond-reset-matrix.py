@@ -20,15 +20,23 @@ SPEC.loader.exec_module(MATRIX)
 
 class ClassificationTests(unittest.TestCase):
     def test_complete_contract_passes(self) -> None:
-        peripheral = b"\n".join(MATRIX.PERIPHERAL_MARKERS)
-        central = b"\n".join(MATRIX.CENTRAL_MARKERS)
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[1], *MATRIX.PERIPHERAL_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_MARKERS)
+        )
         result = MATRIX.classify(peripheral, central)
         self.assertTrue(result["pass"])
         self.assertEqual(result["failure_markers"], [])
 
     def test_missing_bond_observer_fails(self) -> None:
-        peripheral = b"\n".join(MATRIX.PERIPHERAL_MARKERS[:-2])
-        central = b"\n".join(MATRIX.CENTRAL_MARKERS)
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS[:-2])
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
         result = MATRIX.classify(peripheral, central)
         self.assertFalse(result["pass"])
         self.assertIn(
@@ -37,8 +45,12 @@ class ClassificationTests(unittest.TestCase):
         )
 
     def test_conservation_failure_fails_closed(self) -> None:
-        peripheral = b"\n".join(MATRIX.PERIPHERAL_MARKERS)
-        central = b"\n".join(MATRIX.CENTRAL_MARKERS)
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
         central += b"\nRFDBG_RADIO_U5_BLE_BOND_CONSERVATION_ERR"
         result = MATRIX.classify(peripheral, central)
         self.assertFalse(result["pass"])
@@ -46,6 +58,18 @@ class ClassificationTests(unittest.TestCase):
             "RFDBG_RADIO_U5_BLE_BOND_CONSERVATION_ERR",
             result["failure_markers"],
         )
+
+    def test_missing_or_ambiguous_restore_state_fails(self) -> None:
+        peripheral = b"\n".join(MATRIX.PERIPHERAL_MARKERS)
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
+        self.assertFalse(MATRIX.classify(peripheral, central)["pass"])
+
+        peripheral = b"\n".join(
+            (*MATRIX.PERIPHERAL_STARTUP_MARKERS, *MATRIX.PERIPHERAL_MARKERS)
+        )
+        self.assertFalse(MATRIX.classify(peripheral, central)["pass"])
 
     def test_sha256_binds_exact_elf(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
