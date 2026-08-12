@@ -618,9 +618,10 @@ U5B 仍是硬 gate：把当前 fail-closed 的 BLE hash/MAC/symmetric/P-256 hook
 2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
 archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
 `hisi-crypto-ws63` `CryptoService`。该兼容子集严格校验 curve、32-byte descriptor 和
-P-256 私钥范围；`input_priv_key == NULL` 仍 fail closed，因为原始 TRNG 不能替代生产
-DRBG。host BLE ABI tests、WS63 backend/facade host tests 及 RV32 clippy 已通过；这仍不
-覆盖 HMAC-SM3/AES-CMAC KLAD handle lifecycle、随机 keygen、错误恢复或真实 pairing HIL。
+P-256 私钥范围。2026-08-12 已补齐 `input_priv_key == NULL`：私有
+`QualifiedWs63Entropy` 先执行启动重复块检查，再由 continuous-health-check + periodic-reseed
+的 HMAC-SHA256 DRBG 生成私钥；DRBG 与 PKE 都受同一个 runtime mutex 独占，raw TRNG 不会
+直接成为 CSPRNG。三个输出 descriptor 在硬件操作前完整校验，失败不会留下部分私钥输出。
 
 同日后续提交已补齐 archive 实际可达子集的 bounded KM/keyslot/KLAD handle lifecycle，
 以及单次 `start -> update -> finish` 的 HMAC-SM3 和 AES-128-CMAC bridge。handle 带
@@ -643,9 +644,10 @@ key-generation contract。WS63 SPACC 已完成 typed SM3/HMAC-SM3 与 AES-128-CM
 `tests-hil::spacc_aes_cmac_known_answer_vector` 在真实 WS63 覆盖 RFC 4493 的 0/16/40/64
 字节四组向量；PKE 由 `tests-hil::pke_p256_public_key_and_ecdh_known_answer` 以 scalar 2
 验证 public `2G` 与 ECDH shared-x。三类能力均走 3 MHz probe 路径，更新后的完整 suite 为
-6/6。该证据证明确定性 P-256 public/ECDH，但不证明随机 keygen：WS63 仍需显式、经健康检查
-并可重播种的生产 DRBG，不能把 raw TRNG 提升为 CSPRNG；超时/错误恢复、BLE C hook 与
-pairing HIL 也仍未完成。
+6/6。该证据证明确定性 P-256 public/ECDH；后续 U5B DRBG 收口又以两个连续随机 keypair
+验证私钥范围和非重复，并用零轮询 PKE lock 注入确定性覆盖 timeout fail-closed 分支，随后
+立即完成 scalar-one public-key derivation，证明错误后引擎可复用。硬件失败仍不会选择
+RustCrypto fallback。
 
 随后 exact-UAPI diagnostic HIL 进一步通过 archive-facing HMAC-SM3、RFC 4493
 AES-128-CMAC、P-256 scalar 2 public-key derivation 与 ECDH known-answer vectors。
@@ -655,8 +657,11 @@ probe-rs 完整 verify 后连续两次硬件 nRST 均出现
 `RFDBG_BLE_U5B_CRYPTO_COMPAT_OK`、`RFDBG_BLE_B1_INIT_OK` 与
 `RFDBG_BLE_B2_COMMANDS_OK`。证据见
 [WS63 BLE U5B crypto compatibility](evidence/ws63-ble-u5b-crypto-compat-2026-08-09.md)。
-这关闭的是确定性 archive C hook/KAT 门，不关闭 production DRBG、硬件错误恢复、
-pairing/bond keystore 或双板 authenticated-pairing gate。
+2026-08-12 的扩展镜像 ELF SHA-256 为
+`bc03343432017cedd160193eedfebeae4713746b3cf51ffb57b5efd5a8fb381d`；3 MHz full-verify
+下载耗时 58.91 秒，启动后同样通过三组 marker。至此 U5B 的 deterministic hooks、production
+DRBG/random keygen 与 PKE fail-closed recovery 已闭合；这仍不关闭 U5C pairing/bond
+keystore 或 U5D 双板 authenticated-pairing gate。
 `0.1.0-alpha.5` release-prep commit `da8bee2` 及后续 P-256 commit `6e1dfd1`
 已通过 standalone locked package、host tests、clippy 与 RV32 default/no-default build，但
 尚未推送/tag。`hisi-crypto-ws63` 的 standalone lock 仍解析 crates.io
