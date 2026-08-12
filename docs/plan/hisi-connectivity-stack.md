@@ -674,6 +674,29 @@ ELF hash，完整 verify 烧录两块 WS63，先跑 3-reset，再跑 20-reset，
 证据完成前 U5C 状态保持 **implementation complete / silicon gate pending**，不宣称
 `RustManaged`、authenticated pairing 或 stable graduation。
 
+首次 U5C 双板 3-reset 于 2026-08-12 暴露了两层测试反例，不能记作 pairing 失败。第一轮
+使用的 J-Link/UART 配对表被日志直接证伪：peripheral ELF 的启动 marker 出现在 central
+参数指定的 UART，反之亦然；matrix schema v2 随后增加显式 `role_mismatch` 分类。纠正
+物理映射后，两侧连续 3/3 均完成 RF/RTOS/BLE init 并报告唯一的 `BOND_EMPTY`，但
+peripheral 只到 `PERIPHERAL_READY`，central 只到启动状态。根因是 fixture 消费
+`AdvertisingStarted` / `ScanReady` 后立即丢弃 `#[must_use]` guard，`Drop` 按 U4 契约提交
+best-effort stop，因而在配对前主动结束 advertising/scanning。
+
+`hisi-rf` commit `b5a3493` 让 peripheral 持有 `Advertiser`，让 central 持有 `Scanner`
+并在连接前显式等待 `scanner.stop()`；父仓 commit `546b9883d` 把 guard/stop 错误纳入硬
+失败 marker，并以 7 个 host classifier tests 覆盖 role swap 与 lifecycle failure。修复后
+facade host tests 9/9、clippy `-D warnings`、RV32 check 和两份 release build 通过；待烧录
+ELF SHA-256 分别为 peripheral
+`7938968e8c522ead8d610bf36d0e11694a1cbedc124db61874cc6a547360a75d`、central
+`d0b34daeb57c9f1cd37972396015338bb58c0f71ffe11d20991cf0a663bfcdae`。由于 ELF 内容变化，
+这两份 artifact 仍需新的明确硬件授权后才能 full-verify 重烧并重跑 3-reset/20-reset；
+在此之前不得用旧 0/3 关闭或否定 U5C。
+
+remove 的无板契约也已收窄：`hisi-rf` commit `a02438e` 要求同步 remove acceptance 后的
+下一次 facade pairing-state query 返回 `NotPaired`，并通过 host 9/9、clippy 与 RV32
+check。该证据只证明命令/state-machine 语义；vendor NVS 中的关系是否跨 nRST 保持删除，
+仍必须由后续真机 `remove -> NotPaired -> reset -> BOND_EMPTY` 序列证明。
+
 独立发布顺序也已实测：`hisi-keystore 0.1.0-alpha.1` 的 7 host tests、clippy 和 locked
 package 通过，`hisi-rf-core 0.1.0-alpha.22` locked package 通过；`hisi-rf-ws63
 0.1.0-alpha.75` 必须等待尚未发布的 `hisi-crypto 0.1.0-alpha.5`，`hisi-rf
