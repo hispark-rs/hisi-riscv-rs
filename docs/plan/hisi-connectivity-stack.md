@@ -692,6 +692,26 @@ ELF SHA-256 分别为 peripheral
 这两份 artifact 仍需新的明确硬件授权后才能 full-verify 重烧并重跑 3-reset/20-reset；
 在此之前不得用旧 0/3 关闭或否定 U5C。
 
+上述两份修正版随后已按授权以 3 MHz + 完整 verify 烧录；下载分别耗时 58.56 秒和
+58.50 秒。纠正后的 3-reset 每轮都通过角色检查、两侧 `BOND_EMPTY`、peripheral ready、
+central scan match 与双方 connected，但最终为 0/3，因此没有继续 20-reset。三轮都没有
+进入 auth/bond event；peripheral 稳定停在 `RFDBG_MISSING_ROM_CALLBACK ra=0x0014819e`。
+原厂 map/asm 与只读 ROM 反汇编把该返回地址串到 `smp_calc_x_confirm` 的间接 callback：
+ROM `0x00148240` 最终跳到 ordered veneer `__real_new0fun`。这证明失败发生在 SMP confirm
+分配回调，而不是 advertiser/scanner lifecycle、配对凭据或 keystore restore。
+
+修复按三个 release unit 原子落地：`hisi-rf-core` commit `fde52ea` 增加 active lifecycle
+generation 查询；`hisi-rf` commit `dc5d0bb` 把 pair 请求绑定到不可伪造的活动
+`BleConnection` generation，并覆盖“请求入队后先断连”的 stale interleaving；
+`hisi-rf-ws63` commit `06f1d7b` 将 `new0fun` 显式路由到所选 BLE `bg_common` archive 的
+真实 zeroing allocator provider。最终 ELF 中 `__real_new0fun` 位于 `0x00231aee`，明确
+尾跳到 `new0fun` `0x0026ca46`，不再进入 `__ws63_missing_rom_callback`。重新构建的
+peripheral/central SHA-256 分别为
+`fe868982c7cf39149e076f385b26ad584d9386926986105c0075e57715597863` 与
+`095491ca46ee6c546558fd285932ad5f5b74ab540fefda69f00a76620b543d40`。这两个新 artifact
+在获得绑定哈希的明确授权前不得烧录；下一 gate 仍是先 3-reset，只有 3/3 后才进入同一
+镜像的 20-reset。
+
 remove 的无板契约也已收窄：`hisi-rf` commit `a02438e` 要求同步 remove acceptance 后的
 下一次 facade pairing-state query 返回 `NotPaired`，并通过 host 9/9、clippy 与 RV32
 check。该证据只证明命令/state-machine 语义；vendor NVS 中的关系是否跨 nRST 保持删除，
