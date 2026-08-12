@@ -9,9 +9,9 @@ examples, and behavior disagree, prefer the latest passing CI/HIL evidence and
 the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
-two-WS63 WPA2/WPA3 release gate, BLE B0-B3, and SLE S0-S3 are frozen. S3 closed
-the bounded two-board SSAP read/notification lifecycle; the major WIP slot now
-stays empty until the next product-direction gate is selected.
+two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
+frozen. The current major WIP is U5C vendor-managed bond persistence, restore,
+and remove across reset.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -187,7 +187,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- Radio UX/API U4 closed
+## NOW -- U5C BLE Bond Persistence
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -196,10 +196,16 @@ U2 typed BLE GAP and SLE announce/seek control has passed separate two-board
 20-reset matrices, and U3 static typed GATT/SSAP databases are complete. The
 U4 now closes bounded lifecycle events, generation-tagged active guards, and
 explicit/best-effort cancellation. Its host/API/RV32 gate and the BLE/SLE
-two-board 20-reset lifecycle matrices are complete. No next major milestone is
-started automatically: pairing, DLI/SLB, coexistence and stable graduation
-remain deferred; details and evidence live in the
-[connectivity stack plan](docs/plan/hisi-connectivity-stack.md).
+two-board 20-reset lifecycle matrices are complete. U5A/U5B then closed the
+typed security control plane and required hardware crypto boundary. Fixed U5
+peripheral/central images now pass 3/3 and 20/20 pairing, authentication,
+runtime bond observation, and event conservation. However, every reset still
+starts with an empty vendor bond table, so persistence/restore/remove is the
+single active gate. Evidence and the precise boundary live in
+[U5 pairing and bond observation](docs/plan/evidence/ws63-radio-u5-pairing-bond-observation-2026-08-12.md).
+
+DLI/SLB, coexistence and stable graduation remain deferred and do not run in
+parallel with U5C.
 
 ## LATER -- Triggered Product Directions
 

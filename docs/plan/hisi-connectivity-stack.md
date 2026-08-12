@@ -2,7 +2,9 @@
 
 ## 状态
 
-**当前执行窗口已闭合：U0-U4 已完成，下一产品 gate 尚未自动启动。** A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+**当前执行窗口：U5C keystore/bond lifecycle。** U0-U4 已完成；U5A 安全控制面、U5B
+密码能力和 U5D 中“本次启动内 pairing/auth/runtime bond observation”子门槛已经闭合，
+但跨 nRST 的 vendor bond persistence/restore/remove 仍未闭合。A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -75,7 +77,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U4 已闭合，等待下一产品 gate
+## 当前执行窗口：U5C bond persistence/restore
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -161,6 +163,14 @@ best-effort cleanup；fixture scheduler handoff 由 commit `cdcac5c` 固定。�
 3 MHz 完整 verify 后，BLE 与 SLE 分别通过 3/3 shape gate 和 20/20 paired nRST matrix，
 missing/failure marker 均为空。U4 至此关闭；完整证据见
 [Radio U4 lifecycle](evidence/ws63-radio-u4-lifecycle-2026-08-09.md)。
+
+U5 当前只保留一个主要 WIP：闭合 vendor-managed bond 的跨 nRST persistence、restore 和
+remove 生命周期。固定 U5 peripheral/central 镜像已经完成 3/3 shape gate 和 20/20 paired
+nRST matrix；40 个 board run 均完成 pairing、authentication、secret-free runtime bond
+observation 和事件守恒，missing/failure marker 为零。与此同时，40/40 startup 都是
+`BOND_EMPTY`，`BOND_RESTORED` 为 0，因此该矩阵明确证明 runtime observer 稳定，却也明确
+证明 persistence/restore 尚未完成。完整输入、反例和边界见
+[Radio U5 pairing and bond observation](evidence/ws63-radio-u5-pairing-bond-observation-2026-08-12.md)。
 
 ### A5 收口证据账本
 
@@ -671,7 +681,7 @@ clippy、raw/backend RV32 check，以及两份 U5 RV32 release ELF 构建；matr
 与 Python uv contract 也通过。它仍不是硅片 restore 证据：下一 gate 必须重新构建并绑定
 ELF hash，完整 verify 烧录两块 WS63，先跑 3-reset，再跑 20-reset，并证明首次空表配对后
 后续 reset 出现 restore marker、pair/auth/bond event 守恒且 remove 后重新变为空表。在该
-证据完成前 U5C 状态保持 **implementation complete / silicon gate pending**，不宣称
+证据完成前 U5C 状态保持 **runtime observer complete / persistence implementation pending**，不宣称
 `RustManaged`、authenticated pairing 或 stable graduation。
 
 首次 U5C 双板 3-reset 于 2026-08-12 暴露了两层测试反例，不能记作 pairing 失败。第一轮
@@ -730,6 +740,17 @@ archive provider。再次重建的 peripheral/central SHA-256 为
 `ad5a451fe55b8f5344b3e57c217500e739b08ca9d35b4d7ce8a4b7aeaef6c5ea` 与
 `206436255a2ded9d2798efae0a1d1cd092b79761a6d645ec10909bed6917784e`；下一轮继续遵守
 完整 verify、先 3-reset、仅 3/3 后进入 20-reset 的同一镜像门槛。
+
+后续 callback/profile 与 observer ownership 修复最终收敛到 `ws63-radio-sys`
+`0f10155`、`hisi-rf-ws63` `daeda31` 和 `hisi-rf` `fb3f807`。固定 peripheral/central ELF
+SHA-256 分别为 `76667b2a8c1ed6b8ba6abe1c8f3c5adcb3f14d356c0186f4f67416db6c9862d9`
+和 `94f1e08b0df627df3d48228d4f19cc0e2a73d206b9a0813aa04244fefd42a76e`；3 MHz full
+verify 后先通过 3/3，再以同一镜像通过 20/20 paired nRST。每轮双方均到达
+`PAIRED -> AUTH_OK -> BOND_OBSERVED -> BOND_OK`，无 missing callback、panic、event drop
+或 conservation error。观察者不再替换 vendor event-19 callback，也不再用 opaque record
+byte 70 构造公共地址类型，而是只在认证成功后校验 record address 与 typed peer 一致。
+但是每轮 startup 仍为 `BOND_EMPTY`，所以该证据只关闭 runtime pairing/observer 子门槛；
+U5C persistence/restore/remove 仍是当前 WIP。
 
 remove 的无板契约也已收窄：`hisi-rf` commit `a02438e` 要求同步 remove acceptance 后的
 下一次 facade pairing-state query 返回 `NotPaired`，并通过 host 9/9、clippy 与 RV32
