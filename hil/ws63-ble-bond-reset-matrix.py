@@ -1,0 +1,201 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["pyserial"]
+# ///
+"""Run a paired-board WS63 vendor-managed BLE bond reset matrix."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import time
+from pathlib import Path
+
+import serial
+
+from jlink_nrst import pulse_nrst
+
+
+PERIPHERAL_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_READY",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PAIRED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_AUTH_OK",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OBSERVED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK",
+)
+CENTRAL_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PAIR_ACCEPTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PAIRED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_AUTH_OK",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OBSERVED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK",
+)
+FAILURE_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_EVENT_DROP",
+    b"RFDBG_RADIO_U5_BLE_BOND_CONSERVATION_ERR",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_ERR",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_ERR",
+    b"RFDBG_RADIO_U5_BLE_COMMAND_ERR",
+    b"panicked at",
+)
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def drain(port: serial.Serial) -> bytes:
+    waiting = port.in_waiting
+    return port.read(waiting) if waiting else b""
+
+
+def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
+    peripheral_missing = [
+        marker.decode() for marker in PERIPHERAL_MARKERS if marker not in peripheral
+    ]
+    central_missing = [
+        marker.decode() for marker in CENTRAL_MARKERS if marker not in central
+    ]
+    failures = [
+        marker.decode()
+        for marker in FAILURE_MARKERS
+        if marker in peripheral or marker in central
+    ]
+    return {
+        "pass": not peripheral_missing and not central_missing and not failures,
+        "peripheral_missing": peripheral_missing,
+        "central_missing": central_missing,
+        "failure_markers": failures,
+        "peripheral_bytes": len(peripheral),
+        "central_bytes": len(central),
+    }
+
+
+def capture_run(
+    peripheral: serial.Serial,
+    central: serial.Serial,
+    peripheral_jlink: str,
+    central_jlink: str,
+    settle: float,
+    timeout: float,
+) -> tuple[bytes, bytes]:
+    peripheral.reset_input_buffer()
+    central.reset_input_buffer()
+    pulse_nrst("JLinkExe", peripheral_jlink)
+    peripheral_log = bytearray()
+    deadline = time.monotonic() + settle
+    while time.monotonic() < deadline:
+        peripheral_log.extend(drain(peripheral))
+        time.sleep(0.01)
+
+    pulse_nrst("JLinkExe", central_jlink)
+    central_log = bytearray()
+    deadline = time.monotonic() + timeout
+    complete_at: float | None = None
+    while time.monotonic() < deadline:
+        peripheral_log.extend(drain(peripheral))
+        central_log.extend(drain(central))
+        complete = (
+            PERIPHERAL_MARKERS[-1] in peripheral_log
+            and CENTRAL_MARKERS[-1] in central_log
+        )
+        if complete and complete_at is None:
+            complete_at = time.monotonic()
+        if complete_at is not None and time.monotonic() - complete_at >= 1.0:
+            break
+        time.sleep(0.01)
+    peripheral_log.extend(drain(peripheral))
+    central_log.extend(drain(central))
+    return bytes(peripheral_log), bytes(central_log)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--peripheral-port", required=True)
+    parser.add_argument("--peripheral-jlink", required=True)
+    parser.add_argument("--peripheral-elf", type=Path, required=True)
+    parser.add_argument("--central-port", required=True)
+    parser.add_argument("--central-jlink", required=True)
+    parser.add_argument("--central-elf", type=Path, required=True)
+    parser.add_argument("--baud", type=int, default=115_200)
+    parser.add_argument("--runs", type=int, default=20)
+    parser.add_argument("--peripheral-settle", type=float, default=3.0)
+    parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.runs <= 0 or args.peripheral_settle <= 0 or args.timeout <= 0:
+        raise SystemExit("--runs, --peripheral-settle and --timeout must be positive")
+    for path in (args.peripheral_elf, args.central_elf):
+        if not path.is_file():
+            raise SystemExit(f"ELF not found: {path}")
+    args.output.mkdir(parents=True, exist_ok=False)
+
+    records: list[dict[str, object]] = []
+    with serial.Serial(args.peripheral_port, args.baud, timeout=0) as peripheral:
+        with serial.Serial(args.central_port, args.baud, timeout=0) as central:
+            for run in range(1, args.runs + 1):
+                peripheral_log, central_log = capture_run(
+                    peripheral,
+                    central,
+                    args.peripheral_jlink,
+                    args.central_jlink,
+                    args.peripheral_settle,
+                    args.timeout,
+                )
+                peripheral_name = f"run-{run:02d}.peripheral.uart.log"
+                central_name = f"run-{run:02d}.central.uart.log"
+                (args.output / peripheral_name).write_bytes(peripheral_log)
+                (args.output / central_name).write_bytes(central_log)
+                record = classify(peripheral_log, central_log)
+                record.update(
+                    {
+                        "run": run,
+                        "peripheral_log": peripheral_name,
+                        "central_log": central_name,
+                    }
+                )
+                records.append(record)
+                state = "pass" if record["pass"] else "fail"
+                print(f"run {run:02d}/{args.runs}: {state}", flush=True)
+
+    passed = sum(record["pass"] is True for record in records)
+    summary = {
+        "schema_version": 1,
+        "runs": args.runs,
+        "passed": passed,
+        "failed": args.runs - passed,
+        "peripheral": {
+            "port": args.peripheral_port,
+            "jlink": args.peripheral_jlink,
+            "elf": str(args.peripheral_elf),
+            "elf_sha256": sha256(args.peripheral_elf),
+        },
+        "central": {
+            "port": args.central_port,
+            "jlink": args.central_jlink,
+            "elf": str(args.central_elf),
+            "elf_sha256": sha256(args.central_elf),
+        },
+        "records": records,
+    }
+    (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    print(f"summary: {passed}/{args.runs} pass")
+    print(f"artifacts: {args.output}")
+    return 0 if passed == args.runs else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
