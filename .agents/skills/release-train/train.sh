@@ -115,11 +115,15 @@ gh_repo run view "$RUN_ID" --json jobs \
 # ── 4. verify the published release assets ───────────────────────────────────
 echo "==> release assets for $TAG:"
 if gh_repo release view "$TAG" >/dev/null 2>&1; then
-    mapfile -t ASSETS < <(gh_repo release view "$TAG" --json assets -q '.assets[].name')
-    for a in "${ASSETS[@]}"; do echo "      $a"; done
-    N="${#ASSETS[@]}"
+    ASSET_LIST="$(mktemp "${TMPDIR:-/tmp}/release-assets.XXXXXX")"
+    trap 'rm -f "$ASSET_LIST"' EXIT
+    gh_repo release view "$TAG" --json assets -q '.assets[].name' >"$ASSET_LIST"
+    while IFS= read -r asset; do
+        [ -n "$asset" ] && echo "      $asset"
+    done <"$ASSET_LIST"
+    N="$(awk 'NF { count++ } END { print count + 0 }' "$ASSET_LIST")"
     echo "    asset count: $N${EXPECT:+  (expected $EXPECT)}"
-    printf '%s\n' "${ASSETS[@]}" | grep -qiE 'SHA256SUMS|\.sha256$' \
+    grep -qiE 'SHA256SUMS|\.sha256$' "$ASSET_LIST" \
         && echo "    ✓ checksums present" || echo "    ⚠ no SHA256SUMS / .sha256 asset"
     if [ -n "$EXPECT" ] && [ "$N" -ne "$EXPECT" ]; then
         echo "    ⚠ asset count $N ≠ expected $EXPECT"; STATUS_ASSET=1
