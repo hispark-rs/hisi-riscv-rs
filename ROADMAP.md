@@ -10,8 +10,8 @@ the stable API reference, then fix the documentation.
 
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
 two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
-frozen. The current major WIP is U5C vendor-managed bond persistence, restore,
-and remove across reset.
+frozen. U5C vendor-managed bond persistence and restore are now frozen; the
+current major WIP is removal persistence across reset.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -187,7 +187,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- U5C BLE Bond Persistence
+## NOW -- U5C BLE Bond Removal
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -198,11 +198,15 @@ U4 now closes bounded lifecycle events, generation-tagged active guards, and
 explicit/best-effort cancellation. Its host/API/RV32 gate and the BLE/SLE
 two-board 20-reset lifecycle matrices are complete. U5A/U5B then closed the
 typed security control plane and required hardware crypto boundary. Fixed U5
-peripheral/central images now pass 3/3 and 20/20 pairing, authentication,
-runtime bond observation, and event conservation. However, every reset still
-starts with an empty vendor bond table, so persistence/restore/remove is the
-single active gate. Evidence and the precise boundary live in
-[U5 pairing and bond observation](docs/plan/evidence/ws63-radio-u5-pairing-bond-observation-2026-08-12.md).
+peripheral/central images now pass the original pairing/observation gate and the
+released `hisi-rf 0.1.0-alpha.90` images pass a restored-bond `3/3` gate plus a
+`20/20` paired nRST matrix. Both boards restored the vendor-managed bond in all
+20 runs, restarted the current connection's security procedure, and reached a
+typed `Paired` state without failure markers. Persistence and restore are
+therefore frozen. The remaining U5C gate is `remove -> NotPaired -> reset ->
+BOND_EMPTY`; it must prove that deletion persists rather than only changing the
+current in-memory table. Evidence: [initial pairing and observation](docs/plan/evidence/ws63-radio-u5-pairing-bond-observation-2026-08-12.md)
+and [bond restore across reset](docs/plan/evidence/ws63-radio-u5c-bond-restore-2026-08-13.md).
 
 DLI/SLB, coexistence and stable graduation remain deferred and do not run in
 parallel with U5C.
