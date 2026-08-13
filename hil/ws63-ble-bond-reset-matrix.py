@@ -26,6 +26,13 @@ PERIPHERAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OBSERVED",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK",
 )
+PERIPHERAL_RESTORED_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_READY",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PAIRED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_RESTORED_ACTIVE",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK",
+)
 CENTRAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
@@ -33,6 +40,13 @@ CENTRAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_PAIRED",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_AUTH_OK",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OBSERVED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK",
+)
+CENTRAL_RESTORED_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PAIRED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_RESTORED_ACTIVE",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK",
 )
 PERIPHERAL_STARTUP_MARKERS = (
@@ -53,6 +67,8 @@ FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_SCAN_STOP_ERR",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORE_ERR",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORE_ERR",
+    b"RFDBG_RADIO_U5_BLE_RESTORED_STATE_ERR",
+    b"RFDBG_RADIO_U5_BLE_STATE_QUEUE_ERR",
     b"panicked at",
 )
 
@@ -71,11 +87,17 @@ def drain(port: serial.Serial) -> bytes:
 
 
 def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
+    peripheral_restored = PERIPHERAL_STARTUP_MARKERS[1] in peripheral
+    central_restored = CENTRAL_STARTUP_MARKERS[1] in central
+    peripheral_contract = (
+        PERIPHERAL_RESTORED_MARKERS if peripheral_restored else PERIPHERAL_MARKERS
+    )
+    central_contract = CENTRAL_RESTORED_MARKERS if central_restored else CENTRAL_MARKERS
     peripheral_missing = [
-        marker.decode() for marker in PERIPHERAL_MARKERS if marker not in peripheral
+        marker.decode() for marker in peripheral_contract if marker not in peripheral
     ]
     central_missing = [
-        marker.decode() for marker in CENTRAL_MARKERS if marker not in central
+        marker.decode() for marker in central_contract if marker not in central
     ]
     failures = [
         marker.decode()
@@ -93,20 +115,49 @@ def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
         or any(marker in central for marker in PERIPHERAL_STARTUP_MARKERS)
     )
     startup_valid = len(peripheral_startup) == 1 and len(central_startup) == 1
+    restore_mismatch = peripheral_restored != central_restored
     return {
         "pass": not peripheral_missing
         and not central_missing
         and not failures
         and not role_mismatch
-        and startup_valid,
+        and startup_valid
+        and not restore_mismatch,
         "peripheral_missing": peripheral_missing,
         "central_missing": central_missing,
         "failure_markers": failures,
         "peripheral_startup": peripheral_startup,
         "central_startup": central_startup,
         "role_mismatch": role_mismatch,
+        "restore_mismatch": restore_mismatch,
+        "restored_contract": peripheral_restored and central_restored,
         "peripheral_bytes": len(peripheral),
         "central_bytes": len(central),
+    }
+
+
+def validate_persistence(records: list[dict[str, object]]) -> dict[str, object]:
+    """Validate cross-reset persistence, not just each run in isolation."""
+    errors: list[str] = []
+    if not records:
+        errors.append("no reset records")
+    elif not records[0]["restored_contract"]:
+        if len(records) < 2:
+            errors.append("a fresh pairing needs a subsequent reset to prove restore")
+        for record in records[1:]:
+            if not record["restored_contract"]:
+                errors.append(
+                    f"run {record['run']} returned to an empty bond after fresh pairing"
+                )
+    else:
+        for record in records[1:]:
+            if not record["restored_contract"]:
+                errors.append(
+                    f"run {record['run']} lost a bond restored by the preceding reset"
+                )
+    return {
+        "proven": not errors,
+        "errors": errors,
     }
 
 
@@ -135,8 +186,8 @@ def capture_run(
         peripheral_log.extend(drain(peripheral))
         central_log.extend(drain(central))
         complete = (
-            PERIPHERAL_MARKERS[-1] in peripheral_log
-            and CENTRAL_MARKERS[-1] in central_log
+            b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK" in peripheral_log
+            and b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK" in central_log
         )
         if complete and complete_at is None:
             complete_at = time.monotonic()
@@ -202,6 +253,8 @@ def main() -> int:
                 print(f"run {run:02d}/{args.runs}: {state}", flush=True)
 
     passed = sum(record["pass"] is True for record in records)
+    persistence = validate_persistence(records)
+    contract_pass = passed == args.runs and persistence["proven"]
     peripheral_restored = sum(
         PERIPHERAL_STARTUP_MARKERS[1].decode() in record["peripheral_startup"]
         for record in records
@@ -211,10 +264,12 @@ def main() -> int:
         for record in records
     )
     summary = {
-        "schema_version": 2,
+        "schema_version": 3,
         "runs": args.runs,
         "passed": passed,
         "failed": args.runs - passed,
+        "contract_pass": contract_pass,
+        "persistence": persistence,
         "vendor_restore": {
             "peripheral_restored_runs": peripheral_restored,
             "central_restored_runs": central_restored,
@@ -235,8 +290,9 @@ def main() -> int:
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(f"summary: {passed}/{args.runs} pass")
+    print(f"persistence: {'proven' if persistence['proven'] else 'not proven'}")
     print(f"artifacts: {args.output}")
-    return 0 if passed == args.runs else 1
+    return 0 if contract_pass else 1
 
 
 if __name__ == "__main__":

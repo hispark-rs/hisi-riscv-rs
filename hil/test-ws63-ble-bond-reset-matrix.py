@@ -19,16 +19,66 @@ SPEC.loader.exec_module(MATRIX)
 
 
 class ClassificationTests(unittest.TestCase):
+    @staticmethod
+    def record(run: int, restored: bool, passed: bool = True) -> dict[str, object]:
+        return {"run": run, "restored_contract": restored, "pass": passed}
+
     def test_complete_contract_passes(self) -> None:
         peripheral = b"\n".join(
-            (MATRIX.PERIPHERAL_STARTUP_MARKERS[1], *MATRIX.PERIPHERAL_MARKERS)
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
         )
         central = b"\n".join(
-            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_MARKERS)
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
         )
         result = MATRIX.classify(peripheral, central)
         self.assertTrue(result["pass"])
         self.assertEqual(result["failure_markers"], [])
+
+    def test_restored_contract_passes_without_repair_markers(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
+                *MATRIX.PERIPHERAL_RESTORED_MARKERS,
+            )
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_RESTORED_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central)
+        self.assertTrue(result["pass"])
+        self.assertTrue(result["restored_contract"])
+
+    def test_restored_contract_requires_active_state_proof(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
+                *MATRIX.PERIPHERAL_RESTORED_MARKERS[:-2],
+                MATRIX.PERIPHERAL_RESTORED_MARKERS[-1],
+            )
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_RESTORED_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central)
+        self.assertFalse(result["pass"])
+        self.assertIn(
+            "RFDBG_RADIO_U5_BLE_PERIPHERAL_RESTORED_ACTIVE",
+            result["peripheral_missing"],
+        )
+
+    def test_mixed_restore_state_fails_closed(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
+                *MATRIX.PERIPHERAL_RESTORED_MARKERS,
+            )
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central)
+        self.assertFalse(result["pass"])
+        self.assertTrue(result["restore_mismatch"])
 
     def test_missing_bond_observer_fails(self) -> None:
         peripheral = b"\n".join(
@@ -104,6 +154,31 @@ class ClassificationTests(unittest.TestCase):
                 MATRIX.sha256(path),
                 "5850a03e801ffb108da1160e3373979443004b9e670addf33000dca9045fa413",
             )
+
+    def test_fresh_then_restored_proves_persistence(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, False), self.record(2, True), self.record(3, True)]
+        )
+        self.assertTrue(result["proven"])
+
+    def test_single_fresh_run_does_not_prove_persistence(self) -> None:
+        result = MATRIX.validate_persistence([self.record(1, False)])
+        self.assertFalse(result["proven"])
+        self.assertIn("subsequent reset", result["errors"][0])
+
+    def test_repeated_fresh_pairing_fails_persistence(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, False), self.record(2, False), self.record(3, False)]
+        )
+        self.assertFalse(result["proven"])
+        self.assertEqual(len(result["errors"]), 2)
+
+    def test_restored_bond_must_not_regress_to_empty(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, True), self.record(2, False)]
+        )
+        self.assertFalse(result["proven"])
+        self.assertIn("lost a bond", result["errors"][0])
 
 
 if __name__ == "__main__":
