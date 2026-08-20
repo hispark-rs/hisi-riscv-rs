@@ -200,7 +200,10 @@ jobs:
             features: chip-ws63,profile-wifi-wpa3-smoltcp
     env:
       CARGO_TARGET_DIR: target/plain-radio-${{ matrix.profile }}
-      CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUSTFLAGS: -C link-arg=-Thisi-riscv-link.x -C link-arg=--no-relax
+      # The facade build script owns linker-script selection for this external
+      # consumer contract. Keep only the target policy flag here so the entry
+      # script is not loaded twice when memory.x defines named regions.
+      CARGO_TARGET_RISCV32IMFC_UNKNOWN_NONE_ELF_RUSTFLAGS: -C link-arg=--no-relax
     steps:
       - uses: actions/checkout@v7
         with:
