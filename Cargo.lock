@@ -868,7 +868,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-crypto-ws63"
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.5"
 dependencies = [
  "critical-section",
  "hisi-crypto",
@@ -880,7 +880,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.7"
+version = "0.7.0-alpha.9"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -907,7 +907,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-nvs"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.3"
 dependencies = [
  "hisi-storage",
 ]
@@ -918,7 +918,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.87"
+version = "0.1.0-alpha.94"
 dependencies = [
  "critical-section",
  "hisi-hal",
@@ -953,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.75"
+version = "0.1.0-alpha.80"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
@@ -1016,7 +1016,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-storage"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.3"
 dependencies = [
  "embedded-storage",
 ]

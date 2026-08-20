@@ -49,6 +49,16 @@ CENTRAL_RESTORED_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_RESTORED_ACTIVE",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK",
 )
+PERIPHERAL_REMOVAL_MARKERS = (
+    *PERIPHERAL_RESTORED_MARKERS,
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_REMOVED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_REMOVE_OK",
+)
+CENTRAL_REMOVAL_MARKERS = (
+    *CENTRAL_RESTORED_MARKERS,
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_REMOVED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_REMOVE_OK",
+)
 PERIPHERAL_STARTUP_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_EMPTY",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORED",
@@ -69,6 +79,7 @@ FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORE_ERR",
     b"RFDBG_RADIO_U5_BLE_RESTORED_STATE_ERR",
     b"RFDBG_RADIO_U5_BLE_STATE_QUEUE_ERR",
+    b"RFDBG_NV_WRITE_ERR",
     b"panicked at",
 )
 
@@ -86,13 +97,25 @@ def drain(port: serial.Serial) -> bytes:
     return port.read(waiting) if waiting else b""
 
 
-def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
+def classify(
+    peripheral: bytes, central: bytes, *, expect_removal: bool = False
+) -> dict[str, object]:
     peripheral_restored = PERIPHERAL_STARTUP_MARKERS[1] in peripheral
     central_restored = CENTRAL_STARTUP_MARKERS[1] in central
     peripheral_contract = (
-        PERIPHERAL_RESTORED_MARKERS if peripheral_restored else PERIPHERAL_MARKERS
+        PERIPHERAL_REMOVAL_MARKERS
+        if peripheral_restored and expect_removal
+        else PERIPHERAL_RESTORED_MARKERS
+        if peripheral_restored
+        else PERIPHERAL_MARKERS
     )
-    central_contract = CENTRAL_RESTORED_MARKERS if central_restored else CENTRAL_MARKERS
+    central_contract = (
+        CENTRAL_REMOVAL_MARKERS
+        if central_restored and expect_removal
+        else CENTRAL_RESTORED_MARKERS
+        if central_restored
+        else CENTRAL_MARKERS
+    )
     peripheral_missing = [
         marker.decode() for marker in peripheral_contract if marker not in peripheral
     ]
@@ -136,11 +159,22 @@ def classify(peripheral: bytes, central: bytes) -> dict[str, object]:
     }
 
 
-def validate_persistence(records: list[dict[str, object]]) -> dict[str, object]:
+def validate_persistence(
+    records: list[dict[str, object]], *, expect_removal: bool = False
+) -> dict[str, object]:
     """Validate cross-reset persistence, not just each run in isolation."""
     errors: list[str] = []
     if not records:
         errors.append("no reset records")
+    elif expect_removal:
+        for previous, current in zip(records, records[1:]):
+            expected_restored = not previous["restored_contract"]
+            if current["restored_contract"] != expected_restored:
+                expected = "restored" if expected_restored else "empty"
+                errors.append(
+                    f"run {current['run']} was not {expected} after run "
+                    f"{previous['run']}"
+                )
     elif not records[0]["restored_contract"]:
         if len(records) < 2:
             errors.append("a fresh pairing needs a subsequent reset to prove restore")
@@ -168,6 +202,7 @@ def capture_run(
     central_jlink: str,
     settle: float,
     timeout: float,
+    expect_removal: bool,
 ) -> tuple[bytes, bytes]:
     peripheral.reset_input_buffer()
     central.reset_input_buffer()
@@ -185,10 +220,19 @@ def capture_run(
     while time.monotonic() < deadline:
         peripheral_log.extend(drain(peripheral))
         central_log.extend(drain(central))
-        complete = (
+        bond_complete = (
             b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK" in peripheral_log
             and b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK" in central_log
         )
+        restored = (
+            PERIPHERAL_STARTUP_MARKERS[1] in peripheral_log
+            and CENTRAL_STARTUP_MARKERS[1] in central_log
+        )
+        removal_complete = (
+            PERIPHERAL_REMOVAL_MARKERS[-1] in peripheral_log
+            and CENTRAL_REMOVAL_MARKERS[-1] in central_log
+        )
+        complete = removal_complete if expect_removal and restored else bond_complete
         if complete and complete_at is None:
             complete_at = time.monotonic()
         if complete_at is not None and time.monotonic() - complete_at >= 1.0:
@@ -211,6 +255,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--runs", type=int, default=20)
     parser.add_argument("--peripheral-settle", type=float, default=3.0)
     parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument(
+        "--expect-removal",
+        action="store_true",
+        help="require restored bonds to be removed and alternate restored/empty boots",
+    )
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -235,12 +284,15 @@ def main() -> int:
                     args.central_jlink,
                     args.peripheral_settle,
                     args.timeout,
+                    args.expect_removal,
                 )
                 peripheral_name = f"run-{run:02d}.peripheral.uart.log"
                 central_name = f"run-{run:02d}.central.uart.log"
                 (args.output / peripheral_name).write_bytes(peripheral_log)
                 (args.output / central_name).write_bytes(central_log)
-                record = classify(peripheral_log, central_log)
+                record = classify(
+                    peripheral_log, central_log, expect_removal=args.expect_removal
+                )
                 record.update(
                     {
                         "run": run,
@@ -253,7 +305,9 @@ def main() -> int:
                 print(f"run {run:02d}/{args.runs}: {state}", flush=True)
 
     passed = sum(record["pass"] is True for record in records)
-    persistence = validate_persistence(records)
+    persistence = validate_persistence(
+        records, expect_removal=args.expect_removal
+    )
     contract_pass = passed == args.runs and persistence["proven"]
     peripheral_restored = sum(
         PERIPHERAL_STARTUP_MARKERS[1].decode() in record["peripheral_startup"]
@@ -264,7 +318,8 @@ def main() -> int:
         for record in records
     )
     summary = {
-        "schema_version": 3,
+        "schema_version": 4,
+        "expect_removal": args.expect_removal,
         "runs": args.runs,
         "passed": passed,
         "failed": args.runs - passed,

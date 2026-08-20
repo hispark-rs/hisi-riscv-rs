@@ -66,6 +66,42 @@ class ClassificationTests(unittest.TestCase):
             result["peripheral_missing"],
         )
 
+    def test_removal_contract_requires_completed_remove_command(self) -> None:
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[1], *MATRIX.PERIPHERAL_REMOVAL_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_REMOVAL_MARKERS)
+        )
+        self.assertTrue(
+            MATRIX.classify(peripheral, central, expect_removal=True)["pass"]
+        )
+
+        peripheral = peripheral.replace(
+            MATRIX.PERIPHERAL_REMOVAL_MARKERS[-2], b""
+        )
+        result = MATRIX.classify(peripheral, central, expect_removal=True)
+        self.assertFalse(result["pass"])
+        self.assertIn(
+            "RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_REMOVED",
+            result["peripheral_missing"],
+        )
+
+    def test_nv_write_failure_fails_closed(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
+                *MATRIX.PERIPHERAL_REMOVAL_MARKERS,
+                b"RFDBG_NV_WRITE_ERR",
+            )
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[1], *MATRIX.CENTRAL_REMOVAL_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central, expect_removal=True)
+        self.assertFalse(result["pass"])
+        self.assertIn("RFDBG_NV_WRITE_ERR", result["failure_markers"])
+
     def test_mixed_restore_state_fails_closed(self) -> None:
         peripheral = b"\n".join(
             (
@@ -179,6 +215,25 @@ class ClassificationTests(unittest.TestCase):
         )
         self.assertFalse(result["proven"])
         self.assertIn("lost a bond", result["errors"][0])
+
+    def test_removal_lifecycle_alternates_restored_and_empty(self) -> None:
+        result = MATRIX.validate_persistence(
+            [
+                self.record(1, True),
+                self.record(2, False),
+                self.record(3, True),
+            ],
+            expect_removal=True,
+        )
+        self.assertTrue(result["proven"])
+
+    def test_removal_lifecycle_rejects_a_stale_restored_bond(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, True), self.record(2, True)],
+            expect_removal=True,
+        )
+        self.assertFalse(result["proven"])
+        self.assertIn("was not empty", result["errors"][0])
 
 
 if __name__ == "__main__":

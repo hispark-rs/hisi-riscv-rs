@@ -2,11 +2,15 @@
 
 ## 状态
 
-**当前执行窗口：U5C vendor bond removal。** U0-U4 已完成；U5A 安全控制面、U5B
+**当前执行窗口：U5D pairing lifecycle closure。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力和 U5D 中“本次启动内 pairing/auth/runtime bond observation”子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
-20/20 paired nRST，关闭 vendor-managed persistence/restore。当前只剩
-`remove -> NotPaired -> reset -> BOND_EMPTY` 的持久删除门槛。A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
+20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
+0.1.0-alpha.94` 与 backend `0.1.0-alpha.80` 又以 copy-first/header-last NVS GC、
+SFC command-read consistency 和交替 reset matrix 关闭
+`remove -> NotPaired -> reset -> BOND_EMPTY`。U5C 至此完成；下一 gate 是 U5D
+剩余的 pairing responder、取消和 stale connection-generation 契约，不自动毕业 stable API。
+A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
 release-train response-bound 和严格 QEMU/HIL marker contract 已形成基线，真实
@@ -79,7 +83,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U5C bond removal persistence
+## 当前执行窗口：U5D pairing lifecycle closure
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -166,8 +170,9 @@ best-effort cleanup；fixture scheduler handoff 由 commit `cdcac5c` 固定。�
 missing/failure marker 均为空。U4 至此关闭；完整证据见
 [Radio U4 lifecycle](evidence/ws63-radio-u4-lifecycle-2026-08-09.md)。
 
-U5 当前只保留一个主要 WIP：闭合 vendor-managed bond 的跨 nRST remove 生命周期；
-persistence/restore 已由后述 alpha.90 证据关闭。固定 U5 peripheral/central 镜像已经完成 3/3 shape gate 和 20/20 paired
+U5C 的 vendor-managed bond persistence、restore 和 remove 已全部闭合；当前只保留一个
+主要 WIP：U5D pairing responder、取消和 stale connection-generation。早期固定 U5
+peripheral/central 镜像已经完成 3/3 shape gate 和 20/20 paired
 nRST matrix；40 个 board run 均完成 pairing、authentication、secret-free runtime bond
 observation 和事件守恒，missing/failure marker 为零。与此同时，40/40 startup 都是
 `BOND_EMPTY`，`BOND_RESTORED` 为 0，因此该矩阵明确证明 runtime observer 稳定，却也明确
@@ -187,8 +192,20 @@ tag 构建的 peripheral/central ELF SHA-256 分别为
 3/3，再以同一镜像通过 20/20 paired nRST。20 轮双方均报告 `BOND_RESTORED`，
 summary 为 `contract_pass=true`、`persistence.proven=true`，failure marker 为空。
 完整证据见 [U5C vendor bond restore](evidence/ws63-radio-u5c-bond-restore-2026-08-13.md)。
-当前唯一 WIP 收窄为持久删除：`remove -> NotPaired -> reset -> BOND_EMPTY`；在该序列完成前
-不宣称 U5C 全部完成，也不切换到 `RustManaged` ownership 或 stable API。
+后续 `hisi-storage 0.1.0-alpha.3`、`hisi-nvs 0.1.0-alpha.3`、`hisi-hal
+0.7.0-alpha.9`、`hisi-rf-ws63 0.1.0-alpha.80` 和 `hisi-rf 0.1.0-alpha.94`
+关闭了持久删除。NVS 在目标页已满时先把仍有效记录复制到新 logical sequence，擦除目标
+sector，最后写 page header 作为提交点；WS63 writer transaction 使用 SFC command read，
+避免 XIP prefetch 在 command-mode write 后返回旧页内容。固定 peripheral/central ELF
+SHA-256 分别为 `5323f7363310bae59f2f0cede8ba20ad2b6925ca563a71c9b40b5466be1759ab`
+和 `580597f51d6533615fb3827952d24f16fa29067e57578eb8f31e17384cb9522c`。
+同一镜像先通过 removal 3/3，再通过 20/20 paired nRST；20 轮严格交替
+`BOND_EMPTY -> fresh pair` 与 `BOND_RESTORED -> remove -> NotPaired`，下一轮均观察到
+预期反相状态，`contract_pass=true`、`persistence.proven=true`，且无 NV write failure。
+完整证据见
+[U5C vendor bond removal and NVS GC](evidence/ws63-radio-u5c-bond-removal-gc-2026-08-20.md)。
+U5C 至此完成，但 ownership 仍是 `VendorManaged + Rust observer`；这不切换到
+`RustManaged`，也不构成 U5 或 public API 的 stable graduation。
 
 ### A5 收口证据账本
 
@@ -770,10 +787,10 @@ byte 70 构造公共地址类型，而是只在认证成功后校验 record addr
 但是每轮 startup 仍为 `BOND_EMPTY`，所以该历史证据只关闭 runtime pairing/observer 子门槛；
 当时 U5C persistence/restore/remove 仍是 WIP，后续 alpha.90 已关闭前两项。
 
-remove 的无板契约也已收窄：`hisi-rf` commit `a02438e` 要求同步 remove acceptance 后的
+remove 的无板契约先由 `hisi-rf` commit `a02438e` 收窄：同步 remove acceptance 后的
 下一次 facade pairing-state query 返回 `NotPaired`，并通过 host 9/9、clippy 与 RV32
-check。该证据只证明命令/state-machine 语义；vendor NVS 中的关系是否跨 nRST 保持删除，
-仍必须由后续真机 `remove -> NotPaired -> reset -> BOND_EMPTY` 序列证明。
+check。该阶段只证明命令/state-machine 语义；跨 nRST vendor NVS 删除随后由
+alpha.94/alpha.80 的 3/3 与 20/20 交替矩阵关闭，见上述 U5C removal evidence。
 
 独立发布顺序也已实测：`hisi-keystore 0.1.0-alpha.1` 的 7 host tests、clippy 和 locked
 package 通过，`hisi-rf-core 0.1.0-alpha.22` locked package 通过；`hisi-rf-ws63
