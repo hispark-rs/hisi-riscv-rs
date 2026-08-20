@@ -24,6 +24,14 @@ class ClassificationTests(unittest.TestCase):
         return {"run": run, "restored_contract": restored, "pass": passed}
 
     def test_complete_contract_passes(self) -> None:
+        self.assertIn(
+            b"RFDBG_RADIO_U5_BLE_CENTRAL_PASSKEY_ACCEPTED",
+            MATRIX.CENTRAL_MARKERS,
+        )
+        self.assertNotIn(
+            b"RFDBG_RADIO_U5_BLE_CENTRAL_REJECT_ACCEPTED",
+            MATRIX.CENTRAL_MARKERS,
+        )
         peripheral = b"\n".join(
             (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
         )
@@ -85,6 +93,46 @@ class ClassificationTests(unittest.TestCase):
         self.assertIn(
             "RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_REMOVED",
             result["peripheral_missing"],
+        )
+
+    def test_reject_contract_requires_empty_store_and_explicit_rejection(self) -> None:
+        self.assertIn(
+            b"RFDBG_RADIO_U5_BLE_CENTRAL_REJECT_ACCEPTED",
+            MATRIX.CENTRAL_REJECT_MARKERS,
+        )
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_REJECT_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_REJECT_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central, pairing_mode="reject")
+        self.assertTrue(result["pass"])
+        self.assertFalse(result["negative_requires_empty"])
+
+        peripheral = peripheral.replace(
+            MATRIX.PERIPHERAL_STARTUP_MARKERS[0],
+            MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
+        )
+        result = MATRIX.classify(peripheral, central, pairing_mode="reject")
+        self.assertFalse(result["pass"])
+        self.assertTrue(result["negative_requires_empty"])
+
+    def test_stale_contract_requires_stale_generation_rejection(self) -> None:
+        peripheral = b"\n".join(
+            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_STALE_MARKERS)
+        )
+        central = b"\n".join(
+            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_STALE_MARKERS)
+        )
+        result = MATRIX.classify(peripheral, central, pairing_mode="stale")
+        self.assertTrue(result["pass"])
+        central = central.replace(MATRIX.CENTRAL_STALE_MARKERS[3], b"")
+        result = MATRIX.classify(peripheral, central, pairing_mode="stale")
+        self.assertFalse(result["pass"])
+        self.assertIn(
+            "RFDBG_RADIO_U5_BLE_CENTRAL_STALE_REJECTED",
+            result["central_missing"],
         )
 
     def test_nv_write_failure_fails_closed(self) -> None:
@@ -240,6 +288,26 @@ class ClassificationTests(unittest.TestCase):
         )
         self.assertFalse(result["proven"])
         self.assertIn("was not empty", result["errors"][0])
+
+    def test_negative_mode_proves_no_bond_across_resets(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, False), self.record(2, False), self.record(3, False)],
+            pairing_mode="reject",
+        )
+        self.assertTrue(result["proven"])
+
+        result = MATRIX.validate_persistence(
+            [self.record(1, False), self.record(2, True)], pairing_mode="stale"
+        )
+        self.assertFalse(result["proven"])
+        self.assertIn("restored a bond", result["errors"][0])
+
+    def test_single_negative_run_does_not_prove_no_persistence(self) -> None:
+        result = MATRIX.validate_persistence(
+            [self.record(1, False)], pairing_mode="reject"
+        )
+        self.assertFalse(result["proven"])
+        self.assertIn("subsequent reset", result["errors"][0])
 
 
 if __name__ == "__main__":

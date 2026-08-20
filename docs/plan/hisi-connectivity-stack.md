@@ -226,6 +226,24 @@ redaction tests 与 peripheral/central RV32 最终链接；这些仍只是 ABI/A
 POR 后重烧。因此 U5D 的 3-reset/20-reset、passkey relay、reject/cancel 与事件守恒硅片门仍
 保持未完成，不得由上述无板结果推断 authenticated pairing 已闭合。
 
+U5D 的负向生命周期 fixture 随后由 `hisi-rf` commit `c457e90` 补齐：maintainer-only
+`u5-pairing-reject-hil` 显式拒绝一次 generation-bound prompt，
+`u5-pairing-stale-hil` 则先结束当前 connection generation，再证明旧 responder 以
+`StaleLifecycle` fail closed。两种模式都要求 central/peripheral 的 vendor bond store 为空，
+若恢复到旧 bond、意外完成 pairing/authentication、观察到 bond、丢失事件或破坏
+`accepted = consumed + pending` / bond observation 守恒，fixture 立即 fail closed。父仓 paired
+matrix schema v5 增加 `--pairing-mode passkey|reject|stale`；只有 passkey 模式会中继并脱敏六位值，
+负向模式要求连续 reset 均为 `BOND_EMPTY`，且至少两个 reset 才能证明未持久化 bond。
+该提交已通过 20 个 facade/fixture host tests、23 个 matrix tests、三模式 RV32 clippy，并在
+`hisi-rf` CI 中分别构建两端 fixture。2026-08-20 的独立 release ELF SHA-256 为：passkey
+peripheral `0c98bdb1bf26c025abdc51908ef0836b4820b665034c01b7c5d3521656e721d9`、central
+`583c488363c4425dbeeb27700ad3044a5dfaf3f06953b1f212478e42833d5112`；reject peripheral
+`a9d1c479ca0fc658c3134f5d3e1c2de76a9062e9d370097090eb1fe73a3b9e71`、central
+`eda76cbf5ccd5113cf5eb7c60dd03de4f5ba7f43da1f3bb3fe243612f273d7ed`；stale peripheral
+`439859c025985e6a4489aa7ebb47abf431c977683975d553c48c9d76b3bb1733`、central
+`7460900ae9b3359335743c65f33ca4671af153697a537ecc9743f328f7879623`。这些哈希只绑定待烧录
+产物；central 恢复和三种模式的双板 3-reset/20-reset 仍是未完成硅片门。
+
 ### A5 收口证据账本
 
 A4/W2/A5 已交付 facade、标准 relocation、三平台 consumer、bounded protocol、

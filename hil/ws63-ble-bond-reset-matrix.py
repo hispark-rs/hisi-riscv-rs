@@ -63,6 +63,34 @@ CENTRAL_REMOVAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_REMOVED",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_REMOVE_OK",
 )
+PERIPHERAL_REJECT_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_READY",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_NEGATIVE_DISCONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_REJECT_OK",
+)
+CENTRAL_REJECT_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PASSKEY_INPUT",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_REJECT_ACCEPTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_NEGATIVE_DISCONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_REJECT_OK",
+)
+PERIPHERAL_STALE_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_READY",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_NEGATIVE_DISCONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_STALE_OK",
+)
+CENTRAL_STALE_MARKERS = (
+    b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PASSKEY_INPUT",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_STALE_REJECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_NEGATIVE_DISCONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_STALE_OK",
+)
 PERIPHERAL_STARTUP_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_EMPTY",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_RESTORED",
@@ -85,6 +113,12 @@ FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_STATE_QUEUE_ERR",
     b"RFDBG_RADIO_U5_BLE_PASSKEY_QUEUE_ERR",
     b"RFDBG_RADIO_U5_BLE_PASSKEY_RESPONSE_ERR",
+    b"RFDBG_RADIO_U5_BLE_NEGATIVE_REQUIRES_EMPTY",
+    b"RFDBG_RADIO_U5_BLE_NEGATIVE_PAIRED_ERR",
+    b"RFDBG_RADIO_U5_BLE_NEGATIVE_AUTH_ERR",
+    b"RFDBG_RADIO_U5_BLE_NEGATIVE_BOND_ERR",
+    b"RFDBG_RADIO_U5_BLE_STALE_DISCONNECT_ERR",
+    b"RFDBG_RADIO_U5_BLE_NEGATIVE_CONSERVATION_ERR",
     b"RFDBG_NV_WRITE_ERR",
     b"panicked at",
 )
@@ -112,24 +146,46 @@ def redact_passkeys(data: bytes) -> bytes:
     return PASSKEY_PATTERN.sub(PASSKEY_REDACTED, data)
 
 
+def marker_contract(
+    pairing_mode: str,
+    *,
+    peripheral: bool,
+    restored: bool,
+    expect_removal: bool,
+) -> tuple[bytes, ...]:
+    if pairing_mode == "reject":
+        return PERIPHERAL_REJECT_MARKERS if peripheral else CENTRAL_REJECT_MARKERS
+    if pairing_mode == "stale":
+        return PERIPHERAL_STALE_MARKERS if peripheral else CENTRAL_STALE_MARKERS
+    if peripheral:
+        if restored and expect_removal:
+            return PERIPHERAL_REMOVAL_MARKERS
+        return PERIPHERAL_RESTORED_MARKERS if restored else PERIPHERAL_MARKERS
+    if restored and expect_removal:
+        return CENTRAL_REMOVAL_MARKERS
+    return CENTRAL_RESTORED_MARKERS if restored else CENTRAL_MARKERS
+
+
 def classify(
-    peripheral: bytes, central: bytes, *, expect_removal: bool = False
+    peripheral: bytes,
+    central: bytes,
+    *,
+    pairing_mode: str = "passkey",
+    expect_removal: bool = False,
 ) -> dict[str, object]:
     peripheral_restored = PERIPHERAL_STARTUP_MARKERS[1] in peripheral
     central_restored = CENTRAL_STARTUP_MARKERS[1] in central
-    peripheral_contract = (
-        PERIPHERAL_REMOVAL_MARKERS
-        if peripheral_restored and expect_removal
-        else PERIPHERAL_RESTORED_MARKERS
-        if peripheral_restored
-        else PERIPHERAL_MARKERS
+    peripheral_contract = marker_contract(
+        pairing_mode,
+        peripheral=True,
+        restored=peripheral_restored,
+        expect_removal=expect_removal,
     )
-    central_contract = (
-        CENTRAL_REMOVAL_MARKERS
-        if central_restored and expect_removal
-        else CENTRAL_RESTORED_MARKERS
-        if central_restored
-        else CENTRAL_MARKERS
+    central_contract = marker_contract(
+        pairing_mode,
+        peripheral=False,
+        restored=central_restored,
+        expect_removal=expect_removal,
     )
     peripheral_missing = [
         marker.decode() for marker in peripheral_contract if marker not in peripheral
@@ -154,13 +210,17 @@ def classify(
     )
     startup_valid = len(peripheral_startup) == 1 and len(central_startup) == 1
     restore_mismatch = peripheral_restored != central_restored
+    negative_requires_empty = pairing_mode != "passkey" and (
+        peripheral_restored or central_restored
+    )
     return {
         "pass": not peripheral_missing
         and not central_missing
         and not failures
         and not role_mismatch
         and startup_valid
-        and not restore_mismatch,
+        and not restore_mismatch
+        and not negative_requires_empty,
         "peripheral_missing": peripheral_missing,
         "central_missing": central_missing,
         "failure_markers": failures,
@@ -168,6 +228,7 @@ def classify(
         "central_startup": central_startup,
         "role_mismatch": role_mismatch,
         "restore_mismatch": restore_mismatch,
+        "negative_requires_empty": negative_requires_empty,
         "restored_contract": peripheral_restored and central_restored,
         "peripheral_bytes": len(peripheral),
         "central_bytes": len(central),
@@ -175,12 +236,23 @@ def classify(
 
 
 def validate_persistence(
-    records: list[dict[str, object]], *, expect_removal: bool = False
+    records: list[dict[str, object]],
+    *,
+    pairing_mode: str = "passkey",
+    expect_removal: bool = False,
 ) -> dict[str, object]:
     """Validate cross-reset persistence, not just each run in isolation."""
     errors: list[str] = []
     if not records:
         errors.append("no reset records")
+    elif pairing_mode != "passkey":
+        if len(records) < 2:
+            errors.append("a negative pairing mode needs a subsequent reset")
+        for record in records:
+            if record["restored_contract"]:
+                errors.append(
+                    f"run {record['run']} restored a bond in {pairing_mode} mode"
+                )
     elif expect_removal:
         for previous, current in zip(records, records[1:]):
             expected_restored = not previous["restored_contract"]
@@ -217,6 +289,7 @@ def capture_run(
     central_jlink: str,
     settle: float,
     timeout: float,
+    pairing_mode: str,
     expect_removal: bool,
 ) -> tuple[bytes, bytes]:
     peripheral.reset_input_buffer()
@@ -236,7 +309,11 @@ def capture_run(
     while time.monotonic() < deadline:
         peripheral_log.extend(drain(peripheral))
         central_log.extend(drain(central))
-        if not passkey_relayed and (match := PASSKEY_PATTERN.search(peripheral_log)):
+        if (
+            pairing_mode == "passkey"
+            and not passkey_relayed
+            and (match := PASSKEY_PATTERN.search(peripheral_log))
+        ):
             central.write(b"U5PASS=" + match.group(1) + b"\n")
             central.flush()
             passkey_relayed = True
@@ -252,7 +329,20 @@ def capture_run(
             PERIPHERAL_REMOVAL_MARKERS[-1] in peripheral_log
             and CENTRAL_REMOVAL_MARKERS[-1] in central_log
         )
-        complete = removal_complete if expect_removal and restored else bond_complete
+        negative_complete = {
+            "reject": (
+                PERIPHERAL_REJECT_MARKERS[-1] in peripheral_log
+                and CENTRAL_REJECT_MARKERS[-1] in central_log
+            ),
+            "stale": (
+                PERIPHERAL_STALE_MARKERS[-1] in peripheral_log
+                and CENTRAL_STALE_MARKERS[-1] in central_log
+            ),
+        }.get(pairing_mode, False)
+        if pairing_mode == "passkey":
+            complete = removal_complete if expect_removal and restored else bond_complete
+        else:
+            complete = negative_complete
         if complete and complete_at is None:
             complete_at = time.monotonic()
         if complete_at is not None and time.monotonic() - complete_at >= 1.0:
@@ -276,6 +366,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--peripheral-settle", type=float, default=3.0)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument(
+        "--pairing-mode",
+        choices=("passkey", "reject", "stale"),
+        default="passkey",
+        help="pairing lifecycle contract implemented by the selected fixture images",
+    )
+    parser.add_argument(
         "--expect-removal",
         action="store_true",
         help="require restored bonds to be removed and alternate restored/empty boots",
@@ -288,6 +384,8 @@ def main() -> int:
     args = parse_args()
     if args.runs <= 0 or args.peripheral_settle <= 0 or args.timeout <= 0:
         raise SystemExit("--runs, --peripheral-settle and --timeout must be positive")
+    if args.expect_removal and args.pairing_mode != "passkey":
+        raise SystemExit("--expect-removal is only valid with --pairing-mode passkey")
     for path in (args.peripheral_elf, args.central_elf):
         if not path.is_file():
             raise SystemExit(f"ELF not found: {path}")
@@ -304,6 +402,7 @@ def main() -> int:
                     args.central_jlink,
                     args.peripheral_settle,
                     args.timeout,
+                    args.pairing_mode,
                     args.expect_removal,
                 )
                 peripheral_name = f"run-{run:02d}.peripheral.uart.log"
@@ -311,7 +410,10 @@ def main() -> int:
                 (args.output / peripheral_name).write_bytes(peripheral_log)
                 (args.output / central_name).write_bytes(central_log)
                 record = classify(
-                    peripheral_log, central_log, expect_removal=args.expect_removal
+                    peripheral_log,
+                    central_log,
+                    pairing_mode=args.pairing_mode,
+                    expect_removal=args.expect_removal,
                 )
                 record.update(
                     {
@@ -326,7 +428,9 @@ def main() -> int:
 
     passed = sum(record["pass"] is True for record in records)
     persistence = validate_persistence(
-        records, expect_removal=args.expect_removal
+        records,
+        pairing_mode=args.pairing_mode,
+        expect_removal=args.expect_removal,
     )
     contract_pass = passed == args.runs and persistence["proven"]
     peripheral_restored = sum(
@@ -338,7 +442,8 @@ def main() -> int:
         for record in records
     )
     summary = {
-        "schema_version": 4,
+        "schema_version": 5,
+        "pairing_mode": args.pairing_mode,
         "expect_removal": args.expect_removal,
         "runs": args.runs,
         "passed": passed,
