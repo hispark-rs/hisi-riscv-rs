@@ -191,6 +191,12 @@ class ClassificationTests(unittest.TestCase):
                 "5850a03e801ffb108da1160e3373979443004b9e670addf33000dca9045fa413",
             )
 
+    def test_persisted_uart_logs_redact_pairing_passkeys(self) -> None:
+        raw = b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=123456\r\n"
+        redacted = MATRIX.redact_passkeys(raw)
+        self.assertEqual(redacted, MATRIX.PASSKEY_REDACTED + b"\r\n")
+        self.assertNotIn(b"123456", redacted)
+
     def test_fresh_then_restored_proves_persistence(self) -> None:
         result = MATRIX.validate_persistence(
             [self.record(1, False), self.record(2, True), self.record(3, True)]

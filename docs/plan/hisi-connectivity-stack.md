@@ -207,6 +207,25 @@ SHA-256 分别为 `5323f7363310bae59f2f0cede8ba20ad2b6925ca563a71c9b40b5466be175
 U5C 至此完成，但 ownership 仍是 `VendorManaged + Rust observer`；这不切换到
 `RustManaged`，也不构成 U5 或 public API 的 stable graduation。
 
+U5D 的无板实现于 2026-08-20 形成首个提交态闭包：`hisi-rf-core` commit `0a536d3`
+增加六位、`Debug` 脱敏的 `Passkey`；`ws63-radio-sys` commit `e41eba3` 只暴露固定
+archive 的 upper-GAP prompt 事件与 passkey reply 窄 ABI；`hisi-rf-ws63` commit
+`2ab2c24` 在 callback 内复制 event 4/5 的固定 payload 并投递有界队列；`hisi-rf`
+commit `da6fe32` 增加与 connection generation 和单次 prompt generation 同时绑定的
+`PairingResponder`。重复 prompt、断连后的 queued response、非法 passkey 和 stale handle
+均 fail closed；用户拒绝通过同一 responder 显式断开当前 peer。U5 fixture 使用
+DisplayOnly -> KeyboardOnly 的 authenticated pairing，runner 只在内存中转发六位值，落盘
+UART 日志在分类前统一替换为 `[REDACTED]`，central 输入由持有的 HAL UART token读取，不新增
+应用层 MMIO 地址。
+
+该闭包已通过 core/raw/backend/facade host tests、四仓 clippy、U5 fixture contract、matrix
+redaction tests 与 peripheral/central RV32 最终链接；这些仍只是 ABI/API/构建证据。首次硬件
+准备已用 CRC 有效的官方七分区 FWPKG 恢复 central 的 params、SSB、主备 flashboot、完整
+16 KiB NV 和 app，六个 Normal 分区均通过 3 MHz readback verify；peripheral U5D app 也已
+完整 verify。恢复后的原厂 app 在当前 nRST 窗口前关闭 DMI，central U5D app 仍等待一次真实
+POR 后重烧。因此 U5D 的 3-reset/20-reset、passkey relay、reject/cancel 与事件守恒硅片门仍
+保持未完成，不得由上述无板结果推断 authenticated pairing 已闭合。
+
 ### A5 收口证据账本
 
 A4/W2/A5 已交付 facade、标准 relocation、三平台 consumer、bounded protocol、
@@ -645,8 +664,8 @@ public API snapshot；真机门使用两块 WS63 验证 BLE advertise/scan 与 S
 各 20/20 paired reset 检查 event conservation、late completion 和重复 reset。下一 gate
 必须单独选择；U4 完成不会自动启动 U5 或稳定毕业。
 
-U5A 安全控制面与 U5B 密码能力已经闭合，当前单一 WIP 是 **U5C vendor-managed bond
-removal**；persistence/restore 已闭合：`hisi-rf-core` 定义显式
+U5A 安全控制面、U5B 密码能力和 U5C vendor-managed persistence/restore/remove 已经闭合，
+当前单一 WIP 是 **U5D pairing responder/cancellation/stale generation**：`hisi-rf-core` 定义显式
 `SecurityConfig`、`Bonding`、`IoCapability`、`SecurityRequirement` 与 typed
 `PairingState`；WS63 adapter 把它们映射到经审核的四字节 GAP security ABI，并提供
 pair/query/remove-bond 命令；facade 保持 command completion 与 unsolicited pairing/auth

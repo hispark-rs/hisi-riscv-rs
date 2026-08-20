@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from jlink_nrst import pulse_nrst
 PERIPHERAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_READY",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=[REDACTED]",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PAIRED",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_AUTH_OK",
     b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OBSERVED",
@@ -36,6 +38,8 @@ PERIPHERAL_RESTORED_MARKERS = (
 CENTRAL_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_SCAN_MATCH",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_CONNECTED",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PASSKEY_INPUT",
+    b"RFDBG_RADIO_U5_BLE_CENTRAL_PASSKEY_ACCEPTED",
     b"RFDBG_RADIO_U5_BLE_PAIR_ACCEPTED",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_PAIRED",
     b"RFDBG_RADIO_U5_BLE_CENTRAL_AUTH_OK",
@@ -79,9 +83,16 @@ FAILURE_MARKERS = (
     b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_RESTORE_ERR",
     b"RFDBG_RADIO_U5_BLE_RESTORED_STATE_ERR",
     b"RFDBG_RADIO_U5_BLE_STATE_QUEUE_ERR",
+    b"RFDBG_RADIO_U5_BLE_PASSKEY_QUEUE_ERR",
+    b"RFDBG_RADIO_U5_BLE_PASSKEY_RESPONSE_ERR",
     b"RFDBG_NV_WRITE_ERR",
     b"panicked at",
 )
+
+PASSKEY_PATTERN = re.compile(
+    rb"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=([0-9]{6})"
+)
+PASSKEY_REDACTED = b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=[REDACTED]"
 
 
 def sha256(path: Path) -> str:
@@ -95,6 +106,10 @@ def sha256(path: Path) -> str:
 def drain(port: serial.Serial) -> bytes:
     waiting = port.in_waiting
     return port.read(waiting) if waiting else b""
+
+
+def redact_passkeys(data: bytes) -> bytes:
+    return PASSKEY_PATTERN.sub(PASSKEY_REDACTED, data)
 
 
 def classify(
@@ -215,11 +230,16 @@ def capture_run(
 
     pulse_nrst("JLinkExe", central_jlink)
     central_log = bytearray()
+    passkey_relayed = False
     deadline = time.monotonic() + timeout
     complete_at: float | None = None
     while time.monotonic() < deadline:
         peripheral_log.extend(drain(peripheral))
         central_log.extend(drain(central))
+        if not passkey_relayed and (match := PASSKEY_PATTERN.search(peripheral_log)):
+            central.write(b"U5PASS=" + match.group(1) + b"\n")
+            central.flush()
+            passkey_relayed = True
         bond_complete = (
             b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_OK" in peripheral_log
             and b"RFDBG_RADIO_U5_BLE_CENTRAL_BOND_OK" in central_log
@@ -240,7 +260,7 @@ def capture_run(
         time.sleep(0.01)
     peripheral_log.extend(drain(peripheral))
     central_log.extend(drain(central))
-    return bytes(peripheral_log), bytes(central_log)
+    return redact_passkeys(bytes(peripheral_log)), redact_passkeys(bytes(central_log))
 
 
 def parse_args() -> argparse.Namespace:
