@@ -11,8 +11,9 @@ the stable API reference, then fix the documentation.
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
 two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
 frozen. U5A-U5C security control, hardware-crypto compatibility, and
-vendor-managed bond persistence/restore/removal are also frozen. The current
-major WIP is U5D pairing responder, cancellation, and stale-generation closure.
+vendor-managed bond persistence/restore/removal are also frozen. U5D positive
+Secure Connections passkey pairing and restore are frozen; the current major
+WIP is the reject/cancel and stale-generation negative silicon closure.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -188,7 +189,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- U5D BLE Pairing Lifecycle
+## NOW -- U5D BLE Negative Pairing Lifecycle
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -211,15 +212,23 @@ survives reset rather than only changing the current in-memory table. Evidence:
 [bond restore across reset](docs/plan/evidence/ws63-radio-u5c-bond-restore-2026-08-13.md),
 and [bond removal and NVS GC](docs/plan/evidence/ws63-radio-u5c-bond-removal-gc-2026-08-20.md).
 
-U5D now owns the only active product gate. Its submitted no-board closure adds a
-generation-bound, single-use pairing responder with redacted passkey handling,
-explicit rejection, cancellation, and stale-connection fail-closed behavior.
-Host tests, matrix-contract tests, CI fixture builds, and passkey/reject/stale
-RV32 release images are complete. The remaining silicon evidence is deliberately
-narrow: restore the central board, then run each mode through a `3/3` shape gate
-and an unchanged-image `20/20` paired reset matrix while proving pairing/event
-conservation and, for rejection/stale modes, persistent `BOND_EMPTY`. Artifact
-hashes, exact markers, and current recovery status live only in the
+U5D positive Secure Connections now also passes a fresh-pair `3/3` gate and an
+unchanged-image restored-bond `20/20` paired nRST matrix. The production bridge
+uses the Rust WS63 P-256 backend plus a health-checked DRBG for archive-facing
+key generation and ECDH, fails closed without software fallback, and preserves
+the vendor ROM scratch lifecycle. Evidence:
+[Secure Connections pairing and restore](docs/plan/evidence/ws63-radio-u5d-secure-connections-2026-08-24.md).
+
+U5D now owns only the remaining negative product gate. Its submitted no-board
+closure adds a generation-bound, single-use pairing responder with redacted
+passkey handling, explicit rejection, cancellation, and stale-connection
+fail-closed behavior.
+Host tests, matrix-contract tests, CI fixture builds, and reject/stale RV32
+release images are complete. The remaining silicon evidence is deliberately
+narrow: run reject and stale modes through a `3/3` shape gate and unchanged-image
+`20/20` paired reset matrices while proving pairing/event conservation and
+persistent `BOND_EMPTY`. Artifact hashes, exact markers, and current status live
+only in the
 [connectivity execution ledger](docs/plan/hisi-connectivity-stack.md#当前执行窗口u5d-pairing-lifecycle-closure).
 
 DLI/SLB, coexistence and stable graduation remain deferred and do not run in

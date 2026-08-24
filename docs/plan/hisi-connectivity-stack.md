@@ -2,14 +2,16 @@
 
 ## 状态
 
-**当前执行窗口：U5D pairing lifecycle closure。** U0-U4 已完成；U5A 安全控制面、U5B
-密码能力和 U5D 中“本次启动内 pairing/auth/runtime bond observation”子门槛已经闭合；
+**当前执行窗口：U5D negative pairing lifecycle closure。** U0-U4 已完成；U5A 安全控制面、U5B
+密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
 0.1.0-alpha.94` 与 backend `0.1.0-alpha.80` 又以 copy-first/header-last NVS GC、
 SFC command-read consistency 和交替 reset matrix 关闭
-`remove -> NotPaired -> reset -> BOND_EMPTY`。U5C 至此完成；下一 gate 是 U5D
-剩余的 pairing responder、取消和 stale connection-generation 契约，不自动毕业 stable API。
+`remove -> NotPaired -> reset -> BOND_EMPTY`。U5C 至此完成；U5D 正向 passkey 路径又以
+修正后的 P-256 key-generation/ECDH bridge 完成 fresh pair 3/3 与 unchanged-image restored
+bond 20/20。下一 gate 只保留 reject/cancel 与 stale connection-generation 负向硅片契约，
+不自动毕业 stable API。
 A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
@@ -222,9 +224,9 @@ UART 日志在分类前统一替换为 `[REDACTED]`，central 输入由持有的
 redaction tests 与 peripheral/central RV32 最终链接；这些仍只是 ABI/API/构建证据。首次硬件
 准备已用 CRC 有效的官方七分区 FWPKG 恢复 central 的 params、SSB、主备 flashboot、完整
 16 KiB NV 和 app，六个 Normal 分区均通过 3 MHz readback verify；peripheral U5D app 也已
-完整 verify。恢复后的原厂 app 在当前 nRST 窗口前关闭 DMI，central U5D app 仍等待一次真实
-POR 后重烧。因此 U5D 的 3-reset/20-reset、passkey relay、reject/cancel 与事件守恒硅片门仍
-保持未完成，不得由上述无板结果推断 authenticated pairing 已闭合。
+完整 verify。恢复后的原厂 app 在当时 nRST 窗口前关闭 DMI，central U5D app 仍等待一次真实
+POR 后重烧。因此该阶段的 3-reset/20-reset、passkey relay、reject/cancel 与事件守恒硅片门
+仍保持未完成；后续正向 Secure Connections 证据已经关闭其中的 passkey/restore 部分。
 
 U5D 的负向生命周期 fixture 随后由 `hisi-rf` commit `c457e90` 补齐：maintainer-only
 `u5-pairing-reject-hil` 显式拒绝一次 generation-bound prompt，
@@ -242,7 +244,23 @@ peripheral `0c98bdb1bf26c025abdc51908ef0836b4820b665034c01b7c5d3521656e721d9`、
 `eda76cbf5ccd5113cf5eb7c60dd03de4f5ba7f43da1f3bb3fe243612f273d7ed`；stale peripheral
 `439859c025985e6a4489aa7ebb47abf431c977683975d553c48c9d76b3bb1733`、central
 `7460900ae9b3359335743c65f33ca4671af153697a537ecc9743f328f7879623`。这些哈希只绑定待烧录
-产物；central 恢复和三种模式的双板 3-reset/20-reset 仍是未完成硅片门。
+产物；这些历史 artifact 后续已被新的 Secure Connections 正向镜像取代，reject/stale
+模式的双板 3-reset/20-reset 仍是未完成硅片门。
+
+U5D 正向 passkey 路径已于 2026-08-24 闭合。诊断确认两侧协商 AuthReq `0x0d`，失败是
+F6 MacKey 分歧所暴露的 ECDH 表示不兼容；仅把双方 DHKey 置零所得的“成功”被明确判为
+无效证据。`hisi-rf-ws63` commit `0d9dbce` 以 WS63 Rust P-256 backend 和
+health-checked DRBG 替换 archive-facing key generation/ECDH 结果，并仅调用 ROM 入口保留
+vendor scratch lifecycle；`hisi-rf` commit `8e46c6a` 把两项 wrap contract 传到最终链接。
+硬件失败 fail closed，不静默回退软件。固定 peripheral/central ELF SHA-256 分别为
+`beb79a513b59d871c2aa28970f0e62a46ea059a9239bad30c1dbe3ee0b8fbbd2` 和
+`56c4bc4988d950b72f2fa4935b6406a6b2bb4c58d6b7963b7cb0f02f3def4821`；3 MHz full
+verify 后先通过 3/3，其中首轮 fresh authenticated pairing、后两轮 restore，再以同一镜像
+通过 20/20 restored-bond paired nRST。两个 summary 均为 `contract_pass=true`、
+`persistence.proven=true`。完整证据见
+[U5D Secure Connections](evidence/ws63-radio-u5d-secure-connections-2026-08-24.md)。
+该结果关闭正向 passkey/restore gate，但 reject/cancel 与 stale-generation 负向双板矩阵仍
+未完成，也不构成 public API stable graduation。
 
 ### A5 收口证据账本
 
