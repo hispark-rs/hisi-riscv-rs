@@ -289,6 +289,15 @@ def validate_persistence(
     }
 
 
+def empty_capture_roles(record: dict[str, object]) -> list[str]:
+    """Return board roles that produced no UART evidence for a reset."""
+    return [
+        role
+        for role in ("peripheral", "central")
+        if record[f"{role}_bytes"] == 0
+    ]
+
+
 def capture_run(
     peripheral: serial.Serial,
     central: serial.Serial,
@@ -399,6 +408,7 @@ def main() -> int:
     args.output.mkdir(parents=True, exist_ok=False)
 
     records: list[dict[str, object]] = []
+    abort_reason: str | None = None
     with serial.Serial(args.peripheral_port, args.baud, timeout=0) as peripheral:
         with serial.Serial(args.central_port, args.baud, timeout=0) as central:
             for run in range(1, args.runs + 1):
@@ -432,6 +442,13 @@ def main() -> int:
                 records.append(record)
                 state = "pass" if record["pass"] else "fail"
                 print(f"run {run:02d}/{args.runs}: {state}", flush=True)
+                if run == 1 and (empty_roles := empty_capture_roles(record)):
+                    abort_reason = (
+                        "first reset produced no UART evidence for: "
+                        + ", ".join(empty_roles)
+                    )
+                    print(f"aborting matrix: {abort_reason}", flush=True)
+                    break
 
     passed = sum(record["pass"] is True for record in records)
     persistence = validate_persistence(
@@ -439,7 +456,13 @@ def main() -> int:
         pairing_mode=args.pairing_mode,
         expect_removal=args.expect_removal,
     )
-    contract_pass = passed == args.runs and persistence["proven"]
+    executed_runs = len(records)
+    contract_pass = (
+        executed_runs == args.runs
+        and passed == args.runs
+        and persistence["proven"]
+        and abort_reason is None
+    )
     peripheral_restored = sum(
         PERIPHERAL_STARTUP_MARKERS[1].decode() in record["peripheral_startup"]
         for record in records
@@ -449,12 +472,15 @@ def main() -> int:
         for record in records
     )
     summary = {
-        "schema_version": 5,
+        "schema_version": 6,
         "pairing_mode": args.pairing_mode,
         "expect_removal": args.expect_removal,
         "runs": args.runs,
+        "executed_runs": executed_runs,
+        "aborted_early": abort_reason is not None,
+        "abort_reason": abort_reason,
         "passed": passed,
-        "failed": args.runs - passed,
+        "failed": executed_runs - passed,
         "contract_pass": contract_pass,
         "persistence": persistence,
         "vendor_restore": {
@@ -476,7 +502,7 @@ def main() -> int:
         "records": records,
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    print(f"summary: {passed}/{args.runs} pass")
+    print(f"summary: {passed}/{executed_runs} executed pass ({args.runs} planned)")
     print(f"persistence: {'proven' if persistence['proven'] else 'not proven'}")
     print(f"artifacts: {args.output}")
     return 0 if contract_pass else 1

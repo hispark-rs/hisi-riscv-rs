@@ -309,6 +309,26 @@ class ClassificationTests(unittest.TestCase):
         self.assertFalse(result["proven"])
         self.assertIn("subsequent reset", result["errors"][0])
 
+    def test_empty_capture_roles_identifies_silent_board(self) -> None:
+        record = MATRIX.classify(
+            b"RFDBG_RADIO_U5_BLE_PERIPHERAL_BOND_EMPTY\n",
+            b"",
+            pairing_mode="reject",
+            expect_removal=False,
+        )
+
+        self.assertEqual(MATRIX.empty_capture_roles(record), ["central"])
+
+    def test_empty_capture_roles_accepts_nonempty_failure_logs(self) -> None:
+        record = MATRIX.classify(
+            b"peripheral booted without the required marker\n",
+            b"central booted without the required marker\n",
+            pairing_mode="reject",
+            expect_removal=False,
+        )
+
+        self.assertEqual(MATRIX.empty_capture_roles(record), [])
+
     def test_failed_runs_cannot_prove_negative_persistence(self) -> None:
         result = MATRIX.validate_persistence(
             [
