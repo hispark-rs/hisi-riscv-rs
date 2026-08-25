@@ -309,6 +309,23 @@ class ClassificationTests(unittest.TestCase):
         self.assertFalse(result["proven"])
         self.assertIn("subsequent reset", result["errors"][0])
 
+    def test_failed_runs_cannot_prove_negative_persistence(self) -> None:
+        result = MATRIX.validate_persistence(
+            [
+                self.record(1, False, passed=False),
+                self.record(2, False, passed=False),
+            ],
+            pairing_mode="reject",
+        )
+        self.assertFalse(result["proven"])
+        self.assertEqual(
+            result["errors"],
+            [
+                "run 1 did not satisfy the per-run contract",
+                "run 2 did not satisfy the per-run contract",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

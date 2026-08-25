@@ -245,7 +245,14 @@ def validate_persistence(
     errors: list[str] = []
     if not records:
         errors.append("no reset records")
-    elif pairing_mode != "passkey":
+    else:
+        for record in records:
+            if record.get("pass") is not True:
+                errors.append(
+                    f"run {record['run']} did not satisfy the per-run contract"
+                )
+
+    if records and pairing_mode != "passkey":
         if len(records) < 2:
             errors.append("a negative pairing mode needs a subsequent reset")
         for record in records:
@@ -253,7 +260,7 @@ def validate_persistence(
                 errors.append(
                     f"run {record['run']} restored a bond in {pairing_mode} mode"
                 )
-    elif expect_removal:
+    elif records and expect_removal:
         for previous, current in zip(records, records[1:]):
             expected_restored = not previous["restored_contract"]
             if current["restored_contract"] != expected_restored:
@@ -262,7 +269,7 @@ def validate_persistence(
                     f"run {current['run']} was not {expected} after run "
                     f"{previous['run']}"
                 )
-    elif not records[0]["restored_contract"]:
+    elif records and not records[0]["restored_contract"]:
         if len(records) < 2:
             errors.append("a fresh pairing needs a subsequent reset to prove restore")
         for record in records[1:]:
@@ -270,7 +277,7 @@ def validate_persistence(
                 errors.append(
                     f"run {record['run']} returned to an empty bond after fresh pairing"
                 )
-    else:
+    elif records:
         for record in records[1:]:
             if not record["restored_contract"]:
                 errors.append(
