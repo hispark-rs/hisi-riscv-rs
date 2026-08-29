@@ -717,21 +717,26 @@ event、日志或 Debug。这个名称是有意的：原厂 `ble_auth_info_evt_t
 ltk[16]`，并不包含 IRK、CSRK 或完整可恢复 bond。host tests、ABI size gate 与 RV32 check
 已覆盖该边界。U6 在此基础上提供六个编译期互斥的命名 profile：BLE peripheral、central、
 dual-role，以及 SLE announce、seek、SSAP；未启用角色的方法在类型上不存在。backend
-`hisi-rf-ws63 0.1.0-alpha.85`（commit `377ed65`，CI/publish
-`33231864744`/`33231874379`）导出经 archive/profile 绑定的资源事实，并保持 Windows host
-resource-report 不依赖 RV32 runtime symbol；facade `hisi-rf 0.1.0-alpha.100`（commit
-`6869356`，CI/publish `33232071359`/`33232072666`）公开
+`hisi-rf-ws63 0.1.0-alpha.86`（commit `f973668`，CI/publish
+`33241607107`/`33241766142`）导出经 archive/profile 绑定的资源事实，补齐 Wi-Fi+BLE/SLE
+checked resource composition，并保持 Windows host resource-report 不依赖 RV32 runtime
+symbol；facade `hisi-rf 0.1.0-alpha.101`（commit `227bff4`，CI/publish
+`33241960841`/`33242159753`）公开
 caller-owned storage 和 schema `hisi-rf-radio-resource-report/v1` 的 allocation-free JSON
 报告。`hisi-rs-template v0.7.0-alpha.30`（commit `4dd9320`）生成六个 profile starter，
 完成 RV32 check/release build、代表性 BLE/SLE image，并由 main/tag CI
 `33232162664`/`33232664242` 在原生 Linux/macOS/Windows 生成 Wi-Fi/BLE/SLE resource
 report；tag workflow 随后发布非 Draft prerelease。U6 因此完成。
 
-当前单一 WIP 是 **U7 external-consumer and two-board/coexistence acceptance**。第一道门从
-已发布 template tag 在隔离目录创建 crates.io-only consumer，并在 Linux、macOS、Windows
-执行普通 Cargo build/report contract；第二道门只为已有资源事实与公开 API 支持的组合新增
-Wi-Fi+BLE、Wi-Fi+SLE profile，并用两块 WS63 验证并发流量、event conservation、资源峰值和
-重复 reset。任一组合在 HIL 前不得公开 feature；U7 不自动启动 U8 stable graduation。
+当前单一 WIP 是 **U7 external-consumer and two-board/coexistence acceptance**。第一道门已由
+`hisi-rf 0.1.0-alpha.101` 的 crates.io-only fixture 关闭：Linux、macOS、Windows 均完成
+WPA2/WPA3、BLE peripheral、SLE announce 的普通 Cargo build、只读 registry source 和
+offline rebuild。第二道门已经完成 Wi-Fi+BLE 与 Wi-Fi+SLE 的共享资源/平台初始化子门槛，
+固定镜像通过 3/3 与 20/20 paired nRST；证据见
+[U7 shared initialization](evidence/ws63-radio-u7-shared-init-2026-08-29.md)。它仍未证明并发
+Wi-Fi 流量、event conservation、资源峰值或 RF coexistence，因此 U7/X0 当前只继续推进
+concurrent-traffic acceptance。任一组合在完整 HIL 前不得公开 stable `coex` promise；U7
+不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
@@ -2989,6 +2994,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
 
 ### X0 与 R0 -- 共存和发布
 
+- 共享初始化子门槛已关闭：Wi-Fi+BLE 与 Wi-Fi+SLE 固定镜像分别通过 3/3 和 20/20 paired
+  nRST，证明 combined admission、RTOS 和 shared platform init；这不是并发流量证据。见
+  [U7 shared initialization](evidence/ws63-radio-u7-shared-init-2026-08-29.md)。
 - 先验证 Wi-Fi ping + BLE advertising/connection，再验证 Wi-Fi + SLE；只有并发 RF
   时序、shared RAM profile、heap watermark 和 IRQ latency 都有 HIL 后才公开 `coex`。
 - R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、

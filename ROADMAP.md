@@ -231,17 +231,18 @@ generation markers. Evidence:
 U5D is therefore closed. U6 packages the resulting API into six named
 BLE/SLE profiles, caller-owned storage, deterministic machine-readable resource
 reports, and generated projects that depend only on the public `hisi-rf` facade.
-The backend facts are released in `hisi-rf-ws63 0.1.0-alpha.85`; the facade and
-JSON report contract are released in `hisi-rf 0.1.0-alpha.100`.
+The backend facts are released in `hisi-rf-ws63 0.1.0-alpha.86`; the facade and
+JSON report contract are released in `hisi-rf 0.1.0-alpha.101`.
 `hisi-rs-template v0.7.0-alpha.30` generates all six profiles, builds the RV32
 projects and representative images, and emits Wi-Fi/BLE/SLE reports on native
 Linux, macOS and Windows. U6 is therefore closed.
 
-U7 is the next single WIP. First prove a clean crates.io-only consumer from the
-released template on all three host OSes; then introduce only evidence-backed
-Wi-Fi+BLE and Wi-Fi+SLE compositions and run two-board concurrent-traffic HIL.
-No coexistence profile is public before its resource report, event conservation
-and repeated-reset matrix pass. DLI/SLB and stable graduation remain deferred.
+U7 remains the single WIP. Its crates.io-only consumer gate now passes on all
+three host OSes, and fixed Wi-Fi+BLE/Wi-Fi+SLE images pass the shared-init 3/3
+and 20/20 reset gates. This does not prove coexistence traffic. The remaining
+gate is two-board concurrent Wi-Fi traffic with BLE, then SLE, including event
+conservation and measured resource/latency evidence. No stable `coex` promise is
+public before that gate passes. DLI/SLB and stable graduation remain deferred.
 
 ## LATER -- Triggered Product Directions
 
