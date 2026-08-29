@@ -22,8 +22,12 @@ exclude_path = [
 #     resolve in a full `--recursive` clone but the link-check checkout omits
 #     submodules (so it doesn't also scan their trees).
 #   - dl.acm.org DOI pages are valid references but return 403 to the CI bot.
+#   - gitcode.com SDK repositories are canonical references, but their public
+#     endpoint repeatedly times out from GitHub-hosted runners. Keep the links
+#     visible while excluding remote availability from the documentation gate.
 exclude = [
   "^https://blog\\.japaric\\.io",
   "^https://dl\\.acm\\.org/doi/",
+  "^https://gitcode\\.com/HiSpark/fbb_(ws63|bs2x)",
   "crates/.*/CHANGELOG\\.md$",
 ]
