@@ -27,6 +27,7 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v8",
     "hisi-rf-resource-report/v9",
     "hisi-rf-resource-report/v10",
+    "hisi-rf-resource-report/v11",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -55,6 +56,72 @@ def load_object(path: Path, label: str) -> dict[str, Any]:
     return value
 
 
+def validate_task_resource_tree(resource: dict[str, Any]) -> None:
+    if resource["schema"] not in {
+        "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
+    }:
+        return
+
+    schema_revision = resource["schema"].rsplit("/", 1)[-1]
+    positive_keys = (
+        "vendor_task_slots",
+        "vendor_stack_bytes_per_task",
+    )
+    non_negative_keys = (
+        "worker_task_slots",
+        "worker_stack_bytes_per_task",
+    )
+    for key in positive_keys:
+        value = resource.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            raise ValueError(
+                f"resource report {schema_revision} requires positive integer {key}"
+            )
+    for key in non_negative_keys:
+        value = resource.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ValueError(
+                f"resource report {schema_revision} requires non-negative integer {key}"
+            )
+
+    coexistence_slots = 0
+    coexistence_stacks = 0
+    if resource["schema"] == "hisi-rf-resource-report/v11":
+        for key in ("coexistence_task_slots", "coexistence_stack_bytes"):
+            value = resource.get(key)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ValueError(
+                    f"resource report v11 requires non-negative integer {key}"
+                )
+        coexistence_slots = resource["coexistence_task_slots"]
+        coexistence_stacks = resource["coexistence_stack_bytes"]
+        if (coexistence_slots == 0) != (coexistence_stacks == 0):
+            raise ValueError(
+                "resource report v11 coexistence slots and stacks must both be zero "
+                "or both be positive"
+            )
+
+    child_slots = (
+        resource["vendor_task_slots"]
+        + resource["worker_task_slots"]
+        + coexistence_slots
+    )
+    child_stacks = (
+        resource["vendor_task_slots"] * resource["vendor_stack_bytes_per_task"]
+        + resource["worker_task_slots"] * resource["worker_stack_bytes_per_task"]
+        + coexistence_stacks
+    )
+    if resource["dynamic_tasks_required"] != child_slots:
+        raise ValueError(
+            f"resource report {schema_revision} task total does not equal child groups"
+        )
+    if resource["task_stack_bytes"] != child_stacks:
+        raise ValueError(
+            f"resource report {schema_revision} stack total does not equal child groups"
+        )
+
+
 def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> dict[str, Any]:
     resource = load_object(resource_path, "resource report")
     plan = load_object(plan_path, "FlashPlan")
@@ -71,6 +138,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
         "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -85,6 +153,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
         "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
     }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
@@ -98,6 +167,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
         "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
     }:
         positive_keys = (
             "event_capacity",
@@ -168,6 +238,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v8",
         "hisi-rf-resource-report/v9",
         "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
     }:
         schema_revision = resource["schema"].rsplit("/", 1)[-1]
         for key in ("runtime_object_headroom_bytes", "runtime_arena_bytes"):
@@ -199,6 +270,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if resource["schema"] in {
         "hisi-rf-resource-report/v9",
         "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
     }:
         minimum_stack = resource.get("minimum_task_stack_bytes")
         if (
@@ -219,32 +291,11 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
     if plan["image_len"] != image.stat().st_size:
         raise ValueError("FlashPlan image_len does not match the generated image")
 
-    if resource["schema"] == "hisi-rf-resource-report/v10":
-        positive_keys = (
-            "vendor_task_slots",
-            "vendor_stack_bytes_per_task",
-        )
-        non_negative_keys = (
-            "worker_task_slots",
-            "worker_stack_bytes_per_task",
-        )
-        for key in positive_keys:
-            value = resource.get(key)
-            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-                raise ValueError(f"resource report v10 requires positive integer {key}")
-        for key in non_negative_keys:
-            value = resource.get(key)
-            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-                raise ValueError(f"resource report v10 requires non-negative integer {key}")
-        child_slots = resource["vendor_task_slots"] + resource["worker_task_slots"]
-        child_stacks = (
-            resource["vendor_task_slots"] * resource["vendor_stack_bytes_per_task"]
-            + resource["worker_task_slots"] * resource["worker_stack_bytes_per_task"]
-        )
-        if resource["dynamic_tasks_required"] != child_slots:
-            raise ValueError("resource report v10 task total does not equal child groups")
-        if resource["task_stack_bytes"] != child_stacks:
-            raise ValueError("resource report v10 stack total does not equal child groups")
+    validate_task_resource_tree(resource)
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
+    }:
         with elf.open("rb") as stream:
             parsed = ELFFile(stream)
             section = parsed.get_section_by_name(".hisi_shared_arenas")
@@ -262,7 +313,10 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
 
     resolved_resource = dict(resource)
     resolved_resource["flash_bytes"] = plan["image_len"]
-    if resource["schema"] == "hisi-rf-resource-report/v10":
+    if resource["schema"] in {
+        "hisi-rf-resource-report/v10",
+        "hisi-rf-resource-report/v11",
+    }:
         resolved_resource["linked_shared_arena_bytes"] = linked_shared_arena_bytes
     return {
         "schema": SCHEMA,
@@ -361,6 +415,29 @@ def self_test() -> None:
         assert persisted["artifact"]["image_name"] == image.name
         assert str(root) not in output.read_text(encoding="utf-8")
 
+        resource_v11 = dict(persisted["resource"])
+        resource_v11["schema"] = "hisi-rf-resource-report/v11"
+        resource_v11.update(
+            {
+                "vendor_task_slots": 7,
+                "vendor_stack_bytes_per_task": 24 * 1024,
+                "worker_task_slots": 0,
+                "worker_stack_bytes_per_task": 0,
+                "coexistence_task_slots": 4,
+                "coexistence_stack_bytes": 10_240,
+                "dynamic_tasks_required": 11,
+                "task_stack_bytes": 7 * 24 * 1024 + 10_240,
+            }
+        )
+        validate_task_resource_tree(resource_v11)
+        resource_v11["dynamic_tasks_required"] += 1
+        try:
+            validate_task_resource_tree(resource_v11)
+        except ValueError as error:
+            assert "task total" in str(error)
+        else:
+            raise AssertionError("inconsistent v11 coexistence task total was accepted")
+
         resource_v9 = load_object(resource_path, "resource report")
         resource_v8 = dict(resource_v9)
         resource_v8["schema"] = "hisi-rf-resource-report/v8"
@@ -408,7 +485,7 @@ def self_test() -> None:
 
         plan["image_len"] = image.stat().st_size
         plan_path.write_text(json.dumps(plan), encoding="utf-8")
-        resource_v9["schema"] = "hisi-rf-resource-report/v11"
+        resource_v9["schema"] = "hisi-rf-resource-report/v12"
         resource_path.write_text(json.dumps(resource_v9), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)
