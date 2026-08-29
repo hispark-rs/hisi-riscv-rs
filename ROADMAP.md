@@ -11,9 +11,10 @@ the stable API reference, then fix the documentation.
 **WIP limit:** one major milestone at a time. A0-A5, the repository-owned
 two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
 frozen. U5A-U5C security control, hardware-crypto compatibility, and
-vendor-managed bond persistence/restore/removal are also frozen. U5D positive
-Secure Connections passkey pairing and restore are frozen; the current major
-WIP is the reject/cancel and stale-generation negative silicon closure.
+vendor-managed bond persistence/restore/removal, U5D positive/negative pairing
+lifecycles, and U6 named-profile/template delivery are also frozen. The current
+major WIP is U7: crates.io-only external consumers plus measured two-board
+coexistence acceptance.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -189,7 +190,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- U5D BLE Negative Pairing Lifecycle Complete
+## NOW -- U7 External Consumer And Coexistence Acceptance
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -227,11 +228,20 @@ logs; this replaces an invalid earlier matrix whose records could contain prior-
 generation markers. Evidence:
 [negative pairing lifecycles](docs/plan/evidence/ws63-radio-u5d-negative-pairing-2026-08-29.md).
 
-U5D is therefore closed. The next major milestone must be selected explicitly;
-this completion does not graduate the public BLE API to stable.
+U5D is therefore closed. U6 packages the resulting API into six named
+BLE/SLE profiles, caller-owned storage, deterministic machine-readable resource
+reports, and generated projects that depend only on the public `hisi-rf` facade.
+The backend facts are released in `hisi-rf-ws63 0.1.0-alpha.85`; the facade and
+JSON report contract are released in `hisi-rf 0.1.0-alpha.100`.
+`hisi-rs-template v0.7.0-alpha.30` generates all six profiles, builds the RV32
+projects and representative images, and emits Wi-Fi/BLE/SLE reports on native
+Linux, macOS and Windows. U6 is therefore closed.
 
-DLI/SLB, coexistence and stable graduation remain deferred until selected as the
-next single WIP.
+U7 is the next single WIP. First prove a clean crates.io-only consumer from the
+released template on all three host OSes; then introduce only evidence-backed
+Wi-Fi+BLE and Wi-Fi+SLE compositions and run two-board concurrent-traffic HIL.
+No coexistence profile is public before its resource report, event conservation
+and repeated-reset matrix pass. DLI/SLB and stable graduation remain deferred.
 
 ## LATER -- Triggered Product Directions
 

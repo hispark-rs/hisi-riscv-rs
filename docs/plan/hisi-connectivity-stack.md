@@ -2,7 +2,7 @@
 
 ## 状态
 
-**当前执行窗口：U5D negative pairing lifecycle closure 已完成，等待选择下一单一 WIP。** U0-U4 已完成；U5A 安全控制面、U5B
+**当前执行窗口：U7 external-consumer and two-board/coexistence acceptance。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -50,7 +50,9 @@ generation-tagged active guard、显式 `stop(self).await`、Drop best-effort cl
 均已通过 host tests、clippy 与 BLE/SLE RV32 check。固定 BLE/SLE lifecycle 镜像又分别
 通过 3/3 shape gate 与 20/20 paired nRST matrix，因此 U4 已完成；这仍不表示 API stable。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
-约束；它们不会被后续 BLE 里程碑扩张。
+约束；它们不会被后续 BLE 里程碑扩张。U6 的六个命名 BLE/SLE profile、caller-owned
+storage、机器可读 resource report 和 template starter 已完成发布及三平台 CI。当前只推进
+U7 的 crates.io-only external consumer 与两板 coexistence gate，不并行启动 U8。
 跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -85,7 +87,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U5D pairing lifecycle closure 已完成
+## 当前执行窗口：U7 external-consumer and two-board/coexistence acceptance
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -661,7 +663,7 @@ WPA supplicant 不属于 TLS；只有 Enterprise 的 EAP-TLS profile 可以依�
   `ws63-radio-sys`。host/QEMU 使用 stub backend。闭源 payload 后续由自建 registry 的
   `ws63-radio-blob` 显式选择，通用 crates.io crate 不得强依赖私有 registry。
 
-### Radio UX/API convergence（U0-U4 已完成）
+### Radio UX/API convergence（U0-U6 已完成，U7 acceptance）
 
 S3 只冻结 backend 行为，不把当前 `BleB*` / `SleS*` 阶段类型直接改名后稳定发布。
 未来用户只依赖 `hisi-rf`，由唯一 `RadioController` 初始化共享 RF、IRQ、blob、arena 与
@@ -705,15 +707,31 @@ public API snapshot；真机门使用两块 WS63 验证 BLE advertise/scan 与 S
 各 20/20 paired reset 检查 event conservation、late completion 和重复 reset。下一 gate
 必须单独选择；U4 完成不会自动启动 U5 或稳定毕业。
 
-U5A 安全控制面、U5B 密码能力和 U5C vendor-managed persistence/restore/remove 已经闭合，
-当前单一 WIP 是 **U5D pairing responder/cancellation/stale generation**：`hisi-rf-core` 定义显式
+U5A 安全控制面、U5B 密码能力、U5C vendor-managed persistence/restore/remove 和 U5D
+pairing responder/cancellation/stale generation 已经闭合。`hisi-rf-core` 定义显式
 `SecurityConfig`、`Bonding`、`IoCapability`、`SecurityRequirement` 与 typed
 `PairingState`；WS63 adapter 把它们映射到经审核的四字节 GAP security ABI，并提供
 pair/query/remove-bond 命令；facade 保持 command completion 与 unsolicited pairing/auth
 event 分离。认证 callback 只公开 peer、status 和 `ltk_present`；LTK 字节不会进入 public
 event、日志或 Debug。这个名称是有意的：原厂 `ble_auth_info_evt_t` 只有 `ltk_len +
 ltk[16]`，并不包含 IRK、CSRK 或完整可恢复 bond。host tests、ABI size gate 与 RV32 check
-已覆盖该边界。
+已覆盖该边界。U6 在此基础上提供六个编译期互斥的命名 profile：BLE peripheral、central、
+dual-role，以及 SLE announce、seek、SSAP；未启用角色的方法在类型上不存在。backend
+`hisi-rf-ws63 0.1.0-alpha.85`（commit `377ed65`，CI/publish
+`33231864744`/`33231874379`）导出经 archive/profile 绑定的资源事实，并保持 Windows host
+resource-report 不依赖 RV32 runtime symbol；facade `hisi-rf 0.1.0-alpha.100`（commit
+`6869356`，CI/publish `33232071359`/`33232072666`）公开
+caller-owned storage 和 schema `hisi-rf-radio-resource-report/v1` 的 allocation-free JSON
+报告。`hisi-rs-template v0.7.0-alpha.30`（commit `4dd9320`）生成六个 profile starter，
+完成 RV32 check/release build、代表性 BLE/SLE image，并由 main/tag CI
+`33232162664`/`33232664242` 在原生 Linux/macOS/Windows 生成 Wi-Fi/BLE/SLE resource
+report；tag workflow 随后发布非 Draft prerelease。U6 因此完成。
+
+当前单一 WIP 是 **U7 external-consumer and two-board/coexistence acceptance**。第一道门从
+已发布 template tag 在隔离目录创建 crates.io-only consumer，并在 Linux、macOS、Windows
+执行普通 Cargo build/report contract；第二道门只为已有资源事实与公开 API 支持的组合新增
+Wi-Fi+BLE、Wi-Fi+SLE profile，并用两块 WS63 验证并发流量、event conservation、资源峰值和
+重复 reset。任一组合在 HIL 前不得公开 feature；U7 不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
