@@ -918,26 +918,16 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.97"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35507153655f18c1f63a8eeb7f6726cadbc5e9a4f45d234809a5999505e81ada"
-dependencies = [
- "hisi-rf-core",
- "hisi-rf-ws63 0.1.0-alpha.83",
-]
-
-[[package]]
-name = "hisi-rf"
 version = "0.1.0-alpha.101"
 dependencies = [
  "critical-section",
  "hisi-hal",
  "hisi-panic-handler",
  "hisi-rf-core",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
- "hisi-rf-ws63 0.1.0-alpha.86",
+ "hisi-rf-rtos-driver",
+ "hisi-rf-ws63",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
 ]
 
 [[package]]
@@ -956,44 +946,9 @@ version = "0.1.0-alpha.21"
 
 [[package]]
 name = "hisi-rf-rtos-driver"
-version = "0.1.0-alpha.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3c9e2bd31859f4fb022df129c1cc47e89927028308111ff0d59bb58857a6ce6"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
-name = "hisi-rf-rtos-driver"
 version = "0.1.0-alpha.20"
 dependencies = [
  "critical-section",
-]
-
-[[package]]
-name = "hisi-rf-ws63"
-version = "0.1.0-alpha.83"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19db8edfc6dda100c7efc840b4da1ca332257ba0ee1809207146c9efa54f7cc1"
-dependencies = [
- "ar_archive_writer",
- "critical-section",
- "embassy-sync",
- "embassy-time",
- "hisi-alloc",
- "hisi-crypto",
- "hisi-crypto-ws63",
- "hisi-hal",
- "hisi-nvs",
- "hisi-rf-core",
- "hisi-rf-rtos-driver 0.1.0-alpha.19",
- "hisi-storage",
- "object 0.37.3",
- "portable-atomic",
- "smoltcp",
- "static_cell",
- "ws63-radio-sys",
- "zeroize",
 ]
 
 [[package]]
@@ -1012,9 +967,9 @@ dependencies = [
  "hisi-nvs",
  "hisi-panic-handler",
  "hisi-rf-core",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
  "hisi-storage",
  "object 0.37.3",
  "portable-atomic",
@@ -1048,20 +1003,6 @@ version = "0.1.0-alpha.2"
 
 [[package]]
 name = "hisi-rtos"
-version = "0.1.0-alpha.24"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eeda1e1ad4de3fdb57e17b5081a559fb41f77c29d5128e7843bd19e05021a52f"
-dependencies = [
- "critical-section",
- "embassy-time-driver",
- "embassy-time-queue-utils",
- "hisi-alloc",
- "hisi-hal",
- "hisi-rf-rtos-driver 0.1.0-alpha.19",
-]
-
-[[package]]
-name = "hisi-rtos"
 version = "0.1.0-alpha.25"
 dependencies = [
  "critical-section",
@@ -1069,7 +1010,7 @@ dependencies = [
  "embassy-time-queue-utils",
  "hisi-alloc",
  "hisi-hal",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "trybuild",
 ]
 
@@ -1576,9 +1517,9 @@ dependencies = [
  "hisi-alloc",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
 ]
 
 [[package]]
@@ -1591,9 +1532,9 @@ dependencies = [
  "hisi-alloc",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
  "static_cell",
 ]
 
@@ -1605,9 +1546,9 @@ dependencies = [
  "hisi-alloc",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
 ]
 
 [[package]]
@@ -1618,9 +1559,9 @@ dependencies = [
  "hisi-alloc",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
 ]
 
 [[package]]
@@ -1631,9 +1572,9 @@ dependencies = [
  "hisi-alloc",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
 ]
 
 [[package]]
@@ -2222,9 +2163,9 @@ dependencies = [
  "embassy-time",
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf 0.1.0-alpha.97",
+ "hisi-rf",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.24",
+ "hisi-rtos",
  "smoltcp",
  "static_cell",
 ]
@@ -2237,10 +2178,10 @@ dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
  "hisi-rf-core",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
  "hisi-rom-sys",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
  "object 0.37.3",
  "smoltcp",
  "static_cell",
@@ -2254,9 +2195,9 @@ version = "0.1.0"
 dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
- "hisi-rf 0.1.0-alpha.97",
+ "hisi-rf",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.24",
+ "hisi-rtos",
  "smoltcp",
 ]
 
@@ -2363,9 +2304,9 @@ dependencies = [
  "hisi-hal",
  "hisi-nvs",
  "hisi-rf-core",
- "hisi-rf-rtos-driver 0.1.0-alpha.20",
+ "hisi-rf-rtos-driver",
  "hisi-riscv-rt",
- "hisi-rtos 0.1.0-alpha.25",
+ "hisi-rtos",
  "hisi-storage",
  "portable-atomic",
  "smoltcp",
