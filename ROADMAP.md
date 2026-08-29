@@ -189,7 +189,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- U5D BLE Negative Pairing Lifecycle
+## NOW -- U5D BLE Negative Pairing Lifecycle Complete
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -219,20 +219,19 @@ key generation and ECDH, fails closed without software fallback, and preserves
 the vendor ROM scratch lifecycle. Evidence:
 [Secure Connections pairing and restore](docs/plan/evidence/ws63-radio-u5d-secure-connections-2026-08-24.md).
 
-U5D now owns only the remaining negative product gate. Its submitted no-board
-closure adds a generation-bound, single-use pairing responder with redacted
-passkey handling, explicit rejection, cancellation, and stale-connection
-fail-closed behavior.
-Host tests, matrix-contract tests, CI fixture builds, and reject/stale RV32
-release images are complete. The remaining silicon evidence is deliberately
-narrow: run reject and stale modes through a `3/3` shape gate and unchanged-image
-`20/20` paired reset matrices while proving pairing/event conservation and
-persistent `BOND_EMPTY`. Artifact hashes, exact markers, and current status live
-only in the
-[connectivity execution ledger](docs/plan/hisi-connectivity-stack.md#当前执行窗口u5d-pairing-lifecycle-closure).
+U5D negative pairing is also complete. Reject and stale-generation fixtures each
+passed a `3/3` shape gate and an unchanged-image `20/20` paired reset matrix with
+persistent `BOND_EMPTY`. The schema-7 runner physically holds central nRST while
+the peripheral settles and rejects boot-before-protocol or multiple-generation
+logs; this replaces an invalid earlier matrix whose records could contain prior-
+generation markers. Evidence:
+[negative pairing lifecycles](docs/plan/evidence/ws63-radio-u5d-negative-pairing-2026-08-29.md).
 
-DLI/SLB, coexistence and stable graduation remain deferred and do not run in
-parallel with U5D.
+U5D is therefore closed. The next major milestone must be selected explicitly;
+this completion does not graduate the public BLE API to stable.
+
+DLI/SLB, coexistence and stable graduation remain deferred until selected as the
+next single WIP.
 
 ## LATER -- Triggered Product Directions
 

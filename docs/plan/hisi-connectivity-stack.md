@@ -2,7 +2,7 @@
 
 ## 状态
 
-**当前执行窗口：U5D negative pairing lifecycle closure。** U0-U4 已完成；U5A 安全控制面、U5B
+**当前执行窗口：U5D negative pairing lifecycle closure 已完成，等待选择下一单一 WIP。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -10,8 +10,8 @@
 SFC command-read consistency 和交替 reset matrix 关闭
 `remove -> NotPaired -> reset -> BOND_EMPTY`。U5C 至此完成；U5D 正向 passkey 路径又以
 修正后的 P-256 key-generation/ECDH bridge 完成 fresh pair 3/3 与 unchanged-image restored
-bond 20/20。下一 gate 只保留 reject/cancel 与 stale connection-generation 负向硅片契约，
-不自动毕业 stable API。
+bond 20/20。reject/cancel 与 stale connection-generation 又分别通过代际隔离后的 3/3 和
+20/20 双板矩阵；U5D 至此完成，但不自动毕业 stable API。
 A5F 单依赖 facade、A5B 默认 bounded backend、A5R conformance、
 A5U caller-owned resource admission、typed diagnostics 和 template/resource-report
 已经形成可用基线；有界执行、真实 key ownership、opaque facade/runtime 解耦、最终
@@ -85,7 +85,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U5D pairing lifecycle closure
+## 当前执行窗口：U5D pairing lifecycle closure 已完成
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -172,8 +172,8 @@ best-effort cleanup；fixture scheduler handoff 由 commit `cdcac5c` 固定。�
 missing/failure marker 均为空。U4 至此关闭；完整证据见
 [Radio U4 lifecycle](evidence/ws63-radio-u4-lifecycle-2026-08-09.md)。
 
-U5C 的 vendor-managed bond persistence、restore 和 remove 已全部闭合；当前只保留一个
-主要 WIP：U5D pairing responder、取消和 stale connection-generation。早期固定 U5
+U5C 的 vendor-managed bond persistence、restore 和 remove 已全部闭合；U5D pairing
+responder、取消和 stale connection-generation 也已完成。早期固定 U5
 peripheral/central 镜像已经完成 3/3 shape gate 和 20/20 paired
 nRST matrix；40 个 board run 均完成 pairing、authentication、secret-free runtime bond
 observation 和事件守恒，missing/failure marker 为零。与此同时，40/40 startup 都是
@@ -245,7 +245,7 @@ peripheral `0c98bdb1bf26c025abdc51908ef0836b4820b665034c01b7c5d3521656e721d9`、
 `439859c025985e6a4489aa7ebb47abf431c977683975d553c48c9d76b3bb1733`、central
 `7460900ae9b3359335743c65f33ca4671af153697a537ecc9743f328f7879623`。这些哈希只绑定待烧录
 产物；这些历史 artifact 后续已被新的 Secure Connections 正向镜像取代，reject/stale
-模式的双板 3-reset/20-reset 仍是未完成硅片门。
+模式的双板 3-reset/20-reset 后续已由代际隔离 runner 完成；本段历史哈希不替代最终证据。
 
 U5D 正向 passkey 路径已于 2026-08-24 闭合。诊断确认两侧协商 AuthReq `0x0d`，失败是
 F6 MacKey 分歧所暴露的 ECDH 表示不兼容；仅把双方 DHKey 置零所得的“成功”被明确判为
@@ -259,8 +259,13 @@ verify 后先通过 3/3，其中首轮 fresh authenticated pairing、后两轮 r
 通过 20/20 restored-bond paired nRST。两个 summary 均为 `contract_pass=true`、
 `persistence.proven=true`。完整证据见
 [U5D Secure Connections](evidence/ws63-radio-u5d-secure-connections-2026-08-24.md)。
-该结果关闭正向 passkey/restore gate，但 reject/cancel 与 stale-generation 负向双板矩阵仍
-未完成，也不构成 public API stable graduation。
+该结果关闭正向 passkey/restore gate；reject/cancel 与 stale-generation 负向双板矩阵已于
+2026-08-29 分别通过 3/3 和 20/20。父仓 commit `160a7a2fe` 在 peripheral settle 期间物理保持
+central nRST，并以 schema 7 拒绝 boot 前协议 marker 和多启动代，修正了旧 runner 的跨代
+污染。两个 20-run summary 均为 `contract_pass=true`、`persistence.proven=true`、两侧 restored
+为 0、generation failure 为空。完整证据见
+[U5D negative pairing lifecycles](evidence/ws63-radio-u5d-negative-pairing-2026-08-29.md)。
+U5D 至此完成，但不构成 public API stable graduation。
 
 ### A5 收口证据账本
 
