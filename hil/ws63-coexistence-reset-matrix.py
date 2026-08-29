@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["pyserial"]
 # ///
-"""Run the two-board WS63 Wi-Fi/BLE and Wi-Fi/SLE init matrix."""
+"""Run paired WS63 Wi-Fi/BLE and Wi-Fi/SLE coexistence contracts."""
 
 from __future__ import annotations
 
@@ -28,12 +28,28 @@ ROLE_MARKERS = {
     "ble": (b"RFDBG_BLE_B1_SHARED_PLATFORM_OK",),
     "sle": (b"RFDBG_SLE_S1_SHARED_PLATFORM_OK",),
 }
+BLE_ACTIVITY_MARKERS = (
+    b"RFDBG_COEX_BLE_ADV_ACTIVE",
+    b"RFDBG_COEX_WIFI_BLE_ACTIVITY_OK",
+)
+BLE_SCAN_MARKER = b"RFDBG_COEX_WIFI_SCAN_OK"
+BLE_ACTIVITY_SCAN_COUNT = 3
 FAILURE_MARKERS = (
     b"panicked at",
     b"RFDBG_MISSING_ROM_CALLBACK",
     b"RFDBG_COEX_INIT_ERR",
+    b"RFDBG_COEX_WIFI_RUNNER_ERR",
+    b"RFDBG_COEX_BLE_ADV_ERR",
+    b"RFDBG_COEX_BLE_EVENT_DROP",
+    b"RFDBG_COEX_WIFI_INITIALIZE_ERR",
+    b"RFDBG_COEX_WIFI_SCAN_ERR",
+    b"RFDBG_COEX_EVENT_ERR",
     b"scheduler contract violation",
 )
+CONTRACT_NAMES = {
+    "shared-init": "ws63-wifi-bgle-shared-init/v1",
+    "ble-activity": "ws63-wifi-ble-activity/v1",
+}
 
 
 def sha256(path: Path) -> str:
@@ -49,14 +65,38 @@ def drain(port: serial.Serial) -> bytes:
     return port.read(waiting) if waiting else b""
 
 
-def classify(role: str, payload: bytes) -> dict[str, object]:
+def required_markers(contract: str, role: str) -> tuple[bytes, ...]:
     required = COMMON_MARKERS + ROLE_MARKERS[role]
+    if contract == "ble-activity" and role == "ble":
+        required += BLE_ACTIVITY_MARKERS
+    return required
+
+
+def completion_marker(contract: str, role: str) -> bytes:
+    if contract == "ble-activity" and role == "ble":
+        return BLE_ACTIVITY_MARKERS[-1]
+    return COMMON_MARKERS[-1]
+
+
+def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
+    required = required_markers(contract, role)
     missing = [marker.decode() for marker in required if marker not in payload]
     failures = [marker.decode() for marker in FAILURE_MARKERS if marker in payload]
+    scan_count = payload.count(BLE_SCAN_MARKER) if role == "ble" else 0
+    if (
+        contract == "ble-activity"
+        and role == "ble"
+        and scan_count != BLE_ACTIVITY_SCAN_COUNT
+    ):
+        missing.append(
+            f"{BLE_SCAN_MARKER.decode()} x{BLE_ACTIVITY_SCAN_COUNT}"
+            f" (observed {scan_count})"
+        )
     return {
         "pass": not missing and not failures,
         "missing": missing,
         "failure_markers": failures,
+        "wifi_scan_ok_count": scan_count,
         "bytes": len(payload),
     }
 
@@ -67,6 +107,7 @@ def capture_pair(
     ble_jlink: str,
     sle_jlink: str,
     timeout: float,
+    contract: str,
 ) -> tuple[bytes, bytes]:
     ble.reset_input_buffer()
     sle.reset_input_buffer()
@@ -80,9 +121,9 @@ def capture_pair(
     while time.monotonic() < deadline:
         ble_log.extend(drain(ble))
         sle_log.extend(drain(sle))
-        both_complete = (
-            COMMON_MARKERS[-1] in ble_log and COMMON_MARKERS[-1] in sle_log
-        )
+        both_complete = completion_marker(contract, "ble") in ble_log and completion_marker(
+            contract, "sle"
+        ) in sle_log
         if both_complete and complete_at is None:
             complete_at = time.monotonic()
         if complete_at is not None and time.monotonic() - complete_at >= 0.5:
@@ -105,6 +146,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baud", type=int, default=115_200)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=20.0)
+    parser.add_argument(
+        "--contract",
+        choices=tuple(CONTRACT_NAMES),
+        default="shared-init",
+        help="coexistence behavior contract to verify",
+    )
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -123,14 +170,19 @@ def main() -> int:
         with serial.Serial(args.sle_port, args.baud, timeout=0) as sle:
             for run in range(1, args.runs + 1):
                 ble_log, sle_log = capture_pair(
-                    ble, sle, args.ble_jlink, args.sle_jlink, args.timeout
+                    ble,
+                    sle,
+                    args.ble_jlink,
+                    args.sle_jlink,
+                    args.timeout,
+                    args.contract,
                 )
                 ble_name = f"run-{run:02d}.ble.uart.log"
                 sle_name = f"run-{run:02d}.sle.uart.log"
                 (args.output / ble_name).write_bytes(ble_log)
                 (args.output / sle_name).write_bytes(sle_log)
-                ble_result = classify("ble", ble_log)
-                sle_result = classify("sle", sle_log)
+                ble_result = classify(args.contract, "ble", ble_log)
+                sle_result = classify(args.contract, "sle", sle_log)
                 passed = ble_result["pass"] is True and sle_result["pass"] is True
                 records.append(
                     {
@@ -147,8 +199,8 @@ def main() -> int:
 
     passed = sum(record["pass"] is True for record in records)
     summary = {
-        "schema_version": 1,
-        "contract": "ws63-wifi-bgle-shared-init/v1",
+        "schema_version": 2,
+        "contract": CONTRACT_NAMES[args.contract],
         "runs": args.runs,
         "passed": passed,
         "failed": args.runs - passed,
