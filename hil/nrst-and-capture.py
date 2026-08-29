@@ -11,7 +11,7 @@ import time
 
 import serial
 
-from jlink_nrst import jlink_argv, pulse_nrst
+from jlink_nrst import held_nrst, interactive_jlink_argv, jlink_argv, pulse_nrst
 
 PORT = os.environ.get("PORT", "/dev/cu.wchusbserial120")
 BAUD = int(os.environ.get("UART_BAUD", "115200"))

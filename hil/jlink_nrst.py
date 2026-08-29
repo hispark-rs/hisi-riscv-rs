@@ -7,10 +7,13 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import subprocess
 import tempfile
+import time
+from typing import Iterator
 
 
 def jlink_argv(
@@ -62,3 +65,49 @@ def pulse_nrst(jlink: str, serial_number: str | None = None) -> None:
             )
     finally:
         command_path.unlink(missing_ok=True)
+
+
+def interactive_jlink_argv(jlink: str, serial_number: str | None) -> list[str]:
+    """Build an interactive Commander invocation for reset-line ownership."""
+    argv = [jlink, "-NoGui", "1"]
+    if serial_number is not None:
+        if not serial_number.isascii() or not serial_number.isdecimal():
+            raise ValueError("JLINK_SERIAL must contain decimal digits only")
+        argv.extend(("-SelectEmuBySN", serial_number))
+    return argv
+
+
+@contextmanager
+def held_nrst(jlink: str, serial_number: str | None = None) -> Iterator[None]:
+    """Hold nRST for the context lifetime and release it on every exit path."""
+    process = subprocess.Popen(
+        interactive_jlink_argv(jlink, serial_number),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    assert process.stdin is not None
+    try:
+        process.stdin.write("SetRESET\nsleep 200\n")
+        process.stdin.flush()
+        time.sleep(0.4)
+        if process.poll() is not None:
+            raise RuntimeError(
+                f"J-Link exited before nRST hold was established: {process.returncode}"
+            )
+        yield
+    finally:
+        if process.poll() is None:
+            try:
+                process.communicate("ClrRESET\nsleep 200\nq\n", timeout=5)
+            except (BrokenPipeError, subprocess.TimeoutExpired):
+                process.kill()
+                process.wait(timeout=5)
+                # A killed Commander may leave the probe driving nRST. A fresh
+                # complete pulse provides an explicit target-independent release.
+                pulse_nrst(jlink, serial_number)
+        elif process.returncode != 0:
+            # The reset owner disappeared unexpectedly; explicitly restore a
+            # known released state before returning control to the caller.
+            pulse_nrst(jlink, serial_number)

@@ -33,10 +33,18 @@ class ClassificationTests(unittest.TestCase):
             MATRIX.CENTRAL_MARKERS,
         )
         peripheral = b"\n".join(
-            (MATRIX.PERIPHERAL_STARTUP_MARKERS[0], *MATRIX.PERIPHERAL_MARKERS)
+            (
+                MATRIX.BOOT_MARKER,
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[0],
+                *MATRIX.PERIPHERAL_MARKERS,
+            )
         )
         central = b"\n".join(
-            (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_MARKERS)
+            (
+                MATRIX.BOOT_MARKER,
+                MATRIX.CENTRAL_STARTUP_MARKERS[0],
+                *MATRIX.CENTRAL_MARKERS,
+            )
         )
         result = MATRIX.classify(peripheral, central)
         self.assertTrue(result["pass"])
@@ -106,7 +114,11 @@ class ClassificationTests(unittest.TestCase):
         central = b"\n".join(
             (MATRIX.CENTRAL_STARTUP_MARKERS[0], *MATRIX.CENTRAL_REJECT_MARKERS)
         )
-        result = MATRIX.classify(peripheral, central, pairing_mode="reject")
+        result = MATRIX.classify(
+            peripheral,
+            central,
+            pairing_mode="reject",
+        )
         self.assertTrue(result["pass"])
         self.assertFalse(result["negative_requires_empty"])
 
@@ -114,7 +126,11 @@ class ClassificationTests(unittest.TestCase):
             MATRIX.PERIPHERAL_STARTUP_MARKERS[0],
             MATRIX.PERIPHERAL_STARTUP_MARKERS[1],
         )
-        result = MATRIX.classify(peripheral, central, pairing_mode="reject")
+        result = MATRIX.classify(
+            peripheral,
+            central,
+            pairing_mode="reject",
+        )
         self.assertFalse(result["pass"])
         self.assertTrue(result["negative_requires_empty"])
 
@@ -344,6 +360,66 @@ class ClassificationTests(unittest.TestCase):
                 "run 1 did not satisfy the per-run contract",
                 "run 2 did not satisfy the per-run contract",
             ],
+        )
+
+    def test_prior_generation_marker_before_boot_fails_closed(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.BOOT_MARKER,
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[0],
+                *MATRIX.PERIPHERAL_REJECT_MARKERS,
+            )
+        )
+        central = b"\n".join(
+            (
+                MATRIX.CENTRAL_REJECT_MARKERS[-1],
+                MATRIX.BOOT_MARKER,
+                MATRIX.CENTRAL_STARTUP_MARKERS[0],
+                *MATRIX.CENTRAL_REJECT_MARKERS,
+            )
+        )
+
+        result = MATRIX.classify(
+            peripheral,
+            central,
+            pairing_mode="reject",
+            require_single_generation=True,
+        )
+
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["generation_failures"],
+            ["central contained a U5 marker before its boot marker"],
+        )
+
+    def test_multiple_boot_generations_fail_closed(self) -> None:
+        peripheral = b"\n".join(
+            (
+                MATRIX.BOOT_MARKER,
+                MATRIX.PERIPHERAL_STARTUP_MARKERS[0],
+                *MATRIX.PERIPHERAL_REJECT_MARKERS,
+            )
+        )
+        central = b"\n".join(
+            (
+                MATRIX.BOOT_MARKER,
+                MATRIX.CENTRAL_STARTUP_MARKERS[0],
+                *MATRIX.CENTRAL_REJECT_MARKERS,
+                MATRIX.BOOT_MARKER,
+            )
+        )
+
+        result = MATRIX.classify(
+            peripheral,
+            central,
+            pairing_mode="reject",
+            require_single_generation=True,
+        )
+
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["generation_failures"],
+            ["central boot marker count was 2, expected 1"],
         )
 
 

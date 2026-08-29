@@ -16,7 +16,7 @@ from pathlib import Path
 
 import serial
 
-from jlink_nrst import pulse_nrst
+from jlink_nrst import held_nrst, pulse_nrst
 
 
 PERIPHERAL_MARKERS = (
@@ -127,6 +127,8 @@ PASSKEY_PATTERN = re.compile(
     rb"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=([0-9]{6})"
 )
 PASSKEY_REDACTED = b"RFDBG_RADIO_U5_BLE_PERIPHERAL_PASSKEY_DISPLAY=[REDACTED]"
+BOOT_MARKER = b"boot."
+U5_MARKER_PREFIX = b"RFDBG_RADIO_U5_BLE_"
 
 
 def sha256(path: Path) -> str:
@@ -172,7 +174,25 @@ def classify(
     *,
     pairing_mode: str = "passkey",
     expect_removal: bool = False,
+    require_single_generation: bool = False,
 ) -> dict[str, object]:
+    def generation_errors(role: str, data: bytes) -> list[str]:
+        errors: list[str] = []
+        boot_count = data.count(BOOT_MARKER)
+        if boot_count != 1:
+            errors.append(f"{role} boot marker count was {boot_count}, expected 1")
+        boot_at = data.find(BOOT_MARKER)
+        protocol_at = data.find(U5_MARKER_PREFIX)
+        if protocol_at >= 0 and (boot_at < 0 or protocol_at < boot_at):
+            errors.append(f"{role} contained a U5 marker before its boot marker")
+        return errors
+
+    generation_failures = (
+        generation_errors("peripheral", peripheral)
+        + generation_errors("central", central)
+        if require_single_generation
+        else []
+    )
     peripheral_restored = PERIPHERAL_STARTUP_MARKERS[1] in peripheral
     central_restored = CENTRAL_STARTUP_MARKERS[1] in central
     peripheral_contract = marker_contract(
@@ -220,7 +240,8 @@ def classify(
         and not role_mismatch
         and startup_valid
         and not restore_mismatch
-        and not negative_requires_empty,
+        and not negative_requires_empty
+        and not generation_failures,
         "peripheral_missing": peripheral_missing,
         "central_missing": central_missing,
         "failure_markers": failures,
@@ -229,6 +250,7 @@ def classify(
         "role_mismatch": role_mismatch,
         "restore_mismatch": restore_mismatch,
         "negative_requires_empty": negative_requires_empty,
+        "generation_failures": generation_failures,
         "restored_contract": peripheral_restored and central_restored,
         "peripheral_bytes": len(peripheral),
         "central_bytes": len(central),
@@ -310,14 +332,17 @@ def capture_run(
 ) -> tuple[bytes, bytes]:
     peripheral.reset_input_buffer()
     central.reset_input_buffer()
-    pulse_nrst("JLinkExe", peripheral_jlink)
     peripheral_log = bytearray()
-    deadline = time.monotonic() + settle
-    while time.monotonic() < deadline:
-        peripheral_log.extend(drain(peripheral))
-        time.sleep(0.01)
+    # Keep the old central generation physically reset while the peripheral
+    # restarts and begins advertising. Otherwise it can complete a pairing
+    # lifecycle during this settle window and contaminate the next run's log.
+    with held_nrst("JLinkExe", central_jlink):
+        pulse_nrst("JLinkExe", peripheral_jlink)
+        deadline = time.monotonic() + settle
+        while time.monotonic() < deadline:
+            peripheral_log.extend(drain(peripheral))
+            time.sleep(0.01)
 
-    pulse_nrst("JLinkExe", central_jlink)
     central_log = bytearray()
     passkey_relayed = False
     deadline = time.monotonic() + timeout
@@ -431,6 +456,7 @@ def main() -> int:
                     central_log,
                     pairing_mode=args.pairing_mode,
                     expect_removal=args.expect_removal,
+                    require_single_generation=True,
                 )
                 record.update(
                     {
@@ -472,7 +498,7 @@ def main() -> int:
         for record in records
     )
     summary = {
-        "schema_version": 6,
+        "schema_version": 7,
         "pairing_mode": args.pairing_mode,
         "expect_removal": args.expect_removal,
         "runs": args.runs,
