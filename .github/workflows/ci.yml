@@ -97,7 +97,9 @@ jobs:
       # AP and STA select mutually exclusive target archives. Cargo features
       # unify across one invocation, so firmware roles are checked separately.
       - name: Check STA and general workspace
-        run: cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63
+        run: >-
+          cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap
+          --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp
       - name: Check SoftAP firmware role
         run: cargo check -Zbuild-std=core,alloc -p wifi_softap
       # Real link of the default members. Provider-specific legacy Embassy examples
@@ -324,7 +326,9 @@ jobs:
       - name: Test WS63 runtime compatibility shims
         run: cargo test -p ws63-rf-rs --target x86_64-unknown-linux-gnu --lib
       - name: Run clippy for STA and general workspace
-        run: cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63 -- -D warnings
+        run: >-
+          cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap
+          --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp -- -D warnings
       - name: Run clippy for SoftAP firmware role
         run: cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 
