@@ -21,8 +21,15 @@ SPEC.loader.exec_module(MATRIX)
 
 def complete_log(contract: str, role: str) -> bytes:
     markers = list(MATRIX.required_markers(contract, role))
-    if contract == "ble-activity" and role == "ble":
+    if contract in ("ble-activity", "wifi-ble-traffic") and role == "ble":
         markers.extend([MATRIX.BLE_SCAN_MARKER] * MATRIX.BLE_ACTIVITY_SCAN_COUNT)
+    if contract == "wifi-ble-traffic" and role == "ble":
+        markers.append(
+            b"RFDBG_COEX_LOCAL_ECHO sent=0x0000000a received=0x0000000a "
+            b"attempts=0x0000000a bitmap=0x000003ff"
+        )
+    elif contract == "wifi-ble-traffic" and role == "softap":
+        markers.append(b"RFDBG_SOFTAP_NET echo_rx=0000000a echo_tx=0000000a")
     return b"\n".join(markers)
 
 
@@ -66,6 +73,48 @@ class ClassifyTests(unittest.TestCase):
         )
         self.assertTrue(result["pass"])
         self.assertEqual(result["wifi_scan_ok_count"], 0)
+
+    def test_wifi_ble_traffic_requires_local_echo_and_softap_counts(self) -> None:
+        activity = MATRIX.classify(
+            "wifi-ble-traffic", "ble", complete_log("wifi-ble-traffic", "ble")
+        )
+        peer = MATRIX.classify(
+            "wifi-ble-traffic",
+            "softap",
+            complete_log("wifi-ble-traffic", "softap"),
+        )
+        self.assertTrue(activity["pass"])
+        self.assertTrue(peer["pass"])
+        self.assertEqual(activity["wifi_scan_ok_count"], 3)
+
+    def test_wifi_ble_traffic_fails_closed_on_short_echo(self) -> None:
+        payload = complete_log("wifi-ble-traffic", "ble").replace(
+            b"received=0x0000000a", b"received=0x00000009"
+        )
+        result = MATRIX.classify("wifi-ble-traffic", "ble", payload)
+        self.assertFalse(result["pass"])
+
+    def test_wifi_ble_traffic_accepts_bounded_retry(self) -> None:
+        payload = complete_log("wifi-ble-traffic", "ble").replace(
+            b"attempts=0x0000000a", b"attempts=0x0000000b"
+        )
+        result = MATRIX.classify("wifi-ble-traffic", "ble", payload)
+        self.assertTrue(result["pass"])
+        self.assertEqual(result["local_echo"]["attempts"], 11)
+
+    def test_wifi_ble_traffic_fails_closed_on_softap_short_count(self) -> None:
+        payload = complete_log("wifi-ble-traffic", "softap").replace(
+            b"echo_tx=0000000a", b"echo_tx=00000009"
+        )
+        result = MATRIX.classify("wifi-ble-traffic", "softap", payload)
+        self.assertFalse(result["pass"])
+
+    def test_wifi_ble_traffic_uses_independent_softap_counter_maxima(self) -> None:
+        payload = complete_log("wifi-ble-traffic", "softap")
+        payload += b"\nRFDBG_SOFTAP_NET echo_rx=0000000b echo_tx=00000009"
+        result = MATRIX.classify("wifi-ble-traffic", "softap", payload)
+        self.assertTrue(result["pass"])
+        self.assertEqual(result["softap_echo"], {"received": 11, "sent": 10})
 
 
 if __name__ == "__main__":

@@ -740,8 +740,14 @@ fixture 暴露的 repeated-scan payload ownership 泄漏：RAII 释放、敏感 
 scan cache clear 均进入发布路径；固定 ELF
 完成双板 3/3 reset、共 9 次 scan，allocation failure 为零且 live allocation 不再逐轮增长。
 证据见 [U7 Wi-Fi+BLE scan ownership](evidence/ws63-radio-u7-wifi-ble-scan-ownership-2026-08-31.md)。
-这只是并发流量 gate 的前置缺陷闭合，不等同于 sustained traffic/coexistence 验收。任一组合在
-完整 HIL 前不得公开 stable `coex` promise；U7 不自动启动 U8 stable graduation。
+随后固定双板 fixture 已完成 Wi-Fi 本地 UDP 流量 + BLE advertising 子门槛。初始单发探针留下
+`19/20` 反例；有界缺失序列重试版本以同一对 ELF 完成 3/3 和 20/20 paired nRST，累计
+60 次 scan、20 次 WPA2 association 和 200/200 个唯一 UDP echo。226 次实际发送尝试与
+34,000-byte 最小 RF heap free 均被保留为可观测成本，未伪装成零丢包。证据见
+[U7 Wi-Fi traffic + BLE advertising](evidence/ws63-radio-u7-wifi-ble-traffic-2026-08-31.md)。
+这仍不等同于 BLE-connected traffic 或完整 sustained traffic/coexistence 验收。U7 下一步是
+BLE connected traffic、对应 Wi-Fi + SLE lane、事件守恒和 IRQ/resource latency；任一组合在
+完整 HIL 前不得公开 stable `coex` promise，U7 也不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
@@ -3004,6 +3010,10 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   [U7 shared initialization](evidence/ws63-radio-u7-shared-init-2026-08-29.md)。
 - 先验证 Wi-Fi ping + BLE advertising/connection，再验证 Wi-Fi + SLE；只有并发 RF
   时序、shared RAM profile、heap watermark 和 IRQ latency 都有 HIL 后才公开 `coex`。
+- Wi-Fi local UDP + BLE advertising 已由固定双板 ELF 完成 3/3 与 20/20 paired nRST，
+  200/200 unique sequence 全部返回；见
+  [U7 Wi-Fi traffic + BLE advertising](evidence/ws63-radio-u7-wifi-ble-traffic-2026-08-31.md)。
+  BLE-connected traffic、Wi-Fi + SLE 与 latency/resource acceptance 仍未完成。
 - R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、
   examples 和 HIL evidence；之后才把更高层 convenience API 作为稳定候选。
 
