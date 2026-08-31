@@ -735,8 +735,13 @@ offline rebuild。第二道门已经完成 Wi-Fi+BLE 与 Wi-Fi+SLE 的共享资�
 固定镜像通过 3/3 与 20/20 paired nRST；证据见
 [U7 shared initialization](evidence/ws63-radio-u7-shared-init-2026-08-29.md)。它仍未证明并发
 Wi-Fi 流量、event conservation、资源峰值或 RF coexistence，因此 U7/X0 当前只继续推进
-concurrent-traffic acceptance。任一组合在完整 HIL 前不得公开 stable `coex` promise；U7
-不自动启动 U8 stable graduation。
+concurrent-traffic acceptance。`hisi-rf-ws63 0.1.0-alpha.90` 已修复 Wi-Fi+BLE activity
+fixture 暴露的 repeated-scan payload ownership 泄漏：RAII 释放、敏感 payload 清零和每轮
+scan cache clear 均进入发布路径；固定 ELF
+完成双板 3/3 reset、共 9 次 scan，allocation failure 为零且 live allocation 不再逐轮增长。
+证据见 [U7 Wi-Fi+BLE scan ownership](evidence/ws63-radio-u7-wifi-ble-scan-ownership-2026-08-31.md)。
+这只是并发流量 gate 的前置缺陷闭合，不等同于 sustained traffic/coexistence 验收。任一组合在
+完整 HIL 前不得公开 stable `coex` promise；U7 不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
