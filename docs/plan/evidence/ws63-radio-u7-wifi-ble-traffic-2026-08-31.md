@@ -1,5 +1,10 @@
 # WS63 U7 Wi-Fi traffic + BLE advertising evidence (2026-08-31)
 
+> **Status update (2026-09-01):** the open gates described below were later
+> closed by the [connected BLE acceptance evidence](ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md)
+> and the corresponding connected SLE evidence. The original boundary is kept
+> here as the conclusion supported by this earlier artifact.
+
 ## Scope
 
 This evidence closes the U7 sub-gate for local Wi-Fi traffic while BLE

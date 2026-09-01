@@ -24,7 +24,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3、SLE S0-S3、U0-U4、U5A/U5B 与 runtime pairing/observer 已闭合 | 当前唯一 WIP：U5C vendor bond persistence/restore/remove |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3、SLE S0-S3、U0-U7 已闭合 | 当前唯一 WIP：U8 stable-graduation review；评审不等于自动毕业 |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
@@ -60,13 +60,16 @@ flowchart LR
     U1 --> U2["Done U2 typed GAP/announce/seek"]
     U2 --> U3["Done U3 static GATT/SSAP database"]
     U3 --> U4["Done U4 async lifecycle"]
-    U4 --> U5C["NOW U5C bond persistence/restore/remove"]
+    U4 --> U5["Done U5 security/persistence lifecycle"]
+    U5 --> U6["Done U6 profiles/template delivery"]
+    U6 --> U7["Done U7 external consumer/coexistence acceptance"]
+    U7 -. product/API review .-> U8["Triggered U8 stable graduation"]
 ```
 
-这张图记录 A5、BLE B0-B3、SLE S0-S3、Radio UX U0-U4 以及 U5 runtime
-pairing/observer 已完成。历史 Wi-Fi 反例仍保留为回归证据，但不再伪装成未完成门槛；
-当前 major WIP 只有 U5C persistence/restore/remove，不能把
-NVS/TLS/coex/pairing/DLI 并行铺开。
+这张图记录 A5、BLE B0-B3、SLE S0-S3 与 Radio UX U0-U7 已完成。历史 Wi-Fi
+反例仍保留为回归证据，但不再伪装成未完成门槛。当前唯一 major WIP 是 U8
+stable-graduation review；NVS、TLS、DLI/SLB 等方向必须按触发条件重新分配唯一执行槽位，
+不能自动并行铺开。
 
 ## 维护契约
 

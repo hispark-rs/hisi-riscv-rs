@@ -2,11 +2,11 @@
 
 ## Scope
 
-This evidence closes the U7 SLE-connected traffic sub-gate. Two WS63 boards
+This evidence closes the U7 SLE-connected traffic and acceptance gates. Two WS63 boards
 maintain an SLE connection while the client performs Wi-Fi scans, associates
-with the peer's WPA2 SoftAP, and exchanges local UDP traffic. It does **not**
-close BLE-connected traffic or establish a bounded coexistence IRQ-latency
-contract.
+with the peer's WPA2 SoftAP, and exchanges local UDP traffic. Each generation
+also checks bounded event conservation, RF-heap watermarks, scheduler ownership,
+ready latency, and IRQ span. It does **not** make the public `coex` API stable.
 
 ## Implementation and contract
 
@@ -26,14 +26,23 @@ every reset generation:
 - at least ten SoftAP echo receives and replies.
 
 The HIL parser and its host tests were committed in parent commit `82895d488`.
+The schema-3 acceptance extension is implemented by `hisi-rf-core` commit
+`b5db5e2`, `hisi-rf-ws63` commits `420b421`, `17d786d`, and `a8005de`, the
+WS63 examples commit `fd15c7b`, and parent commits `cc490d9d4` and `7f4c6c017`.
+It requires `accepted = consumed + pending`, zero event drops and allocation
+failures, no RTOS ready-ownership error, client RF-heap free space of at least
+8 KiB, SoftAP RF-heap free space of at least 16 KiB, ready latency at most 2
+seconds, and IRQ span at most 100 ms.
 
 ## Fixed artifacts
 
 - SoftAP + SLE server ELF SHA-256:
-  `6c7029d8a984f5bd79589557238edde6d167579225264e12d27abbfb7c5ba131`;
+  `df30af903b4bd8193c14b5409a8f9e102786d93a65f9a680f2c7b708c4f07f34`;
 - STA + SLE client ELF SHA-256:
-  `a177e2daeb57bcd2fd2c28a42b69fff87c06e1a123ae55c8b61c355d753d6422`;
+  `41461b7b14b9a8a1f07d987c0196ff82b49ea7aa3573343cb78d136374eb3657`;
 - both images were downloaded through probe-rs at 3 MHz with full verify;
+- the SoftAP download took 139.58 seconds and the client download took 148.82
+  seconds;
 - the 20-reset matrix reused the unchanged images and used nRST only.
 
 ## Silicon evidence
@@ -51,9 +60,26 @@ matrix:
 - every client completion marker reported three scans, ten echoes, and active
   SLE connectivity.
 
+The acceptance images then completed another 3/3 shape gate and 20/20 paired
+nRST matrix. Across the 20-run matrix:
+
+- all 40 role snapshots satisfied event conservation and recorded zero drops;
+- the largest Wi-Fi/SLE queue high-water mark was 5;
+- the minimum RF-heap free space was 13,336 bytes and the maximum peak usage was
+  61,876 bytes, with zero allocation failures;
+- the maximum observed ready latency was 1,212 ms and maximum IRQ span was 1 ms;
+- all ready-owner, duplicate-membership, wrong-bucket, and invalid-link counters
+  remained zero;
+- the connected-traffic result remained 20/20 and 200/200 unique UDP sequences.
+
 Local matrix artifact:
 
 `/private/tmp/ws63-u7-wifi-sle-connected-retained-scan-20reset-20260901`
+
+Acceptance artifacts:
+
+- `/private/tmp/ws63-u7-acceptance-sle-rf8k-reset3-20260901`;
+- `/private/tmp/ws63-u7-acceptance-sle-rf8k-reset20-20260901`.
 
 ## Release and remaining boundary
 
@@ -63,6 +89,8 @@ released in `hisi-rf-ws63 0.1.0-alpha.94`; the facade pins that backend in
 macOS, and Windows. The 272 KiB Wi-Fi+BLE figure is a link-time boundary, not a
 new BLE runtime watermark claim.
 
-U7 remains open for BLE-connected traffic and measured IRQ/resource latency.
-This matrix is integration and statistical evidence for fixed artifacts; it is
-not a proof that external RF traffic cannot be lost.
+The SLE half of U7 event-conservation and resource/latency acceptance is closed.
+Together with the BLE acceptance matrix, this closes U7 integration acceptance.
+The result is integration and statistical evidence for fixed artifacts, not a
+mathematical proof that external RF traffic cannot be lost. Stable graduation
+remains a separate U8 review.

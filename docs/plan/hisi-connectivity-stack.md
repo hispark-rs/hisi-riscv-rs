@@ -2,7 +2,7 @@
 
 ## 状态
 
-**当前执行窗口：U7 external-consumer and two-board/coexistence acceptance。** U0-U4 已完成；U5A 安全控制面、U5B
+**U7 external-consumer and two-board/coexistence acceptance 已完成；当前唯一 major WIP 是 U8 stable-graduation review。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -51,8 +51,9 @@ generation-tagged active guard、显式 `stop(self).await`、Drop best-effort cl
 通过 3/3 shape gate 与 20/20 paired nRST matrix，因此 U4 已完成；这仍不表示 API stable。
 vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早于父仓 v0.8.0”的删除门槛
 约束；它们不会被后续 BLE 里程碑扩张。U6 的六个命名 BLE/SLE profile、caller-owned
-storage、机器可读 resource report 和 template starter 已完成发布及三平台 CI。当前只推进
-U7 的 crates.io-only external consumer 与两板 coexistence gate，不并行启动 U8。
+storage、机器可读 resource report 和 template starter 已完成发布及三平台 CI。U7 的
+crates.io-only external consumer、两板 connected traffic、事件守恒与资源/延迟 gate 均已
+闭合；U8 只评审有证据的候选面，不自动毕业 stable `coex` API。
 跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -87,7 +88,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U7 external-consumer and two-board/coexistence acceptance
+## 当前执行窗口：U8 stable-graduation review
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -728,7 +729,7 @@ caller-owned storage 和 schema `hisi-rf-radio-resource-report/v1` 的 allocatio
 `33232162664`/`33232664242` 在原生 Linux/macOS/Windows 生成 Wi-Fi/BLE/SLE resource
 report；tag workflow 随后发布非 Draft prerelease。U6 因此完成。
 
-当前单一 WIP 是 **U7 external-consumer and two-board/coexistence acceptance**。第一道门已由
+U7 external-consumer and two-board/coexistence acceptance 已完成。第一道门由
 `hisi-rf 0.1.0-alpha.101` 的 crates.io-only fixture 关闭：Linux、macOS、Windows 均完成
 WPA2/WPA3、BLE peripheral、SLE announce 的普通 Cargo build、只读 registry source 和
 offline rebuild。第二道门已经完成 Wi-Fi+BLE 与 Wi-Fi+SLE 的共享资源/平台初始化子门槛，
@@ -762,8 +763,17 @@ watermark HIL 校准。BLE-connected traffic 子门槛也已闭合：`hisi-rf-ws
 advertising completion 误判为错误的问题后，3/3 shape gate 与 20/20 paired nRST 均通过，
 累计返回 200/200 个唯一 sequence，每轮固定 10/10，双方 BLE connected marker 完整。
 证据见 [U7 Wi-Fi traffic + connected BLE](evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md)。
-U7 剩余工作是显式事件守恒和 IRQ/resource latency/watermark acceptance；完整 HIL 前不得
-公开 stable `coex` promise，U7 也不自动启动 U8 stable graduation。
+最后的显式事件守恒和 IRQ/resource latency/watermark acceptance 由 schema-3 HIL
+contract 闭合：BLE-connected 与 SLE-connected 固定镜像均再次通过 3/3 shape gate 和
+20/20 paired nRST；80 份 role snapshot 满足 `accepted = consumed + pending`，event drop、
+allocation failure 和 RTOS ready ownership 错误均为零。BLE lane 的最小 RF heap free 为
+10,364 bytes、最大 ready latency 为 1,189 ms、最大 IRQ span 为 1 ms；SLE lane 分别为
+13,336 bytes、1,212 ms 和 1 ms。client RF heap 采用独立的 8 KiB burst reserve，不能与
+profile 中 16 KiB RTOS runtime-object headroom 混为同一预算。证据已并入上述 connected
+BLE/SLE 页面。U7 因此完成；当前唯一 major WIP 转为 U8 stable-graduation review，
+不能从固定镜像的统计证据直接推导 stable `coex` promise。U8 必须逐项核对 public facade、
+typed lifecycle、compile-fail/host/三平台 consumer、两板 HIL、资源报告、文档与迁移兼容性；
+没有完整映射的 API 继续保持 unstable/doc-hidden。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
@@ -3036,7 +3046,8 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   20/20 paired nRST，均返回 200/200 unique sequence；见
   [U7 Wi-Fi traffic + connected BLE](evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md)
   和 [U7 Wi-Fi traffic + connected SLE](evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md)。
-  显式事件守恒与 latency/resource acceptance 仍未完成。
+  schema-3 acceptance matrix 又逐轮验证事件守恒、零 drop、RF heap watermark、ready/IRQ
+  latency 和 RTOS ready ownership；BLE/SLE 各 20/20 通过，U7 integration gate 已完成。
 - R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、
   examples 和 HIL evidence；之后才把更高层 convenience API 作为稳定候选。
 

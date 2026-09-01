@@ -1,5 +1,9 @@
 # WS63 U7 Wi-Fi + BLE scan ownership evidence (2026-08-31)
 
+> **Status update (2026-09-01):** U7 was subsequently closed by the connected
+> BLE/SLE traffic and schema-3 acceptance matrices. The original open-boundary
+> statement remains below because it accurately describes this earlier fixture.
+
 ## Scope
 
 This evidence closes a prerequisite defect in the U7 Wi-Fi + BLE activity

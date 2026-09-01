@@ -12,9 +12,9 @@ the stable API reference, then fix the documentation.
 two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
 frozen. U5A-U5C security control, hardware-crypto compatibility, and
 vendor-managed bond persistence/restore/removal, U5D positive/negative pairing
-lifecycles, and U6 named-profile/template delivery are also frozen. The current
-major WIP is U7: crates.io-only external consumers plus measured two-board
-coexistence acceptance.
+lifecycles, U6 named-profile/template delivery, and U7 external-consumer plus
+measured two-board coexistence acceptance are also frozen. The current sole WIP
+is U8 stable-graduation review; review does not imply automatic stabilization.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -190,7 +190,7 @@ and [SLE S1 announce/seek](docs/plan/evidence/ws63-sle-s1-announce-seek-2026-08-
 plus [SLE S2 connect/disconnect](docs/plan/evidence/ws63-sle-s2-connect-disconnect-2026-08-07.md)
 and [SLE S3 SSAP](docs/plan/evidence/ws63-sle-s3-ssap-2026-08-07.md).
 
-## NOW -- U7 External Consumer And Coexistence Acceptance
+## Completed -- U7 External Consumer And Coexistence Acceptance
 
 The product gate selected Radio UX/API convergence. U0 has frozen the B3/S3
 migration inputs and U1 now provides facade-owned BLE/SLE storage,
@@ -237,7 +237,7 @@ JSON report contract are released in `hisi-rf 0.1.0-alpha.101`.
 projects and representative images, and emits Wi-Fi/BLE/SLE reports on native
 Linux, macOS and Windows. U6 is therefore closed.
 
-U7 remains the single WIP. Its crates.io-only consumer gate now passes on all
+U7's crates.io-only consumer gate passes on all
 three host OSes, and fixed Wi-Fi+BLE/Wi-Fi+SLE images pass the shared-init 3/3
 and 20/20 reset gates. The Wi-Fi local-UDP + BLE-advertising lane now also passes
 3/3 and 20/20 paired reset gates with 200/200 unique sequences recovered; its
@@ -255,9 +255,23 @@ The BLE-connected lane now also passes 3/3 and 20/20 paired reset gates, with
 20/20 BLE links, 20/20 WPA2 associations, and exactly 200/200 unique UDP
 sequences; see the
 [connected-BLE evidence](docs/plan/evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md).
-The remaining gate is explicit event conservation plus measured IRQ/resource
-latency and runtime watermark acceptance. No stable `coex` promise is public
-before that gate passes. DLI/SLB and stable graduation remain deferred.
+The final schema-3 acceptance gate also passes for both connected lanes. BLE and
+SLE each completed another 3/3 shape gate and 20/20 paired nRST matrix. Across
+80 role snapshots, accepted events were exactly consumed plus pending, drops and
+allocation failures were zero, and RTOS ready-ownership diagnostics remained
+clean. The worst measured BLE/SLE RF-heap free watermarks were 10,364/13,336
+bytes, ready latencies 1,189/1,212 ms, and IRQ spans 1/1 ms. U7 is therefore
+closed. These fixed-artifact HIL matrices remain statistical integration evidence;
+Public stabilization remains pending U8 review; DLI/SLB remains deferred.
+
+## NOW -- U8 Stable-Graduation Review
+
+U8 audits only evidence-backed public facade candidates. Each candidate must map
+to typed lifecycle and error contracts, compile-fail and host interleaving tests,
+crates.io-only Linux/macOS/Windows consumers, two-board HIL, resource reports,
+documentation, and a compatible migration path. Missing evidence keeps the API
+unstable or doc-hidden. The review may produce a no-go result and does not widen
+BLE/SLE/DLI/SLB scope.
 
 ## LATER -- Triggered Product Directions
 
@@ -266,7 +280,6 @@ After B0-B3, choose exactly one direction from measured product demand:
 - NVS N0-N3 when the release image must stop depending on the vendor NV
   generator;
 - TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;
-- coexistence only after S3 SSAP is reproducible on the two-board rig.
 
 WPA3-Personal was selected at the A4 product gate; the remaining choices stay
 triggered rather than pre-booked as concurrent work.
