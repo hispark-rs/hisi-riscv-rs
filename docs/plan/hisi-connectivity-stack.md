@@ -90,9 +90,9 @@ Embassy executor/time 运行环境。
 
 ## 当前执行窗口：U8R facade-boundary remediation
 
-U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。Wi-Fi 公开快照仍有
-16 处 `hisi_rf_ws63` 类型签名；BLE/SLE 虽然已经隐藏 backend crate 类型，但仍公开裸
-`stage: u8` / `status: u32` backend event 和 unsafe allocator hooks；coexistence 只有
+U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。U8R-E1/E2 已进一步移除
+BLE/SLE 裸 backend event 和三条 profile 的 public unsafe allocator hooks；Wi-Fi 公开快照仍有
+16 处 `hisi_rf_ws63` 类型签名，coexistence 仍只有
 `#[doc(hidden)]` 维护 fixture，没有公共 shared-controller lifecycle。完整映射见
 [U8 stable-graduation review](evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md)。
 
@@ -105,9 +105,11 @@ capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait �
   `BleBackendStage`、`SleBackendStage` 和 opaque `VendorStatus`；public unsolicited event
   不再暴露需要应用解释的裸 stage/status 整数。BLE 13 个 host tests、SLE 5 个 host tests、
   facade contracts、public API snapshots、Clippy 和两条 RV32 profile check 均通过。
-- [ ] **U8R-E2 allocator capability**：移除普通应用可见的 public unsafe
-  `InstalledRadioStorage::{allocate,deallocate}`，由 composition-owned capability 向 runtime
-  提供有界 allocator glue。
+- [x] **U8R-E2 allocator capability**：`hisi-rf` commit `38fbd03` 将
+  `InstalledRadioStorage::{allocate,deallocate}` 收回 facade 内部，三个 profile 统一通过安全
+  `rtos_resources(monotonic_ms)` 构造 RTOS services。public API snapshots、graduation gate、
+  BLE/SLE contracts、RV32 BLE/SLE/Wi-Fi composition、Clippy 与 package no-verify 均通过；
+  已发布 alpha.110 consumer fixture 保留旧 API，待下一次 facade release 后迁移。
 - [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 16 处 `hisi_rf_ws63` public signature，
   保持现有 WPA2/WPA3 行为和三平台 consumer contract。
 

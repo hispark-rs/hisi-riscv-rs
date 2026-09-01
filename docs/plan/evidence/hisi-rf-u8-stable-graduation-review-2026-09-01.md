@@ -25,9 +25,9 @@ implementation details or incomplete lifecycle contracts.
 
 | Surface | Evidence already closed | Graduation decision | Blocking facts |
 |---|---|---|---|
-| Wi-Fi station | WPA2/WPA3, bounded runner, crates.io-only three-OS consumer, two-board traffic | Blocked | The public snapshot still contains 16 `hisi_rf_ws63` signatures; allocator hooks are public unsafe functions; NET0/NET1 link metadata and Embassy Net contract remain deferred. |
-| BLE | Typed role profiles, lifecycle cancellation, GATT, security/bonding, two-board U7 acceptance | Blocked | Backend crate types are hidden, but public events still expose raw `stage: u8` and `status: u32`; runtime allocator hooks remain public unsafe functions; migration naming has not completed final review. |
-| SLE | Typed announce/seek, lifecycle cancellation, SSAP server slice, two-board U7 acceptance | Blocked | Backend crate types are hidden, but raw backend event integers and public unsafe allocator hooks remain; connection and SSAP client lifecycle are not represented by the current facade slice. |
+| Wi-Fi station | WPA2/WPA3, bounded runner, crates.io-only three-OS consumer, two-board traffic | Blocked | At review time the public snapshot contained 16 `hisi_rf_ws63` signatures and public unsafe allocator hooks; NET0/NET1 link metadata and Embassy Net contract remain deferred. |
+| BLE | Typed role profiles, lifecycle cancellation, GATT, security/bonding, two-board U7 acceptance | Blocked | At review time public events exposed raw `stage: u8` and `status: u32` and runtime allocator hooks were public unsafe functions; migration naming had not completed final review. |
+| SLE | Typed announce/seek, lifecycle cancellation, SSAP server slice, two-board U7 acceptance | Blocked | At review time raw backend event integers and public unsafe allocator hooks remained; connection and SSAP client lifecycle were not represented by the facade slice. |
 | Coexistence | Connected Wi-Fi+BLE and Wi-Fi+SLE fixed-image acceptance | Hidden | Only `#[doc(hidden)] __coexistence` maintainer fixtures exist. There is no public shared `RadioController` lifecycle, capability negotiation, or recovery contract. |
 
 ## Evidence Boundary
@@ -61,6 +61,11 @@ remain separate evidence gates. U8R must not widen into those product areas.
 U8R-E1 is complete in `hisi-rf` commit `08a1e43`. BLE and SLE asynchronous
 backend events now expose `BleBackendStage` / `SleBackendStage` plus opaque
 `VendorStatus`; their public snapshots no longer contain raw `stage: u8` or
-`status: u32` fields. This removes one review blocker but does not change the
-no-graduation decision: public unsafe allocator hooks and the Wi-Fi backend-type
-boundary remain open.
+`status: u32` fields.
+
+U8R-E2 is complete in `hisi-rf` commit `38fbd03`. The facade now keeps raw arena
+allocation and deallocation private and exposes a safe, composition-owned
+`InstalledRadioStorage::rtos_resources` factory. Wi-Fi, BLE, and SLE public API
+snapshots contain no public unsafe allocator hooks. The no-graduation decision
+remains unchanged: the Wi-Fi backend-type boundary and the protocol-specific
+lifecycle/NET gates remain open.
