@@ -51,28 +51,21 @@ smoltcp = {
 ## 2. 把全局状态改成调用方持有的 storage
 
 旧应用通常由 `ws63-rf-rs` 内部全局状态隐式持有队列、密码硬件 scratch 和 RF heap。
-新入口要求应用明确提供有界 storage 和 radio arena：
+新入口要求应用明确提供有界 storage；宏同时声明 control state 和正确 linker section 中的
+arena backing：
 
 ```rust
-const EVENT_CAPACITY: usize = 8;
-
-static RADIO_STORAGE:
-    hisi_rf::ws63::Storage<hisi_rf::ws63::SelectedProfile, EVENT_CAPACITY> =
-    hisi_rf::ws63::Storage::new();
-
-hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);
+hisi_rf::ws63::declare_radio_storage!(static RADIO_STORAGE);
 ```
 
-初始化 RTOS 前先 claim 并安装 arena。重复 claim、容量不足或 profile 不匹配会在启动
+初始化 RTOS 前先安装 caller-owned storage。重复安装、容量不足或 profile 不匹配会在启动
 blob 前返回结构化错误：
 
 ```rust
-let radio_arena = RADIO_ARENA
-    .claim_for::<hisi_rf::ws63::SelectedProfile>()?
-    .install()?;
+let installed_storage = RADIO_STORAGE.install()?;
 ```
 
-完整资源数字由生成项目中的 `just rf-resource-report` 输出；不要从旧示例复制 heap、
+完整资源数字由生成项目中的 `just resource-report` 输出；不要从旧示例复制 heap、
 task 或 queue 常量。
 
 ## 3. 使用 WS63 composition root
@@ -81,21 +74,16 @@ task 或 queue 常量。
 底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：
 
 ```rust
-let resources = hisi_rf::ws63::Resources::<hisi_rf::ws63::WifiWpa2Smoltcp>::builder(
-    efuse,
-    radio_arena,
-)
-.crypto(km, spacc, trng)
-.build();
+let resources = installed_storage.resources(efuse, km, spacc, trng);
 
-let controller =
-    hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &RADIO_STORAGE)?;
+let controller = hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources)?;
 
-let mut wifi = controller.start_runner()?;
+let parts = controller.split(RUNNER_BUDGET);
 ```
 
-WPA3 使用 `WifiWpa3Smoltcp`，并在 `.crypto(...)` 后追加 `.pke(pke)`；漏掉
-PKE 时没有可调用的 `build()`。WPA2 不消费 PKE，因此应用仍可把该 token 留给其他用途。
+WPA3 的 `resources` 调用在 `spacc` 后额外接收 `pke`；WPA2 的编译配置中没有这个参数，
+因此应用仍可把 PKE token 留给其他用途。profile、arena 和 backend builder 都由 facade
+内部消费，不再出现在应用签名中。
 
 应用只通过 chip-neutral 控制面继续工作：
 
@@ -129,7 +117,7 @@ cargo generate --git https://github.com/hispark-rs/hisi-rs-template \
 
 cd rf-migration-reference
 just build
-just rf-resource-report
+just resource-report
 just image
 ```
 

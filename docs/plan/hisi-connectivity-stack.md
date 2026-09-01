@@ -90,9 +90,9 @@ Embassy executor/time 运行环境。
 
 ## 当前执行窗口：U8R facade-boundary remediation
 
-U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。U8R-E1/E2 已进一步移除
-BLE/SLE 裸 backend event 和三条 profile 的 public unsafe allocator hooks；Wi-Fi 公开快照仍有
-16 处 `hisi_rf_ws63` 类型签名，coexistence 仍只有
+U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。U8R-E1/E2/E3a/E3b 已进一步
+移除 BLE/SLE 裸 backend event、三条 profile 的 public unsafe allocator hooks，以及 Wi-Fi
+wait/storage/resources/init 边界中的 backend 类型；coexistence 仍只有
 `#[doc(hidden)]` 维护 fixture，没有公共 shared-controller lifecycle。完整映射见
 [U8 stable-graduation review](evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md)。
 
@@ -110,14 +110,17 @@ capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait �
   `RuntimeAllocator` capability 把回调交给应用选择的 runtime；`hisi-rf` 不依赖或启动
   `hisi-rtos`。public API snapshots、graduation gate、runtime boundary check、
   BLE/SLE contracts、RV32 BLE/SLE/Wi-Fi composition、Clippy 与 package no-verify 均通过；
-  已发布 alpha.110 consumer fixture 保留旧 API，待下一次 facade release 后迁移。
+  已发布 alpha.110 consumer fixture 保留旧 API；alpha.111 consumer 已迁移到新 facade。
 - [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 `hisi_rf_ws63` public signature，保持现有
   WPA2/WPA3 行为和三平台 consumer contract。
   - [x] **E3a wait diagnostics**：`hisi-rf` commit `8ab95a4` 让 runner 只返回
     `WaitDiagnosticsSnapshot`，移除 backend wait type re-export 和 public `From<backend>`；
     host tests、RV32 check、public API gate 与 Clippy 通过。快照剩余 14 行 backend 引用。
-  - [ ] **E3b storage/resources/init**：由 facade-owned admission 和 resource builder 消费
-    backend arena/profile/init error，不让应用拆出 backend capability。
+  - [x] **E3b storage/resources/init**：`hisi-rf` commits `d410e9a` / `26a4746` 由
+    facade-owned `ResourceReport`、`InitError`、`Resources` 和 `InstalledRadioStorage`
+    消费 backend arena/profile/admission。WPA2/WPA3 分别通过编译期不同的 `resources(...)`
+    签名表达 PKE 所有权，统一使用 `init(config, resources)`；alpha.111 已发布，独立模板
+    release build 和资源报告使用 crates.io 依赖通过。
   - [ ] **E3c device/diagnostics**：以 facade-owned smoltcp device/token 和 diagnostics
     snapshots 替换剩余 backend data-path 类型，随后重跑三平台 consumer 与 Wi-Fi HIL parity。
 
@@ -1185,25 +1188,15 @@ composition root 可以同时依赖抽象与具体实现，这不改变 backend 
 期望初始化入口是由 facade re-export 的安全资源构造器，例如：
 
 ```rust,ignore
-hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);
+hisi_rf::ws63::declare_radio_storage!(static RADIO_STORAGE);
 
-let arena = RADIO_ARENA
-    .claim_for::<hisi_rf::ws63::SelectedProfile>()?
-    .install()?;
-let resources =
-    hisi_rf::ws63::Resources::<hisi_rf::ws63::WifiWpa2Smoltcp>::builder(efuse, arena)
-        .crypto(km, spacc, trng)
-        .build();
-let radio = hisi_rf::ws63::init(
-    RadioConfig::default(),
-    resources,
-    &RADIO_STATE,
-)?;
+let installed = RADIO_STORAGE.install()?;
+let resources = installed.resources(efuse, km, spacc, trng);
+let radio = hisi_rf::ws63::init(RadioConfig::default(), resources)?;
 ```
 
 用户不能传入 `ws63_radio_sys::*` raw type、archive path、ROM address 或 relocation profile。
-WPA3 profile 使用同一 builder，但必须在 `build()` 前显式 `.pke(pke)`；WPA2 profile
-在类型上不消费 PKE。
+WPA3 profile 的 `resources(...)` 签名额外消费 PKE；WPA2 profile 在类型上不消费 PKE。
 标准 RISC-V relocation archive、可重定位 ROM patch object 和 dependency-owned link directives
 是此 UX 的前置条件；最终应用不得运行 guarded-link shell、读取
 `DEP_WS63_RADIO_SYS_*`、调用 `hisi-rf-link` 或依赖 GCC/Python/个人绝对路径才能完成普通
@@ -2368,8 +2361,8 @@ P0 面向应用开发者，只收敛完成 Wi-Fi demo 所必需的四个体验�
 board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo-hisi` 的命令、agent、安全、
 跨平台与 release 规划见 [`cargo-hisi` Developer Workflow CLI Plan](cargo-hisi-cli.md)。
 
-- [x] **隐藏组合根**：`hisi_rf::ws63::Resources::<Profile>::builder(...)` 消费明确的 HAL
-  peripheral tokens，`hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装并返回只能通过
+- [x] **隐藏组合根**：`InstalledRadioStorage::resources(...)` 消费明确的 HAL peripheral
+  tokens，`hisi_rf::ws63::init` 完成 backend/crypto/event/L2 组装并返回只能通过
   chip-neutral API `split()` 的 controller。普通 consumer 不构造 `Ws63WifiBackend`，不直接
   依赖 `ws63-radio-sys`/blob/RTOS driver，也不调用 vendor OSAL。
 - [x] **提供命名、验证过的 profile**：当前发布的
@@ -2596,9 +2589,10 @@ board-manager、IDE 图形界面和更多协议不进入该 gate。独立 `cargo
   名字集合除预期的 `SelectedProfile` 目标外一致，host tests、RV32 checks、独立
   `cargo package --locked` 与 public-API gate 均通过。`hisi-rf 0.1.0-alpha.49`、
   `ws63-examples` 和 template v0.7.0-alpha.12 已沿 facade 消费同一契约。
-- [x] 冻结 `Storage<Profile, EVENTS>` 与 `RadioArenaStorage` 的长期所有权形态：普通用户
-  只声明一个 caller-owned `RadioStorage<Profile, const EVENTS: usize>` composition，并
-  通过单一 `install()` / `into_init_parts()` admission 入口消费。实现必须物理拆分普通
+- [x] 冻结 caller-owned storage 与 arena 的长期所有权形态：普通用户只声明一个
+  `declare_radio_storage!` composition，并通过单一 `install()` admission 入口消费；
+  alpha.111 进一步由 `InstalledRadioStorage::resources(...)` 直接绑定 profile 所需 token，
+  不再向应用暴露 `into_init_parts()` 或 backend arena capability。实现必须物理拆分普通
   `.bss` control state 与 `.hisi.shared-arena` NOLOAD backing；把两者强行放入同一 linker
   section 会与 WS63 SRAM 布局冲突，因此“逻辑单一所有权、物理分区存放”是已冻结契约。
   allocation hooks 只可通过已安装的 `InstalledRadioStorage` 访问 arena。resource report

@@ -10,6 +10,11 @@ The alpha.52 public shape recorded here still exposed `EVENTS` in facade types
 and the storage macro. Alpha.53 retained the same ownership and physical layout
 while moving event capacity into the selected profile; see
 [A5UX opaque event capacity](ws63-rf-a5ux-opaque-event-capacity-2026-07-29.md).
+The later `hisi-rf 0.1.0-alpha.111` facade keeps this ownership and physical
+layout but replaces the public `into_init_parts()` boundary with
+`InstalledRadioStorage::resources(...)` followed by `init(config, resources)`.
+The bullets below describe the historical alpha.52 evidence, not the current
+consumer API.
 
 ## Frozen Contract
 

@@ -274,17 +274,19 @@ documentation, and a compatible migration path. Missing evidence keeps the API
 unstable or doc-hidden. The review may produce a no-go result and does not widen
 BLE/SLE/DLI/SLB scope.
 
-The review produced a no-go decision for public graduation. U8R-E1/E2 have since
-replaced raw BLE/SLE backend event fields and hidden the three profiles' unsafe
-runtime allocator hooks. Wi-Fi still leaks chip-backend types in public signatures. The
+The review produced a no-go decision for public graduation. U8R-E1/E2/E3a/E3b have
+since replaced raw BLE/SLE backend event fields, hidden the three profiles' unsafe
+runtime allocator hooks, and removed backend types from Wi-Fi wait/storage/resources/init
+signatures. Wi-Fi device and diagnostics surfaces still leak chip-backend types. The
 coexistence surface remains a doc-hidden maintainer fixture rather than a public
 shared lifecycle. Exact findings are recorded in the
 [U8 review evidence](docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md).
 
 ## NOW -- U8R Facade-Boundary Remediation
 
-U8R is the only major WIP. Typed BLE/SLE errors and the composition-owned allocator
-capability are complete; the active step is Wi-Fi backend-type wrappers. Each step must preserve current alpha behavior
+U8R is the only major WIP. Typed BLE/SLE errors, the composition-owned allocator,
+and Wi-Fi storage/resources/init wrappers are complete; the active step is the Wi-Fi
+device and diagnostics facade. Each step must preserve current alpha behavior
 and rerun public API, host, three-OS consumer, documentation, and applicable HIL
 gates. It does not stabilize coexistence or widen into Embassy Net, DLI/SLB, or
 new protocol features.
