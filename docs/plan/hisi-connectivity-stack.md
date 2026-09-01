@@ -756,8 +756,14 @@ SLE-connected traffic 子门槛随后也已闭合：固定双板 ELF 先建立 S
 证据见 [U7 Wi-Fi traffic + connected SLE](evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md)。
 `hisi-rf-ws63 0.1.0-alpha.94` 同时把 Wi-Fi+BLE shared arena 收敛到 272 KiB；Linux/macOS/
 Windows stock rust-lld final-link 和边界 guard 已通过，但该数字尚未由新的 BLE runtime
-watermark HIL 校准。U7 剩余工作是 BLE-connected traffic、事件守恒和 IRQ/resource
-latency；完整 HIL 前不得公开 stable `coex` promise，U7 也不自动启动 U8 stable graduation。
+watermark HIL 校准。BLE-connected traffic 子门槛也已闭合：`hisi-rf-ws63
+0.1.0-alpha.97` 和 `hisi-rf 0.1.0-alpha.106` 的固定双板 fixture 先建立 BLE connection，
+再完成 3 次 Wi-Fi scan、WPA2 association 和本地 UDP；修正 SoftAP 把 status-zero
+advertising completion 误判为错误的问题后，3/3 shape gate 与 20/20 paired nRST 均通过，
+累计返回 200/200 个唯一 sequence，每轮固定 10/10，双方 BLE connected marker 完整。
+证据见 [U7 Wi-Fi traffic + connected BLE](evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md)。
+U7 剩余工作是显式事件守恒和 IRQ/resource latency/watermark acceptance；完整 HIL 前不得
+公开 stable `coex` promise，U7 也不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
@@ -3026,7 +3032,11 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   Wi-Fi local UDP + SLE announcing 也已由固定双板 ELF 完成 3/3 与 20/20 paired nRST，
   200/200 unique sequence 全部返回且无 Wi-Fi/SLE event drop；见
   [U7 Wi-Fi traffic + SLE announcing](evidence/ws63-radio-u7-wifi-sle-traffic-2026-09-01.md)。
-  BLE-connected traffic、SLE-connected traffic 与 latency/resource acceptance 仍未完成。
+  Wi-Fi local UDP + connected BLE 与 connected SLE 也分别由固定双板 ELF 完成 3/3 与
+  20/20 paired nRST，均返回 200/200 unique sequence；见
+  [U7 Wi-Fi traffic + connected BLE](evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md)
+  和 [U7 Wi-Fi traffic + connected SLE](evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md)。
+  显式事件守恒与 latency/resource acceptance 仍未完成。
 - R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、
   examples 和 HIL evidence；之后才把更高层 convenience API 作为稳定候选。
 

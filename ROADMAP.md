@@ -251,9 +251,13 @@ The SLE-connected lane now also passes 3/3 and 20/20 paired reset gates while
 maintaining the SLE link, completing three scans, associating over WPA2, and
 recovering 200/200 unique UDP sequences; see the
 [connected-SLE evidence](docs/plan/evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md).
-The remaining gate is BLE-connected traffic plus measured IRQ/resource
-latency. No stable `coex` promise is public before that gate passes. DLI/SLB and
-stable graduation remain deferred.
+The BLE-connected lane now also passes 3/3 and 20/20 paired reset gates, with
+20/20 BLE links, 20/20 WPA2 associations, and exactly 200/200 unique UDP
+sequences; see the
+[connected-BLE evidence](docs/plan/evidence/ws63-radio-u7-wifi-ble-connected-traffic-2026-09-01.md).
+The remaining gate is explicit event conservation plus measured IRQ/resource
+latency and runtime watermark acceptance. No stable `coex` promise is public
+before that gate passes. DLI/SLB and stable graduation remain deferred.
 
 ## LATER -- Triggered Product Directions
 
