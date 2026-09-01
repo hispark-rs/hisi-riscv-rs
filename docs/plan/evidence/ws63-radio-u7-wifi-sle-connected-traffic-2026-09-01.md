@@ -92,5 +92,6 @@ new BLE runtime watermark claim.
 The SLE half of U7 event-conservation and resource/latency acceptance is closed.
 Together with the BLE acceptance matrix, this closes U7 integration acceptance.
 The result is integration and statistical evidence for fixed artifacts, not a
-mathematical proof that external RF traffic cannot be lost. Stable graduation
-remains a separate U8 review.
+mathematical proof that external RF traffic cannot be lost. The later U8 review
+recorded a no-go graduation decision in
+[`hisi-rf-u8-stable-graduation-review-2026-09-01.md`](hisi-rf-u8-stable-graduation-review-2026-09-01.md).

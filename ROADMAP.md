@@ -12,9 +12,10 @@ the stable API reference, then fix the documentation.
 two-WS63 WPA2/WPA3 release gate, BLE B0-B3, SLE S0-S3, and Radio UX U0-U4 are
 frozen. U5A-U5C security control, hardware-crypto compatibility, and
 vendor-managed bond persistence/restore/removal, U5D positive/negative pairing
-lifecycles, U6 named-profile/template delivery, and U7 external-consumer plus
-measured two-board coexistence acceptance are also frozen. The current sole WIP
-is U8 stable-graduation review; review does not imply automatic stabilization.
+lifecycles, U6 named-profile/template delivery, U7 external-consumer plus
+measured two-board coexistence acceptance, and the U8 no-go graduation review
+are also frozen. The current sole WIP is U8R facade-boundary remediation;
+coexistence does not graduate automatically.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -261,10 +262,10 @@ SLE each completed another 3/3 shape gate and 20/20 paired nRST matrix. Across
 allocation failures were zero, and RTOS ready-ownership diagnostics remained
 clean. The worst measured BLE/SLE RF-heap free watermarks were 10,364/13,336
 bytes, ready latencies 1,189/1,212 ms, and IRQ spans 1/1 ms. U7 is therefore
-closed. These fixed-artifact HIL matrices remain statistical integration evidence;
-Public stabilization remains pending U8 review; DLI/SLB remains deferred.
+closed. These fixed-artifact HIL matrices remain statistical integration evidence.
+The completed U8 review made a no-go graduation decision; DLI/SLB remains deferred.
 
-## NOW -- U8 Stable-Graduation Review
+## Completed -- U8 Stable-Graduation Review
 
 U8 audits only evidence-backed public facade candidates. Each candidate must map
 to typed lifecycle and error contracts, compile-fail and host interleaving tests,
@@ -272,6 +273,23 @@ crates.io-only Linux/macOS/Windows consumers, two-board HIL, resource reports,
 documentation, and a compatible migration path. Missing evidence keeps the API
 unstable or doc-hidden. The review may produce a no-go result and does not widen
 BLE/SLE/DLI/SLB scope.
+
+The review produced a no-go decision for public graduation. BLE/SLE have strong
+lifecycle and silicon evidence and no backend crate types in their API snapshots,
+but still expose raw backend status fields and public unsafe runtime allocator
+hooks. Wi-Fi additionally leaks chip-backend types in public signatures. The
+coexistence surface remains a doc-hidden maintainer fixture rather than a public
+shared lifecycle. Exact findings are recorded in the
+[U8 review evidence](docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md).
+
+## NOW -- U8R Facade-Boundary Remediation
+
+U8R is the only major WIP. It removes the identified public boundary blockers in
+dependency order: typed BLE/SLE errors, composition-owned allocator capability,
+then Wi-Fi backend-type wrappers. Each step must preserve current alpha behavior
+and rerun public API, host, three-OS consumer, documentation, and applicable HIL
+gates. It does not stabilize coexistence or widen into Embassy Net, DLI/SLB, or
+new protocol features.
 
 ## LATER -- Triggered Product Directions
 

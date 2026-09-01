@@ -2,7 +2,7 @@
 
 ## 状态
 
-**U7 external-consumer and two-board/coexistence acceptance 已完成；当前唯一 major WIP 是 U8 stable-graduation review。** U0-U4 已完成；U5A 安全控制面、U5B
+**U8 stable-graduation review 已完成并给出 no-go；当前唯一 major WIP 是 U8R facade-boundary remediation。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -53,7 +53,7 @@ vendor oracle 与旧 facade 仍分别受“一个迁移 release”和“不早�
 约束；它们不会被后续 BLE 里程碑扩张。U6 的六个命名 BLE/SLE profile、caller-owned
 storage、机器可读 resource report 和 template starter 已完成发布及三平台 CI。U7 的
 crates.io-only external consumer、两板 connected traffic、事件守恒与资源/延迟 gate 均已
-闭合；U8 只评审有证据的候选面，不自动毕业 stable `coex` API。
+闭合；U8R 只修复已识别的 facade 边界，不自动毕业 stable `coex` API。
 跨计划优先级和依赖以
 [工程计划注册表](README.md)为准。
 
@@ -88,7 +88,18 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U8 stable-graduation review
+## 当前执行窗口：U8R facade-boundary remediation
+
+U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。Wi-Fi 公开快照仍有
+16 处 `hisi_rf_ws63` 类型签名；BLE/SLE 虽然已经隐藏 backend crate 类型，但仍公开裸
+`stage: u8` / `status: u32` backend event 和 unsafe allocator hooks；coexistence 只有
+`#[doc(hidden)]` 维护 fixture，没有公共 shared-controller lifecycle。完整映射见
+[U8 stable-graduation review](evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md)。
+
+U8R 按依赖顺序收口这些边界：先 typed BLE/SLE error，再把 allocator 操作收进 composition
+capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait 类型。每一步都保持
+当前 alpha 行为并重跑 public API、host、三平台 crates.io-only consumer、文档和相关 HIL。
+本窗口不实现 Embassy Net、DLI/SLB、新协议功能或 public coexistence。
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -770,10 +781,10 @@ allocation failure 和 RTOS ready ownership 错误均为零。BLE lane 的最小
 10,364 bytes、最大 ready latency 为 1,189 ms、最大 IRQ span 为 1 ms；SLE lane 分别为
 13,336 bytes、1,212 ms 和 1 ms。client RF heap 采用独立的 8 KiB burst reserve，不能与
 profile 中 16 KiB RTOS runtime-object headroom 混为同一预算。证据已并入上述 connected
-BLE/SLE 页面。U7 因此完成；当前唯一 major WIP 转为 U8 stable-graduation review，
-不能从固定镜像的统计证据直接推导 stable `coex` promise。U8 必须逐项核对 public facade、
-typed lifecycle、compile-fail/host/三平台 consumer、两板 HIL、资源报告、文档与迁移兼容性；
-没有完整映射的 API 继续保持 unstable/doc-hidden。
+BLE/SLE 页面。U7 因此完成。随后 U8 已逐项核对 public facade、typed lifecycle、
+compile-fail/host/三平台 consumer、两板 HIL、资源报告、文档与迁移兼容性，并给出不毕业
+任何 public RF surface 的 no-go 结论。没有完整映射的 API 继续保持
+unstable/doc-hidden；当前唯一 major WIP 已转为 U8R facade-boundary remediation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，

@@ -93,5 +93,6 @@ Local matrix artifacts:
 The BLE half of U7 event-conservation and resource/latency acceptance is closed.
 This matrix is integration and statistical evidence for two fixed artifacts;
 it is not a mathematical proof, cannot prove that external RF traffic never
-loses data, and does not graduate the public coexistence API. Stable graduation
-is a separate U8 review.
+loses data, and does not graduate the public coexistence API. The later U8 review
+recorded a no-go graduation decision in
+[`hisi-rf-u8-stable-graduation-review-2026-09-01.md`](hisi-rf-u8-stable-graduation-review-2026-09-01.md).
