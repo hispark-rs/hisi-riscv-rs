@@ -119,6 +119,36 @@ class ClassifyTests(unittest.TestCase):
         self.assertTrue(result["pass"])
         self.assertEqual(result["softap_echo"], {"received": 11, "sent": 10})
 
+    def test_wifi_ble_connected_traffic_requires_link_and_echo_on_both_boards(
+        self,
+    ) -> None:
+        contract = "wifi-ble-connected-traffic"
+        softap = MATRIX.classify(contract, "softap", complete_log(contract, "softap"))
+        activity = MATRIX.classify(contract, "ble", complete_log(contract, "ble"))
+        self.assertTrue(softap["pass"])
+        self.assertTrue(activity["pass"])
+        self.assertEqual(activity["wifi_scan_ok_count"], 3)
+        self.assertEqual(MATRIX.endpoint_roles(contract), ("softap", "ble"))
+
+    def test_wifi_ble_connected_traffic_fails_without_server_connection(self) -> None:
+        contract = "wifi-ble-connected-traffic"
+        payload = complete_log(contract, "softap").replace(
+            b"RFDBG_COEX_BLE_SERVER_CONNECTED\n", b"", 1
+        )
+        result = MATRIX.classify(contract, "softap", payload)
+        self.assertFalse(result["pass"])
+        self.assertIn("RFDBG_COEX_BLE_SERVER_CONNECTED", result["missing"])
+
+    def test_wifi_ble_connected_traffic_fails_closed_on_client_error(self) -> None:
+        contract = "wifi-ble-connected-traffic"
+        payload = complete_log(contract, "ble")
+        payload += b"\nRFDBG_COEX_BLE_CONNECT_ERR stage=connect"
+        result = MATRIX.classify(contract, "ble", payload)
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["failure_markers"], ["RFDBG_COEX_BLE_CONNECT_ERR"]
+        )
+
     def test_wifi_sle_traffic_requires_announce_echo_and_softap_counts(self) -> None:
         softap = MATRIX.classify(
             "wifi-sle-traffic",

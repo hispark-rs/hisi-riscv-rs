@@ -42,6 +42,12 @@ BLE_TRAFFIC_MARKERS = (
     b"RFDBG_COEX_LOCAL_ECHO",
     b"RFDBG_COEX_WIFI_BLE_TRAFFIC_OK",
 )
+BLE_CONNECTED_TRAFFIC_MARKERS = (
+    b"RFDBG_COEX_BLE_CONNECTED",
+    b"RFDBG_COEX_WIFI_CONNECT_OK",
+    b"RFDBG_COEX_LOCAL_ECHO",
+    b"RFDBG_COEX_WIFI_BLE_CONNECTED_TRAFFIC_OK",
+)
 SLE_TRAFFIC_MARKERS = (
     b"RFDBG_COEX_SLE_ANNOUNCE_ACTIVE",
     b"RFDBG_COEX_WIFI_CONNECT_OK",
@@ -58,6 +64,10 @@ SOFTAP_SLE_CONNECTED_MARKERS = (
     b"RFDBG_COEX_SLE_SERVER_READY",
     b"RFDBG_COEX_SLE_SERVER_CONNECTED",
 )
+SOFTAP_BLE_CONNECTED_MARKERS = (
+    b"RFDBG_COEX_BLE_SERVER_READY",
+    b"RFDBG_COEX_BLE_SERVER_CONNECTED",
+)
 SOFTAP_TRAFFIC_MARKER = b"RFDBG_SOFTAP_NET"
 LOCAL_ECHO_PATTERN = re.compile(
     rb"RFDBG_COEX_LOCAL_ECHO sent=0x([0-9a-fA-F]{8}) "
@@ -73,7 +83,10 @@ FAILURE_MARKERS = (
     b"RFDBG_COEX_INIT_ERR",
     b"RFDBG_COEX_WIFI_RUNNER_ERR",
     b"RFDBG_COEX_BLE_ADV_ERR",
+    b"RFDBG_COEX_BLE_CONNECT_ERR",
     b"RFDBG_COEX_BLE_EVENT_DROP",
+    b"RFDBG_COEX_BLE_SERVER_ERR",
+    b"RFDBG_COEX_BLE_SERVER_EVENT_DROP",
     b"RFDBG_COEX_SLE_ANNOUNCE_ERR",
     b"RFDBG_COEX_SLE_EVENT_DROP",
     b"RFDBG_COEX_SLE_SERVER_ERR",
@@ -90,11 +103,13 @@ CONTRACT_NAMES = {
     "shared-init": "ws63-wifi-bgle-shared-init/v1",
     "ble-activity": "ws63-wifi-ble-activity/v1",
     "wifi-ble-traffic": "ws63-wifi-ble-local-traffic/v1",
+    "wifi-ble-connected-traffic": "ws63-wifi-ble-connected-local-traffic/v1",
     "wifi-sle-traffic": "ws63-wifi-sle-local-traffic/v1",
     "wifi-sle-connected-traffic": "ws63-wifi-sle-connected-local-traffic/v1",
 }
 TRAFFIC_CONTRACTS = (
     "wifi-ble-traffic",
+    "wifi-ble-connected-traffic",
     "wifi-sle-traffic",
     "wifi-sle-connected-traffic",
 )
@@ -116,13 +131,15 @@ def drain(port: serial.Serial) -> bytes:
 def endpoint_roles(contract: str) -> tuple[str, str]:
     if contract == "wifi-ble-traffic":
         return "ble", "softap"
+    if contract == "wifi-ble-connected-traffic":
+        return "softap", "ble"
     if contract in ("wifi-sle-traffic", "wifi-sle-connected-traffic"):
         return "softap", "sle"
     return "ble", "sle"
 
 
 def traffic_activity_role(contract: str) -> str | None:
-    if contract == "wifi-ble-traffic":
+    if contract in ("wifi-ble-traffic", "wifi-ble-connected-traffic"):
         return "ble"
     if contract in ("wifi-sle-traffic", "wifi-sle-connected-traffic"):
         return "sle"
@@ -132,7 +149,9 @@ def traffic_activity_role(contract: str) -> str | None:
 def required_markers(contract: str, role: str) -> tuple[bytes, ...]:
     if contract in TRAFFIC_CONTRACTS and role == "softap":
         required = ROLE_MARKERS[role] + (SOFTAP_TRAFFIC_MARKER,)
-        if contract == "wifi-sle-connected-traffic":
+        if contract == "wifi-ble-connected-traffic":
+            required += SOFTAP_BLE_CONNECTED_MARKERS
+        elif contract == "wifi-sle-connected-traffic":
             required += SOFTAP_SLE_CONNECTED_MARKERS
         return required
     required = COMMON_MARKERS + ROLE_MARKERS[role]
@@ -140,6 +159,8 @@ def required_markers(contract: str, role: str) -> tuple[bytes, ...]:
         required += BLE_ACTIVITY_MARKERS
     elif contract == "wifi-ble-traffic" and role == "ble":
         required += BLE_TRAFFIC_MARKERS
+    elif contract == "wifi-ble-connected-traffic" and role == "ble":
+        required += BLE_CONNECTED_TRAFFIC_MARKERS
     elif contract == "wifi-sle-traffic" and role == "sle":
         required += SLE_TRAFFIC_MARKERS
     elif contract == "wifi-sle-connected-traffic" and role == "sle":
@@ -150,6 +171,12 @@ def required_markers(contract: str, role: str) -> tuple[bytes, ...]:
 def completion_marker(contract: str, role: str) -> bytes:
     if contract == "wifi-ble-traffic":
         return BLE_TRAFFIC_MARKERS[-1] if role == "ble" else SOFTAP_TRAFFIC_MARKER
+    if contract == "wifi-ble-connected-traffic":
+        return (
+            BLE_CONNECTED_TRAFFIC_MARKERS[-1]
+            if role == "ble"
+            else SOFTAP_TRAFFIC_MARKER
+        )
     if contract == "wifi-sle-traffic":
         return SLE_TRAFFIC_MARKERS[-1] if role == "sle" else SOFTAP_TRAFFIC_MARKER
     if contract == "wifi-sle-connected-traffic":
