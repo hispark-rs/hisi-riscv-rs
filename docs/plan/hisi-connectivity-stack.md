@@ -749,10 +749,15 @@ scan cache clear 均进入发布路径；固定 ELF
 20/20 paired nRST，累计 60 次 scan、20 次 WPA2 association 和 200/200 个唯一 UDP echo；
 60 份 heap 样本中的 allocation failure 和 Wi-Fi/SLE event drop 均为零。证据见
 [U7 Wi-Fi traffic + SLE announcing](evidence/ws63-radio-u7-wifi-sle-traffic-2026-09-01.md)。
-这些结果仍不等同于 BLE-connected traffic、SLE-connected traffic 或完整 sustained
-traffic/coexistence 验收。U7 剩余工作是两条 connected traffic lane、事件守恒和
-IRQ/resource latency；任一组合在完整 HIL 前不得公开 stable `coex` promise，U7 也不自动
-启动 U8 stable graduation。
+SLE-connected traffic 子门槛随后也已闭合：固定双板 ELF 先建立 SLE connection，再完成
+3 次 Wi-Fi scan、WPA2 association 和本地 UDP；3/3 shape gate 后的 20/20 paired nRST
+累计返回 200/200 个唯一 sequence，Wi-Fi/SLE event drop 为零。为避免后续 scan 清掉早期
+发现的唯一可用 AP，backend 只保留已观测 candidate，而不是把“最后一次 scan”误当成事实源。
+证据见 [U7 Wi-Fi traffic + connected SLE](evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md)。
+`hisi-rf-ws63 0.1.0-alpha.94` 同时把 Wi-Fi+BLE shared arena 收敛到 272 KiB；Linux/macOS/
+Windows stock rust-lld final-link 和边界 guard 已通过，但该数字尚未由新的 BLE runtime
+watermark HIL 校准。U7 剩余工作是 BLE-connected traffic、事件守恒和 IRQ/resource
+latency；完整 HIL 前不得公开 stable `coex` promise，U7 也不自动启动 U8 stable graduation。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
