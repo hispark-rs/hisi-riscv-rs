@@ -77,6 +77,40 @@ SOFTAP_ECHO_PATTERN = re.compile(
     rb"RFDBG_SOFTAP_NET .*?echo_rx=([0-9a-fA-F]{8}) "
     rb"echo_tx=([0-9a-fA-F]{8})"
 )
+ACTIVITY_EVENT_PATTERN = re.compile(
+    rb"RFDBG_COEX_EVENT_CONSERVATION "
+    rb"wifi_accepted=0x([0-9a-fA-F]{8}) wifi_consumed=0x([0-9a-fA-F]{8}) "
+    rb"wifi_pending=0x([0-9a-fA-F]{8}) wifi_dropped=0x([0-9a-fA-F]{8}) "
+    rb"wifi_high_water=0x([0-9a-fA-F]{8}) "
+    rb"protocol_accepted=0x([0-9a-fA-F]{8}) "
+    rb"protocol_consumed=0x([0-9a-fA-F]{8}) "
+    rb"protocol_pending=0x([0-9a-fA-F]{8}) "
+    rb"protocol_dropped=0x([0-9a-fA-F]{8}) "
+    rb"protocol_high_water=0x([0-9a-fA-F]{8})"
+)
+SERVER_EVENT_PATTERN = re.compile(
+    rb"RFDBG_COEX_SERVER_EVENT_CONSERVATION accepted=0x([0-9a-fA-F]{8}) "
+    rb"consumed=0x([0-9a-fA-F]{8}) pending=0x([0-9a-fA-F]{8}) "
+    rb"dropped=0x([0-9a-fA-F]{8}) high_water=0x([0-9a-fA-F]{8})"
+)
+ACTIVITY_RESOURCE_PATTERN = re.compile(
+    rb"RFDBG_COEX_RESOURCE_ACCEPTANCE arena=0x([0-9a-fA-F]{8}) "
+    rb"free=0x([0-9a-fA-F]{8}) peak=0x([0-9a-fA-F]{8}) "
+    rb"failures=0x([0-9a-fA-F]{8}) min_free=0x([0-9a-fA-F]{8}) "
+    rb"max_ready_ms=0x([0-9a-fA-F]{8}) ready_limit_ms=0x([0-9a-fA-F]{8}) "
+    rb"max_irq_ms=0x([0-9a-fA-F]{8}) irq_limit_ms=0x([0-9a-fA-F]{8}) "
+    rb"ready_owner_err=0x([0-9a-fA-F]{8}) ready_dup=0x([0-9a-fA-F]{8}) "
+    rb"ready_wrong_bucket=0x([0-9a-fA-F]{8}) ready_bad_link=0x([0-9a-fA-F]{8})"
+)
+SERVER_RESOURCE_PATTERN = re.compile(
+    rb"RFDBG_COEX_SERVER_RESOURCE_ACCEPTANCE arena=0x([0-9a-fA-F]{8}) "
+    rb"free=0x([0-9a-fA-F]{8}) peak=0x([0-9a-fA-F]{8}) "
+    rb"failures=0x([0-9a-fA-F]{8}) min_free=0x([0-9a-fA-F]{8}) "
+    rb"max_ready_ms=0x([0-9a-fA-F]{8}) ready_limit_ms=0x([0-9a-fA-F]{8}) "
+    rb"max_irq_ms=0x([0-9a-fA-F]{8}) irq_limit_ms=0x([0-9a-fA-F]{8}) "
+    rb"ready_owner_err=0x([0-9a-fA-F]{8}) ready_dup=0x([0-9a-fA-F]{8}) "
+    rb"ready_wrong_bucket=0x([0-9a-fA-F]{8}) ready_bad_link=0x([0-9a-fA-F]{8})"
+)
 FAILURE_MARKERS = (
     b"panicked at",
     b"RFDBG_MISSING_ROM_CALLBACK",
@@ -96,6 +130,7 @@ FAILURE_MARKERS = (
     b"RFDBG_COEX_WIFI_CONNECT_ERR",
     b"RFDBG_COEX_LOCAL_ECHO_ERR",
     b"RFDBG_COEX_EVENT_ERR",
+    b"RFDBG_COEX_ACCEPTANCE_ERR",
     b"RFDBG_SOFTAP_NET_ERR",
     b"scheduler contract violation",
 )
@@ -111,6 +146,10 @@ TRAFFIC_CONTRACTS = (
     "wifi-ble-traffic",
     "wifi-ble-connected-traffic",
     "wifi-sle-traffic",
+    "wifi-sle-connected-traffic",
+)
+ACCEPTANCE_CONTRACTS = (
+    "wifi-ble-connected-traffic",
     "wifi-sle-connected-traffic",
 )
 
@@ -198,6 +237,8 @@ def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
     scan_count = payload.count(BLE_SCAN_MARKER) if role in ("ble", activity_role) else 0
     local_echo: dict[str, int] | None = None
     softap_echo: dict[str, int] | None = None
+    event_conservation: dict[str, int] | None = None
+    resource_acceptance: dict[str, int] | None = None
     if (
         (
             (contract == "ble-activity" and role == "ble")
@@ -231,6 +272,17 @@ def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
                 missing.append("SoftAP echo requires received>=10 and sent>=10")
         else:
             missing.append("parseable RFDBG_SOFTAP_NET echo counters")
+    if contract in ACCEPTANCE_CONTRACTS:
+        if role == activity_role:
+            event_conservation = parse_activity_events(payload, missing)
+            resource_acceptance = parse_resource_acceptance(
+                ACTIVITY_RESOURCE_PATTERN, payload, missing, "activity"
+            )
+        elif role == "softap":
+            event_conservation = parse_server_events(payload, missing)
+            resource_acceptance = parse_resource_acceptance(
+                SERVER_RESOURCE_PATTERN, payload, missing, "server"
+            )
     return {
         "pass": not missing and not failures,
         "missing": missing,
@@ -238,7 +290,146 @@ def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
         "wifi_scan_ok_count": scan_count,
         "local_echo": local_echo,
         "softap_echo": softap_echo,
+        "event_conservation": event_conservation,
+        "resource_acceptance": resource_acceptance,
         "bytes": len(payload),
+    }
+
+
+def parse_activity_events(payload: bytes, missing: list[str]) -> dict[str, int] | None:
+    matches = ACTIVITY_EVENT_PATTERN.findall(payload)
+    if not matches:
+        missing.append("parseable RFDBG_COEX_EVENT_CONSERVATION")
+        return None
+    names = (
+        "wifi_accepted",
+        "wifi_consumed",
+        "wifi_pending",
+        "wifi_dropped",
+        "wifi_high_water",
+        "protocol_accepted",
+        "protocol_consumed",
+        "protocol_pending",
+        "protocol_dropped",
+        "protocol_high_water",
+    )
+    values = dict(zip(names, (int(value, 16) for value in matches[-1]), strict=True))
+    if (
+        values["wifi_accepted"]
+        != values["wifi_consumed"] + values["wifi_pending"]
+        or values["protocol_accepted"]
+        != values["protocol_consumed"] + values["protocol_pending"]
+        or values["wifi_dropped"] != 0
+        or values["protocol_dropped"] != 0
+        or values["wifi_pending"] > 8
+        or values["wifi_high_water"] > 8
+        or values["protocol_pending"] > 32
+        or values["protocol_high_water"] > 32
+    ):
+        missing.append("activity event conservation requires zero drops and bounded ownership")
+    return values
+
+
+def parse_server_events(payload: bytes, missing: list[str]) -> dict[str, int] | None:
+    matches = SERVER_EVENT_PATTERN.findall(payload)
+    if not matches:
+        missing.append("parseable RFDBG_COEX_SERVER_EVENT_CONSERVATION")
+        return None
+    names = ("accepted", "consumed", "pending", "dropped", "high_water")
+    values = dict(zip(names, (int(value, 16) for value in matches[-1]), strict=True))
+    if (
+        values["accepted"] != values["consumed"] + values["pending"]
+        or values["dropped"] != 0
+        or values["pending"] > 32
+        or values["high_water"] > 32
+    ):
+        missing.append("server event conservation requires zero drops and bounded ownership")
+    return values
+
+
+def parse_resource_acceptance(
+    pattern: re.Pattern[bytes], payload: bytes, missing: list[str], owner: str
+) -> dict[str, int] | None:
+    matches = pattern.findall(payload)
+    if not matches:
+        missing.append(f"parseable {owner} coexistence resource acceptance")
+        return None
+    names = (
+        "arena",
+        "free",
+        "peak",
+        "failures",
+        "min_free",
+        "max_ready_ms",
+        "ready_limit_ms",
+        "max_irq_ms",
+        "irq_limit_ms",
+        "ready_owner_err",
+        "ready_dup",
+        "ready_wrong_bucket",
+        "ready_bad_link",
+    )
+    values = dict(zip(names, (int(value, 16) for value in matches[-1]), strict=True))
+    if (
+        values["arena"] == 0
+        or values["peak"] > values["arena"]
+        or values["free"] < values["min_free"]
+        or values["failures"] != 0
+        or values["max_ready_ms"] > values["ready_limit_ms"]
+        or values["max_irq_ms"] > values["irq_limit_ms"]
+        or any(
+            values[name] != 0
+            for name in (
+                "ready_owner_err",
+                "ready_dup",
+                "ready_wrong_bucket",
+                "ready_bad_link",
+            )
+        )
+    ):
+        missing.append(f"{owner} resource/latency acceptance exceeded its fixture contract")
+    return values
+
+
+def summarize_acceptance(records: list[dict[str, object]]) -> dict[str, int] | None:
+    event_snapshots: list[dict[str, int]] = []
+    resource_snapshots: list[dict[str, int]] = []
+    for record in records:
+        for endpoint in ("ble", "sle"):
+            result = record[endpoint]
+            assert isinstance(result, dict)
+            events = result.get("event_conservation")
+            resources = result.get("resource_acceptance")
+            if isinstance(events, dict):
+                event_snapshots.append(events)
+            if isinstance(resources, dict):
+                resource_snapshots.append(resources)
+    if not event_snapshots or not resource_snapshots:
+        return None
+
+    dropped_total = 0
+    high_water = 0
+    for events in event_snapshots:
+        dropped_total += events.get("dropped", 0)
+        dropped_total += events.get("wifi_dropped", 0)
+        dropped_total += events.get("protocol_dropped", 0)
+        high_water = max(
+            high_water,
+            events.get("high_water", 0),
+            events.get("wifi_high_water", 0),
+            events.get("protocol_high_water", 0),
+        )
+    return {
+        "event_snapshots": len(event_snapshots),
+        "event_dropped_total": dropped_total,
+        "max_event_high_water": high_water,
+        "min_heap_free": min(item["free"] for item in resource_snapshots),
+        "max_heap_peak": max(item["peak"] for item in resource_snapshots),
+        "allocation_failures_total": sum(
+            item["failures"] for item in resource_snapshots
+        ),
+        "max_ready_ms": max(item["max_ready_ms"] for item in resource_snapshots),
+        "max_irq_ms": max(item["max_irq_ms"] for item in resource_snapshots),
     }
 
 
@@ -348,7 +539,7 @@ def main() -> int:
 
     passed = sum(record["pass"] is True for record in records)
     summary = {
-        "schema_version": 2,
+        "schema_version": 3,
         "contract": CONTRACT_NAMES[args.contract],
         "runs": args.runs,
         "passed": passed,
@@ -367,6 +558,7 @@ def main() -> int:
             "elf": str(args.sle_elf),
             "elf_sha256": sha256(args.sle_elf),
         },
+        "acceptance": summarize_acceptance(records),
         "records": records,
     }
     (args.output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")

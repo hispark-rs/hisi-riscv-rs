@@ -33,6 +33,38 @@ def complete_log(contract: str, role: str) -> bytes:
         )
     elif contract in MATRIX.TRAFFIC_CONTRACTS and role == "softap":
         markers.append(b"RFDBG_SOFTAP_NET echo_rx=0000000a echo_tx=0000000a")
+    if contract in MATRIX.ACCEPTANCE_CONTRACTS and role == activity_role:
+        markers.append(
+            b"RFDBG_COEX_EVENT_CONSERVATION "
+            b"wifi_accepted=0x00000004 wifi_consumed=0x00000004 "
+            b"wifi_pending=0x00000000 wifi_dropped=0x00000000 "
+            b"wifi_high_water=0x00000001 protocol_accepted=0x00000008 "
+            b"protocol_consumed=0x00000008 protocol_pending=0x00000000 "
+            b"protocol_dropped=0x00000000 protocol_high_water=0x00000002"
+        )
+        markers.append(
+            b"RFDBG_COEX_RESOURCE_ACCEPTANCE arena=0x000115c0 free=0x000066e0 "
+            b"peak=0x0000aee0 failures=0x00000000 min_free=0x00004000 "
+            b"max_ready_ms=0x00000100 ready_limit_ms=0x000007d0 "
+            b"max_irq_ms=0x00000008 irq_limit_ms=0x00000064 "
+            b"ready_owner_err=0x00000000 ready_dup=0x00000000 "
+            b"ready_wrong_bucket=0x00000000 ready_bad_link=0x00000000"
+        )
+    elif contract in MATRIX.ACCEPTANCE_CONTRACTS and role == "softap":
+        markers.append(
+            b"RFDBG_COEX_SERVER_EVENT_CONSERVATION accepted=0x00000008 "
+            b"consumed=0x00000008 pending=0x00000000 dropped=0x00000000 "
+            b"high_water=0x00000002"
+        )
+        markers.append(
+            b"RFDBG_COEX_SERVER_RESOURCE_ACCEPTANCE arena=0x000115c0 "
+            b"free=0x000066e0 peak=0x0000aee0 failures=0x00000000 "
+            b"min_free=0x00004000 max_ready_ms=0x00000100 "
+            b"ready_limit_ms=0x000007d0 max_irq_ms=0x00000008 "
+            b"irq_limit_ms=0x00000064 ready_owner_err=0x00000000 "
+            b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+            b"ready_bad_link=0x00000000"
+        )
     return b"\n".join(markers)
 
 
@@ -148,6 +180,50 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(
             result["failure_markers"], ["RFDBG_COEX_BLE_CONNECT_ERR"]
         )
+
+    def test_connected_traffic_requires_event_conservation(self) -> None:
+        contract = "wifi-ble-connected-traffic"
+        payload = complete_log(contract, "ble").replace(
+            b"wifi_accepted=0x00000004", b"wifi_accepted=0x00000005"
+        )
+        result = MATRIX.classify(contract, "ble", payload)
+        self.assertFalse(result["pass"])
+        self.assertIn("event conservation", result["missing"][-1])
+
+    def test_connected_traffic_requires_resource_headroom(self) -> None:
+        contract = "wifi-sle-connected-traffic"
+        payload = complete_log(contract, "sle").replace(
+            b"free=0x000066e0", b"free=0x00002000"
+        )
+        result = MATRIX.classify(contract, "sle", payload)
+        self.assertFalse(result["pass"])
+        self.assertIn("resource/latency", result["missing"][-1])
+
+    def test_connected_softap_requires_server_acceptance_markers(self) -> None:
+        contract = "wifi-ble-connected-traffic"
+        payload = complete_log(contract, "softap").replace(
+            b"RFDBG_COEX_SERVER_EVENT_CONSERVATION", b"RFDBG_COEX_SERVER_EVENT_MISSING"
+        )
+        result = MATRIX.classify(contract, "softap", payload)
+        self.assertFalse(result["pass"])
+        self.assertTrue(
+            any("SERVER_EVENT_CONSERVATION" in item for item in result["missing"])
+        )
+
+    def test_acceptance_summary_aggregates_both_endpoints(self) -> None:
+        contract = "wifi-ble-connected-traffic"
+        records = [
+            {
+                "ble": MATRIX.classify(contract, "softap", complete_log(contract, "softap")),
+                "sle": MATRIX.classify(contract, "ble", complete_log(contract, "ble")),
+            }
+        ]
+        summary = MATRIX.summarize_acceptance(records)
+        self.assertIsNotNone(summary)
+        assert summary is not None
+        self.assertEqual(summary["event_snapshots"], 2)
+        self.assertEqual(summary["event_dropped_total"], 0)
+        self.assertEqual(summary["min_heap_free"], 0x66E0)
 
     def test_wifi_sle_traffic_requires_announce_echo_and_softap_counts(self) -> None:
         softap = MATRIX.classify(
