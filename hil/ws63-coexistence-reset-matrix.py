@@ -42,6 +42,12 @@ BLE_TRAFFIC_MARKERS = (
     b"RFDBG_COEX_LOCAL_ECHO",
     b"RFDBG_COEX_WIFI_BLE_TRAFFIC_OK",
 )
+SLE_TRAFFIC_MARKERS = (
+    b"RFDBG_COEX_SLE_ANNOUNCE_ACTIVE",
+    b"RFDBG_COEX_WIFI_CONNECT_OK",
+    b"RFDBG_COEX_LOCAL_ECHO",
+    b"RFDBG_COEX_WIFI_SLE_TRAFFIC_OK",
+)
 SOFTAP_TRAFFIC_MARKER = b"RFDBG_SOFTAP_NET"
 LOCAL_ECHO_PATTERN = re.compile(
     rb"RFDBG_COEX_LOCAL_ECHO sent=0x([0-9a-fA-F]{8}) "
@@ -58,6 +64,8 @@ FAILURE_MARKERS = (
     b"RFDBG_COEX_WIFI_RUNNER_ERR",
     b"RFDBG_COEX_BLE_ADV_ERR",
     b"RFDBG_COEX_BLE_EVENT_DROP",
+    b"RFDBG_COEX_SLE_ANNOUNCE_ERR",
+    b"RFDBG_COEX_SLE_EVENT_DROP",
     b"RFDBG_COEX_WIFI_INITIALIZE_ERR",
     b"RFDBG_COEX_WIFI_SCAN_ERR",
     b"RFDBG_COEX_WIFI_CONNECT_ERR",
@@ -70,7 +78,9 @@ CONTRACT_NAMES = {
     "shared-init": "ws63-wifi-bgle-shared-init/v1",
     "ble-activity": "ws63-wifi-ble-activity/v1",
     "wifi-ble-traffic": "ws63-wifi-ble-local-traffic/v1",
+    "wifi-sle-traffic": "ws63-wifi-sle-local-traffic/v1",
 }
+TRAFFIC_CONTRACTS = ("wifi-ble-traffic", "wifi-sle-traffic")
 
 
 def sha256(path: Path) -> str:
@@ -86,20 +96,40 @@ def drain(port: serial.Serial) -> bytes:
     return port.read(waiting) if waiting else b""
 
 
+def endpoint_roles(contract: str) -> tuple[str, str]:
+    if contract == "wifi-ble-traffic":
+        return "ble", "softap"
+    if contract == "wifi-sle-traffic":
+        return "softap", "sle"
+    return "ble", "sle"
+
+
+def traffic_activity_role(contract: str) -> str | None:
+    if contract == "wifi-ble-traffic":
+        return "ble"
+    if contract == "wifi-sle-traffic":
+        return "sle"
+    return None
+
+
 def required_markers(contract: str, role: str) -> tuple[bytes, ...]:
-    if contract == "wifi-ble-traffic" and role == "softap":
+    if contract in TRAFFIC_CONTRACTS and role == "softap":
         return ROLE_MARKERS[role] + (SOFTAP_TRAFFIC_MARKER,)
     required = COMMON_MARKERS + ROLE_MARKERS[role]
     if contract == "ble-activity" and role == "ble":
         required += BLE_ACTIVITY_MARKERS
     elif contract == "wifi-ble-traffic" and role == "ble":
         required += BLE_TRAFFIC_MARKERS
+    elif contract == "wifi-sle-traffic" and role == "sle":
+        required += SLE_TRAFFIC_MARKERS
     return required
 
 
 def completion_marker(contract: str, role: str) -> bytes:
     if contract == "wifi-ble-traffic":
         return BLE_TRAFFIC_MARKERS[-1] if role == "ble" else SOFTAP_TRAFFIC_MARKER
+    if contract == "wifi-sle-traffic":
+        return SLE_TRAFFIC_MARKERS[-1] if role == "sle" else SOFTAP_TRAFFIC_MARKER
     if contract == "ble-activity" and role == "ble":
         return BLE_ACTIVITY_MARKERS[-1]
     return COMMON_MARKERS[-1]
@@ -109,19 +139,22 @@ def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
     required = required_markers(contract, role)
     missing = [marker.decode() for marker in required if marker not in payload]
     failures = [marker.decode() for marker in FAILURE_MARKERS if marker in payload]
-    scan_count = payload.count(BLE_SCAN_MARKER) if role == "ble" else 0
+    activity_role = traffic_activity_role(contract)
+    scan_count = payload.count(BLE_SCAN_MARKER) if role in ("ble", activity_role) else 0
     local_echo: dict[str, int] | None = None
     softap_echo: dict[str, int] | None = None
     if (
-        contract in ("ble-activity", "wifi-ble-traffic")
-        and role == "ble"
+        (
+            (contract == "ble-activity" and role == "ble")
+            or (contract in TRAFFIC_CONTRACTS and role == activity_role)
+        )
         and scan_count != BLE_ACTIVITY_SCAN_COUNT
     ):
         missing.append(
             f"{BLE_SCAN_MARKER.decode()} x{BLE_ACTIVITY_SCAN_COUNT}"
             f" (observed {scan_count})"
         )
-    if contract == "wifi-ble-traffic" and role == "ble":
+    if contract in TRAFFIC_CONTRACTS and role == activity_role:
         matches = LOCAL_ECHO_PATTERN.findall(payload)
         if matches:
             sent, received, attempts = (int(value, 16) for value in matches[-1])
@@ -132,7 +165,7 @@ def classify(contract: str, role: str, payload: bytes) -> dict[str, object]:
                 )
         else:
             missing.append("parseable RFDBG_COEX_LOCAL_ECHO")
-    elif contract == "wifi-ble-traffic" and role == "softap":
+    elif contract in TRAFFIC_CONTRACTS and role == "softap":
         matches = SOFTAP_ECHO_PATTERN.findall(payload)
         if matches:
             values = [(int(a, 16), int(b, 16)) for a, b in matches]
@@ -174,16 +207,16 @@ def capture_pair(
     while time.monotonic() < deadline:
         ble_log.extend(drain(ble))
         peer_log.extend(drain(peer))
-        peer_role = "softap" if contract == "wifi-ble-traffic" else "sle"
-        if contract == "wifi-ble-traffic":
+        first_role, second_role = endpoint_roles(contract)
+        if contract in TRAFFIC_CONTRACTS:
             both_complete = (
-                completion_marker(contract, "ble") in ble_log
-                and classify(contract, peer_role, bytes(peer_log))["pass"] is True
+                classify(contract, first_role, bytes(ble_log))["pass"] is True
+                and classify(contract, second_role, bytes(peer_log))["pass"] is True
             )
         else:
             both_complete = completion_marker(
-                contract, "ble"
-            ) in ble_log and completion_marker(contract, peer_role) in peer_log
+                contract, first_role
+            ) in ble_log and completion_marker(contract, second_role) in peer_log
         if both_complete and complete_at is None:
             complete_at = time.monotonic()
         if complete_at is not None and time.monotonic() - complete_at >= 0.5:
@@ -228,7 +261,7 @@ def main() -> int:
     records: list[dict[str, object]] = []
     with serial.Serial(args.ble_port, args.baud, timeout=0) as ble:
         with serial.Serial(args.sle_port, args.baud, timeout=0) as sle:
-            peer_role = "softap" if args.contract == "wifi-ble-traffic" else "sle"
+            first_role, second_role = endpoint_roles(args.contract)
             for run in range(1, args.runs + 1):
                 ble_log, sle_log = capture_pair(
                     ble,
@@ -242,15 +275,15 @@ def main() -> int:
                 sle_name = f"run-{run:02d}.sle.uart.log"
                 (args.output / ble_name).write_bytes(ble_log)
                 (args.output / sle_name).write_bytes(sle_log)
-                ble_result = classify(args.contract, "ble", ble_log)
-                sle_result = classify(args.contract, peer_role, sle_log)
+                ble_result = classify(args.contract, first_role, ble_log)
+                sle_result = classify(args.contract, second_role, sle_log)
                 passed = ble_result["pass"] is True and sle_result["pass"] is True
                 records.append(
                     {
                         "run": run,
                         "pass": passed,
-                        "ble": {**ble_result, "role": "ble", "log": ble_name},
-                        "sle": {**sle_result, "role": peer_role, "log": sle_name},
+                        "ble": {**ble_result, "role": first_role, "log": ble_name},
+                        "sle": {**sle_result, "role": second_role, "log": sle_name},
                     }
                 )
                 print(
@@ -266,14 +299,14 @@ def main() -> int:
         "passed": passed,
         "failed": args.runs - passed,
         "ble": {
-            "role": "ble",
+            "role": first_role,
             "port": args.ble_port,
             "jlink": args.ble_jlink,
             "elf": str(args.ble_elf),
             "elf_sha256": sha256(args.ble_elf),
         },
         "sle": {
-            "role": peer_role,
+            "role": second_role,
             "port": args.sle_port,
             "jlink": args.sle_jlink,
             "elf": str(args.sle_elf),

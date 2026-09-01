@@ -21,14 +21,17 @@ SPEC.loader.exec_module(MATRIX)
 
 def complete_log(contract: str, role: str) -> bytes:
     markers = list(MATRIX.required_markers(contract, role))
-    if contract in ("ble-activity", "wifi-ble-traffic") and role == "ble":
+    activity_role = MATRIX.traffic_activity_role(contract)
+    if (contract == "ble-activity" and role == "ble") or (
+        contract in MATRIX.TRAFFIC_CONTRACTS and role == activity_role
+    ):
         markers.extend([MATRIX.BLE_SCAN_MARKER] * MATRIX.BLE_ACTIVITY_SCAN_COUNT)
-    if contract == "wifi-ble-traffic" and role == "ble":
+    if contract in MATRIX.TRAFFIC_CONTRACTS and role == activity_role:
         markers.append(
             b"RFDBG_COEX_LOCAL_ECHO sent=0x0000000a received=0x0000000a "
             b"attempts=0x0000000a bitmap=0x000003ff"
         )
-    elif contract == "wifi-ble-traffic" and role == "softap":
+    elif contract in MATRIX.TRAFFIC_CONTRACTS and role == "softap":
         markers.append(b"RFDBG_SOFTAP_NET echo_rx=0000000a echo_tx=0000000a")
     return b"\n".join(markers)
 
@@ -115,6 +118,33 @@ class ClassifyTests(unittest.TestCase):
         result = MATRIX.classify("wifi-ble-traffic", "softap", payload)
         self.assertTrue(result["pass"])
         self.assertEqual(result["softap_echo"], {"received": 11, "sent": 10})
+
+    def test_wifi_sle_traffic_requires_announce_echo_and_softap_counts(self) -> None:
+        softap = MATRIX.classify(
+            "wifi-sle-traffic",
+            "softap",
+            complete_log("wifi-sle-traffic", "softap"),
+        )
+        activity = MATRIX.classify(
+            "wifi-sle-traffic", "sle", complete_log("wifi-sle-traffic", "sle")
+        )
+        self.assertTrue(softap["pass"])
+        self.assertTrue(activity["pass"])
+        self.assertEqual(activity["wifi_scan_ok_count"], 3)
+
+    def test_wifi_sle_traffic_fails_closed_on_announce_error(self) -> None:
+        payload = complete_log("wifi-sle-traffic", "sle")
+        payload += b"\nRFDBG_COEX_SLE_ANNOUNCE_ERR"
+        result = MATRIX.classify("wifi-sle-traffic", "sle", payload)
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["failure_markers"], ["RFDBG_COEX_SLE_ANNOUNCE_ERR"]
+        )
+
+    def test_wifi_sle_traffic_maps_physical_endpoints_explicitly(self) -> None:
+        self.assertEqual(
+            MATRIX.endpoint_roles("wifi-sle-traffic"), ("softap", "sle")
+        )
 
 
 if __name__ == "__main__":
