@@ -29,6 +29,7 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v10",
     "hisi-rf-resource-report/v11",
     "hisi-rf-resource-report/v12",
+    "hisi-rf-resource-report/v13",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -62,6 +63,7 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         return
 
@@ -79,7 +81,10 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
     worker_values: list[int] = []
     for key in ("worker_task_slots", "worker_stack_bytes_per_task"):
         value = resource.get(key)
-        if resource["schema"] == "hisi-rf-resource-report/v12" and value is None:
+        if resource["schema"] in {
+            "hisi-rf-resource-report/v12",
+            "hisi-rf-resource-report/v13",
+        } and value is None:
             worker_values.append(0)
         elif isinstance(value, int) and not isinstance(value, bool) and value >= 0:
             worker_values.append(value)
@@ -100,6 +105,7 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
     if resource["schema"] in {
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         for key in ("coexistence_task_slots", "coexistence_stack_bytes"):
             value = resource.get(key)
@@ -153,6 +159,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -169,6 +176,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
@@ -184,6 +192,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         positive_keys = (
             "event_capacity",
@@ -256,6 +265,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         schema_revision = resource["schema"].rsplit("/", 1)[-1]
         for key in ("runtime_object_headroom_bytes", "runtime_arena_bytes"):
@@ -289,6 +299,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         minimum_stack = resource.get("minimum_task_stack_bytes")
         if (
@@ -314,6 +325,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         with elf.open("rb") as stream:
             parsed = ELFFile(stream)
@@ -336,6 +348,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
+        "hisi-rf-resource-report/v13",
     }:
         resolved_resource["linked_shared_arena_bytes"] = linked_shared_arena_bytes
     return {
@@ -520,7 +533,12 @@ def self_test() -> None:
         )
         validate_task_resource_tree(resource_v12)
 
-        resource_v9["schema"] = "hisi-rf-resource-report/v13"
+        resource_v13 = dict(resource_v12)
+        resource_v13["schema"] = "hisi-rf-resource-report/v13"
+        assert resource_v13["schema"] in RESOURCE_SCHEMAS
+        validate_task_resource_tree(resource_v13)
+
+        resource_v9["schema"] = "hisi-rf-resource-report/v14"
         resource_path.write_text(json.dumps(resource_v9), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)
