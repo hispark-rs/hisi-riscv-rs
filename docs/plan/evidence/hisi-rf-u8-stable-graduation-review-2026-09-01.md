@@ -63,9 +63,11 @@ backend events now expose `BleBackendStage` / `SleBackendStage` plus opaque
 `VendorStatus`; their public snapshots no longer contain raw `stage: u8` or
 `status: u32` fields.
 
-U8R-E2 is complete in `hisi-rf` commit `38fbd03`. The facade now keeps raw arena
-allocation and deallocation private and exposes a safe, composition-owned
-`InstalledRadioStorage::rtos_resources` factory. Wi-Fi, BLE, and SLE public API
+U8R-E2 is complete in `hisi-rf` commits `38fbd03` and `a95fca9`. The facade now
+keeps raw arena allocation and deallocation private and exposes a safe,
+composition-owned `RuntimeAllocator` capability. The application passes its
+callbacks to the explicitly selected runtime; `hisi-rf` neither depends on nor
+starts `hisi-rtos`. Wi-Fi, BLE, and SLE public API
 snapshots contain no public unsafe allocator hooks. The no-graduation decision
 remains unchanged: the Wi-Fi backend-type boundary and the protocol-specific
 lifecycle/NET gates remain open.

@@ -105,9 +105,10 @@ capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait �
   `BleBackendStage`、`SleBackendStage` 和 opaque `VendorStatus`；public unsolicited event
   不再暴露需要应用解释的裸 stage/status 整数。BLE 13 个 host tests、SLE 5 个 host tests、
   facade contracts、public API snapshots、Clippy 和两条 RV32 profile check 均通过。
-- [x] **U8R-E2 allocator capability**：`hisi-rf` commit `38fbd03` 将
+- [x] **U8R-E2 allocator capability**：`hisi-rf` commits `38fbd03` / `a95fca9` 将
   `InstalledRadioStorage::{allocate,deallocate}` 收回 facade 内部，三个 profile 统一通过安全
-  `rtos_resources(monotonic_ms)` 构造 RTOS services。public API snapshots、graduation gate、
+  `RuntimeAllocator` capability 把回调交给应用选择的 runtime；`hisi-rf` 不依赖或启动
+  `hisi-rtos`。public API snapshots、graduation gate、runtime boundary check、
   BLE/SLE contracts、RV32 BLE/SLE/Wi-Fi composition、Clippy 与 package no-verify 均通过；
   已发布 alpha.110 consumer fixture 保留旧 API，待下一次 facade release 后迁移。
 - [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 `hisi_rf_ws63` public signature，保持现有
