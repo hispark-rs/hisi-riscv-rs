@@ -918,7 +918,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hisi-rf"
-version = "0.1.0-alpha.104"
+version = "0.1.0-alpha.106"
 dependencies = [
  "critical-section",
  "hisi-hal",
@@ -953,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-rf-ws63"
-version = "0.1.0-alpha.94"
+version = "0.1.0-alpha.97"
 dependencies = [
  "ar_archive_writer",
  "critical-section",
@@ -2196,9 +2196,11 @@ dependencies = [
  "hisi-hal",
  "hisi-panic-handler",
  "hisi-rf",
+ "hisi-rf-ws63",
  "hisi-riscv-rt",
  "hisi-rtos",
  "smoltcp",
+ "ws63-radio-sys",
 ]
 
 [[package]]
