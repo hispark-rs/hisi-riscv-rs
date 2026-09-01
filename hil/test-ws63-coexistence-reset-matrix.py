@@ -146,6 +146,38 @@ class ClassifyTests(unittest.TestCase):
             MATRIX.endpoint_roles("wifi-sle-traffic"), ("softap", "sle")
         )
 
+    def test_wifi_sle_connected_traffic_requires_link_and_echo_on_both_boards(
+        self,
+    ) -> None:
+        contract = "wifi-sle-connected-traffic"
+        softap = MATRIX.classify(contract, "softap", complete_log(contract, "softap"))
+        activity = MATRIX.classify(contract, "sle", complete_log(contract, "sle"))
+        self.assertTrue(softap["pass"])
+        self.assertTrue(activity["pass"])
+        self.assertEqual(activity["wifi_scan_ok_count"], 3)
+        self.assertEqual(MATRIX.endpoint_roles(contract), ("softap", "sle"))
+
+    def test_wifi_sle_connected_traffic_fails_without_server_connection(self) -> None:
+        contract = "wifi-sle-connected-traffic"
+        payload = complete_log(contract, "softap").replace(
+            b"RFDBG_COEX_SLE_SERVER_CONNECTED\n", b"", 1
+        )
+        result = MATRIX.classify(contract, "softap", payload)
+        self.assertFalse(result["pass"])
+        self.assertIn("RFDBG_COEX_SLE_SERVER_CONNECTED", result["missing"])
+
+    def test_wifi_sle_connected_traffic_fails_closed_on_server_event_drop(
+        self,
+    ) -> None:
+        contract = "wifi-sle-connected-traffic"
+        payload = complete_log(contract, "softap")
+        payload += b"\nRFDBG_COEX_SLE_SERVER_EVENT_DROP"
+        result = MATRIX.classify(contract, "softap", payload)
+        self.assertFalse(result["pass"])
+        self.assertEqual(
+            result["failure_markers"], ["RFDBG_COEX_SLE_SERVER_EVENT_DROP"]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
