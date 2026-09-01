@@ -243,9 +243,13 @@ and 20/20 reset gates. The Wi-Fi local-UDP + BLE-advertising lane now also passe
 3/3 and 20/20 paired reset gates with 200/200 unique sequences recovered; its
 bounded retry and RAM costs remain visible in the
 [evidence](docs/plan/evidence/ws63-radio-u7-wifi-ble-traffic-2026-08-31.md).
-The remaining gate is BLE-connected traffic, then Wi-Fi + SLE, including event
-conservation and measured resource/latency evidence. No stable `coex` promise is
-public before that gate passes. DLI/SLB and stable graduation remain deferred.
+The Wi-Fi local-UDP + SLE-announcing lane now also passes 3/3 and 20/20 paired
+reset gates with 200/200 unique sequences recovered and zero Wi-Fi/SLE event
+drops; its retry and RAM costs remain visible in the
+[evidence](docs/plan/evidence/ws63-radio-u7-wifi-sle-traffic-2026-09-01.md).
+The remaining gate is BLE-connected and SLE-connected traffic plus measured
+IRQ/resource latency. No stable `coex` promise is public before that gate
+passes. DLI/SLB and stable graduation remain deferred.
 
 ## LATER -- Triggered Product Directions
 
