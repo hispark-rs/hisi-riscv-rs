@@ -110,8 +110,15 @@ capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait �
   `rtos_resources(monotonic_ms)` 构造 RTOS services。public API snapshots、graduation gate、
   BLE/SLE contracts、RV32 BLE/SLE/Wi-Fi composition、Clippy 与 package no-verify 均通过；
   已发布 alpha.110 consumer fixture 保留旧 API，待下一次 facade release 后迁移。
-- [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 16 处 `hisi_rf_ws63` public signature，
-  保持现有 WPA2/WPA3 行为和三平台 consumer contract。
+- [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 `hisi_rf_ws63` public signature，保持现有
+  WPA2/WPA3 行为和三平台 consumer contract。
+  - [x] **E3a wait diagnostics**：`hisi-rf` commit `8ab95a4` 让 runner 只返回
+    `WaitDiagnosticsSnapshot`，移除 backend wait type re-export 和 public `From<backend>`；
+    host tests、RV32 check、public API gate 与 Clippy 通过。快照剩余 14 行 backend 引用。
+  - [ ] **E3b storage/resources/init**：由 facade-owned admission 和 resource builder 消费
+    backend arena/profile/init error，不让应用拆出 backend capability。
+  - [ ] **E3c device/diagnostics**：以 facade-owned smoltcp device/token 和 diagnostics
+    snapshots 替换剩余 backend data-path 类型，随后重跑三平台 consumer 与 Wi-Fi HIL parity。
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过

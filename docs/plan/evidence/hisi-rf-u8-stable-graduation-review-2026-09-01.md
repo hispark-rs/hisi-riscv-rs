@@ -69,3 +69,9 @@ allocation and deallocation private and exposes a safe, composition-owned
 snapshots contain no public unsafe allocator hooks. The no-graduation decision
 remains unchanged: the Wi-Fi backend-type boundary and the protocol-specific
 lifecycle/NET gates remain open.
+
+U8R-E3a is complete in `hisi-rf` commit `8ab95a4`. The incremental runner now
+returns the facade-owned `WaitDiagnosticsSnapshot`; the backend wait type and
+public conversion implementation no longer appear in the public API. Fourteen
+backend references remain in the Wi-Fi snapshot and are owned by the subsequent
+storage/resources/init and device/aggregate-diagnostics slices.
