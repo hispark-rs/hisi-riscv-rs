@@ -101,6 +101,16 @@ capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait �
 当前 alpha 行为并重跑 public API、host、三平台 crates.io-only consumer、文档和相关 HIL。
 本窗口不实现 Embassy Net、DLI/SLB、新协议功能或 public coexistence。
 
+- [x] **U8R-E1 typed backend events**：`hisi-rf` commit `08a1e43` 新增
+  `BleBackendStage`、`SleBackendStage` 和 opaque `VendorStatus`；public unsolicited event
+  不再暴露需要应用解释的裸 stage/status 整数。BLE 13 个 host tests、SLE 5 个 host tests、
+  facade contracts、public API snapshots、Clippy 和两条 RV32 profile check 均通过。
+- [ ] **U8R-E2 allocator capability**：移除普通应用可见的 public unsafe
+  `InstalledRadioStorage::{allocate,deallocate}`，由 composition-owned capability 向 runtime
+  提供有界 allocator glue。
+- [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 16 处 `hisi_rf_ws63` public signature，
+  保持现有 WPA2/WPA3 行为和三平台 consumer contract。
+
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
 `ws63-radio-sys 0.1.0-alpha.12` 发布。完整证据见

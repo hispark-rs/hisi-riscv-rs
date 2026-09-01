@@ -55,3 +55,12 @@ The next and only major WIP is U8R facade-boundary remediation:
 
 Coexistence, full SLE client UX, Embassy Net, DLI/SLB, and stable protocol APIs
 remain separate evidence gates. U8R must not widen into those product areas.
+
+## Post-Review Remediation
+
+U8R-E1 is complete in `hisi-rf` commit `08a1e43`. BLE and SLE asynchronous
+backend events now expose `BleBackendStage` / `SleBackendStage` plus opaque
+`VendorStatus`; their public snapshots no longer contain raw `stage: u8` or
+`status: u32` fields. This removes one review blocker but does not change the
+no-graduation decision: public unsafe allocator hooks and the Wi-Fi backend-type
+boundary remain open.
