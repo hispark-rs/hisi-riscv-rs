@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0471372e.js";
+            window.path_to_searchindex_js = "searchindex-12203146.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-91c64007.js"></script>
@@ -1860,37 +1860,25 @@ smoltcp = {
 选择冲突时，facade 会在编译期报错。</p>
 <h2 id="2-把全局状态改成调用方持有的-storage"><a class="header" href="#2-把全局状态改成调用方持有的-storage">2. 把全局状态改成调用方持有的 storage</a></h2>
 <p>旧应用通常由 <code>ws63-rf-rs</code> 内部全局状态隐式持有队列、密码硬件 scratch 和 RF heap。
-新入口要求应用明确提供有界 storage 和 radio arena：</p>
-<pre><code class="language-rust">const EVENT_CAPACITY: usize = 8;
-
-static RADIO_STORAGE:
-    hisi_rf::ws63::Storage&lt;hisi_rf::ws63::SelectedProfile, EVENT_CAPACITY&gt; =
-    hisi_rf::ws63::Storage::new();
-
-hisi_rf::ws63::declare_radio_arena!(static RADIO_ARENA);</code></pre>
-<p>初始化 RTOS 前先 claim 并安装 arena。重复 claim、容量不足或 profile 不匹配会在启动
+新入口要求应用明确提供有界 storage；宏同时声明 control state 和正确 linker section 中的
+arena backing：</p>
+<pre><code class="language-rust">hisi_rf::ws63::declare_radio_storage!(static RADIO_STORAGE);</code></pre>
+<p>初始化 RTOS 前先安装 caller-owned storage。重复安装、容量不足或 profile 不匹配会在启动
 blob 前返回结构化错误：</p>
-<pre><code class="language-rust">let radio_arena = RADIO_ARENA
-    .claim_for::&lt;hisi_rf::ws63::SelectedProfile&gt;()?
-    .install()?;</code></pre>
-<p>完整资源数字由生成项目中的 <code>just rf-resource-report</code> 输出；不要从旧示例复制 heap、
+<pre><code class="language-rust">let installed_storage = RADIO_STORAGE.install()?;</code></pre>
+<p>完整资源数字由生成项目中的 <code>just resource-report</code> 输出；不要从旧示例复制 heap、
 task 或 queue 常量。</p>
 <h2 id="3-使用-ws63-composition-root"><a class="header" href="#3-使用-ws63-composition-root">3. 使用 WS63 composition root</a></h2>
 <p>旧路径会在应用中构造 <code>Ws63WifiBackend</code>，或者分别调用 <code>config()</code>、<code>resources()</code> 和
 底层初始化函数。新路径只组装 HAL token，并通过一个入口创建 controller：</p>
-<pre><code class="language-rust">let resources = hisi_rf::ws63::Resources::&lt;hisi_rf::ws63::WifiWpa2Smoltcp&gt;::builder(
-    efuse,
-    radio_arena,
-)
-.crypto(km, spacc, trng)
-.build();
+<pre><code class="language-rust">let resources = installed_storage.resources(efuse, km, spacc, trng);
 
-let controller =
-    hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources, &amp;RADIO_STORAGE)?;
+let controller = hisi_rf::ws63::init(hisi_rf::RadioConfig::default(), resources)?;
 
-let mut wifi = controller.start_runner()?;</code></pre>
-<p>WPA3 使用 <code>WifiWpa3Smoltcp</code>，并在 <code>.crypto(...)</code> 后追加 <code>.pke(pke)</code>；漏掉
-PKE 时没有可调用的 <code>build()</code>。WPA2 不消费 PKE，因此应用仍可把该 token 留给其他用途。</p>
+let parts = controller.split(RUNNER_BUDGET);</code></pre>
+<p>WPA3 的 <code>resources</code> 调用在 <code>spacc</code> 后额外接收 <code>pke</code>；WPA2 的编译配置中没有这个参数，
+因此应用仍可把 PKE token 留给其他用途。profile、arena 和 backend builder 都由 facade
+内部消费，不再出现在应用签名中。</p>
 <p>应用只通过 chip-neutral 控制面继续工作：</p>
 <ul>
 <li><code>wifi.controller.initialize().await</code></li>
@@ -1916,7 +1904,7 @@ PKE 时没有可调用的 <code>build()</code>。WPA2 不消费 PKE，因此应�
 
 cd rf-migration-reference
 just build
-just rf-resource-report
+just resource-report
 just image
 </code></pre>
 <p>然后检查原应用：</p>
