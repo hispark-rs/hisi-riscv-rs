@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>创建你的第一个工程 - HiSilicon RISC-V Rust 嵌入式开发手册</title>
+        <title>Connectivity 支持矩阵与资源边界 - HiSilicon RISC-V Rust 嵌入式开发手册</title>
 
 
         <!-- Custom HTML head -->
@@ -12,34 +12,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../../favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
-        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../../css/general-e96d0476.css">
-        <link rel="stylesheet" href="../../css/chrome-d279d366.css">
-        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../../theme/hisi-docs-5dcc79d1.css">
+        <link rel="stylesheet" href="../theme/hisi-docs-5dcc79d1.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "../../";
+            const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-35982b9b.js";
+            window.path_to_searchindex_js = "../searchindex-35982b9b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-8a6bfe17.js"></script>
+        <script src="../toc-8a6bfe17.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -106,7 +106,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -141,13 +141,13 @@
                     <h1 class="menu-title">HiSilicon RISC-V Rust 嵌入式开发手册</h1>
 
                     <div class="right-buttons">
-                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/hispark-rs/hisi-riscv-rs" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/tutorials/app/02-first-project.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/hispark-rs/hisi-riscv-rs/edit/main/docs/src/reference/12-connectivity-support.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -182,83 +182,130 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <script type="application/json" data-hisi-docs-manifest="">{"chips": {"default": "ws63", "selectable": ["ws63", "bs21", "bs20"], "chips": {"ws63": {"display_name": "WS63", "family": "ws63", "status": "stable", "hil": "verified", "qemu_machine": "ws63", "hal_features": "chip-ws63", "rt_features": "chip-ws63,boot-header", "pac_crate": "ws63-pac", "api_chip": "ws63", "app_addr": "0x00230000", "fwpkg_chip": "ws63", "probe_chip": "WS63", "rustdoc_packages": ["hisi-hal", "ws63-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-ws63,hisi-riscv-rt/chip-ws63,hisi-riscv-rt/boot-header", "rustdoc_no_default_features": false, "notes": "默认 stable + HIL 验证路径。"}, "bs21": {"display_name": "BS21", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs21", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS21", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS2X family 实验路径；当前无真机 HIL 承诺。"}, "bs20": {"display_name": "BS20", "family": "bs2x", "status": "experimental", "hil": "none", "qemu_machine": "bs20", "hal_features": "chip-bs21,rt,unstable", "rt_features": "chip-bs21,unstable", "pac_crate": "bs2x-pac", "api_chip": "bs21", "app_addr": "0x00090000", "fwpkg_chip": "bs21", "probe_chip": "BS20", "rustdoc_packages": ["hisi-hal", "bs2x-pac", "hisi-riscv-rt"], "rustdoc_features": "hisi-hal/chip-bs21,hisi-hal/rt,hisi-hal/unstable,hisi-riscv-rt/chip-bs21,hisi-riscv-rt/unstable", "rustdoc_no_default_features": true, "notes": "BS20 第一阶段复用 BS21 API 文档入口；仅内存/QEMU machine 区分。"}, "hi3322": {"display_name": "Hi3322", "family": "hi3322", "status": "planned", "hil": "none", "qemu_machine": "", "hal_features": "", "rt_features": "", "pac_crate": "hi3322-pac", "api_chip": "", "app_addr": "", "fwpkg_chip": "", "probe_chip": "", "rustdoc_packages": [], "rustdoc_features": "", "rustdoc_no_default_features": true, "notes": "预研目标；未进入默认选择器。"}}}, "versions": {"default": "latest", "latest": "v0.6.0", "versions": [{"id": "latest", "label": "Latest", "kind": "alias", "target": "v0.6.0", "book_base": "/hisi-riscv-rs/latest/", "api_base": "/hisi-riscv-rs/api/latest/"}, {"id": "main", "label": "main", "kind": "branch", "book_base": "/hisi-riscv-rs/main/", "api_base": "/hisi-riscv-rs/api/main/"}]}}</script>
-<h1 id="从模板创建你的第一个工程"><a class="header" href="#从模板创建你的第一个工程">从模板创建你的第一个工程</a></h1>
-<p>这是应用开发者路径<strong>最关键的一课</strong>。我们用 <code>cargo generate</code> 从模板生成一个
-<strong>你自己的</strong> blinky 工程，先在 QEMU 里跑通，再烧到真正的 WS63 开发板，
-亲眼看到板载 LED 闪烁。</p>
-<blockquote>
-<p>这条 blinky 路径已在真实芯片上验证通过（2026-06-14，GPIO0 翻转正常）。照做即可成功。</p>
-</blockquote>
-<h2 id="第-1-步从模板生成工程"><a class="header" href="#第-1-步从模板生成工程">第 1 步：从模板生成工程</a></h2>
-<p>用 <code>cargo generate</code> 拉取模板并回答几个提示：</p>
-<pre><code class="language-bash">cargo generate --git https://github.com/hispark-rs/hisi-rs-template
-</code></pre>
-<p>按提示回答（默认值就是我们要的）：</p>
+<h1 id="connectivity-支持矩阵与资源边界"><a class="header" href="#connectivity-支持矩阵与资源边界">Connectivity 支持矩阵与资源边界</a></h1>
+<p>本页汇总当前 <code>hisi-rf</code> alpha release train 的<strong>可构建能力、真机证据和资源契约</strong>。
+它不是稳定性承诺：U8 评审结论仍为 no-go，所有连接性 API 仍可能在后续 alpha 中调整。</p>
+<h2 id="当前发布闭包"><a class="header" href="#当前发布闭包">当前发布闭包</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>组件</th><th>版本或修订</th></tr>
+</thead>
+<tbody>
+<tr><td>用户 facade</td><td><code>hisi-rf 0.1.0-alpha.114</code></td></tr>
+<tr><td>WS63 backend</td><td><code>hisi-rf-ws63 0.1.0-alpha.100</code></td></tr>
+<tr><td>target archive 包</td><td><code>ws63-radio-blob 0.1.0-alpha.25</code></td></tr>
+<tr><td>Wi-Fi 资源报告</td><td><code>hisi-rf-resource-report/v13</code> / <code>ws63-radio-2026-09-01-r13</code></td></tr>
+<tr><td>BLE/SLE 资源报告</td><td><code>hisi-rf-radio-resource-report/v1</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>当前只有 WS63 backend。<code>bs20</code>、<code>bs21</code> 和其他芯片没有可选择的 <code>hisi-rf</code> 实现，
+因此不能从“HAL 支持该芯片”推导出“RF 支持该芯片”。</p>
+<h2 id="profile-矩阵"><a class="header" href="#profile-矩阵">Profile 矩阵</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Cargo profile</th><th>能力边界</th><th>Host 构建</th><th>WS63 HIL</th><th>当前等级</th></tr>
+</thead>
+<tbody>
+<tr><td><code>profile-wifi-wpa2-smoltcp</code></td><td>STA、WPA2-Personal、Ethernet L2、smoltcp</td><td>macOS/Linux/Windows</td><td>connect、DHCP、ARP、DNS、lease renew、本地 UDP</td><td>alpha</td></tr>
+<tr><td><code>profile-wifi-wpa3-smoltcp</code></td><td>STA、WPA3-SAE+PMF、Ethernet L2、smoltcp</td><td>macOS/Linux/Windows</td><td>pure WPA3 和 transition，含重复复位</td><td>alpha</td></tr>
+<tr><td><code>profile-wifi-wpa2-softap</code></td><td>WPA2-Personal SoftAP、DHCP、本地 UDP echo</td><td>macOS/Linux/Windows</td><td>AP/STA 配对 20-reset</td><td>alpha</td></tr>
+<tr><td><code>profile-wifi-wpa3-softap</code></td><td>WPA3-Personal SoftAP</td><td>macOS/Linux/Windows</td><td>pure WPA3 AP/STA 配对</td><td>alpha</td></tr>
+<tr><td><code>profile-ble-peripheral</code></td><td>advertising、连接、GATT server、安全生命周期</td><td>macOS/Linux/Windows</td><td>双板 peripheral/central</td><td>alpha</td></tr>
+<tr><td><code>profile-ble-central</code></td><td>scan、连接、GATT client、安全生命周期</td><td>macOS/Linux/Windows</td><td>双板 peripheral/central</td><td>alpha</td></tr>
+<tr><td><code>profile-ble-dual-role</code></td><td>BLE 双角色静态资源组合</td><td>macOS/Linux/Windows</td><td>facade/资源与迁移 fixture</td><td>alpha</td></tr>
+<tr><td><code>profile-sle-announce</code></td><td>SLE announce</td><td>macOS/Linux/Windows</td><td>双板 announce/seek</td><td>alpha</td></tr>
+<tr><td><code>profile-sle-seek</code></td><td>SLE seek</td><td>macOS/Linux/Windows</td><td>双板 announce/seek</td><td>alpha</td></tr>
+<tr><td><code>profile-sle-ssap</code></td><td>connect、SSAP discover/read/notification</td><td>macOS/Linux/Windows</td><td>双板 S3 20-reset</td><td>alpha</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>profile-wifi-wpa2-softap-ble-coexistence</code> 和
+<code>profile-wifi-wpa2-softap-sle-coexistence</code> 是 doc-hidden maintainer HIL profile，
+用于证明共享初始化和并发流量；它们尚不是普通应用的公开组合入口。</p>
+<p>Host 构建表示 crates.io-only consumer 可以在对应桌面系统完成普通 Cargo 构建，
+不表示这些桌面系统都连接了真机烧录 rig。真机证据当前来自 macOS 上的两块 WS63 EVB。</p>
+<h2 id="资源预算"><a class="header" href="#资源预算">资源预算</a></h2>
+<p>资源数字由 facade 的 <code>resource_report()</code> / <code>Storage::report()</code> 生成；应用不应另建一套
+常量。Wi-Fi 固件还会在 UART 输出 <code>RFDBG_RESOURCE</code>，HIL 将它与实际 heap/arena 状态核对。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Profile 族</th><th style="text-align: right">RF arena</th><th style="text-align: right">Runtime arena</th><th style="text-align: right">动态任务</th><th style="text-align: right">任务栈总量</th><th style="text-align: right">最小任务栈</th><th style="text-align: right">事件容量</th></tr>
+</thead>
+<tbody>
+<tr><td>Wi-Fi WPA2/WPA3 STA</td><td style="text-align: right">101,824 B</td><td style="text-align: right">197,120 B</td><td style="text-align: right">8（7 vendor + 1 worker）</td><td style="text-align: right">180,224 B</td><td style="text-align: right">8,192 B</td><td style="text-align: right">8 public</td></tr>
+<tr><td>BLE peripheral/central/dual-role</td><td style="text-align: right">303,104 B</td><td style="text-align: right">由应用 RTOS storage 提供</td><td style="text-align: right">4</td><td style="text-align: right">10,240 B</td><td style="text-align: right">512 B</td><td style="text-align: right">32 backend / 8 public</td></tr>
+<tr><td>SLE announce/seek/SSAP</td><td style="text-align: right">303,104 B</td><td style="text-align: right">由应用 RTOS storage 提供</td><td style="text-align: right">4</td><td style="text-align: right">10,240 B</td><td style="text-align: right">512 B</td><td style="text-align: right">32 backend / 8 public</td></tr>
+</tbody>
+</table>
+</div>
+<p>Wi-Fi 另外需要 49,152 B <code>.wifi_pkt_ram</code> 和至少 32,768 B main stack。当前 Wi-Fi
+报告仍是 <code>runtime_resources_calibrated=false</code>：固定 HIL 已证明显式 arena、零分配失败和
+可观测 headroom，但这些数字尚未毕业为跨 workload 的稳定容量承诺。</p>
+<p>SoftAP 暂无与 STA v13 等价的公开机器资源报告。当前只承诺固定 HIL composition 的
+链接器 guard、启动 admission 和零分配失败；统一报告是 stable graduation 前的已知缺口。</p>
+<p>U8R-E3c 固定闭包中，<code>hisi-fwpkg plan</code> 得到的完整 flash image 为：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>角色</th><th>ELF SHA-256</th><th style="text-align: right">image 长度</th></tr>
+</thead>
+<tbody>
+<tr><td>WPA2 STA</td><td><code>7fefd18bc0c2d59eb3592e41c8ff81c50c62d67e05953ef1d50bf2d85e032c3d</code></td><td style="text-align: right">774,024 B</td></tr>
+<tr><td>WPA2 SoftAP</td><td><code>f1ccf42b169df42cc996e5af3a19dc78860d5a051267ebaddaa681e583728c38</code></td><td style="text-align: right">675,672 B</td></tr>
+</tbody>
+</table>
+</div>
+<p>这些是该固定 source closure 的测量值，不是未来版本的 flash 上限。</p>
+<h2 id="blob-与-rom-身份"><a class="header" href="#blob-与-rom-身份">Blob 与 ROM 身份</a></h2>
+<p>target archive 的逐文件输入/输出 hash、normalization revision、hostap source tag/commit
+和构建器身份以 <code>ws63-radio-blob/artifacts/manifest.json</code> 为事实源。当前关键身份为：</p>
 <ul>
-<li><strong>项目名</strong>（<code>Project Name</code>）：随便起一个，比如 <code>my-blinky</code>。</li>
-<li><strong>Target chip</strong>：选 <code>ws63</code>（默认）。</li>
-<li><strong>Starter app</strong>：选 <code>blinky</code>（默认）。</li>
-<li><strong>App partition flash address</strong>：保持默认 <code>0x00230000</code>（WS63 的应用分区地址，已验证）。</li>
+<li>base profile：<code>ws63-wifi-base-v1</code>；</li>
+<li>upstream hostap：<code>hostap_2_11</code>，commit
+<code>f735d907a3fdc423747db1e7fa4aaf61676baa82</code>，release archive SHA-256
+<code>912ea06f74e30a8e36fbb68064d6cdff218d8d591db0fc5d75dee6c81ac7fc0a</code>；</li>
+<li>BLE archive ABI：<code>ws63-ble-b0-archive-abi-v2</code>；</li>
+<li>SLE archive ABI：<code>ws63-sle-s0-archive-abi-v1</code>。</li>
 </ul>
-<p>生成完成后进入工程目录：</p>
-<pre><code class="language-bash">cd my-blinky
-</code></pre>
-<p>这个工程是<strong>自包含的</strong>：它的依赖（<code>hisi-hal</code> / <code>hisi-riscv-rt</code> / <code>ws63-pac</code>）
-都来自 crates.io，它自带 <code>rust-toolchain.toml</code>（钉死工具链）、
-<code>.cargo/config.toml</code>（设好目标和 QEMU runner）和一个 <code>justfile</code>。
-你<strong>不需要</strong>克隆任何monorepo。</p>
-<h2 id="第-2-步在-qemu-里跑"><a class="header" href="#第-2-步在-qemu-里跑">第 2 步：在 QEMU 里跑</a></h2>
-<p>先用 QEMU 确认程序能正常启动：</p>
-<pre><code class="language-bash">just run
-</code></pre>
-<p>这会 <code>cargo build --release</code> 再用 <code>-M ws63</code> 启动 QEMU。blinky 只翻转 GPIO0、
-没有串口输出，所以控制台<strong>不会</strong>打印东西——这是预期的：程序正在安静地循环翻转引脚
-（机器 trace 里能看到 GPIO0 每 500 ms 变一次）。</p>
-<p>按 <code>Ctrl-A</code> 然后按 <code>X</code> 退出 QEMU。</p>
-<h2 id="第-3-步烧到真正的开发板"><a class="header" href="#第-3-步烧到真正的开发板">第 3 步：烧到真正的开发板</a></h2>
-<p>插上 WS63 开发板，一条命令完成“编译 → 打包 → 下载 → 复位“：</p>
-<pre><code class="language-bash">just flash
-</code></pre>
-<p><code>just flash</code> 依次做了这些事：</p>
-<ol>
-<li><code>cargo build --release</code> 编出 ELF；</li>
-<li><code>hisi-fwpkg plan --image-output</code> 生成完整 flash image 和 <code>*.plan.json</code>；</li>
-<li>从 plan 读取 <code>base_addr</code>；</li>
-<li>用打补丁的 probe-rs 分支执行 <code>download --binary-format bin --base-address &lt;plan.base_addr&gt; &lt;image&gt;</code>；</li>
-<li><code>probe-rs reset</code> 复位，flashboot 跳进应用入口（<code>app + 0x300</code>）。</li>
-</ol>
-<blockquote>
-<p><strong>不需要真正签名，但需要真实 hash</strong>：开发芯片的安全验证是关闭的（efuse
-<code>SEC_VERIFY_ENABLE == 0</code>），但 flashboot 在硬件上<strong>仍会校验 body 的 SHA-256</strong>——
-secure-off 只是跳过 ECC 签名，不跳过 hash。所以镜像需要的是 <code>0x300</code> 头 +
-<strong>真实 body SHA-256</strong>（这正是 <code>hisi-fwpkg plan</code> 在做的事），而不存在一个能让它启动的“占位签名“。
-镜像格式细节见 <a href="../../reference/06-image-format.html">应用镜像格式与签名</a>。</p>
-<p><code>patch-hash</code> 只用于 <code>probe-rs run</code> / embedded-test 这类需要 ELF 符号和半主机元数据的路径；普通烧录走 <code>plan</code>。</p>
-<p>如果 <code>HiSilicon_WS63.yaml</code> 不在当前目录，指给它：
-<code>just CHIP_DESC=/path/to/HiSilicon_WS63.yaml flash</code>。
-probe-rs 分支与 YAML 的细节见 <a href="../../how-to/04-flash-probe-rs.html">用 probe-rs 烧录到真机</a>。</p>
-</blockquote>
-<p>想在烧录的同时顺便看 UART0 的启动日志，可以用：</p>
-<pre><code class="language-bash">just run-hw PORT=/dev/ttyUSB0
-</code></pre>
-<p>它会先 <code>flash</code>，再把 UART0（CH340 串口，<code>/dev/ttyUSB0</code> @ 115200 8N1）接到终端。</p>
-<h2 id="第-4-步看-led-闪烁"><a class="header" href="#第-4-步看-led-闪烁">第 4 步：看 LED 闪烁</a></h2>
-<p>复位之后，看你的开发板：<strong>板载 LED（GPIO0）开始闪烁</strong>，亮 0.5 秒、灭 0.5 秒，
-不断循环。</p>
-<p>成功了！你刚刚用一个<strong>完全属于你自己</strong>的 Rust 工程，让一块真正的 WS63 芯片
-亮起了第一个 LED。</p>
-<p>下一课我们把它改造成一个会“说话“的 UART 程序 ——
-<a href="03-uart.html">改造成一个 UART 程序</a>。</p>
+<p>ROM 符号、callback 和 patch metadata 的输入 hash 由
+<code>hisi-rom-sys-ws63/assets/ws63/manifest.txt</code> 固定：</p>
+<ul>
+<li>ROM linker facts：<code>fa8f0071c07374d443db10dd2d5569a48e1e07486538b2eae701252e2188edbc</code>；</li>
+<li>callback facts：<code>66934b3acfac013106f19ae40753eeb561cfbe21bc5e347b50c3b52e409ea92e</code>；</li>
+<li>Wi-Fi patch facts：<code>993e3a3007c0a660eae7f006172cfdee32ce5c1c5fedafdc780c1005487f8d22</code>。</li>
+</ul>
+<h2 id="已知边界"><a class="header" href="#已知边界">已知边界</a></h2>
+<ul>
+<li><code>hisi-rf</code> 仍是 alpha；<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md">U8 stable graduation review</a> 明确维持 no-go。</li>
+<li>Wi-Fi 的正式 IP adapter 当前是 smoltcp；Embassy wait 不等于 Embassy Net driver。</li>
+<li>BLE/SLE 使用 vendor host；不能把它描述为通用 BLE HCI 或标准 SLE DLI backend。</li>
+<li>coexistence profile 仍是 maintainer fixture；公开 <code>coex</code> 需要单独产品/API 评审。</li>
+<li><code>ws63-rf-rs</code> legacy facade 要保留到至少一个迁移 release，并且不能早于父仓 <code>v0.8.0</code> 退役。</li>
+<li>HIL 的事件/队列守恒只证明内部路径；不能证明 RF 环境或外部网络永不丢包。</li>
+</ul>
+<h2 id="证据入口"><a class="header" href="#证据入口">证据入口</a></h2>
+<ul>
+<li><a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/hisi-rf-u8r-e3c-facade-hil-2026-09-03.md">U8R-E3c opaque facade fixed-image HIL</a></li>
+<li><a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/ws63-rf-release-closure-wpa2-wpa3-2026-08-06.md">WPA2/WPA3 release closure</a></li>
+<li><a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md">BLE/SLE U7 integration acceptance</a></li>
+<li><a href="11-rf-diagnostics.html">RF 错误与诊断契约</a></li>
+</ul>
+<p>若文档与构建输出冲突，以当前 crate metadata、机器资源报告、artifact manifest 和最新
+CI/HIL evidence 为准，并请通过仓库 issue 报告漂移。</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../tutorials/app/01-setup.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../reference/11-rf-diagnostics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../../tutorials/app/03-uart.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../explanation/00-index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -268,11 +315,11 @@ probe-rs 分支与 YAML 的细节见 <a href="../../how-to/04-flash-probe-rs.htm
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../tutorials/app/01-setup.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../reference/11-rf-diagnostics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../../tutorials/app/03-uart.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../explanation/00-index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -292,16 +339,16 @@ probe-rs 分支与 YAML 的细节见 <a href="../../how-to/04-flash-probe-rs.htm
         </script>
 
 
-        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
-        <script src="../../mark-09e88c2c.min.js"></script>
-        <script src="../../searcher-09f2665d.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
-        <script src="../../clipboard-1626706a.min.js"></script>
-        <script src="../../highlight-abc7f01d.js"></script>
-        <script src="../../book-609e4cb8.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="../../theme/hisi-docs-d2dc7ae4.js"></script>
+        <script src="../theme/hisi-docs-d2dc7ae4.js"></script>
 
 
 
