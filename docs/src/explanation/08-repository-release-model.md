@@ -79,13 +79,17 @@ PAC 还有一个额外约束：全程序不能链接两份 PAC。PAC 内部的 s
 
 独立发布意味着每层都通过 crates.io 版本和下游对话。下游的 lockfile 不能解析到一个还没发布的上游版本。
 
-所以顺序必须从底往上：
+所以顺序必须沿依赖图从底往上，而不是假设整个生态只有一条链：
 
 ```text
-PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
+SVD → PAC → hisi-hal / hisi-riscv-rt
+hisi-crypto → hisi-keystore / hisi-crypto-ws63
+hisi-alloc / hisi-storage / hisi-nvs / hisi-rom-sys
+    → chip backend → hisi-rf facade → examples/template
+all released units → parent submodule pointers and integration lockfile
 ```
 
-这个顺序不是仪式，而是依赖解析的自然结果。比如 HAL 需要消费新版 PAC，PAC 就必须先发布；父仓要 pin 到新版 HAL，HAL 的 commit 就必须先 push。父仓 pointer 永远是最后一步，因为它记录的是“已经存在、可 fetch、可复现的一组提交”。
+这个顺序不是仪式，而是依赖解析的自然结果。比如 HAL 需要消费新版 PAC，PAC 就必须先发布；keystore 复用新版 crypto 的 key capability 时，也必须先发布 crypto。父仓要 pin 到新版组件，该组件的 commit、tag 和独立 CI 就必须先存在。父仓 pointer 永远是最后一步，因为它记录的是“已经存在、可 fetch、可复现的一组提交”。
 
 ## “官方组合”与“可替换上层”可以同时存在
 

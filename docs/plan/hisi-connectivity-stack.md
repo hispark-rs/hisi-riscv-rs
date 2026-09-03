@@ -844,8 +844,9 @@ unstable/doc-hidden；后续 U8R facade-boundary remediation 已闭合，当前�
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
-也不得在 IRQ/critical section/scheduler lock 中等待。U5C 已建立独立 `hisi-keystore`
-候选 release unit：不可导出、generation-tagged `KeyHandle`，显式 kind/usage/persistence，
+也不得在 IRQ/critical section/scheduler lock 中等待。U5C 已建立并发布独立
+`hisi-keystore` release unit：不可导出、generation-tagged `KeyHandle`，显式
+kind/usage/persistence，
 caller-owned `BondTable<N>`，以及容量先行的 `reserve -> import keys -> commit` 两阶段事务。
 容量不足在导入 secret 前失败，放弃 reservation 不改变旧 bond，替换返回旧 opaque handles
 供 backend 清理。该 crate 保持 `no_std`、无堆、芯片中立；`hisi-nvs` 只提供普通存储格式，

@@ -13,11 +13,11 @@ runnable **without hardware** on the sister project
 `-M ws63 / bs21 / bs21e / bs22 / bs20`).
 
 > **North star: connectivity.** The WS63 path now completes real WPA2 scan,
-> connect, DHCP, smoltcp neighbor discovery, validated public UDP DNS and DHCP renewal on
-> silicon. The active A4 work is release and compatibility/HIL closeout for the
-> new chip-neutral `hisi-rf` vertical slice; BLE/SLE and BS2X connectivity remain
-> deferred. Current priorities are in [`ROADMAP.md`](ROADMAP.md), and dated
-> evidence lives under [`docs/plan/evidence/`](docs/plan/evidence/).
+> connect, sustained local traffic, BLE GATT, and SLE SSAP on paired real boards.
+> The A0-A5 and U0-U8R delivery windows are frozen; no new implementation track
+> starts until the product-direction gate allocates the single WIP slot. Current
+> priorities are in [`ROADMAP.md`](ROADMAP.md), and dated evidence lives under
+> [`docs/plan/evidence/`](docs/plan/evidence/).
 
 ## Crates
 
@@ -31,9 +31,18 @@ in-tree and are not published.
 | [`bs2x-pac`](crates/chips/bs2x/bs2x-pac/) | `svd2rust`-generated BS21/BS2X peripheral access (the multi-chip sibling of `ws63-pac`) | — |
 | [`hisi-hal`](crates/hisi-hal/) | Hand-written safe drivers on `embedded-hal 1.0` (GPIO, UART, SPI, I2C, DMA, timers, clocks, …) — plus optional `async` (`embedded-hal-async`/`embedded-io-async`) and `embassy` (an embassy-time driver). Standalone builds have no default chip: enable `chip-ws63`; experimental `chip-bs21` also requires `unstable`. | [`hisi-hal`](https://crates.io/crates/hisi-hal) |
 | [`hisi-riscv-rt`](crates/hisi-riscv-rt/) | Runtime: startup assembly, linker scripts, interrupt vectors (over `riscv-rt`) | [`hisi-riscv-rt`](https://crates.io/crates/hisi-riscv-rt) |
+| [`hisi-alloc`](crates/hisi-alloc/) | Caller-owned, bounded allocation contracts for vendor runtimes | [`hisi-alloc`](https://crates.io/crates/hisi-alloc) |
+| [`hisi-crypto`](crates/hisi-crypto/) | Chip-neutral fallible crypto capabilities, secret/key types, and software oracles | [`hisi-crypto`](https://crates.io/crates/hisi-crypto) |
+| [`hisi-keystore`](crates/hisi-keystore/) | Generation-tagged key handles and bounded bond/key lifecycle contracts | [`hisi-keystore`](https://crates.io/crates/hisi-keystore) |
+| [`hisi-storage`](crates/hisi-storage/) | Chip-neutral embedded-storage contracts | [`hisi-storage`](https://crates.io/crates/hisi-storage) |
+| [`hisi-nvs`](crates/hisi-nvs/) | Read-first HiSilicon ACPU KV/NVS format support | [`hisi-nvs`](https://crates.io/crates/hisi-nvs) |
+| [`hisi-rom-sys`](crates/hisi-rom-sys/) | Chip-neutral ROM capability facade | [`hisi-rom-sys`](https://crates.io/crates/hisi-rom-sys) |
+| [`hisi-rf-core`](crates/hisi-rf-core/) | Chip-neutral radio domain types and bounded control/event contracts | [`hisi-rf-core`](https://crates.io/crates/hisi-rf-core) |
 | [`hisi-rf`](crates/hisi-rf/) | Chip-neutral radio controller/runner, typed Wi-Fi config, bounded events and L2 device contracts | [`hisi-rf`](https://crates.io/crates/hisi-rf) |
 | [`hisi-rf-rtos-driver`](crates/hisi-rf-rtos-driver/) | Runtime-neutral task/IPC contract used by radio adapters | [`hisi-rf-rtos-driver`](https://crates.io/crates/hisi-rf-rtos-driver) |
 | [`hisi-rtos`](crates/hisi-rtos/) | Single-hart scheduler, IPC and Embassy integration backend | [`hisi-rtos`](https://crates.io/crates/hisi-rtos) |
+| [`hisi-crypto-ws63`](crates/chips/ws63/hisi-crypto-ws63/) | WS63 SPACC/PKE/RKP/TRNG hardware backend | [`hisi-crypto-ws63`](https://crates.io/crates/hisi-crypto-ws63) |
+| [`hisi-rf-ws63`](crates/chips/ws63/hisi-rf-ws63/) | WS63 composition, archive adapter, resource profiles, and radio backend | [`hisi-rf-ws63`](https://crates.io/crates/hisi-rf-ws63) |
 | [`ws63-radio-sys`](crates/chips/ws63/ws63-radio-sys/) | WS63 blob ABI/archive profile and versioned `hisi-rf-link` post-link tooling; nests the language-neutral vendor payload | GitHub/submodule |
 | [`ws63-rf-rs`](chips/ws63/rf/) | Transitional WS63 blob ABI/OSAL/netif adapter and `hisi-rf` backend. In-tree, `publish = false` | — |
 | [`ws63-flashboot`](chips/ws63/flashboot/) | Experimental bootloader (**not** secure boot). In-tree, `publish = false` | — |
@@ -57,6 +66,13 @@ hisi-riscv-rs/
 │   │   ├── bs2x/              # BS2X PAC (nests bs2x-svd)
 │   │   └── hi3322/            # planned-family PAC work (nests SVD)
 │   ├── hisi-hal/              # submodule (multi-chip: chip-ws63 / chip-bs21)
+│   ├── hisi-alloc/             # bounded caller-owned allocation contracts
+│   ├── hisi-crypto/            # chip-neutral crypto contracts and software oracle
+│   ├── hisi-keystore/          # key-handle and bond lifecycle contracts
+│   ├── hisi-storage/           # storage traits and chip-neutral access contracts
+│   ├── hisi-nvs/               # ACPU KV/NVS reader
+│   ├── hisi-rom-sys/           # chip-neutral ROM facade
+│   ├── hisi-rf-core/           # chip-neutral radio domain contracts
 │   ├── hisi-rf/               # chip-neutral radio API/runner
 │   ├── hisi-rf-rtos-driver/   # runtime-neutral radio OS contract
 │   ├── hisi-rtos/             # native scheduler/IPC/Embassy runtime
@@ -177,7 +193,7 @@ Release** — it does not publish the library crates.
 - [`docs/src/explanation/components/01-overview.md`](docs/src/explanation/components/01-overview.md) — the whole picture (Chinese), with per-component docs alongside.
 - [`docs/review/`](docs/review/) — the architecture review ledger.
 - [`ROADMAP.md`](ROADMAP.md) — current connectivity-first roadmap; historical remediation details live in [`docs/archive/`](docs/archive/).
-- **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21-hil-baseline`) is in use for WS63 HIL; connectivity bring-up remains open.
+- **Open tasks:** tracked as GitHub issues on [hispark-rs/hisi-riscv-rs](https://github.com/hispark-rs/hisi-riscv-rs/issues). Probe-rs debug support (fork [hispark-rs/probe-rs](https://github.com/hispark-rs/probe-rs) branch `add-hisilicon-ws63-bs21-hil-baseline`) is in use for WS63 HIL. The next connectivity implementation direction remains behind the product gate recorded in the engineering-plan registry.
 
 ## License
 

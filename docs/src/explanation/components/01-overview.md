@@ -28,7 +28,9 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 │                    └── embassy-executor (platform-riscv32, thread mode)  ← embassy 示例
 │ hisi-riscv-rt (启动/中断向量/链接脚本 + critical-section + 工具链原子垫片) ─┘（运行时）
 │ chips/ws63/flashboot (实验性二级引导，独立，裸 MMIO)
-│ chips/ws63/rf + ws63-RF (WS63 Wi-Fi/BT/BLE/SLE blob + Rust porting 层)
+│ hisi-rf → hisi-rf-core / hisi-rf-ws63 → ws63-radio-sys / ws63-RF
+│ hisi-rf-ws63 → hisi-alloc / hisi-crypto(-ws63) / hisi-nvs / hisi-rom-sys
+│ hisi-keystore → hisi-crypto（密钥能力与 bond lifecycle，不拥有 NVS 格式）
 │ chips/ws63/guide (WS63 中文硬件手册，Sphinx)
 │ chips/bs2x/guide (BS2X 中文硬件手册，Sphinx)
 │
@@ -45,6 +47,15 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `crates/chips/bs2x/bs2x-pac/bs2x-svd` | 嵌套 submodule | BS2X SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
 | `crates/hisi-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-hal.md](04-hisi-hal.md) |
 | `crates/hisi-riscv-rt` | submodule | 运行时：启动、中断向量、链接脚本、critical-section | [hisi-riscv-rt.md](05-hisi-riscv-rt.md) |
+| `crates/hisi-alloc` | submodule | caller-owned、有界的 vendor runtime allocation contract | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-crypto` | submodule | 芯片中立的 fallible crypto capability、secret/key 类型和软件 oracle | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-keystore` | submodule | generation-tagged key handle 与有界 bond/key lifecycle | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-storage` | submodule | 芯片中立 storage contract | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-nvs` | submodule | ACPU KV/NVS 只读格式与 reader | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-rf-core` | submodule | 芯片中立 radio domain/control/event contract | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/hisi-rf` | submodule | 用户可见的 radio controller/runner facade | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/chips/ws63/hisi-rf-ws63` | submodule | WS63 composition、resource profile 与 backend adapter | [ws63-RF.md](09-ws63-rf.md) |
+| `crates/chips/ws63/hisi-crypto-ws63` | submodule | WS63 SPACC/PKE/RKP/TRNG backend | [ws63-RF.md](09-ws63-rf.md) |
 | `examples/ws63/*` | in-tree 独立工作区 | WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…） | [ws63-examples.md](07-ws63-examples.md) |
 | `examples/bs21/*` | in-tree 独立工作区 | BS2X/BS21 示例；成员清单见参考页 | [ws63-examples.md](07-ws63-examples.md) |
 | `examples/bs20/` | in-tree 独立工作区 | BS20（M1）示例；不是 BS21 示例全集 | [ws63-examples.md](07-ws63-examples.md) |
@@ -107,16 +118,18 @@ cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 ```
 
-## 当前风险边界
+## 职责边界与事实源
 
-1. **连接性状态**：
-   - **WS63 Wi-Fi**（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。
-   - **BS2X BLE/SLE**（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 `hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md`。
-2. ~~示例无法链接~~ **（已修）**；~~多芯片支持~~ **（已实现）**：hisi-hal 用 `chip-ws63`/`chip-bs21` feature 区分，二选一；`chip-bs21` 因缺 BS2X 真机 HIL 需 `unstable`；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。
-3. **硬件在环（HIL）进度**：HAL 驱动级 WS63 embedded-test 证据基线见
-   [Stable API 清单](../../reference/10-stable-api.md)；示例级 smoke 与连接性 HIL 仍按
-   [HIL 测试框架](../07-hil-framework.md) 和 [示例目录与验证标记串](../../reference/02-examples.md) 分轨推进。
-4. **正确性修复状态**：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 [Stable API 清单](../../reference/10-stable-api.md) 为准。
+本页只解释组件如何分层，不维护发布状态、评审结论或逐项 HIL 台账。精确事实分别归属：
+
+- HAL 默认公开面与硅片证据：[Stable API 清单](../../reference/10-stable-api.md)；
+- 示例、marker 与构建范围：[示例目录与验证标记串](../../reference/02-examples.md)；
+- 当前 connectivity profile、资源与支持等级：[Connectivity 支持矩阵](../../reference/12-connectivity-support.md)；
+- HIL 轨道为什么分层：[HIL 测试框架](../07-hil-framework.md)；
+- 执行状态、产品触发条件和历史反例：[Connectivity 全栈计划](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/hisi-connectivity-stack.md)与[工程计划注册表](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/README.md)。
+
+因此，某个 crate 出现在上面的依赖图中，只说明它的责任边界和组合位置；不自动表示其
+API 已稳定、所有芯片均有 backend，或所有路径都具备相同 HIL 等级。
 
 ## 多芯片支持细节
 
