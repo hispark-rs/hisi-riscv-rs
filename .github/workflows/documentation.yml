@@ -164,7 +164,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-ws63-docs-
 
       - name: Install mdBook
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.4
         with:
           tool: mdbook
 
@@ -268,7 +268,7 @@ jobs:
           cache-dependency-glob: "**/*.py"
 
       - name: Install mdBook + linkcheck
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.4
         with:
           tool: mdbook,mdbook-linkcheck
 
