@@ -979,11 +979,12 @@ remove 的无板契约先由 `hisi-rf` commit `a02438e` 收窄：同步 remove a
 check。该阶段只证明命令/state-machine 语义；跨 nRST vendor NVS 删除随后由
 alpha.94/alpha.80 的 3/3 与 20/20 交替矩阵关闭，见上述 U5C removal evidence。
 
-独立发布顺序也已实测：`hisi-keystore 0.1.0-alpha.1` 的 7 host tests、clippy 和 locked
-package 通过，`hisi-rf-core 0.1.0-alpha.22` locked package 通过；`hisi-rf-ws63
-0.1.0-alpha.75` 必须等待尚未发布的 `hisi-crypto 0.1.0-alpha.5`，`hisi-rf
-0.1.0-alpha.87` 必须等待 `hisi-rf-core 0.1.0-alpha.22` 和 backend。父仓 path patch 只证明
-集成构建，不能替代上述 crates.io release-order gate。
+独立发布顺序也已实测并关闭 keystore 入口：`hisi-keystore 0.1.0-alpha.1` 在 commit
+`d4532e0` 统一复用 `hisi-crypto 0.1.0-alpha.5` 的 `KeyHandle`/`KeyUsage` 能力后，以 tag
+`v0.1.0-alpha.1` 发布到 crates.io 和 GitHub prerelease。main/tag CI 均通过 Linux、macOS、
+Windows host test/clippy/locked package 与 RV32 `no_std` check；host regression 为 8/8。
+父仓 commit `cb5132557` 再以 submodule pin 接入该 release unit。其余依赖仍须按各自
+crates.io 版本顺序发布；父仓 path patch 只证明集成构建，不能替代 release-order gate。
 
 2026-08-09 的下一步收口已把 BLE profile 的 `Pke` 改为显式 owned resource，并将
 archive 的 FIPS P-256R caller-provided-private-key `gen_key` 与 ECDH hook 接到同一个
