@@ -278,8 +278,9 @@ BLE/SLE/DLI/SLB scope.
 The review produced a no-go decision for public graduation. U8R-E1/E2/E3a/E3b/E3c have
 since replaced raw BLE/SLE backend event fields, hidden the three profiles' unsafe
 runtime allocator hooks, and removed backend types from Wi-Fi wait/storage/resources/init,
-device, and diagnostics signatures. `hisi-rf 0.1.0-alpha.113`, the three-OS consumer
-fixtures, examples, and template are updated. The remaining E3c gate is fixed-image
+device, and diagnostics signatures. `hisi-rf 0.1.0-alpha.114`, the three-OS consumer
+fixtures, examples, and template are updated; alpha.114 also fixes the SoftAP-only
+Clippy feature boundary. The remaining E3c gate is fixed-image
 Wi-Fi HIL parity: the first paired attempt exposed a local AP-to-STA data-path failure
 and also proved the J-Link peer-reset action did not produce a fresh boot, so it is not
 accepted as a reset matrix. The

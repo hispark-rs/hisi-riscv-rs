@@ -124,18 +124,25 @@ release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi �
     release build 和资源报告使用 crates.io 依赖通过。
   - [ ] **E3c device/diagnostics**：代码与 release 已完成，真机 parity 尚未关闭。
     `hisi-rf` commits `b6109b5` / `4478f68` 以 facade-owned smoltcp device/token、diagnostics
-    snapshots 和 frame diagnostics 替换剩余 backend data-path 类型；`0.1.0-alpha.113`
-    已发布。WPA2/WPA3 public API snapshots 不再出现 `hisi_rf_ws63::`，host tests、Clippy、
+    snapshots 和 frame diagnostics 替换剩余 backend data-path 类型；随后 commit `3417d7f`
+    修正 SoftAP-only profile 的 allocator cfg/Clippy 边界，`0.1.0-alpha.114` 已发布。
+    WPA2/WPA3 public API snapshots 不再出现 `hisi_rf_ws63::`，host tests、Clippy、
     RV32 WPA2/WPA3 check、standalone package、examples crates.io-only WPA2/WPA3/SoftAP、
-    template generate/build/resource-report 均通过；父仓 release-unit 指针由 commit
-    `70abb30c1` 固定。2026-09-03 的双板尝试绑定 AP ELF
+    template generate/build/resource-report 均通过；父仓 release-unit 指针由 commits
+    `70abb30c1` / `be3da4a70` 固定。2026-09-03 的双板尝试绑定 AP ELF
     `8c9164d0df84b4a8af2da79c3b9440a23c97f6131b4c19a4dc158e59d1848811` 与 STA ELF
     `ca522d21cdbe677c3fb731db43c37001a42becb3ef103169ac50aebbfe49bf42`：AP 每轮接收并
     提交 10 个 echo，STA 只收到 DHCP 的三个 IPv4 包，三轮均分类为
     `local_data_path_failure`。同时 peer 日志没有新 `boot`/`RFDBG_SOFTAP_READY`，计数跨轮
     累积；独立验证确认两枚 J-Link 的 `SetRESET`/`ClrRESET` 没有让目标重启，probe-rs
     运行态 reset 也无法重新建立 debug 连接。因此该三轮不是有效 nRST parity，不能关闭
-    E3c；需先恢复板级 reset，或用重新下载得到的干净双板启动完成同一固定镜像 gate。
+    E3c。为不依赖该无效 reset，examples commit `527bed0` 增加只由构建环境显式启用的
+    HIL 启动延迟；alpha.114 AP/STA ELF 分别固定为
+    `ceba01046f26f97855bcb0f29f506389b518585aec11beb7469b33bce257b1a2` 与
+    `b48e46d59d9c8c710e32715126c7428aa97af0b0aac997b11e39122fb811dec6`。STA 已在
+    3 MHz 下完成完整 verify（91.76 s），但 AP 在 3 MHz 连接前失败、经一次 nRST 后降至
+    500 kHz 仍报告 target access port 无响应；需 AP 物理断电上电后重新执行“延迟 STA
+    先烧、AP 后烧”的干净双板启动，再完成固定镜像 parity gate。
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
