@@ -140,9 +140,14 @@ release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi �
     HIL 启动延迟；alpha.114 AP/STA ELF 分别固定为
     `ceba01046f26f97855bcb0f29f506389b518585aec11beb7469b33bce257b1a2` 与
     `b48e46d59d9c8c710e32715126c7428aa97af0b0aac997b11e39122fb811dec6`。STA 已在
-    3 MHz 下完成完整 verify（91.76 s），但 AP 在 3 MHz 连接前失败、经一次 nRST 后降至
-    500 kHz 仍报告 target access port 无响应；需 AP 物理断电上电后重新执行“延迟 STA
-    先烧、AP 后烧”的干净双板启动，再完成固定镜像 parity gate。
+    3 MHz 下完成完整 verify（首次 91.76 s，复测 91.43 s），但 AP 在 3 MHz 连接前失败、
+    经一次 nRST 后降至 500 kHz 仍报告 target access port 无响应。随后尝试保留 NV、分区表
+    和 flashboot，仅通过 `hisiflash write-program` + LoaderBoot 写入上述 AP 计划镜像；指定
+    J-Link 的 reset-pin 脉冲后连续三次 30 s 均未进入串口下载握手，额外 8 s UART 只读采集
+    也无输出，且未发生擦写。这进一步证明当前 J-Link reset-pin 不是可接受的新启动来源；
+    需 AP 物理断电上电后重新执行“延迟 STA 先烧、AP 后烧”的干净双板启动，再完成固定
+    镜像 parity gate。只有 app-only 恢复在物理上电后仍无法握手时，才升级为覆盖
+    flashboot/app/NV 的完整官方 FWPKG 恢复，并单独记录恢复授权和产物身份。
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
