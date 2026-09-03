@@ -91,6 +91,9 @@ jobs:
       - name: Check RF diagnostic documentation anchors
         run: uv run --script scripts/check-rf-diagnostic-docs.py
 
+      - name: Check connectivity support documentation
+        run: uv run --script scripts/check-connectivity-support-docs.py
+
       - name: Check image-format truth-source drift
         run: uv run scripts/check-image-format-truth.py
 

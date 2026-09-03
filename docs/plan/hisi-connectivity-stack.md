@@ -3106,8 +3106,9 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   和 [U7 Wi-Fi traffic + connected SLE](evidence/ws63-radio-u7-wifi-sle-connected-traffic-2026-09-01.md)。
   schema-3 acceptance matrix 又逐轮验证事件守恒、零 drop、RF heap watermark、ready/IRQ
   latency 和 RTOS ready ownership；BLE/SLE 各 20/20 通过，U7 integration gate 已完成。
-- R0 发布 compatibility matrix、RAM/flash/task budget、blob/ROM hashes、known issues、
-  examples 和 HIL evidence；之后才把更高层 convenience API 作为稳定候选。
+- R0（完成，alpha 发布资料）：[Connectivity 支持矩阵与资源边界](../src/reference/12-connectivity-support.md)
+  已汇总 named profiles、RAM/flash/task budget、blob/ROM identity、known issues、examples
+  和 HIL evidence。它关闭发布资料交付，不改变 U8 stable graduation 的 no-go 结论。
 
 ## 验证
 

@@ -20,3 +20,4 @@
 | [CLI 工具速查](08-cli-tools.md) | `hisi-fwpkg`、补丁版 `probe-rs`、QEMU、`hisiflash` 命令与仓库清单 |
 | [已知问题索引](09-known-issues.md) | 工具链/IDE 集成层面的已知坑、影响、修复/规避与跟踪 issue |
 | [RF 错误与诊断契约](11-rf-diagnostics.md) | `hisi-rf-error/v3`、三层 timeout/cancellation、稳定错误码、阶段、恢复动作和文档 fragment |
+| [Connectivity 支持矩阵与资源边界](12-connectivity-support.md) | `hisi-rf` named profiles、WS63 HIL 覆盖、资源预算、blob/ROM 身份和已知边界 |

@@ -38,6 +38,7 @@
   - [CLI 工具速查（hisi-fwpkg / probe-rs）](reference/08-cli-tools.md)
   - [已知问题索引](reference/09-known-issues.md)
   - [RF 错误与诊断契约](reference/11-rf-diagnostics.md)
+  - [Connectivity 支持矩阵与资源边界](reference/12-connectivity-support.md)
 - [原理与背景 · Explanation](explanation/00-index.md)
   - [系统架构总览](explanation/01-architecture.md)
   - [HAL 政策约定](explanation/policies/00-index.md)
