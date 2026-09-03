@@ -1032,12 +1032,13 @@ probe-rs 完整 verify 后连续两次硬件 nRST 均出现
 下载耗时 58.91 秒，启动后同样通过三组 marker。至此 U5B 的 deterministic hooks、production
 DRBG/random keygen 与 PKE fail-closed recovery 已闭合；这仍不关闭 U5C pairing/bond
 keystore 或 U5D 双板 authenticated-pairing gate。
-`0.1.0-alpha.5` release-prep commit `da8bee2` 及后续 P-256 commit `6e1dfd1`
-已通过 standalone locked package、host tests、clippy 与 RV32 default/no-default build，但
-尚未推送/tag。`hisi-crypto-ws63` 的 standalone lock 仍解析 crates.io
-`hisi-crypto 0.1.0-alpha.4`，因此 release 顺序固定为：先发布 alpha.5，再独立刷新 WS63 backend lock、
-执行 package/CI，最后发布 backend；父仓 path patch 只能用于本轮集成/HIL，不能作为 release
-证据。
+`hisi-crypto 0.1.0-alpha.5` 的 release-prep commit `da8bee2`、后续 P-256 commit
+`6e1dfd1` 与 DRBG release-note commit `56b619a` 已完成 standalone locked package、host
+tests、clippy 和 RV32 default/no-default build，并以 tag `v0.1.0-alpha.5` 发布到 crates.io。
+`hisi-crypto-ws63 0.1.0-alpha.5` 也已在 commit `74218d3` 完成 tag 和 crates.io 发布；其
+standalone lock 明确解析 registry `hisi-crypto 0.1.0-alpha.5`。因此本轮
+`hisi-crypto -> hisi-crypto-ws63` release-order gate 已闭合；父仓 path patch 仍只用于集成
+和 HIL，不能替代独立 release 证据。
 
 ### BLE/SLE typed API 与标准 metadata（U2/U3 后续，延期）
 
