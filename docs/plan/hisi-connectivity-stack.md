@@ -80,7 +80,8 @@ Embassy executor/time 运行环境。
 
 更长期的 protection domain、跨芯片 port、host runtime 与 CLI-first observability
 架构已作为 deferred outlook 记录在
-[`hisi-rtos` 未来架构](hisi-rtos-future-architecture.md)；它不属于当前 A3/A4 gate。
+[`hisi-rtos` 未来架构](hisi-rtos-future-architecture.md)；A3/A4 已完成，该架构仍是
+产品触发后的 deferred 工作，不会由已完成的 connectivity gate 自动启动。
 通用 scheduler 语义、形式化模型与实现一致性 gate 另见
 [RTOS 调度语义与验证计划](hisi-rtos-semantics-and-verification.md)；WS63 blob
 兼容 profile 不得反向改写通用 RTOS 语义。
@@ -230,7 +231,7 @@ host tests、host clippy、RV32 check 与 public-api leak gate 均通过。固�
 typed GATT registration、advertising 和 peer scan。固定 SLE source/observer 也以同一
 FlashPlan + 3 MHz + 完整 verify 契约烧录，并通过 3/3 shape gate 与 20/20 paired nRST
 matrix；每轮均完成 typed SSAP registration 和 peer seek，missing/failure marker 为空。
-U3 至此关闭，唯一 WIP 切换到 U4。完整证据见
+U3 当时关闭并把唯一 WIP 切换到 U4；U4 后续也已完成。完整证据见
 [Radio U3 static databases](evidence/ws63-radio-u3-static-databases-2026-08-08.md)。
 
 U4 已完成实现与真机闭包：`hisi-rf-core` commit `fc7435f` 提供 bounded protocol event
@@ -432,9 +433,9 @@ caller-owned resources、typed diagnostics、template/report 和严格双板 rel
    OSAL receive-wait 终态矩阵得到 `18 pass + 2 local_data_path_failure`。失败轮分别收到
    `4/10` 与 `3/10` reply；两板 FRW wait/wakeup、task dispatch、IRQ45 与 HMAC RX 都继续
    前进，因此永久漏唤醒和 adopted-main 旧调度延迟都不是充分根因。run 6 有 4 个 request
-   未到 AP Rust echo 层；run 19 中 AP 已观察并提交全部 10 个 reply。下一步必须用 completion
-   packet number + timestamp 绑定异步 TX 归属，再区分 AP MAC completion、空口与 STA
-   lower-RX，不能用 5 ms 即时 delta 代替修复。随后门槛修正后的提交态矩阵仍为
+   未到 AP Rust echo 层；run 19 中 AP 已观察并提交全部 10 个 reply。当时的下一步要求是用
+   completion packet number + timestamp 绑定异步 TX 归属，再区分 AP MAC completion、
+   空口与 STA lower-RX，不能用 5 ms 即时 delta 代替修复。随后门槛修正后的提交态矩阵仍为
    `18 pass + 2 local_data_path_failure`，两次均是真实 `0/10`；AP 已生成并提交 reply，
    软件 q0 仍持有 7 个 PPDU/MPDU，硬件 data queue 为空且 TX completion 为 0。随后修复
    scan completion/timeout 的原子线性化，并以不可变 AP/STA identity 执行第二轮
@@ -801,8 +802,9 @@ WPA2/WPA3、BLE peripheral、SLE announce 的普通 Cargo build、只读 registr
 offline rebuild。第二道门已经完成 Wi-Fi+BLE 与 Wi-Fi+SLE 的共享资源/平台初始化子门槛，
 固定镜像通过 3/3 与 20/20 paired nRST；证据见
 [U7 shared initialization](evidence/ws63-radio-u7-shared-init-2026-08-29.md)。它仍未证明并发
-Wi-Fi 流量、event conservation、资源峰值或 RF coexistence，因此 U7/X0 当前只继续推进
-concurrent-traffic acceptance。`hisi-rf-ws63 0.1.0-alpha.90` 已修复 Wi-Fi+BLE activity
+Wi-Fi 流量、event conservation、资源峰值或 RF coexistence；这是当时尚待关闭的
+concurrent-traffic acceptance，后续证据已在本节下方完成闭环。`hisi-rf-ws63
+0.1.0-alpha.90` 已修复 Wi-Fi+BLE activity
 fixture 暴露的 repeated-scan payload ownership 泄漏：RAII 释放、敏感 payload 清零和每轮
 scan cache clear 均进入发布路径；固定 ELF
 完成双板 3/3 reset、共 9 次 scan，allocation failure 为零且 live allocation 不再逐轮增长。
@@ -850,18 +852,20 @@ kind/usage/persistence，
 caller-owned `BondTable<N>`，以及容量先行的 `reserve -> import keys -> commit` 两阶段事务。
 容量不足在导入 secret 前失败，放弃 reservation 不改变旧 bond，替换返回旧 opaque handles
 供 backend 清理。该 crate 保持 `no_std`、无堆、芯片中立；`hisi-nvs` 只提供普通存储格式，
-不拥有密钥策略。U5D 需要 pairing responder/cancellation/stale connection generation、
-双板 authenticated pairing/bond restore/remove 的 20-reset 证据与事件守恒。U5A 通过
+不拥有密钥策略。U5D 当时的验收要求包括 pairing responder/cancellation/stale connection
+generation、双板 authenticated pairing/bond restore/remove 的 20-reset 证据与事件守恒；
+这些门槛已由本节后续发布和真机证据关闭。U5A 通过
 编译和 host tests 不代表 BLE pairing 可用，更不代表 U5 完成或 API stable。
 
 U5C 初始 restore gate 的约束如下；该 gate 后续已由 alpha.90 真机证据关闭。原厂认证完成 callback 运行在 BTS service context，
 其指针由 vendor service 管理，Rust 只能在 callback 内做有界复制并 wake runner，不能在
 callback 中导入持久存储或执行用户逻辑。更重要的是，原厂 auto-save 路径维护约 79-byte
 SMP record，而公开 callback 只提供 LTK；当前不得据此伪造 IRK/CSRK 或宣称 Rust keystore
-能够跨重启恢复 vendor bond。下一步必须先从固定 archive/header/map/asm 建立完整、版本化的
+能够跨重启恢复 vendor bond。当时的下一步要求是先从固定 archive/header/map/asm 建立完整、版本化的
 manual-save/import/restore ABI，或明确让 vendor host 继续拥有完整 SMP persistence、Rust
 keystore 只持有协议上确实可见的 LTK capability。两种 ownership 模式必须显式选择，禁止
-双写且禁止把 vendor auto-save 成功误记为 Rust keystore restore 证据。
+双写且禁止把 vendor auto-save 成功误记为 Rust keystore restore 证据；后续实现选择并验证了
+vendor-managed persistence，闭环记录见本节后文。
 
 2026-08-12 的 archive/asm 审计进一步把该边界收窄：internal GAP event 19 和
 `sapi_ble_recover_smp_keys` 使用相同的 71-byte record；已证明 bytes 0..5 是 peer address，
@@ -1076,7 +1080,8 @@ Cargo build 不解析 PDF，也不复制不可重分发正文。生成物包括 
 newtype 文档、boundary/property tests、DLI golden frames 和 standard/vendor/silicon 差异报告。
 标准允许范围与 WS63 实际范围发生冲突时两者都记录，stable API 只承诺真机证据交集。
 
-后续里程碑保持 deferred，不插入当前 U2 WIP：TYP0 inventory 扫描 public headers 中所有
+后续里程碑保持 deferred；U2-U8R 已完成且 U8 给出 no-go，因此它们只在新的产品触发和唯一
+WIP 分配后启动：TYP0 inventory 扫描 public headers 中所有
 raw enum/flags/unit/handle/sentinel；TYP1 完成 core values、typed errors 和 API snapshot；TYP2
 完成 WS63 conversion、capability 与 golden frame gate；TYP3 迁移 facade/examples 并让旧
 stage/raw API 保留一个 migration release；TYP4 交付 SSAP/GATT schema、caller-owned storage
@@ -1138,8 +1143,9 @@ API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个�
   Windows 验证 facade、profile 与 caller-owned storage 契约。HIL 只能证明固定环境下的
   内部 queue/stack conservation 与行为 parity，不能宣称外部网络永不丢包。
 
-NET0-NET5 是当前 U4 async event/cancellation/lifecycle 与 connectivity evidence 收口后的
-triggered backlog，不与当前 Radio UX/API WIP 并行。STA 与 SoftAP 可以使用不同 backend，
+NET0-NET5 是 U4 async event/cancellation/lifecycle 与 connectivity evidence 收口后的
+triggered backlog；U8R 已完成，但该方向仍需新的产品触发和唯一 WIP 分配。STA 与 SoftAP
+可以使用不同 backend，
 但 composition、storage、runner、typed error、
 diagnostics 和 network lifecycle UX 必须对齐；example 中手写的 smoltcp
 `Interface/SocketSet/DHCP/UDP/DNS/renew` 在形成第二个消费者前继续作为可执行 composition
@@ -1858,8 +1864,9 @@ event registration、station open、supplicant port 和 native supplicant create
 及 Linux/macOS/Windows 最终 RF 链接在 CI `29985603598` 全绿，publish workflow
 `29985785769` 成功。`hisi-rf 0.1.0-alpha.30` 从安全 WS63 composition root 转发这些隐藏诊断
 类型，CI `29986181474` 的六组三平台 consumer 与 crates.io-only/offline gate 全绿，publish
-workflow `29986543335` 成功。当前仍缺真实硅片逐阶段 WCT 和可轮询 vendor init 边界，因此
-这些证据不会把默认 backend 切换为增量实现，也不会提前关闭 A5B。
+workflow `29986543335` 成功。在 alpha.19 这个历史检查点仍缺真实硅片逐阶段 WCT 和可轮询
+vendor init 边界，因此当时的证据不能切换默认 backend 或关闭 A5B；alpha.20 之后的栈修正、
+真机 WCT、bounded runner 与 release closure 已在后续条目完成该门槛。
 
 `hisi-rf-ws63 0.1.0-alpha.20` 随后闭合了 vendor Wi-Fi bootstrap 的栈破坏问题。根因是普通
 8 KiB main stack 在同步 `uapi_wifi_init` 中溢出并破坏相邻 vendor `.bss`，不是 PAC、RTOS
@@ -2933,8 +2940,8 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   峰值。CCMP 数据面保持 MAC/DMAC offload。PKE 本身及 transition-mode association 的同镜像
   20 次 nRST 均已 20/20；status-30 清理和 first-EAPOL cached-BSS 恢复具有逐轮诊断证据。
   断电冷启动最终状态已由同一未重烧镜像的 `lease=up` marker 证明；受控 WPA3-only
-  SAE+PMF 和依赖版本发布仍阻塞
-  WPA3-SAE stable 声明。
+  SAE+PMF 和依赖版本发布也已由后续固定镜像闭合。WPA3-SAE 仍未毕业 stable，是 U8
+  对完整 public API、迁移和证据面的 no-go 结论，而不是 WPA3-only HIL 尚未完成。
 
 #### A2 进展
 
@@ -3060,7 +3067,7 @@ resource report、typed diagnostics 与取消/超时资源守恒均不回归。
   worker/background 使用 per-thread quota，并在分类完成后评估 aggregate group quota。
   `Budgeted` 不提供最低 CPU 服务保证；是否引入独立 Reservation 只按
   [Quota 收口与保证服务演进](hisi-rtos-semantics-and-verification.md#quota-closure-and-guaranteed-service-evolution)
-  的 G0 gate 决定，不阻塞当前 init/scan/connect/ping parity。
+  的 G0 gate 决定；已完成的 Q4 结论是当前 payload 不需要 group quota 或 Reservation。
 - ported switch 的长期 ticket/generation 强化是独立 deferred correctness 轨道，唯一排期见
   [Ported Switch Intent/Ticket 协议](hisi-rtos-semantics-and-verification.md#ported-switch-intentticket-protocol-deferred)。
   当前已验证的 stale-request recovery 在该轨道完成 100-reset HIL 前不得删除；它不属于
