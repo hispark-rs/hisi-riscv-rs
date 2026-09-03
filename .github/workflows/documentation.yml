@@ -88,6 +88,9 @@ jobs:
       - name: Check engineering plan registry
         run: uv run --script scripts/check-plan-registry.py
 
+      - name: Check connectivity plan status
+        run: uv run --script scripts/check-connectivity-plan-status.py
+
       - name: Check RF diagnostic documentation anchors
         run: uv run --script scripts/check-rf-diagnostic-docs.py
 
