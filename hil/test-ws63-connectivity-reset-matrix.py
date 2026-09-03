@@ -612,6 +612,39 @@ class ClassifyTests(unittest.TestCase):
             MATRIX.validate_rust_contract(log, "connectivity"),
         )
 
+    def test_ready_ownership_uses_previous_snapshot_for_truncated_suffix(self) -> None:
+        log = b"\n".join(
+            (
+                b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000000 "
+                b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+                b"ready_bad_link=0x00000000",
+                b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000000 ready_dup=0x",
+            )
+        )
+        self.assertEqual(
+            MATRIX.parse_ready_ownership(log),
+            {
+                "ready_owner_err": 0,
+                "ready_dup": 0,
+                "ready_wrong_bucket": 0,
+                "ready_bad_link": 0,
+            },
+        )
+
+    def test_ready_ownership_keeps_nonzero_value_from_truncated_tail(self) -> None:
+        log = b"\n".join(
+            (
+                b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000000 "
+                b"ready_dup=0x00000000 ready_wrong_bucket=0x00000000 "
+                b"ready_bad_link=0x00000000",
+                b"RFDBG_SOFTAP_SCHED ready_owner_err=0x00000001 ready_dup=0x",
+            )
+        )
+        self.assertIn(
+            "nonzero:peer.ready_ownership.ready_owner_err=1",
+            MATRIX.validate_ready_ownership(log, "peer"),
+        )
+
     def test_peer_contract_rejects_ready_queue_link_violation(self) -> None:
         peer_log = (
             b"RFDBG_SOFTAP_READY\n"

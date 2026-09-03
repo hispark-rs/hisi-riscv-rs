@@ -593,10 +593,28 @@ def validate_a5b_metrics(
 
 
 def parse_ready_ownership(log: bytes) -> dict[str, int] | None:
-    line = last_prefixed_line(log, b"RFDBG_A5B_SCHED ")
-    if line is None:
-        line = last_prefixed_line(log, b"RFDBG_SOFTAP_SCHED ")
-    return parse_hex_fields(line) if line is not None else None
+    lines = log.splitlines()
+    prefix = b"RFDBG_A5B_SCHED "
+    if not any(line.startswith(prefix) for line in lines):
+        prefix = b"RFDBG_SOFTAP_SCHED "
+
+    # Long UART diagnostics can be cut in the middle of the final line. Keep
+    # the newest value observed for each ownership counter and fill only the
+    # missing suffix from earlier snapshots. A non-zero value in the truncated
+    # final line therefore still wins and fails the contract.
+    snapshot: dict[str, int] = {}
+    saw_snapshot = False
+    for line in reversed(lines):
+        if not line.startswith(prefix):
+            continue
+        saw_snapshot = True
+        fields = parse_hex_fields(line)
+        for field in READY_OWNERSHIP_FIELDS:
+            if field not in snapshot and field in fields:
+                snapshot[field] = fields[field]
+        if all(field in snapshot for field in READY_OWNERSHIP_FIELDS):
+            break
+    return snapshot if saw_snapshot else None
 
 
 def validate_ready_ownership(log: bytes, role: str) -> list[str]:
