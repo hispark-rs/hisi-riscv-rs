@@ -906,6 +906,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hisi-keystore"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "hisi-crypto",
+]
+
+[[package]]
 name = "hisi-nvs"
 version = "0.1.0-alpha.3"
 dependencies = [

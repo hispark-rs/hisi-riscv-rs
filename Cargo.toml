@@ -10,6 +10,7 @@ members = [
     "crates/chips/bs2x/bs2x-pac",
     "crates/hisi-alloc",
     "crates/hisi-crypto",
+    "crates/hisi-keystore",
     "crates/chips/ws63/hisi-crypto-ws63",
     "crates/chips/ws63/hisi-rf-ws63",
     "crates/hisi-rom-sys",
@@ -69,6 +70,7 @@ default-members = [
     "crates/chips/ws63/ws63-pac",
     "crates/hisi-alloc",
     "crates/hisi-crypto",
+    "crates/hisi-keystore",
     "crates/chips/ws63/hisi-crypto-ws63",
     "crates/chips/ws63/hisi-rf-ws63",
     "crates/hisi-storage",
@@ -115,6 +117,7 @@ repository = "https://github.com/hispark-rs/hisi-riscv-rs"
 ws63-pac = { path = "crates/chips/ws63/ws63-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
+hisi-keystore = { path = "crates/hisi-keystore" }
 hisi-crypto-ws63 = { path = "crates/chips/ws63/hisi-crypto-ws63" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
 hisi-storage = { path = "crates/hisi-storage" }
@@ -147,6 +150,7 @@ ws63-pac = { path = "crates/chips/ws63/ws63-pac" }
 bs2x-pac = { path = "crates/chips/bs2x/bs2x-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
 hisi-crypto = { path = "crates/hisi-crypto" }
+hisi-keystore = { path = "crates/hisi-keystore" }
 hisi-rom-sys = { path = "crates/hisi-rom-sys" }
 hisi-storage = { path = "crates/hisi-storage" }
 hisi-nvs = { path = "crates/hisi-nvs" }

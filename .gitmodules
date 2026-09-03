@@ -37,6 +37,9 @@
 [submodule "crates/hisi-crypto"]
 	path = crates/hisi-crypto
 	url = https://github.com/hispark-rs/hisi-crypto.git
+[submodule "crates/hisi-keystore"]
+	path = crates/hisi-keystore
+	url = https://github.com/hispark-rs/hisi-keystore.git
 [submodule "crates/chips/ws63/ws63-radio-sys"]
 	path = crates/chips/ws63/ws63-radio-sys
 	url = https://github.com/hispark-rs/ws63-radio-sys.git
