@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-35982b9b.js";
+            window.path_to_searchindex_js = "../searchindex-4fb3f481.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8a6bfe17.js"></script>
@@ -243,10 +243,14 @@
 <p>这也是为什么 lockfile 归属跟仓库走：子仓 release 用子仓 <code>Cargo.lock</code>，父仓集成用父仓 <code>Cargo.lock</code>。父仓 lockfile 不能替代子仓 release lockfile。</p>
 <h2 id="为什么要按依赖顺序发布"><a class="header" href="#为什么要按依赖顺序发布">为什么要按依赖顺序发布</a></h2>
 <p>独立发布意味着每层都通过 crates.io 版本和下游对话。下游的 lockfile 不能解析到一个还没发布的上游版本。</p>
-<p>所以顺序必须从底往上：</p>
-<pre><code class="language-text">PAC/SVD → hisi-riscv-rt → hisi-hal → examples/RF/guide → 父仓 pointer
+<p>所以顺序必须沿依赖图从底往上，而不是假设整个生态只有一条链：</p>
+<pre><code class="language-text">SVD → PAC → hisi-hal / hisi-riscv-rt
+hisi-crypto → hisi-keystore / hisi-crypto-ws63
+hisi-alloc / hisi-storage / hisi-nvs / hisi-rom-sys
+    → chip backend → hisi-rf facade → examples/template
+all released units → parent submodule pointers and integration lockfile
 </code></pre>
-<p>这个顺序不是仪式，而是依赖解析的自然结果。比如 HAL 需要消费新版 PAC，PAC 就必须先发布；父仓要 pin 到新版 HAL，HAL 的 commit 就必须先 push。父仓 pointer 永远是最后一步，因为它记录的是“已经存在、可 fetch、可复现的一组提交”。</p>
+<p>这个顺序不是仪式，而是依赖解析的自然结果。比如 HAL 需要消费新版 PAC，PAC 就必须先发布；keystore 复用新版 crypto 的 key capability 时，也必须先发布 crypto。父仓要 pin 到新版组件，该组件的 commit、tag 和独立 CI 就必须先存在。父仓 pointer 永远是最后一步，因为它记录的是“已经存在、可 fetch、可复现的一组提交”。</p>
 <h2 id="官方组合与可替换上层可以同时存在"><a class="header" href="#官方组合与可替换上层可以同时存在">“官方组合”与“可替换上层”可以同时存在</a></h2>
 <p>项目仍然需要一个官方组合：否则文档、HIL、模板、示例、QEMU parity 都没有锚点。官方组合的意义是给用户一条可靠路径，也给维护者一个可以验证的集成面。</p>
 <p>但官方组合不应该变成生态边界。我们要同时保留两种能力：</p>

@@ -36,7 +36,7 @@
             const path_to_root = "../../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-35982b9b.js";
+            window.path_to_searchindex_js = "../../searchindex-4fb3f481.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../../toc-8a6bfe17.js"></script>
@@ -208,7 +208,9 @@
 │                    └── embassy-executor (platform-riscv32, thread mode)  ← embassy 示例
 │ hisi-riscv-rt (启动/中断向量/链接脚本 + critical-section + 工具链原子垫片) ─┘（运行时）
 │ chips/ws63/flashboot (实验性二级引导，独立，裸 MMIO)
-│ chips/ws63/rf + ws63-RF (WS63 Wi-Fi/BT/BLE/SLE blob + Rust porting 层)
+│ hisi-rf → hisi-rf-core / hisi-rf-ws63 → ws63-radio-sys / ws63-RF
+│ hisi-rf-ws63 → hisi-alloc / hisi-crypto(-ws63) / hisi-nvs / hisi-rom-sys
+│ hisi-keystore → hisi-crypto（密钥能力与 bond lifecycle，不拥有 NVS 格式）
 │ chips/ws63/guide (WS63 中文硬件手册，Sphinx)
 │ chips/bs2x/guide (BS2X 中文硬件手册，Sphinx)
 │
@@ -228,6 +230,15 @@
 <tr><td><code>crates/chips/bs2x/bs2x-pac/bs2x-svd</code></td><td>嵌套 submodule</td><td>BS2X SVD 真值 + 生成工具</td><td><a href="02-ws63-svd.html">ws63-svd.md</a></td></tr>
 <tr><td><code>crates/hisi-hal</code></td><td>submodule</td><td>多芯片 HAL（standalone 需显式选 <code>chip-ws63</code>；实验性 <code>chip-bs21</code> 需 <code>unstable</code>）+ 可选 <code>async</code>/<code>embassy</code></td><td><a href="04-hisi-hal.html">hisi-hal.md</a></td></tr>
 <tr><td><code>crates/hisi-riscv-rt</code></td><td>submodule</td><td>运行时：启动、中断向量、链接脚本、critical-section</td><td><a href="05-hisi-riscv-rt.html">hisi-riscv-rt.md</a></td></tr>
+<tr><td><code>crates/hisi-alloc</code></td><td>submodule</td><td>caller-owned、有界的 vendor runtime allocation contract</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-crypto</code></td><td>submodule</td><td>芯片中立的 fallible crypto capability、secret/key 类型和软件 oracle</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-keystore</code></td><td>submodule</td><td>generation-tagged key handle 与有界 bond/key lifecycle</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-storage</code></td><td>submodule</td><td>芯片中立 storage contract</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-nvs</code></td><td>submodule</td><td>ACPU KV/NVS 只读格式与 reader</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-rf-core</code></td><td>submodule</td><td>芯片中立 radio domain/control/event contract</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/hisi-rf</code></td><td>submodule</td><td>用户可见的 radio controller/runner facade</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/hisi-rf-ws63</code></td><td>submodule</td><td>WS63 composition、resource profile 与 backend adapter</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
+<tr><td><code>crates/chips/ws63/hisi-crypto-ws63</code></td><td>submodule</td><td>WS63 SPACC/PKE/RKP/TRNG backend</td><td><a href="09-ws63-rf.html">ws63-RF.md</a></td></tr>
 <tr><td><code>examples/ws63/*</code></td><td>in-tree 独立工作区</td><td>WS63 应用示例（blinky/uart/timer/gpio/dma/reset/async/embassy/wifi_blob_link/rf_port_demo…）</td><td><a href="07-ws63-examples.html">ws63-examples.md</a></td></tr>
 <tr><td><code>examples/bs21/*</code></td><td>in-tree 独立工作区</td><td>BS2X/BS21 示例；成员清单见参考页</td><td><a href="07-ws63-examples.html">ws63-examples.md</a></td></tr>
 <tr><td><code>examples/bs20/</code></td><td>in-tree 独立工作区</td><td>BS20（M1）示例；不是 BS21 示例全集</td><td><a href="07-ws63-examples.html">ws63-examples.md</a></td></tr>
@@ -304,20 +315,17 @@ cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings
 cargo build -Zbuild-std=core,alloc -p blinky             # 单独构建一个示例
 cargo build -Zbuild-std=core,alloc -p ws63-flashboot     # 显式构建实验性 flashboot（包名是 ws63-flashboot）
 </code></pre>
-<h2 id="当前风险边界"><a class="header" href="#当前风险边界">当前风险边界</a></h2>
-<ol>
-<li><strong>连接性状态</strong>：
+<h2 id="职责边界与事实源"><a class="header" href="#职责边界与事实源">职责边界与事实源</a></h2>
+<p>本页只解释组件如何分层，不维护发布状态、评审结论或逐项 HIL 台账。精确事实分别归属：</p>
 <ul>
-<li><strong>WS63 Wi-Fi</strong>（ROADMAP C1-C5）：porting 层 + 链接 + netif→smoltcp 已实现并在 QEMU 自测，符号闭合已达成；真实 blob 上板、init、scan、connect、ping 仍待 HIL。</li>
-<li><strong>BS2X BLE/SLE</strong>（已评估）：radio MMIO 模拟是死胡同（B_CTL 0x59000000 为 56 个写只 PHY 寄存器 + IRQ-26 blob 事件墙），HCI 边界为 blob-on-blob（无法干预）；完整分析见 <code>hisi-riscv-qemu/docs/bs21-connectivity-feasibility.md</code>。</li>
+<li>HAL 默认公开面与硅片证据：<a href="../../reference/10-stable-api.html">Stable API 清单</a>；</li>
+<li>示例、marker 与构建范围：<a href="../../reference/02-examples.html">示例目录与验证标记串</a>；</li>
+<li>当前 connectivity profile、资源与支持等级：<a href="../../reference/12-connectivity-support.html">Connectivity 支持矩阵</a>；</li>
+<li>HIL 轨道为什么分层：<a href="../07-hil-framework.html">HIL 测试框架</a>；</li>
+<li>执行状态、产品触发条件和历史反例：<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/hisi-connectivity-stack.md">Connectivity 全栈计划</a>与<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/README.md">工程计划注册表</a>。</li>
 </ul>
-</li>
-<li><del>示例无法链接</del> <strong>（已修）</strong>；<del>多芯片支持</del> <strong>（已实现）</strong>：hisi-hal 用 <code>chip-ws63</code>/<code>chip-bs21</code> feature 区分，二选一；<code>chip-bs21</code> 因缺 BS2X 真机 HIL 需 <code>unstable</code>；examples 分为 WS63（submodule）、BS2X（in-tree 独立工作区）。</li>
-<li><strong>硬件在环（HIL）进度</strong>：HAL 驱动级 WS63 embedded-test 证据基线见
-<a href="../../reference/10-stable-api.html">Stable API 清单</a>；示例级 smoke 与连接性 HIL 仍按
-<a href="../07-hil-framework.html">HIL 测试框架</a> 和 <a href="../../reference/02-examples.html">示例目录与验证标记串</a> 分轨推进。</li>
-<li><strong>正确性修复状态</strong>：中断（LOCIEN/LOCIPRI/LOCIPCLR）、SPI（两级时钟）、超时（wait_until 有界）、复位（GLB_CTL + SYS_RST_RECORD）等历史核心问题已修；QEMU 软件在环验证已覆盖中断、复位、DMA、timer；stable API 的真机证据以 <a href="../../reference/10-stable-api.html">Stable API 清单</a> 为准。</li>
-</ol>
+<p>因此，某个 crate 出现在上面的依赖图中，只说明它的责任边界和组合位置；不自动表示其
+API 已稳定、所有芯片均有 backend，或所有路径都具备相同 HIL 等级。</p>
 <h2 id="多芯片支持细节"><a class="header" href="#多芯片支持细节">多芯片支持细节</a></h2>
 <ul>
 <li><strong>PAC 组织</strong>：<code>crates/chips/ws63/ws63-pac</code> 和 <code>crates/chips/bs2x/bs2x-pac</code> 各自独立（SVD 源→svd2rust 生成），root <code>Cargo.toml</code> 经 <code>[patch.crates-io]</code> 统一链接到本地实例（保证单一 PAC 版本）。</li>
