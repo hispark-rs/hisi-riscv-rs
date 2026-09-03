@@ -77,3 +77,18 @@ returns the facade-owned `WaitDiagnosticsSnapshot`; the backend wait type and
 public conversion implementation no longer appear in the public API. Fourteen
 backend references remain in the Wi-Fi snapshot and are owned by the subsequent
 storage/resources/init and device/aggregate-diagnostics slices.
+
+U8R-E3b and E3c are complete in `hisi-rf 0.1.0-alpha.114`. Facade-owned
+resources, storage, initialization, smoltcp device/token, wait diagnostics and
+aggregate/frame diagnostics remove `hisi_rf_ws63::` from the WPA2/WPA3 public
+snapshots. Host, package, Clippy, RV32, three-OS crates.io-only consumer,
+examples and template gates pass. A clean parent `b70186139` closure then passed
+strict WPA2 SoftAP/STA 3/3 and 20/20 paired-reset matrices with 200/200 local
+UDP replies, zero authentication timeout, queue/backend/allocation failure, and
+zero ready-ownership diagnostics. Exact artifacts and evidence boundaries are
+recorded in
+[`hisi-rf-u8r-e3c-facade-hil-2026-09-03.md`](hisi-rf-u8r-e3c-facade-hil-2026-09-03.md).
+
+This closes the remediation actions, not the graduation review. The no-go
+decision remains in force until a later product/API review allocates a new
+evidence gate; coexistence remains doc-hidden.

@@ -14,9 +14,9 @@ frozen. U5A-U5C security control, hardware-crypto compatibility, and
 vendor-managed bond persistence/restore/removal, U5D positive/negative pairing
 lifecycles, U6 named-profile/template delivery, U7 external-consumer plus
 measured two-board coexistence acceptance, and the U8 no-go graduation review
-are also frozen. U8R's code and release boundary are closed; the current sole
-WIP is its fixed-image Wi-Fi HIL parity gate;
-coexistence does not graduate automatically.
+are also frozen. U8R's facade, release, three-OS consumer and fixed-image Wi-Fi
+HIL parity gates are closed. No new major WIP is activated automatically;
+coexistence does not graduate without a new product/API review.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
 
@@ -280,22 +280,28 @@ since replaced raw BLE/SLE backend event fields, hidden the three profiles' unsa
 runtime allocator hooks, and removed backend types from Wi-Fi wait/storage/resources/init,
 device, and diagnostics signatures. `hisi-rf 0.1.0-alpha.114`, the three-OS consumer
 fixtures, examples, and template are updated; alpha.114 also fixes the SoftAP-only
-Clippy feature boundary. The remaining E3c gate is fixed-image
-Wi-Fi HIL parity: the first paired attempt exposed a local AP-to-STA data-path failure
-and also proved the J-Link peer-reset action did not produce a fresh boot, so it is not
-accepted as a reset matrix. The
+Clippy feature boundary. After repairing the AP RST connection, a clean parent
+`b70186139` closure passed strict fixed-image WPA2 3/3 and 20/20 paired-reset matrices
+with 200/200 local UDP replies and zero contract errors. The
 coexistence surface remains a doc-hidden maintainer fixture rather than a public
 shared lifecycle. Exact findings are recorded in the
-[U8 review evidence](docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md).
+[U8 review evidence](docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md)
+and [E3c HIL evidence](docs/plan/evidence/hisi-rf-u8r-e3c-facade-hil-2026-09-03.md).
 
-## NOW -- U8R Facade-Boundary Remediation
+## Completed -- U8R Facade-Boundary Remediation
 
-U8R is the only major WIP. Typed BLE/SLE errors, the composition-owned allocator,
-and every Wi-Fi opaque facade wrapper are complete and released. The active step is
-only the Wi-Fi fixed-image HIL parity gate after restoring a reset path that produces
-a verified fresh boot. Public API, host, three-OS consumer, package, examples, and
-template gates already pass. This does not stabilize coexistence or widen into
-Embassy Net, DLI/SLB, or new protocol features.
+Typed BLE/SLE errors, the composition-owned allocator, and every Wi-Fi opaque facade
+wrapper are complete and released. Public API, host, three-OS consumer, package,
+examples, template and fixed-image Wi-Fi HIL parity gates pass. The final same-image
+20-reset matrix completed 20/20 with 200/200 local UDP replies, zero authentication
+timeout, and zero queue, runner, allocation or ready-ownership error. This does not
+stabilize coexistence or widen into Embassy Net, DLI/SLB, or new protocol features.
+
+## NOW -- Product Direction Gate
+
+There is no automatically active major implementation milestone. Starting the next
+direction requires an explicit product trigger, a single allocated WIP slot, and a
+fresh evidence plan. Deferred designs remain facts, not implicit TODOs.
 
 ## LATER -- Triggered Product Directions
 

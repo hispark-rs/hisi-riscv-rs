@@ -2,7 +2,7 @@
 
 ## 状态
 
-**U8 stable-graduation review 已完成并给出 no-go；当前唯一 major WIP 是 U8R-E3c facade HIL closure。** U0-U4 已完成；U5A 安全控制面、U5B
+**U8 stable-graduation review 已完成并给出 no-go；U8R facade-boundary remediation 已闭合，当前唯一 WIP 槽位是产品方向决策 gate，没有自动激活的实现里程碑。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -88,7 +88,7 @@ Embassy executor/time 运行环境。
 <a id="active-window-now-a5u-developer-ux-and-resource-admission"></a>
 <a id="active-window-now-a5b-incremental-backend-prototype"></a>
 
-## 当前执行窗口：U8R facade-boundary remediation
+## 已完成执行窗口：U8R facade-boundary remediation
 
 U8 已完成逐项评审，结论是当前不毕业任何 public RF surface。U8R-E1/E2/E3a/E3b 已进一步
 移除 BLE/SLE 裸 backend event、三条 profile 的 public unsafe allocator hooks，以及 Wi-Fi
@@ -98,8 +98,8 @@ wait/storage/resources/init 边界中的 backend 类型；coexistence 仍只有
 
 U8R 按依赖顺序收口这些边界：先 typed BLE/SLE error，再把 allocator 操作收进 composition
 capability，最后包装 Wi-Fi resources/storage/diagnostics/device/init/wait 类型。E3c 的代码、
-release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi 真机 parity。每一步都保持
-当前 alpha 行为并重跑 public API、host、三平台 crates.io-only consumer、文档和相关 HIL。
+release、无板 consumer 和固定镜像真机 parity 均已完成。每一步都保持当前 alpha 行为并
+重跑 public API、host、三平台 crates.io-only consumer、文档和相关 HIL。
 本窗口不实现 Embassy Net、DLI/SLB、新协议功能或 public coexistence。
 
 - [x] **U8R-E1 typed backend events**：`hisi-rf` commit `08a1e43` 新增
@@ -112,7 +112,7 @@ release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi �
   `hisi-rtos`。public API snapshots、graduation gate、runtime boundary check、
   BLE/SLE contracts、RV32 BLE/SLE/Wi-Fi composition、Clippy 与 package no-verify 均通过；
   已发布 alpha.110 consumer fixture 保留旧 API；alpha.111 consumer 已迁移到新 facade。
-- [ ] **U8R-E3 Wi-Fi opaque facade**：包装剩余 `hisi_rf_ws63` public signature，保持现有
+- [x] **U8R-E3 Wi-Fi opaque facade**：包装剩余 `hisi_rf_ws63` public signature，保持现有
   WPA2/WPA3 行为和三平台 consumer contract。
   - [x] **E3a wait diagnostics**：`hisi-rf` commit `8ab95a4` 让 runner 只返回
     `WaitDiagnosticsSnapshot`，移除 backend wait type re-export 和 public `From<backend>`；
@@ -122,7 +122,7 @@ release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi �
     消费 backend arena/profile/admission。WPA2/WPA3 分别通过编译期不同的 `resources(...)`
     签名表达 PKE 所有权，统一使用 `init(config, resources)`；alpha.111 已发布，独立模板
     release build 和资源报告使用 crates.io 依赖通过。
-  - [ ] **E3c device/diagnostics**：代码与 release 已完成，真机 parity 尚未关闭。
+  - [x] **E3c device/diagnostics**：代码、release 与真机 parity 已完成。
     `hisi-rf` commits `b6109b5` / `4478f68` 以 facade-owned smoltcp device/token、diagnostics
     snapshots 和 frame diagnostics 替换剩余 backend data-path 类型；随后 commit `3417d7f`
     修正 SoftAP-only profile 的 allocator cfg/Clippy 边界，`0.1.0-alpha.114` 已发布。
@@ -145,9 +145,16 @@ release 和无板 consumer gate 已完成；当前只剩固定镜像的 Wi-Fi �
     和 flashboot，仅通过 `hisiflash write-program` + LoaderBoot 写入上述 AP 计划镜像；指定
     J-Link 的 reset-pin 脉冲后连续三次 30 s 均未进入串口下载握手，额外 8 s UART 只读采集
     也无输出，且未发生擦写。这进一步证明当前 J-Link reset-pin 不是可接受的新启动来源；
-    需 AP 物理断电上电后重新执行“延迟 STA 先烧、AP 后烧”的干净双板启动，再完成固定
-    镜像 parity gate。只有 app-only 恢复在物理上电后仍无法握手时，才升级为覆盖
-    flashboot/app/NV 的完整官方 FWPKG 恢复，并单独记录恢复授权和产物身份。
+    AP 物理重新接通 RST 后，父仓 `b70186139` 的干净 detached worktree 重新构建并固定
+    SoftAP ELF `f1ccf42b169df42cc996e5af3a19dc78860d5a051267ebaddaa681e583728c38`
+    与 STA ELF `7fefd18bc0c2d59eb3592e41c8ff81c50c62d67e05953ef1d50bf2d85e032c3d`。
+    两者均在 3 MHz 首次完成完整 verify，随后同一对镜像通过严格 3/3 与 20/20 paired
+    nRST：STA 本地 UDP echo `200/200`，认证响应 2 超时、event drop、runner error、
+    allocator failure 和 ready ownership 违规均为零，runner 单步最大 38 ms。完整闭包、
+    资源边界和 UART marker 少计说明见
+    [U8R-E3c facade HIL evidence](evidence/hisi-rf-u8r-e3c-facade-hil-2026-09-03.md)。
+    因此 E3c 与 U8R 已闭合；U8 的 no-go 结论不变，后续方向必须经产品触发重新分配唯一
+    WIP，不能自动毕业 coexistence 或其他 RF API。
 
 本计划保留完整架构，但当前 WIP 限制是**一个主要里程碑**。B0 已固定实际使用的 BLE
 vendor archive/hash、required-symbol ownership、target ABI 与标准 relocation 产物，并通过
@@ -832,7 +839,8 @@ profile 中 16 KiB RTOS runtime-object headroom 混为同一预算。证据已�
 BLE/SLE 页面。U7 因此完成。随后 U8 已逐项核对 public facade、typed lifecycle、
 compile-fail/host/三平台 consumer、两板 HIL、资源报告、文档与迁移兼容性，并给出不毕业
 任何 public RF surface 的 no-go 结论。没有完整映射的 API 继续保持
-unstable/doc-hidden；当前唯一 major WIP 已转为 U8R facade-boundary remediation。
+unstable/doc-hidden；后续 U8R facade-boundary remediation 已闭合，当前唯一 WIP 槽位
+转为产品方向决策 gate，不自动启动实现。
 
 U5B 的硬 gate 要求是把 fail-closed 的 BLE hash/MAC/symmetric/P-256 hooks 接到
 `hisi-crypto -> hisi-crypto-ws63` 的显式 capability suite；不得在硬件失败后静默回退，
