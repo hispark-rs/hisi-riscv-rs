@@ -294,7 +294,7 @@ task exit、timer、IRQ 和 event queue 的生产入口。
    -> wake -> Ready -> Running -> consume/drop，始终满足
    `accepted = processed + explicitly_dropped + pending`。任何 accepted event 未归入三类
    之一必须 fail closed，禁止 queue、IRQ epilogue 或 runner 静默丢失。
-3. **RTOS-LOCK-002 -- Bounded lock latency (proposed)**：为 scheduler lock 与 interrupt-masking
+3. **Bounded lock latency（proposed，ID 待入规范时分配）**：为 scheduler lock 与 interrupt-masking
    critical section 定义 profile 上界、测量方式和超限 diagnostics/fault；“最终 unlock”
    不能作为无界 liveness 假设。
 4. **RTOS-TIMER-004 -- Deadline-to-runnable progress**：deadline 到期后的 wake 必须最终
