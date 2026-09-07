@@ -26,6 +26,12 @@ jobs:
           cache-dependency-glob: "**/*.py"
       - name: Test FlashPlan evidence validation
         run: uv run --script scripts/test-check-flash-plan.py
+      - name: Install pinned image format owner
+        run: cargo +stable install hisi-fwpkg-cli --version 0.3.2 --locked
+      - name: Exercise byte-level image and release negative contracts
+        run: |
+          FLASH_PLAN_INTEGRATION=1 uv run --script scripts/test-check-flash-plan.py
+          uv run --script scripts/test-release-evidence.py
       - name: Test and enforce release image-format truth
         run: |
           uv run --script scripts/test-image-format-truth.py

@@ -160,19 +160,24 @@ git push origin "$branch"
 git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 
-# 可选：用 repo skill 代看 workflow
-bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
+# 观察确切 run；通过后用显式 registry 契约验收
+gh run watch <run-id> --exit-status
+bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z \
+  --kind crates-io --repo hispark-rs/<repo> --workflow publish.yml \
+  --run-id <run-id> --package <crate>=X.Y.Z --report /path/to/acceptance.json
 ```
 
 如果 crate 要求显式选择 chip/profile，则把同一个最小 feature 集传给自动
 preflight；不要用 `--no-verify` 绕过：
 
 ```bash
-PACKAGE_FEATURES=chip-ws63,profile-wifi-wpa2-smoltcp \
-  bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
+uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
+  --package --features chip-ws63,profile-wifi-wpa2-smoltcp
 ```
 
-crates.io 没有 GitHub release asset；`publish.yml` 成功就是发布信号。若下游马上要依赖这个版本，等 crates.io index 能解析到它后再继续。
+不能仅凭 `publish.yml` 绿灯宣称发布完成。验收脚本还会下载确切 `.crate`，检查
+registry checksum、未撤回状态与 `.cargo_vcs_info.json` 源码 commit；GitHub release
+缺失不能自动解释成 crates.io 发布。网络失败必须明确报错。
 
 ## 3. 更新父仓 submodule pointer
 
@@ -202,7 +207,7 @@ git push origin main
 ```bash
 git submodule status --recursive
 git status --short
-cargo build -Zbuild-std=core,alloc --release
+cargo build --locked -Zbuild-std=core,alloc --release
 cargo fmt --all -- --check
 ```
 
@@ -218,7 +223,16 @@ uv run --script .agents/skills/embedded-test-hil/scripts/hil_inventory.py --stri
 
 `--current-claims` 会列出需要人工复核的“当前 / 默认 / stable”等表述；它是漂移线索扫描，输出不等于必然错误。
 
-然后 tag 父仓：
+先在成功 CI 的同一 commit 上运行不公开发布的演练：
+
+```bash
+gh workflow run release.yml --ref main -f failure_stage=none
+gh workflow run release.yml --ref main -f failure_stage=before-finalize
+```
+
+第二项是预期失败演练：下载校验完成后故意中断，清理步骤必须确认没有公开
+Release 并删除本轮 draft。演练不部署 Pages，也不创建正式版本。
+确认两项结果符合预期后，再 tag 父仓：
 
 ```bash
 git tag -a vX.Y.Z -m "vX.Y.Z"
@@ -231,10 +245,17 @@ git push origin vX.Y.Z
 - `blinky.elf`：与 tag commit 对应的可调试 ELF；
 - `blinky.img`：包含 WS63 header、连续 verified body 与正确 hash 的可烧录镜像；
 - `blinky.plan.json`：记录 base address、body/hash、erase range 与 write chunks；
-- `SHA256SUMS`：绑定上述三个产物。
+- `Cargo.lock`、`rust-toolchain.toml`：确切构建输入；
+- `release-manifest.json`：父仓 SHA、递归子仓 SHA、source CI、工具身份与产物哈希；
+- `SHA256SUMS`：完整绑定上述六个文件。
 
-workflow 会用 `scripts/check-flash-plan.py` 重新计算 body SHA-256，并检查 image、地址、
-擦写范围和 write chunks 一致后才创建 GitHub Release。父仓不会替子仓 publish
+`scripts/release-bundle.py` 调用 `hisi-fwpkg` 复验实际 header/body，并验证 write chunks
+无重叠、无缺口覆盖完整 image；下载后再从发布的 ELF 重建 image/plan 逐字节比较。
+这个检查是镜像完整性与语义一致性，不是签名认证或新增 HIL。
+
+候选先以 draft 保存，mdBook/rustdoc、下载复验与正式 Pages 部署/在线校验全部成功后
+才公开 Release。`train.sh --kind github --firmware-bundle` 用命名 asset、确切 run/SHA
+执行最终下载验收，完整参数见仓库 release-train skill。父仓不会替子仓 publish
 crates.io crate，也不会再把 `rust-objcopy -O binary` 的裸展开结果冒充可烧录镜像。
 
 ## 5. 常见失败

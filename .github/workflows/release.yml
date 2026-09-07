@@ -2,8 +2,14 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      failure_stage:
+        description: Nonpublishing rehearsal failure injection
+        type: choice
+        options: [none, before-finalize]
+        default: none
 
 permissions:
   actions: read
@@ -11,39 +17,38 @@ permissions:
   pages: write
   id-token: write
 
-# Toolchain + default target come from rust-toolchain.toml and .cargo/config.toml.
-# RISC-V release builds use the upstream target with `-Zbuild-std=core,alloc`.
+concurrency:
+  group: parent-release
+  cancel-in-progress: false
 
 jobs:
   source-ci:
     name: Require successful source CI
     runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.gate.outputs.url }}
     steps:
       - name: Require successful CI for the release commit
+        id: gate
         uses: actions/github-script@v8
         with:
           script: |
-            const response = await github.rest.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head_sha: context.sha,
-              status: 'completed',
-              per_page: 100,
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              workflow_id: 'ci.yml', head_sha: context.sha, status: 'completed', per_page: 100
             });
-            const successful = response.data.workflow_runs.find(
-              run => run.name === 'CI' && run.conclusion === 'success'
-            );
-            if (!successful) {
-              core.setFailed(`No successful CI run exists for release SHA ${context.sha}`);
-              return;
-            }
-            core.info(`Source CI: ${successful.html_url}`);
+            const successful = runs.find(run => run.conclusion === 'success' && run.head_sha === context.sha);
+            if (!successful) throw new Error('No successful CI for exact release SHA ' + context.sha);
+            core.setOutput('url', successful.html_url);
 
-  # ── Create GitHub Release ─────────────────────────────────────
   release:
-    name: Create Release
+    name: Candidate, docs, download verification, then publish
     needs: source-ci
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_VERSION: ${{ github.event_name == 'push' && github.ref_name || format('v0.0.0-rehearsal.{0}.{1}', github.run_id, github.run_attempt) }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -51,129 +56,110 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           cache-dependency-glob: "**/*.py"
-
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
-
-      - name: Build release firmware
-        run: cargo build -Zbuild-std=core,alloc --release -p blinky
-
-      - name: Install the image-plan truth source
+      - name: Build locked release firmware
+        run: cargo build --locked -Zbuild-std=core,alloc --release -p blinky
+      - name: Install pinned image format owner
         run: cargo install hisi-fwpkg-cli --version 0.3.2 --locked
-
-      # FlashPlan owns the WS63 header, verified body, hash and erase/write
-      # boundaries. The release never publishes an objcopy-derived raw body.
-      - name: Package and verify firmware through FlashPlan
+      - name: Prepare verified immutable train bundle
+        run: >-
+          uv run --script scripts/release-bundle.py prepare candidate
+          --elf target/riscv32imfc-unknown-none-elf/release/blinky
+          --version "$RELEASE_VERSION"
+          --source-ci "${{ needs.source-ci.outputs.url }}"
+      - name: Upload candidate for audit
+        uses: actions/upload-artifact@v6
+        with:
+          name: parent-release-candidate
+          path: candidate
+          if-no-files-found: error
+          retention-days: 90
+      - name: Create private draft candidate
         run: |
           set -euo pipefail
-          OUT=target/riscv32imfc-unknown-none-elf/release
-          ELF="$OUT/blinky"
-          IMAGE="$OUT/blinky.img"
-          PLAN="$OUT/blinky.plan.json"
-          test -f "$ELF"
-          cp "$ELF" "$OUT/blinky.elf"
-          hisi-fwpkg plan "$ELF" --chip ws63 --image-output "$IMAGE" > "$PLAN"
-          uv run --script scripts/check-flash-plan.py --base-address 0x230000 "$PLAN" "$IMAGE"
-          hisi-fwpkg --version
-
-      - name: Generate firmware checksums
-        run: |
-          set -euo pipefail
-          OUT=target/riscv32imfc-unknown-none-elf/release
-          cd "$OUT"
-          sha256sum blinky.elf blinky.img blinky.plan.json > SHA256SUMS
-          sha256sum --check SHA256SUMS
-
-      - name: Generate changelog
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v6
-        with:
-          configuration: .github/changelog-config.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v3
-        with:
-          body: ${{ steps.changelog.outputs.changelog }}
-          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
-          # Globs match the actual artifact names. They produce no files
-          # until firmware packaging above runs; gh-release just skips empty matches.
-          files: |
-            target/riscv32imfc-unknown-none-elf/release/blinky.elf
-            target/riscv32imfc-unknown-none-elf/release/blinky.img
-            target/riscv32imfc-unknown-none-elf/release/blinky.plan.json
-            target/riscv32imfc-unknown-none-elf/release/SHA256SUMS
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          # Refuse to overwrite an existing release, including a previous draft.
+          if gh release view "$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "Release already exists; inspect it before retrying." >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_VERSION" candidate/* --target "$GITHUB_SHA" --draft \
+            --title "$RELEASE_VERSION" --notes "Verified firmware train; see release-manifest.json for exact source, submodules, tools and checksums."
       - name: Install mdBook
         uses: taiki-e/install-action@v2
         with:
           tool: mdbook
-
       - name: Seed existing versioned docs site
         run: scripts/seed-docs-site.sh --out site
-
       - name: Resolve published latest docs version
-        run: echo "LATEST_VERSION=$(uv run scripts/read-doc-latest.py --site site --candidate \"${GITHUB_REF_NAME}\")" >> "$GITHUB_ENV"
-
+        run: echo "LATEST_VERSION=$(uv run scripts/read-doc-latest.py --site site --candidate "$RELEASE_VERSION")" >> "$GITHUB_ENV"
       - name: Build mdBook handbook
         run: mdbook build docs
         env:
-          DOC_VERSION: ${{ github.ref_name }}
+          DOC_VERSION: ${{ env.RELEASE_VERSION }}
           LATEST_VERSION: ${{ env.LATEST_VERSION }}
-
       - name: Assemble versioned handbook
-        run: uv run scripts/assemble-docs-site.py --version "${GITHUB_REF_NAME}" --latest-version "${LATEST_VERSION}" --book docs/book --out site
-
+        run: uv run scripts/assemble-docs-site.py --version "$RELEASE_VERSION" --latest-version "$LATEST_VERSION" --book docs/book --out site
       - name: Refresh shared docs theme assets
         run: uv run scripts/sync-doc-theme-assets.py --book docs/book --site site
-
       - name: Build versioned API documentation
-        run: scripts/build-rustdoc-site.sh --version "${GITHUB_REF_NAME}" --out site
+        run: scripts/build-rustdoc-site.sh --version "$RELEASE_VERSION" --out site
         env:
           LATEST_VERSION: ${{ env.LATEST_VERSION }}
-
       - name: Check versioned docs site
         run: uv run scripts/check-versioned-docs.py site
-
+      - name: Download and reverify draft release bytes
+        run: |
+          gh release download "$RELEASE_VERSION" --dir downloaded
+          uv run --script scripts/release-bundle.py verify downloaded \
+            --version "$RELEASE_VERSION" --expected-source "$GITHUB_SHA" \
+            --report download-verification.json
+      - name: Preserve download evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: parent-release-download-verification
+          path: download-verification.json
+          if-no-files-found: error
+      - name: Inject rehearsal failure before publication
+        if: github.event_name == 'workflow_dispatch' && inputs.failure_stage == 'before-finalize'
+        run: |
+          echo "Intentional negative release rehearsal: publication must not execute." >&2
+          exit 1
       - name: Persist versioned docs state
+        if: github.event_name == 'push'
         id: docs_state
-        run: scripts/publish-docs-state.sh --site site --message "Update docs site for ${GITHUB_REF_NAME}"
-
+        run: scripts/publish-docs-state.sh --site site --message "Update docs site for $RELEASE_VERSION"
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v6
-
       - name: Upload Pages artifact
+        if: github.event_name == 'push'
         id: pages_artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: site
-
       - name: Deploy versioned docs to GitHub Pages
-        id: deployment
+        if: github.event_name == 'push'
         run: >-
           uv run scripts/deploy-pages.py
           --artifact-id "${{ steps.pages_artifact.outputs.artifact_id }}"
           --build-version "${{ steps.docs_state.outputs.deployment_sha }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Verify live versioned documentation
-        run: >-
-          uv run scripts/check-live-docs.py
-          --version "${GITHUB_REF_NAME}"
-          --latest-version "${LATEST_VERSION}"
-
-  # ── crates.io publishing is OWNED BY EACH CRATE'S OWN REPO ─────────────────
-  # The monorepo tag only cuts the firmware GitHub Release above. Each library
-  # crate is a standalone submodule repo and publishes ITSELF from its own
-  # `.github/workflows/release.yml` (triggered by a `v*` tag in that repo, using
-  # that repo's CRATES_IO_TOKEN secret). The parent must not reach in and publish
-  # the submodules' crates — that couples independent releases and inverts
-  # ownership. To release a crate, bump + tag it in its own repo:
-  #   ws63-pac  -> github.com/hispark-rs/ws63-pac   (release.yml)
-  #   hisi-riscv-rt   -> github.com/hispark-rs/hisi-riscv-rt    (release.yml)
-  #   hisi-hal  -> github.com/hispark-rs/hisi-hal   (release.yml)
-  # ws63-flashboot / ws63-rf-rs are publish=false (not published).
+        if: github.event_name == 'push'
+        run: uv run scripts/check-live-docs.py --version "$RELEASE_VERSION" --latest-version "$LATEST_VERSION"
+      - name: Publish only after every gate
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          prerelease=false
+          [[ "$RELEASE_VERSION" == *-* ]] && prerelease=true
+          gh release edit "$RELEASE_VERSION" --draft=false --prerelease="$prerelease"
+          test "$(gh release view "$RELEASE_VERSION" --json isDraft --jq .isDraft)" = false
+      - name: Clean rehearsal draft and prove no public release
+        if: always() && github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          # API errors other than a confirmed 404 are failures, never absence.
+          uv run --script scripts/check-release-rehearsal.py "$RELEASE_VERSION" --source "$GITHUB_SHA"

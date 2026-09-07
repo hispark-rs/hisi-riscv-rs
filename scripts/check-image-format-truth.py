@@ -60,10 +60,10 @@ def release_workflow_errors(release: str) -> list[str]:
     errors: list[str] = []
     for token, description in (
         ("cargo install hisi-fwpkg-cli --version 0.3.2 --locked", "pinned hisi-fwpkg install"),
-        ("hisi-fwpkg plan", "FlashPlan image generation"),
-        ("scripts/check-flash-plan.py", "FlashPlan evidence validation"),
-        ("blinky.img", "planned image release asset"),
-        ("blinky.plan.json", "FlashPlan release asset"),
+        ("scripts/release-bundle.py prepare", "FlashPlan image generation"),
+        ("scripts/release-bundle.py verify", "FlashPlan evidence validation"),
+        ("cargo build --locked", "locked firmware build"),
+        ("--draft", "private candidate release"),
     ):
         if token not in release:
             errors.append(f"missing {description}")

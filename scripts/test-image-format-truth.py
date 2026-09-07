@@ -28,7 +28,7 @@ class ReleaseImageTruthTests(unittest.TestCase):
         self.assertEqual(MODULE.release_workflow_errors(self.release), [])
 
     def test_missing_flash_plan_is_rejected(self) -> None:
-        broken = self.release.replace("hisi-fwpkg plan", "removed-plan-command")
+        broken = self.release.replace("scripts/release-bundle.py prepare", "removed-plan-command")
         self.assertIn(
             "missing FlashPlan image generation",
             MODULE.release_workflow_errors(broken),
