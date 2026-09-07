@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-4fb3f481.js";
+            window.path_to_searchindex_js = "../searchindex-ae8b38cf.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8a6bfe17.js"></script>
@@ -351,7 +351,17 @@ uv run --script .agents/skills/embedded-test-hil/scripts/hil_inventory.py --stri
 <pre><code class="language-bash">git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 </code></pre>
-<p>父仓 <code>.github/workflows/release.yml</code> 会构建 default-members，产出 firmware release assets。它不会替子仓 publish crates.io。</p>
+<p>父仓 <code>.github/workflows/release.yml</code> 会先确认 tag commit 已有成功的主 CI，随后构建
+<code>blinky</code> 并通过固定版本的 <code>hisi-fwpkg plan</code> 产出以下 firmware release assets：</p>
+<ul>
+<li><code>blinky.elf</code>：与 tag commit 对应的可调试 ELF；</li>
+<li><code>blinky.img</code>：包含 WS63 header、连续 verified body 与正确 hash 的可烧录镜像；</li>
+<li><code>blinky.plan.json</code>：记录 base address、body/hash、erase range 与 write chunks；</li>
+<li><code>SHA256SUMS</code>：绑定上述三个产物。</li>
+</ul>
+<p>workflow 会用 <code>scripts/check-flash-plan.py</code> 重新计算 body SHA-256，并检查 image、地址、
+擦写范围和 write chunks 一致后才创建 GitHub Release。父仓不会替子仓 publish
+crates.io crate，也不会再把 <code>rust-objcopy -O binary</code> 的裸展开结果冒充可烧录镜像。</p>
 <h2 id="5-常见失败"><a class="header" href="#5-常见失败">5. 常见失败</a></h2>
 <ul>
 <li><strong><code>--locked</code> 失败</strong>：<code>Cargo.lock</code> 缺失或过期。先用
