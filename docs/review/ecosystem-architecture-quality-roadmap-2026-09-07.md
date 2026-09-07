@@ -43,9 +43,10 @@ RF、RTOS、密码、存储、镜像格式的主要分层是成立的；真正�
   [CI 失败](https://github.com/hispark-rs/hisi-rf/actions/runs/33704789484)，但同提交
   [Publish 成功](https://github.com/hispark-rs/hisi-rf/actions/runs/33704796687)。失败步骤是
   WPA2 dependency/public API boundary；原因是 source 为 alpha.114，外部 fixture 仍 pin alpha.110。
-- **定位：**[fixture Cargo.toml](../../crates/hisi-rf/.github/fixtures/ws63-consumer/Cargo.toml)
-  第 21 行；[boundary checker](../../crates/hisi-rf/.github/scripts/check-boundaries.py)
-  第 65-83 行；[publish.yml](../../crates/hisi-rf/.github/workflows/publish.yml)第 16-38 行。
+- **定位：**`crates/hisi-rf/.github/fixtures/ws63-consumer/Cargo.toml` 第 21 行；
+  `crates/hisi-rf/.github/scripts/check-boundaries.py` 第 65-83 行；
+  `crates/hisi-rf/.github/workflows/publish.yml` 第 16-38 行。这些是 submodule 快照内路径，
+  不伪装成父仓浅 checkout 下可用的相对链接。
 - **影响：**三平台旧 fixture 成功不能证明最新发布 facade 的 consumer 契约；独立 publish
   job 没有依赖完整候选包验收。该失败不证明 alpha.114 功能坏，但证明发布 gate 可以被绕过。
 - **建议：**区分 source-graph、packaged-candidate、published-registry 三条验证线。
@@ -107,8 +108,8 @@ RF、RTOS、密码、存储、镜像格式的主要分层是成立的；真正�
 - **事实：**RTOS 已有 46 个 requirement、真实 Kani/TLA+ job、production helper proof 和
   legacy counterexample；PORT-004 已覆盖 ticket 创建前决策，STATE-004 已覆盖 ready ownership。
   不应重新把历史缺口当成未修复 bug。
-- **定位：**[check-requirements.py](../../crates/hisi-rtos/scripts/check-requirements.py)
-  第 47-78 行主要按文本找 symbol/harness；第 91-137 行校验 immutable evidence 引用。
+- **定位：**`crates/hisi-rtos/scripts/check-requirements.py` 第 47-78 行主要按文本找
+  symbol/harness；第 91-137 行校验 immutable evidence 引用。
   本地探针证明：源码仅有 `// missing_production_helper was deleted` 注释，也满足该 symbol 检查。
 - **影响：**映射检查通过不等于对应 proof 在指定 bounds 下执行成功；历史 HIL URL 有效也不等于
   当前代码变化仍在原证据范围。当前 manifest 没有完整表达 assumptions、bounds 和 not-covered。
@@ -124,12 +125,12 @@ RF、RTOS、密码、存储、镜像格式的主要分层是成立的；真正�
 ### F6 · P2：部分未来计划已经落后于实现，另有尚未验证的 API 草案
 
 - [NVS 计划](../plan/hisi-nvs-image.md)第 5、28-39、111-118 行仍写 alpha.1 只读、write/GC
-  尚未实现；实际 [NvWriter](../../crates/hisi-nvs/src/lib.rs)第 69、108、431 行已有 append、
+  尚未实现；实际 `crates/hisi-nvs/src/lib.rs` 的 `NvWriter` 已有 append、
   recovery、GC，alpha.3 与 [U5C evidence](../plan/evidence/ws63-radio-u5c-bond-removal-gc-2026-08-20.md)
   已覆盖部分使用场景。应区分“runtime 已实现但成熟度有限”和“host image builder 未开始”。
 - [中断改革计划](../plan/hisi-interrupt-handler-reform.md)第 99-169 行同时讨论 closure 和裸
   `extern C fn` 表，并有无所有权的全局注册草案；已有
-  [RTOS WS63 Binding/Resources](../../crates/hisi-rtos/src/ws63.rs)第 29-35、70-80、106-111 行
+  `crates/hisi-rtos/src/ws63.rs` 的 `Binding`/`Resources`
   提供类型化端口资源约束。不能不审计现有消费者就再建第二套动态全局 handler 机制。
 - [run-ws63-rs skill](../../.agents/skills/run-ws63-rs/SKILL.md)第 63-66 行声称 HAL 不能跑 host
   tests，与 [parent CI](../../.github/workflows/ci.yml)第 354-368 行矛盾。旧 phase、目录和
@@ -144,7 +145,7 @@ RF、RTOS、密码、存储、镜像格式的主要分层是成立的；真正�
   模块化、出现独立消费者再拆 release unit”原则冲突。
 - 同段仍说 blob 重分发未确认，未反映当前 normalized artifact 交付；RTOS start 示例也未跟随
   typed port API。历史决策应标日期，不能留在当前公共契约段。
-- 当前 [hisi-rf lib.rs](../../crates/hisi-rf/src/lib.rs)为 5,550 行，混合 BLE/SLE/Wi-Fi
+- 当前 `crates/hisi-rf/src/lib.rs` 为 5,550 行，混合 BLE/SLE/Wi-Fi
   profile composition、资源、生命周期和适配。不是长度本身证明缺陷，但代码审阅和 feature
   矩阵变更的影响范围已过大。
 - **建议：**纯结构拆成协议 facade、profile/resource composition、event/error adapter、tests；
