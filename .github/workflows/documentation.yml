@@ -139,7 +139,7 @@ jobs:
       - name: Install happy-path tools
         run: |
           cargo +stable install cargo-generate just
-          cargo +stable install hisi-fwpkg-cli --version 0.3.2
+          cargo +stable install hisi-fwpkg-cli --version 0.3.3 --locked
 
       - name: Run tutorial contracts
         run: scripts/tutorial-contracts.sh --no-hardware

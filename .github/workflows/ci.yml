@@ -27,7 +27,7 @@ jobs:
       - name: Test FlashPlan evidence validation
         run: uv run --script scripts/test-check-flash-plan.py
       - name: Install pinned image format owner
-        run: cargo +stable install hisi-fwpkg-cli --version 0.3.2 --locked
+        run: cargo +stable install hisi-fwpkg-cli --version 0.3.3 --locked
       - name: Exercise byte-level image and release negative contracts
         run: |
           FLASH_PLAN_INTEGRATION=1 uv run --script scripts/test-check-flash-plan.py
@@ -257,7 +257,7 @@ jobs:
           --require-upstream-supplicant
       - name: Install the image-plan truth source
         if: runner.os == 'Linux'
-        run: cargo install hisi-fwpkg-cli --version 0.3.2 --locked
+        run: cargo install hisi-fwpkg-cli --version 0.3.3 --locked
       - name: Emit the compile-time RF resource report
         if: runner.os == 'Linux'
         run: >-

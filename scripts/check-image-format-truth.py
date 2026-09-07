@@ -59,7 +59,7 @@ def iter_files() -> list[Path]:
 def release_workflow_errors(release: str) -> list[str]:
     errors: list[str] = []
     for token, description in (
-        ("cargo install hisi-fwpkg-cli --version 0.3.2 --locked", "pinned hisi-fwpkg install"),
+        ("cargo install hisi-fwpkg-cli --version 0.3.3 --locked", "pinned hisi-fwpkg install"),
         ("scripts/release-bundle.py prepare", "FlashPlan image generation"),
         ("scripts/release-bundle.py verify", "FlashPlan evidence validation"),
         ("cargo build --locked", "locked firmware build"),

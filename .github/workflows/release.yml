@@ -61,7 +61,7 @@ jobs:
       - name: Build locked release firmware
         run: cargo build --locked -Zbuild-std=core,alloc --release -p blinky
       - name: Install pinned image format owner
-        run: cargo install hisi-fwpkg-cli --version 0.3.2 --locked
+        run: cargo install hisi-fwpkg-cli --version 0.3.3 --locked
       - name: Prepare verified immutable train bundle
         run: >-
           uv run --script scripts/release-bundle.py prepare candidate

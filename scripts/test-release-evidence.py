@@ -46,6 +46,12 @@ def elf_fixture():
 def candidate(root):
     (root / "blinky.elf").write_bytes(elf_fixture())
     plan = BUNDLE.plan(root / "blinky.elf", root / "blinky.img")
+    if plan["body_range"]["len"] != 0x38:
+        raise AssertionError("ELF PT_LOAD LMA span is 0x38; planner used file offsets or runtime addresses")
+    body_offset = plan["body_range"]["image_offset"]
+    image = (root / "blinky.img").read_bytes()
+    if image[body_offset + 16:body_offset + 0x30] != b"\xff" * 0x20:
+        raise AssertionError("ELF load-address gaps must remain erased")
     BUNDLE.write_json(root / "blinky.plan.json", plan)
     (root / "Cargo.lock").write_text("test-only lock")
     (root / "rust-toolchain.toml").write_text("test-only toolchain")
