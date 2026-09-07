@@ -2,19 +2,20 @@
 
 ## 状态
 
-**延期 / 条件触发。** 当前只读 `hisi-nvs` baseline 已可服务 connectivity；N0-N3
-只在要求完全脱离原厂 NV generator 时启动，N4-N5 仍是更远期工作。本计划保留 NVS
-格式、oracle 和验收事实，但不属于当前 A3/A4 WIP。
+**延期 / 条件触发。** 当前 `hisi-nvs 0.1.0-alpha.3` 已提供只读 parser、明文
+append writer 和显式 erase-capable backend 下的 bounded GC；主机端 NV image builder
+仍未实现。N0-N3 只在要求完全脱离原厂 NV generator 时启动，N4-N5 仍是更远期工作。
+本计划保留 NVS 格式、oracle 和验收事实，但不属于当前 connectivity WIP。
 
 ## 概要
 
 本计划补齐主机端 NVS image 生成、检查和迁移能力，目标是最终不依赖
-`fbb_ws63` 的完整 C build system 生成 `ws63_all_nv.bin`。它不阻塞当前 A2
-只读 parser、Wi-Fi init/scan/connect/ping，也不改变已发布 `hisi-nvs` reader API。
+`fbb_ws63` 的完整 C build system 生成 `ws63_all_nv.bin`。它不阻塞当前已投入使用的
+runtime reader/writer 或 Wi-Fi connectivity，也不改变已发布 `hisi-nvs` API。
 
 格式事实边界固定为：
 
-- `hisi-nvs`：`no_std` format primitives、reader 和结构化错误；
+- `hisi-nvs`：`no_std` format primitives、reader、明文 append/GC writer 和结构化错误；
 - `hisi-nvs-image`：`std` host 镜像生成器和校验器；
 - `hisi-nvs-cli`：`build`、`inspect`、`verify`、`diff`；
 - `hisi-fwpkg`：只把已生成 NV image 当 partition payload，不理解 page/key/CRC/GC。
@@ -25,7 +26,7 @@ Canonical manifest 第一阶段只接受已经序列化的 value bytes（hex/fil
 
 ## 当前基线
 
-`hisi-nvs 0.1.0-alpha.1` 已提供 backend-neutral `ReadStorage` 只读 ACPU KV reader：
+`hisi-nvs 0.1.0-alpha.3` 已提供 backend-neutral `ReadStorage` ACPU KV reader：
 
 - WS63 ACPU store `0x254D`、4 KiB page 页面；
 - page details/sequence complement 校验；
@@ -36,7 +37,17 @@ Canonical manifest 第一阶段只接受已经序列化的 value bytes（hex/fil
 - 完整性验证先于 `BufferTooSmall`；
 - `Encrypted`、`CorruptRecord`、`NotFound` 等结构化错误。
 
-它不支持 enumerate/attributes、解密、写入、GC、恢复、升级，也不生成 NV image。
+此外，alpha.2/alpha.3 已增加：
+
+- `NvWriter::write`：通过 `WriteStorage` 进行明文 append replacement，最后提交 magic，
+  并对可判定的中断 append 做 fail-closed recovery；
+- `NvWriter::write_with_gc`：仅在调用者显式提供 `EraseStorage` 时执行 bounded
+  copy-and-commit page compaction，先复制有效记录，最后提交新 page header；
+- canonical logical page、页尾可擦除性和 partial failure 的 host 回归。
+
+当前仍不支持 enumerate/attributes API、encrypted record 解密、factory/backup upgrade、
+完整 delete/rollover/endurance 生命周期，也不生成 `ws63_all_nv.bin`。现有 writer/GC
+属于 alpha 能力；在真机掉电、损坏恢复和耐久证据完成前，不得写成稳定承诺。
 
 ## Oracle 来源
 
@@ -70,7 +81,8 @@ flash size `0x4000`、page size `0x1000`、4 pages、16-byte page/key headers、
 - 新建独立 release unit `hisi-nvs-image`，提供 deterministic `NvImageBuilder`。
 - 生成 page header、key header、padding、CRC、page allocation 和 `0xFF` tail。
 - duplicate key、capacity exhaustion、oversized record、无效 store/page 参数明确报错。
-- 第一阶段不支持 encrypted record、runtime write 或 GC。
+- 第一阶段不负责 encrypted record，也不重复实现 runtime writer/GC；它复用
+  `hisi-nvs` 的格式 primitive，专注 deterministic host image layout。
 
 **门槛：**同一 canonical manifest 重复构建逐字节一致；Rust writer -> `NvReader`
 roundtrip 覆盖边界长度、跨页、空值、满页和错误输入。
@@ -106,12 +118,13 @@ roundtrip 不改变 payload bytes。
 **门槛：**factory/backup cross-oracle fixture、升级前后 semantic diff，以及真实设备恢复
 演练；N4 不阻塞 Wi-Fi connectivity baseline。
 
-### N5 -- 加密与写入生命周期
+### N5 -- 加密与完整写入生命周期
 
 - encrypted record 依赖成熟的 `hisi-keystore`/`hisi-crypto`，只使用不可导出 key handle；
   `hisi-nvs` 不拥有 key policy。
-- runtime write、invalid/delete、GC、power-loss recovery、sequence rollover 和 endurance
-  全部保持 unstable。
+- 已有明文 append 与 bounded GC 保持 alpha/unstable；N5 补齐 invalid/delete、跨场景
+  power-loss recovery、sequence rollover、factory/backup interaction 和 endurance，而不是
+  重新规划一个不存在的 writer。
 - 不允许硬件 crypto 失败后静默软件回退，不允许在 XIP/critical section 中等待 erase/write。
 
 **门槛：**掉电注入、损坏恢复、rollover、erase endurance 和真机 HIL 完成前，不进入

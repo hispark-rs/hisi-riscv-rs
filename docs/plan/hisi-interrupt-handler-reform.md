@@ -1,305 +1,133 @@
 # 中断处理整改规划
 
-**版本**: 1.0
-**日期**: 2026-07-21
-**范围**: hisi-riscv-rt + hisi-hal + hisi-rtos
-**决策**: esp-hal 路线（`set_handler` + `bind_interrupts!` 语法糖）
+**版本**: 2.0
+**日期**: 2026-09-07
+**范围**: `hisi-riscv-rt` + `hisi-hal` + `hisi-rtos` + consumer adapters
 
 ## 状态
 
-**延期 / P2，执行前必须重新评审架构。** 本文的阶段编号只表示本计划内部
-顺序，不表示生态全局优先级。执行前必须先对照当前 272-byte trap ABI、RTOS F2 WS63
-port、单 hart 无 A 的原子/临界区约束和现有 HIL 重新评审；当前 P0 仍是 A5U。跨计划
-优先级与触发条件以[工程计划注册表](README.md)为准。
+**延期 / P2，条件触发。** 当前 connectivity 固件已有可工作的 WS63 RTOS typed
+binding；没有证据表明必须立即建立全局动态 handler registry。执行前先完成 IRQ consumer
+inventory，由真实缺口决定是扩展 compile-time binding，还是增加受限的动态注册能力。
+跨计划优先级与触发条件以[工程计划注册表](README.md)为准。
 
----
+## 当前事实
 
-## 一、背景与现状
+WS63 的中断责任已经分成三层：
 
-### 1.1 当前架构
+- `hisi-riscv-rt` 拥有 trap entry、272-byte frame save/restore、四栈切换、弱 IRQ
+  symbol、`__hisi_irq_epilogue` 和最终 `mret`；
+- `hisi-hal::interrupt` 只拥有 mask、priority、threshold、pending 和 clear 等控制器机制，
+  不拥有应用 handler 生命周期；
+- `hisi-rtos::ws63` 已提供 typed `Binding<Handler>` 与 `bind_interrupts!`，为
+  `TIMER_INT0`/`SOFT_INT0` 生成唯一 strong symbol，并把 callback 固定接到 RTOS
+  enter/exit、timer/SWI scheduler path。
 
-WS63 的中断处理跨越三个 crate：
+因此旧计划中“HAL 完全没有 handler API，所以先加入通用 `set_handler` 表”的前提已经
+过期。现有 RTOS adapter 不能直接泛化成所有外设的全局事实源，但也不应被另一张动态表
+重复覆盖。
 
-```
-┌─────────────────────────────────────────────────────┐
-│  hisi-riscv-rt (.S assembly)                        │
-│    trap_entry / nmi_vector                          │
-│    mie_interruptX_handler / local_interrupt_handler │
-│    hisi_push_task_context / _pop (272B unified)     │
-│    csrw mscratch, sp (四栈切换)                     │
-│    __hisi_irq_epilogue → __hisi_resume_trap         │
-│    weak symbols: mie0..5_interrupt_handler          │
-│                  local_isr_dispatch                 │
-│                  __hisi_irq_epilogue_default        │
-│                  __rt_irq_dispatch                  │
-├─────────────────────────────────────────────────────┤
-│  hisi-hal (Rust, interrupt:: module)                │
-│    中断控制器操作 (enable/disable, 优先级, 阈值)     │
-│    IRQ 26-31: mie CSR                              │
-│    IRQ >=32: LOCIEN/LOCIPRI/LOCIPCLR custom CSR    │
-│    无 handler 注册 API                              │
-├─────────────────────────────────────────────────────┤
-│  hisi-rtos (Rust, context.rs + runtime.rs)          │
-│    TaskContext (272B, repr(C))                      │
-│    __hisi_irq_epilogue(frame) → 调度下一个任务       │
-│    cooperative_context_switch_fallback              │
-│    interrupt_enter() / interrupt_exit()             │
-└─────────────────────────────────────────────────────┘
-```
+## 决策边界
 
-### 1.2 用户写 ISR 的当前方式
+1. trap ABI 与 context restore 继续只归 `hisi-riscv-rt`；HAL 和 RTOS 不复制汇编入口。
+2. HAL 保持 interrupt-controller owner；driver binding 只使用 typed IRQ token/trait，
+   不让 HAL 承担应用 scheduler policy。
+3. RTOS scheduler-critical IRQ 继续使用 compile-time typed binding，不经过运行时函数指针表。
+4. 普通 peripheral IRQ 优先采用 compile-time binding；只有出现热替换、共享 IRQ 或
+   runtime-selected driver 的真实消费者后，才评审动态 registry。
+5. WS63 是 single hart + no A。不得直接假设 core `AtomicUsize` 是硬件单指令原子；若
+   动态 registry 被触发，发布/撤销必须基于 `portable-atomic`/短
+   `critical-section-single-hart`，并定义 ISR 并发、unregister 与 lifetime 语义。
+6. handler/ISR 只 ack、记录、入有界队列和 wake；用户 callback 不在 IRQ、scheduler
+   lock 或 critical section 中执行。
 
-```rust
-#[unsafe(no_mangle)]
-extern "C" fn TIMER_INT0() {
-    TimerAlarm0::clear_interrupt();
-    hisi_rtos::interrupt_enter();
-    // 业务逻辑
-    hisi_rtos::interrupt_exit();
-}
+## 目标形态
+
+```text
+hisi-riscv-rt
+  trap/vector + complete frame + weak dispatch ABI + epilogue/mret
+        |
+        +-- hisi-rtos::ws63 typed scheduler binding (TIMER_INT0/SOFT_INT0)
+        |
+        +-- hisi-hal typed peripheral binding contract
+              |
+              +-- driver-owned top half -> bounded state/waker -> task/future
 ```
 
-问题：依赖弱符号覆盖（函数名拼错不报错）、无类型检查（参数类型错误静默忽略）、无编译期验证（多 handler 重复定义同符号只有链接时冲突）。
-
-### 1.3 为什么不走 riscv-rt 的 #[interrupt] 路线
-
-`hisi-rtos` 的 `__hisi_irq_epilogue` 要求完整 272B unified frame（32 GPR + 32 FPR + mstatus/mepc/tp/fcsr），以支持 ISR 返回时切换到**不同于被打断任务的另一个任务**。riscv-rt 的 `#[interrupt]` 宏的核心价值是"选择性保存寄存器"——只保存 ISR 实际用到的。这与 RTOS 的完整帧语义冲突，该路线在 WS63 生态里无性能优势。
-
-此外，维护一个定制 proc macro crate 的成本高于在 `hisi-hal` 里加 API 层。
+公共 API 不承诺一个万能 closure registry。compile-time binding 应表达：
 
----
+- IRQ identity 来自当前 chip PAC；
+- 每个 exclusive IRQ 只有一个 owner；
+- handler ABI 固定为无捕获 symbol 或实现受控 trait 的类型；
+- 重复 binding 在编译或链接阶段 fail closed；
+- driver 对 ack/clear 顺序和 deferred work 负责。
 
-## 二、目标架构
+## 里程碑
 
-### 2.1 职责分界
+### IR0 -- Consumer 与 ABI 清单
 
-```
-┌─────────────────────────────────────────────────┐
-│ hisi-riscv-rt (不变)                            │
-│   汇编入口、上下文保存、栈切换、IRQ epilogue     │
-│   weak symbol 仍然存在                          │
-├─────────────────────────────────────────────────┤
-│ hisi-hal (扩展)                                 │
-│   new: set_handler() —— 函数指针注册            │
-│   new: bind_interrupts! —— 声明宏               │
-│   现有: enable/disable/init/clear_pending 不变  │
-├─────────────────────────────────────────────────┤
-│ hisi-rtos (不变)                                │
-│   TaskContext / __hisi_irq_epilogue 不变        │
-│   interrupt_enter/exit 不变                     │
-├─────────────────────────────────────────────────┤
-│ ws63-pac (不变)                                 │
-│   ExternalInterrupt 枚举 + device.x 弱符号      │
-└─────────────────────────────────────────────────┘
-```
-
-### 2.2 用户 API 目标
-
-```rust
-// 方式一：set_handler —— 动态注册
-interrupt::set_handler(Interrupt::TIMER_INT0, || {
-    TimerAlarm0::clear_interrupt();
-    hisi_rtos::interrupt_enter();
-    // 业务逻辑
-    hisi_rtos::interrupt_exit();
-});
-
-// 方式二：bind_interrupts! —— 语法糖，生成 #[no_mangle] extern "C" fn
-bind_interrupts! {
-    TIMER_INT0 => || { /* ... */ },
-    SOFT_INT0  => || { /* ... */ },
-    GPIO_INT0  => || { /* ... */ },
-}
-
-// 方式三：继续用 #[no_mangle] extern "C" fn (向后兼容，不弃用)
-```
-
-### 2.3 向后兼容
-
-已有的 `#[no_mangle] extern "C" fn TIMER_INT0()` 继续工作。`set_handler` 是新增能力，不破坏任何现有代码路径。`timer_irq` / `gpio_irq` QEMU 示例的独立手写汇编 mode 保持不变（作为绕过框架的对照基线）。
-
----
-
-## 三、分步实施计划
-
-### IR0：`set_handler` 接口
-
-**位置**: `crates/hisi-hal/src/interrupt.rs`
-
-**改动**:
-
-```rust
-use core::sync::atomic::{AtomicUsize, Ordering};
-
-const HANDLER_COUNT: usize = 92;
-
-static DEFERRED_STORE_QUEUE: [AtomicUsize; HANDLER_COUNT] = [/* init */];
-
-/// 注册一个中断 handler。handler 在 `hisi-riscv-rt` 的 MIE/local interrupt
-/// 入口处被调用，已拥有四栈隔离和 full 272B frame。
-///
-/// handler 必须是 `fn()` — 不使用任何参数，通过闭包捕获或静态变量与外部通信。
-pub fn set_handler(irq: Interrupt, handler: extern "C" fn()) {
-    DEFERRED_STORE_QUEUE[irq as usize].store(handler as usize, Ordering::Release);
-}
+- 扫描 examples、HAL async driver、RTOS port、RF adapter 中所有 exported IRQ symbol、
+  手写 `#[unsafe(no_mangle)]` handler、waker 和 callback path。
+- 为每个 IRQ 记录 owner、ack/clear、是否共享、是否需要 runtime replacement、是否进入
+  RTOS epilogue，以及现有 QEMU/HIL marker。
+- 将 PAC IRQ enum、runtime weak symbol 和实际 consumer 做 machine-readable drift check。
 
-/// 覆盖 startup.S 的 weak symbol，读取 handler 表并调用。
-/// 此函数在第 2.2 层由他的 `bind_interrupts!` 宏替换
-#[unsafe(no_mangle)]
-unsafe extern "C" fn mie0_interrupt_handler() {
-    let ptr = HANDLERS[26].load(Ordering::Acquire) as *const ();
-    if !ptr.is_null() {
-        // SAFETY: ptr 由 set_handler 写入，确保指向合法的 fn()
-        unsafe { core::mem::transmute::<_, extern "C" fn()>(ptr)() };
-    }
-}
-// 同理覆盖 mie1..mie5 和 local_isr_dispatch
-```
+**门槛：**不存在“计划声称未建模、代码其实已有 adapter”的双重事实；每个准备迁移的
+IRQ 有唯一 owner 和现有行为基线。
 
-**设计要点**:
+### IR1 -- 编译期绑定契约
 
-- 使用 `AtomicUsize` 序列避免 `static mut` 带来的 unsafe 和 UB 风险
-- `Extern "C" fn()` 类型确保 ABI 匹配
-- handler 返回后，汇编框架继续执行 `csrr a0, mscratch → __hisi_irq_epilogue → __hisi_resume_trap`
-- 不需要 `interrupt::free()` 包围 register——`AtomicUsize::store` 是单指令原子写
+- 在不改变 272-byte frame/trap ABI 的前提下，抽取 scheduler binding 已验证的最小模式。
+- 明确 `Binding<Handler>` safety contract、strong/weak symbol ownership、重复定义错误和
+  top-half 限制。
+- 对只需驱动唤醒的外设提供 typed handler trait；不接受可捕获闭包，也不把任意用户代码
+  放进 ISR。
 
-**验收**:
+**门槛：**compile-fail 覆盖错误 IRQ、重复 owner、错误 handler 类型；ELF symbol audit
+证明一个 IRQ 只有一个 strong implementation。
 
-- `timer_irq` 和 `gpio_irq` 测试用例可通过 `set_handler` 替代手写 `#[no_mangle]` 运行
-- 空 handler（未注册的 IRQ 触发）不 crash
+### IR2 -- Driver 纵向切片
 
-### IR1：`bind_interrupts!` 声明宏
+- 选择一个 MIE IRQ 和一个 custom local IRQ 做纵向切片，优先复用现有 timer/GPIO/UART
+  HIL，而不是一次迁移所有 IRQ。
+- driver top half 完成 clear/ack、状态记录和 wake；业务逻辑在 task/future 中运行。
+- 保留旧手写 symbol 一个迁移周期，并做 binary/symbol 与行为 parity。
 
-**位置**: `crates/hisi-hal/src/interrupt.rs`（或新增 `macros.rs`）
+**门槛：**host lost-wake/cancellation tests、QEMU marker、WS63 HIL 和 IRQ storm/queue-full
+diagnostics 全部通过。
 
-**改动**:
+### IR3 -- 动态 registry（仅真实需求触发）
 
-```rust
-#[macro_export]
-macro_rules! bind_interrupts {
-    ($($irq:ident => $handler:expr),* $(,)?) => {
-        $(
-            #[unsafe(no_mangle)]
-            unsafe extern "C" fn $irq() {
-                $handler();
-            }
-        )*
-    };
-}
-```
+- 只有 IR0 证明 compile-time binding 无法覆盖真实 consumer 时才实施。
+- API 必须使用 generation-bearing registration handle；drop/unregister 与正在执行 ISR 的
+  竞态有明确线性化点，stale handle fail closed。
+- shared IRQ 需要 bounded fan-out 与逐 owner pending predicate；不得遍历无界 callback list。
+- no-A 实现使用项目统一的 portable-atomic/critical-section policy，不在临界区调用 handler。
 
-或者支持两种形式（`FnOnce()` + `extern "C" fn`）：
+**门槛：**Kani/TLA+ 或等价 deterministic model 覆盖 register/dispatch/unregister/stale
+generation；没有 HIL 证据前保持 unstable。
 
-```rust
-#[macro_export]
-macro_rules! bind_interrupts {
-    // 闭包形式
-    ($($irq:ident => || $body:block),* $(,)?) => {
-        $(
-            #[unsafe(no_mangle)]
-            unsafe extern "C" fn $irq() {
-                $body
-            }
-        )*
-    };
-    // extern "C" fn 形式
-    ($($irq:ident => $handler:path),* $(,)?) => {
-        $(
-            #[unsafe(no_mangle)]
-            unsafe extern "C" fn $irq() {
-                $handler();
-            }
-        )*
-    };
-}
-```
+### IR4 -- Embassy 与稳定性评审
 
-**设计要点**:
+- HAL 保留 peripheral async trait 与 waker mechanism；Embassy executor/time ownership 归
+  `hisi-rtos`，避免第二个 TIMER owner。
+- 只有真实 controller-only trait 语义匹配时才实现生态标准 trait；不为语法相似伪造
+  compatibility。
+- 稳定 API 只毕业有命名 HIL 的纵向切片。
 
-- 编译期为每个 handler 生成唯一的 extern "C" fn，避免符号冲突
-- 闭包环境能在 handler body 中引用外围的静态变量
-- 宏展开为 `#[no_mangle] extern "C" fn`，完全兼容 startup.S 的 weak symbol 覆盖
+## 验证矩阵
 
-**验收**:
+- 静态检查：PAC IRQ、runtime symbol、binding owner、feature combination drift。
+- Host：重复 binding compile-fail、lost wake、cancel/drop、queue conservation、nested IRQ
+  bookkeeping。
+- QEMU 验证：MIE/local IRQ、clear/ack、handler return、RTOS epilogue。
+- HIL：timer、GPIO/UART 纵向切片，长时间 IRQ storm，无 user callback in IRQ，无 task/waker
+  丢失。
+- ELF：strong/weak symbol 唯一性、trap/frame ABI 和 `mret` path 不变。
 
-- `bind_interrupts!` 生成的代码与等价的手写 `#[no_mangle] extern "C" fn` 产生的二进制完全一致
-- 编译期检测重复符号（linker error on symbol conflict）
+## 非目标
 
-### IR2：embassy 兼容
-
-**无需在本 crate 实现。** embassy 的 `bind_interrupts!` 宏在其自身的 proc macro 中完成。当用户的 `Interrupt` 枚举类型实现了 `embassy_executor::Interrupt` trait 后即可直接使用 embassy 自己的宏。
-
-验证点：确保 `ws63_pac::interrupt::ExternalInterrupt` 或 `hisi_riscv_rt::interrupt::ExternalInterrupt` 枚举中的变体名称在 embassy 的 `Interrupt` trait 中可被识别。
-
-### IR3：废弃 timer_irq / gpio_irq 的手写汇编 mode（可选）
-
-这两个 QEMU 测试例现在自装 `csrw mtvec, xxx` 和使用手写汇编。当 `set_handler` / `bind_interrupts!` 功能完备后，可考虑：
-
-- 保留这些例子作为"绕过框架的最小验证路径"（独立 baseline）
-- 新增 `timer_irq_framework` / `gpio_irq_framework` 测试例，使用 `bind_interrupts!` 框架路径
-
----
-
-## 四、不变量与约束
-
-### 4.1 跨 crate ABI
-
-```
-hisi-riscv-rt (startup.S)
-  → call mie0_interrupt_handler  (weak → Rust 侧）
-    返回后：
-  → csrr a0, mscratch           (a0 = unified frame)
-  → call __hisi_irq_epilogue    (hisi-rtos 提供 strong 符号)
-  → j __hisi_resume_trap        (hisi_pop_task_context + mret)
-```
-
-这根链路保持不变。`set_handler` / `bind_interrupts!` 插入在 `mie0_interrupt_handler` 的**函数体内**，不改变调用约定。
-
-### 4.2 mscratch 约定
-
-```
-正常运行:    mscratch = __irq_stack_top__
-中断处理中: mscratch = 被打断时的 frame 指针
-```
-
-此约定由 `hisi-riscv-rt` 的 `startup.S` 独占管理。任何 Rust 层处理程序不得直接操作 mscratch。
-
-### 4.3 TaskContext 布局
-
-272B `TaskContext` 结构体（`hisi-rtos/src/context.rs`）不被触碰。所有字段偏移保持不变。
-
-### 4.4 浮点寄存器
-
-浮点寄存器（fs0-fs11, ft0-ft11, fa0-fa7, fcsr）在 `hisi_push_task_context` 中全量保存。Rust handler 可以安全使用浮点指令。
-
----
-
-## 五、风险与缓解
-
-| 风险 | 影响 | 缓解 |
-|---|---|---|
-| `AtomicUsize` 对函数指针的 store 在超标量架构上的可见性 | handler 注册后第一个中断可能看到旧值 | `Ordering::Release`/`Acquire` 配对；fence 在中断入口由 CSR 写隐式完成 |
-| 用户错误地在一个 ISR 中既用 `set_handler` 又手写 `#[no_mangle]` | 运行时行为不确定 | 在 API 文档中标注互斥约束；lint 考虑通过编译期检查对称性 |
-| `bind_interrupts!` 引入了重复的 `bind_interrupts!` 宏（embassy 版本 vs hisi-hal 版本） | 编译错误或符号双重生成 | 命名约定：hisi-hal 的宏命名为 `hisi_bind_interrupts!` 或保持 `bind_interrupts!` 但明确文档标注 — embassy 绑定在 proc macro 实现上，不会被展开 |
-| 函数指针间接调用引入额外 `jalr` 开销 | 1-2 拍的开销 (load + jalr) | 可忽略 — 中断上下文的保存/恢复/换栈/RTOS epilogue 已占用数百拍 |
-
----
-
-## 六、存量路径处置与未来迭代
-
-### 6.1 被替代的现有路径
-
-- `startup.S` 中手写汇编的 `local_isr_dispatch` 默认实现：当 `set_handler` 表完备后，该弱符号可由 handler 表覆盖替代。汇编中的默认 `ret` 保留（fallback 到空操作）。
-- `push_reg` / `pop_reg` 宏：MIR 和 local IRQ 路径不再使用（已改为 `hisi_push_task_context` / `hisi_pop_task_context` 的 unified 272B frame）。异常路径和 NMI 路径保留现有宏。
-
-### 6.2 实验模式 `riscv-rt-start-experiment` 的处理
-
-该 feature 目前是 unstable + non-default，意图是让 `riscv-rt` 提供通用 `_start` 流程而 `hisi-riscv-rt` 通过 `__pre_init` / `_setup_interrupts` 钩子注入 WS63 特化逻辑。
-
-当前状态：保留不动。`set_handler` / `bind_interrupts!` 在**默认 startup 路径**上开发，两者与 startup 入口的选择耦合度很低——handler 注册不关心 `mtvec` 是谁初始化的。当 esp-hal 路线稳定后，实验路径自然获得相同的 handler API 能力，届时再评估是否提升其优先级或合并为统一入口路径。
-
-### 6.2 潜在后续工作
-
-- 编译期宏验证：确保 `bind_interrupts!` 中使用的 IRQ 变体与 PAC 枚举一致
-- HAL driver 集成：在驱动层提供 `with_handler()` 配置函数（如 `Uart::with_interrupt_handler(pin, handler)`）
-- set_handler 并发安全性：评估是否需要 `critical_section` 保护 register，或当前的原子操作是否已足够
+- 不把 `hisi-riscv-rt` 变成 driver registry；
+- 不在 HAL 中复制 RTOS interrupt nesting/scheduling；
+- 不以一个 `AtomicUsize` 函数指针数组替代所有 typed ownership；
+- 不为尚无消费者的共享 IRQ、热插拔或 SMP 提前扩张稳定 API。

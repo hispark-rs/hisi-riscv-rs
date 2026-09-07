@@ -3,8 +3,10 @@ name: run-ws63-rs
 description: Build, check, lint, and test the ws63-rs embedded HAL for HiSilicon WS63 (RISC-V). Use when asked to build, verify, run checks, or test hisi-hal, ws63-pac, or any crate in this workspace.
 ---
 
-Paths below are relative to the repo root, a Cargo workspace with `ws63-pac`,
-`hisi-hal`, `hisi-riscv-rt`, `ws63-examples/blinky`, and `ws63-flashboot`.
+Paths below are relative to the parent repository root. This workspace contains
+chip-neutral crates, WS63 integration crates, independently versioned submodules,
+and target-specific examples. Discover the current member set from Cargo metadata;
+do not rely on a fixed crate or file count.
 
 ## Toolchain (required)
 
@@ -31,8 +33,10 @@ default custom rustc install path.
 ## Build (agent path)
 
 ```bash
-bash .agents/skills/run-ws63-rs/driver.sh all      # check + fmt + clippy + blinky build
-bash .agents/skills/run-ws63-rs/driver.sh check    # cargo check + doc + blinky release build
+bash .agents/skills/run-ws63-rs/driver.sh all      # checks + host tests + docs + fmt + clippy
+bash .agents/skills/run-ws63-rs/driver.sh check    # STA/AP checks + blinky release build
+bash .agents/skills/run-ws63-rs/driver.sh test     # current host-test lanes
+bash .agents/skills/run-ws63-rs/driver.sh doc      # WS63 rustdoc
 bash .agents/skills/run-ws63-rs/driver.sh fmt      # cargo fmt --check
 bash .agents/skills/run-ws63-rs/driver.sh clippy   # cargo clippy
 ```
@@ -44,11 +48,14 @@ scripts to downstream bins).
 ## Quick commands
 
 ```bash
-cargo build -Zbuild-std=core,alloc                      # default-members: libs + blinky
-cargo check -Zbuild-std=core,alloc --workspace          # everything incl. flashboot
-cargo clippy -Zbuild-std=core,alloc --workspace -- -D warnings
+cargo build -Zbuild-std=core,alloc                      # default members
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap \
+  --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp
+cargo check -Zbuild-std=core,alloc -p wifi_softap       # mutually exclusive AP archive lane
+cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap \
+  --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp -- -D warnings
 cargo fmt --all -- --check
-cargo build -Zbuild-std=core,alloc -p ws63-flashboot --release   # experimental flashboot
+cargo build -Zbuild-std=core,alloc -p blinky --release
 ```
 
 ## Documentation
@@ -60,10 +67,18 @@ cargo doc -Zbuild-std=core,alloc -p hisi-hal -p ws63-pac -p hisi-riscv-rt --no-d
 
 ## Test
 
-In-binary unit tests (`#[cfg(test)]`) cannot run on the host: hisi-hal contains RISC-V
-inline asm (e.g. `asm!("ebreak")`), so the crate does not compile for an x86 host. They
-are compile-checked only as part of `cargo check`. Running real host unit tests requires
-cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP phase 1.
+Host tests are real executable evidence, but must override the repository's default
+RISC-V target. The driver derives the current rustc host tuple. Representative lanes are:
+
+```bash
+HOST_TARGET="$(rustc -vV | sed -n 's/^host: //p')"
+cargo test -p hisi-hal --no-default-features --features chip-ws63 --target "$HOST_TARGET"
+cargo test -p ws63-rf-rs --lib --target "$HOST_TARGET"
+cargo test -p hisi-rtos --target "$HOST_TARGET"
+```
+
+Host tests prove pure logic and contract behavior only. QEMU and named WS63 HIL markers
+remain separate evidence layers; do not translate a host pass into a silicon claim.
 
 ## Gotchas
 
@@ -71,8 +86,9 @@ cfg-gating the riscv asm (ROADMAP phase 2). On-silicon validation is ROADMAP pha
   or `rust-src` usually shows up as "can't find crate for core".
 - **Single PAC instance**: the root `Cargo.toml` `[patch.crates-io]` redirects the
   `ws63-pac` registry dep to the local submodule. Don't add a second `ws63-pac` source.
-- **`ws63-pac/src/lib.rs` is svd2rust-generated** — do not hand-edit it (a PreToolUse
-  hook blocks edits). Change `ws63-svd/WS63.svd` and regenerate (ROADMAP phase 2).
+- **`crates/chips/ws63/ws63-pac/src/lib.rs` is svd2rust-generated** — do not hand-edit
+  it. Change the nested `ws63-svd/WS63.svd`, regenerate, and follow the
+  `pac-svd-register-access` skill.
 - **Submodule changes**: commit inside the submodule first, push, then bump the parent
   pointer. Use the `submodule-commit` skill.
 - **`git submodule update --init --recursive`** if you get missing-manifest errors.
