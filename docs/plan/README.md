@@ -3,13 +3,15 @@
 `docs/plan/` 用于保存工程执行计划和延期的架构展望。它不属于面向用户的 Diátaxis
 手册，因此有意不加入 `docs/src/SUMMARY.md`。
 
-本注册表是计划状态、生态优先级、启动条件和阻塞关系的唯一事实源。各计划文档负责记录
+机器可读的 [`registry.toml`](registry.toml) 是计划状态、稳定 ID、生态优先级、owner、依赖、
+启动条件和关闭证据的唯一事实源。本页表格是由 CI 校验的一份人类可读镜像。各计划文档负责记录
 自身的详细需求和证据；[`ROADMAP.md`](../../ROADMAP.md) 只负责简短的
 “当前 / 下一步 / 以后”视图。不要把详细检查清单复制到这两个索引中。
 
 ## 状态规则
 
-- **执行中**：仓库 WIP 限制允许的唯一主要里程碑。
+- **执行中**：仓库 WIP 限制允许的主要实现里程碑；可以为零，最多一个。
+- **决策待定**：产品方向等待显式选择，不占用实现 WIP 槽位。
 - **配套工作**：当前里程碑所需的有限正确性或兼容性工作，不开启第二条产品方向。
 - **条件触发**：仅当注册表记录的产品条件成立时启动。
 - **延期**：保留架构设计，但当前未分配执行槽位。
@@ -24,7 +26,7 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
-| [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3、SLE S0-S3、U0-U8R 已闭合 | 当前唯一 WIP 槽位是产品方向决策 gate；未显式决策前不启动实现，也不自动毕业 coexistence |
+| [Connectivity 全栈](hisi-connectivity-stack.md) | 决策待定 | P0 | A5、BLE B0-B3、SLE S0-S3、U0-U8R 已闭合 | 当前没有活动实现；未显式决策前不启动实现，也不自动毕业 coexistence |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |
 | [`cargo-hisi` CLI](cargo-hisi-cli.md) | 延期 | P2 | A5U 的产物和报告契约稳定 | 可选的统一工作流 CLI；普通 Cargo 始终必须可用 |
@@ -68,16 +70,17 @@ flowchart LR
 ```
 
 这张图记录 A5、BLE B0-B3、SLE S0-S3、Radio UX U0-U8 与 U8R 已完成。历史 Wi-Fi
-反例仍保留为回归证据，但不再伪装成未完成门槛。Connectivity 继续占用唯一执行槽位，
-但当前只承载产品方向决策 gate，没有自动激活的实现里程碑；NVS、TLS、DLI/SLB 等方向
+反例仍保留为回归证据，但不再伪装成未完成门槛。Connectivity 当前是产品方向决策 gate，
+不占用实现槽位，也没有自动激活的实现里程碑；NVS、TLS、DLI/SLB 等方向
 必须按触发条件显式选择，不能自动并行铺开。
 
 ## 维护契约
 
-1. 新增顶层计划时，必须在同一提交中增加注册表条目。
+1. 新增顶层计划时，必须在同一提交中增加 `registry.toml` 条目并同步本页镜像。
 2. 开始或完成里程碑前，先更新注册表状态；只有“当前 / 下一步 / 以后”的顺序改变时才
    更新 `ROADMAP.md`。
 3. 日期化证据放在 `docs/plan/evidence/`；证据文件不是计划，不在此登记，也不受中文
    规划正文约束。
 4. 已完成计划不能继续声称某项工作“当前正在进行”，而应链接到新的执行中计划。
-5. 提交计划变更前运行 `uv run --script scripts/check-plan-registry.py`。
+5. 提交计划变更前运行 `uv run --script scripts/test-plan-registry.py` 和
+   `uv run --script scripts/check-plan-registry.py`。

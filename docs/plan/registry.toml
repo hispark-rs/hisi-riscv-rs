@@ -1,0 +1,128 @@
+schema = "hispark-rs/plan-registry/v1"
+max_active_implementations = 1
+
+[[evidence]]
+id = "connectivity-u8-review"
+path = "docs/plan/evidence/hisi-rf-u8-stable-graduation-review-2026-09-01.md"
+
+[[evidence]]
+id = "ws63-debug-memory-diagnosis"
+path = "docs/plan/ws63-debug-memory-access.md"
+
+[[evidence]]
+id = "ws63-rf-a0-baseline"
+path = "docs/plan/evidence/ws63-rf-a0-2026-07-12.md"
+
+[[evidence]]
+id = "hal-060-release-record"
+path = "docs/plan/hal-0.6.0-release.md"
+
+[[plan]]
+id = "connectivity-stack"
+path = "hisi-connectivity-stack.md"
+status = "decision-pending"
+priority = "P0"
+owner = "ecosystem maintainers"
+depends_on = []
+trigger = "explicit product direction decision"
+evidence = ["connectivity-u8-review"]
+
+[[plan]]
+id = "rtos-semantics"
+path = "hisi-rtos-semantics-and-verification.md"
+status = "supporting"
+priority = "P1"
+owner = "hisi-rtos maintainers"
+depends_on = ["connectivity-stack"]
+trigger = "requirement, runtime, or silicon mechanism changes"
+evidence = []
+
+[[plan]]
+id = "ws63-rf-runtime-compatibility"
+path = "ws63-rf-runtime-compatibility.md"
+status = "supporting"
+priority = "P1"
+owner = "WS63 radio integration maintainers"
+depends_on = ["connectivity-stack"]
+trigger = "archive/profile changes or a newly observed compatibility defect"
+evidence = []
+
+[[plan]]
+id = "cargo-hisi-cli"
+path = "cargo-hisi-cli.md"
+status = "deferred"
+priority = "P2"
+owner = "tooling maintainers"
+depends_on = ["connectivity-stack"]
+trigger = "A5U artifact and report contracts are stable and a product workflow requires aggregation"
+evidence = []
+
+[[plan]]
+id = "interrupt-handler-reform"
+path = "hisi-interrupt-handler-reform.md"
+status = "deferred"
+priority = "P2"
+owner = "HAL and RTOS maintainers"
+depends_on = ["rtos-semantics"]
+trigger = "existing RT/RTOS interrupt bindings have a reviewed product-level gap"
+evidence = []
+
+[[plan]]
+id = "nvs-image"
+path = "hisi-nvs-image.md"
+status = "triggered"
+priority = "P2"
+owner = "NVS maintainers"
+depends_on = ["connectivity-stack"]
+trigger = "a product release must no longer depend on the vendor NV generator"
+evidence = []
+
+[[plan]]
+id = "rtos-future-architecture"
+path = "hisi-rtos-future-architecture.md"
+status = "deferred"
+priority = "P3"
+owner = "hisi-rtos maintainers"
+depends_on = ["rtos-semantics"]
+trigger = "a concrete portability, protection-domain, or multi-hart requirement appears"
+evidence = []
+
+[[plan]]
+id = "rtos-debugging-cli"
+path = "hisi-rtos-debugging-cli.md"
+status = "deferred"
+priority = "P3"
+owner = "hisi-rtos tooling maintainers"
+depends_on = ["rtos-future-architecture"]
+trigger = "the RTOS snapshot, trace, and build-id protocol is stable"
+evidence = []
+
+[[plan]]
+id = "ws63-debug-memory"
+path = "ws63-debug-memory-access.md"
+status = "completed"
+priority = "Done"
+owner = "probe integration maintainers"
+depends_on = []
+trigger = "closed diagnostic; AP1 product integration requires a new plan"
+evidence = ["ws63-debug-memory-diagnosis"]
+
+[[plan]]
+id = "ws63-rf-init-scan"
+path = "ws63-rf-init-scan.md"
+status = "completed"
+priority = "Done"
+owner = "WS63 connectivity maintainers"
+depends_on = []
+trigger = "historical RF0-RF5 bring-up closure"
+evidence = ["ws63-rf-a0-baseline"]
+
+[[plan]]
+id = "hal-060-release"
+path = "hal-0.6.0-release.md"
+status = "completed"
+priority = "Done"
+owner = "hisi-hal maintainers"
+depends_on = []
+trigger = "historical release closure"
+evidence = ["hal-060-release-record"]

@@ -91,6 +91,9 @@ jobs:
       - name: Check connectivity plan status
         run: uv run --script scripts/check-connectivity-plan-status.py
 
+      - name: Test plan registry mutations
+        run: uv run --script scripts/test-plan-registry.py
+
       - name: Check RF diagnostic documentation anchors
         run: uv run --script scripts/check-rf-diagnostic-docs.py
 

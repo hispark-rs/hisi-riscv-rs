@@ -2,7 +2,7 @@
 
 ## 状态
 
-**U8 stable-graduation review 已完成并给出 no-go；U8R facade-boundary remediation 已闭合，当前唯一 WIP 槽位是产品方向决策 gate，没有自动激活的实现里程碑。** U0-U4 已完成；U5A 安全控制面、U5B
+**U8 stable-graduation review 已完成并给出 no-go；U8R facade-boundary remediation 已闭合。当前状态是产品方向决策待定，活动实现数为零，没有自动激活的里程碑。** U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
