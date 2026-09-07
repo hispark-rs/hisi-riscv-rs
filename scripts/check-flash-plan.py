@@ -10,7 +10,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
+import tempfile
 
 
 REQUIRED_KEYS = (
@@ -83,6 +86,7 @@ def validate_flash_plan(
     chunks = plan["write_chunks"]
     if not isinstance(chunks, list) or not chunks:
         raise ValueError("write_chunks must not be empty")
+    covered = []
     for index, chunk in enumerate(chunks):
         if not isinstance(chunk, dict):
             raise ValueError(f"write_chunks[{index}] must be an object")
@@ -97,6 +101,38 @@ def validate_flash_plan(
             raise ValueError(f"write_chunks[{index}] address does not match image offset")
         if addr < erase_start or addr + length > erase_end:
             raise ValueError(f"write_chunks[{index}] extends beyond erase_range")
+        covered.append((offset, offset + length))
+    cursor = 0
+    for start, end in sorted(covered):
+        if start != cursor:
+            raise ValueError("write_chunks must cover the complete image exactly once")
+        cursor = end
+    if cursor != len(image):
+        raise ValueError("write_chunks must cover the complete image exactly once")
+
+
+def validate_image_semantics(plan: dict, image: bytes) -> None:
+    """Delegate header parsing and normalization to the image format owner.
+
+    This checks canonical image equivalence, not a cryptographic signature.
+    No header offsets or magic values are duplicated in this checker.
+    """
+    with tempfile.TemporaryDirectory(prefix="flash-plan-verify-") as directory:
+        source = Path(directory) / "input.img"
+        output = Path(directory) / "canonical.img"
+        source.write_bytes(image)
+        result = subprocess.run(
+            [os.environ.get("HISI_FWPKG", "hisi-fwpkg"), "plan", str(source),
+             "--chip", plan["chip"], "--app-addr", hex(plan["base_addr"]),
+             "--image-output", str(output)],
+            check=True, capture_output=True, text=True,
+        )
+        canonical = json.loads(result.stdout)
+        if output.read_bytes() != image:
+            raise ValueError("image header/body is not a canonical hisi-fwpkg image")
+        for key in ("base_addr", "image_len", "body_range", "code_area_len", "code_area_hash"):
+            if plan[key] != canonical[key]:
+                raise ValueError(f"{key} disagrees with the actual image header")
 
 
 def main() -> int:
@@ -111,7 +147,8 @@ def main() -> int:
     image = args.image.read_bytes()
     try:
         validate_flash_plan(plan, image, args.base_address)
-    except ValueError as error:
+        validate_image_semantics(plan, image)
+    except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
         raise SystemExit(str(error)) from error
 
     print(

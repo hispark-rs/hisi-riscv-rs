@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -43,6 +47,16 @@ def valid_fixture() -> tuple[dict, bytes]:
 
 
 class FlashPlanTests(unittest.TestCase):
+    def test_rejects_incomplete_and_overlapping_writes(self) -> None:
+        for chunks in (
+            [{"addr": 0x230000, "image_offset": 0, "len": 1}],
+            [{"addr": 0x230000, "image_offset": 0, "len": 32}] * 2,
+        ):
+            plan, image = valid_fixture()
+            plan["write_chunks"] = chunks
+            with self.assertRaisesRegex(ValueError, "exactly once"):
+                MODULE.validate_flash_plan(plan, image)
+
     def test_accepts_bound_image_and_body_hash(self) -> None:
         plan, image = valid_fixture()
         MODULE.validate_flash_plan(plan, image, 0x230000)
@@ -58,6 +72,33 @@ class FlashPlanTests(unittest.TestCase):
         plan["erase_range"]["len"] -= 1
         with self.assertRaisesRegex(ValueError, "complete planned image"):
             MODULE.validate_flash_plan(plan, image, 0x230000)
+
+
+@unittest.skipUnless(os.environ.get("FLASH_PLAN_INTEGRATION") == "1", "requires pinned hisi-fwpkg CLI")
+class ImageSemanticsTests(unittest.TestCase):
+    def test_real_images_and_header_corruption(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for size in (16, 0xE1001):
+                source, output = root / "body.bin", root / "image.img"
+                source.write_bytes(bytes(range(256)) * (size // 256) + bytes(size % 256))
+                plan = json.loads(subprocess.check_output(
+                    ["hisi-fwpkg", "plan", str(source), "--chip", "ws63", "--image-output", str(output)],
+                    text=True,
+                ))
+                image = output.read_bytes()
+                MODULE.validate_flash_plan(plan, image)
+                MODULE.validate_image_semantics(plan, image)
+                header_end = plan["body_range"]["image_offset"]
+                corrupted = bytes(header_end) + image[header_end:]
+                with self.assertRaisesRegex(ValueError, "canonical"):
+                    MODULE.validate_image_semantics(plan, corrupted)
+                hash_offset = image.find(bytes(plan["code_area_hash"]), 0, header_end)
+                self.assertGreaterEqual(hash_offset, 0)
+                stale_header = bytearray(image)
+                stale_header[hash_offset] ^= 1
+                with self.assertRaisesRegex(ValueError, "canonical"):
+                    MODULE.validate_image_semantics(plan, bytes(stale_header))
 
     def test_rejects_mismatched_chunk_address(self) -> None:
         plan, image = valid_fixture()
