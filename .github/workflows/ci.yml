@@ -16,6 +16,21 @@ env:
 # `-Zbuild-std=core,alloc`.
 
 jobs:
+  release-evidence-gates:
+    name: Release evidence gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: "**/*.py"
+      - name: Test FlashPlan evidence validation
+        run: uv run --script scripts/test-check-flash-plan.py
+      - name: Test and enforce release image-format truth
+        run: |
+          uv run --script scripts/test-image-format-truth.py
+          uv run --script scripts/check-image-format-truth.py
+
   # ── Per-crate check ─────────────────────────────────────────────
   build:
     name: Check (RISC-V)

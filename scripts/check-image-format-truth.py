@@ -24,6 +24,7 @@ CHECK_ROOTS = [
     ROOT / "hil",
     ROOT / "crates" / "hisi-rs-template",
 ]
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 STALE_PATTERNS = [
     (re.compile(r"probe-rs\s+download\s+<elf>", re.IGNORECASE), "probe-rs direct ELF placeholder"),
@@ -55,6 +56,27 @@ def iter_files() -> list[Path]:
     return sorted(set(files))
 
 
+def release_workflow_errors(release: str) -> list[str]:
+    errors: list[str] = []
+    for token, description in (
+        ("cargo install hisi-fwpkg-cli --version 0.3.2 --locked", "pinned hisi-fwpkg install"),
+        ("hisi-fwpkg plan", "FlashPlan image generation"),
+        ("scripts/check-flash-plan.py", "FlashPlan evidence validation"),
+        ("blinky.img", "planned image release asset"),
+        ("blinky.plan.json", "FlashPlan release asset"),
+    ):
+        if token not in release:
+            errors.append(f"missing {description}")
+    for token, description in (
+        ("rust-objcopy", "raw objcopy release path"),
+        ("-O binary", "raw binary release conversion"),
+        ("blinky.bin", "ambiguous raw binary release asset"),
+    ):
+        if token in release:
+            errors.append(f"forbidden {description}: {token}")
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     for path in iter_files():
@@ -66,6 +88,12 @@ def main() -> int:
             for pattern, reason in STALE_PATTERNS:
                 if pattern.search(line):
                     errors.append(f"{rel}:{lineno}: {reason}: {line.strip()}")
+
+    release = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+    errors.extend(
+        f"{RELEASE_WORKFLOW.relative_to(ROOT)}: {error}"
+        for error in release_workflow_errors(release)
+    )
 
     if errors:
         print("image-format truth-source drift detected:", file=sys.stderr)

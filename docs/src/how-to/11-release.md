@@ -225,7 +225,17 @@ git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-父仓 `.github/workflows/release.yml` 会构建 default-members，产出 firmware release assets。它不会替子仓 publish crates.io。
+父仓 `.github/workflows/release.yml` 会先确认 tag commit 已有成功的主 CI，随后构建
+`blinky` 并通过固定版本的 `hisi-fwpkg plan` 产出以下 firmware release assets：
+
+- `blinky.elf`：与 tag commit 对应的可调试 ELF；
+- `blinky.img`：包含 WS63 header、连续 verified body 与正确 hash 的可烧录镜像；
+- `blinky.plan.json`：记录 base address、body/hash、erase range 与 write chunks；
+- `SHA256SUMS`：绑定上述三个产物。
+
+workflow 会用 `scripts/check-flash-plan.py` 重新计算 body SHA-256，并检查 image、地址、
+擦写范围和 write chunks 一致后才创建 GitHub Release。父仓不会替子仓 publish
+crates.io crate，也不会再把 `rust-objcopy -O binary` 的裸展开结果冒充可烧录镜像。
 
 ## 5. 常见失败
 

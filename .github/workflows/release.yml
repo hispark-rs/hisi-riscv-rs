@@ -6,6 +6,7 @@ on:
       - 'v*'
 
 permissions:
+  actions: read
   contents: write
   pages: write
   id-token: write
@@ -14,9 +15,34 @@ permissions:
 # RISC-V release builds use the upstream target with `-Zbuild-std=core,alloc`.
 
 jobs:
+  source-ci:
+    name: Require successful source CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful CI for the release commit
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const response = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: context.sha,
+              status: 'completed',
+              per_page: 100,
+            });
+            const successful = response.data.workflow_runs.find(
+              run => run.name === 'CI' && run.conclusion === 'success'
+            );
+            if (!successful) {
+              core.setFailed(`No successful CI run exists for release SHA ${context.sha}`);
+              return;
+            }
+            core.info(`Source CI: ${successful.html_url}`);
+
   # ── Create GitHub Release ─────────────────────────────────────
   release:
     name: Create Release
+    needs: source-ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -29,31 +55,34 @@ jobs:
       - name: Install Rust toolchain
         run: bash .github/scripts/install-toolchain.sh
 
-      # Build the default-members (libraries + WS63 examples). Only blinky is
-      # packaged below; the experimental flashboot binary is not built/attached here.
-      - name: Build default members (release)
-        run: cargo build -Zbuild-std=core,alloc --release
+      - name: Build release firmware
+        run: cargo build -Zbuild-std=core,alloc --release -p blinky
 
-      # Package the blinky firmware. rust-objcopy comes from llvm-tools-preview.
-      - name: Package firmware
+      - name: Install the image-plan truth source
+        run: cargo install hisi-fwpkg-cli --version 0.3.2 --locked
+
+      # FlashPlan owns the WS63 header, verified body, hash and erase/write
+      # boundaries. The release never publishes an objcopy-derived raw body.
+      - name: Package and verify firmware through FlashPlan
         run: |
           set -euo pipefail
           OUT=target/riscv32imfc-unknown-none-elf/release
-          OBJCOPY="$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-objcopy"
-          shopt -s nullglob
-          for elf in "$OUT"/blinky; do
-            [ -f "$elf" ] || continue
-            "$OBJCOPY" -O binary "$elf" "$elf.bin"
-            cp "$elf" "$elf.elf"
-            echo "packaged $(basename "$elf").bin / .elf"
-          done
+          ELF="$OUT/blinky"
+          IMAGE="$OUT/blinky.img"
+          PLAN="$OUT/blinky.plan.json"
+          test -f "$ELF"
+          cp "$ELF" "$OUT/blinky.elf"
+          hisi-fwpkg plan "$ELF" --chip ws63 --image-output "$IMAGE" > "$PLAN"
+          uv run --script scripts/check-flash-plan.py --base-address 0x230000 "$PLAN" "$IMAGE"
+          hisi-fwpkg --version
 
       - name: Generate firmware checksums
         run: |
           set -euo pipefail
           OUT=target/riscv32imfc-unknown-none-elf/release
           cd "$OUT"
-          sha256sum blinky.bin blinky.elf > SHA256SUMS
+          sha256sum blinky.elf blinky.img blinky.plan.json > SHA256SUMS
+          sha256sum --check SHA256SUMS
 
       - name: Generate changelog
         id: changelog
@@ -68,11 +97,12 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.changelog }}
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
-          # Globs match the actual artifact names (.elf/.bin). They produce no files
+          # Globs match the actual artifact names. They produce no files
           # until firmware packaging above runs; gh-release just skips empty matches.
           files: |
-            target/riscv32imfc-unknown-none-elf/release/blinky.bin
             target/riscv32imfc-unknown-none-elf/release/blinky.elf
+            target/riscv32imfc-unknown-none-elf/release/blinky.img
+            target/riscv32imfc-unknown-none-elf/release/blinky.plan.json
             target/riscv32imfc-unknown-none-elf/release/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

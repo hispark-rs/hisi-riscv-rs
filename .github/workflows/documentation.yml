@@ -98,7 +98,7 @@ jobs:
         run: uv run --script scripts/check-connectivity-support-docs.py
 
       - name: Check image-format truth-source drift
-        run: uv run scripts/check-image-format-truth.py
+        run: uv run --script scripts/check-image-format-truth.py
 
       - name: Check happy-path documentation drift
         run: uv run scripts/check-happy-path-docs.py

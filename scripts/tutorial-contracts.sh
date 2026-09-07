@@ -300,7 +300,7 @@ PLAN="$WORK/uart_hello.plan.json"
 
 echo "tutorial-contracts: planning tutorial image"
 "$HISI_FWPKG" plan "$ELF" --chip ws63 --image-output "$IMG" > "$PLAN"
-uv run "$ROOT/scripts/check-flash-plan.py" \
+uv run --script "$ROOT/scripts/check-flash-plan.py" \
     --base-address 0x230000 "$PLAN" "$IMG"
 
 run_template_case() {
