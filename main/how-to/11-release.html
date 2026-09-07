@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ae8b38cf.js";
+            window.path_to_searchindex_js = "../searchindex-1cb62558.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8a6bfe17.js"></script>
@@ -310,15 +310,20 @@ git push origin "$branch"
 <pre><code class="language-bash">git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 
-# 可选：用 repo skill 代看 workflow
-bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
+# 观察确切 run；通过后用显式 registry 契约验收
+gh run watch &lt;run-id&gt; --exit-status
+bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z \
+  --kind crates-io --repo hispark-rs/&lt;repo&gt; --workflow publish.yml \
+  --run-id &lt;run-id&gt; --package &lt;crate&gt;=X.Y.Z --report /path/to/acceptance.json
 </code></pre>
 <p>如果 crate 要求显式选择 chip/profile，则把同一个最小 feature 集传给自动
 preflight；不要用 <code>--no-verify</code> 绕过：</p>
-<pre><code class="language-bash">PACKAGE_FEATURES=chip-ws63,profile-wifi-wpa2-smoltcp \
-  bash /path/to/hisi-riscv-rs/.agents/skills/release-train/train.sh vX.Y.Z
+<pre><code class="language-bash">uv run --script /path/to/hisi-riscv-rs/scripts/cargo-standalone-lock.py . \
+  --package --features chip-ws63,profile-wifi-wpa2-smoltcp
 </code></pre>
-<p>crates.io 没有 GitHub release asset；<code>publish.yml</code> 成功就是发布信号。若下游马上要依赖这个版本，等 crates.io index 能解析到它后再继续。</p>
+<p>不能仅凭 <code>publish.yml</code> 绿灯宣称发布完成。验收脚本还会下载确切 <code>.crate</code>，检查
+registry checksum、未撤回状态与 <code>.cargo_vcs_info.json</code> 源码 commit；GitHub release
+缺失不能自动解释成 crates.io 发布。网络失败必须明确报错。</p>
 <h2 id="3-更新父仓-submodule-pointer"><a class="header" href="#3-更新父仓-submodule-pointer">3. 更新父仓 submodule pointer</a></h2>
 <p>子仓 release 成功并 push 后，回到父仓根目录：</p>
 <pre><code class="language-bash">cd /path/to/hisi-riscv-rs
@@ -336,7 +341,7 @@ git push origin main
 <p>父仓 tag 只创建 firmware GitHub Release，不发布 crates.io crate。发布前确认：</p>
 <pre><code class="language-bash">git submodule status --recursive
 git status --short
-cargo build -Zbuild-std=core,alloc --release
+cargo build --locked -Zbuild-std=core,alloc --release
 cargo fmt --all -- --check
 </code></pre>
 <p>如果 release 包含 HAL stable API 或真机行为变化，按<a href="07-run-hil-tests.html">如何运行 HIL 测试</a>跑对应 HIL；如果只更新文档，也至少跑：</p>
@@ -347,7 +352,13 @@ uv run --script .agents/skills/embedded-test-hil/scripts/check_hil_smoke_markers
 uv run --script .agents/skills/embedded-test-hil/scripts/hil_inventory.py --strict
 </code></pre>
 <p><code>--current-claims</code> 会列出需要人工复核的“当前 / 默认 / stable”等表述；它是漂移线索扫描，输出不等于必然错误。</p>
-<p>然后 tag 父仓：</p>
+<p>先在成功 CI 的同一 commit 上运行不公开发布的演练：</p>
+<pre><code class="language-bash">gh workflow run release.yml --ref main -f failure_stage=none
+gh workflow run release.yml --ref main -f failure_stage=before-finalize
+</code></pre>
+<p>第二项是预期失败演练：下载校验完成后故意中断，清理步骤必须确认没有公开
+Release 并删除本轮 draft。演练不部署 Pages，也不创建正式版本。
+确认两项结果符合预期后，再 tag 父仓：</p>
 <pre><code class="language-bash">git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin vX.Y.Z
 </code></pre>
@@ -357,10 +368,16 @@ git push origin vX.Y.Z
 <li><code>blinky.elf</code>：与 tag commit 对应的可调试 ELF；</li>
 <li><code>blinky.img</code>：包含 WS63 header、连续 verified body 与正确 hash 的可烧录镜像；</li>
 <li><code>blinky.plan.json</code>：记录 base address、body/hash、erase range 与 write chunks；</li>
-<li><code>SHA256SUMS</code>：绑定上述三个产物。</li>
+<li><code>Cargo.lock</code>、<code>rust-toolchain.toml</code>：确切构建输入；</li>
+<li><code>release-manifest.json</code>：父仓 SHA、递归子仓 SHA、source CI、工具身份与产物哈希；</li>
+<li><code>SHA256SUMS</code>：完整绑定上述六个文件。</li>
 </ul>
-<p>workflow 会用 <code>scripts/check-flash-plan.py</code> 重新计算 body SHA-256，并检查 image、地址、
-擦写范围和 write chunks 一致后才创建 GitHub Release。父仓不会替子仓 publish
+<p><code>scripts/release-bundle.py</code> 调用 <code>hisi-fwpkg</code> 复验实际 header/body，并验证 write chunks
+无重叠、无缺口覆盖完整 image；下载后再从发布的 ELF 重建 image/plan 逐字节比较。
+这个检查是镜像完整性与语义一致性，不是签名认证或新增 HIL。</p>
+<p>候选先以 draft 保存，mdBook/rustdoc、下载复验与正式 Pages 部署/在线校验全部成功后
+才公开 Release。<code>train.sh --kind github --firmware-bundle</code> 用命名 asset、确切 run/SHA
+执行最终下载验收，完整参数见仓库 release-train skill。父仓不会替子仓 publish
 crates.io crate，也不会再把 <code>rust-objcopy -O binary</code> 的裸展开结果冒充可烧录镜像。</p>
 <h2 id="5-常见失败"><a class="header" href="#5-常见失败">5. 常见失败</a></h2>
 <ul>
