@@ -20,11 +20,12 @@ path = "docs/plan/hal-0.6.0-release.md"
 [[plan]]
 id = "connectivity-stack"
 path = "hisi-connectivity-stack.md"
-status = "decision-pending"
+status = "active"
+active_milestone = "NET0"
 priority = "P0"
 owner = "ecosystem maintainers"
 depends_on = []
-trigger = "explicit product direction decision"
+trigger = "2026-09-08 approved L2 -> Embassy Net -> autonomous-time HTTPS client; NET0 first"
 evidence = ["connectivity-u8-review"]
 
 [[plan]]

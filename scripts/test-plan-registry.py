@@ -71,7 +71,17 @@ def main() -> None:
     hidden_checkbox = "  * [ ] 未登记实现：合法缩进和星号不能绕过检查"
     assert CONNECTIVITY.OPEN_ITEM.findall(hidden_checkbox) == ["未登记实现"]
 
-    print("计划注册表契约测试通过：1 个正向场景，7 个 mutation/解析负场景")
+    active_status = "当前唯一活动里程碑是 NET0"
+    assert CONNECTIVITY.check_active_window(SOURCE, active_status) == []
+    assert CONNECTIVITY.check_active_window(SOURCE, "决策待定")
+    premature = copy.deepcopy(SOURCE)
+    premature["plan"][0]["active_milestone"] = "NET1"
+    assert CONNECTIVITY.check_active_window(premature, active_status)
+    concurrent = copy.deepcopy(SOURCE)
+    concurrent["plan"][1]["status"] = "active"
+    assert CONNECTIVITY.check_active_window(concurrent, active_status)
+
+    print("计划注册表契约测试通过：2 个正向场景，10 个 mutation/解析负场景")
 
 
 if __name__ == "__main__":

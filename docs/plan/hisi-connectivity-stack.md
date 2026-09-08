@@ -2,7 +2,7 @@
 
 ## 状态
 
-**U8 stable-graduation review 已完成并给出 no-go；U8R facade-boundary remediation 已闭合。当前状态是产品方向决策待定，活动实现数为零，没有自动激活的里程碑。** U0-U4 已完成；U5A 安全控制面、U5B
+**U8 stable-graduation review 已完成并给出 no-go；U8R facade-boundary remediation 已闭合。2026-09-08 用户批准标准 L2 → Embassy Net → 自主授时 HTTPS 客户端；当前唯一活动里程碑是 NET0，后续 NET1–NET5 顺序排队。** 详细契约见 [NET0–NET5](#net0-net5-https)，既有 HIL 不自动覆盖新路径。U0-U4 已完成；U5A 安全控制面、U5B
 密码能力以及 U5D 正向 Secure Connections passkey/restore 子门槛已经闭合；
 `hisi-rf 0.1.0-alpha.90` 又以发布 tag 构建的固定镜像通过 restored-bond 3/3 与
 20/20 paired nRST，关闭 vendor-managed persistence/restore。`hisi-rf
@@ -555,7 +555,8 @@ graph TD
   TLS --> TLS_EMBED["hisi-tls-embedded (optional)"]
   TLS_MBED --> CRYPTO["hisi-crypto"]
   TLS_EMBED --> CRYPTO
-  TLS --> RF
+  APP --> NET["Embassy Net / smoltcp"]
+  NET --> RF
   RF --> CRYPTO
   RF --> CRYPTO_WS63["hisi-crypto-ws63"]
   CRYPTO_WS63 --> CRYPTO
@@ -1093,7 +1094,24 @@ timing、handle 或 status；raw DLI 类型不越过 `ws63-radio-sys`；metadata
 vendor header drift report；unknown/reserved decoder；const positive/compile-fail negative；
 示例 semantic magic-hex 扫描（custom UUID/vendor extension 需显式 allowlist）。
 
-### Wi-Fi 上层生态补全（NET0-NET5，延期）
+<a id="wi-fi-上层生态补全net0-net5延期"></a>
+<a id="net0-net5-https"></a>
+
+### 标准 L2 到自主授时 HTTPS（NET0-NET5）
+
+2026-09-08 用户批准实施。完成目标为：WS63 冷启动后依次完成 Wi-Fi、DHCP/DNS、
+认证授时、严格业务服务身份验证、HTTPS GET/POST，并能从断网恢复。WIP=1；
+本轮不实施 MQTT、mTLS、OTA、IPv6、多 TLS 并发或新的通用 `hisi-net`。
+
+| 阶段 | 状态 | 进入下一阶段的门槛 |
+|---|---|---|
+| NET0 L2 | active | 实例队列、真实 token 预留、generation/wake/守恒 host tests、WS63 smoltcp parity |
+| NET1 Embassy Net | queued | 标准 Driver 接入、双板加独立主机 TCP/UDP/DNS/DHCP/lifecycle HIL |
+| NET2 资源与共享熵 | queued | 单一 TRNG owner、可失败 DRBG、资源报告等于最终 ELF、启动前准入 |
+| NET3 TLS | queued | 独立 mbedTLS workspace/artifacts、线程与取消边界、安全正反例 |
+| NET3-T 自主授时 | queued | pinned 身份、nonce/时间区间/轮换/失效负例，不存在通用跳过验证 |
+| NET4 HTTPS | queued | 单连接 GET/POST、流式响应、断网恢复、完整受控 HIL |
+| NET5 交付 | queued | 三平台公开包 clean/offline consumer、模板、可下载发布证据 |
 
 当前 Wi-Fi 主干保持 `Application -> hisi-rf facade -> RadioController::split() ->
 WifiController + WifiDevice + RadioRunner -> hisi-rf-ws63`。已有控制与 L2 纵向切片包括：
@@ -1110,46 +1128,106 @@ Embassy Net/smoltcp 拥有 IP、ARP/ND、DHCP、DNS、ICMP、TCP、UDP 和 multi
 API 事实源。当前不创建 `hisi-net`；只有第二个芯片或第二个独立消费者证明共用边界后，
 才评估提取 `hisi-net-adapters`。
 
-- **NET0 -- L2 contract closure**：让 `WifiDevice` 拥有 hardware address、link state、MTU/
-  capability、RX/TX wake 和 backpressure 契约；以 `MacAddress`、`WifiChannel`、
-  `CenterFrequency`、`RssiDbm`、`DisconnectReason` 等类型替换 public raw 数字，补齐
-  negotiated security/PMF/channel/PHY/rate；收窄 `inner/inner_mut/into_inner` escape hatch。
-  host tests 必须覆盖 link up/down、wake、queue conservation 和 saturation。L2 ownership
-  必须属于具体 `RadioController` instance；现有 static/global bridge 只能是迁移实现，不能
-  成为多实例 API 或资源模型的事实源。
-- **NET1 -- Embassy Net primary adapter**：优先实现 `embassy_net_driver::Driver`，先评估
-  `embassy-net-driver-channel`，只有其复制、RAM 或零拷贝模型不合适才直接实现 driver。
-  `hisi-rf-core` 只依赖 driver contract，不依赖主 `embassy-net` crate；smoltcp adapter
-  继续作为可选低层入口和既有 HIL oracle。工作 backend 存在前不得暴露虚假的
-  `profile-wifi-wpa2-embassy-net` / `profile-wifi-wpa3-embassy-net`。HIL 覆盖 DHCP、DNS、
-  TCP echo、UDP、lease renew、link-down 时 IP/DHCP deconfigure、reconnect 后重新配置、
-  AP disappear/reappear、burst RX 与 backpressure。
-- **NET2 -- socket ecosystem adapters**：TCP/TLS stream 在 IP/TLS 层实现
-  `embedded_io_async::{Read, Write}`，`WifiDevice` 本身不得实现 stream。优先复用
-  Embassy Net 与 `embedded-nal-async` 的 TCP/UDP/DNS contract；blocking embedded-nal
-  仅在真实消费者出现后增加。`WifiEvent` 可选实现 `futures_core::Stream`，最小 API 仍是
-  `next_event().await`。
-- **NET3 -- TLS**：保持 `Application -> hisi-tls -> hisi-crypto`，默认
-  `hisi-tls-mbedtls`、可选 `hisi-tls-embedded`。`TlsStream<T>` 实现 async Read/Write；
-  certificate time、entropy/DRBG、server-name verification、caller-owned buffers、取消、
-  timeout 与错误恢复必须显式建模。WPA supplicant 不经过 TLS，只有 EAP-TLS 依赖该层。
-- **NET4 -- application protocols**：按真实需求评估 reqwless HTTP client、picoserve
-  SoftAP server、minimq、edge-net/edge-mdns/edge-dhcp、sntpc；CoAP 因 alpha、flow-control
-  与 dedup 风险后置。OTA 是 HTTP/TLS + `hisi-storage`/`hisi-fwpkg` service，不归 RF。
-- **NET5 -- UX and evidence**：template 最终提供 Embassy Net 默认 happy path，用户只选
-  chip/profile 和静态网络资源；生成机器可读 RAM/socket/packet-buffer report。验收覆盖
-  repeated reset/cold boot、DHCP renew、AP disappear/reappear、DNS/TCP/UDP burst、queue
-  saturation、TLS/MQTT reconnect，并以 crates.io-only external consumer 在 macOS/Linux/
-  Windows 验证 facade、profile 与 caller-owned storage 契约。HIL 只能证明固定环境下的
-  内部 queue/stack conservation 与行为 parity，不能宣称外部网络永不丢包。
+#### NET0：标准 L2 契约
 
-NET0-NET5 是 U4 async event/cancellation/lifecycle 与 connectivity evidence 收口后的
-triggered backlog；U8R 已完成，但该方向仍需新的产品触发和唯一 WIP 分配。STA 与 SoftAP
-可以使用不同 backend，
-但 composition、storage、runner、typed error、
-diagnostics 和 network lifecycle UX 必须对齐；example 中手写的 smoltcp
-`Interface/SocketSet/DHCP/UDP/DNS/renew` 在形成第二个消费者前继续作为可执行 composition
-oracle，不下沉进 `hisi-rf`。
+`WifiDevice` 实现 `embassy_net_driver::Driver`，包含硬件地址、link state、MTU、RX/TX
+token、背压和唤醒；TX token 必须先预留真实容量，不能 consume 时因队列满而失败。
+caller-owned `L2Storage` 拥有 packet queue；全局仅保留独占注册的 C callback 路由。
+连接 generation 隔离旧帧/完成通知。队列 claim → 临界区外复制 → publish，callback 不等待，
+记录 accepted/delivered/dropped/pending 及首次断链位置；typed MAC/channel/RSSI/reason
+取代语义裸整数，backend escape hatch 只作迁移期诊断。
+
+直接在实例队列实现 Driver，不另加 driver-channel 重复缓冲。保留 smoltcp adapter，
+同一设备不能同时交给两个 IP stack。标准契约见
+[Driver 0.2.0](https://docs.embassy.dev/embassy-net-driver/0.2.0/default/trait.Driver.html)。
+接入真实 callback/profile 和旧路径 HIL 前，不宣称 NET0 完成。
+
+#### NET1：Embassy Net 接入
+
+固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
+DNS/TCP/UDP；新网络/TLS 边界统一 `embedded-io-async 0.7`，不扩大到无关 HAL 升级。
+工作 backend 就绪后增加 WPA2/WPA3 Embassy Net named profile。RadioRunner 推进无线，
+NetRunner 推进 IP，不再采用应用每 10 ms 手动 poll。Stack/socket/NetRunner 留在同一
+executor 线程，不用 unsafe 跨线程共享 RefCell。link-down 立即使连接失效；重新连接后
+重新获取 DHCP/DNS 配置，重试使用有上限退避。复用标准 TCP、DNS/NAL，不重写协议。
+
+#### NET2：资源与共享熵源
+
+唯一 HAL TRNG token 由 composition 的硬件 owner 持有，RF/TLS 领取受控 capability，
+不再 `steal`，TLS 不通过 RF 获取熵。复用可失败熵源、健康检查和 reseeding DRBG；
+TLS/网络使用不同 personalization，初始化/重播种失败传播，不用固定种子或静默回退。
+分别提供 L2/socket/TLS caller-owned storage；首版只有一个活动 TLS connection，授时和
+业务顺序复用。TLS C heap 是独立有界 arena，不占 RF heap。报告由唯一子项 checked-sum
+派生，包含 packet slots、TCP buffers、TLS arena/context、worker stack 和 allocator overhead；
+与最终 ELF 一致。SRAM 不足时停在本门槛，不缩减已验证 RF 栈来掩盖容量冲突。
+
+#### NET3：mbedTLS 与 async TLS
+
+新独立 `hisi-tls` release workspace 包含 facade、`hisi-tls-mbedtls`、内部 target-artifact
+package；backend 不依赖 facade。首版不实现 embedded-tls backend。
+[Mbed TLS 4.1.1 LTS](https://github.com/Mbed-TLS/mbedtls/releases/tag/mbedtls-4.1.1)
+与配套 TF-PSA-Crypto 固定 source commit、官方 tarball SHA、配置、构建器和产物摘要；
+该 LTS 支持至至少 2029-03，每次发布重新检查安全公告。CI 构建标准 RV32IMFC/ILP32F
+archive，消费端只用 Cargo/官方 Rust，build.rs 不联网、不调用 GCC/CMake/Python。
+最小预生成 FFI、符号命名空间和 ABI manifest 防止与 supplicant/libc 冲突。
+
+默认 TLS 1.3，兼容 1.2，现代 ECDHE/AEAD，ECDSA/RSA 证书验签；禁用旧协议、静态 RSA
+交换、0-RTT、renegotiation、session resumption。首版显式使用 upstream PSA 软件密码与
+共享硬件熵源；后续硬件加速只能经 hisi-crypto，不引入 vendor mbedTLS。
+公开 `TlsStream<T>: embedded_io_async::{Read, Write}`、ClientConfig、ServerName、
+TrustAnchors、TimeProvider、资源和 typed errors，不公开 C context。
+
+C context 由独立可抢占 RTOS thread 内唯一 TLS worker task 持有；TCP socket 留在网络
+executor，两侧以有界 buffer 和 generation-tagged request 通信。BIO 返回 WANT_READ/
+WANT_WRITE，不在 callback 中 block_on。取消/超时使连接失效；worker 确认当前 C 操作
+退出前不能释放/复用 buffer。close 有 deadline；截断/异常 EOF/部分写/过期完成通知必须
+有明确语义。TLS 计算不得阻塞 RadioRunner/NetRunner 的持续进展。
+
+#### NET3-T：自主可信时间
+
+专用 TimeBootstrapClient 访问受控 HTTPS 服务；固件预置端点、当前/下一 SPKI pin。
+无可信时间时只有该入口可使用固定公钥身份认证：严格校验 peer key 与 TLS 私钥持有证明，
+仅对此入口特殊处理时间校验，不清除其他错误，不开放通用 skip-verification 开关。
+禁止重定向、未认证响应更新 pin。每次冷启动发送新 DRBG nonce，响应回显 nonce/UTC/
+精度；校验大小、往返时限和本启动会话，结合单调时钟生成带误差区间和最大有效期的
+TrustedTime。过期/回退/时钟失效/服务不可达均 fail closed。SNTP 只作诊断，编译时间或
+未经认证持久化 UTC 不作当前时间。业务证书必须在整个可信区间有效。
+pin 轮换通过受控固件/配置更新，覆盖当前/下一 pin 及旧 pin 删除；首版不做 OTA、
+跨断电防回滚。授时服务和固件完整性是明确的信任前提。
+
+#### NET4：一个 HTTPS 客户端
+
+固定 [reqwless 0.14.0](https://docs.rs/reqwless/0.14.0/reqwless/)，关闭默认 TLS feature，
+只复用底层 HTTP 编解码并输入自有 TlsStream，不用高层客户端另建 TLS。
+`wifi_https` 自主授时后执行受控 GET health、POST echo/遥测，验证状态/序号/内容，
+大响应使用流式摘要。HTTP/1.1、单连接、固定 buffer，header/body/timeout/retry 有界；
+禁止 HTTPS 降级、自动跨域重定向和结果未知时盲目重发 POST。
+受控服务采用独立 TLS 实现，负责证书故障/慢响应/断连；公网仅匿名 GET 观察。
+测试服务只有临时进程，不安装本机常驻服务或 HIL runner。template 增加 HTTPS starter，
+配置只有 chip/profile、网络凭据、业务根和授时 pin；PKIX 始终校验证书链、域名、用途、
+有效期，不宣称在线吊销检查。
+
+#### NET5：正反向证据与交付
+
+- Host：lost-wake、token Drop、满队列、旧 generation、link flap、DNS 错误、DHCP renew/
+  deconfigure、TCP 半关闭/背压；独立主机验证，不能只测两个同源实现。
+- 安全负例：未知 CA、错误域名/用途、过期/未来证书、错误 pin/nonce、延迟/重放、时间
+  失效、熵失败、OOM、截断、取消、部分写，必须拒绝且不泄漏应用数据。
+- 并发/内存：压力下队列守恒、Radio/NetRunner 前进、取消后无悬空 C 指针、重复握手无
+  泄漏；标准向量/sanitizer 约束自有边界，不宣称证明整个 TLS 栈。
+- HIL：3-reset 预检；WPA2/WPA3 各两组 20-reset + 至少 5 次冷启动，每轮授时、完整
+  握手、10 次 GET/POST 配对；另跑 1 小时保持、反复断网恢复和 DHCP renew。
+- 受控正常矩阵要求全通过，负例全部正确拒绝；保留每次失败并归类，不用重跑覆盖。
+  公网与固件失败分开，ICMP 不作为 HTTPS gate。
+- macOS ARM64/Linux x86_64/Windows x86_64 公开包 external consumer plain Cargo
+  clean/offline，覆盖空格/非 ASCII 路径、只读 registry、依赖边界和 ELF/资源报告。
+- 复用 release/evidence 契约：source SHA、lock、CI run、下载产物、服务配置、ELF/image
+  hash、逐轮结果和负例。子仓发布验收后更新父仓/模板；新路径先 alpha，具名 gate 才能
+  更新支持声明，不自动升级 HAL/RF stable，不把有限 HIL 解释为网络永不丢包。
+
+完成定义：外部用户仅依赖公开包即可构建；冷启动不人工设时，能认证授时和业务服务，
+完成 HTTPS 并断网恢复，所有正反向证据可重新下载验证。现有 smoltcp composition 保留
+为迁移 oracle，不下沉到 RF。STA/SoftAP 的 storage/runner/errors/lifecycle 契约须一致。
 
 ### WS63 GLE HCI / DLI 分层（延期）
 

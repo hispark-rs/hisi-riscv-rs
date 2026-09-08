@@ -15,7 +15,7 @@ vendor-managed bond persistence/restore/removal, U5D positive/negative pairing
 lifecycles, U6 named-profile/template delivery, U7 external-consumer plus
 measured two-board coexistence acceptance, and the U8 no-go graduation review
 are also frozen. U8R's facade, release, three-OS consumer and fixed-image Wi-Fi
-HIL parity gates are closed. No new major WIP is activated automatically;
+HIL parity gates are closed. The approved NET0 L2 contract is the only active WIP;
 coexistence does not graduate without a new product/API review.
 
 ## Completed -- A3 Runtime And Connectivity Baseline
@@ -297,11 +297,14 @@ examples, template and fixed-image Wi-Fi HIL parity gates pass. The final same-i
 timeout, and zero queue, runner, allocation or ready-ownership error. This does not
 stabilize coexistence or widen into Embassy Net, DLI/SLB, or new protocol features.
 
-## NOW -- Product Direction Gate
+## NOW -- NET0 Standard L2
 
-There is no automatically active major implementation milestone. Starting the next
-direction requires an explicit product trigger, a single allocated WIP slot, and a
-fresh evidence plan. Deferred designs remain facts, not implicit TODOs.
+The 2026-09-08 product decision activates the
+[L2 -> Embassy Net -> autonomous-time HTTPS client](docs/plan/hisi-connectivity-stack.md#net0-net5-https).
+NET0 delivers caller-owned packet storage, generation-fenced queues and a standard
+Embassy driver. NET1, resources/entropy, TLS, authenticated time bootstrap, HTTPS
+and delivery follow sequentially, only after each named gate. Existing smoltcp
+profiles remain the regression oracle; no new support claim inherits old HIL.
 
 ## LATER -- Triggered Product Directions
 
@@ -309,7 +312,7 @@ After B0-B3, choose exactly one direction from measured product demand:
 
 - NVS N0-N3 when the release image must stop depending on the vendor NV
   generator;
-- TLS after stable TCP/IP plus an HTTP/MQTT consumer exists;
+- MQTT, mTLS, OTA and IPv6 after the selected single-connection HTTPS slice;
 
 WPA3-Personal was selected at the A4 product gate; the remaining choices stay
 triggered rather than pre-booked as concurrent work.
@@ -325,8 +328,7 @@ These designs remain documented, but are not active TODO checklists:
 - NVS factory/write/GC/encryption and complete hardware key-slot/crypto support;
 - Enterprise Wi-Fi, broader SoftAP productization, pairing UX, BLE/SLE typed
   metadata/schema graduation, stable BLE/SLE API, DLI/SLB productization,
-  Wi-Fi L2/Embassy Net/TLS/application-protocol ecosystem closure
-  ([NET0-NET5](docs/plan/hisi-connectivity-stack.md#wi-fi-上层生态补全net0-net5延期)),
+  broader application-protocol ecosystem closure beyond the selected HTTPS client,
   and coexistence;
 - BSP/board-manager, mdBook i18n, Hi3322 runtime, and AP1 probe-rs fast-path
   integration.

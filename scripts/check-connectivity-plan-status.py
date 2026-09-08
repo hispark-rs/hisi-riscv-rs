@@ -41,6 +41,27 @@ def status_section(text: str) -> str:
     return match.group("body") if match else ""
 
 
+def check_active_window(registry: dict, status: str) -> list[str]:
+    """Keep the approved implementation and its document entry in agreement."""
+    errors = []
+    entries = registry.get("plan", [])
+    connectivity = next(
+        (entry for entry in entries if entry.get("id") == "connectivity-stack"), None
+    )
+    if connectivity is None:
+        return ["registry.toml 缺少 connectivity-stack"]
+    if connectivity.get("status") != "active":
+        errors.append("已批准的 connectivity-stack 必须是 active")
+    if connectivity.get("active_milestone") != "NET0":
+        errors.append("当前仅批准激活 NET0；后续阶段须先验收并更新契约")
+    if "当前唯一活动里程碑是 NET0" not in status:
+        errors.append("状态段必须与 registry 的 NET0 活动窗口一致")
+    active = [entry.get("id") for entry in entries if entry.get("status") == "active"]
+    if active != ["connectivity-stack"]:
+        errors.append(f"活动实现必须唯一：{active}")
+    return errors
+
+
 def main() -> int:
     plan = PLAN.read_text(encoding="utf-8")
     registry = tomllib.loads(REGISTRY.read_text(encoding="utf-8"))
@@ -50,18 +71,7 @@ def main() -> int:
     if not status:
         errors.append("计划缺少可解析的 `## 状态` 段")
 
-    entries = registry.get("plan", [])
-    connectivity = next(
-        (entry for entry in entries if entry.get("id") == "connectivity-stack"),
-        None,
-    )
-    if connectivity is None:
-        errors.append("registry.toml 缺少 connectivity-stack")
-    elif connectivity.get("status") != "decision-pending":
-        errors.append("connectivity-stack 当前必须是 decision-pending")
-    active = [entry.get("id") for entry in entries if entry.get("status") == "active"]
-    if active:
-        errors.append(f"产品方向决策前不能自动激活实现计划：{active}")
+    errors.extend(check_active_window(registry, status))
 
     open_item_list = OPEN_ITEM.findall(plan)
     open_items = set(open_item_list)
@@ -107,7 +117,7 @@ def main() -> int:
     print(
         "connectivity-plan-status: OK "
         f"({len(evidence_links)} evidence links, {len(open_items)} conditional items, "
-        "active implementations=0)"
+        "active implementations=1, milestone=NET0)"
     )
     return 0
 
