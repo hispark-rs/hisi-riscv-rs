@@ -81,7 +81,12 @@ def main() -> None:
     concurrent["plan"][1]["status"] = "active"
     assert CONNECTIVITY.check_active_window(concurrent, active_status)
 
-    print("计划注册表契约测试通过：2 个正向场景，10 个 mutation/解析负场景")
+    plan = (ROOT / "docs/plan/hisi-connectivity-stack.md").read_text()
+    assert CONNECTIVITY.check_net_milestones(plan) == []
+    assert CONNECTIVITY.check_net_milestones(plan.replace("| NET1 Embassy Net | queued |", "| NET1 Embassy Net | active |"))
+    assert CONNECTIVITY.check_net_milestones(plan.replace("| NET0 L2 | active |", "| NET0 L2 | complete |"))
+
+    print("计划注册表契约测试通过：3 个正向场景，12 个 mutation/解析负场景")
 
 
 if __name__ == "__main__":

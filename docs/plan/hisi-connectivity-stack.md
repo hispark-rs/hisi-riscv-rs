@@ -1142,6 +1142,17 @@ caller-owned `L2Storage` 拥有 packet queue；全局仅保留独占注册的 C 
 [Driver 0.2.0](https://docs.embassy.dev/embassy-net-driver/0.2.0/default/trait.Driver.html)。
 接入真实 callback/profile 和旧路径 HIL 前，不宣称 NET0 完成。
 
+2026-09-08 core 进度：`hisi-rf-core` 提交 `e928174`、`29c1fa9` 实现 opt-in
+`embassy-net-driver` feature、caller-owned L2Storage、独立 RX ingress、真实 TX 槽位预留、
+generation fence、smoltcp/标准 Driver 共用队列及守恒统计。新 feature 默认关闭，
+WS63 production bridge 仍是旧路径，未创建 Embassy Net named profile，也未发布新版本。
+本地最终源码通过 94 项 host tests、1 项 compile-fail、19 项 L2 Miri tests、Clippy、
+RV32IMFC check；其中一项枚举 64 种有界 reset/publish/consume 交错。源码 CI 见
+[core NET0 CI](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34205631398)，
+最终 SHA 的三平台 host、Linux Miri 与常规检查共 5/5 jobs 通过。
+这不是 NET0 HIL、Embassy Net external consumer 或 HTTPS 验收；下一步仍是 WS63
+callback 路由、连接生命周期、资源报告和固定 profile 真机 parity，不跳到 NET1。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

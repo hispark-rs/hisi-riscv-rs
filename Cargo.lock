@@ -488,6 +488,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fc328bf943af66b80b98755db9106bf7e7471b0cf47dc8559cd9a6be504cc9c"
 
 [[package]]
+name = "embassy-net-driver"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "524eb3c489760508f71360112bca70f6e53173e6fe48fc5f0efd0f5ab217751d"
+
+[[package]]
 name = "embassy-sync"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -943,6 +949,7 @@ name = "hisi-rf-core"
 version = "0.1.0-alpha.24"
 dependencies = [
  "critical-section",
+ "embassy-net-driver",
  "embassy-sync",
  "portable-atomic",
  "smoltcp",

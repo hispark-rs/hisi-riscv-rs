@@ -62,6 +62,14 @@ def check_active_window(registry: dict, status: str) -> list[str]:
     return errors
 
 
+def check_net_milestones(plan: str) -> list[str]:
+    rows = re.findall(r"^\| (NET[0-5](?:-T)?) [^|]+\| (active|queued|complete) \|", plan, re.MULTILINE)
+    expected = [("NET0", "active")] + [
+        (name, "queued") for name in ("NET1", "NET2", "NET3", "NET3-T", "NET4", "NET5")
+    ]
+    return [] if rows == expected else [f"NET 阶段表与唯一活动窗口不一致：{rows}"]
+
+
 def main() -> int:
     plan = PLAN.read_text(encoding="utf-8")
     registry = tomllib.loads(REGISTRY.read_text(encoding="utf-8"))
@@ -72,6 +80,7 @@ def main() -> int:
         errors.append("计划缺少可解析的 `## 状态` 段")
 
     errors.extend(check_active_window(registry, status))
+    errors.extend(check_net_milestones(plan))
 
     open_item_list = OPEN_ITEM.findall(plan)
     open_items = set(open_item_list)
