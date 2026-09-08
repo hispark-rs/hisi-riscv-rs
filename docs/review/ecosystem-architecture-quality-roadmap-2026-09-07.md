@@ -12,21 +12,23 @@
 
 ## L0 收口更新
 
-本节记录同日按评审结论完成的“发布与证据可信化”收口。后文 F1-F9 保留发现时的证据、
-影响和关闭条件，不能再把 F1-F6 的原始快照解读为当前未处理状态。
+本节以[独立验收与闭环复验](release-evidence-acceptance-2026-09-07.md)为准。初次
+“收口”声明被 A1-A5 反例否决，2026-09-07 至 09-08 的补修进一步完成真实发布演练与
+下载重验。后文 F1-F9 保留发现时的证据、影响和关闭条件，不是实时未处理列表。
 
 | Finding | 当前状态 | 可执行证据 |
 | --- | --- | --- |
-| F1 release 绕过 | **已关闭** | `hisi-rf` `c120de33` 将 publish 绑定到同 revision candidate gate；[CI 34092745250](https://github.com/hispark-rs/hisi-rf/actions/runs/34092745250)通过 |
-| F2 release 镜像旁路 | **已关闭** | parent `3e60622e` 由 FlashPlan 生成并复验 ELF/plan/image/checksums；[CI 34093283204](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/34093283204)通过 |
+| F1 release 绕过 | **已关闭本轮范围** | RF `173deae` 的 [12 路 candidate Publish 演练](https://github.com/hispark-rs/hisi-rf/actions/runs/34109641559)通过；独立下载核对 candidate/lock/ELF/graph，真实失败演练证明 publish 被依赖门禁阻断 |
+| F2 release 镜像旁路 | **已关闭本轮范围** | 正式 fwpkg 0.3.3；parent `4ffd06bb9` 的 [正常演练](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/34110566113)及[发布前故障注入](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/34110573399)，七件 bundle 实际下载重验 |
 | F3 hostap 公告未分类 | **已关闭** | `ws63-radio-sys` `06504cca` 对 2026-4/2026-5 建立 profile applicability 与 fail-closed gate；[CI 34094226717](https://github.com/hispark-rs/ws63-radio-sys/actions/runs/34094226717)通过 |
 | F4 计划句式门禁 | **已关闭** | parent `f06cc08d` 引入 `registry.toml`、依赖/evidence schema 和 7 个负测试 |
-| F5 proof/evidence 混淆 | **已关闭本轮范围** | `hisi-rtos` `22804841` + `5991896f` 绑定 source/model/config/harness/workflow/tool digest 和完成态 Kani/TLA run manifest；[CI 34096444025](https://github.com/hispark-rs/hisi-rtos/actions/runs/34096444025)通过 |
+| F5 proof/evidence 混淆 | **已关闭本轮范围** | RTOS `d17beda` 的 [CI 34107500673](https://github.com/hispark-rs/hisi-rtos/actions/runs/34107500673)：逐项执行 receipt + 下载原始日志复验；缺失、skipped、disabled invariant、错误身份均有拒绝测试 |
 | F6 计划与 Skill 漂移 | **本报告所在提交关闭** | NVS/IRQ 计划按当前实现改写；`run-ws63-rs` 命令已执行 host tests，不再复制固定 crate/file 数量 |
 
-证据可信化同时暴露了存量债务：7 条 RTOS HIL marker 中只有 2 条绑定精确 firmware ELF，
-其余 5 条已显式标为 `legacy-no-firmware-hash`。这是更诚实的证据边界，不是把旧结果重新
-认证为当前固件。L0 没有新增板卡 HIL，也没有宣称解决 F7-F9 的长期架构、集成和性能问题。
+证据可信化同时暴露了存量债务：7 条 RTOS HIL marker 中 2 条只是
+`declared-firmware/not-reverified`，其余 5 条为 `legacy-no-firmware-hash`。格式合法的
+hash 不是实际 ELF 校验；新增 bundle 验证器不能自动提升历史等级。L0 没有新增板卡 HIL，
+也没有宣称解决 F7-F9 的长期架构、集成和性能问题。
 
 ## 一、评审结论
 

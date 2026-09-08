@@ -1,0 +1,106 @@
+{
+  "candidate_sha256": "ae180ba191ad1dcad2b0215f95829dcda77dee90975e6a7fb3229f0fef1d64dd",
+  "consumers": [
+    {
+      "elf_sha256": "1d0f4b20682d87d5ef2bff92a8053b24388bfd299176c25eab40b016db8f6814",
+      "host": "macos-14",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "ble-peripheral",
+      "report_sha256": "c3f86b33caa2311d7d2a2e42380281d417dd3583db1e028bb426dca3bc8552a7",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "4cdd6fc33acb0817cd4c458e9db4a56bbb0e47bc397231fc2fd9f4e45b83d227",
+      "host": "macos-14",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "sle-announce",
+      "report_sha256": "33173b499bedcaae0955530a7f096ce07b4982bfd679c350ce50685b9f586740",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "fd8b58b7f2bba34647d654cbbf3612c887b59de550ab3ff939370b78d1601f1c",
+      "host": "macos-14",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa2-personal",
+      "report_sha256": "83fbd123a6cc4b6804ccd4688653313a9e07db5caef281c24d614cc8cbe0f198",
+      "resolved_nodes": 129
+    },
+    {
+      "elf_sha256": "cb1bd334e66dec409052dc62fa472736b5432e58f15007aaed8abc301e62cf77",
+      "host": "macos-14",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa3-personal",
+      "report_sha256": "cc59412741f5c355fe700c4ab981462510ce50977f345da0430f088d0c1e9145",
+      "resolved_nodes": 130
+    },
+    {
+      "elf_sha256": "dd505d588a60500a485454ffcf67a15747e69c32dd17fe48a16b801a41b7ab2e",
+      "host": "ubuntu-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "ble-peripheral",
+      "report_sha256": "031711d7e82ca7291152b7a4fc526dd152a1dba814dfa977e52a70f6c0d573af",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "c7c90add51081e7a1b5f86501888b796a1cf4e0cb45d0a478ae9047cb84e45cc",
+      "host": "ubuntu-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "sle-announce",
+      "report_sha256": "f29403b8c0c3c61b96c03acdaca96c167277281d735ba91b50b7ac1eb285f773",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "52cbaa8fa2c88582f466798b1074e2f1a6d741a93b61d9f278147001f061c55e",
+      "host": "ubuntu-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa2-personal",
+      "report_sha256": "939569c54d67b8123ef563e2450ab49eec80608f41580bc65a4ae07aa07340d1",
+      "resolved_nodes": 129
+    },
+    {
+      "elf_sha256": "c9708c3b3be2c94a0c61b8c2f18e73b3bf5727bce9ab8f3499ffa127f7a816e8",
+      "host": "ubuntu-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa3-personal",
+      "report_sha256": "92cc95e15576a6024d53fc56c956c393b4497bc3f5f98f41e8a8b787dc650587",
+      "resolved_nodes": 130
+    },
+    {
+      "elf_sha256": "f065a0604cd342789efdb4bcc6296c8b93e04a428dbcac648b957a72082168c0",
+      "host": "windows-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "ble-peripheral",
+      "report_sha256": "1a0f4443571a70e9b5132257932595c2e2d709b007fd2e96f085b4621484dd1e",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "e0604afa76aceeb115119e99ad541bfba424d5ed1d7bef43ed48d7420e620cff",
+      "host": "windows-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "sle-announce",
+      "report_sha256": "1cdcaafb355b79a882ca20fd0e10d906b1e6465872210546f264b25c458e9d69",
+      "resolved_nodes": 118
+    },
+    {
+      "elf_sha256": "8e067933913d3d107b4b748f2b7d8cee2446f56d3556b5007447171490b11e36",
+      "host": "windows-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa2-personal",
+      "report_sha256": "44ec9c4f275c71b043e007362cdeb7ef1c5797f5e84e55bce9264f1685acc5ce",
+      "resolved_nodes": 129
+    },
+    {
+      "elf_sha256": "ede5f86d16dfd518cc37ad68cc698d915be3a183679d0d8db3913a153a449efa",
+      "host": "windows-latest",
+      "lock_sha256": "9092a3496a4edfa56fc73e4c92640248cd80c750b603ca2440787053b503a0db",
+      "profile": "wpa3-personal",
+      "report_sha256": "2823f08085017f215526ed4f2fcb6e7d8454ef1f548b05b4d0d1c067efb86a44",
+      "resolved_nodes": 130
+    }
+  ],
+  "run_id": "34109641559",
+  "schema": 1,
+  "scope": "downloaded bytes, exact candidate and CI identity; no hardware claim",
+  "source_commit": "173deae319fe01531d06af96800c5534150abc12",
+  "status": "pass"
+}

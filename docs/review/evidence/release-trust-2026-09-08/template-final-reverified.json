@@ -1,0 +1,105 @@
+{
+  "reports": [
+    {
+      "artifact": "consumer-hp-ws63-ble-central",
+      "lock_sha256": "eada72b03aa3729a567555bfaca2ca6057c33f96b1c679813c284ccde73f68a1",
+      "profile": "ble-central",
+      "report_sha256": "1b2584556b459a6fd6a74b6c5529092637c74014438da26cfc835203093e49e3"
+    },
+    {
+      "artifact": "consumer-hp-ws63-ble-dual-role",
+      "lock_sha256": "49d0162463cddaabbb3a9d62e9712d2cebeb6c47cadd2d5b0a9d7b5ab73eca43",
+      "profile": "ble-dual-role",
+      "report_sha256": "4f76b5c10de20c86a07fad84b7cbfdb52f58d9ff32b0935d3e9be5b64ec5d97d"
+    },
+    {
+      "artifact": "consumer-hp-ws63-ble-peripheral",
+      "lock_sha256": "7822579d2f273948e1e1c6eabbf1d6ce48c8370ede60ed2904792292db57fd63",
+      "profile": "ble-peripheral",
+      "report_sha256": "36ffdab023bbbb5530d1de604180cbe37cdf2abb8b3249f2680bb0790033829e"
+    },
+    {
+      "artifact": "consumer-hp-ws63-sle-announce",
+      "lock_sha256": "718abfc454541f496222cfe1d802f5182bba55c7fc2c5e58096a0dbd74898f98",
+      "profile": "sle-announce",
+      "report_sha256": "ad4b620336e0a85fd25437c678a24a9c919f4430b5c5bd09feb725ab11edeb32"
+    },
+    {
+      "artifact": "consumer-hp-ws63-sle-seek",
+      "lock_sha256": "2fd5a3dbef30b754f6be045074fc70be1f1f0b7eaaf29e47c56002b4c88f1227",
+      "profile": "sle-seek",
+      "report_sha256": "0b0b29464378275453b99755d7441b879339cc3899ecf3f42e605aa72b47b0d8"
+    },
+    {
+      "artifact": "consumer-hp-ws63-sle-ssap",
+      "lock_sha256": "ed003dd0db1012bde5055c472db1227dd5201ffdb311ef8d7e6ca25f11d258eb",
+      "profile": "sle-ssap",
+      "report_sha256": "2eea5fbca46fa66c293cf2ac882a087a1ae331cf17a8d87c6e0328b2c249d87f"
+    },
+    {
+      "artifact": "consumer-hp-ws63-wifi",
+      "lock_sha256": "fd0018aa0eaa58cbaf9be09cda85ad7f7ccc7b2182d7b405d79142db85e8cefe",
+      "profile": "wifi-wpa2-smoltcp",
+      "report_sha256": "73f210877d5a51ea523bb9c5555fd019397b6a5761d592e322c9ea4c17b95995"
+    },
+    {
+      "artifact": "resource-reports-macos-14",
+      "lock_sha256": "7822579d2f273948e1e1c6eabbf1d6ce48c8370ede60ed2904792292db57fd63",
+      "profile": "ble-peripheral",
+      "report_sha256": "36ffdab023bbbb5530d1de604180cbe37cdf2abb8b3249f2680bb0790033829e"
+    },
+    {
+      "artifact": "resource-reports-macos-14",
+      "lock_sha256": "718abfc454541f496222cfe1d802f5182bba55c7fc2c5e58096a0dbd74898f98",
+      "profile": "sle-announce",
+      "report_sha256": "ad4b620336e0a85fd25437c678a24a9c919f4430b5c5bd09feb725ab11edeb32"
+    },
+    {
+      "artifact": "resource-reports-macos-14",
+      "lock_sha256": "fd0018aa0eaa58cbaf9be09cda85ad7f7ccc7b2182d7b405d79142db85e8cefe",
+      "profile": "wifi-wpa2-smoltcp",
+      "report_sha256": "73f210877d5a51ea523bb9c5555fd019397b6a5761d592e322c9ea4c17b95995"
+    },
+    {
+      "artifact": "resource-reports-ubuntu-latest",
+      "lock_sha256": "7822579d2f273948e1e1c6eabbf1d6ce48c8370ede60ed2904792292db57fd63",
+      "profile": "ble-peripheral",
+      "report_sha256": "36ffdab023bbbb5530d1de604180cbe37cdf2abb8b3249f2680bb0790033829e"
+    },
+    {
+      "artifact": "resource-reports-ubuntu-latest",
+      "lock_sha256": "718abfc454541f496222cfe1d802f5182bba55c7fc2c5e58096a0dbd74898f98",
+      "profile": "sle-announce",
+      "report_sha256": "ad4b620336e0a85fd25437c678a24a9c919f4430b5c5bd09feb725ab11edeb32"
+    },
+    {
+      "artifact": "resource-reports-ubuntu-latest",
+      "lock_sha256": "fd0018aa0eaa58cbaf9be09cda85ad7f7ccc7b2182d7b405d79142db85e8cefe",
+      "profile": "wifi-wpa2-smoltcp",
+      "report_sha256": "73f210877d5a51ea523bb9c5555fd019397b6a5761d592e322c9ea4c17b95995"
+    },
+    {
+      "artifact": "resource-reports-windows-latest",
+      "lock_sha256": "7822579d2f273948e1e1c6eabbf1d6ce48c8370ede60ed2904792292db57fd63",
+      "profile": "ble-peripheral",
+      "report_sha256": "36ffdab023bbbb5530d1de604180cbe37cdf2abb8b3249f2680bb0790033829e"
+    },
+    {
+      "artifact": "resource-reports-windows-latest",
+      "lock_sha256": "718abfc454541f496222cfe1d802f5182bba55c7fc2c5e58096a0dbd74898f98",
+      "profile": "sle-announce",
+      "report_sha256": "ad4b620336e0a85fd25437c678a24a9c919f4430b5c5bd09feb725ab11edeb32"
+    },
+    {
+      "artifact": "resource-reports-windows-latest",
+      "lock_sha256": "fd0018aa0eaa58cbaf9be09cda85ad7f7ccc7b2182d7b405d79142db85e8cefe",
+      "profile": "wifi-wpa2-smoltcp",
+      "report_sha256": "73f210877d5a51ea523bb9c5555fd019397b6a5761d592e322c9ea4c17b95995"
+    }
+  ],
+  "run_id": "34174872035",
+  "schema": 1,
+  "scope": "downloaded resource accounting and lock bytes; not HIL calibration",
+  "source_commit": "a0a3519862fa6c04684dbe11bcb22a5681c76f45",
+  "status": "pass"
+}

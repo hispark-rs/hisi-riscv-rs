@@ -1,0 +1,15 @@
+{
+  "downloaded_asset_sha256": {
+    "Cargo.lock": "8f43b767352d6f7e8db95499eed05ac285ebfeb3321d3c41d2b17207906b6997",
+    "blinky.elf": "9a32924b9d2494232bac52c9fb3d93cd544d89d3438d8fb27bbc594e18ccc8ef",
+    "blinky.img": "0b4d3570661c6906f0446671f2978e108727af4c38c2c719a6478e9410d2c345",
+    "blinky.plan.json": "d39b20d87bb1a2d13a04eb5d58640b144faa1c73440720646a0394e2a39b4784",
+    "release-manifest.json": "b547f30e999d8e9a641e9fddfc41d8bb394f595d45ba15f52bc0393f40d99a40",
+    "rust-toolchain.toml": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+  },
+  "schema": 1,
+  "scope": "byte integrity, train identity, ELF-to-image equivalence; no new HIL claim",
+  "source_commit": "4ffd06bb9987b168a1c2603789b3589e86c1661b",
+  "status": "pass",
+  "version": "v0.0.0-rehearsal.34110566113.1"
+}

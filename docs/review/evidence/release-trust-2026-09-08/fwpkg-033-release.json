@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "conclusion": "success",
+      "name": "publish"
+    }
+  ],
+  "kind": "crates-io",
+  "registry": [
+    {
+      "package": "hisi-fwpkg",
+      "sha256": "c5f8d9ebd265b33a6fd2cfa038fb18876090925d687a6027cde2956fc09e7713",
+      "source_commit": "366c2cfde859d20efe7278c79f8b6de347a27ef1",
+      "version": "0.3.3"
+    },
+    {
+      "package": "hisi-fwpkg-cli",
+      "sha256": "cb2bc1500a616680eb934f07913e291bdaa1e5376b51956012b90534f9d2ba96",
+      "source_commit": "366c2cfde859d20efe7278c79f8b6de347a27ef1",
+      "version": "0.3.3"
+    }
+  ],
+  "run_attempt": 1,
+  "run_url": "https://github.com/hispark-rs/hisi-fwpkg/actions/runs/34108710617",
+  "schema": 1,
+  "source_commit": "366c2cfde859d20efe7278c79f8b6de347a27ef1",
+  "status": "pass"
+}

@@ -1,0 +1,402 @@
+{
+  "ci": {
+    "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+    "run_attempt": 1,
+    "run_id": "34107500673"
+  },
+  "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+  "evidence_scope": "completed-proof-run",
+  "kind": "tla",
+  "logs": [
+    {
+      "expected_result": "pass",
+      "name": "PriorityInheritance",
+      "sha256": "15b14261ca143cd77d42df594d2119268b939abd159d825b16f0ac98ed85b8d8"
+    },
+    {
+      "expected_result": "pass",
+      "name": "ReadyOwnership",
+      "sha256": "0403bce45bd10730b8b4db99d4a19df221dd52bcd99e297c1d18089ec53280ca"
+    },
+    {
+      "expected_result": "pass",
+      "name": "ResourceLifecycle",
+      "sha256": "4a18d19cead19271a8df6bebc34bcb4d21df806241181e404a04d53f4d84eaf0"
+    },
+    {
+      "expected_result": "pass",
+      "name": "SchedulerBudget",
+      "sha256": "ff77b55489a0671f417aff0a022b8b1324926f0c6c00d20cdce881084baf11e2"
+    },
+    {
+      "expected_result": "pass",
+      "name": "SwitchIntent",
+      "sha256": "899db4b410634fc688130a5260ed06fa5797c07d7aa98722736fdd986ce16a0b"
+    },
+    {
+      "expected_result": "pass",
+      "name": "SwitchIntentCreation",
+      "sha256": "21f5c554587349d5513ac59646555ba195d237998aaf32b8c346cbf63d501ae6"
+    },
+    {
+      "expected_result": "pass",
+      "name": "TimerRearm",
+      "sha256": "3dcdb2d51c476e73461c7f848c20612ff2ba2fddf3f3f886d772845214e42843"
+    },
+    {
+      "expected_result": "pass",
+      "name": "WaitLinearization",
+      "sha256": "70be1abe2a7c71868a24cf93beaee2b93e5cdae3cbf5a5d1b48776912c2fb318"
+    },
+    {
+      "expected_result": "counterexample",
+      "name": "ReadyOwnershipLegacy",
+      "sha256": "97444ea1af3ed196b79a013231f2887c3fe6af5b6c53b78d196c0e394b1cdf6e"
+    },
+    {
+      "expected_result": "counterexample",
+      "name": "SwitchIntentCreationLegacy",
+      "sha256": "5682cd37d9598c2341f59f21b766feecf288adea995fea85b0cb893f3cfeb95d"
+    }
+  ],
+  "receipts": [
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "PriorityInheritance.cfg",
+        "PriorityInheritance.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 1.5029289139999946,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/PriorityInheritance.cfg",
+        "config_sha256": "e1ae8a296229a2f9ef12b882866ad329cbe833a085a308fc8f826badb419d8ad",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/PriorityInheritance.tla",
+        "model_sha256": "55b4b8556e179be2d4b35b7e00afc2134cc02807154487bd10a6207f51698048",
+        "name": "PriorityInheritance"
+      },
+      "log_sha256": "15b14261ca143cd77d42df594d2119268b939abd159d825b16f0ac98ed85b8d8",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "ReadyOwnership.cfg",
+        "ReadyOwnership.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.8440342270000087,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/ReadyOwnership.cfg",
+        "config_sha256": "3eb8b215e9c6eb7bfe6a0d780f4c467a8251d024ed335d8eb400f6d3bd7b2844",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/ReadyOwnership.tla",
+        "model_sha256": "572f23bad98cbb15dfc805db0235f13af65aa58a6618b9de608a906dd6b65b07",
+        "name": "ReadyOwnership"
+      },
+      "log_sha256": "0403bce45bd10730b8b4db99d4a19df221dd52bcd99e297c1d18089ec53280ca",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "ResourceLifecycle.cfg",
+        "ResourceLifecycle.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.8371571440000025,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/ResourceLifecycle.cfg",
+        "config_sha256": "a9d035a0bc50a002102c2f6b67cc60fd089d2b2b8cc095aa932da5f3bdb24877",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/ResourceLifecycle.tla",
+        "model_sha256": "b248dddfb7368f8ca5431b878e8f9936179b0b6f5514d50e769360b5db607fbe",
+        "name": "ResourceLifecycle"
+      },
+      "log_sha256": "4a18d19cead19271a8df6bebc34bcb4d21df806241181e404a04d53f4d84eaf0",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "SchedulerBudget.cfg",
+        "SchedulerBudget.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.8341881209999968,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/SchedulerBudget.cfg",
+        "config_sha256": "9e3d705fef759ebb611ea519878b69329ac7ba6682707131dcc62969c11e1377",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/SchedulerBudget.tla",
+        "model_sha256": "96e1431e054891c15334b719474f115c500e94eb3bb03cdd6f708e873f87141e",
+        "name": "SchedulerBudget"
+      },
+      "log_sha256": "ff77b55489a0671f417aff0a022b8b1324926f0c6c00d20cdce881084baf11e2",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "SwitchIntent.cfg",
+        "SwitchIntent.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.8612518770000008,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/SwitchIntent.cfg",
+        "config_sha256": "76297eb4e0f0f168d42ef854f900bdd925ca06d6e996c334143023d96e253832",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/SwitchIntent.tla",
+        "model_sha256": "20bd82d3988a49fd469d3cc0fa6f78e12e5c0db2c3480d52d8527cff0a4803df",
+        "name": "SwitchIntent"
+      },
+      "log_sha256": "899db4b410634fc688130a5260ed06fa5797c07d7aa98722736fdd986ce16a0b",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "SwitchIntentCreation.cfg",
+        "SwitchIntentCreation.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.885013047000001,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/SwitchIntentCreation.cfg",
+        "config_sha256": "1e93af1cbdaebf19d8695aab95e4130091b3c418b05e37fc257c72b243298a5a",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/SwitchIntentCreation.tla",
+        "model_sha256": "286fd11b962fb5e5ed68dba5c47e2f99b1c4f69926165c6e9e93e67f5f60144d",
+        "name": "SwitchIntentCreation"
+      },
+      "log_sha256": "21f5c554587349d5513ac59646555ba195d237998aaf32b8c346cbf63d501ae6",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "TimerRearm.cfg",
+        "TimerRearm.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 1.0077190290000004,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/TimerRearm.cfg",
+        "config_sha256": "b90ed1791116256d1b8dee5785c0f245ce782435383541cfc244dd50bdb7d53c",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/TimerRearm.tla",
+        "model_sha256": "2e05ebefe09adf62b1533316c0cb21b49ecc48def822e1de9e3428556dbdee94",
+        "name": "TimerRearm"
+      },
+      "log_sha256": "3dcdb2d51c476e73461c7f848c20612ff2ba2fddf3f3f886d772845214e42843",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "WaitLinearization.cfg",
+        "WaitLinearization.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.857427598000001,
+      "exit_code": 0,
+      "item": {
+        "config": "spec/WaitLinearization.cfg",
+        "config_sha256": "f42a6b3b05c194ae18093f745999228966b53c1787c02a6c63fd19f290b5758a",
+        "expected": "Model checking completed. No error has been found.",
+        "model": "spec/WaitLinearization.tla",
+        "model_sha256": "e6489e11589aac2d7b9ea3344aad384c7665898192667c1a2e87e527f67010a3",
+        "name": "WaitLinearization"
+      },
+      "log_sha256": "70be1abe2a7c71868a24cf93beaee2b93e5cdae3cbf5a5d1b48776912c2fb318",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "ReadyOwnershipLegacy.cfg",
+        "ReadyOwnership.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.8639737679999939,
+      "exit_code": 12,
+      "item": {
+        "config": "spec/ReadyOwnershipLegacy.cfg",
+        "config_sha256": "6f3355760911f4d484c3e0e96a9087e29a6693be0789c50224e7f28e5744bf12",
+        "expected": "Invariant ReadyHasExactlyOneOwner is violated",
+        "expected_result": "counterexample",
+        "model": "spec/ReadyOwnership.tla",
+        "model_sha256": "572f23bad98cbb15dfc805db0235f13af65aa58a6618b9de608a906dd6b65b07",
+        "name": "ReadyOwnershipLegacy"
+      },
+      "log_sha256": "97444ea1af3ed196b79a013231f2887c3fe6af5b6c53b78d196c0e394b1cdf6e",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/tla2tools.jar",
+        "tlc2.TLC",
+        "-workers",
+        "4",
+        "-config",
+        "SwitchIntentCreationLegacy.cfg",
+        "SwitchIntentCreation.tla"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.880221230999993,
+      "exit_code": 12,
+      "item": {
+        "config": "spec/SwitchIntentCreationLegacy.cfg",
+        "config_sha256": "7332a45303199a6dbe6c406067d72cd4d1011cb6c13ae21d24c7ccef059cdf6c",
+        "expected": "Invariant PreparedSourceNotResumed is violated",
+        "expected_result": "counterexample",
+        "model": "spec/SwitchIntentCreation.tla",
+        "model_sha256": "286fd11b962fb5e5ed68dba5c47e2f99b1c4f69926165c6e9e93e67f5f60144d",
+        "name": "SwitchIntentCreationLegacy"
+      },
+      "log_sha256": "5682cd37d9598c2341f59f21b766feecf288adea995fea85b0cb893f3cfeb95d",
+      "schema": 1,
+      "tool_identity": "1.7.4",
+      "version": "1.7.4"
+    }
+  ],
+  "result": "pass",
+  "schema": 2,
+  "source_commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+  "source_tree_sha256": "c95aa65527870cfefa6ee25e884589eb68596b41f0859632eaa65a051e8d5586",
+  "tool_sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+  "version": "1.7.4"
+}

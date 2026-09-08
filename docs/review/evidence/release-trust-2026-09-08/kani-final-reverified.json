@@ -1,0 +1,370 @@
+{
+  "ci": {
+    "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+    "run_attempt": 1,
+    "run_id": "34107500673"
+  },
+  "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+  "evidence_scope": "completed-proof-run",
+  "harnesses": [
+    "destroyed_resource_handle_cannot_be_resolved_twice",
+    "stale_resource_generation_never_aliases_reused_slot",
+    "ready_ownership_audit_detects_invalid_ownership",
+    "resumed_previous_cancels_intent_and_restores_target",
+    "stale_switch_identity_cannot_commit",
+    "switch_away_prepare_or_observe_resume_is_atomic",
+    "switch_intent_is_consumed_at_most_once",
+    "mutex_handoff_preserves_priority_fifo_and_restores_owner",
+    "mutex_wait_chain_rejects_cycles",
+    "semaphore_signal_cancel_race_preserves_queue_ownership_and_permit",
+    "semaphore_signal_timeout_race_preserves_queue_ownership_and_permit",
+    "stale_timer_rearm_ticket_cannot_validate_after_new_claim",
+    "remaining_never_exceeds_capacity"
+  ],
+  "kind": "kani",
+  "receipts": [
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::resource::proofs::destroyed_resource_handle_cannot_be_resolved_twice"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 3.005329835999987,
+      "exit_code": 0,
+      "item": {
+        "name": "destroyed_resource_handle_cannot_be_resolved_twice",
+        "reference": "runtime::resource::proofs::destroyed_resource_handle_cannot_be_resolved_twice",
+        "source": "src/runtime/resource.rs",
+        "source_sha256": "f8f4f28031fafc8ea98430bc41eb5c3557bf9a7ad757dda01d5900ea991eeeba"
+      },
+      "log_sha256": "b0007547f64f751cd388c96d2d744bd8d004a126b381ced567a5d824d6311670",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::resource::proofs::stale_resource_generation_never_aliases_reused_slot"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 2.030856674000006,
+      "exit_code": 0,
+      "item": {
+        "name": "stale_resource_generation_never_aliases_reused_slot",
+        "reference": "runtime::resource::proofs::stale_resource_generation_never_aliases_reused_slot",
+        "source": "src/runtime/resource.rs",
+        "source_sha256": "f8f4f28031fafc8ea98430bc41eb5c3557bf9a7ad757dda01d5900ea991eeeba"
+      },
+      "log_sha256": "86c70979cb732d75cd88f851bdb2e7fb97fff8d4887cfe7d898bfa9c55eb1a53",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::scheduler::proofs::ready_ownership_audit_detects_invalid_ownership"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 11.825106420999987,
+      "exit_code": 0,
+      "item": {
+        "name": "ready_ownership_audit_detects_invalid_ownership",
+        "reference": "runtime::scheduler::proofs::ready_ownership_audit_detects_invalid_ownership",
+        "source": "src/runtime/scheduler.rs",
+        "source_sha256": "813b550ebebace1777f85da3ca126b132cb2a3cbbbf09c7b6613664c51ca123d"
+      },
+      "log_sha256": "e21d586cc760c10b9bd684b9dec6b7a490dd1a09970b7fbb2c6898f189d4f543",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::scheduler::proofs::resumed_previous_cancels_intent_and_restores_target"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 6.234888917000006,
+      "exit_code": 0,
+      "item": {
+        "name": "resumed_previous_cancels_intent_and_restores_target",
+        "reference": "runtime::scheduler::proofs::resumed_previous_cancels_intent_and_restores_target",
+        "source": "src/runtime/scheduler.rs",
+        "source_sha256": "813b550ebebace1777f85da3ca126b132cb2a3cbbbf09c7b6613664c51ca123d"
+      },
+      "log_sha256": "019d29c1af119a84cdc0b3087ba5e875f4a3d4e72b4746f2c6f87cea6bd20bf5",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::scheduler::proofs::stale_switch_identity_cannot_commit"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 7.639755338999976,
+      "exit_code": 0,
+      "item": {
+        "name": "stale_switch_identity_cannot_commit",
+        "reference": "runtime::scheduler::proofs::stale_switch_identity_cannot_commit",
+        "source": "src/runtime/scheduler.rs",
+        "source_sha256": "813b550ebebace1777f85da3ca126b132cb2a3cbbbf09c7b6613664c51ca123d"
+      },
+      "log_sha256": "2127bca4f729fca92fb0e0ae0736017b06bbe2efdcd0b6edeb59ba03b47e3563",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::scheduler::proofs::switch_away_prepare_or_observe_resume_is_atomic"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 11.626235731000008,
+      "exit_code": 0,
+      "item": {
+        "name": "switch_away_prepare_or_observe_resume_is_atomic",
+        "reference": "runtime::scheduler::proofs::switch_away_prepare_or_observe_resume_is_atomic",
+        "source": "src/runtime/scheduler.rs",
+        "source_sha256": "813b550ebebace1777f85da3ca126b132cb2a3cbbbf09c7b6613664c51ca123d"
+      },
+      "log_sha256": "f96d0dd14e30f9feea0738671dc0157bfcd74d7a875c0726358b68c6db392553",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::scheduler::proofs::switch_intent_is_consumed_at_most_once"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 5.353963711999995,
+      "exit_code": 0,
+      "item": {
+        "name": "switch_intent_is_consumed_at_most_once",
+        "reference": "runtime::scheduler::proofs::switch_intent_is_consumed_at_most_once",
+        "source": "src/runtime/scheduler.rs",
+        "source_sha256": "813b550ebebace1777f85da3ca126b132cb2a3cbbbf09c7b6613664c51ca123d"
+      },
+      "log_sha256": "327019f011ea82f45a16155a5e175e59cfa1e55e14d9114128ca9dfad7b68ca7",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::sync::proofs::mutex_handoff_preserves_priority_fifo_and_restores_owner"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 11.210482482000003,
+      "exit_code": 0,
+      "item": {
+        "name": "mutex_handoff_preserves_priority_fifo_and_restores_owner",
+        "reference": "runtime::sync::proofs::mutex_handoff_preserves_priority_fifo_and_restores_owner",
+        "source": "src/runtime/sync.rs",
+        "source_sha256": "56396cce15f10dcdfe0c8b74c75095a1e149cb1a86c2b6fa084ff5a9e3dd9605"
+      },
+      "log_sha256": "5549fb78ef0e4096d73c7d93413e0584b18893bc52bb330754eb38910c37d2c2",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::sync::proofs::mutex_wait_chain_rejects_cycles"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 1.6959401960000093,
+      "exit_code": 0,
+      "item": {
+        "name": "mutex_wait_chain_rejects_cycles",
+        "reference": "runtime::sync::proofs::mutex_wait_chain_rejects_cycles",
+        "source": "src/runtime/sync.rs",
+        "source_sha256": "56396cce15f10dcdfe0c8b74c75095a1e149cb1a86c2b6fa084ff5a9e3dd9605"
+      },
+      "log_sha256": "43fde046a6c1fad0095fb4e087c89fa735621347e6246a9686419ee262603262",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::sync::proofs::semaphore_signal_cancel_race_preserves_queue_ownership_and_permit"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 21.612009698999998,
+      "exit_code": 0,
+      "item": {
+        "name": "semaphore_signal_cancel_race_preserves_queue_ownership_and_permit",
+        "reference": "runtime::sync::proofs::semaphore_signal_cancel_race_preserves_queue_ownership_and_permit",
+        "source": "src/runtime/sync.rs",
+        "source_sha256": "56396cce15f10dcdfe0c8b74c75095a1e149cb1a86c2b6fa084ff5a9e3dd9605"
+      },
+      "log_sha256": "de5a0704c3fb0689f2384251b54e341b87db41435c7b4d19dd0e408be9e945ca",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::sync::proofs::semaphore_signal_timeout_race_preserves_queue_ownership_and_permit"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 13.770282772999991,
+      "exit_code": 0,
+      "item": {
+        "name": "semaphore_signal_timeout_race_preserves_queue_ownership_and_permit",
+        "reference": "runtime::sync::proofs::semaphore_signal_timeout_race_preserves_queue_ownership_and_permit",
+        "source": "src/runtime/sync.rs",
+        "source_sha256": "56396cce15f10dcdfe0c8b74c75095a1e149cb1a86c2b6fa084ff5a9e3dd9605"
+      },
+      "log_sha256": "4905521381d8419f843019f3dd38337d2002946c822fb7afa22a2196bb1a0f49",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "runtime::time::proofs::stale_timer_rearm_ticket_cannot_validate_after_new_claim"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 0.6270592340000007,
+      "exit_code": 0,
+      "item": {
+        "name": "stale_timer_rearm_ticket_cannot_validate_after_new_claim",
+        "reference": "runtime::time::proofs::stale_timer_rearm_ticket_cannot_validate_after_new_claim",
+        "source": "src/runtime/time.rs",
+        "source_sha256": "c7f4859306e3b86dd95922995236c012a436702f8461aa93b76c5c2548edb903"
+      },
+      "log_sha256": "a923101fae768c04124fa04e3b9a5756ad15e0bf2082bfd5d5da233b4dad3a85",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    },
+    {
+      "ci": {
+        "commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+        "run_attempt": 1,
+        "run_id": "34107500673"
+      },
+      "command": [
+        "cargo",
+        "kani",
+        "--harness",
+        "scheduling::proofs::remaining_never_exceeds_capacity"
+      ],
+      "contract_sha256": "ae968c7d0e7c1ddc47440b064b33713477eaee0531fdb1eee3222a1dcfd9b268",
+      "duration_seconds": 1.1234852599999954,
+      "exit_code": 0,
+      "item": {
+        "name": "remaining_never_exceeds_capacity",
+        "reference": "scheduling::proofs::remaining_never_exceeds_capacity",
+        "source": "src/scheduling.rs",
+        "source_sha256": "7ec3a9f28f14d88c935b15d2b9fc1c1b5c970b0103cd5d3ef0943b501c59f664"
+      },
+      "log_sha256": "7f8c7df903e5814fdcbe4fa26ecfa5465b0de45722472ccd3482a79cc85f14f8",
+      "schema": 1,
+      "tool_identity": "cargo-kani 0.67.0",
+      "version": "0.67.0"
+    }
+  ],
+  "result": "pass",
+  "schema": 2,
+  "source_commit": "d17beda62ce8d69c78d81322c58b34c97e4249f9",
+  "source_tree_sha256": "c95aa65527870cfefa6ee25e884589eb68596b41f0859632eaa65a051e8d5586",
+  "version": "0.67.0"
+}
