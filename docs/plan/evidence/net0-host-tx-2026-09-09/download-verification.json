@@ -1,0 +1,231 @@
+{
+  "schema": "net0-host-tx-downloads/v1",
+  "source": "60faf85b7ce47c1c3f8a93f604c911785d3d671b",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34339419484",
+  "successful_jobs": 23,
+  "artifacts": [
+    {
+      "host": "ubuntu-latest",
+      "id": 10099396816,
+      "expires_at": "2026-12-08T10:17:26Z",
+      "downloaded_zip_sha256": "5c39789b954d4a68a8eecfe2dadecdaf495fdec8537a8c0c7ce07af68ee916da",
+      "github_digest": "sha256:5c39789b954d4a68a8eecfe2dadecdaf495fdec8537a8c0c7ce07af68ee916da",
+      "elf_sha256": "e7ddf6f84f16843996d155a7ee5d9a011e7633b8a9a9f0f2f8ba4b568ebc30f5",
+      "metadata": {
+        "symbol": "__hisi_net0_host_tx_tracker",
+        "bytes": 576,
+        "address": 10571608,
+        "section": ".data",
+        "capacity": 32,
+        "owner": "native host TX identity tracker",
+        "packet_payload_bytes": 0
+      },
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "bf5284d3373a591bf4ec3f87ed9e02dd3f34c3f28d7b23114cdde2090ed2c681",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "1bed1555b85c2e5bc4d0e0cc6edb69da102a6a760c6d975d8e2cc004d2a26892",
+          "bytes": 3549
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "cae5c246ccf0b5e082cf3723ba1368610589dcbf69062d2a2176ff40cd255193",
+          "bytes": 15792
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "c54598c57fdfca406280fa5d14f5dc39616a69ce02f312b21d3aeec84a16464a",
+          "bytes": 2610
+        },
+        {
+          "name": "storage.json",
+          "sha256": "19226278363b6abf653c8d4a69da5aa386b16c2349574ec24f81c112151286c5",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "macos-14",
+      "id": 10099492504,
+      "expires_at": "2026-12-08T10:17:26Z",
+      "downloaded_zip_sha256": "71c9777afa9c7c57d936a03911e1eda702bbf510c327c12821e372778b8a8c0e",
+      "github_digest": "sha256:71c9777afa9c7c57d936a03911e1eda702bbf510c327c12821e372778b8a8c0e",
+      "elf_sha256": "e0bea9a4615fc4d63a5db2fce308ea9bef77b877a140336b7076545cfacbf0f3",
+      "metadata": {
+        "symbol": "__hisi_net0_host_tx_tracker",
+        "bytes": 576,
+        "address": 10571608,
+        "section": ".data",
+        "capacity": 32,
+        "owner": "native host TX identity tracker",
+        "packet_payload_bytes": 0
+      },
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "b553916db188521b1cc5c808deb1222c9c38c7f1a8b89b21102754fe083034da",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "1bed1555b85c2e5bc4d0e0cc6edb69da102a6a760c6d975d8e2cc004d2a26892",
+          "bytes": 3549
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "cae5c246ccf0b5e082cf3723ba1368610589dcbf69062d2a2176ff40cd255193",
+          "bytes": 15792
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "d11af2b3cdfad2e9dc14351627303dee72f11069865c5df067031047c089191a",
+          "bytes": 2610
+        },
+        {
+          "name": "storage.json",
+          "sha256": "af90ccac95d1bbe375f615fa43b2c6a16c0b509edc29ca6333e6b247f1ab888f",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "windows-latest",
+      "id": 10099585845,
+      "expires_at": "2026-12-08T10:17:26Z",
+      "downloaded_zip_sha256": "10e8cb34b0f640c93ad88473f440c6da0e0c23eece45392fe779bafc8a5bd82b",
+      "github_digest": "sha256:10e8cb34b0f640c93ad88473f440c6da0e0c23eece45392fe779bafc8a5bd82b",
+      "elf_sha256": "93d0769c976fea8a3efa9be56d02ad83ba6bf0329fb8fe6c7cd5d216c859b55a",
+      "metadata": {
+        "symbol": "__hisi_net0_host_tx_tracker",
+        "bytes": 576,
+        "address": 10571608,
+        "section": ".data",
+        "capacity": 32,
+        "owner": "native host TX identity tracker",
+        "packet_payload_bytes": 0
+      },
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "a9fa8b47e42d0ffd1754094a22380341232466d8b94665665cad6e9e2971de95",
+          "bytes": 1479
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "8736fa7baa8c0b45be3b9cb84f56296f8ea6ff27f6ac13e36dbf766c58c84ccc",
+          "bytes": 3612
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "2150a68d5a7d56392b620d16269fa3851046b56f8e608eb03f7f8af3c2628681",
+          "bytes": 16250
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "3ec8eb7da4b54c425718a53631846cf2bb9a70f455aa6b516e3cb23cdf8432bf",
+          "bytes": 2705
+        },
+        {
+          "name": "storage.json",
+          "sha256": "52e08c14600c3850ccc9c0c94102163ed780c883579e14cfb70fb1e5116794fc",
+          "bytes": 776
+        }
+      ]
+    }
+  ],
+  "semantic_parity": {
+    "tx_edges": [
+      [
+        "uapi_ioctl_send_eapol",
+        "__wrap_frw_host_post_data"
+      ],
+      [
+        "uapi_lwip_send",
+        "__wrap_frw_host_post_data"
+      ],
+      [
+        "__wrap_frw_host_post_data",
+        "frw_host_post_data"
+      ],
+      [
+        "__wrap_frw_host_post_data",
+        "frw_host_post_data"
+      ],
+      [
+        "frw_netbuf_que_handle",
+        "__wrap_frw_netbuf_exec_callback"
+      ],
+      [
+        "__wrap_frw_netbuf_exec_callback",
+        "frw_netbuf_exec_callback"
+      ],
+      [
+        "__wrap_frw_netbuf_exec_callback",
+        "frw_netbuf_exec_callback"
+      ],
+      [
+        "frw_host_post_data",
+        "__wrap_oal_netbuf_free"
+      ],
+      [
+        "frw_host_post_data",
+        "__wrap_oal_netbuf_free"
+      ],
+      [
+        "__wrap_oal_netbuf_free",
+        "oal_netbuf_free"
+      ],
+      [
+        "__wrap_frw_host_post_data",
+        "oal_netbuf_free"
+      ]
+    ],
+    "metadata": {
+      "symbol": "__hisi_net0_host_tx_tracker",
+      "bytes": 576,
+      "section": ".data",
+      "capacity": 32,
+      "owner": "native host TX identity tracker",
+      "packet_payload_bytes": 0
+    },
+    "storage": {
+      "control_bytes": 21440,
+      "l2_offset": 2296,
+      "l2_bytes": 12560,
+      "payload_bytes": 12112,
+      "metadata_bytes": 448,
+      "rx_slots": 4,
+      "tx_slots": 4,
+      "mtu": 1514,
+      "shared_arena_bytes": 299008,
+      "main_stack_bytes": 32768,
+      "packet_ram_bytes": 49152,
+      "rf_arena_bytes": 101888,
+      "runtime_arena_bytes": 197120,
+      "native_pbuf_prefix_bytes": 16,
+      "schema": "net0-linked-storage/v3",
+      "status": "pass",
+      "boundary": "Physical storage/link validation only; no native fence or HIL claim"
+    }
+  },
+  "boundary": "Downloaded report ZIPs, not firmware. Packaged path dependency, not registry-only facade. Actions retention is finite."
+}

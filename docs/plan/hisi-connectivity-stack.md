@@ -1353,6 +1353,13 @@ offline build、删 metadata 必须链接失败、恢复后调用图/资源布�
 CI 和三个下载 ZIP/15 个文件摘要，同时保留首轮 CI 的缓存依赖解析失败。
 该项关闭实验路径的 transitive hook 缺口，不关闭 native fence 或重连 HIL gate。
 
+backend `60faf85` 新增真实 host queue-4 post/dispatch/free 的 ticket 所有权与有界
+排空，在进入 WAL disconnect 前等待已接受的 host TX 完成；额外 576-byte 元数据
+由实际 ELF 核对。[本轮证据](evidence/net0-host-tx-2026-09-09.md)保留采集器错误阈值
+导致的首轮 0/1，以及同一 ELF 修正契约后的 3/3、20/20（UDP 30/30、200/200）。
+queue-4 两个 EAPOL 与 fast-path UDP 计数分开，不能据此声称 DMAC/RX 排空。
+剩余功能门槛是 native RX/DMAC closure 和有界同设备重连；NET0 active / NET1 queued。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
