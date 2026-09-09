@@ -1337,6 +1337,15 @@ headroom，并在 v3 资源报告列出每包额外 RF-heap 成本。193 host te
 0/1。它不覆盖 allocation 之前的 DMAC 工作或 native 新拷贝，不放宽 one-shot guard，
 也不替代原生 producer fence；NET0 active / NET1 queued 不变。
 
+backend `94478fc` 将 HMAC user delete 与真实 resource-free 返回值关联，避免两层
+原厂调用丢弃内部失败；独立最终 ELF gate 验证六条实际调用并拒绝逐条删调用的负例。
+[清理状态证据](evidence/net0-user-cleanup-2026-09-09.md)区分正常 3/3 + 13/14
+（请求 20 轮，第 14 轮 association retry 保护拒绝）、首次错误注入夹具的 0/1
+断言失败，以及修正编码/raw trace 断言后的 3/3 负向通过。203 host tests 与
+真实负向 HIL 只闭合 host-user cleanup 错误传播，不代表 DMAC/FRW producer fence、
+native wait 有界性或外部 Cargo transitive hook 交付。原生排空/重连仍是下一功能
+门槛，不继续用 closed-route/one-shot 统计代替；NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

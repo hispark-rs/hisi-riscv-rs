@@ -1,0 +1,1093 @@
+{
+  "schema": "net0-cleanup-downloads/v1",
+  "source": "c3b144805ba1a34ae981f1c5d570a7665cd67880",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34332305328",
+  "ci_successful_jobs": 23,
+  "source_copy": [
+    {
+      "path": ".github/public-api/ble-b3-stage.txt",
+      "sha256": "9864143375bea3659098551768946d8280af4c9b96b7a01de3ac0b4bfa98bdbd"
+    },
+    {
+      "path": ".github/public-api/sle-s3-stage.txt",
+      "sha256": "85445ba0cdad4f6dcd26570acb9a858c361a07653f8a7fe39cae3c6cb366ec81"
+    },
+    {
+      "path": ".github/public-api/wpa2-incremental.txt",
+      "sha256": "1a6bdf40b75d90f8ee3150cdb404f69d41eb9ed0a0bc6ee1508609315f95583b"
+    },
+    {
+      "path": ".github/public-api/wpa3-incremental.txt",
+      "sha256": "3c814bd3fb8c0cc5daa2ad7d3055e7a270510d1e6265cd8c95290a183247f03e"
+    },
+    {
+      "path": ".github/scripts/check-net0-cleanup.py",
+      "sha256": "5b9590e8dbe0337a0b4d0367ffc8e8969eaa344c4e517c329ff5af3765bc806f"
+    },
+    {
+      "path": ".github/scripts/check-net0-storage.py",
+      "sha256": "a3911bd242e6cf2b4614819d054b9232de7f30b43394674fd9ccd820c34db8d4"
+    },
+    {
+      "path": ".github/scripts/check-public-api.py",
+      "sha256": "e0ee648dffaa1baf38b101649732e5dc4c6d48612ea1c9dac9d158520eeedb49"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "bebbe911d555f7408c8bfc35ce8a4cc21ea5d0f67cfa21fed566d90140b0d008"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "sha256": "b357886da2fab78024c6d1e1e12ee107887207f53e3afc47e7153c0956eac363"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "32612892f1c9e15fe772b8034945f8072b83e025153aef597e45d5eccbe98c43"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "b9790b16b87f0b89bd37ea4298d052de3b663553c12e2bdb9dea5658fcf8bc42"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "08327a9316fb1788a80e99c532c4ff3ca225283db5ce3054bc43136daedf1e9f"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "7a7a93d9addcdb516442c1724d171182e1091bc97d0e5dcbd641a71db01ce1ce"
+    },
+    {
+      "path": "README.md",
+      "sha256": "70ddb34e4f153fb48931d509dd1c43f455e6397197484baa8e1fb8a5bfff1c9d"
+    },
+    {
+      "path": "build.rs",
+      "sha256": "b1ffaa74c77ffc7f9f5485e8e062f65a6768b7a06e5a23317033b141d6a5fa31"
+    },
+    {
+      "path": "docs/l2-integration.md",
+      "sha256": "0361e540965d244ca3ad85ea5413cfcd19a3aa51445f3f1018165fc84ed849fd"
+    },
+    {
+      "path": "docs/radio-stage-api-migration.md",
+      "sha256": "e0d02a8533e7a233c8e2c8744616560017f3688bf8831ead5ac67805445c28f1"
+    },
+    {
+      "path": "examples/arena_admission_error.rs",
+      "sha256": "59dd1ec00c7b292489f13eaf74adfa8757c561c745c6776a404e4def121d8c03"
+    },
+    {
+      "path": "examples/ble_gatt_client_smoke.rs",
+      "sha256": "16d96ea509cf05a716a513c5a35ba61c831b4f01b33084dc04a26b05a302a85a"
+    },
+    {
+      "path": "examples/ble_gatt_server_smoke.rs",
+      "sha256": "b304277746044cbed0786af5c4577950532dc5b2d6830e10b9c3619413ed3eb5"
+    },
+    {
+      "path": "examples/ble_init_link.rs",
+      "sha256": "b75e7423b20fa1276a312fa1cef8b075f8aa2db4dd95b4dc3fb5781de0522506"
+    },
+    {
+      "path": "examples/ble_init_smoke.rs",
+      "sha256": "70b50a676dd067fd4ab0c07a7d4bf24c8b9373f0d06eee64a0d9d0219bc4aae6"
+    },
+    {
+      "path": "examples/bootstrap_profile.rs",
+      "sha256": "7bd6a442e6614102c5cc78f751f447a1faa38283dfa3fdf38fefba7b76148eb8"
+    },
+    {
+      "path": "examples/coexistence_init_smoke.rs",
+      "sha256": "17e00cabe16c639edbfab28f31e8933b86a29b921e680b2bab54b011ef5262d3"
+    },
+    {
+      "path": "examples/connectivity_contract_fixture.rs",
+      "sha256": "08eeb3545084a7d997c062184836a6ed5386da172f73c2a93c6b3f8bb4a6ba24"
+    },
+    {
+      "path": "examples/incremental_scan_profile.rs",
+      "sha256": "fa8400468b553bf33410c3c1e2a06fe9a538bd4eba7eec3a1f47e750a20158a6"
+    },
+    {
+      "path": "examples/operation_error_injection.rs",
+      "sha256": "f2271d7b1e4f4e3c065cee1846cd76d8f127a9c735d4eabc536a71ce927a750d"
+    },
+    {
+      "path": "examples/plain_firmware.rs",
+      "sha256": "b808155b327af4a38e2cf3b864a2e8e307103da4ee7b9e109501799096c630b0"
+    },
+    {
+      "path": "examples/resource_report.rs",
+      "sha256": "aec9bf8225e73c6d50a4b7ee0fc9b882cd6dbb2e933fb35736777cbe7f5cf3cd"
+    },
+    {
+      "path": "examples/sle_announce_smoke.rs",
+      "sha256": "7850ec88fb89fd89dead85dfb4bd05515531635b539be008ede6b8e4f2f5f616"
+    },
+    {
+      "path": "examples/sle_connect_client_smoke.rs",
+      "sha256": "1d695527b5c2f50eb8edf22ede22b922532245a140d83779992ad9bf74808c8e"
+    },
+    {
+      "path": "examples/sle_connect_server_smoke.rs",
+      "sha256": "09f81b40cbdb5d73ae732e2e5eb3e11b2f2d7c262aa1ffc1a0b1bad55f85f322"
+    },
+    {
+      "path": "examples/sle_seek_smoke.rs",
+      "sha256": "c07cfc654fdc5117b0d96feacf88dc4f4b023a02a78143201a8c58ef03816387"
+    },
+    {
+      "path": "examples/sle_ssap_client_smoke.rs",
+      "sha256": "6b8f3cff2e20dc171e40d561bd82121ffbfb000652a83e4e0da6fa2e067048e4"
+    },
+    {
+      "path": "examples/sle_ssap_server_smoke.rs",
+      "sha256": "a023be299c59e7b6d2306edce7e3403c1d1e2ea304327eb64467ad71aca1da6a"
+    },
+    {
+      "path": "examples/support/ble_firmware.rs",
+      "sha256": "f38a82d7d670296435bc3e23f348d1e35ac5237f1813176a46f31935b45eca95"
+    },
+    {
+      "path": "examples/support/net0_initial_network.rs",
+      "sha256": "77f0200601eb1d5b15b969c6cbd96bddf03d2ec11b79132e116dc5fca6b47896"
+    },
+    {
+      "path": "examples/support/net0_storage.rs",
+      "sha256": "305df264c7953f701c344d8fca8cdb700111502cb67ba75d96a231499397b9f1"
+    },
+    {
+      "path": "examples/support/sle_firmware.rs",
+      "sha256": "f16e6e091689c0faf6a2ad59c2fd642b288c6decc38b1def47d67ebc59a57c2e"
+    },
+    {
+      "path": "examples/typed_error_parity.rs",
+      "sha256": "4686536a882ad24eba59dbb53f3da271cfbae0bc1cbe357db910fb793d8efdfd"
+    },
+    {
+      "path": "examples/wifi_ble_coexistence_smoke.rs",
+      "sha256": "1f9ebe94e6a0ac757951681af33fcafd5d5b2fd125ee65c5a060b77ac1733d87"
+    },
+    {
+      "path": "examples/wifi_ble_connected_client_smoke.rs",
+      "sha256": "1088f65886784c0efbde4fb77830b040ea9e521849317218823f2e76f5396681"
+    },
+    {
+      "path": "examples/wifi_sle_coexistence_smoke.rs",
+      "sha256": "8030ba6e05ef1c954c52ef7da2c34aae2c382b048e0a221c8821373b8f81a941"
+    },
+    {
+      "path": "examples/wifi_sle_connected_client_smoke.rs",
+      "sha256": "9bc3dba62e438300f302e2b9295e7034f2000e5fdff79ea07a2a63d2dc6b50a9"
+    },
+    {
+      "path": "link/ws63-rom-call-symbols.txt",
+      "sha256": "cf2f6a7f10e80eb9f826415e2e986dd0a1d15951019e4290d26b6c60482a201c"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "path": "src/alloc.rs",
+      "sha256": "8b4bb6bb051eac0f9951bb690604fc0fe83d3c42d627e4aeaeb9f8599d5128ed"
+    },
+    {
+      "path": "src/ble.rs",
+      "sha256": "24277166ebeaccf4b21ad7a92503ad3db41074cb7c755f396f83e77948e02215"
+    },
+    {
+      "path": "src/ble_compat.rs",
+      "sha256": "e64d6f510a631726de024a017ad385d164d6e683a7835b231f8836df38eb8802"
+    },
+    {
+      "path": "src/ble_init_diag.rs",
+      "sha256": "3f61b697ec8a68bac85f7c669d9806a82fb4c1ca7590d8982a6a4a8c26123860"
+    },
+    {
+      "path": "src/ble_sc.rs",
+      "sha256": "086c68ec76867b487e50f2514ddb650c1efc5458630dc56f5d38e4963f219e9f"
+    },
+    {
+      "path": "src/blocking_diagnostics.rs",
+      "sha256": "593d5a6c7dc0fb8f866f7bfdce5c87aa8d0ed5d82af7b7441e5f3ed1f32e937f"
+    },
+    {
+      "path": "src/compiler_rt.rs",
+      "sha256": "839d60f9c1ef96216570fa08eb5f9aaff1ec4adc9bfce3f5564e663e3195829b"
+    },
+    {
+      "path": "src/composition.rs",
+      "sha256": "c77cb22df06f80a72d3203b01c158a158b360ae00b802bad191c428b6b7ec874"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "242f546a002b076e17c9c123a048c04fc643ca810f3959b75cc71cac93b67a7e"
+    },
+    {
+      "path": "src/crypto_sae.rs",
+      "sha256": "d07f1f25d544e331ccf41d0b3ed7819adbfb04041d78e6a32926175dc2a4ba76"
+    },
+    {
+      "path": "src/data_path_diag.rs",
+      "sha256": "211c44513c5ecb793159911ed83a87ea64157aa762fba24d294fcc758d3db4e6"
+    },
+    {
+      "path": "src/eloop_diag.rs",
+      "sha256": "408dbfc56840fa6d4dfb4b96fb163d3a72d74382e717b80e0b1b575cc7e9c529"
+    },
+    {
+      "path": "src/error.rs",
+      "sha256": "4041c276faa97cad4fa390f0f20b6ac69c6396860b4f768e0e2c58d1c2fefc91"
+    },
+    {
+      "path": "src/frw.rs",
+      "sha256": "d5d0170784755c14fe70821514bca10413e2ba6e90816565a7bf09ee8416ba6b"
+    },
+    {
+      "path": "src/hcc.rs",
+      "sha256": "e33e13e01494bfb83817592e9b656a2a9eafca91c07063582e3edcd315e8e352"
+    },
+    {
+      "path": "src/hisi_rf_backend.rs",
+      "sha256": "2793c4404f280723afdab1653b8b3591bc828498f3a53895c6a828b5f21a718a"
+    },
+    {
+      "path": "src/hisi_rf_backend/incremental.rs",
+      "sha256": "840a098998454036a074a575dba363ab4ce15f4d2e31e43a91d64b891549dffd"
+    },
+    {
+      "path": "src/incremental_wait.rs",
+      "sha256": "e125b9d46c8939daddbd60ef2015559ce4d1c6f09e3d92d7d9adeaaa8fdf891a"
+    },
+    {
+      "path": "src/incremental_worker.rs",
+      "sha256": "1d372f6213255dbe5986c642da3b0a0b2b176b88272c72abd9f3e4a72ceb50eb"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "93f9f2c8f415a55751855288f60491b640dd9126e56364dc13cd82ee857a38ed"
+    },
+    {
+      "path": "src/libc.rs",
+      "sha256": "df78b59884b8c32d82857d0956a9f8a4ca9af2161acbb68ed17cab02e30bd292"
+    },
+    {
+      "path": "src/log.rs",
+      "sha256": "8eb2ae029b652d63d22fc50df192619050bd5350d838c2904c63fe2efab18350"
+    },
+    {
+      "path": "src/netif.rs",
+      "sha256": "387c0118bc3b19ebfbf6745805381c7ecf2b5da41016663a828838b050d2e8aa"
+    },
+    {
+      "path": "src/netif_l2.rs",
+      "sha256": "0ed4382e308a433a601ae3564d4b65146f6c81b10958a6eaa75a2c5766a155b3"
+    },
+    {
+      "path": "src/netif_l2/device.rs",
+      "sha256": "19de3f4477868d72dd234a04c64de6ba8b2853775542cd954183dcae0874a1e0"
+    },
+    {
+      "path": "src/netif_l2/host_delivery.rs",
+      "sha256": "4ddeeb15fc90ee0cd353c13068a3576c205d77a5ef63e7035b9922a32c06761f"
+    },
+    {
+      "path": "src/netif_l2/initial_session.rs",
+      "sha256": "392a5b12ded2c7add59c4fee1b10430425b8ac1437c8e8ba2246841a529bc41b"
+    },
+    {
+      "path": "src/netif_l2/link.rs",
+      "sha256": "700783930dfd726cdfa023f9431766dbc20a9dd017dbc64577437cf1dbc1af49"
+    },
+    {
+      "path": "src/netif_l2/pbuf_tests.rs",
+      "sha256": "d17695f52c4d78f7fc2b1904cd838e69feb0d69c76ccce03424771b383586346"
+    },
+    {
+      "path": "src/netif_l2/storage.rs",
+      "sha256": "154c5d907eda5433004c49b6128c09e80be4febea4c66b3da7067d2228a60d4a"
+    },
+    {
+      "path": "src/netif_l2/tests.rs",
+      "sha256": "d2069bc3ee8aaa26616643acb588fe0bee81bdb6d564a1328c115925574dcba9"
+    },
+    {
+      "path": "src/netif_l2/user_cleanup.rs",
+      "sha256": "767dc0cd1735d271e4e0eaf6c34e5c4a9894c28f66359fb3c11557bba8b5392c"
+    },
+    {
+      "path": "src/netif_smoltcp.rs",
+      "sha256": "c82319c2528eb08915cdce6c1294aa6bc78cc42271e4e4d07d15c8aa1b140bc4"
+    },
+    {
+      "path": "src/oal.rs",
+      "sha256": "4d2ffa86169ec9ccbddf10bd4b6558687a5f9a1d3531996c16da678d075f89fe"
+    },
+    {
+      "path": "src/osal.rs",
+      "sha256": "15348817fb1c4871186c7282a06fe5d9ce8ecd2bdfc578b96df1cb655d657116"
+    },
+    {
+      "path": "src/osal_adapt.rs",
+      "sha256": "d8064fc7ec757b24753369570366e0ad992970fb199ed21aad7ca02102b50c17"
+    },
+    {
+      "path": "src/osal_ext.rs",
+      "sha256": "940df6d07aa14b84a3891b0cc994c5f61a559b4c352fe20d7e6831bb28f54876"
+    },
+    {
+      "path": "src/osal_queue.rs",
+      "sha256": "10e21083ca2bcdde845fc3c2fc1bbfd94a145122f54b6207692a3a239e6aed30"
+    },
+    {
+      "path": "src/osal_sync.rs",
+      "sha256": "c125bb76c0545432fa458b0ae064c6874bc79ef574f7c2693ea229324d93a602"
+    },
+    {
+      "path": "src/osal_wait.rs",
+      "sha256": "ff224efc249facc99f43d93dccf7d5c48d1b4cf2132a3e893c485d9dc0a89600"
+    },
+    {
+      "path": "src/pmp.rs",
+      "sha256": "3bdc4ae633d3c2d37efb8508345ac800167da688f53c4caa0bb8c44d1f2efc92"
+    },
+    {
+      "path": "src/profile.rs",
+      "sha256": "611a5ef7cebcad022f6417c8a8928c266b76ee9255c978e86b3b7fea21612266"
+    },
+    {
+      "path": "src/rf_init_diag.rs",
+      "sha256": "6a98c4e4c669680cf0efae3cfbb06f1c620bd525e4a36af605ce4a817bbb9ad7"
+    },
+    {
+      "path": "src/runtime.rs",
+      "sha256": "22052faad0a599a363d3c39dc34f6b0a250f05026abaa2ae6a4f9cdf18a5eee1"
+    },
+    {
+      "path": "src/selftest.rs",
+      "sha256": "0f7ff5898503a2ce497211de1f621cca53b7fb7efdee841c1d5772cd375e276a"
+    },
+    {
+      "path": "src/sle.rs",
+      "sha256": "a5fdd6fa2c7897252790947b19a948a4226c7a2be7148755a2c25bf983f9899b"
+    },
+    {
+      "path": "src/station_pm_diag.rs",
+      "sha256": "3a0652b10431d573accc1abe323cf46d3028736a52e6f2ffa277582ba980d3bd"
+    },
+    {
+      "path": "src/timer.rs",
+      "sha256": "c3ee655c889bd3b7e34bab4e67bc87abc17dca9061f1b4b1d471ddec8c299977"
+    },
+    {
+      "path": "src/uapi.rs",
+      "sha256": "04066048c0385a9317cc9349819cfd6a673594aa64af3701c5adbd73729f8396"
+    },
+    {
+      "path": "src/upstream_authenticator.rs",
+      "sha256": "a9f9918932a4c9dd873b7dd12c8e613a7ff075aafcda9b3effb38fbee11e0db8"
+    },
+    {
+      "path": "src/upstream_supplicant.rs",
+      "sha256": "88306a0d87070b9375125293a2df0238c8c7de08b65816646d6a375e8ad957a1"
+    },
+    {
+      "path": "src/upstream_supplicant/deauth.rs",
+      "sha256": "bf2701505da37c1e3ddc4eb6a79fdda291a4de9d09e0f8e73167f5da44ecb746"
+    },
+    {
+      "path": "src/wal.rs",
+      "sha256": "790ae2ac17883133d14c61f2f02fa38e23f89ad88864bcaaefc9532e5f917010"
+    },
+    {
+      "path": "src/wifi.rs",
+      "sha256": "70aa960b72b510639016716c516b94b291a8685eae0a5dc597d53d1882cb20c3"
+    },
+    {
+      "path": "src/wlmac_diag.rs",
+      "sha256": "1af95ffeb55e063657076854f765477aeb2510b954dbceb9b8cdbeefdd27720a"
+    },
+    {
+      "path": "src/wpa_compat.rs",
+      "sha256": "a7dfaf832281c3bfef2f12b1214c0aa65a4790da4db254472fb6a0c9270f8160"
+    },
+    {
+      "path": "src/ws63_runtime_compat.rs",
+      "sha256": "084c679a4383c9ebd64b1e83121f4b04b5b588705391bba770a681d89025771c"
+    },
+    {
+      "path": "tests/radio_stage_contract.rs",
+      "sha256": "4ac5256c7bf0f8c6047c4f5513ada897eedeff9f48e6cea4be2e8a3d37b1651c"
+    }
+  ],
+  "archives": [
+    {
+      "id": 10096320350,
+      "name": "net0-linked-storage-ubuntu-latest",
+      "digest": "sha256:4b5f3af438e2fdcb9abfd936569913c0f4f0917e2e9eff0694e08d90db213075",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "4b5f3af438e2fdcb9abfd936569913c0f4f0917e2e9eff0694e08d90db213075"
+    },
+    {
+      "id": 10096436117,
+      "name": "net0-incremental-linked-storage-ubuntu-latest",
+      "digest": "sha256:71a1525e4193563f4be81fabcaceb8b21a5378c5135d0fd3e9ff822dc2e65110",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "71a1525e4193563f4be81fabcaceb8b21a5378c5135d0fd3e9ff822dc2e65110"
+    },
+    {
+      "id": 10096328183,
+      "name": "net0-linked-storage-macos-14",
+      "digest": "sha256:ed0189f3e94a057fd2a6627e3e970fa874f64c22da925778b82a34a23e8d552a",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "ed0189f3e94a057fd2a6627e3e970fa874f64c22da925778b82a34a23e8d552a"
+    },
+    {
+      "id": 10096476480,
+      "name": "net0-incremental-linked-storage-macos-14",
+      "digest": "sha256:a662925b6b54cd856848c5a43b234bb068f4219b81815ededd30ebb34cfa075b",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "a662925b6b54cd856848c5a43b234bb068f4219b81815ededd30ebb34cfa075b"
+    },
+    {
+      "id": 10096383255,
+      "name": "net0-linked-storage-windows-latest",
+      "digest": "sha256:faa0b54288fcbba92badca2aa189c518a3c50de978e5370b5b5c7a6c548af531",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "faa0b54288fcbba92badca2aa189c518a3c50de978e5370b5b5c7a6c548af531"
+    },
+    {
+      "id": 10096559225,
+      "name": "net0-incremental-linked-storage-windows-latest",
+      "digest": "sha256:769c8f494930c171f4d5f80d0abdbd455deb85d4c4fd1c91935bc7d64a6349fb",
+      "expires_at": "2026-12-08T09:00:55Z",
+      "zip_sha256": "769c8f494930c171f4d5f80d0abdbd455deb85d4c4fd1c91935bc7d64a6349fb"
+    }
+  ],
+  "reports": [
+    {
+      "host": "ubuntu-latest",
+      "artifact_id": 10096320350,
+      "file": "net0-storage.json",
+      "sha256": "f9f60157775f9f13bbffbbea2e4534be25e7e427512ef4941385a1e7a82d046c",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "c318b4f879a5598cb397f74c4da0ef078b0908033446b6d498b4810452b6c00f",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692416,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794304,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "ubuntu-latest",
+      "artifact_id": 10096436117,
+      "file": "net0-incremental-storage.json",
+      "sha256": "b9d8885c75646b2e5aac21f7f2b5b35f6ba5fa82813c5e41c24b01b3841e0534",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "f3590d66c7997cc420e4e0f293c482375d0f7a6e9cff95aa1e2c4b8706cd2d11",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694976,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796864,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "ubuntu-latest",
+      "artifact_id": 10096436117,
+      "file": "net0-payload-storage.json",
+      "sha256": "2820bb3feac1c2173e48e3d77003222184506093e3ac3e16b770024220c3f487",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "991e6341a40956977b291ec1b2ea60268e065b0520560594d341cf4696d9889c",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696384,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798272,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "ubuntu-latest",
+      "artifact_id": 10096436117,
+      "file": "net0-cleanup-link.json",
+      "sha256": "327b44d9344e25fe3e554e02149bd64246bd26a93a510ca9aca65c97e6a11475",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2511642,
+            "file_offset": 221978,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2377176
+          },
+          {
+            "call_address": 2377350,
+            "file_offset": 87686,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2628682
+          },
+          {
+            "call_address": 2629242,
+            "file_offset": 339578,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2625338
+          },
+          {
+            "call_address": 2625376,
+            "file_offset": 335712,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2377712
+          },
+          {
+            "call_address": 2377730,
+            "file_offset": 88066,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2995190
+          },
+          {
+            "call_address": 2377842,
+            "file_offset": 88178,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2663958
+          }
+        ],
+        "elf_sha256": "991e6341a40956977b291ec1b2ea60268e065b0520560594d341cf4696d9889c",
+        "rejected_call_mutations": 6,
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    },
+    {
+      "host": "ubuntu-latest",
+      "artifact_id": 10096436117,
+      "file": "net0-cleanup-fault-link.json",
+      "sha256": "14722e7f5311d67b1ed1ad95aefbc7cf6b4796b6263d201d33d3501ca371a0a6",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2513112,
+            "file_offset": 223448,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2378546
+          },
+          {
+            "call_address": 2378720,
+            "file_offset": 89056,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2630152
+          },
+          {
+            "call_address": 2630712,
+            "file_offset": 341048,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2626808
+          },
+          {
+            "call_address": 2626846,
+            "file_offset": 337182,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2379082
+          },
+          {
+            "call_address": 2379100,
+            "file_offset": 89436,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2997518
+          },
+          {
+            "call_address": 2379212,
+            "file_offset": 89548,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2665428
+          }
+        ],
+        "elf_sha256": "b6b1ff77307733c864da1d20ce3bb6742ff7c99614f118bc0d3877ca7750894b",
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    },
+    {
+      "host": "macos-14",
+      "artifact_id": 10096328183,
+      "file": "net0-storage.json",
+      "sha256": "0e169435af05eb5d14dd4ecea6d6e55611754290983f4916291c641f28de9b31",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "686b9ac367f8b25070a6a68913a50e7633eb85b05a1db731f962ce07ca16be61",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692416,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794304,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "macos-14",
+      "artifact_id": 10096476480,
+      "file": "net0-incremental-storage.json",
+      "sha256": "617ad6635f754b6f94f029186926176c826314f99e4cd4bd0423fb5c91dac288",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "de6390050784ac03e0d8026fc389990b01b85d5e998894b996a76855af38598c",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694976,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796864,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "macos-14",
+      "artifact_id": 10096476480,
+      "file": "net0-payload-storage.json",
+      "sha256": "a2f4c1041cebd3d19858325c7c76ecddf3217d21364d0f2e5f1341a0f616385c",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "c78fa82f08ee924572a52f331261cca9e86b6074857df2bee916f615179c93b9",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696384,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798272,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "macos-14",
+      "artifact_id": 10096476480,
+      "file": "net0-cleanup-link.json",
+      "sha256": "e06abbcecc5d1ba85c80ec0f4ddd61b667658ff4a723c8ff092680dee1de42e5",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2511642,
+            "file_offset": 221978,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2377176
+          },
+          {
+            "call_address": 2377350,
+            "file_offset": 87686,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2628682
+          },
+          {
+            "call_address": 2629242,
+            "file_offset": 339578,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2625338
+          },
+          {
+            "call_address": 2625376,
+            "file_offset": 335712,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2377712
+          },
+          {
+            "call_address": 2377730,
+            "file_offset": 88066,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2995214
+          },
+          {
+            "call_address": 2377842,
+            "file_offset": 88178,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2663958
+          }
+        ],
+        "elf_sha256": "c78fa82f08ee924572a52f331261cca9e86b6074857df2bee916f615179c93b9",
+        "rejected_call_mutations": 6,
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    },
+    {
+      "host": "macos-14",
+      "artifact_id": 10096476480,
+      "file": "net0-cleanup-fault-link.json",
+      "sha256": "891b1260e7bb7b87b97ce382ada9b532687ac1876123de300ccc8b4d0ef6fef9",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2513112,
+            "file_offset": 223448,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2378548
+          },
+          {
+            "call_address": 2378722,
+            "file_offset": 89058,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2630152
+          },
+          {
+            "call_address": 2630712,
+            "file_offset": 341048,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2626808
+          },
+          {
+            "call_address": 2626846,
+            "file_offset": 337182,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2379084
+          },
+          {
+            "call_address": 2379102,
+            "file_offset": 89438,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2997542
+          },
+          {
+            "call_address": 2379214,
+            "file_offset": 89550,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2665428
+          }
+        ],
+        "elf_sha256": "0b5082d92408f3e12d861956cb2d5c0f707fff7afbd11fcc8c7647777daa73dd",
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    },
+    {
+      "host": "windows-latest",
+      "artifact_id": 10096383255,
+      "file": "net0-storage.json",
+      "sha256": "8e9ed708d93fb2093fa983e64088af2900ab99bb86c03ae1625e9a872d8ba5c8",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "3bc49426bca7a5e6bd2d75fb12e0da02ba39e071ac73982d663d5a0a6cede92c",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692416,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794304,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "windows-latest",
+      "artifact_id": 10096559225,
+      "file": "net0-incremental-storage.json",
+      "sha256": "c6ce08c1dbe40ee8852ba97c72968440338f12fdeb7e51babd6823862f4c56ad",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "37e6d627411aca5cddf7dcf8315f12818346dade311acf69ffeb051b64febcb4",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694976,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796864,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "windows-latest",
+      "artifact_id": 10096559225,
+      "file": "net0-payload-storage.json",
+      "sha256": "714207294678b1a9478a0f5c65cbac7abe342c220ca18cdab9761d51791ad112",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "4c38818c6c8671b7bfc4bdbd5ca4b7f5e356239e571c9836bef0f2950d21d10d",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "native_pbuf_prefix_bytes": 16,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696384,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798272,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v3",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      }
+    },
+    {
+      "host": "windows-latest",
+      "artifact_id": 10096559225,
+      "file": "net0-cleanup-link.json",
+      "sha256": "c40a742bca5771937fd1786e8d56e21d1a2f6f1f62647d74af0b65d948ab9028",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2511642,
+            "file_offset": 221978,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2377176
+          },
+          {
+            "call_address": 2377350,
+            "file_offset": 87686,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2628682
+          },
+          {
+            "call_address": 2629242,
+            "file_offset": 339578,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2625338
+          },
+          {
+            "call_address": 2625376,
+            "file_offset": 335712,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2377712
+          },
+          {
+            "call_address": 2377730,
+            "file_offset": 88066,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2995558
+          },
+          {
+            "call_address": 2377842,
+            "file_offset": 88178,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2663958
+          }
+        ],
+        "elf_sha256": "4c38818c6c8671b7bfc4bdbd5ca4b7f5e356239e571c9836bef0f2950d21d10d",
+        "rejected_call_mutations": 6,
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    },
+    {
+      "host": "windows-latest",
+      "artifact_id": 10096559225,
+      "file": "net0-cleanup-fault-link.json",
+      "sha256": "495ba6e52f7f281ca248b5974a9ce27d55aa30cc8d9488d6fa1c06c6d6cc9d3e",
+      "report": {
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "edges": [
+          {
+            "call_address": 2513112,
+            "file_offset": 223448,
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "target_address": 2378546
+          },
+          {
+            "call_address": 2378720,
+            "file_offset": 89056,
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "target_address": 2630152
+          },
+          {
+            "call_address": 2630712,
+            "file_offset": 341048,
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "target_address": 2626808
+          },
+          {
+            "call_address": 2626846,
+            "file_offset": 337182,
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "target_address": 2379082
+          },
+          {
+            "call_address": 2379100,
+            "file_offset": 89436,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "target_address": 2997886
+          },
+          {
+            "call_address": 2379212,
+            "file_offset": 89548,
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "target_address": 2665428
+          }
+        ],
+        "elf_sha256": "76a00607c00796d9c33a9d130dddc2dda7e9740ef6ff1201398409e818a304f4",
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass"
+      }
+    }
+  ],
+  "boundary": "Verified downloaded ZIP digests, original report bytes, resource layout and resolved source/callee parity. ROM trampoline addresses differ across hosts; no claim of byte-identical or downloaded firmware ELF or permanent release storage"
+}

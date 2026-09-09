@@ -1,0 +1,51 @@
+{
+  "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+  "edges": [
+    {
+      "call_address": 2513740,
+      "file_offset": 224076,
+      "source": "hmac_config_kick_user_etc",
+      "target": "__wrap_hmac_user_del_etc",
+      "target_address": 2379176
+    },
+    {
+      "call_address": 2379350,
+      "file_offset": 89686,
+      "source": "__wrap_hmac_user_del_etc",
+      "target": "hmac_user_del_etc",
+      "target_address": 2630780
+    },
+    {
+      "call_address": 2631340,
+      "file_offset": 341676,
+      "source": "hmac_user_del_etc",
+      "target": "hmac_user_free_etc",
+      "target_address": 2627436
+    },
+    {
+      "call_address": 2627474,
+      "file_offset": 337810,
+      "source": "hmac_user_free_etc",
+      "target": "__wrap_hmac_res_free_mac_user_etc",
+      "target_address": 2379712
+    },
+    {
+      "call_address": 2379730,
+      "file_offset": 90066,
+      "source": "__wrap_hmac_res_free_mac_user_etc",
+      "target": "_mac_res_get_hmac_user",
+      "target_address": 2997754
+    },
+    {
+      "call_address": 2379842,
+      "file_offset": 90178,
+      "source": "__wrap_hmac_res_free_mac_user_etc",
+      "target": "hmac_res_free_mac_user_etc",
+      "target_address": 2666056
+    }
+  ],
+  "elf_sha256": "78808ae7a5fe4d17b0cef59215d34c5b7e37fc68f8cadae2bf227a111f2bee0e",
+  "rejected_call_mutations": 6,
+  "schema": "net0-cleanup-link/v1",
+  "status": "pass"
+}
