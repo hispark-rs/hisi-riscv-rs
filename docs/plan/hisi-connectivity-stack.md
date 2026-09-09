@@ -1196,6 +1196,15 @@ Clippy/RV32/独立 package 通过；精确源码
 包括三平台 callback 契约与最终 RF 链接。此提交尚未将新队列加入 named profile、
 worker 或资源报告，native fence 和新路径真机 parity 仍是下一门槛。
 
+WS63 后续 `aecb495` / `e117f58` 将 one-shot caller-owned L2 storage 纳入真实 control
+对象和 v14 资源报告，增加 target ELF 描述符校验，并修正 bootstrap fixture 的独立
+RTOS arena 接线。精确源码 [CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34301630873)
+通过；三平台下载报告的目标布局一致，本地独立离线构建通过，双板同一 ELF 各完成
+3/3 次 bootstrap/任务栈准入，见[资源与启动证据](evidence/net0-storage-2026-09-09.md)。
+L2 实际占用 12,560 bytes，已包含在 control storage 中，未降低现有 RF 栈/arena。
+这些提交尚未发版；新队列的 worker/session 接线、native producer 排空、延迟帧和
+smoltcp 流量 parity 仍未完成，不能以资源准入替代 NET0 完成或 NET1 支持声明。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

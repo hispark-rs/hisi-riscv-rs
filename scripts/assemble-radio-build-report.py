@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import struct
 import tempfile
 from typing import Any
 
@@ -30,6 +31,7 @@ RESOURCE_SCHEMAS = {
     "hisi-rf-resource-report/v11",
     "hisi-rf-resource-report/v12",
     "hisi-rf-resource-report/v13",
+    "hisi-rf-resource-report/v14",
 }
 PLAN_KEYS = (
     "base_addr",
@@ -64,6 +66,7 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         return
 
@@ -84,6 +87,7 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
         if resource["schema"] in {
             "hisi-rf-resource-report/v12",
             "hisi-rf-resource-report/v13",
+            "hisi-rf-resource-report/v14",
         } and value is None:
             worker_values.append(0)
         elif isinstance(value, int) and not isinstance(value, bool) and value >= 0:
@@ -106,6 +110,7 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         for key in ("coexistence_task_slots", "coexistence_stack_bytes"):
             value = resource.get(key)
@@ -141,6 +146,61 @@ def validate_task_resource_tree(resource: dict[str, Any]) -> None:
         )
 
 
+def validate_l2_storage(resource: dict[str, Any]) -> None:
+    if resource["schema"] != "hisi-rf-resource-report/v14":
+        return
+    l2 = resource.get("l2_storage")
+    if not isinstance(l2, dict):
+        raise ValueError("resource report v14 requires l2_storage")
+    for key in ("rx_slots", "tx_slots", "mtu", "payload_bytes", "metadata_bytes", "total_bytes"):
+        value = l2.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            raise ValueError(f"resource report v14 requires positive L2 {key}")
+    offset = resource.get("l2_storage_offset")
+    if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+        raise ValueError("resource report v14 requires non-negative l2_storage_offset")
+    if l2["payload_bytes"] != (l2["rx_slots"] + l2["tx_slots"]) * l2["mtu"]:
+        raise ValueError("resource report v14 L2 payload does not equal slot capacity")
+    if l2["total_bytes"] != l2["payload_bytes"] + l2["metadata_bytes"]:
+        raise ValueError("resource report v14 L2 size does not equal its children")
+    if offset + l2["total_bytes"] > resource["control_storage_bytes"]:
+        raise ValueError("resource report v14 L2 storage exceeds control storage")
+
+
+def validate_l2_layout(resource: dict[str, Any], parsed: ELFFile) -> None:
+    """The v14 prototype requires its target descriptor, not a host size_of report."""
+    if resource["schema"] != "hisi-rf-resource-report/v14":
+        return
+    if parsed.elfclass != 32 or not parsed.little_endian or parsed["e_machine"] != "EM_RISCV":
+        raise ValueError("resource report v14 requires the RV32 target ELF")
+    table = parsed.get_section_by_name(".symtab")
+    def unique(name: str) -> Any:
+        matches = table.get_symbol_by_name(name) if table else None
+        if not matches or len(matches) != 1:
+            raise ValueError(f"v14 target layout is missing or ambiguous: {name}")
+        return matches[0]
+    control = unique("NET0_CONTROL")
+    layout = unique("NET0_STORAGE_LAYOUT")
+    if control["st_size"] != resource["control_storage_bytes"] or layout["st_size"] != 52:
+        raise ValueError("v14 control storage or descriptor size differs from target ELF")
+    section = parsed.get_section(layout["st_shndx"])
+    offset = layout["st_value"] - section["sh_addr"]
+    data = section.data()
+    if offset < 0 or offset + 52 > len(data):
+        raise ValueError("v14 descriptor is outside its ELF section")
+    l2 = resource["l2_storage"]
+    expected = (
+        int.from_bytes(b"NET0", "little"), 1,
+        resource["control_storage_bytes"], resource["l2_storage_offset"],
+        l2["total_bytes"], l2["payload_bytes"], l2["metadata_bytes"],
+        l2["rx_slots"], l2["tx_slots"], l2["mtu"],
+        resource["arena_storage_bytes"] + resource["runtime_arena_bytes"],
+        resource["main_stack_bytes_required"], resource["linker_packet_ram_bytes"],
+    )
+    if struct.unpack("<13I", data[offset:offset + 52]) != expected:
+        raise ValueError("v14 resource report differs from target-built layout descriptor")
+
+
 def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> dict[str, Any]:
     resource = load_object(resource_path, "resource report")
     plan = load_object(plan_path, "FlashPlan")
@@ -160,6 +220,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         for key in ("runtime_internal_tasks", "task_stack_bytes"):
             value = resource.get(key)
@@ -177,6 +238,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         value = resource.get("shared_rf_arena_bytes")
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
@@ -193,6 +255,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         positive_keys = (
             "event_capacity",
@@ -266,6 +329,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         schema_revision = resource["schema"].rsplit("/", 1)[-1]
         for key in ("runtime_object_headroom_bytes", "runtime_arena_bytes"):
@@ -300,6 +364,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         minimum_stack = resource.get("minimum_task_stack_bytes")
         if (
@@ -321,14 +386,17 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         raise ValueError("FlashPlan image_len does not match the generated image")
 
     validate_task_resource_tree(resource)
+    validate_l2_storage(resource)
     if resource["schema"] in {
         "hisi-rf-resource-report/v10",
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         with elf.open("rb") as stream:
             parsed = ELFFile(stream)
+            validate_l2_layout(resource, parsed)
             section = parsed.get_section_by_name(".hisi_shared_arenas")
             if section is None:
                 raise ValueError("ELF is missing .hisi_shared_arenas")
@@ -349,6 +417,7 @@ def assemble(resource_path: Path, plan_path: Path, elf: Path, image: Path) -> di
         "hisi-rf-resource-report/v11",
         "hisi-rf-resource-report/v12",
         "hisi-rf-resource-report/v13",
+        "hisi-rf-resource-report/v14",
     }:
         resolved_resource["linked_shared_arena_bytes"] = linked_shared_arena_bytes
     return {
@@ -538,7 +607,95 @@ def self_test() -> None:
         assert resource_v13["schema"] in RESOURCE_SCHEMAS
         validate_task_resource_tree(resource_v13)
 
-        resource_v9["schema"] = "hisi-rf-resource-report/v14"
+        resource_v14 = dict(resource_v9)
+        resource_v14.update(
+            schema="hisi-rf-resource-report/v14",
+            control_storage_bytes=21_376,
+            l2_storage_offset=2_296,
+            l2_storage={
+                "rx_slots": 4, "tx_slots": 4, "mtu": 1_514,
+                "payload_bytes": 12_112, "metadata_bytes": 448, "total_bytes": 12_560,
+            },
+        )
+        resource_v14["caller_owned_bytes"] = (
+            resource_v14["control_storage_bytes"]
+            + resource_v14["arena_storage_bytes"]
+            + resource_v14["runtime_arena_bytes"]
+        )
+        assert resource_v14["schema"] in RESOURCE_SCHEMAS
+        validate_l2_storage(resource_v14)
+        from unittest.mock import MagicMock
+        target_words = [
+            int.from_bytes(b"NET0", "little"), 1, 21_376, 2_296, 12_560, 12_112, 448,
+            4, 4, 1_514, 114_240 + 188_928, 0x8000, 0x24000,
+        ]
+        symbols = {
+            "NET0_CONTROL": {"st_size": 21_376},
+            "NET0_STORAGE_LAYOUT": {"st_size": 52, "st_value": 0x230400, "st_shndx": 1},
+        }
+        symbol_table = MagicMock()
+        symbol_table.get_symbol_by_name.side_effect = lambda name: [symbols[name]] if name in symbols else None
+        descriptor = MagicMock()
+        descriptor.__getitem__.return_value = 0x230400
+        descriptor.data.return_value = struct.pack("<13I", *target_words)
+        parsed = MagicMock(elfclass=32, little_endian=True)
+        parsed.__getitem__.return_value = "EM_RISCV"
+        parsed.get_section_by_name.return_value = symbol_table
+        parsed.get_section.return_value = descriptor
+        validate_l2_layout(resource_v14, parsed)
+        for index in range(len(target_words)):
+            changed = target_words.copy()
+            changed[index] += 1
+            descriptor.data.return_value = struct.pack("<13I", *changed)
+            try:
+                validate_l2_layout(resource_v14, parsed)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"ELF/report mismatch at descriptor word {index} accepted")
+        descriptor.data.return_value = struct.pack("<13I", *target_words)
+        symbol_table.get_symbol_by_name.side_effect = lambda _name: None
+        try:
+            validate_l2_layout(resource_v14, parsed)
+        except ValueError as error:
+            assert "missing or ambiguous" in str(error)
+        else:
+            raise AssertionError("v14 ELF without target layout proof was accepted")
+        for key in resource_v14["l2_storage"]:
+            for invalid in (None, True, -1, 0, "4"):
+                bad = dict(resource_v14, l2_storage=dict(resource_v14["l2_storage"]))
+                bad["l2_storage"][key] = invalid
+                try:
+                    validate_l2_storage(bad)
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError(f"invalid L2 {key}={invalid!r} was accepted")
+        for change in (
+            {"l2_storage": None},
+            {"l2_storage_offset": -1},
+            {"l2_storage_offset": True},
+            {"l2_storage_offset": 21_376},
+            {"l2_storage": dict(resource_v14["l2_storage"], total_bytes=12_561)},
+            {"l2_storage": dict(resource_v14["l2_storage"], rx_slots=5)},
+        ):
+            try:
+                validate_l2_storage(dict(resource_v14, **change))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"inconsistent L2 resource tree accepted: {change!r}")
+        double_counted = dict(resource_v14)
+        double_counted["caller_owned_bytes"] += double_counted["l2_storage"]["total_bytes"]
+        resource_path.write_text(json.dumps(double_counted), encoding="utf-8")
+        try:
+            assemble(resource_path, plan_path, elf, image)
+        except ValueError as error:
+            assert "caller_owned_bytes" in str(error)
+        else:
+            raise AssertionError("L2 storage was counted twice")
+
+        resource_v9["schema"] = "hisi-rf-resource-report/v15"
         resource_path.write_text(json.dumps(resource_v9), encoding="utf-8")
         try:
             assemble(resource_path, plan_path, elf, image)

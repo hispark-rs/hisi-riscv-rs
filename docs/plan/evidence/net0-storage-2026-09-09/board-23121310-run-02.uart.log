@@ -1,0 +1,71 @@
+boot.
+Flash Init Fail! ret = 0x80001341
+verify_public_rootkey secure verify disable!
+verify_params_key_area secure verify disable!
+verify_params_area_info secure verify disable!
+verify_image_key_area secure verify disable!
+verify_image_code_info secure verify disable!
+
+RFDBG_BOOTSTRAP_PROFILE_BEGIN
+RFDBG_A5U_ARENA_OK bytes=0x00018dc0
+RFDBG_RF_POWER_OK
+RFDBG_RTOS_START_OK
+RFDBG_RTOS_IRQ_OK
+RFDBG_RTOS_OK
+RFDBG_BOOT_STAGE_LIVE name=resource_claim event=begin
+RFDBG_BOOT_STAGE_LIVE name=resource_claim event=completed
+RFDBG_BOOT_STAGE_LIVE name=crypto_install event=begin
+RFDBG_BOOT_STAGE_LIVE name=crypto_install event=completed
+RFDBG_BOOT_STAGE_LIVE name=crypto_self_test event=begin
+RFDBG_BOOT_DETAIL name=pbkdf2 event=begin
+RFDBG_BOOT_DETAIL name=pbkdf2 event=completed
+RFDBG_BOOT_DETAIL name=sha_hmac event=begin
+RFDBG_BOOT_DETAIL name=sha_hmac event=completed
+RFDBG_BOOT_STAGE_LIVE name=crypto_self_test event=completed
+RFDBG_BOOT_STAGE_LIVE name=vendor_memory_prepare event=begin
+RFDBG_BOOT_STAGE_LIVE name=vendor_memory_prepare event=completed
+RFDBG_BOOT_STAGE_LIVE name=rom_timebase_initialize event=begin
+RFDBG_BOOT_DETAIL name=systick_init event=begin
+RFDBG_BOOT_DETAIL name=systick_init event=completed
+RFDBG_BOOT_DETAIL name=tcxo_init event=begin
+RFDBG_BOOT_DETAIL name=tcxo_init event=completed
+RFDBG_BOOT_DETAIL name=systick_calibration event=begin
+RFDBG_BOOT_DETAIL name=systick_count_start event=begin
+RFDBG_BOOT_DETAIL name=systick_count_start event=completed
+RFDBG_BOOT_DETAIL name=tcxo_count_start event=begin
+RFDBG_BOOT_DETAIL name=tcxo_count_start event=completed
+RFDBG_BOOT_DETAIL name=tcxo_delay event=begin
+RFDBG_BOOT_DETAIL name=tcxo_delay event=completed
+RFDBG_BOOT_DETAIL name=systick_count_end event=begin
+RFDBG_BOOT_DETAIL name=systick_count_end event=completed
+RFDBG_BOOT_DETAIL name=tcxo_count_end event=begin
+RFDBG_BOOT_DETAIL name=tcxo_count_end event=completed
+RFDBG_BOOT_DETAIL name=systick_calibration event=completed
+RFDBG_BOOT_STAGE_LIVE name=rom_timebase_initialize event=completed
+RFDBG_BOOT_STAGE_LIVE name=vendor_wifi_initialize event=begin
+RFDBG_BOOT_DETAIL name=wifi_init event=begin
+RFDBG_BOOT_DETAIL name=wifi_init event=completed
+RFDBG_BOOT_STAGE_LIVE name=vendor_wifi_initialize event=completed elapsed_ms=0x00000043
+RFDBG_BOOT_STAGE_LIVE name=station_device_create event=begin
+RFDBG_BOOT_STAGE_LIVE name=station_device_create event=completed elapsed_ms=0x00000009
+RFDBG_BOOT_STAGE_LIVE name=event_registration event=begin
+RFDBG_BOOT_STAGE_LIVE name=event_registration event=completed elapsed_ms=0x00000000
+RFDBG_BOOT_STAGE_LIVE name=station_device_open event=begin
+RFDBG_BOOT_STAGE_LIVE name=station_device_open event=completed elapsed_ms=0x00000008
+RFDBG_BOOT_STAGE_LIVE name=supplicant_port_prepare event=begin
+RFDBG_BOOT_STAGE_LIVE name=supplicant_port_prepare event=completed elapsed_ms=0x00000000
+RFDBG_BOOT_STAGE_LIVE name=native_supplicant_create event=begin
+RFDBG_BOOT_STAGE_LIVE name=native_supplicant_create event=completed elapsed_ms=0x00000002
+RFDBG_BOOT_STAGE name=resource_claim calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000000 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=crypto_install calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000000 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=crypto_self_test calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000000 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=vendor_memory_prepare calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000000 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=rom_timebase_initialize calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000000 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=vendor_wifi_initialize calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000043
+RFDBG_BOOT_STAGE name=station_device_create calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000009
+RFDBG_BOOT_STAGE name=event_registration calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=station_device_open calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000008
+RFDBG_BOOT_STAGE name=supplicant_port_prepare calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000000
+RFDBG_BOOT_STAGE name=native_supplicant_create calls=0x00000001 completed=0x00000001 failed=0x00000000 timed=0x00000001 max_ms=0x00000002
+RFDBG_BOOTSTRAP_PROFILE_OK
+A5U_TASK_STACK_ADMISSION_OK bytes=0x0002c000 reserved=0x00000002

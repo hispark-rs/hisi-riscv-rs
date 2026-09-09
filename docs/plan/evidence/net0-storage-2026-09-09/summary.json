@@ -1,0 +1,142 @@
+{
+  "boundaries": [
+    "Bootstrap and task-stack admission only, not native L2 traffic or reconnect",
+    "CI report bytes downloaded and verified; CI ELF bytes are not retained in these artifacts",
+    "Local HIL ELF/image bytes remain local pending complete NET0 evidence publication",
+    "UART retains Flash Init Fail 0x80001341 before app entry; this test does not diagnose or waive that boot warning",
+    "No Embassy Net/TLS/HTTPS gate or stable claim follows from this evidence"
+  ],
+  "capture_tool_sha256": "10e6f63de1e767029388e5a62184ef79398c8aecc83e7f7ee576e7b58cf7e169",
+  "ci_jobs": {
+    "passed": 23,
+    "total": 23
+  },
+  "ci_reports": [
+    {
+      "host": "ubuntu-latest",
+      "receipt": "ci-ubuntu-latest.json",
+      "receipt_sha256": "5c69c3c3bf876a559aa8cbd2dd4c042ab11b813a518ea5e1de2c183597a1235f",
+      "reported_elf_sha256": "8167b28ef57489914f84c5db8efe917a604ae905283c892846c1f57ddd9d7803"
+    },
+    {
+      "host": "macos-14",
+      "receipt": "ci-macos-14.json",
+      "receipt_sha256": "2c7b9f05ae387d0075e6025ffe1250de256ab6d36049d800d2215555d10f8613",
+      "reported_elf_sha256": "c306d47f8695dde74ec22bb74f0e4d721bc280f78422f97b2aa4d2bb3ddbb9ea"
+    },
+    {
+      "host": "windows-latest",
+      "receipt": "ci-windows-latest.json",
+      "receipt_sha256": "a3ebf8be4bf0fd67e531f53d59c345f42923fd006051b14d0d9861885825c8ff",
+      "reported_elf_sha256": "990173c228aa8259968397077ddcd1b872c01f88b9fff783d93666301847d368"
+    }
+  ],
+  "ci_run": 34301630873,
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34301630873",
+  "hil_boards": [
+    {
+      "flash": {
+        "exit_code": 0,
+        "seconds": 121.32046945788898,
+        "speed_khz": 3000,
+        "verify": true
+      },
+      "flash_log_sha256": "6a49a01a7536ab7a2463fc6226020d53062762fb458455411be55cf2b298d98a",
+      "jlink_serial": "23121310",
+      "runs": [
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 1,
+          "sha256": "7e1cff31e821b3ecf08109768a297b7e257905a8cc9e22fbf8184d65f5550606",
+          "uart": "board-23121310-run-01.uart.log"
+        },
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 2,
+          "sha256": "7e1cff31e821b3ecf08109768a297b7e257905a8cc9e22fbf8184d65f5550606",
+          "uart": "board-23121310-run-02.uart.log"
+        },
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 3,
+          "sha256": "7e1cff31e821b3ecf08109768a297b7e257905a8cc9e22fbf8184d65f5550606",
+          "uart": "board-23121310-run-03.uart.log"
+        }
+      ],
+      "uart": "/dev/cu.wchusbserial1130"
+    },
+    {
+      "flash": {
+        "exit_code": 0,
+        "seconds": 122.32919183303602,
+        "speed_khz": 3000,
+        "verify": true
+      },
+      "flash_log_sha256": "45e759598c19aad84bfb939b65eeb471fc53d4bd44578a3b2eb3448464658abd",
+      "jlink_serial": "24060504",
+      "runs": [
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 1,
+          "sha256": "d28b2ac846eab8fdfa8d43e26665b7c093b2948121420d3deb7bb40c73c18ab5",
+          "uart": "board-24060504-run-01.uart.log"
+        },
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 2,
+          "sha256": "a3ced325548d8eb522309391afc54949ffe981c31f1d9e28ade6e5caff9cce93",
+          "uart": "board-24060504-run-02.uart.log"
+        },
+        {
+          "boot_warning_flash_init": true,
+          "pass": true,
+          "run": 3,
+          "sha256": "326007ce5c1c902d454af0cf25391dd7730ddeb3947ecaf8a0031d7b398d48d0",
+          "uart": "board-24060504-run-03.uart.log"
+        }
+      ],
+      "uart": "/dev/cu.wchusbserial1140"
+    }
+  ],
+  "local_firmware": {
+    "build": "cargo build -Zbuild-std=core,alloc --locked --offline --release --target riscv32imfc-unknown-none-elf --example bootstrap_profile --features wpa2-personal,smoltcp,incremental-backend-experiment,incremental-embassy-wait,standard-l2,bootstrap-stage-diag,firmware-example",
+    "cargo_lock_sha256": "e7b84de45abb47c5a176d67b7d7e6b27c7ea614c70a920d00e55bcd669366848",
+    "elf_sha256": "ed798e7ee4c45ef898467de26b7f81d537fb3cc26b375da78aa239a8baca2a63",
+    "image_bytes": 669288,
+    "image_sha256": "74aaf3d9777ad11a4aa488dd836e0182cf2de5b859a98c92bd38d5aec4172896",
+    "plan_sha256": "7edc3bbd6c7366a7e6ed7882164a5139c6726de874bab28d40f4cf6503c39cae",
+    "rustc": "rustc 1.99.0-nightly (14cae6813 2026-07-08)\nbinary: rustc\ncommit-hash: 14cae681329a63c622a6e1fbe1d30f9374bc51d8\ncommit-date: 2026-07-08\nhost: aarch64-apple-darwin\nrelease: 1.99.0-nightly\nLLVM version: 22.1.8"
+  },
+  "physical_layout": {
+    "control_address": 10538336,
+    "control_bytes": 21376,
+    "l2_bytes": 12560,
+    "l2_offset": 2296,
+    "main_stack_bytes": 32768,
+    "metadata_bytes": 448,
+    "mtu": 1514,
+    "packet_ram_bytes": 49152,
+    "payload_bytes": 12112,
+    "rx_slots": 4,
+    "shared_arena_bytes": 299008,
+    "tx_slots": 4
+  },
+  "schema": "net0-storage-evidence/v1",
+  "source_commit": "e117f585b80d72779fc3c6fb26b8bbd9564a918f",
+  "tools": {
+    "JLinkExe": {
+      "sha256": "1fb393c2dbf6c569088131eafb28113cd98f865b6730b0470c2f6166c680bf9a"
+    },
+    "hisi-fwpkg": {
+      "sha256": "6bfedba07579cc62e1f932234ee196b9cb785372742c83711bd7ae35a336f760"
+    },
+    "probe-rs": {
+      "sha256": "fed6d7b73cb3984bd19fd7d05d2bf31057d57b2f988bb51677a75da016a9c232"
+    }
+  }
+}
