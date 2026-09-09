@@ -1218,6 +1218,17 @@ ioctl，也不证明 RX/DMA/user-delete 已排空。精确源码
 均为 control 21,408 bytes、L2 12,560 bytes。这里下载的是报告，不是 CI ELF，不能
 替代二进制验收。后续 HIL 分开验收；上一份 bootstrap ELF 的 3/3 结果不迁移到此提交。
 
+随后 backend `d99cb8e` 把 hostap 自主断连及两处内联 recovery 纳入同一 native
+ticket 所有权；内联调用结束后重新 wake 排队请求，session 失败不随 history 淘汰。
+断连入口先关闭新 Rust RX admission；这一步不撤销已开始的 copy/TX，也不替代
+worker 的 link-down 与 native 排空。独立公开依赖 offline host tests 160/160、
+旧 profile 119/119、Miri receipt tests 24/24、host/RV32 Clippy 与最终链接通过；
+精确源码 [CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34305002013)
+通过。仍未发布、未烧录新提交，native fence / 新队列 worker composition / 流量 HIL
+保持 open。同日只读审计补充了双板相同 ROM 摘要、过早的 DEL_USER_COMPLETE 通知和
+DMAC 隐藏释放错误，详见[同一 native fence 证据](evidence/net0-native-fence-audit-2026-09-09.md)；
+这些观察不能转写成排空或重连成功声明。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
