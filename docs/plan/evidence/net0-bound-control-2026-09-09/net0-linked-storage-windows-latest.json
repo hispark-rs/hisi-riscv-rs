@@ -1,0 +1,18 @@
+{
+  "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+  "control_address": 10538336,
+  "control_bytes": 21440,
+  "elf_sha256": "2708ad92517ab72a3e2d12805b4637862e05f0228844f0cae3e2d6cd5b639899",
+  "l2_bytes": 12560,
+  "l2_offset": 2296,
+  "main_stack_bytes": 32768,
+  "metadata_bytes": 448,
+  "mtu": 1514,
+  "packet_ram_bytes": 49152,
+  "payload_bytes": 12112,
+  "rx_slots": 4,
+  "schema": "net0-linked-storage/v1",
+  "shared_arena_bytes": 299008,
+  "status": "pass",
+  "tx_slots": 4
+}

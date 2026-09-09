@@ -1249,6 +1249,18 @@ host/RV32 Clippy 和最终 ELF/资源检查通过；精确源码
 包含 Linux/macOS/Windows NET0 契约与最终链接。该补丁尚未烧录，前述 23 次控制面样本
 不迁移到它，也不将 Rust TX 借用归零解释为原厂队列/DMA 排空。
 
+backend `654e90c` 随后把 profile 内真实 L2 storage 接到 opaque 标准 Driver 和既有
+native worker，使用实际 MAC；单一设备保留可选 smoltcp adapter，不增加 packet 副本。
+关闭修订号与 semaphore waker 覆盖注册前关闭和合并通知，worker 每轮最多提交一帧。
+路由仍不开放。独立 offline NET0 host 173/173、L2/pbuf Miri 27/27、旧 incremental
+119/119、旧 blocking 83/83、host/RV32 Clippy 和 API snapshot 通过，
+[精确 CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34310132814)
+及三平台下载 ELF storage report 通过；控制对象为 21,440 字节，未缩减 RF 栈/arena。
+同一 STA ELF 3 MHz 完整 verify 后，固定 AP 下 3/3 + 20/20 nRST 均出现绑定关闭和
+connect/disconnect marker，见[绑定关闭控制面证据](evidence/net0-bound-control-2026-09-09.md)。
+此证据不向前迁移到旧 commit，也不构成新队列流量、native producer fence 或重连证明。
+NET0 仍 active；剩余是原生排空/authorization 接线及流量 HIL，NET1 继续 queued。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

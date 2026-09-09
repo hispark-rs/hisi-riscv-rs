@@ -28,6 +28,9 @@
 [3/3 + 20/20 控制面 connect/disconnect](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-control-2026-09-09.md)，
 但该 fixture 未开放新 L2 route，尚未完成 L2 流量、断连屏障或重连验收，
 不能视为已发布的 Embassy Net 支持。
+后续 `654e90c` 已把同一队列绑定到标准 Driver 与既有 worker，并完成另一组
+[固定 ELF 3/3 + 20/20 绑定关闭控制面验证](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-bound-control-2026-09-09.md)。
+新路由仍不开放，以上流量、原生排空和重连门槛仍未关闭，未增加公开支持声明。
 
 ## Profile 矩阵
 
