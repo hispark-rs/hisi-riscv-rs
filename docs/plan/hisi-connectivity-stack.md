@@ -1298,6 +1298,22 @@ NET0 队列保持 closed；在途调用、prepare/commit 间的新调用或计�
 这不覆盖 hook 之前的设备工作及其返回后的 MSG595/TX/EAPOL 队列，不能当作 native
 producer fence。NET0 active / NET1 queued 不变。
 
+公开依赖收口：core `alpha.26`（`b68d1c3`）、backend `alpha.102`（`f8268b2`）、
+facade `alpha.116`（`b7e0b29`）已依次发布，精确源码 CI 分别 5/5、23/23、13/13；
+facade [Publish 27/27](https://github.com/hispark-rs/hisi-rf/actions/runs/34318794641)
+包含三平台各四种 profile 的 candidate/published consumer。
+下载包的 registry checksum 与 clean VCS 身份分别记录在
+[core](evidence/net0-core-alpha26-acceptance-2026-09-09.json)、
+[backend](evidence/net0-backend-alpha102-acceptance-2026-09-09.json)、
+[facade](evidence/net0-rf-alpha116-acceptance-2026-09-09.json) 验收文件。
+另已下载并重算 [24 组 consumer ELF/lock/receipt](evidence/net0-rf-alpha116-consumer-downloads-2026-09-09.json)，
+精确核对 candidate/published、三平台、四 profile、source/run/toolchain，候选包与 registry
+checksum 一致；这些 Actions artifacts 有保留期限，不冒充永久存档。
+此次同时修正单播站点地址与口令 Debug 脱敏契约；named profiles 仍走既有 smoltcp。
+examples `566e7ba` 与模板 `d9cd0ba` 已固定这组公开依赖；独立 registry workspace 的
+STA/AP 最终链接、模板 Wi-Fi 的 image/resource report 和 locked/offline 构建通过。
+上述旧 HIL 不自动覆盖新 release ELF，native fence、新 L2 流量与重连仍待验收。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

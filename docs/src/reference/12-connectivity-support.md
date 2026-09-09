@@ -7,9 +7,9 @@
 
 | 组件 | 版本或修订 |
 |---|---|
-| 用户 facade | `hisi-rf 0.1.0-alpha.115` |
-| WS63 backend | `hisi-rf-ws63 0.1.0-alpha.101` |
-| target archive 包 | `ws63-radio-blob 0.1.0-alpha.25` |
+| 用户 facade | `hisi-rf 0.1.0-alpha.116` |
+| WS63 backend | `hisi-rf-ws63 0.1.0-alpha.102` |
+| target archive 包 | `ws63-radio-blob 0.1.0-alpha.26` |
 | Wi-Fi 资源报告 | `hisi-rf-resource-report/v13` / `ws63-radio-2026-09-01-r13` |
 | BLE/SLE 资源报告 | `hisi-rf-radio-resource-report/v1` |
 
@@ -17,14 +17,15 @@
 因此不能从“HAL 支持该芯片”推导出“RF 支持该芯片”。
 
 本次发布新增非默认 NET0 契约，未切换下面的 smoltcp profile。精确发布的
-[三平台 consumer CI](https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416)
-和[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json)
+[三平台 consumer CI](https://github.com/hispark-rs/hisi-rf/actions/runs/34318794641)
+和[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha116-acceptance-2026-09-09.json)
 已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。
 
-父仓当前另 pin 了尚未发布的 NET0 backend 改动，以及已发布并完成
+上表闭包包含已发布的 NET0 backend 改动，以及已完成
 [下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-host-delivery-2026-09-09/radio-release-acceptance.json)
 的 `ws63-radio-blob 0.1.0-alpha.26` / `ws63-radio-sys 0.1.0-alpha.26`。
-这不是上表 facade alpha.115 的发布依赖闭包变更。仅启用 `standard-l2` 时，
+facade 同时固定 `hisi-rf-core 0.1.0-alpha.26`，提供经过验证的单播站点地址类型和
+口令/配置 Debug 脱敏。仅启用 backend 的非默认 `standard-l2` 时，
 资源报告为 `hisi-rf-resource-report/v14` / `ws63-radio-2026-09-09-r14-net0`，
 计入 caller-owned L2 队列；未启用时仍使用上表 v13。该实验路径已通过目标 ELF
 存储布局和双板初始化准入预检；`3914ff5` 的固定 ELF 另完成

@@ -1,0 +1,181 @@
+{
+  "candidate_sha256": "7fe26d515dc1b407ad54aa90ccfa1c4161dc726c4ebc03cf94bdb574f1f39c7c",
+  "consumers": [
+    {
+      "artifact": "candidate-evidence-ubuntu-latest-wpa2-personal",
+      "elf_sha256": "1f0c021c372fe12eaacc95fb46b710760f38004bde1b3882e422028bd2aee807",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "ubuntu-latest-wpa2-personal.json",
+      "receipt_sha256": "e798a33bbde2ba4df39e9ec083568d3375a22fe3fbf69680bc92cb6dd020743f"
+    },
+    {
+      "artifact": "candidate-evidence-ubuntu-latest-wpa3-personal",
+      "elf_sha256": "395912ad66318a4d77d877ab63edd388fc3b3294c3655452b5e5dc6410f19d88",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "ubuntu-latest-wpa3-personal.json",
+      "receipt_sha256": "8e29283b9f4896d04552e88a280d354e0c7bdc696aa75b9cb7f2f0de0d0fe5d6"
+    },
+    {
+      "artifact": "candidate-evidence-ubuntu-latest-ble-peripheral",
+      "elf_sha256": "a16ed59751970025685e65815ca59e081c4e3d4298d4888c6f21cf24266854ff",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "ubuntu-latest-ble-peripheral.json",
+      "receipt_sha256": "8ce2fd113507f0ce3568f2c78b76cb0abff9971a397cb511ab653fc3b98f5673"
+    },
+    {
+      "artifact": "candidate-evidence-ubuntu-latest-sle-announce",
+      "elf_sha256": "5af4889f0a4b6241167535d92ef49c043a415418c7addbea70cb06deefb5472e",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "ubuntu-latest-sle-announce.json",
+      "receipt_sha256": "2e0abc686fd80caae18a938d6b1c8aa4b22ad8057a0f75e404d94883832e1be5"
+    },
+    {
+      "artifact": "candidate-evidence-macos-14-wpa2-personal",
+      "elf_sha256": "ebafdac23fd780b1048f555849a0a6b589ec4dadf104ade855b00db2fe58f20f",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "macos-14-wpa2-personal.json",
+      "receipt_sha256": "65909a6f7f496da661276f493bb58292c01aa34847f6f4ed3dc01951212a1082"
+    },
+    {
+      "artifact": "candidate-evidence-macos-14-wpa3-personal",
+      "elf_sha256": "f73bf682c2c548b5100b2562809772b1386cd4a58ca445c9c096caf43cc979b1",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "macos-14-wpa3-personal.json",
+      "receipt_sha256": "a24cc4c375d345c100ee43a4428e7034a3b24c7316f202b2d4cac5738e486993"
+    },
+    {
+      "artifact": "candidate-evidence-macos-14-ble-peripheral",
+      "elf_sha256": "40da69f7de35dcdb9b710826de495398dbaaae3c4edf249e089ff1aa402ccfb3",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "macos-14-ble-peripheral.json",
+      "receipt_sha256": "ba53e0052aa1f464e74b50f6c5d61714372be6e9b90a45eb7e3e6eb0f4d12608"
+    },
+    {
+      "artifact": "candidate-evidence-macos-14-sle-announce",
+      "elf_sha256": "a24da7cafadbc5a4738c4669ff10cd9885b8668ac796b8bfb1f8539c1455f9cb",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "macos-14-sle-announce.json",
+      "receipt_sha256": "1bca084e915eb8f944ce074fb02d22958ffcbfe90cbdf38391af951f1d54e4b4"
+    },
+    {
+      "artifact": "candidate-evidence-windows-latest-wpa2-personal",
+      "elf_sha256": "a659f4ef979cd5f408a75836775fac59cf03bcdc0295a80c1ac45299433c6d5f",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "windows-latest-wpa2-personal.json",
+      "receipt_sha256": "4b95e23cc093a46964b7791322ff7f96843693f6451fbe19530ae3ba83492549"
+    },
+    {
+      "artifact": "candidate-evidence-windows-latest-wpa3-personal",
+      "elf_sha256": "da1a1e0448b6f5a988dd3055c2afa58418728a813bcbb42a00c094245359e431",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "windows-latest-wpa3-personal.json",
+      "receipt_sha256": "53edf50cb022c282c762b667f224785ce3236a8a870c1d543df3d27ce0aafea7"
+    },
+    {
+      "artifact": "candidate-evidence-windows-latest-ble-peripheral",
+      "elf_sha256": "a0d7ff72cf17e16c8496a883a591ef30d850a7c1f7cdeb9e0805009c0ccddd66",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "windows-latest-ble-peripheral.json",
+      "receipt_sha256": "c97ba4a717f8741428d66245eeb7a6b6553b6f00c1ac3e04c8bdfee137aac136"
+    },
+    {
+      "artifact": "candidate-evidence-windows-latest-sle-announce",
+      "elf_sha256": "cc183acc4f5326e48199cd9eccd12a5a8ae90795a61b26678916ee831ad287c7",
+      "lock_sha256": "fa1e228ec8225c9db0f803de06a5ab81fb9c28f61187c6d736a82050ea5ccb14",
+      "receipt": "windows-latest-sle-announce.json",
+      "receipt_sha256": "679e591c86bfde77fa51c8cc7abfd5f5b100088abbb12bbbe24d2342588d259c"
+    },
+    {
+      "artifact": "published-evidence-ubuntu-latest-wpa2-personal",
+      "elf_sha256": "f07bd023d661b7a20a844b4e435d49a2115a39d65a72d961d946c48e0d857996",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "ubuntu-latest-wpa2-personal.json",
+      "receipt_sha256": "011997ba66b7c5202c3d038e4a375fe0c0d801450f6e64f77743d0fdb2a4d203"
+    },
+    {
+      "artifact": "published-evidence-ubuntu-latest-wpa3-personal",
+      "elf_sha256": "f2a6ac69064f0e744b5214019be576d92577311448b56cb92e688c4c7874a0f6",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "ubuntu-latest-wpa3-personal.json",
+      "receipt_sha256": "9d85045e9342013653019731b8d6b86611940da4c31f4921279f44da75e813b6"
+    },
+    {
+      "artifact": "published-evidence-ubuntu-latest-ble-peripheral",
+      "elf_sha256": "bed78e1ad53bfc6c461046319aff315b3ca948f4571b7b529f5f5c2b32e24545",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "ubuntu-latest-ble-peripheral.json",
+      "receipt_sha256": "15cdc1aca0a928f9e778a4e6fdd6a4c20f715322cb014ddaf330ef72c9714f8a"
+    },
+    {
+      "artifact": "published-evidence-ubuntu-latest-sle-announce",
+      "elf_sha256": "2dd4d1ef4581ad89c393b0ccdf5f2bc87c0ff780460d1f7646012d208bfa7b31",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "ubuntu-latest-sle-announce.json",
+      "receipt_sha256": "48d70fed972340d73c050eb7aa7269c729ef8593cd26274ffc1e59fcc05c448e"
+    },
+    {
+      "artifact": "published-evidence-macos-14-wpa2-personal",
+      "elf_sha256": "954dbfebc07b65257c787939e58d72e86aa17689c901448dd853db29d51f703d",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "macos-14-wpa2-personal.json",
+      "receipt_sha256": "296c1c08e33253ee6a38a68ea511b80b04ac1aacc96e384167adad0e6f3bf0b6"
+    },
+    {
+      "artifact": "published-evidence-macos-14-wpa3-personal",
+      "elf_sha256": "f2700125911e2c668fe094f0c76165fd88dfd926766b3406cae23dd76c87b501",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "macos-14-wpa3-personal.json",
+      "receipt_sha256": "fa5c68243ae529e7f1471a5ef281aeb17ee81bf3c505a749fbee35808bf46d87"
+    },
+    {
+      "artifact": "published-evidence-macos-14-ble-peripheral",
+      "elf_sha256": "90276d34c733a06e80e165c3f96e2b213c156fe0af35a9a1b0901e0a3fe42bbb",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "macos-14-ble-peripheral.json",
+      "receipt_sha256": "27cdd19739fe50f622435f11718281c4ad20728b939dc06e8eacfca15d6aa0e0"
+    },
+    {
+      "artifact": "published-evidence-macos-14-sle-announce",
+      "elf_sha256": "aa539bb58c8780531f9c29018c5e9b18984cd1659a27dd4310c8cc12061f0bc0",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "macos-14-sle-announce.json",
+      "receipt_sha256": "4b5a2923891a7b0ae83ddabe40d6abb47181baf1501468e29df9a0d99e79dbb8"
+    },
+    {
+      "artifact": "published-evidence-windows-latest-wpa2-personal",
+      "elf_sha256": "da7755ffb9132e0449d82b3e37e6bac1c0474afd9223f4ee2d70a83f2914e131",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "windows-latest-wpa2-personal.json",
+      "receipt_sha256": "0e127e83a5bbe1f60ed18e8aff720811539022adb97c2e1716bd8193f5ea9e89"
+    },
+    {
+      "artifact": "published-evidence-windows-latest-wpa3-personal",
+      "elf_sha256": "e8c3ecf905437d7038b8329c24f855176bea25fd3cbc6ea094f2cf0fa39c61df",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "windows-latest-wpa3-personal.json",
+      "receipt_sha256": "4e8f7d326aff9c4f5188db7a1563eeeeaec9028d0a50ca3c276c23dd00d979ac"
+    },
+    {
+      "artifact": "published-evidence-windows-latest-ble-peripheral",
+      "elf_sha256": "6745ee83d57575d7a21927db53423015871b011503ea03b8f26751a84d5ebfc9",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "windows-latest-ble-peripheral.json",
+      "receipt_sha256": "1d79d969844a027531aeed53749c89c764eac282c5bf18c8b5bd7237283c270d"
+    },
+    {
+      "artifact": "published-evidence-windows-latest-sle-announce",
+      "elf_sha256": "703bb52a85fe7733838b3ff7d4dd38b24058b29e79bc303e321c95783206d913",
+      "lock_sha256": "f4fc1c7d687898c5725212c808607c164fcc835ea2e291a016a83a9c225ab9c6",
+      "receipt": "windows-latest-sle-announce.json",
+      "receipt_sha256": "ba88d296d987a269821dd445a14fc9b7d806198b9bf14696a8f14da14d26fc39"
+    }
+  ],
+  "package": "hisi-rf=0.1.0-alpha.116",
+  "run_attempt": 1,
+  "run_url": "https://github.com/hispark-rs/hisi-rf/actions/runs/34318794641",
+  "schema": 1,
+  "scope": "Published existing profiles with NET0 contract dependencies; not new standard-L2 profile or HIL acceptance. GitHub Actions artifacts have finite retention.",
+  "source_commit": "b7e0b2948d7ec57fb6ce086d83cba5f167fc4b8a",
+  "status": "pass",
+  "verification": "Rehashed downloaded candidate crate, 24 raw receipts, 24 consumer ELF files and 24 Cargo.lock files; checked exact matrix/source/run/host/profile/toolchain identities."
+}

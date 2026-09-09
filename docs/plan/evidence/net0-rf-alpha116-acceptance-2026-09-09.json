@@ -1,0 +1,126 @@
+{
+  "jobs": [
+    {
+      "conclusion": "success",
+      "name": "Require successful source CI"
+    },
+    {
+      "conclusion": "success",
+      "name": "Build immutable candidate"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (ubuntu-latest, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (macos-14, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (macos-14, wpa3-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (macos-14, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (ubuntu-latest, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (macos-14, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (windows-latest, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (windows-latest, wpa3-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (windows-latest, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (windows-latest, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (ubuntu-latest, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Candidate consumer (ubuntu-latest, wpa3-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Publish verified candidate"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (ubuntu-latest, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (macos-14, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (windows-latest, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (macos-14, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (macos-14, wpa3-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (ubuntu-latest, wpa3-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (windows-latest, wpa2-personal)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (ubuntu-latest, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (ubuntu-latest, sle-announce)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (macos-14, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (windows-latest, ble-peripheral)"
+    },
+    {
+      "conclusion": "success",
+      "name": "Published consumer (windows-latest, wpa3-personal)"
+    }
+  ],
+  "kind": "crates-io",
+  "registry": [
+    {
+      "package": "hisi-rf",
+      "sha256": "7fe26d515dc1b407ad54aa90ccfa1c4161dc726c4ebc03cf94bdb574f1f39c7c",
+      "source_commit": "b7e0b2948d7ec57fb6ce086d83cba5f167fc4b8a",
+      "version": "0.1.0-alpha.116"
+    }
+  ],
+  "run_attempt": 1,
+  "run_url": "https://github.com/hispark-rs/hisi-rf/actions/runs/34318794641",
+  "schema": 1,
+  "source_commit": "b7e0b2948d7ec57fb6ce086d83cba5f167fc4b8a",
+  "status": "pass"
+}
