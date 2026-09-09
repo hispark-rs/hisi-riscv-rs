@@ -1,0 +1,886 @@
+{
+  "schema": "net0-control-evidence/v1",
+  "status": "control-plane-passed-only",
+  "boundary": "No NET0 payload/producer-fence, reconnect, Embassy Net, HTTPS, secure boot or release acceptance claim",
+  "parent_source": "beda64110d66397d14f4a6128a72c5662e0bf98d",
+  "sta_source": "3914ff5424ee872bf1e4a5adfebc5c2070ba50b2",
+  "examples_source": "7fe7bfd38df4e654fc12d186acca32e123958607",
+  "ci": {
+    "backend": 34305967044,
+    "parent": 34306627005,
+    "documentation": 34306627017
+  },
+  "configuration": {
+    "kind": "committed non-production paired-board test configuration",
+    "source_path": "examples/ws63/hil_wifi_config.rs",
+    "sha256": "ff3b87eb5fa268b8bfba7a020c1ce1f19ceebe65cc670c1bb111c94ec99289df",
+    "private_credential_file_used": false
+  },
+  "elf": {
+    "ap": {
+      "sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+      "delivery": "local-only"
+    },
+    "sta": {
+      "sha256": "85900df215755b764785d625c7bebe11a8a24c3b2a28cb1e46fa729343d93476",
+      "delivery": "local-only"
+    }
+  },
+  "inputs": [
+    {
+      "file": "ap.Cargo.lock",
+      "sha256": "0f993d712910c86b6b4b4ec88089b2d1dd2ef1231c037aa5a344543c86dc6435"
+    },
+    {
+      "file": "sta.Cargo.lock",
+      "sha256": "e7b84de45abb47c5a176d67b7d7e6b27c7ea614c70a920d00e55bcd669366848"
+    },
+    {
+      "file": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "file": "capture-tool.py",
+      "sha256": "dcdced6dfebd326dd0378c7cabd8e26171ca250c866ff6abde1c1fad1b6b44b6"
+    }
+  ],
+  "matrices": [
+    {
+      "schema": "net0-control-hil/v1",
+      "source_commit": "beda64110d66397d14f4a6128a72c5662e0bf98d",
+      "elf_sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+      "role": "ap",
+      "probe": "1366:0105:000023121310",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 1.3619214999489486,
+          "markers": {
+            "RFDBG_SOFTAP_READY": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 1340,
+              "sha256": "6a0b9bf07b3fa016dc623f56c828738bb84718a34b052a26171bc1a25be77b8d"
+            },
+            {
+              "role": "peer",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          ],
+          "public_excerpt": {
+            "file": "ap-preflight-run-01.markers.log",
+            "sha256": "df81dbf5285be651f4fe7192bdb18b613c3f7097b135b52da31cb7f626088282",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {}
+        }
+      ],
+      "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+      "flash": {
+        "exit_code": 0,
+        "seconds": 89.64019587496296,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "be3f127d2b99ef58705778c9297e70b1194b52b8a05addabdd2ea00611fc8541",
+        "image_sha256": "52ee50542074cc0b52654ddc878aa08225cfb78b9e6cd90fc03e70f0dc7befa1",
+        "plan": {
+          "file": "ap.plan.json",
+          "sha256": "c2a587d58e0affe7f5c2ee820426beec64f525288bf3ac9b491ce4090e4b27c8"
+        }
+      },
+      "case": "ap-preflight",
+      "raw_summary_sha256": "d722bec239f7529abc91e949ceccb569005a8be24029f83a9683288ef5cc4b74"
+    },
+    {
+      "schema": "net0-control-hil/v1",
+      "source_commit": "3914ff5424ee872bf1e4a5adfebc5c2070ba50b2",
+      "elf_sha256": "85900df215755b764785d625c7bebe11a8a24c3b2a28cb1e46fa729343d93476",
+      "role": "sta",
+      "probe": "1366:0105:000024060504",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 10.742665208061226,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 28111,
+              "sha256": "134359e9bf89eb0cb450a4da46b23da2c73dbdfabbe4d4d8660a4a8e12d06384"
+            },
+            {
+              "role": "peer",
+              "bytes": 10518,
+              "sha256": "ad745ae4fab6d56e2e4208640a9f299832df38e441e29fc6af5a8276db372d74"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset3-run-01.markers.log",
+            "sha256": "43ea36b0151c8e2e87f20eea9cbb1e19c89bafcaacbfdbf1c2262bb8b64e39ce",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 13192,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 9.983134416048415,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 18834,
+              "sha256": "49198bfd9870a630af4d76074746d8a257539163c13db815f3e1e05d7542d738"
+            },
+            {
+              "role": "peer",
+              "bytes": 37993,
+              "sha256": "5336067fcbf96e761b3320278d1e4d404b06d643b6ee13d9c0b91ade9612e731"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset3-run-02.markers.log",
+            "sha256": "3ceba30fc8cc8e0a4ce8b18bca9168587a1f693da5854a350b401bcf913297ce",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 11936,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 4.18734820804093,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22005,
+              "sha256": "a9b11f9d8a058265e85864e8832300a453db0fe78ce90da1e5c76b813c6f4cb9"
+            },
+            {
+              "role": "peer",
+              "bytes": 14488,
+              "sha256": "dc6db678c7997fbe7bd7aaad46f64e29a381e2cdd559c83b779e0686cbb5422b"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset3-run-03.markers.log",
+            "sha256": "f38b91867a495cc518b5a62668a41b487f801c933b1d88afc412e2357e04a75f",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2197,
+            "DISCONNECT": 110
+          }
+        }
+      ],
+      "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+      "flash": {
+        "exit_code": 0,
+        "seconds": 89.46354654198512,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "975ef9a0fdc8dd6e99ae35a22eef44db6a09a9673f670476de106c95ccf1ff85",
+        "image_sha256": "fbcccf501fbd9fed36d671a8d9416aa40e9adbe8460f4c3c584874c960f6e8f3",
+        "plan": {
+          "file": "sta.plan.json",
+          "sha256": "3e01156475ba6ce90209ed41fc7fd8b37b2254dc375ab84d21d9540a76e427da"
+        }
+      },
+      "case": "sta-reset3",
+      "raw_summary_sha256": "e3f2fa7123eee1f5d0f91d0613edd25cbcb1f13662fb6d6b43a93b2c309b41a0"
+    },
+    {
+      "schema": "net0-control-hil/v1",
+      "source_commit": "3914ff5424ee872bf1e4a5adfebc5c2070ba50b2",
+      "elf_sha256": "85900df215755b764785d625c7bebe11a8a24c3b2a28cb1e46fa729343d93476",
+      "role": "sta",
+      "probe": "1366:0105:000024060504",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 10.000216583022848,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20097,
+              "sha256": "92041bc30ca3fb23d23ffc757788d1b929eb0ef471ad40eb783683bee535c3e9"
+            },
+            {
+              "role": "peer",
+              "bytes": 34071,
+              "sha256": "76977125471517ab7bc3cb4a6246898e35f7d7a9e1e37262e38a9e6b4e25dff2"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-01.markers.log",
+            "sha256": "17fbc9412f704a6893ea5c16709d1b70eacd0e322f25ed4aee9d52b0c542a452",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 11877,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 10.066948415944353,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20097,
+              "sha256": "929ac6825266846ea4bc362b02f8d0e32cbeb5d830cb38db7c2ad0ea8db0726a"
+            },
+            {
+              "role": "peer",
+              "bytes": 39555,
+              "sha256": "32b89eef84a5ce428f18aaa514dadf5fe26be7b288fb3399e9be735d5a2d41c0"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-02.markers.log",
+            "sha256": "c52c22cf9cbd4725129c5bab92cfc256ba03bbb6eef06635ffe473232397ad12",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 12012,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 3.9502757500158623,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 19143,
+              "sha256": "6ae88731528d10ea0ba8fa9c2b973992ab944272edd69e82cd94226a3024a709"
+            },
+            {
+              "role": "peer",
+              "bytes": 12196,
+              "sha256": "a925e5a33b9a0e58e369f487cbdc91372220e0757f991d88d98109226b30df6a"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-03.markers.log",
+            "sha256": "df3105e2b96d832c2ea47f6e18aedf98ee57d9514aedcc335772a9f9bf45ef9d",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1781,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 4,
+          "pass": true,
+          "elapsed_seconds": 9.954169291071594,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 18825,
+              "sha256": "860c25d94780521494f55d237d4debc53d15d7e1d8ce31e41bba359540bf6d89"
+            },
+            {
+              "role": "peer",
+              "bytes": 39913,
+              "sha256": "6a7cd79c6c8a6cea324371dfc381db22164ad71afca74beb3b06e4bdc23dcc42"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-04.markers.log",
+            "sha256": "c87ec35fa85074dbddf7e363a38b59392c2640663ab7bd7d458b82db7df1deba",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 11874,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 5,
+          "pass": true,
+          "elapsed_seconds": 10.06838750001043,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20415,
+              "sha256": "7701287dce659a2fc3a65f9dd6dd6f3738ca8322b664d7292a0416e5a150c25a"
+            },
+            {
+              "role": "peer",
+              "bytes": 33596,
+              "sha256": "5e5de10e053486e6d2698c67a3fb5212793947f10dcd9a607370dab5803e24a0"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-05.markers.log",
+            "sha256": "0f4e9f0ebc7f2586505ad15b17d9876af852b81181a032bf3924e6fcccb66e14",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 11993,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 6,
+          "pass": true,
+          "elapsed_seconds": 4.0182284999173135,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22014,
+              "sha256": "b92e7ed4daa995cd6aece844eb6ada6363bbf6370c14330deabb50e774f995ca"
+            },
+            {
+              "role": "peer",
+              "bytes": 16989,
+              "sha256": "cbf45781b42b61f8b3440459c90120158568edf27842d4bab1e0f5d9ad780e81"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-06.markers.log",
+            "sha256": "e2ec2a89beaf4cc78430ee7bbc9c6c320189e4a61e761ce5d8ca1f3e58fd534f",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1773,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 7,
+          "pass": true,
+          "elapsed_seconds": 4.810105166980065,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29964,
+              "sha256": "900be554a432fcce7c73e2319a708fee4563d67bca518bfa00a587733e3bb67f"
+            },
+            {
+              "role": "peer",
+              "bytes": 13633,
+              "sha256": "0de3a4df6defd9e466c9a71f7b89c609373955a5044649c83cf929bba16db46f"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-07.markers.log",
+            "sha256": "e56c6112ea9fee16a23d51af861b540ab8d86523b55bc3f8a8bcff9a13694a3d",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 3087,
+            "DISCONNECT": 112
+          }
+        },
+        {
+          "index": 8,
+          "pass": true,
+          "elapsed_seconds": 4.007947249920107,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20424,
+              "sha256": "d69973ea2d7321907529dbae9a06ce8d87351d16bd420a36368192fce986e978"
+            },
+            {
+              "role": "peer",
+              "bytes": 17021,
+              "sha256": "5b1f04fe48dc258fabdf575efe738af8cc0e9c0783dc472ed64fae765aa8a687"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-08.markers.log",
+            "sha256": "16648aa0d6c414994bb4069ea195d14c525f823b6126228fc5b05a2e06605ed7",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1856,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 9,
+          "pass": true,
+          "elapsed_seconds": 4.178684125072323,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 24240,
+              "sha256": "ebad15976f56ef7e625fe3e1d24443818893853d3a38720ff1091fbe3c75e9a7"
+            },
+            {
+              "role": "peer",
+              "bytes": 14367,
+              "sha256": "356021594d13fd29a493b82ecbdac820bb6e17bf9bafdd87f6bfc0d24d98e9d0"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-09.markers.log",
+            "sha256": "52256ccb3438e9a61011ee7798e67a63a88df9c29729302b780318dd759d3565",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2055,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 10,
+          "pass": true,
+          "elapsed_seconds": 3.992713209008798,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21060,
+              "sha256": "14b626f9112fe4093a1bf678e4b16e0b6e4b6cddb7f411f554d23cdc169d66ce"
+            },
+            {
+              "role": "peer",
+              "bytes": 16157,
+              "sha256": "5c5b9457a6b991da397a20207fa86f5937892af5c0087ed3e84b83f8deca8b1c"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-10.markers.log",
+            "sha256": "87a652c1b7c3141404e99967b54fe3492872087c8535fe5a0f31f3dc1dfa24bb",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1801,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 11,
+          "pass": true,
+          "elapsed_seconds": 4.227087249979377,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 23277,
+              "sha256": "6c98adf9861ee39c53cfcb12756a0d488141edaa3024df2fde0252973d6db47c"
+            },
+            {
+              "role": "peer",
+              "bytes": 15173,
+              "sha256": "16220628b7856105c81950cefed952f8484ca6d61944f30fbd37ddbaae18ceed"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-11.markers.log",
+            "sha256": "0202e6f14fb16a127fdd3fe96bd4049239d3ce80bb40d29ac10693e9c76ae0b4",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2245,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 12,
+          "pass": true,
+          "elapsed_seconds": 3.987332500051707,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20115,
+              "sha256": "25c3d75282907a8b535b37adb4d2fcfe9a82c35f5cdf2b2d3bbd354508185990"
+            },
+            {
+              "role": "peer",
+              "bytes": 16349,
+              "sha256": "1beff54d4599620fc9b64412bd24258919aba65697d61b0ee0d56913d4957305"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-12.markers.log",
+            "sha256": "3b4b37dc62e63f850e776489af9052087a6708f29a022a9851a603315deba439",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1785,
+            "DISCONNECT": 112
+          }
+        },
+        {
+          "index": 13,
+          "pass": true,
+          "elapsed_seconds": 10.24278766696807,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21696,
+              "sha256": "ae6d7f3dd12514322ada177b1651faffa91d121e23dddd3881738974cced35f4"
+            },
+            {
+              "role": "peer",
+              "bytes": 36107,
+              "sha256": "7fcdc97a20f03f286df335d4831d1b7209d679ab03f88abda76935fa2d612a7a"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-13.markers.log",
+            "sha256": "3409bdbe64a8e3654f74a0b2b0cab2fb2eee56a787ac82711e24a1f57009a11d",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 12342,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 14,
+          "pass": true,
+          "elapsed_seconds": 3.8522282500052825,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 18507,
+              "sha256": "2ac9cc7546def8118384bc99245205006c20da8d4cd6207f5094a08528a93b1a"
+            },
+            {
+              "role": "peer",
+              "bytes": 14845,
+              "sha256": "7fe7b46384c63e832c82845bfd20f8e75a50727927b74634fac56faaae062d6c"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-14.markers.log",
+            "sha256": "a66fcd8b2ccc10977fef105629197f9d7095ef4fba5023621f0ebdaa05a90f68",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1678,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 15,
+          "pass": true,
+          "elapsed_seconds": 4.368181208963506,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 23595,
+              "sha256": "7540856c2168bf7877365f99111b3e525af7cbe61d03502aa6466840dd1d00aa"
+            },
+            {
+              "role": "peer",
+              "bytes": 16575,
+              "sha256": "0415b1cf635cc7489ad6ed41022de8b99c2cdf540fbd21441ea57895a73dffea"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-15.markers.log",
+            "sha256": "d5008a9ac0139ca0ef2e76e598f87b3e0698fd18043359d1e5febcaaa330de35",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2490,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 16,
+          "pass": true,
+          "elapsed_seconds": 4.014729124959558,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20106,
+              "sha256": "3c3bef2bd02820a619b4eb63aa77b802f705c61e8540295494fa52049739b31d"
+            },
+            {
+              "role": "peer",
+              "bytes": 16477,
+              "sha256": "2d7bada5d99d668e7948bc4c9f03d0dc297935eab8253deb9b5090880c62bda6"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-16.markers.log",
+            "sha256": "60b8ff91aebfdfa7f65301362da70f560a4693e1888a63382ed5ad8781f25276",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1832,
+            "DISCONNECT": 111
+          }
+        },
+        {
+          "index": 17,
+          "pass": true,
+          "elapsed_seconds": 10.24338495801203,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21687,
+              "sha256": "b600c12619292d8e9a6a0c96d6cab1abc50763123a6e3a6b2fd40e749973353d"
+            },
+            {
+              "role": "peer",
+              "bytes": 35982,
+              "sha256": "01cc4828ddc5aec433fe5dc7d58c61e11de419245999303d10c631b2739eabf7"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-17.markers.log",
+            "sha256": "243c157904979a70c03558ae8046c18b27fad2b25f38a2719b7c7a8b682bd959",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 12346,
+            "DISCONNECT": 111
+          }
+        },
+        {
+          "index": 18,
+          "pass": true,
+          "elapsed_seconds": 4.015065332991071,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20415,
+              "sha256": "4c5d11cee6e3fe616d09456464265922641b2bafed95e334bbe31af6bfaa06d9"
+            },
+            {
+              "role": "peer",
+              "bytes": 16445,
+              "sha256": "c3e198b1f06d66ea720df7b94ab4bd75fc25de4beab5ce5f0faac07b169bcb59"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-18.markers.log",
+            "sha256": "5c2096365ef7528a3e214a9849c6d0e76abdc85090a4485bd0648b18279f94a1",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1786,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 19,
+          "pass": true,
+          "elapsed_seconds": 4.244501415989362,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22323,
+              "sha256": "1c789d771ab66fee97acc356982dd8e2bf879226ddc18ec4f35c2303e92c2031"
+            },
+            {
+              "role": "peer",
+              "bytes": 14988,
+              "sha256": "2ff384cb77a543f43647fb17627b08e51f92dc94a16d94cc220b87b35e94f586"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-19.markers.log",
+            "sha256": "8c41d4a776158d2d773eab8863508d7c0409e424ff10ae87222198f9f7d80c7f",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2282,
+            "DISCONNECT": 110
+          }
+        },
+        {
+          "index": 20,
+          "pass": true,
+          "elapsed_seconds": 3.9592657920438796,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20106,
+              "sha256": "82eeffb7e39aad6925bd6d7c3d31ac3787b154dc8516a1378540792f8cedd89f"
+            },
+            {
+              "role": "peer",
+              "bytes": 16029,
+              "sha256": "9719465f3e5df12cf771091dd0ba3a8e3014019458028efaf3661dfc7c27ef83"
+            }
+          ],
+          "public_excerpt": {
+            "file": "sta-reset20-run-20.markers.log",
+            "sha256": "4cec03e9ac42db28d4798fa921bac9d46375b37336cc822aecde2f35b53c3928",
+            "policy": "full-line whitelist; not an original UART capture"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1835,
+            "DISCONNECT": 109
+          }
+        }
+      ],
+      "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+      "case": "sta-reset20",
+      "raw_summary_sha256": "45fc417c259d3493020c62c64cc7618502a29ab55a0f15e086611c311d883e8a"
+    }
+  ],
+  "post_run20_readonly": {
+    "source": "3914ff5424ee872bf1e4a5adfebc5c2070ba50b2",
+    "elf_sha256": "85900df215755b764785d625c7bebe11a8a24c3b2a28cb1e46fa729343d93476",
+    "deauth": {
+      "file": "sta-deauth-counters.bin",
+      "sha256": "56bf425bcc2d60a815175503b3fd7349ed8c8d2edf86617a5b641a5889a62489",
+      "base": "0x00a2d4a8",
+      "bytes": 44,
+      "failed": 0,
+      "queued": 1,
+      "dropped": 0,
+      "completed": 1
+    },
+    "throughput": {
+      "file": "sta-throughput-modes.bin",
+      "sha256": "015275e61fa0d0751c1d9f45541c7804c895404455470710ade3786f282f2da0",
+      "base": "0x00a32ea0",
+      "bytes": 23,
+      "resume_frw_rx_data_18": 0
+    },
+    "boundary": "last-reset snapshot only; not a per-round native receipt or permanent RX-mode invariant"
+  },
+  "tools": {
+    "rustc": "rustc 1.99.0-nightly (14cae6813 2026-07-08)\nbinary: rustc\ncommit-hash: 14cae681329a63c622a6e1fbe1d30f9374bc51d8\ncommit-date: 2026-07-08\nhost: aarch64-apple-darwin\nrelease: 1.99.0-nightly\nLLVM version: 22.1.8\n",
+    "probe_rs": "probe-rs 0.31.0 (git commit: ed6ac741)",
+    "probe_rs_sha256": "fed6d7b73cb3984bd19fd7d05d2bf31057d57b2f988bb51677a75da016a9c232",
+    "probe_yaml_sha256": "90c0c07c50f967e6d8d40578c8a7b93841e86cb2cc005cf1d1b1b94c0251f3c2",
+    "hisi_fwpkg": "hisi-fwpkg 0.3.3",
+    "hisi_fwpkg_sha256": "6bfedba07579cc62e1f932234ee196b9cb785372742c83711bd7ae35a336f760",
+    "reset": {
+      "source_path": "hil/jlink_nrst.py",
+      "sha256": "95ba6d96bacd558c69ec87f0e4144efd926c427dcfc4992aa9e78b9bc9563a48"
+    },
+    "flash": {
+      "source_path": "hil/flash.sh",
+      "sha256": "a30a4b394b15c0fecf38129e22ce9f69d35569100b0df393fd925c4521281383"
+    }
+  }
+}

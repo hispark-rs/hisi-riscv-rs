@@ -24,7 +24,9 @@
 父仓当前另 pin 了尚未发布的 NET0 backend 改动。仅启用 `standard-l2` 时，
 资源报告为 `hisi-rf-resource-report/v14` / `ws63-radio-2026-09-09-r14-net0`，
 计入 caller-owned L2 队列；未启用时仍使用上表 v13。该实验路径已通过目标 ELF
-存储布局和双板初始化准入预检，但尚未完成 L2 流量、断连屏障或重连验收，
+存储布局和双板初始化准入预检；`3914ff5` 的固定 ELF 另完成
+[3/3 + 20/20 控制面 connect/disconnect](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-control-2026-09-09.md)，
+但该 fixture 未开放新 L2 route，尚未完成 L2 流量、断连屏障或重连验收，
 不能视为已发布的 Embassy Net 支持。
 
 ## Profile 矩阵

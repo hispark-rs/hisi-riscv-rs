@@ -1224,7 +1224,7 @@ ticket 所有权；内联调用结束后重新 wake 排队请求，session 失�
 worker 的 link-down 与 native 排空。独立公开依赖 offline host tests 160/160、
 旧 profile 119/119、Miri receipt tests 24/24、host/RV32 Clippy 与最终链接通过；
 精确源码 [CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34305002013)
-通过。仍未发布、未烧录新提交，native fence / 新队列 worker composition / 流量 HIL
+通过。该阶段尚未发布或烧录；后续 `3914ff5` 控制面 HIL 见下，native fence / 新队列 worker composition / 流量 HIL
 保持 open。同日只读审计补充了双板相同 ROM 摘要、过早的 DEL_USER_COMPLETE 通知和
 DMAC 隐藏释放错误，详见[同一 native fence 证据](evidence/net0-native-fence-audit-2026-09-09.md)；
 这些观察不能转写成排空或重连成功声明。
@@ -1234,8 +1234,20 @@ backend `3914ff5` 修复了原生 admission close 与 link-up wake 交错时被�
 真实 waker 交错回归先在旧实现失败，再在修复后通过；独立 offline host 163/163、
 旧 profile 119/119、L2 Miri 13/13、host/RV32 Clippy 和最终 ELF 检查通过。
 精确源码 [CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34305967044)
-及三平台下载资源报告比对通过。尚未发布或烧录该提交，native producer fence、
-worker composition 和流量 HIL 继续 open；不跳到 NET1。
+及三平台下载资源报告比对通过。随后同一 STA ELF 以 3 MHz 完整 verify，复用固定
+WPA2 SoftAP 完成 3/3 预检与 20/20 nRST connect/disconnect，见
+[控制面证据](evidence/net0-control-2026-09-09.md)。最后一轮只读计数为 native deauth
+queued/completed=1/1、failed/dropped=0/0；这是末轮快照，不是每轮 native 排空证明。
+此 fixture 的新 L2 route 仍 closed，没有新队列流量或重连验收；尚未发布，native
+producer fence、worker composition 和流量 HIL 继续 open，不跳到 NET1。
+
+后续 backend `af81bf5` 增加原生 TX 准入票据：admission close 后，已排队但未开始的
+TX 也不得进入原厂函数；已准入调用保留票据/缓冲直至返回，reopen 拒绝未完成借用。
+回归先在旧实现失败；独立 offline host 167/167、旧路径 119/119、L2 Miri 17/17、
+host/RV32 Clippy 和最终 ELF/资源检查通过；精确源码
+[CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34307709275)
+包含 Linux/macOS/Windows NET0 契约与最终链接。该补丁尚未烧录，前述 23 次控制面样本
+不迁移到它，也不将 Rust TX 借用归零解释为原厂队列/DMA 排空。
 
 #### NET1：Embassy Net 接入
 
