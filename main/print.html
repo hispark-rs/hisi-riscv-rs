@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-7987b2d4.js";
+            window.path_to_searchindex_js = "searchindex-21b6760b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-8a6bfe17.js"></script>
@@ -3257,9 +3257,9 @@ revision、bounded trace 和操作顺序，不要继续复用可能已失配的�
 <tr><th>组件</th><th>版本或修订</th></tr>
 </thead>
 <tbody>
-<tr><td>用户 facade</td><td><code>hisi-rf 0.1.0-alpha.115</code></td></tr>
-<tr><td>WS63 backend</td><td><code>hisi-rf-ws63 0.1.0-alpha.101</code></td></tr>
-<tr><td>target archive 包</td><td><code>ws63-radio-blob 0.1.0-alpha.25</code></td></tr>
+<tr><td>用户 facade</td><td><code>hisi-rf 0.1.0-alpha.116</code></td></tr>
+<tr><td>WS63 backend</td><td><code>hisi-rf-ws63 0.1.0-alpha.102</code></td></tr>
+<tr><td>target archive 包</td><td><code>ws63-radio-blob 0.1.0-alpha.26</code></td></tr>
 <tr><td>Wi-Fi 资源报告</td><td><code>hisi-rf-resource-report/v13</code> / <code>ws63-radio-2026-09-01-r13</code></td></tr>
 <tr><td>BLE/SLE 资源报告</td><td><code>hisi-rf-radio-resource-report/v1</code></td></tr>
 </tbody>
@@ -3268,13 +3268,14 @@ revision、bounded trace 和操作顺序，不要继续复用可能已失配的�
 <p>当前只有 WS63 backend。<code>bs20</code>、<code>bs21</code> 和其他芯片没有可选择的 <code>hisi-rf</code> 实现，
 因此不能从“HAL 支持该芯片”推导出“RF 支持该芯片”。</p>
 <p>本次发布新增非默认 NET0 契约，未切换下面的 smoltcp profile。精确发布的
-<a href="https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416">三平台 consumer CI</a>
-和<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json">下载验收</a>
+<a href="https://github.com/hispark-rs/hisi-rf/actions/runs/34318794641">三平台 consumer CI</a>
+和<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha116-acceptance-2026-09-09.json">下载验收</a>
 已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。</p>
-<p>父仓当前另 pin 了尚未发布的 NET0 backend 改动，以及已发布并完成
+<p>上表闭包包含已发布的 NET0 backend 改动，以及已完成
 <a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-host-delivery-2026-09-09/radio-release-acceptance.json">下载验收</a>
 的 <code>ws63-radio-blob 0.1.0-alpha.26</code> / <code>ws63-radio-sys 0.1.0-alpha.26</code>。
-这不是上表 facade alpha.115 的发布依赖闭包变更。仅启用 <code>standard-l2</code> 时，
+facade 同时固定 <code>hisi-rf-core 0.1.0-alpha.26</code>，提供经过验证的单播站点地址类型和
+口令/配置 Debug 脱敏。仅启用 backend 的非默认 <code>standard-l2</code> 时，
 资源报告为 <code>hisi-rf-resource-report/v14</code> / <code>ws63-radio-2026-09-09-r14-net0</code>，
 计入 caller-owned L2 队列；未启用时仍使用上表 v13。该实验路径已通过目标 ELF
 存储布局和双板初始化准入预检；<code>3914ff5</code> 的固定 ELF 另完成
