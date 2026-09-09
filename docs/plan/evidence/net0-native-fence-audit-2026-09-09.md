@@ -225,3 +225,35 @@ disabled at this observation. This narrows the current fixture, not every
 profile: the final ELF still contains `hmac_set_thruput_test`, so the snapshot
 does not establish an immutable mode or justify ignoring future mode changes.
 Queued EAPOL is independent of index 16 and remains in the fence scope.
+
+## Enqueue And VAP-stop Return-value Limits
+
+Further inspection of the same pinned SDK disassembly confirms that the
+ambiguous enqueue return is inside `frw_host_post_data` itself, not only its
+EAPOL caller. At `0x26516c` the limit branch frees the netbuf and reaches the
+zero return at `0x265186`. The normal branch calls `frw_host_post_async` at
+`0x265194`; a nonzero result frees the netbuf at `0x26519a`, then also reaches
+that zero return. A queue-4 barrier must therefore observe its own correlated
+execution or a checked lower-level enqueue receipt. A zero from this wrapper
+cannot prove admission, progress or drainage. No sentinel was submitted on the
+basis of this observation.
+
+The alternative `wal_stop_vap` / `wal_deinit_wlan_vap` route is also not an
+already-verified replacement. `wal_stop_vap` (`0x2998f8`) calls `wal_down_vap`;
+the down handler iterates user deletion and calls `hmac_vap_clear_tx_queue`
+(`0x268358`), which sends device configuration 232. Its device handler
+`dmac_vap_clear_tx_queue` (`0x2a03da`) walks and frees selected VAP TX lists;
+this does not by itself cover the host queue-4 frames waiting to reach those
+lists. `wal_deinit_wlan_vap` (`0x299a72`) issues configuration 322, then clears
+the netdev's VAP pointer at `0x299acc` even after a nonzero result. Its no-VAP
+branch returns zero. Consequently a null pointer or a successful outer return
+is not a checked destroy receipt, and a failed destroy cannot be silently
+followed by recreation.
+
+For any future shim, use the explicit SDK declarations plus the actual
+archive ABI, not the historical convenience declarations in `port_frw.h`:
+that file's one-pointer `frw_send_msg_to_device` / `frw_rx_netbuf` declarations
+do not match the four-argument / two-argument definitions inspected here.
+The existing Cargo path does not acquire new FFI imports from that header in
+this change. These observations add constraints to the pending native fence;
+they are not a new runtime implementation, producer-drain proof or HIL result.

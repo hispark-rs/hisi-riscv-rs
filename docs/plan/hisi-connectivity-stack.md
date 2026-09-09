@@ -1280,6 +1280,16 @@ host Clippy（含 tests）、RV32 check/final link 通过；回退到 enqueue-on
 该提交尚未发布或烧录，不继承 `654e90c` 的 23 次控制面 HIL。原厂 producer fence、
 typed MAC/channel/RSSI/reason 和新队列流量/重连 HIL 仍待完成。
 
+core `fbbe769` 将已有非零单播 MAC 校验收敛为 `UnicastMacAddress`，由
+`WifiL2Capabilities` 实际持有；`WifiDevice::station_address` 返回该类型，旧数组接口
+保留兼容。const 正例、非法 const/私有构造 compile-fail、全部首字节分类、实例初始化
+前后和双实例隔离均有测试。独立 offline 100 项 host tests、4 项 doctests、Clippy、
+RV32、package 和 API snapshot 通过；
+[精确源码 CI 5/5](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34312901303)
+包含 Linux/macOS/Windows host 和 Linux Miri。该增量尚未发布；scan/connection 的
+BSSID/channel/frequency/RSSI 和 disconnect reason 还未迁移，不能宣称全部 typed
+metadata 或 NET0 已完成。native fence 仍是当前数据面验收的前置缺口。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
