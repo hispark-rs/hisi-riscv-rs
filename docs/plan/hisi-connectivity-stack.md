@@ -1360,6 +1360,14 @@ backend `60faf85` 新增真实 host queue-4 post/dispatch/free 的 ticket 所有
 queue-4 两个 EAPOL 与 fast-path UDP 计数分开，不能据此声称 DMAC/RX 排空。
 剩余功能门槛是 native RX/DMAC closure 和有界同设备重连；NET0 active / NET1 queued。
 
+backend `06d790b` 增加默认关闭的原生 RX-stop 实验：真实设备线程完成消息 91，
+核对完整 task handle、原生返回值、MAC 状态和软件描述符队列。修复了新增 ROM
+调用的错误 PC-relative 解析及 slot/完整 handle 混比；最终 ELF 16 项负例通过。
+[真机记录](evidence/net0-rx-stop-2026-09-09.md)保留两版失败候选、修正后的 3/3，
+以及同镜像后续 20-reset 在 2/3 停止的失败：首次授权前的断连触发终止式停机，
+再次恢复被一次性契约拒绝。不能将其写为 20/20、AP 瞬态或完整 producer fence。
+下一门槛仍是原生 RX/DMAC closure 与有界同设备恢复，不以重复 one-shot 统计替代。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
