@@ -1145,13 +1145,44 @@ caller-owned `L2Storage` 拥有 packet queue；全局仅保留独占注册的 C 
 2026-09-08 core 进度：`hisi-rf-core` 提交 `e928174`、`29c1fa9` 实现 opt-in
 `embassy-net-driver` feature、caller-owned L2Storage、独立 RX ingress、真实 TX 槽位预留、
 generation fence、smoltcp/标准 Driver 共用队列及守恒统计。新 feature 默认关闭，
-WS63 production bridge 仍是旧路径，未创建 Embassy Net named profile，也未发布新版本。
+WS63 production bridge 仍是旧路径，未创建 Embassy Net named profile。
 本地最终源码通过 94 项 host tests、1 项 compile-fail、19 项 L2 Miri tests、Clippy、
 RV32IMFC check；其中一项枚举 64 种有界 reset/publish/consume 交错。源码 CI 见
 [core NET0 CI](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34205631398)，
 最终 SHA 的三平台 host、Linux Miri 与常规检查共 5/5 jobs 通过。
 这不是 NET0 HIL、Embassy Net external consumer 或 HTTPS 验收；下一步仍是 WS63
 callback 路由、连接生命周期、资源报告和固定 profile 真机 parity，不跳到 NET1。
+
+2026-09-09 持续目标已覆盖整个 NET0–NET5，但当前 WIP 仍只有 NET0。
+core `0.1.0-alpha.25`（`da0a852`）已发布：精确源码
+[CI 5/5](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34296735313)、
+[Publish](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34296904584)
+通过，下载的 `.crate` checksum、非 yanked 状态和 `.cargo_vcs_info` 源码 SHA 已验证，
+记录见 [registry acceptance](evidence/net0-core-alpha25-acceptance-2026-09-09.json)。
+WS63 `2ee3917` 新增 opt-in `standard-l2` callback registration、进入时捕获 generation、
+close/drain 检查、callback 守恒和单帧 TX worker step；本地 35 项 host tests 中有
+9 项新 L2 tests，9 项 Miri、RV32、Clippy、独立 registry 依赖 package 均通过。
+`0.1.0-alpha.101`（`8f600b3`）精确源码
+[CI 22/22](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34297345110)
+包含三平台最终 RF 链接、L2 contract 和 Miri；
+[Publish](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34297753677)
+及[下载验收](evidence/net0-ws63-alpha101-acceptance-2026-09-09.json)通过。
+它尚未安装到 production `driverif_input`。Rust callback 的 `in_flight=0` 不是原厂
+RX/TX/FRW 队列已排空的证据，native quiescence 必须独立建立，禁止只把 disconnect
+提交成功当成新 generation 可以开放的依据。此阶段不增加 Embassy Net 支持声明。
+同日[只读 native fence 审计](evidence/net0-native-fence-audit-2026-09-09.md)
+绑定了 vendor oracle 摘要：同步 WAL/FRW completion、异步断连通知和 deferred user
+清理是不同边界；`uapi_wifi_sta_stop` 依赖 vendor WPA，不能直接作为 upstream-native
+排空实现。当前仍需在实际 artifact/ELF 与延迟帧 HIL 上闭合 native quiescence。
+
+facade `0.1.0-alpha.115`（`e87cba5`）固定上述两个公开依赖：
+[源码 CI 13/13](https://github.com/hispark-rs/hisi-rf/actions/runs/34297907747)、
+[发布 27/27](https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416)
+通过，包含 macOS/Linux/Windows 的 4 profile candidate/published consumer，
+另有[下载 registry 验收](evidence/net0-rf-alpha115-acceptance-2026-09-09.json)。
+examples `7fe7bfd` 将 STA/AP 固定到此版本，分别通过自身 workspace/lock 的最终
+release ELF 链接；它仍保留显式 RTOS/PAC 开发 patch，不冒充 registry-only consumer。
+以上不改变旧 smoltcp profile；新的 NET0 callback/profile/HIL gate 仍未关闭。
 
 #### NET1：Embassy Net 接入
 

@@ -1,0 +1,22 @@
+{
+  "jobs": [
+    {
+      "conclusion": "success",
+      "name": "publish"
+    }
+  ],
+  "kind": "crates-io",
+  "registry": [
+    {
+      "package": "hisi-rf-core",
+      "sha256": "4a6e485f8981eb030385581a031c20251232bd72620914d6c87e568fc75a7e9d",
+      "source_commit": "da0a852b8cf30e63a96c7fe2ec7f4138f0efcf66",
+      "version": "0.1.0-alpha.25"
+    }
+  ],
+  "run_attempt": 1,
+  "run_url": "https://github.com/hispark-rs/hisi-rf-core/actions/runs/34296904584",
+  "schema": 1,
+  "source_commit": "da0a852b8cf30e63a96c7fe2ec7f4138f0efcf66",
+  "status": "pass"
+}
