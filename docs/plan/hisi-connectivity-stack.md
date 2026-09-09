@@ -1205,6 +1205,19 @@ L2 实际占用 12,560 bytes，已包含在 control storage 中，未降低现�
 这些提交尚未发版；新队列的 worker/session 接线、native producer 排空、延迟帧和
 smoltcp 流量 parity 仍未完成，不能以资源准入替代 NET0 完成或 NET1 支持声明。
 
+未发布的 backend `8d3711a` 为显式 disconnect 增加有界 native ioctl ticket/receipt：
+区分排队、运行、精确请求完成和未提交 native 请求；排队成功或旧请求完成不能提前
+交付 hostap 的断连完成事件。超时/取消后仍保留 pending/failed 状态，拒绝覆盖；
+队列满、wake 失败、错误 completion、历史淘汰或序号耗尽明确失败。
+本地独立 offline 构建通过 147 项 host tests、119 项旧 profile 回归、12 项 Miri、
+host/RV32 Clippy 和最终 ELF；control storage 增加 32 bytes，arena/任务栈未缩减。
+这只覆盖显式调用产生的请求范围，不覆盖 hostap 自主请求或 association recovery 内联
+ioctl，也不证明 RX/DMA/user-delete 已排空。精确源码
+[CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34303454637)
+通过，包含三平台 receipt tests、Miri 与最终链接；下载的三平台资源报告与本地 ELF
+均为 control 21,408 bytes、L2 12,560 bytes。这里下载的是报告，不是 CI ELF，不能
+替代二进制验收。后续 HIL 分开验收；上一份 bootstrap ELF 的 3/3 结果不迁移到此提交。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
