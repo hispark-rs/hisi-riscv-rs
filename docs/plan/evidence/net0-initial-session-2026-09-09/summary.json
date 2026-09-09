@@ -1,0 +1,1584 @@
+{
+  "schema": "net0-initial-session-evidence/v1",
+  "status": "experimental-bring-up",
+  "boundary": "Initial-session ARP/UDP only; native drainage, STA-only reset, reconnect, Embassy Net and HTTPS remain unaccepted",
+  "delivery": "Local ELF/image only; downloadable firmware bundle gate remains open",
+  "ci": [
+    {
+      "headSha": "4a90a8be6007fe4079bdcdc540fd087bd0f44181",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34322598411",
+      "jobs": [
+        {
+          "name": "api-boundary",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-incremental, wpa2-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "l2-miri",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "minimal-target",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa3)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-smoltcp, wpa2-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-legacy-oracle, wpa2-personal,smoltcp,legacy-blocking-backend)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "feature-gates",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-sle-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "package",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-ble-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-net0-storage-contract, wpa2-personal,smoltcp,incremental-backend-experiment,increme...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-smoltcp, wpa3-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-sle-connected, wpa2-personal,coexistence-wifi-sle,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-ble-coexistence, wpa2-personal,coexistence-wifi-ble,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-incremental, wpa3-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "headSha": "14a346cfb4472f1340b5ab848c86e681cef84813",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34323212544",
+      "jobs": [
+        {
+          "name": "feature-gates",
+          "conclusion": "success"
+        },
+        {
+          "name": "api-boundary",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa3)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-sle-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "minimal-target",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-ble-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "package",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-legacy-oracle, wpa2-personal,smoltcp,legacy-blocking-backend)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-incremental, wpa3-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2)",
+          "conclusion": "success"
+        },
+        {
+          "name": "l2-miri",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-incremental, wpa2-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-sle-connected, wpa2-personal,coexistence-wifi-sle,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-net0-storage-contract, wpa2-personal,smoltcp,incremental-backend-experiment,increme...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-smoltcp, wpa3-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-ble-coexistence, wpa2-personal,coexistence-wifi-ble,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-smoltcp, wpa2-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "headSha": "30ff74ade1d77526fd3ec06328c603e18507824c",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34323969213",
+      "jobs": [
+        {
+          "name": "feature-gates",
+          "conclusion": "success"
+        },
+        {
+          "name": "api-boundary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-net0-storage-contract, wpa2-personal,smoltcp,incremental-backend-experiment,increme...",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (macos-14)",
+          "conclusion": "success"
+        },
+        {
+          "name": "package",
+          "conclusion": "success"
+        },
+        {
+          "name": "l2-miri",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-sle-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "NET0 native L2 contract (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa2-ble-coexistence)",
+          "conclusion": "success"
+        },
+        {
+          "name": "minimal-target",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-sle-connected, wpa2-personal,coexistence-wifi-sle,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "SoftAP profile (wpa3)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Final RF link (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-smoltcp, wpa3-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-smoltcp, wpa2-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa3-incremental, wpa3-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-ble-coexistence, wpa2-personal,coexistence-wifi-ble,incremental-embassy-wait)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-legacy-oracle, wpa2-personal,smoltcp,legacy-blocking-backend)",
+          "conclusion": "success"
+        },
+        {
+          "name": "profile (wpa2-incremental, wpa2-personal,incremental-backend-experiment)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "file": "sta.Cargo.lock",
+      "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+    },
+    {
+      "file": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "file": "capture-tool.py",
+      "sha256": "fff45513ec7887bf26e5b99c91cd903c1c82b6c17305d3840678751b07be09a2"
+    },
+    {
+      "file": "collect-evidence.py",
+      "sha256": "6801d6f7bfe84d4547a0fc76d2b345db1bc016b8d6a12e8ec44a1340dc46ba48"
+    },
+    {
+      "file": "test-collector.py",
+      "sha256": "77af67c0c1ebfc4431347eb94317d2736959550739dca55ea29e0851bf66c392"
+    },
+    {
+      "file": "ap-reset-before-sta-only.json",
+      "sha256": "5428b42cfbdd8456dba00f14e0ab761ae885cd8a88d26257eb34715ae071c294"
+    },
+    {
+      "file": "sta.plan.json",
+      "sha256": "dd823dd925ce2f2e2c942d94361e2aa96a196f30a19b8e1aa1bb1cb1dfaf638b"
+    }
+  ],
+  "matrices": [
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "936780cb4a1707f686360a9f52d54f1d59cf45a2f70087893b74163a90be4777",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "unobserved-success",
+      "source_commit": "4a90a8be6007fe4079bdcdc540fd087bd0f44181",
+      "requested_rounds": 3,
+      "raw_summary_sha256": "315e47bc5d2a82885d88a57fd4b2648fb1930718248f0932097e79a74dff0bfd",
+      "reset_policy": {
+        "kind": "target-only"
+      },
+      "interpretation": "Failed before payload: experimental association-success observer was attached to the rejection-only close hook. Fixed by 14a346c; not an AP/RF diagnosis.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": false,
+          "elapsed_seconds": 60.00586720800493,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": false,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 26457,
+              "sha256": "9ab96b6dfee33ece9073ebd5421e14d1cd7c7be018e6477c267a7ed1d76c78b0"
+            },
+            {
+              "role": "peer",
+              "bytes": 206035,
+              "sha256": "362aaeae0626bd160e554ca8f4c32ab4708068ef6402442894bd492814707488"
+            }
+          ],
+          "payload": null,
+          "classification": "control-or-payload-incomplete",
+          "public_excerpts": [
+            {
+              "file": "unobserved-success-run-01.target.markers.log",
+              "sha256": "86e843822e1fcb47f8ad51a39595edda8b779160fb1c11b43e9fa3ec4ed236f2",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "unobserved-success-run-01.peer.markers.log",
+              "sha256": "7639565acf7f9005737dfcbefd5817c70f80ef9ebd8fa4e78117dc7b7aa695e7",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 0,
+            "echo_tx": 0
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 98.07605795899872,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "a780801bafa5466fb216e6ba657ccc1e780f74c284975e24d8a5bc88f4caa941"
+      },
+      "totals": {
+        "rounds": 1,
+        "passed": 0,
+        "sent": 0,
+        "received": 0
+      }
+    },
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "8bd3f2b3fa53da64b92cad055c31c9c653df6770e51dcb7061395ddb044f7cbe",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "fixed-open-no-reply",
+      "source_commit": "14a346cfb4472f1340b5ab848c86e681cef84813",
+      "requested_rounds": 3,
+      "raw_summary_sha256": "1a43e9051c138c4cbc2e1fe8d7b37e9f5a3abef359e796c1f5fe9b5c0d845113",
+      "reset_policy": {
+        "kind": "target-only"
+      },
+      "interpretation": "Initial route opened; 10 requests reached AP but zero replies at application. AP was not reset.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": false,
+          "elapsed_seconds": 45.00930466700811,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 27613,
+              "sha256": "a73e502419ca1879716b1b1ffd37f8c31794dc7078e7bb8fdeebd492a877e582"
+            },
+            {
+              "role": "peer",
+              "bytes": 187317,
+              "sha256": "ea700783e41f53cfa90737370e5351c713a267f118688f2463f2e053638e761d"
+            }
+          ],
+          "payload": {
+            "sent": 10,
+            "received": 0,
+            "bitmap": 0,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "no-udp-reply",
+          "public_excerpts": [
+            {
+              "file": "fixed-open-no-reply-run-01.target.markers.log",
+              "sha256": "6eec44ff4e67bf8ade2c50b6c06a835c908726410af3a1cbdd13eb0a181307a8",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "fixed-open-no-reply-run-01.peer.markers.log",
+              "sha256": "cc05dc0f63d8e54b7290987d5c135484c563f09b0483cdc5430567e3dab33a86",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 97.67507437500171,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "599c5b4a41acca41984364e0cfe5b58edce4d68ef50385ca7407d42e68b49749"
+      },
+      "totals": {
+        "rounds": 1,
+        "passed": 0,
+        "sent": 10,
+        "received": 0
+      }
+    },
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "083604380538836bf84af4b554c02db19a3b06f835ef7c10b2eca4c18b22bf64",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "rx-boundary-no-reply",
+      "source_commit": "30ff74ade1d77526fd3ec06328c603e18507824c",
+      "requested_rounds": 1,
+      "raw_summary_sha256": "c66c954667a3f020e92ebf1d478eb4a954b40ea58827b11d0c31248eb4f9611c",
+      "reset_policy": {
+        "kind": "target-only"
+      },
+      "interpretation": "Only one ARP entered driverif_input and reached smoltcp, with no route drops; no IPv4 at that boundary. AP receive/reply counters do not certify on-air completion.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": false,
+          "elapsed_seconds": 40.01894750003703,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 28541,
+              "sha256": "f970ddc74439bd81548812a6bb7c752942264be81eceb756779442171df013dd"
+            },
+            {
+              "role": "peer",
+              "bytes": 169179,
+              "sha256": "2787f59222900a7d678d252eae4293d1fcb3d84acf82e6289fa8f2d030ed3dae"
+            }
+          ],
+          "payload": {
+            "sent": 10,
+            "received": 0,
+            "bitmap": 0,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "no-udp-reply",
+          "public_excerpts": [
+            {
+              "file": "rx-boundary-no-reply-run-01.target.markers.log",
+              "sha256": "a5bea731c1ea8d23a256cf3319b25157e0242f8446aed8999f0697da14f8efa9",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "rx-boundary-no-reply-run-01.peer.markers.log",
+              "sha256": "52a7be4761fb315d3c70be5a4f5a46e512ac18229d08dc2938a1296b2cdbc613",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 1,
+            "queued": 1,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 20,
+            "echo_tx": 20
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 99.33168125001248,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "c4280771b298481b170b56eadb42763bf12dc61c9220081ee1cca262d8ed7e97"
+      },
+      "totals": {
+        "rounds": 1,
+        "passed": 0,
+        "sent": 10,
+        "received": 0
+      }
+    },
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "083604380538836bf84af4b554c02db19a3b06f835ef7c10b2eca4c18b22bf64",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "ap-once-sta-reset3",
+      "source_commit": "30ff74ade1d77526fd3ec06328c603e18507824c",
+      "requested_rounds": 3,
+      "raw_summary_sha256": "667d4b60541c37fc5a4aa8a119af32a69238328acb5109910cbe01ef3c3607cb",
+      "reset_policy": {
+        "kind": "target-only"
+      },
+      "interpretation": "AP reset once before this case, then STA only each round. Same ELF recovered 20/20 payloads across two rounds; third round required association retry and was intentionally rejected by one-shot experiment. Not 3/3.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 7.064687040983699,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22137,
+              "sha256": "af4184f10f357b23443d64de783b141cc82c417a5cc9907ac822613a0cc4f7d3"
+            },
+            {
+              "role": "peer",
+              "bytes": 23663,
+              "sha256": "90d6ca4ce0b7957c91bc91313f496a773465eb282d544ddeb52e57e474d0e7e6"
+            }
+          ],
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "ap-once-sta-reset3-run-01.target.markers.log",
+              "sha256": "6bfba85c43ccd6f9fe813221dc46963b135e091f2b65b1e58a411855242f0ce8",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "ap-once-sta-reset3-run-01.peer.markers.log",
+              "sha256": "dbad7eaf1325679c98cef61d93874f889fd45f0fafbc8eb8cd38b5d1d9258018",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 7.196216834010556,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21174,
+              "sha256": "dfaa19766b96cc798057aacad21e883ba75bbf2417953dafdda3ddc773b788c8"
+            },
+            {
+              "role": "peer",
+              "bytes": 31654,
+              "sha256": "feb6842fc3a98293e84f2642a7dab4cd82b92f795e0ca9a427cf8c52fb162e3c"
+            }
+          ],
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "ap-once-sta-reset3-run-02.target.markers.log",
+              "sha256": "f0e07a9f8de38ef0a395bda53ec30ba80aabc1b9814a63d70b2a810caf8287ad",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "ap-once-sta-reset3-run-02.peer.markers.log",
+              "sha256": "f52cb4581b2c2950069ea9f82aaf75df3e605c4147da3e213c6a4a218621c055",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 20,
+            "echo_tx": 20
+          }
+        },
+        {
+          "index": 3,
+          "pass": false,
+          "elapsed_seconds": 40.00386516703293,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": false,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 18913,
+              "sha256": "81bc8f7d6d298f09dcbc219f0165c3372683ae98c0ca92092baa381f6b68f602"
+            },
+            {
+              "role": "peer",
+              "bytes": 148024,
+              "sha256": "e2a0bf02724078c72e712cd1921b423c1d154e8ab5917b97d4ddea8e5b2ac09f"
+            }
+          ],
+          "payload": null,
+          "classification": "initial-session-rejected",
+          "public_excerpts": [
+            {
+              "file": "ap-once-sta-reset3-run-03.target.markers.log",
+              "sha256": "0878b9870a1270af0143e5533884292fd11d549338a7b53c489d63d56f012c6b",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "ap-once-sta-reset3-run-03.peer.markers.log",
+              "sha256": "5b4b0b8a1ed5fb0b71439ee77fb4b2c314007dc94d21ef574cb6b03247a69a93",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 20,
+            "echo_tx": 20
+          }
+        }
+      ],
+      "totals": {
+        "rounds": 3,
+        "passed": 2,
+        "sent": 20,
+        "received": 20
+      }
+    },
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "083604380538836bf84af4b554c02db19a3b06f835ef7c10b2eca4c18b22bf64",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "paired-reset3",
+      "source_commit": "30ff74ade1d77526fd3ec06328c603e18507824c",
+      "requested_rounds": 3,
+      "raw_summary_sha256": "2d7511f6e0f106fc7c4a9eb0c7a0bb5a7562db3ca1dafe10670e81519a23d39d",
+      "reset_policy": {
+        "kind": "paired-ap-then-sta",
+        "peer_serial": "23121310"
+      },
+      "interpretation": "AP reset then STA reset every round. Initial-session ARP/UDP and closed-after-disconnect only; not a reconnect/drain gate.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 7.8275137500604615,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29460,
+              "sha256": "376888b1afd074191a9cc65f95289f455af75889f8c42077c0d8ba0b073ed4f6"
+            },
+            {
+              "role": "peer",
+              "bytes": 25122,
+              "sha256": "60c3eb57eb07d4a92838494b89f01afcafcc3f55e07372968b7ea017824a1077"
+            }
+          ],
+          "peer_reset_seconds": 0.7328069999348372,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset3-run-01.target.markers.log",
+              "sha256": "e6fd6d2f32e3b087d6f192c06f0eb7cbcdcc9e1fd91acb08a64ade9d5cf00c63",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset3-run-01.peer.markers.log",
+              "sha256": "97670f3272d955dfc3b91bfe5c0b99c5b7672a6caa591f153c469fb7f06ef294",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 7.818751249928027,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29760,
+              "sha256": "7e9850138de8de8a91225700c9159eda52c186fa0d46db8af9539b70117da325"
+            },
+            {
+              "role": "peer",
+              "bytes": 26489,
+              "sha256": "0f4e3cd8fe62a5a629f7e7ea1628b12eff9c9ad581488e78f8ccfbed7bc7ccef"
+            }
+          ],
+          "peer_reset_seconds": 0.7139075840823352,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset3-run-02.target.markers.log",
+              "sha256": "e7fe425ecf5a507912d27c5717ae12f081317dd5e9c3b762c852b881a63e6177",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset3-run-02.peer.markers.log",
+              "sha256": "6d9ba6658de9bbef4c8184635ec16cdc7e756b21f461ed794222fe4082def6a2",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 7.811378916958347,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 27852,
+              "sha256": "db3109cc4552b77576bb760d819c76e311ce22bf0e2dd1177e8f7a6b84f71367"
+            },
+            {
+              "role": "peer",
+              "bytes": 25504,
+              "sha256": "75d99aafd5a55a037e99940e50f66c00b102927fa19672af83290b539ec9bf02"
+            }
+          ],
+          "peer_reset_seconds": 0.7295706670265645,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset3-run-03.target.markers.log",
+              "sha256": "8125a9dbd6523ec84714762e47e32147559f843963ef32ee7f182c5ddd1c46e7",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset3-run-03.peer.markers.log",
+              "sha256": "06e4e043eee142aefe4996c113c5d0b3f72c6932123527b68c74feb53795d0d1",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        }
+      ],
+      "totals": {
+        "rounds": 3,
+        "passed": 3,
+        "sent": 30,
+        "received": 30
+      }
+    },
+    {
+      "schema": "net0-initial-session-hil/v1",
+      "elf_sha256": "083604380538836bf84af4b554c02db19a3b06f835ef7c10b2eca4c18b22bf64",
+      "role": "sta",
+      "boundary": "One-shot initial-session L2/ARP/UDP experiment; no native drain/reconnect proof",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_INITIAL_SESSION_OPEN",
+        "RFDBG_NET0_PAYLOAD_OK",
+        "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "name": "paired-reset20-attempt",
+      "source_commit": "30ff74ade1d77526fd3ec06328c603e18507824c",
+      "requested_rounds": 20,
+      "raw_summary_sha256": "415c1c3f0a9003eb2a67d767e656c371b0c76ebf6fa5dab8cb1278c92463bdb3",
+      "reset_policy": {
+        "kind": "paired-ap-then-sta",
+        "peer_serial": "23121310"
+      },
+      "interpretation": "Stopped on first failure at round 9. Eight rounds delivered 80/80 payloads; round 9 required association retry and was intentionally rejected. Not 20/20, and not a native-fence acceptance.",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 7.830279791960493,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 30732,
+              "sha256": "752d58af217ad8129b4211ddf13bdda3d67e9825a4822ba22b910030f2f0514e"
+            },
+            {
+              "role": "peer",
+              "bytes": 26020,
+              "sha256": "8f6163b08a97604f3e32c78e4a9a9c25b72b64293cc0074ae400dbdf5f9e273e"
+            }
+          ],
+          "peer_reset_seconds": 0.7322680420475081,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-01.target.markers.log",
+              "sha256": "744a0cf675b2b953ee1d1564b678a21e6ac56b16244a6d5054e0761e6375b518",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-01.peer.markers.log",
+              "sha256": "8c10fb4776d77221610a807fbe132a1cd2455c7a246c3994a9e4cb9cf21d9d83",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 7.797869583941065,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29778,
+              "sha256": "65c64d53f3737732dabd5f72d68abfed7441fa24f6a9ee4a1ff1676e7b8b887a"
+            },
+            {
+              "role": "peer",
+              "bytes": 25472,
+              "sha256": "e0b279923e9ca08fc8e426798537e401cdd21f33f83e595c74ef03338175a957"
+            }
+          ],
+          "peer_reset_seconds": 0.7297318330965936,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-02.target.markers.log",
+              "sha256": "ed12e00e248728a25a399c6ad4dc4b6589f4593aa05753741e73b3d4d8cc07c2",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-02.peer.markers.log",
+              "sha256": "24c1cdbd8cfba450a759ba29050817df97cd3027d12b193c9af7f11360331776",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 7.8368055409519,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 30723,
+              "sha256": "c287db057b1f6ded9e362448b631315d07a16f8671ccb8fde68d28a52799e80b"
+            },
+            {
+              "role": "peer",
+              "bytes": 25386,
+              "sha256": "0e7f56332c4e97aab83f9b2095ff677a21dcda7e98c0a4ee79be3bbd4167ef44"
+            }
+          ],
+          "peer_reset_seconds": 0.7240925000514835,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-03.target.markers.log",
+              "sha256": "e3c33b1f22a1cad82ae6ad7cc1aca92a8d32dab4c00c4638f08822a438069a50",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-03.peer.markers.log",
+              "sha256": "3a7de590e4025539643154a0d23585c1d66f31ceb91e36e186eae6fe0bee7bc6",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 4,
+          "pass": true,
+          "elapsed_seconds": 7.806916542002,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29460,
+              "sha256": "dea9d21900fe583ab5a3a1a5baa1bd97ebbb06a751fabce0e0ff2f8ee31c4d2f"
+            },
+            {
+              "role": "peer",
+              "bytes": 25574,
+              "sha256": "3bee21b1a714aa70d409cc7c7da043b95c41eb5d93a02a98b9122e89b5903947"
+            }
+          ],
+          "peer_reset_seconds": 0.7192612501094118,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-04.target.markers.log",
+              "sha256": "82198ea4cc810f8d2fdeb286f24e5cf06001187399d38100653f1a770b8384f7",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-04.peer.markers.log",
+              "sha256": "1e8bb000678341a6c0781a0003fcbd8c22d3da65ab69c4eb05d6e8de05f3b29c",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 5,
+          "pass": true,
+          "elapsed_seconds": 7.81204220908694,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29442,
+              "sha256": "385138380eb581dcee78c2516197194b0dade11db773fe051da5b695c4dc95f1"
+            },
+            {
+              "role": "peer",
+              "bytes": 25423,
+              "sha256": "2cb836c0885545c0615759b921c2ef9f06f81314921e5d3e71b5c6357aaf9b9c"
+            }
+          ],
+          "peer_reset_seconds": 0.7300475409720093,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-05.target.markers.log",
+              "sha256": "e3af217343033a4851578b4e685c87d881b8e61b8991d4a06473c401907d9b2e",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-05.peer.markers.log",
+              "sha256": "bdf7c88fb6033031349972eab7e8a861abceb306152c3269c662f4d96eb6bd76",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 6,
+          "pass": true,
+          "elapsed_seconds": 7.810092625091784,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 28824,
+              "sha256": "cc5f10d8f9cafb899282014766dad488a2f8af62cf42f49754285cb9faee7aa8"
+            },
+            {
+              "role": "peer",
+              "bytes": 25431,
+              "sha256": "9192c672bcd17ca44284f1fb3cb493c2c1fad68acb7e483c7e2c3d88dbfd1de7"
+            }
+          ],
+          "peer_reset_seconds": 0.7194202080136165,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-06.target.markers.log",
+              "sha256": "f89576f5f708fc0115c5aefc8e91353e81192a6c320296c64b0fec2fefa07d66",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-06.peer.markers.log",
+              "sha256": "c71ca695bc36e51249cc8dab73e4cf8c0da415e758e59a5f0a1541719e107000",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 7,
+          "pass": true,
+          "elapsed_seconds": 7.819928125012666,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 27861,
+              "sha256": "2f67379b6ef726c3b3ea4417ee3bc4f90bf86226184977f7400d9523b54bec2e"
+            },
+            {
+              "role": "peer",
+              "bytes": 25298,
+              "sha256": "450201b68e6870cf30d6a06edd9af30beffdda201273d95a44d15905d2f6c011"
+            }
+          ],
+          "peer_reset_seconds": 0.7099417910212651,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-07.target.markers.log",
+              "sha256": "7fa45a390a1127fce6247db90ea2d113f758bd9be5e4a4a029b724ef16101cee",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-07.peer.markers.log",
+              "sha256": "b389c610fcbff2e043e8fdef137fe296f78f38f23012dfc1e8837b250e26c223",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 8,
+          "pass": true,
+          "elapsed_seconds": 7.807151624932885,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 31032,
+              "sha256": "1e1d62fea33e88c0f8767c2bd4ebdb1d28db4e0c5e469f7bbdb318c93e304f92"
+            },
+            {
+              "role": "peer",
+              "bytes": 26234,
+              "sha256": "91b5d6a59b198bf0dd797ea321f245a8f23bf5bf1a57e1dcbde3b13a7f0ca6d8"
+            }
+          ],
+          "peer_reset_seconds": 0.7206151250284165,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "classification": "initial-session-payload-pass",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-08.target.markers.log",
+              "sha256": "f87eb40805339fe0f99b090811c40c89ca01486bbb32a213eeb688c10eca4ec0",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-08.peer.markers.log",
+              "sha256": "8a4bdc30a0cf21b13de97497c8c5f40b7a945685c79c3a718110f6fb93b4b35a",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "route": {
+            "entered": 11,
+            "queued": 11,
+            "dropped": 0,
+            "closed": 0,
+            "abandoned": 0,
+            "in_flight": 0
+          },
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 10,
+            "echo_tx": 10
+          }
+        },
+        {
+          "index": 9,
+          "pass": false,
+          "elapsed_seconds": 40.02181141707115,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": false,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 27181,
+              "sha256": "569912ce08e3b467dc2b3fa7ac4f68e8b712dc934d069f8f3326596fd2c6132c"
+            },
+            {
+              "role": "peer",
+              "bytes": 139257,
+              "sha256": "d07a835def684f14445d0e9db67e70211bcf3335db911e28ea3f0454fa76d5c7"
+            }
+          ],
+          "peer_reset_seconds": 0.7244944999692962,
+          "payload": null,
+          "classification": "initial-session-rejected",
+          "public_excerpts": [
+            {
+              "file": "paired-reset20-attempt-run-09.target.markers.log",
+              "sha256": "3e1bdbcf19b531cbdbda32a0253b398e8515d9bafc3c9ea36f7ae5aa31e34421",
+              "policy": "full-line whitelist, never original UART"
+            },
+            {
+              "file": "paired-reset20-attempt-run-09.peer.markers.log",
+              "sha256": "6e2f6388c8ec7096065288b4fbe789a42f884fae7e8938a960567eee8c253dd0",
+              "policy": "full-line whitelist, never original UART"
+            }
+          ],
+          "flash_init_warning": true,
+          "peer_echo_rx_tx_max": {
+            "echo_rx": 0,
+            "echo_tx": 0
+          }
+        }
+      ],
+      "totals": {
+        "rounds": 9,
+        "passed": 8,
+        "sent": 80,
+        "received": 80
+      }
+    }
+  ],
+  "configuration": {
+    "path": "examples/ws63/hil_wifi_config.rs",
+    "sha256": "ff3b87eb5fa268b8bfba7a020c1ce1f19ceebe65cc670c1bb111c94ec99289df",
+    "private_credentials_used": false,
+    "kind": "committed public non-production paired fixture"
+  },
+  "ap": {
+    "elf_sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+    "prior_evidence": "../net0-control-2026-09-09/summary.json",
+    "firmware_unchanged": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "net0-control-hil/v1",
+  "source_commit": "3914ff5",
+  "elf_sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+  "role": "ap",
+  "probe": "1366:0105:000023121310",
+  "runs": [
+    {
+      "index": 1,
+      "pass": true,
+      "elapsed_seconds": 1.3584245409583673,
+      "markers": {
+        "RFDBG_SOFTAP_READY": true
+      },
+      "captures": [
+        {
+          "role": "target",
+          "bytes": 3570,
+          "sha256": "bb91bfa04d8b815d72561521e663e74fd9b8bd7e89892c855e2e83aee5fb2a90"
+        },
+        {
+          "role": "peer",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+  "required_markers": [
+    "RFDBG_SOFTAP_READY"
+  ]
+}

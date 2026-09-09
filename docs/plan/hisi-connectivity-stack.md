@@ -1314,6 +1314,15 @@ examples `566e7ba` 与模板 `d9cd0ba` 已固定这组公开依赖；独立 regi
 STA/AP 最终链接、模板 Wi-Fi 的 image/resource report 和 locked/offline 构建通过。
 上述旧 HIL 不自动覆盖新 release ELF，native fence、新 L2 流量与重连仍待验收。
 
+首次新队列流量实验（backend `30ff74a`，精确 CI 23/23）已单列为非默认
+`standard-l2-initial-session-experiment`，不是 production 开放路径。
+[完整尝试记录](evidence/net0-initial-session-2026-09-09.md)保留了事件接线修复、
+AP 保留状态下的两次 10/0 回程失败、AP 单次复位后 2/3，以及双板逐轮复位的
+3/3 预检。后续请求的 20 轮在第 9 轮 association 重试被保护拒绝后停止，实际为
+8/9，前八轮 UDP 80/80；不能写为 20/20 或 native fence 已解决。普通连接重试、
+保留 AP 会话的可靠性、原生排空、最终 HIL ELF 资源报告与可下载固件证据仍 open。
+本阶段不再为诊断单独发布新 crate，NET0 active / NET1 queued 保持不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
