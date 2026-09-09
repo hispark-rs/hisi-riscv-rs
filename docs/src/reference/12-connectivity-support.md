@@ -7,14 +7,19 @@
 
 | 组件 | 版本或修订 |
 |---|---|
-| 用户 facade | `hisi-rf 0.1.0-alpha.114` |
-| WS63 backend | `hisi-rf-ws63 0.1.0-alpha.100` |
+| 用户 facade | `hisi-rf 0.1.0-alpha.115` |
+| WS63 backend | `hisi-rf-ws63 0.1.0-alpha.101` |
 | target archive 包 | `ws63-radio-blob 0.1.0-alpha.25` |
 | Wi-Fi 资源报告 | `hisi-rf-resource-report/v13` / `ws63-radio-2026-09-01-r13` |
 | BLE/SLE 资源报告 | `hisi-rf-radio-resource-report/v1` |
 
 当前只有 WS63 backend。`bs20`、`bs21` 和其他芯片没有可选择的 `hisi-rf` 实现，
 因此不能从“HAL 支持该芯片”推导出“RF 支持该芯片”。
+
+本次发布新增非默认 NET0 契约，未切换下面的 smoltcp profile。精确发布的
+[三平台 consumer CI](https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416)
+和[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json)
+已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。
 
 ## Profile 矩阵
 
