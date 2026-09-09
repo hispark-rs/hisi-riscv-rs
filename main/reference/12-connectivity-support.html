@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-dc3326f8.js";
+            window.path_to_searchindex_js = "../searchindex-c61f1643.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8a6bfe17.js"></script>
@@ -192,8 +192,8 @@
 <tr><th>组件</th><th>版本或修订</th></tr>
 </thead>
 <tbody>
-<tr><td>用户 facade</td><td><code>hisi-rf 0.1.0-alpha.114</code></td></tr>
-<tr><td>WS63 backend</td><td><code>hisi-rf-ws63 0.1.0-alpha.100</code></td></tr>
+<tr><td>用户 facade</td><td><code>hisi-rf 0.1.0-alpha.115</code></td></tr>
+<tr><td>WS63 backend</td><td><code>hisi-rf-ws63 0.1.0-alpha.101</code></td></tr>
 <tr><td>target archive 包</td><td><code>ws63-radio-blob 0.1.0-alpha.25</code></td></tr>
 <tr><td>Wi-Fi 资源报告</td><td><code>hisi-rf-resource-report/v13</code> / <code>ws63-radio-2026-09-01-r13</code></td></tr>
 <tr><td>BLE/SLE 资源报告</td><td><code>hisi-rf-radio-resource-report/v1</code></td></tr>
@@ -202,6 +202,10 @@
 </div>
 <p>当前只有 WS63 backend。<code>bs20</code>、<code>bs21</code> 和其他芯片没有可选择的 <code>hisi-rf</code> 实现，
 因此不能从“HAL 支持该芯片”推导出“RF 支持该芯片”。</p>
+<p>本次发布新增非默认 NET0 契约，未切换下面的 smoltcp profile。精确发布的
+<a href="https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416">三平台 consumer CI</a>
+和<a href="https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json">下载验收</a>
+已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。</p>
 <h2 id="profile-矩阵"><a class="header" href="#profile-矩阵">Profile 矩阵</a></h2>
 <div class="table-wrapper">
 <table>
