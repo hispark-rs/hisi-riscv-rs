@@ -106,6 +106,41 @@ late netbuf delivery across deletion/reassociation, check final-free errors,
 and retain a closed route on timeout. A Rust callback counter, a successful WAL
 return, event 10, and a queue-empty snapshot each cover only part of that chain.
 
+## Installed Callback Snapshot
+
+A subsequent read-only check used the same two boards, still running the
+previous bootstrap artifact (ELF SHA-256
+`ed798e7ee4c45ef898467de26b7f81d537fb3cc26b375da78aa239a8baca2a63`).
+It does not exercise the newer teardown or close-revision commits. No flashing,
+reset, function invocation, or NV write was performed.
+
+The 64-byte ROM range `[0x128d4a, 0x128d8a)` has SHA-256
+`b80a5ca4b7cb2879fda9f16b5af605e8d46c90ffbfeaf2f4fc93bd8993be05e6`.
+Disassembly confirms `frw_get_rom_cb` accepts indices through 264 and loads
+`g_frw_rom_cb[index]` from `0x181008 + 4 * index`. Accordingly, the bounded
+four-byte read of callback 211 at `0x181354` returned `0x002810ae` on both
+boards (each file SHA-256
+`8bcac958a3d10c50c9a94ab679b870db07f0846ee72b2d13707dfb6a7d0ef5b2`).
+
+The known ELF identifies that address as the 24-byte
+`dmac_common_hook_del_user`. A read of those 24 flash bytes on the first board
+matches the ELF disassembly, SHA-256
+`5f1a87ec164f6bf41604037320a9a9fe07ba2ef64190f206daec5136f96b999e`.
+The hook logs null arguments and otherwise returns 2; the enclosing ROM path
+therefore continues its default deletion sequence. For this sampled artifact
+the hook is not an extra queue-drain implementation. This is a configuration
+snapshot, not evidence that a disconnect exercised the hook or that later
+firmware cannot install a different callback.
+
+The SDK RX call graph also sharpens the outstanding host-queue boundary:
+`hmac_rx_process_data_msg` acquires the user reference at `0x2662a2` and
+releases it through `hmac_user_use_cnt_dec` at `0x266564`, after its processing
+path. Throughput-mode message 595 is queued by `hmac_rx_data_event_adapt`
+**before** this processing/reference-acquisition boundary. Thus user-reference
+zero alone cannot certify that no older unprocessed message 595 exists. The
+native fence must either cover that queue or establish and enforce the actual
+profile's synchronous RX mode; neither condition has been closed by this audit.
+
 The existing released smoltcp path is unchanged. No board was flashed for this
 audit, and no Embassy Net support claim follows from it. The ROM reads identify
 code bytes and control flow only; they do not prove those branches were exercised

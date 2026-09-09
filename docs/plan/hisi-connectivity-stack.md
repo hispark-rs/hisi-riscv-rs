@@ -1229,6 +1229,14 @@ worker 的 link-down 与 native 排空。独立公开依赖 offline host tests 1
 DMAC 隐藏释放错误，详见[同一 native fence 证据](evidence/net0-native-fence-audit-2026-09-09.md)；
 这些观察不能转写成排空或重连成功声明。
 
+backend `3914ff5` 修复了原生 admission close 与 link-up wake 交错时被旧 open 覆盖
+的问题：关闭修订号不回绕，提交时不匹配则回滚 Down，并显式丢弃窗口内排队的 TX。
+真实 waker 交错回归先在旧实现失败，再在修复后通过；独立 offline host 163/163、
+旧 profile 119/119、L2 Miri 13/13、host/RV32 Clippy 和最终 ELF 检查通过。
+精确源码 [CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34305967044)
+及三平台下载资源报告比对通过。尚未发布或烧录该提交，native producer fence、
+worker composition 和流量 HIL 继续 open；不跳到 NET1。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
