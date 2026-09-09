@@ -1323,6 +1323,12 @@ AP 保留状态下的两次 10/0 回程失败、AP 单次复位后 2/3，以及�
 保留 AP 会话的可靠性、原生排空、最终 HIL ELF 资源报告与可下载固件证据仍 open。
 本阶段不再为诊断单独发布新 crate，NET0 active / NET1 queued 保持不变。
 
+backend `9784072` 随后补齐实际 traffic fixture 的物理资源描述符，与 bootstrap
+共用声明；精确 CI 23/23、三平台九份下载报告及七类 ELF 篡改负例通过，见
+[资源证据](evidence/net0-traffic-storage-2026-09-09.md)。新 ELF 的 3 轮预检在第 2 轮
+association 重试被保护拒绝后停止，实际 1/2，首轮 UDP 10/10。资源子项/最终 ELF
+一致性已补强，但不将其写成完整 HIL、native fence 或重连验收；NET0 仍 active。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

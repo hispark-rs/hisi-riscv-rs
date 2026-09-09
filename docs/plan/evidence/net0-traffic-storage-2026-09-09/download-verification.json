@@ -1,0 +1,749 @@
+{
+  "boundary": "Downloaded report bytes, not downloaded CI ELF bytes; no native fence or release acceptance",
+  "ci_successful_jobs": 23,
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34326046377",
+  "downloaded_reports": [
+    {
+      "artifact": {
+        "digest": "sha256:aebd4808bc28cc7ef0c4b0f22a709549b73e8d43cf92bb1db61d3d32b2fe0806",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093847195,
+        "name": "net0-linked-storage-ubuntu-latest"
+      },
+      "host": "ubuntu-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "6fcbd033e5f70106f2affdafe74f4fcd3b9ce370f59aa724e580f97ca64f69e6",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692288,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794176,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "5289dfc3dc9a3229b6e13605d29cf51be4abfcfa05c973855fcd6dab2a1a5199",
+      "variant": "net0-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:b3cc4f1b5bd4c10d4451ef74abf5403a57030a74e2385d19acccbebf6b2dd447",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093920397,
+        "name": "net0-incremental-linked-storage-ubuntu-latest"
+      },
+      "host": "ubuntu-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "2e28f056c593fab8dc2e865009ea555eeb1ac904278b61411619f7c374da278a",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694784,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796672,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "a2fde11d900146e493adb6ef9aff5f148e4718d36f6321ed34b9d1bf2fb55a27",
+      "variant": "net0-incremental-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:b3cc4f1b5bd4c10d4451ef74abf5403a57030a74e2385d19acccbebf6b2dd447",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093920397,
+        "name": "net0-incremental-linked-storage-ubuntu-latest"
+      },
+      "host": "ubuntu-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "3ef17f94587c91766ae74575bccf317307e0741bb99a62e61b9b9c082d9ad1b6",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696192,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798080,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "87601333f0567af05e58beaf42964d79f3c82180365c8d9c0fb0855f3755b0d7",
+      "variant": "net0-payload-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:4b106d14beb3fe6a4712767ab141b13b23e153204d2047492f870f7fde313913",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093905854,
+        "name": "net0-linked-storage-macos-14"
+      },
+      "host": "macos-14",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "9555eff6dfeab428a822e958d4f7bde481f8dc85c4880de2f455bd173c1da80d",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692288,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794176,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "8389477caab62a6f6a71ae7b12ea7f52e12da1794231d4f8ad6fd5551d86dff5",
+      "variant": "net0-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:fc57d50722dfdde86ad9c22f376e2bfcd0b68478b4d13e12e10657f5fb3ddd30",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093992471,
+        "name": "net0-incremental-linked-storage-macos-14"
+      },
+      "host": "macos-14",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "a16bcefddfa3623015248084f351f9a1b944f73a311c64f224474dfbcce6b906",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694784,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796672,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "320bd28579725af80c3472371ca864d7313a16bb34ecf837cfb96a9b31529257",
+      "variant": "net0-incremental-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:fc57d50722dfdde86ad9c22f376e2bfcd0b68478b4d13e12e10657f5fb3ddd30",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093992471,
+        "name": "net0-incremental-linked-storage-macos-14"
+      },
+      "host": "macos-14",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "f7371bb8b3183a126a4621e4c2df44b20aa30a4f396a5ddefcf4311995a04e85",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696192,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798080,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "3de1a7a052d3987343d1647222b12e10009d568b963de9973c6db82681363fc5",
+      "variant": "net0-payload-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:cee3ce8c8309450f87d8ee27d18d44b21f041919ece2b2ad355f37ab5e6f5ff2",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10093907814,
+        "name": "net0-linked-storage-windows-latest"
+      },
+      "host": "windows-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "d526a52fc273fcc01225a3082638cf052563ffd22b50991c1c1fe7a0a1971d72",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10692288,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10794176,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "4da3922f612eda28b1cb313275e67cf3e40446db7edfc4f0573c9224a8427dca",
+      "variant": "net0-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:3bba36b90384636cfd68d665328b4d0a375e920c0e2a0b6bd993cdf4e6d22d65",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10094024117,
+        "name": "net0-incremental-linked-storage-windows-latest"
+      },
+      "host": "windows-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "6c5beb45eda01a1501e35683d4bba6c39744441eb2c65c2df4322fc14242f676",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10694784,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10796672,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "3aaa39fe84f709daaf513613cc4fb24408dc5e0a0bdcb9c263e3bc91ce3d08ae",
+      "variant": "net0-incremental-storage.json"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:3bba36b90384636cfd68d665328b4d0a375e920c0e2a0b6bd993cdf4e6d22d65",
+        "expired": false,
+        "expires_at": "2026-12-08T07:52:00Z",
+        "id": 10094024117,
+        "name": "net0-incremental-linked-storage-windows-latest"
+      },
+      "host": "windows-latest",
+      "report": {
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim",
+        "control_address": 10538336,
+        "control_bytes": 21440,
+        "elf_sha256": "a92f7142891de77f33c38f38fce5ecab4adf24677d093d693462039294d6298d",
+        "l2_bytes": 12560,
+        "l2_offset": 2296,
+        "main_stack_address": 10996480,
+        "main_stack_bytes": 32768,
+        "metadata_bytes": 448,
+        "mtu": 1514,
+        "packet_ram_address": 10485760,
+        "packet_ram_bytes": 49152,
+        "payload_bytes": 12112,
+        "rf_arena_address": 10696192,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_address": 10798080,
+        "runtime_arena_bytes": 197120,
+        "rx_slots": 4,
+        "schema": "net0-linked-storage/v2",
+        "shared_arena_bytes": 299008,
+        "status": "pass",
+        "tx_slots": 4
+      },
+      "sha256": "55a19f4c63769ca065e0accfe475471b2d13eb07e09937401606e647dac7c74c",
+      "variant": "net0-payload-storage.json"
+    }
+  ],
+  "local_elf_sha256": "2a1f7969e5db7df93608e0316ae32eb61be40e6431a6eafef187ca2db34a272b",
+  "local_report_sha256": "7564d6137db27edb2222bb83e443e489ce43b67df12cfdffbd92ceafb6b9ffa3",
+  "schema": "net0-storage-download-verification/v1",
+  "source_commit": "97840727c2da80812ada30459aaaaad08c5dff37",
+  "source_copy": [
+    {
+      "path": ".github/public-api/ble-b3-stage.txt",
+      "sha256": "9864143375bea3659098551768946d8280af4c9b96b7a01de3ac0b4bfa98bdbd"
+    },
+    {
+      "path": ".github/public-api/sle-s3-stage.txt",
+      "sha256": "85445ba0cdad4f6dcd26570acb9a858c361a07653f8a7fe39cae3c6cb366ec81"
+    },
+    {
+      "path": ".github/public-api/wpa2-incremental.txt",
+      "sha256": "1a6bdf40b75d90f8ee3150cdb404f69d41eb9ed0a0bc6ee1508609315f95583b"
+    },
+    {
+      "path": ".github/public-api/wpa3-incremental.txt",
+      "sha256": "3c814bd3fb8c0cc5daa2ad7d3055e7a270510d1e6265cd8c95290a183247f03e"
+    },
+    {
+      "path": ".github/scripts/check-net0-storage.py",
+      "sha256": "c67734cf8bb50f398539c2e8240fb9f115a4adcff4c5a28f043968068be92bd6"
+    },
+    {
+      "path": ".github/scripts/check-public-api.py",
+      "sha256": "e0ee648dffaa1baf38b101649732e5dc4c6d48612ea1c9dac9d158520eeedb49"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "d61fc5a1005b22739f32827be2020a4b102c78d207e9dd761ee0d647c4ee5952"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "sha256": "b357886da2fab78024c6d1e1e12ee107887207f53e3afc47e7153c0956eac363"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "32612892f1c9e15fe772b8034945f8072b83e025153aef597e45d5eccbe98c43"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "6e2f5bb361298bb9c86b31e8cc70e3ee2862b44ebb75d76a7aa4f0c2d50ee598"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "afe36c8677deb53facb61950b41762a593fbfdabf0d97e82d03c0213d5032101"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "7a7a93d9addcdb516442c1724d171182e1091bc97d0e5dcbd641a71db01ce1ce"
+    },
+    {
+      "path": "README.md",
+      "sha256": "70ddb34e4f153fb48931d509dd1c43f455e6397197484baa8e1fb8a5bfff1c9d"
+    },
+    {
+      "path": "build.rs",
+      "sha256": "de49efb45416d9cea17e646ddc66c2e4bfef4b2cd2c3f8f7aa33efc2dd641dad"
+    },
+    {
+      "path": "docs/l2-integration.md",
+      "sha256": "ab183cdbe63d9f21286e53c30f094da6e08b5ed9bdfe14a16cf3bf3ff60c013e"
+    },
+    {
+      "path": "docs/radio-stage-api-migration.md",
+      "sha256": "e0d02a8533e7a233c8e2c8744616560017f3688bf8831ead5ac67805445c28f1"
+    },
+    {
+      "path": "examples/arena_admission_error.rs",
+      "sha256": "59dd1ec00c7b292489f13eaf74adfa8757c561c745c6776a404e4def121d8c03"
+    },
+    {
+      "path": "examples/ble_gatt_client_smoke.rs",
+      "sha256": "16d96ea509cf05a716a513c5a35ba61c831b4f01b33084dc04a26b05a302a85a"
+    },
+    {
+      "path": "examples/ble_gatt_server_smoke.rs",
+      "sha256": "b304277746044cbed0786af5c4577950532dc5b2d6830e10b9c3619413ed3eb5"
+    },
+    {
+      "path": "examples/ble_init_link.rs",
+      "sha256": "b75e7423b20fa1276a312fa1cef8b075f8aa2db4dd95b4dc3fb5781de0522506"
+    },
+    {
+      "path": "examples/ble_init_smoke.rs",
+      "sha256": "70b50a676dd067fd4ab0c07a7d4bf24c8b9373f0d06eee64a0d9d0219bc4aae6"
+    },
+    {
+      "path": "examples/bootstrap_profile.rs",
+      "sha256": "7bd6a442e6614102c5cc78f751f447a1faa38283dfa3fdf38fefba7b76148eb8"
+    },
+    {
+      "path": "examples/coexistence_init_smoke.rs",
+      "sha256": "17e00cabe16c639edbfab28f31e8933b86a29b921e680b2bab54b011ef5262d3"
+    },
+    {
+      "path": "examples/connectivity_contract_fixture.rs",
+      "sha256": "08eeb3545084a7d997c062184836a6ed5386da172f73c2a93c6b3f8bb4a6ba24"
+    },
+    {
+      "path": "examples/incremental_scan_profile.rs",
+      "sha256": "c83fe6acfcbdaae5a57744b290ae9a0dc865fdb58d663caa0d42a8b1578d5c9a"
+    },
+    {
+      "path": "examples/operation_error_injection.rs",
+      "sha256": "f2271d7b1e4f4e3c065cee1846cd76d8f127a9c735d4eabc536a71ce927a750d"
+    },
+    {
+      "path": "examples/plain_firmware.rs",
+      "sha256": "b808155b327af4a38e2cf3b864a2e8e307103da4ee7b9e109501799096c630b0"
+    },
+    {
+      "path": "examples/resource_report.rs",
+      "sha256": "aec9bf8225e73c6d50a4b7ee0fc9b882cd6dbb2e933fb35736777cbe7f5cf3cd"
+    },
+    {
+      "path": "examples/sle_announce_smoke.rs",
+      "sha256": "7850ec88fb89fd89dead85dfb4bd05515531635b539be008ede6b8e4f2f5f616"
+    },
+    {
+      "path": "examples/sle_connect_client_smoke.rs",
+      "sha256": "1d695527b5c2f50eb8edf22ede22b922532245a140d83779992ad9bf74808c8e"
+    },
+    {
+      "path": "examples/sle_connect_server_smoke.rs",
+      "sha256": "09f81b40cbdb5d73ae732e2e5eb3e11b2f2d7c262aa1ffc1a0b1bad55f85f322"
+    },
+    {
+      "path": "examples/sle_seek_smoke.rs",
+      "sha256": "c07cfc654fdc5117b0d96feacf88dc4f4b023a02a78143201a8c58ef03816387"
+    },
+    {
+      "path": "examples/sle_ssap_client_smoke.rs",
+      "sha256": "6b8f3cff2e20dc171e40d561bd82121ffbfb000652a83e4e0da6fa2e067048e4"
+    },
+    {
+      "path": "examples/sle_ssap_server_smoke.rs",
+      "sha256": "a023be299c59e7b6d2306edce7e3403c1d1e2ea304327eb64467ad71aca1da6a"
+    },
+    {
+      "path": "examples/support/ble_firmware.rs",
+      "sha256": "f38a82d7d670296435bc3e23f348d1e35ac5237f1813176a46f31935b45eca95"
+    },
+    {
+      "path": "examples/support/net0_initial_network.rs",
+      "sha256": "77f0200601eb1d5b15b969c6cbd96bddf03d2ec11b79132e116dc5fca6b47896"
+    },
+    {
+      "path": "examples/support/net0_storage.rs",
+      "sha256": "68d815e6d801be4d6f44e2cd5809d865aa4b8f14970423efc30628d7f4e69b01"
+    },
+    {
+      "path": "examples/support/sle_firmware.rs",
+      "sha256": "f16e6e091689c0faf6a2ad59c2fd642b288c6decc38b1def47d67ebc59a57c2e"
+    },
+    {
+      "path": "examples/typed_error_parity.rs",
+      "sha256": "4686536a882ad24eba59dbb53f3da271cfbae0bc1cbe357db910fb793d8efdfd"
+    },
+    {
+      "path": "examples/wifi_ble_coexistence_smoke.rs",
+      "sha256": "1f9ebe94e6a0ac757951681af33fcafd5d5b2fd125ee65c5a060b77ac1733d87"
+    },
+    {
+      "path": "examples/wifi_ble_connected_client_smoke.rs",
+      "sha256": "1088f65886784c0efbde4fb77830b040ea9e521849317218823f2e76f5396681"
+    },
+    {
+      "path": "examples/wifi_sle_coexistence_smoke.rs",
+      "sha256": "8030ba6e05ef1c954c52ef7da2c34aae2c382b048e0a221c8821373b8f81a941"
+    },
+    {
+      "path": "examples/wifi_sle_connected_client_smoke.rs",
+      "sha256": "9bc3dba62e438300f302e2b9295e7034f2000e5fdff79ea07a2a63d2dc6b50a9"
+    },
+    {
+      "path": "link/ws63-rom-call-symbols.txt",
+      "sha256": "cf2f6a7f10e80eb9f826415e2e986dd0a1d15951019e4290d26b6c60482a201c"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "path": "src/alloc.rs",
+      "sha256": "8b4bb6bb051eac0f9951bb690604fc0fe83d3c42d627e4aeaeb9f8599d5128ed"
+    },
+    {
+      "path": "src/ble.rs",
+      "sha256": "24277166ebeaccf4b21ad7a92503ad3db41074cb7c755f396f83e77948e02215"
+    },
+    {
+      "path": "src/ble_compat.rs",
+      "sha256": "e64d6f510a631726de024a017ad385d164d6e683a7835b231f8836df38eb8802"
+    },
+    {
+      "path": "src/ble_init_diag.rs",
+      "sha256": "3f61b697ec8a68bac85f7c669d9806a82fb4c1ca7590d8982a6a4a8c26123860"
+    },
+    {
+      "path": "src/ble_sc.rs",
+      "sha256": "086c68ec76867b487e50f2514ddb650c1efc5458630dc56f5d38e4963f219e9f"
+    },
+    {
+      "path": "src/blocking_diagnostics.rs",
+      "sha256": "593d5a6c7dc0fb8f866f7bfdce5c87aa8d0ed5d82af7b7441e5f3ed1f32e937f"
+    },
+    {
+      "path": "src/compiler_rt.rs",
+      "sha256": "839d60f9c1ef96216570fa08eb5f9aaff1ec4adc9bfce3f5564e663e3195829b"
+    },
+    {
+      "path": "src/composition.rs",
+      "sha256": "c77cb22df06f80a72d3203b01c158a158b360ae00b802bad191c428b6b7ec874"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "242f546a002b076e17c9c123a048c04fc643ca810f3959b75cc71cac93b67a7e"
+    },
+    {
+      "path": "src/crypto_sae.rs",
+      "sha256": "d07f1f25d544e331ccf41d0b3ed7819adbfb04041d78e6a32926175dc2a4ba76"
+    },
+    {
+      "path": "src/data_path_diag.rs",
+      "sha256": "211c44513c5ecb793159911ed83a87ea64157aa762fba24d294fcc758d3db4e6"
+    },
+    {
+      "path": "src/eloop_diag.rs",
+      "sha256": "408dbfc56840fa6d4dfb4b96fb163d3a72d74382e717b80e0b1b575cc7e9c529"
+    },
+    {
+      "path": "src/error.rs",
+      "sha256": "4041c276faa97cad4fa390f0f20b6ac69c6396860b4f768e0e2c58d1c2fefc91"
+    },
+    {
+      "path": "src/frw.rs",
+      "sha256": "d5d0170784755c14fe70821514bca10413e2ba6e90816565a7bf09ee8416ba6b"
+    },
+    {
+      "path": "src/hcc.rs",
+      "sha256": "e33e13e01494bfb83817592e9b656a2a9eafca91c07063582e3edcd315e8e352"
+    },
+    {
+      "path": "src/hisi_rf_backend.rs",
+      "sha256": "33c55258bcd69f2647bfe72bd0130637294a80fb190f57ce0c98413f118efbdb"
+    },
+    {
+      "path": "src/hisi_rf_backend/incremental.rs",
+      "sha256": "840a098998454036a074a575dba363ab4ce15f4d2e31e43a91d64b891549dffd"
+    },
+    {
+      "path": "src/incremental_wait.rs",
+      "sha256": "e125b9d46c8939daddbd60ef2015559ce4d1c6f09e3d92d7d9adeaaa8fdf891a"
+    },
+    {
+      "path": "src/incremental_worker.rs",
+      "sha256": "1d372f6213255dbe5986c642da3b0a0b2b176b88272c72abd9f3e4a72ceb50eb"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "38416dfc21e3ec91aebdfb4fa95b59fae350606b5426112692327cf17a5157ea"
+    },
+    {
+      "path": "src/libc.rs",
+      "sha256": "df78b59884b8c32d82857d0956a9f8a4ca9af2161acbb68ed17cab02e30bd292"
+    },
+    {
+      "path": "src/log.rs",
+      "sha256": "8eb2ae029b652d63d22fc50df192619050bd5350d838c2904c63fe2efab18350"
+    },
+    {
+      "path": "src/netif.rs",
+      "sha256": "c6a7125a4963d35344f612ff19f7ff7bc0d560a744e9b871c3a1efda08b8bcaf"
+    },
+    {
+      "path": "src/netif_l2.rs",
+      "sha256": "2bcb7fa66505831602da1842626a9cbc042387c935c1c2d2550bbea9a108e71e"
+    },
+    {
+      "path": "src/netif_l2/device.rs",
+      "sha256": "19de3f4477868d72dd234a04c64de6ba8b2853775542cd954183dcae0874a1e0"
+    },
+    {
+      "path": "src/netif_l2/host_delivery.rs",
+      "sha256": "4ddeeb15fc90ee0cd353c13068a3576c205d77a5ef63e7035b9922a32c06761f"
+    },
+    {
+      "path": "src/netif_l2/initial_session.rs",
+      "sha256": "392a5b12ded2c7add59c4fee1b10430425b8ac1437c8e8ba2246841a529bc41b"
+    },
+    {
+      "path": "src/netif_l2/link.rs",
+      "sha256": "700783930dfd726cdfa023f9431766dbc20a9dd017dbc64577437cf1dbc1af49"
+    },
+    {
+      "path": "src/netif_l2/pbuf_tests.rs",
+      "sha256": "d88baac26b5a9e9b654063e9b0163b465da1e3156d113247f9c65dff81ed2b2a"
+    },
+    {
+      "path": "src/netif_l2/storage.rs",
+      "sha256": "69442729657bd6c24a782cb5a916248a00432765fbba014f931b877c87409f92"
+    },
+    {
+      "path": "src/netif_l2/tests.rs",
+      "sha256": "1c7d13ce976d6487047044b3ca659ec43789e7d3e47572902808e03884c91870"
+    },
+    {
+      "path": "src/netif_smoltcp.rs",
+      "sha256": "c82319c2528eb08915cdce6c1294aa6bc78cc42271e4e4d07d15c8aa1b140bc4"
+    },
+    {
+      "path": "src/oal.rs",
+      "sha256": "4d2ffa86169ec9ccbddf10bd4b6558687a5f9a1d3531996c16da678d075f89fe"
+    },
+    {
+      "path": "src/osal.rs",
+      "sha256": "15348817fb1c4871186c7282a06fe5d9ce8ecd2bdfc578b96df1cb655d657116"
+    },
+    {
+      "path": "src/osal_adapt.rs",
+      "sha256": "d8064fc7ec757b24753369570366e0ad992970fb199ed21aad7ca02102b50c17"
+    },
+    {
+      "path": "src/osal_ext.rs",
+      "sha256": "940df6d07aa14b84a3891b0cc994c5f61a559b4c352fe20d7e6831bb28f54876"
+    },
+    {
+      "path": "src/osal_queue.rs",
+      "sha256": "10e21083ca2bcdde845fc3c2fc1bbfd94a145122f54b6207692a3a239e6aed30"
+    },
+    {
+      "path": "src/osal_sync.rs",
+      "sha256": "c125bb76c0545432fa458b0ae064c6874bc79ef574f7c2693ea229324d93a602"
+    },
+    {
+      "path": "src/osal_wait.rs",
+      "sha256": "ff224efc249facc99f43d93dccf7d5c48d1b4cf2132a3e893c485d9dc0a89600"
+    },
+    {
+      "path": "src/pmp.rs",
+      "sha256": "3bdc4ae633d3c2d37efb8508345ac800167da688f53c4caa0bb8c44d1f2efc92"
+    },
+    {
+      "path": "src/profile.rs",
+      "sha256": "245fcfc7dbd0a78e296f52a1a9d42434ba39225af243416f153239a9b04ace78"
+    },
+    {
+      "path": "src/rf_init_diag.rs",
+      "sha256": "6a98c4e4c669680cf0efae3cfbb06f1c620bd525e4a36af605ce4a817bbb9ad7"
+    },
+    {
+      "path": "src/runtime.rs",
+      "sha256": "22052faad0a599a363d3c39dc34f6b0a250f05026abaa2ae6a4f9cdf18a5eee1"
+    },
+    {
+      "path": "src/selftest.rs",
+      "sha256": "0f7ff5898503a2ce497211de1f621cca53b7fb7efdee841c1d5772cd375e276a"
+    },
+    {
+      "path": "src/sle.rs",
+      "sha256": "a5fdd6fa2c7897252790947b19a948a4226c7a2be7148755a2c25bf983f9899b"
+    },
+    {
+      "path": "src/station_pm_diag.rs",
+      "sha256": "3a0652b10431d573accc1abe323cf46d3028736a52e6f2ffa277582ba980d3bd"
+    },
+    {
+      "path": "src/timer.rs",
+      "sha256": "c3ee655c889bd3b7e34bab4e67bc87abc17dca9061f1b4b1d471ddec8c299977"
+    },
+    {
+      "path": "src/uapi.rs",
+      "sha256": "04066048c0385a9317cc9349819cfd6a673594aa64af3701c5adbd73729f8396"
+    },
+    {
+      "path": "src/upstream_authenticator.rs",
+      "sha256": "a9f9918932a4c9dd873b7dd12c8e613a7ff075aafcda9b3effb38fbee11e0db8"
+    },
+    {
+      "path": "src/upstream_supplicant.rs",
+      "sha256": "f05fdf3fb53c37d42945a62c3e8866664f0098be63e0f3a42ba41ac18c6c868d"
+    },
+    {
+      "path": "src/upstream_supplicant/deauth.rs",
+      "sha256": "bf2701505da37c1e3ddc4eb6a79fdda291a4de9d09e0f8e73167f5da44ecb746"
+    },
+    {
+      "path": "src/wal.rs",
+      "sha256": "790ae2ac17883133d14c61f2f02fa38e23f89ad88864bcaaefc9532e5f917010"
+    },
+    {
+      "path": "src/wifi.rs",
+      "sha256": "70aa960b72b510639016716c516b94b291a8685eae0a5dc597d53d1882cb20c3"
+    },
+    {
+      "path": "src/wlmac_diag.rs",
+      "sha256": "1af95ffeb55e063657076854f765477aeb2510b954dbceb9b8cdbeefdd27720a"
+    },
+    {
+      "path": "src/wpa_compat.rs",
+      "sha256": "a7dfaf832281c3bfef2f12b1214c0aa65a4790da4db254472fb6a0c9270f8160"
+    },
+    {
+      "path": "src/ws63_runtime_compat.rs",
+      "sha256": "084c679a4383c9ebd64b1e83121f4b04b5b588705391bba770a681d89025771c"
+    },
+    {
+      "path": "tests/radio_stage_contract.rs",
+      "sha256": "4ac5256c7bf0f8c6047c4f5513ada897eedeff9f48e6cea4be2e8a3d37b1651c"
+    }
+  ]
+}
