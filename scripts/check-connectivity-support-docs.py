@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import re
@@ -37,7 +38,48 @@ def require(text: str, value: str, errors: list[str], label: str) -> None:
         errors.append(f"missing {label}: {value}")
 
 
+def string_variants(source: str, name: str) -> tuple[str, ...]:
+    """Accept the two reviewed constant shapes; unknown Rust fails closed."""
+    definitions = re.findall(rf'\b{re.escape(name)}: &str\s*=\s*(.*?);', source, re.S)
+    if len(definitions) != 1:
+        raise ValueError(f"expected one {name} definition")
+    expression = definitions[0].strip()
+    literal = re.fullmatch(r'"([^"\\]+)"', expression)
+    if literal:
+        return (literal[1],)
+    conditional = re.fullmatch(
+        r'if\s+cfg!\(feature\s*=\s*"[a-z0-9-]+"\)\s*'
+        r'\{\s*"([^"\\]+)"\s*\}\s*else\s*\{\s*"([^"\\]+)"\s*\}',
+        expression,
+    )
+    if conditional:
+        return conditional[1], conditional[2]
+    raise ValueError(f"unsupported {name} initializer")
+
+
+def self_test() -> None:
+    assert string_variants('const SCHEMA: &str = "v13";', "SCHEMA") == ("v13",)
+    conditional = 'const SCHEMA: &str = if cfg!(feature = "standard-l2") { "v14" } else { "v13" };'
+    assert string_variants(conditional, "SCHEMA") == ("v14", "v13")
+    errors: list[str] = []
+    for value in string_variants(conditional, "SCHEMA"):
+        require("document v13", value, errors, "schema")
+    assert errors == ["missing schema: v14"]
+    for source in ("", conditional + conditional, 'const SCHEMA: &str = unknown("v14");'):
+        try:
+            string_variants(source, "SCHEMA")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"accepted ambiguous/unknown initializer: {source}")
+    print("connectivity-support-docs: constant parser mutations OK")
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-test", action="store_true")
+    if parser.parse_args().self_test:
+        self_test()
     document = DOC.read_text()
     facade = tomllib.loads(FACADE_MANIFEST.read_text())
     profile_source = PROFILE_SOURCE.read_text()
@@ -59,17 +101,17 @@ def main() -> int:
     for profile in profile_names:
         require(document, f"`{profile}`", errors, "named profile")
 
-    for pattern, label in (
-        (r'RESOURCE_REPORT_SCHEMA: &str = "([^"]+)"', "Wi-Fi report schema"),
-        (r'PROFILE_REVISION: &str = "([^"]+)"', "Wi-Fi profile revision"),
-        (r'RADIO_RESOURCE_REPORT_SCHEMA: &str = "([^"]+)"', "BLE/SLE report schema"),
+    for name, label in (
+        ("RESOURCE_REPORT_SCHEMA", "Wi-Fi report schema"),
+        ("PROFILE_REVISION", "Wi-Fi profile revision"),
+        ("RADIO_RESOURCE_REPORT_SCHEMA", "BLE/SLE report schema"),
     ):
         source = profile_source if label.startswith("Wi-Fi") else facade_source
-        match = re.search(pattern, source)
-        if match is None:
-            errors.append(f"cannot resolve {label} from source")
-        else:
-            require(document, match.group(1), errors, label)
+        try:
+            for value in string_variants(source, name):
+                require(document, value, errors, label)
+        except ValueError as error:
+            errors.append(f"cannot resolve {label}: {error}")
 
     require(document, blob["profile_revision"], errors, "blob profile revision")
     upstream = blob["native_supplicant"]["upstream"]

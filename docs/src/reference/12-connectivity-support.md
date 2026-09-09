@@ -21,6 +21,12 @@
 和[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json)
 已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。
 
+父仓当前另 pin 了尚未发布的 NET0 backend 改动。仅启用 `standard-l2` 时，
+资源报告为 `hisi-rf-resource-report/v14` / `ws63-radio-2026-09-09-r14-net0`，
+计入 caller-owned L2 队列；未启用时仍使用上表 v13。该实验路径已通过目标 ELF
+存储布局和双板初始化准入预检，但尚未完成 L2 流量、断连屏障或重连验收，
+不能视为已发布的 Embassy Net 支持。
+
 ## Profile 矩阵
 
 | Cargo profile | 能力边界 | Host 构建 | WS63 HIL | 当前等级 |
