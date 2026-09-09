@@ -145,3 +145,37 @@ The existing released smoltcp path is unchanged. No board was flashed for this
 audit, and no Embassy Net support claim follows from it. The ROM reads identify
 code bytes and control flow only; they do not prove those branches were exercised
 by a disconnect in the current Rust firmware.
+
+## Host Queue Topology Cross-check
+
+A subsequent static audit distinguishes the queues hidden behind the similar
+FRW names. It uses the same oracle above and the normalized target archive
+`libwifi_driver_tcm.a` with SHA-256
+`d0563f779957eb6df24cb27e102806105b09414991e60efcbe96f8e392a356e0`.
+The extracted `frw_thread.c.obj` is
+`42d7308f372412c93005fecd7b4abaebecc75f03f398a1775972429e8c736d4e`;
+its ELF relocations independently bind `frw_thread_init` to
+`frw_netbuf_que_handle` and `frw_task_process`, and `frw_host_post_data` to
+`frw_host_post_async`. These are archive facts, not runtime addresses.
+
+| Path in the pinned oracle | Queue/ownership observation | Fence consequence |
+|---|---|---|
+| `frw_thread_init` (`0x2651a0`) | Initializes two 136-byte thread controls, each with five 24-byte queue descriptors; queue 4 uses `frw_netbuf_que_handle`, while queues 0/1/3 use `frw_msg_que_handle`. Queue 2 is the synchronous response tracking list. | A single queue's empty flag cannot describe all work owned by both threads. |
+| `frw_task_process` (`0x264c6e`) | Walks the five descriptors in order and calls their configured handlers. Message handling processes one fetched node; netbuf handling loops until its queue becomes empty. | A synchronous command response is not a marker placed after every queue's prior work. |
+| `frw_host_post_msg_sync` / `frw_host_post_sync` | Local synchronous configuration is submitted to thread 0, queue 0. | Its completion does not establish a thread-1 RX message barrier. |
+| `frw_host_post_msg` (`0x265124`) | Selects thread 1, queue 1. The throughput-18 RX branch submits message 595 here before user-reference acquisition. | Even completion of user deletion cannot alone account for this pre-reference queue. |
+| `frw_host_post_data` (`0x26513a`) | Selects thread 1, queue 4. The public enum defines type 4 as `FRW_NETBUF_W2H_DATA_FRAME`. | This is a host-to-wireless data path, not evidence of an extra always-enabled RX queue. |
+| `uapi_lwip_send` (`0x268cb8`) | Throughput flag 16 selects type-4 queued TX; the other branch calls `hmac_bridge_vap_xmit_etc` directly. | The data profile must account for its actual TX mode as well as RX flag 18. |
+| `uapi_ioctl_send_eapol` (`0x29a9b8`) | Calls `frw_host_post_data(type=4)` and returns zero without propagating that helper's enqueue/free result. | Disabling ordinary queued TX does not remove the supplicant's queued EAPOL path. |
+| `frw_rx_netbuf` (`0x264166`) | Copies the DMAC payload into a host buffer, frees the original DMAC netbuf, then invokes `frw_hmac_rcv_netbuf` (`0x264682`), which dispatches the registered hook. | Freeing the original DMAC buffer does not retire the copied host frame or prove no callback can run later. |
+
+`frw_thread_exit` is also not a reconnect shortcut: it unregisters the receive
+hook, disables queues, optionally destroys tasks, and frees queued nodes and
+locks. It is a whole-framework teardown with distinct ownership requirements,
+not a bounded per-station flush. It was not called on either board.
+
+The next implementation must explicitly cover thread-1 message 595, queued
+TX/EAPOL, the direct RX callback, native user/TID teardown and Rust tickets.
+Do not infer queue ordering from a function name or turn a momentary empty
+snapshot into a permanent producer fence. No product hook, fixed delay, raw
+queue mutation or new open transition was added by this topology audit.
