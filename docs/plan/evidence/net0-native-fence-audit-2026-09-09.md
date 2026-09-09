@@ -257,3 +257,31 @@ do not match the four-argument / two-argument definitions inspected here.
 The existing Cargo path does not acquire new FFI imports from that header in
 this change. These observations add constraints to the pending native fence;
 they are not a new runtime implementation, producer-drain proof or HIL result.
+
+## Earliest Host-delivery Hook Snapshot
+
+Three further read-only STA ROM ranges, still on the same bound-control ELF,
+identify the host-delivery call boundary without installing a hook:
+
+| Range | SHA-256 |
+|---|---|
+| `[0x128540, 0x128620)` | `432d50209b953e42b4d4f6eb5661a84c57782cb4d251755c4d7e84c80e96fd24` |
+| `[0x128620, 0x1288a0)` | `69008d5d19978204c1894cd1ae7c411100cd136dd1b1a05ff8ef2c604e560cc2` |
+| `[0x128cb0, 0x128d60)` | `1fe52a0df4819124524e38944bb39e58a9583740b0c1a518290cb3f351e37d68` |
+
+The standard instructions show `frw_send_data_to_host` (`0x12877e`) selecting
+type 3 and jumping to `dmac_frw_send_data` (`0x1285bc`). The latter calls
+`hcc_slave_tx` (`0x128cea`), which looks up ROM callback **261**, passes the
+netbuf and length registers to it, and returns its status. The bounded read at
+`0x18141c` returned `0x0029792e`, which the fixed STA ELF resolves to
+`frw_rx_netbuf`. The SDK oracle independently registers that function at slot
+261 in `dmac_main_rom_cb_base_init_before_frw_init` (`0x2a4704`–`0x2a470e`).
+
+This is a candidate earlier observation boundary than `driverif_input`: it is
+before the host-buffer copy and the optional message-595 queue. It is not yet
+an interception contract. An implementation must retain the correct callback
+ABI/ownership, count callbacks already in progress, account for delayed work
+before this boundary and message 595 after it, and reject conflicting hook
+ownership. Unknown vendor instructions were not assigned semantics by LLVM.
+No callback replacement, target function call, queue flush or radio reset was
+performed; these local read artifacts do not close native quiescence or HIL.
