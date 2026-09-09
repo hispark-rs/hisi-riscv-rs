@@ -116,7 +116,8 @@ reset, function invocation, or NV write was performed.
 
 The 64-byte ROM range `[0x128d4a, 0x128d8a)` has SHA-256
 `b80a5ca4b7cb2879fda9f16b5af605e8d46c90ffbfeaf2f4fc93bd8993be05e6`.
-Disassembly confirms `frw_get_rom_cb` accepts indices through 264 and loads
+The range contains both `frw_rom_cb_register` (`0x128d4a`) and
+`frw_get_rom_cb` (`0x128d60`). The latter accepts indices through 264 and loads
 `g_frw_rom_cb[index]` from `0x181008 + 4 * index`. Accordingly, the bounded
 four-byte read of callback 211 at `0x181354` returned `0x002810ae` on both
 boards (each file SHA-256
@@ -179,3 +180,48 @@ TX/EAPOL, the direct RX callback, native user/TID teardown and Rust tickets.
 Do not infer queue ordering from a function name or turn a momentary empty
 snapshot into a permanent producer fence. No product hook, fixed delay, raw
 queue mutation or new open transition was added by this topology audit.
+
+## Device Flush And Host Hook Limits
+
+A later read of STA ROM `[0x128a00, 0x128e00)` produced 1,024 bytes with
+SHA-256 `26b87a1b312ab2f05a575f101fb6be203465048bc4edef833a81b17df7fba63f`.
+The STA was still running the bound-control ELF
+`35fbdf1ceed30d1b82c105892ff953dd813e23717885e290516bdfdaaea6df5e`.
+There was no reset, flash/NV write or target function invocation. The file is a
+local audit input, not a downloaded release artifact or behavioral HIL result.
+
+The existing Orb `dev` command channel did not return even for `uname`; only
+the two temporary clients started for this audit were terminated, without
+restarting the VM or its service. Rust's bundled LLVM object tools decoded
+the standard RV32 instructions instead. Vendor instructions remain marked
+unknown; no conclusions about those instructions are inferred from LLVM.
+
+The standard instructions and the pinned ROM symbol table establish that
+`frw_dmac_event_vap_flush_event` (`0x128b34`) calls `frw_flush_msg_que`
+(`0x128a96`) with queue indices 0 and 1. The message-only wrapper at `0x128b48`
+also visits those two queues. `frw_event_flush_callback` (`0x128b1e`) dispatches
+optional ROM callback 227; its existence is not evidence that the callback is
+installed or drains DMA. This still does not cover the separate host-thread
+message-595 queue or TX/EAPOL queue described above. The SDK's `frw_flush_msg`
+has a six-byte ABI (VAP flag, drop flag, VAP id, padding, message id), not an
+unqualified all-producer barrier.
+
+The same SDK's `frw_netbuf_hook_register` oracle (`0x2642c6`) rejects null
+callbacks and types >= 5, and refuses to replace an occupied hook. The public
+enum assigns those five types to device-to-host management/data/FTM and
+wireless-to-host management/data. Thus a proposed queue-4 sentinel cannot
+claim an undeclared type or overwrite an existing hook without a separate,
+audited interception/lifetime contract. The current implementation does
+neither. A future fence must establish actual producer closure and checked
+FIFO progress, not rely on an invalid sentinel, queue-empty snapshot, fixed
+delay or this static disassembly alone.
+
+In a separate read of the same fixed STA, ELF symbol `g_thruput_type` resolves
+to `0x00a32ed8`. All 23 flag bytes were zero (SHA-256
+`015275e61fa0d0751c1d9f45541c7804c895404455470710ade3786f282f2da0`).
+The SDK enum names index 16 `THRUPUT_RESUME_FRW_TX_DATA` and index 18
+`THRUPUT_RESUME_FRW_RX_DATA`; both optional ordinary-data queue paths were
+disabled at this observation. This narrows the current fixture, not every
+profile: the final ELF still contains `hmac_set_thruput_test`, so the snapshot
+does not establish an immutable mode or justify ignoring future mode changes.
+Queued EAPOL is independent of index 16 and remains in the fence scope.

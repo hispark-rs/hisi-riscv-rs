@@ -1261,6 +1261,25 @@ connect/disconnect marker，见[绑定关闭控制面证据](evidence/net0-bound
 此证据不向前迁移到旧 commit，也不构成新队列流量、native producer fence 或重连证明。
 NET0 仍 active；剩余是原生排空/authorization 接线及流量 HIL，NET1 继续 queued。
 
+core 未发布修复 `decca17` 移除 `Passphrase` 的派生 Debug 明文输出，并把
+`try_from_ascii` 的实际接受范围收紧为承诺的 8–63 字节可打印 ASCII。直接、嵌套配置与
+runner request 的 Debug 均脱敏；枚举全部 256 字节值和长度边界的回归先在旧实现失败。
+独立 offline 97 项 host tests、1 项 doctest、Clippy/RV32/package/API snapshot 通过，
+[精确源码 CI 5/5](https://github.com/hispark-rs/hisi-rf-core/actions/runs/34311315931)
+通过。这是源码修复，尚未替代 registry 的 `0.1.0-alpha.25`；后续 release 必须同时
+更新 backend/facade 的精确依赖，不能把父仓 patch 解析结果当作已发布消费者保护。
+
+backend `aef2b5c` 将驱动主动断连、关联拒绝和无法投递的 link event 接到独立 L2
+admission close：事件发布前关闭，队列满/非法长度/port 不可用也关闭并唤醒 worker，
+不依赖控制面继续 poll。association success 本身不授权、不开放链路。独立 offline
+NET0 host 176/176、旧 incremental 120/120、旧 blocking 84/84、两项新跨层 Miri、
+host Clippy（含 tests）、RV32 check/final link 通过；回退到 enqueue-only 的 mutation
+会使回归失败。
+[精确源码 CI 23/23](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34311989729)
+通过，包含三平台关闭路径、新增 Miri 与最终 RF 链接。
+该提交尚未发布或烧录，不继承 `654e90c` 的 23 次控制面 HIL。原厂 producer fence、
+typed MAC/channel/RSSI/reason 和新队列流量/重连 HIL 仍待完成。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
