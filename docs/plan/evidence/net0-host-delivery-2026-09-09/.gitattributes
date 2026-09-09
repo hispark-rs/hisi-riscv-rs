@@ -1,0 +1,2 @@
+# Preserve downloaded Windows evidence bytes and their recorded checksum.
+net0-linked-storage-windows-latest.json -text whitespace=trailing-space,space-before-tab,cr-at-eol

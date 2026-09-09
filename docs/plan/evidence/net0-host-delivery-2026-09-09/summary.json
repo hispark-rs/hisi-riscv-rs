@@ -1,0 +1,1979 @@
+{
+  "schema": "net0-host-delivery-evidence/v1",
+  "status": "call-observation-only",
+  "boundary": "No NET0 payload, native queue drainage, reconnect, Embassy Net or HTTPS claim",
+  "source_commit": "b69727512fb71baac57d66fbb33b06cd4f1bb3c4",
+  "sta_elf_sha256": "c52bcc67ef92aa5f3d2a09de5df1c9a531fbc8ca544c86fcc6aa6cf734d2c4c4",
+  "ap_elf_sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+  "ap_prior_evidence": "../net0-control-2026-09-09/summary.json",
+  "ap_changed_or_reset_during_matrix": false,
+  "elf_image_delivery": "local-only; final downloadable NET0 firmware bundle remains open",
+  "configuration": {
+    "path": "examples/ws63/hil_wifi_config.rs",
+    "sha256": "ff3b87eb5fa268b8bfba7a020c1ce1f19ceebe65cc670c1bb111c94ec99289df",
+    "kind": "committed public non-production paired fixture",
+    "private_credentials_used": false
+  },
+  "ci": {
+    "headSha": "b69727512fb71baac57d66fbb33b06cd4f1bb3c4",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34316064614"
+  },
+  "ci_jobs": [
+    {
+      "name": "feature-gates",
+      "conclusion": "success"
+    },
+    {
+      "name": "l2-miri",
+      "conclusion": "success"
+    },
+    {
+      "name": "Final RF link (ubuntu-latest)",
+      "conclusion": "success"
+    },
+    {
+      "name": "SoftAP profile (wpa2-sle-coexistence)",
+      "conclusion": "success"
+    },
+    {
+      "name": "NET0 native L2 contract (ubuntu-latest)",
+      "conclusion": "success"
+    },
+    {
+      "name": "SoftAP profile (wpa2-ble-coexistence)",
+      "conclusion": "success"
+    },
+    {
+      "name": "NET0 native L2 contract (macos-14)",
+      "conclusion": "success"
+    },
+    {
+      "name": "package",
+      "conclusion": "success"
+    },
+    {
+      "name": "Final RF link (macos-14)",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-incremental, wpa2-personal,incremental-backend-experiment)",
+      "conclusion": "success"
+    },
+    {
+      "name": "NET0 native L2 contract (windows-latest)",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa3-incremental, wpa3-personal,incremental-backend-experiment)",
+      "conclusion": "success"
+    },
+    {
+      "name": "minimal-target",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-smoltcp, wpa2-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+      "conclusion": "success"
+    },
+    {
+      "name": "SoftAP profile (wpa3)",
+      "conclusion": "success"
+    },
+    {
+      "name": "api-boundary",
+      "conclusion": "success"
+    },
+    {
+      "name": "Final RF link (windows-latest)",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-legacy-oracle, wpa2-personal,smoltcp,legacy-blocking-backend)",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-ble-coexistence, wpa2-personal,coexistence-wifi-ble,incremental-embassy-wait)",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-net0-storage-contract, wpa2-personal,smoltcp,incremental-backend-experiment,increme...",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa3-smoltcp, wpa3-personal,smoltcp,incremental-backend-experiment,incremental-embassy-w...",
+      "conclusion": "success"
+    },
+    {
+      "name": "profile (wpa2-sle-connected, wpa2-personal,coexistence-wifi-sle,incremental-embassy-wait)",
+      "conclusion": "success"
+    },
+    {
+      "name": "SoftAP profile (wpa2)",
+      "conclusion": "success"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "sta.Cargo.lock",
+      "sha256": "1b03e9d49398175b1bfdd6218a2d88984ce8a321aa4df58cf93330e4bcb33b4c"
+    },
+    {
+      "file": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "file": "capture-tool.py",
+      "sha256": "0c5f648a4ebd934eb0df44891c1f7c3edf398f00a072eca0b314f4ed40cefcf9"
+    },
+    {
+      "file": "capture-test.py",
+      "sha256": "ba2c38c9de2fa698bc32e2e81d2fbb7cc4593982237c687f525dd97cf6163e38"
+    },
+    {
+      "file": "radio-release-acceptance.json",
+      "sha256": "189a8d3779f3168042ac46c27487a296225d4d6855d9866b4e18ce00de79adb3"
+    }
+  ],
+  "linked_storage": [
+    {
+      "file": "net0-linked-storage-macos-14.json",
+      "sha256": "e6b9fac72c0aefc3843335ac0662ec2dd63830e2a2e30fe16ef22f5d4c870379"
+    },
+    {
+      "file": "net0-linked-storage-ubuntu-latest.json",
+      "sha256": "859b814c592a90cc6d206a4fb46bf0b54d9a316e1356ac1027d2d97a4bd8bbd3"
+    },
+    {
+      "file": "net0-linked-storage-windows-latest.json",
+      "sha256": "cfa21005fdcd1f2df65f66c4e287b2d8ae2ae5896908691701a993966a5836a2"
+    }
+  ],
+  "matrices": [
+    {
+      "schema": "net0-control-hil/v1",
+      "source_commit": "b69727512fb71baac57d66fbb33b06cd4f1bb3c4",
+      "elf_sha256": "c52bcc67ef92aa5f3d2a09de5df1c9a531fbc8ca544c86fcc6aa6cf734d2c4c4",
+      "role": "sta",
+      "probe": "1366:0105:000024060504",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 4.886047333944589,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 30823,
+              "sha256": "24c2c8b47a586b52aafb3d25abd412f207dfd2ffb614e5f6e5caecaf9359ac31"
+            },
+            {
+              "role": "peer",
+              "bytes": 11357,
+              "sha256": "ce02560de343b75790ebae5b6b220c301d38a140453a81029e78f9010ec8c05e"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 157,
+                "returned": 157,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 157,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 158,
+                "returned": 158,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 158,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset3-run-01.markers.log",
+            "sha256": "10c3ad64fa445b39e360e50ba2b6bd46f99f9552bd46cbfa4e23c28a4fcb21ea",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 3118,
+            "DISCONNECT": 109
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 4.208252792013809,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 24472,
+              "sha256": "143bb421adfd99349f3c8c92fd39da5a6c36336ad5d8b77e61bc89c886d30ec2"
+            },
+            {
+              "role": "peer",
+              "bytes": 20062,
+              "sha256": "afe04994cbf3378c4c8f24d528e469f6e56719aece3257285b720bd45ccb24a5"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 182,
+                "returned": 182,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 182,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 182,
+                "returned": 182,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 182,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset3-run-02.markers.log",
+            "sha256": "8071edf803a9e3d28dd1eab7ce1d4532279cc36a096690bb8d0a7bcad5f6c503",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1934,
+            "DISCONNECT": 109
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 4.218301750021055,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 23509,
+              "sha256": "3773ea2b1b3a3cdacb79188390596f1609c9e7a357c2a7b363fff8f6ebe73af9"
+            },
+            {
+              "role": "peer",
+              "bytes": 14741,
+              "sha256": "bf6ae12d90b1175d333f36681f97aca4538c2d907e4fc3dd7fb66f6252fde18d"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 138,
+                "returned": 138,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 138,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 138,
+                "returned": 138,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 138,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset3-run-03.markers.log",
+            "sha256": "93318e65334f64e36d172f0a434b45776beb08042a151d4d1b8d55e347cfae9c",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1958,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        }
+      ],
+      "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+      "flash": {
+        "exit_code": 0,
+        "seconds": 97.09180441696662,
+        "verify_requested": true,
+        "speed_khz": 3000,
+        "log_sha256": "c7af03396aae661906faaba9f9898ad2bbe3099be24c1849618b871b83a7e066",
+        "image_sha256": "b6e146aa8cf7638f7b7e6d68dd57a00208223944cf5c99c357b34d09785a89a0",
+        "plan": {
+          "file": "sta.plan.json",
+          "sha256": "abc75a56b83eb280aee22c4dee403eba39119875b531e7c66d9bfd85b50028a0"
+        }
+      },
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "case": "reset3",
+      "raw_summary_sha256": "f4e8026af6eb19da6bd47e155c3efecbfcdf0cda734e99ed77535ea126ad5ec2"
+    },
+    {
+      "schema": "net0-control-hil/v1",
+      "source_commit": "b69727512fb71baac57d66fbb33b06cd4f1bb3c4",
+      "elf_sha256": "c52bcc67ef92aa5f3d2a09de5df1c9a531fbc8ca544c86fcc6aa6cf734d2c4c4",
+      "role": "sta",
+      "probe": "1366:0105:000024060504",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 4.351687208050862,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 26371,
+              "sha256": "52175675c3e2e3bb3e3fbde7f2bf32ac89f9f793e4549e5a0fa3c66b6780e88b"
+            },
+            {
+              "role": "peer",
+              "bytes": 17138,
+              "sha256": "1145278639069b551f940ce03046e05ff2017ffb96f34b31ec0e36495ad7dab5"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 160,
+                "returned": 160,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 160,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 161,
+                "returned": 161,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 161,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-01.markers.log",
+            "sha256": "5c28ae5950804373a0c0a3361150e442b848c4f4ca5c64b52a940220f8a5ed25",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2180,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 4.121506083058193,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22882,
+              "sha256": "0ef5ae21d82bc8adf59c272cd935a274d3685008a12b1f103048e005d0da71bd"
+            },
+            {
+              "role": "peer",
+              "bytes": 19076,
+              "sha256": "d4d58dd36fb06f1dbf1c85b8e24d73ef7a60fe499801d2a7bce5536b18350e52"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 124,
+                "returned": 124,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 124,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 124,
+                "returned": 124,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 124,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-02.markers.log",
+            "sha256": "be4ac3bf623702e9c9bb50363e6850eef229cb9a4a0adf6ae39b7207fd6bcf07",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1856,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 4.208093875087798,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22237,
+              "sha256": "1f65c05e24926741b3ae28df27ea94ac7c848fac10076c84b3c471492755a0fe"
+            },
+            {
+              "role": "peer",
+              "bytes": 15707,
+              "sha256": "2818a1fc134935e83d54c9f837cab3b8be00cc96b052451350f9c852b3824e96"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 123,
+                "returned": 123,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 123,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 124,
+                "returned": 124,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 124,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-03.markers.log",
+            "sha256": "446bff9f426fba6d4226a7a76cd8e07286473307a6e71becab0dfbb235d101fd",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2058,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 4,
+          "pass": true,
+          "elapsed_seconds": 4.212738708010875,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22555,
+              "sha256": "3236df4d7e24c21ff2a66c8e05006a46abece7faf07bdde77cd95c44888174d2"
+            },
+            {
+              "role": "peer",
+              "bytes": 20773,
+              "sha256": "28b4aacc25b7207daa1417e01d7fe34818975a3bf10af54b7c0180c963602523"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 146,
+                "returned": 146,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 146,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 147,
+                "returned": 147,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 147,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-04.markers.log",
+            "sha256": "3eb9278b97fc3e0f11669987e041fd78ec5bbdda4f8cb1c6fdb3e1c0f3ef7205",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1944,
+            "DISCONNECT": 111
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 5,
+          "pass": true,
+          "elapsed_seconds": 4.2589185839751735,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 23827,
+              "sha256": "8957c9519483b9040235d2c7603e3b4c67453b527c6bf64dc014e9dea2bca52d"
+            },
+            {
+              "role": "peer",
+              "bytes": 14849,
+              "sha256": "8a127dcd630d4af04356e29b338a82b23aa768fa93ee0c7e9ac707f7d0989e50"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 155,
+                "returned": 155,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 155,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 155,
+                "returned": 155,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 155,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-05.markers.log",
+            "sha256": "fcb0f147e55a2b624f8b58bbb966300ed3777f861a6919094188b849563a4de4",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1981,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 6,
+          "pass": true,
+          "elapsed_seconds": 4.029360415996052,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 20656,
+              "sha256": "e0f4aa72b3b0617f01598682f0c7b5a5f25092f04295b9957485e56ce5531a49"
+            },
+            {
+              "role": "peer",
+              "bytes": 18788,
+              "sha256": "1babcde8f1474ef9425c4ca131c93d4f3455beec42eeed6a3092452d0ee22a82"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 147,
+                "returned": 147,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 147,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 147,
+                "returned": 147,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 147,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-06.markers.log",
+            "sha256": "f8ec54e179fcdc5a36f9ddf7c03b4dfcfb8ad57729a0c0cabb85b4eb529b33ae",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1766,
+            "DISCONNECT": 111
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 7,
+          "pass": true,
+          "elapsed_seconds": 4.238536041928455,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 24463,
+              "sha256": "9ff9f86e9f46dc7d1aa5485b86db2da45015ab7bb27c2615a360950eeb4d2e17"
+            },
+            {
+              "role": "peer",
+              "bytes": 15967,
+              "sha256": "b58554efd030db7227a39983103eb7089613d1e114c1d74268c6df0df7681bfd"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 157,
+                "returned": 157,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 157,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 157,
+                "returned": 157,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 157,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-07.markers.log",
+            "sha256": "78742531b08ebb2f02bbe1f3766b721178811bbd82ac26ee95ff8293c398bdc9",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2024,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 8,
+          "pass": true,
+          "elapsed_seconds": 4.183956208988093,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22882,
+              "sha256": "7e7241f88cf496847dfcf36fa81832f379d2f340af9167f8bc45ebc2bc8fe827"
+            },
+            {
+              "role": "peer",
+              "bytes": 20517,
+              "sha256": "3e8758bf832674e85b4720c73f2427a36f53fa1e0caa47f0178a391fee1b32a0"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 156,
+                "returned": 156,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 156,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 157,
+                "returned": 157,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 157,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-08.markers.log",
+            "sha256": "76f3b18036769a47850adfa02f0727264cf90cf4254be383ce9011688e373906",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1895,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 9,
+          "pass": true,
+          "elapsed_seconds": 4.1767151249805465,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 23518,
+              "sha256": "c864d6c9554333e71cf37faa9f2c7ec036ec797de43e01d9c6dbcf016d6e89bb"
+            },
+            {
+              "role": "peer",
+              "bytes": 15088,
+              "sha256": "abad10029609c2bae5c69f5815eee2164028854c6801527a51c5c17a53944506"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 158,
+                "returned": 158,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 158,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 158,
+                "returned": 158,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 158,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-09.markers.log",
+            "sha256": "3028b123067e04183edeb94d5e25a2ca9f83022ed02cb398ab15b20b381fdc10",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1975,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 10,
+          "pass": true,
+          "elapsed_seconds": 4.907612917013466,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 32740,
+              "sha256": "0494578aef8ea9a35465345b15d74a58c75ade61b22b832460962a2e26a969d8"
+            },
+            {
+              "role": "peer",
+              "bytes": 21036,
+              "sha256": "e17f9a18e9b1b0658fc466fe7136a226d31e54368bd63e1b669aa06e2e850d34"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 160,
+                "returned": 160,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 160,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 160,
+                "returned": 160,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 160,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-10.markers.log",
+            "sha256": "392128d07dbec4c36876395f979ca62644e29c56c89f1a72b1bbcdd860158ef3",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 3108,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 11,
+          "pass": true,
+          "elapsed_seconds": 4.106819084030576,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21592,
+              "sha256": "3a1db992d62856a2d032a56e3256b01c6fc7d1c4a240eabbe057168eefbc4c6e"
+            },
+            {
+              "role": "peer",
+              "bytes": 19179,
+              "sha256": "6ce07fbf9d6fe0fedf286f287d91a594095446b29c14b2a32cbe114049f7af1a"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 153,
+                "returned": 153,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 153,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 154,
+                "returned": 154,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 154,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-11.markers.log",
+            "sha256": "0962d4720704bf2e04f5332e31154979c91495c3429673f141bfe1cf9e9405b8",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1907,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 12,
+          "pass": true,
+          "elapsed_seconds": 4.307850375073031,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 24145,
+              "sha256": "98a3c6274799ed4dd22c7b905dda5874708aceeaa99650a00e89501f06c9ba53"
+            },
+            {
+              "role": "peer",
+              "bytes": 16415,
+              "sha256": "9dd9217bcf69aba8700e56e5f47bc967df7c650f5e022febe837af2d4d484580"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 157,
+                "returned": 157,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 157,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 158,
+                "returned": 158,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 158,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-12.markers.log",
+            "sha256": "d704d32bbefb34c976d1415ccc52c3118a550bec1b94bba2b27a2d9b0ed51a17",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2151,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 13,
+          "pass": true,
+          "elapsed_seconds": 4.146919291932136,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22555,
+              "sha256": "7a3aa8f8eef045ae20228e7c2189efb31fdf6a56e76c1ddf328d7bfea8b150a4"
+            },
+            {
+              "role": "peer",
+              "bytes": 19140,
+              "sha256": "c8b4771680c18e1924d47b8f88f0839dfea063ca06e9609acc951578dbb41520"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 153,
+                "returned": 153,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 153,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 154,
+                "returned": 154,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 154,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-13.markers.log",
+            "sha256": "76ed01b161e0fbad6b4c44410bd8e5a16c5b881dbf5a817656e6804b7027f59c",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1893,
+            "DISCONNECT": 109
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 14,
+          "pass": true,
+          "elapsed_seconds": 4.245064208982512,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 24790,
+              "sha256": "b067f2a2230533b9262a5f847a43f2f6f897c04b729668d62fb4bf97189384c5"
+            },
+            {
+              "role": "peer",
+              "bytes": 15633,
+              "sha256": "d757399c1a3670ac7a439cc2938c5783be320d21d5a6857684ce513864353c7f"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 156,
+                "returned": 156,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 156,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 156,
+                "returned": 156,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 156,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-14.markers.log",
+            "sha256": "07fdd99d2358f997325cf0b865547c6621b8d1963d315b71edd28a2ca88d44e8",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1949,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 15,
+          "pass": true,
+          "elapsed_seconds": 4.160887583042495,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21601,
+              "sha256": "a98963c56f45a0595dff0fcfc28b9f9426d1aacae634839abd2c55067fe5a3cc"
+            },
+            {
+              "role": "peer",
+              "bytes": 20741,
+              "sha256": "d859073638bf3bb1bef1adf0b579c52506962d5c99cc553314545371f9289bea"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 140,
+                "returned": 140,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 140,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 140,
+                "returned": 140,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 140,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-15.markers.log",
+            "sha256": "acd19a609709324de0e291d116b95f20cc03496fd780f0dcb457546eb3960238",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1994,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 16,
+          "pass": true,
+          "elapsed_seconds": 4.2519067079992965,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22564,
+              "sha256": "a9f9b0cfe1c257201837f0e2033679562ada2a30365c676a9e550c22849f5fb5"
+            },
+            {
+              "role": "peer",
+              "bytes": 14862,
+              "sha256": "484aae604d30fa7c314e6ab269b9b3af6cec9f9cab8cb7e7b18d25de7718ff46"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 146,
+                "returned": 146,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 146,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 147,
+                "returned": 147,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 147,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-16.markers.log",
+            "sha256": "1abaeed9c7dd8460c74e40269d1bd1a696ce391f6317164370968ecab4f79adb",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2116,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 17,
+          "pass": true,
+          "elapsed_seconds": 4.079905166989192,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21601,
+              "sha256": "5482e6da96d6ebcb0bf9cc96882e44214a0426b592a5ab551a18d1410ad36828"
+            },
+            {
+              "role": "peer",
+              "bytes": 19364,
+              "sha256": "120162cba21b70ff5956d5a145cc04ca6c28cc5546a0996c976804bbb80bfbe9"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 172,
+                "returned": 172,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 172,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 172,
+                "returned": 172,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 172,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-17.markers.log",
+            "sha256": "581d6665f29e5b816f9443878df000595424124aa5b57e39f520bba13251380e",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1879,
+            "DISCONNECT": 111
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 18,
+          "pass": true,
+          "elapsed_seconds": 4.111524041974917,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 21274,
+              "sha256": "ed9dd348f2866370e2e09c3324baca0506cc98f057c75d7e062f539e39598673"
+            },
+            {
+              "role": "peer",
+              "bytes": 15400,
+              "sha256": "532b27bce6fab619b28494a7fccbc772801600052a7506e9f786b137b411db95"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 126,
+                "returned": 126,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 126,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 126,
+                "returned": 126,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 126,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-18.markers.log",
+            "sha256": "83b54e7f4f9f62bf1fcd7a848ef11515aac7b243a3a7535d806c6165c06d142a",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1992,
+            "DISCONNECT": 111
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 19,
+          "pass": true,
+          "elapsed_seconds": 4.141098082996905,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 22555,
+              "sha256": "6845b233d0efc462667cffc6f0f0287f8cc555f180d3821ad0e9dc8b4c80194f"
+            },
+            {
+              "role": "peer",
+              "bytes": 19211,
+              "sha256": "4c23b447288effaf027c1c428224c1a1049171910d1591fd0ce9d40fbaf47162"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 136,
+                "returned": 136,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 136,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 136,
+                "returned": 136,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 136,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-19.markers.log",
+            "sha256": "0994d2e22a14d6d5f02b9a244bffb57ea2409921ddf058186ce070d41f513e1b",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 1856,
+            "DISCONNECT": 110
+          },
+          "flash_init_warning": true
+        },
+        {
+          "index": 20,
+          "pass": true,
+          "elapsed_seconds": 4.31143224996049,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_BOUND_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 25108,
+              "sha256": "88afee663fc9bb707bf284243c36f081e24da7ec13db37a49cc1df8c2012e40d"
+            },
+            {
+              "role": "peer",
+              "bytes": 16443,
+              "sha256": "acffcfeacd5f670b549cef5df840c52f5dcf1662b247a2a8da0ef02f77c03f0b"
+            }
+          ],
+          "host_delivery": {
+            "samples": [
+              {
+                "entered": 0,
+                "returned": 0,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 0,
+                "closed": 0,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "bootstrap",
+                "exhausted": false
+              },
+              {
+                "entered": 151,
+                "returned": 151,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 151,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "connected",
+                "exhausted": false
+              },
+              {
+                "entered": 152,
+                "returned": 152,
+                "abandoned": 0,
+                "in_flight": 0,
+                "peak": 1,
+                "closed": 152,
+                "crossed_close": 0,
+                "nonzero": 0,
+                "phase": "disconnected",
+                "exhausted": false
+              }
+            ],
+            "errors": [],
+            "pass": true,
+            "boundary": "Call-lifetime observations only; not native queue drainage or Ethernet delivery"
+          },
+          "public_excerpt": {
+            "file": "reset20-run-20.markers.log",
+            "sha256": "0b02ee93465c10a6ff60498d73255c4dfd83aea1517088d6beaf98426a8d0a33",
+            "policy": "full-line whitelist, not original UART"
+          },
+          "firmware_elapsed_ms": {
+            "CONNECT": 2134,
+            "DISCONNECT": 109
+          },
+          "flash_init_warning": true
+        }
+      ],
+      "boundary": "Native control-plane sequencing only; no L2 traffic or native producer-fence claim",
+      "required_markers": [
+        "RFDBG_A5B_CONNECT_OK",
+        "RFDBG_A5B_DISCONNECT_OK",
+        "RFDBG_A5B_CONNECT_PROFILE_OK",
+        "RFDBG_NET0_BOUND_CLOSED"
+      ],
+      "case": "reset20",
+      "raw_summary_sha256": "b6cd651a240a9404dd479d937a2dfe9e1a52e664ca2e8be38e3fb36bffbb7f79"
+    }
+  ],
+  "tools": {
+    "rustc": "rustc 1.99.0-nightly (14cae6813 2026-07-08)\nbinary: rustc\ncommit-hash: 14cae681329a63c622a6e1fbe1d30f9374bc51d8\ncommit-date: 2026-07-08\nhost: aarch64-apple-darwin\nrelease: 1.99.0-nightly\nLLVM version: 22.1.8\n",
+    "probe_rs": "probe-rs 0.31.0 (git commit: ed6ac741)",
+    "probe_rs_sha256": "fed6d7b73cb3984bd19fd7d05d2bf31057d57b2f988bb51677a75da016a9c232",
+    "probe_yaml_sha256": "90c0c07c50f967e6d8d40578c8a7b93841e86cb2cc005cf1d1b1b94c0251f3c2",
+    "hisi_fwpkg": "hisi-fwpkg 0.3.3",
+    "hisi_fwpkg_sha256": "6bfedba07579cc62e1f932234ee196b9cb785372742c83711bd7ae35a336f760",
+    "reset": {
+      "source_path": "hil/jlink_nrst.py",
+      "sha256": "95ba6d96bacd558c69ec87f0e4144efd926c427dcfc4992aa9e78b9bc9563a48"
+    },
+    "flash": {
+      "source_path": "hil/flash.sh",
+      "sha256": "a30a4b394b15c0fecf38129e22ce9f69d35569100b0df393fd925c4521281383"
+    }
+  },
+  "connect_ms_range": [
+    1766,
+    3118
+  ],
+  "disconnect_ms_range": [
+    109,
+    111
+  ],
+  "host_calls_per_round_range": [
+    124,
+    182
+  ]
+}

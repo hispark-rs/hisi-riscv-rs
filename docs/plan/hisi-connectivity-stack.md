@@ -1290,6 +1290,14 @@ RV32、package 和 API snapshot 通过；
 BSSID/channel/frequency/RSSI 和 disconnect reason 还未迁移，不能宣称全部 typed
 metadata 或 NET0 已完成。native fence 仍是当前数据面验收的前置缺口。
 
+早期原生收包观察器 `b697275` 已基于公开 `ws63-radio-sys alpha.26` ABI 接线，
+独立 offline host 184/184、Miri 35/35、精确源码 CI 23/23 通过。固定 STA 镜像
+完成 3/3 + 20/20 nRST；[逐轮证据与发布包校验](evidence/net0-host-delivery-2026-09-09.md)
+记录真实 hook 调用、完整 u64 守恒计数和白名单 UART。管理/EAPOL 仍恰好转发一次，
+NET0 队列保持 closed；在途调用、prepare/commit 间的新调用或计数耗尽均阻止 open。
+这不覆盖 hook 之前的设备工作及其返回后的 MSG595/TX/EAPOL 队列，不能当作 native
+producer fence。NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

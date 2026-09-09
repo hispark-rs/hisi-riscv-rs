@@ -1,0 +1,38 @@
+{
+  "jobs": [
+    {
+      "conclusion": "success",
+      "name": "Rebuild native hostap archives"
+    },
+    {
+      "conclusion": "success",
+      "name": "publish"
+    }
+  ],
+  "kind": "crates-io",
+  "registry": [
+    {
+      "package": "hisi-rf-link",
+      "sha256": "af219b6f876483c0c8d83784fd515d36dcabfcea68c01eb37a2fb526a6c3b8e9",
+      "source_commit": "63b3de4e9787e1f24aa693df5c7a3755d16c3098",
+      "version": "0.1.0-alpha.26"
+    },
+    {
+      "package": "ws63-radio-blob",
+      "sha256": "fec287044352c4cac8eec5f3418ba98d8a901e137ca4f5bbd090b5f5d52663ad",
+      "source_commit": "63b3de4e9787e1f24aa693df5c7a3755d16c3098",
+      "version": "0.1.0-alpha.26"
+    },
+    {
+      "package": "ws63-radio-sys",
+      "sha256": "8c992bd61305ddfeedfee027a4316c9e1c179af089086f67574e934b0cfda2ed",
+      "source_commit": "63b3de4e9787e1f24aa693df5c7a3755d16c3098",
+      "version": "0.1.0-alpha.26"
+    }
+  ],
+  "run_attempt": 1,
+  "run_url": "https://github.com/hispark-rs/ws63-radio-sys/actions/runs/34315272264",
+  "schema": 1,
+  "source_commit": "63b3de4e9787e1f24aa693df5c7a3755d16c3098",
+  "status": "pass"
+}
