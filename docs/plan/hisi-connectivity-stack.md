@@ -1329,6 +1329,14 @@ backend `9784072` 随后补齐实际 traffic fixture 的物理资源描述符，
 association 重试被保护拒绝后停止，实际 1/2，首轮 UDP 10/10。资源子项/最终 ELF
 一致性已补强，但不将其写成完整 HIL、native fence 或重连验收；NET0 仍 active。
 
+backend `2ce83fd` 修复已分配 native pbuf 跨 close/open 延迟交付时被重新标记的问题：
+私有 16-byte allocation prefix 保存分配前的 close revision，保持原厂 pbuf ABI/
+headroom，并在 v3 资源报告列出每包额外 RF-heap 成本。193 host tests、39 Miri tests
+及实际 ELF 负例通过；[修复证据](evidence/net0-pbuf-epoch-2026-09-09.md)保留新镜像
+3/3 预检（UDP 30/30）及后续请求 20 轮、首轮因 association retry 保护拒绝而停止的
+0/1。它不覆盖 allocation 之前的 DMAC 工作或 native 新拷贝，不放宽 one-shot guard，
+也不替代原生 producer fence；NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
