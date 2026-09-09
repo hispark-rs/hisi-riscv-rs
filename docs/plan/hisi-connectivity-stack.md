@@ -1171,18 +1171,30 @@ close/drain 检查、callback 守恒和单帧 TX worker step；本地 35 项 hos
 RX/TX/FRW 队列已排空的证据，native quiescence 必须独立建立，禁止只把 disconnect
 提交成功当成新 generation 可以开放的依据。此阶段不增加 Embassy Net 支持声明。
 同日[只读 native fence 审计](evidence/net0-native-fence-audit-2026-09-09.md)
-绑定了 vendor oracle 摘要：同步 WAL/FRW completion、异步断连通知和 deferred user
-清理是不同边界；`uapi_wifi_sta_stop` 依赖 vendor WPA，不能直接作为 upstream-native
+绑定了 vendor oracle 和 normalized archive 摘要：同步 WAL/FRW completion、异步断连
+通知和 user 引用排空是不同边界。实际 user-delete 在引用未归零时每 1 ms 同步等待，
+并非返回后 deferred cleanup；最终 user-free 的失败也不一定传播到外层状态。
+`uapi_wifi_sta_stop` 依赖 vendor WPA，不能直接作为 upstream-native
 排空实现。当前仍需在实际 artifact/ELF 与延迟帧 HIL 上闭合 native quiescence。
 
 facade `0.1.0-alpha.115`（`e87cba5`）固定上述两个公开依赖：
 [源码 CI 13/13](https://github.com/hispark-rs/hisi-rf/actions/runs/34297907747)、
 [发布 27/27](https://github.com/hispark-rs/hisi-rf/actions/runs/34298279416)
 通过，包含 macOS/Linux/Windows 的 4 profile candidate/published consumer，
-另有[下载 registry 验收](evidence/net0-rf-alpha115-acceptance-2026-09-09.json)。
+另有[下载 registry 验收](evidence/net0-rf-alpha115-acceptance-2026-09-09.json)及
+[24 份 consumer ELF/lock/receipt 重算摘要](evidence/net0-rf-alpha115-consumer-downloads-2026-09-09.json)。
 examples `7fe7bfd` 将 STA/AP 固定到此版本，分别通过自身 workspace/lock 的最终
 release ELF 链接；它仍保留显式 RTOS/PAC 开发 patch，不冒充 registry-only consumer。
 以上不改变旧 smoltcp profile；新的 NET0 callback/profile/HIL gate 仍未关闭。
+
+WS63 未发布提交 `8ef92be` 已将真实 `driverif_input` 接入 caller-owned route，
+在 callback 入口捕获 generation，校验 netif/pbuf/长度和单段约束，所有路径只释放
+一次 pbuf 引用。新 route 未绑定或未开放时明确 drop，不回退旧全局队列。
+本地 39 项 host tests、13 项 Miri（含真实 callback 与泄漏检查）、组合 feature、
+Clippy/RV32/独立 package 通过；精确源码
+[CI 22/22](https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34299849591)
+包括三平台 callback 契约与最终 RF 链接。此提交尚未将新队列加入 named profile、
+worker 或资源报告，native fence 和新路径真机 parity 仍是下一门槛。
 
 #### NET1：Embassy Net 接入
 
