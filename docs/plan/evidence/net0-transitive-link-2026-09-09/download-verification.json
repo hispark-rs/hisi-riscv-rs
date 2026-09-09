@@ -1,0 +1,1680 @@
+{
+  "schema": "net0-transitive-downloads/v1",
+  "source": "1830bc9ff87654b0870e39e288958605fcbe435c",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34335647477",
+  "successful_jobs": 23,
+  "artifacts": [
+    {
+      "host": "ubuntu-latest",
+      "id": 10097849364,
+      "name": "net0-external-consumer-ubuntu-latest",
+      "expires_at": "2026-12-08T09:36:24Z",
+      "digest": "sha256:54ee2b17ac8778b618b133e3a39a1c3c8a282c10f66a8ebd8c2789fc33b2693b",
+      "downloaded_zip_sha256": "54ee2b17ac8778b618b133e3a39a1c3c8a282c10f66a8ebd8c2789fc33b2693b",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "13344aeb465138dd9aef23da3c193555b796c841b6a12cc5102c18e226d37aa3",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "1bed1555b85c2e5bc4d0e0cc6edb69da102a6a760c6d975d8e2cc004d2a26892",
+          "bytes": 3549
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "333c366bd7314f77c2b9ec6ef0e6b78627c5fad6ac5653262bfe241edf886655",
+          "bytes": 15370
+        },
+        {
+          "name": "storage.json",
+          "sha256": "c9495eb7d78035ab0446192c9fd08116e925bccd4ab038303fb799df04fc8f1b",
+          "bytes": 751
+        }
+      ],
+      "consumer": {
+        "schema": "net0-transitive-consumer/v1",
+        "status": "pass",
+        "harness_sha256": "516bd2389d77bfeda37fb60cc85d430880822e829b736c84d5b7c416e25c0e9f",
+        "package_sha256": "23428970631ebea336cb214993c7cbb20a2f8490b9ac4cde7a5c0fa2f63c166a",
+        "package_bytes": 387161,
+        "source_files": [
+          {
+            "path": ".github/public-api/ble-b3-stage.txt",
+            "sha256": "9864143375bea3659098551768946d8280af4c9b96b7a01de3ac0b4bfa98bdbd"
+          },
+          {
+            "path": ".github/public-api/sle-s3-stage.txt",
+            "sha256": "85445ba0cdad4f6dcd26570acb9a858c361a07653f8a7fe39cae3c6cb366ec81"
+          },
+          {
+            "path": ".github/public-api/wpa2-incremental.txt",
+            "sha256": "1a6bdf40b75d90f8ee3150cdb404f69d41eb9ed0a0bc6ee1508609315f95583b"
+          },
+          {
+            "path": ".github/public-api/wpa3-incremental.txt",
+            "sha256": "3c814bd3fb8c0cc5daa2ad7d3055e7a270510d1e6265cd8c95290a183247f03e"
+          },
+          {
+            "path": ".github/scripts/check-net0-cleanup.py",
+            "sha256": "5b9590e8dbe0337a0b4d0367ffc8e8969eaa344c4e517c329ff5af3765bc806f"
+          },
+          {
+            "path": ".github/scripts/check-net0-consumer.py",
+            "sha256": "516bd2389d77bfeda37fb60cc85d430880822e829b736c84d5b7c416e25c0e9f"
+          },
+          {
+            "path": ".github/scripts/check-net0-storage.py",
+            "sha256": "a3911bd242e6cf2b4614819d054b9232de7f30b43394674fd9ccd820c34db8d4"
+          },
+          {
+            "path": ".github/scripts/check-public-api.py",
+            "sha256": "e0ee648dffaa1baf38b101649732e5dc4c6d48612ea1c9dac9d158520eeedb49"
+          },
+          {
+            "path": ".github/workflows/ci.yml",
+            "sha256": "bcc737426e57801d3750b2f050304367421af238c097cc448ba5c2e39a377544"
+          },
+          {
+            "path": ".github/workflows/publish.yml",
+            "sha256": "b357886da2fab78024c6d1e1e12ee107887207f53e3afc47e7153c0956eac363"
+          },
+          {
+            "path": ".gitignore",
+            "sha256": "02e7b40893c74a993a139de7b0f85d8cf2eaea57d544effd576920a514872af4"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "sha256": "7a5b4fd487badb1a27051753c4e8e8ed0c0e95be3a7ad4f51d0606a8687d2634"
+          },
+          {
+            "path": "Cargo.lock",
+            "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+          },
+          {
+            "path": "Cargo.toml",
+            "sha256": "08327a9316fb1788a80e99c532c4ff3ca225283db5ce3054bc43136daedf1e9f"
+          },
+          {
+            "path": "LICENSE",
+            "sha256": "7a7a93d9addcdb516442c1724d171182e1091bc97d0e5dcbd641a71db01ce1ce"
+          },
+          {
+            "path": "README.md",
+            "sha256": "03e0eabde526cb3265dc15ebe1bf3cb26ea0c2123e574f3fc9c4c96394270b4f"
+          },
+          {
+            "path": "build.rs",
+            "sha256": "de49efb45416d9cea17e646ddc66c2e4bfef4b2cd2c3f8f7aa33efc2dd641dad"
+          },
+          {
+            "path": "docs/l2-integration.md",
+            "sha256": "0361e540965d244ca3ad85ea5413cfcd19a3aa51445f3f1018165fc84ed849fd"
+          },
+          {
+            "path": "docs/radio-stage-api-migration.md",
+            "sha256": "e0d02a8533e7a233c8e2c8744616560017f3688bf8831ead5ac67805445c28f1"
+          },
+          {
+            "path": "examples/arena_admission_error.rs",
+            "sha256": "59dd1ec00c7b292489f13eaf74adfa8757c561c745c6776a404e4def121d8c03"
+          },
+          {
+            "path": "examples/ble_gatt_client_smoke.rs",
+            "sha256": "16d96ea509cf05a716a513c5a35ba61c831b4f01b33084dc04a26b05a302a85a"
+          },
+          {
+            "path": "examples/ble_gatt_server_smoke.rs",
+            "sha256": "b304277746044cbed0786af5c4577950532dc5b2d6830e10b9c3619413ed3eb5"
+          },
+          {
+            "path": "examples/ble_init_link.rs",
+            "sha256": "b75e7423b20fa1276a312fa1cef8b075f8aa2db4dd95b4dc3fb5781de0522506"
+          },
+          {
+            "path": "examples/ble_init_smoke.rs",
+            "sha256": "70b50a676dd067fd4ab0c07a7d4bf24c8b9373f0d06eee64a0d9d0219bc4aae6"
+          },
+          {
+            "path": "examples/bootstrap_profile.rs",
+            "sha256": "7bd6a442e6614102c5cc78f751f447a1faa38283dfa3fdf38fefba7b76148eb8"
+          },
+          {
+            "path": "examples/coexistence_init_smoke.rs",
+            "sha256": "17e00cabe16c639edbfab28f31e8933b86a29b921e680b2bab54b011ef5262d3"
+          },
+          {
+            "path": "examples/connectivity_contract_fixture.rs",
+            "sha256": "08eeb3545084a7d997c062184836a6ed5386da172f73c2a93c6b3f8bb4a6ba24"
+          },
+          {
+            "path": "examples/incremental_scan_profile.rs",
+            "sha256": "fa8400468b553bf33410c3c1e2a06fe9a538bd4eba7eec3a1f47e750a20158a6"
+          },
+          {
+            "path": "examples/operation_error_injection.rs",
+            "sha256": "f2271d7b1e4f4e3c065cee1846cd76d8f127a9c735d4eabc536a71ce927a750d"
+          },
+          {
+            "path": "examples/plain_firmware.rs",
+            "sha256": "b808155b327af4a38e2cf3b864a2e8e307103da4ee7b9e109501799096c630b0"
+          },
+          {
+            "path": "examples/resource_report.rs",
+            "sha256": "aec9bf8225e73c6d50a4b7ee0fc9b882cd6dbb2e933fb35736777cbe7f5cf3cd"
+          },
+          {
+            "path": "examples/sle_announce_smoke.rs",
+            "sha256": "7850ec88fb89fd89dead85dfb4bd05515531635b539be008ede6b8e4f2f5f616"
+          },
+          {
+            "path": "examples/sle_connect_client_smoke.rs",
+            "sha256": "1d695527b5c2f50eb8edf22ede22b922532245a140d83779992ad9bf74808c8e"
+          },
+          {
+            "path": "examples/sle_connect_server_smoke.rs",
+            "sha256": "09f81b40cbdb5d73ae732e2e5eb3e11b2f2d7c262aa1ffc1a0b1bad55f85f322"
+          },
+          {
+            "path": "examples/sle_seek_smoke.rs",
+            "sha256": "c07cfc654fdc5117b0d96feacf88dc4f4b023a02a78143201a8c58ef03816387"
+          },
+          {
+            "path": "examples/sle_ssap_client_smoke.rs",
+            "sha256": "6b8f3cff2e20dc171e40d561bd82121ffbfb000652a83e4e0da6fa2e067048e4"
+          },
+          {
+            "path": "examples/sle_ssap_server_smoke.rs",
+            "sha256": "a023be299c59e7b6d2306edce7e3403c1d1e2ea304327eb64467ad71aca1da6a"
+          },
+          {
+            "path": "examples/support/ble_firmware.rs",
+            "sha256": "f38a82d7d670296435bc3e23f348d1e35ac5237f1813176a46f31935b45eca95"
+          },
+          {
+            "path": "examples/support/net0_initial_network.rs",
+            "sha256": "77f0200601eb1d5b15b969c6cbd96bddf03d2ec11b79132e116dc5fca6b47896"
+          },
+          {
+            "path": "examples/support/net0_storage.rs",
+            "sha256": "305df264c7953f701c344d8fca8cdb700111502cb67ba75d96a231499397b9f1"
+          },
+          {
+            "path": "examples/support/sle_firmware.rs",
+            "sha256": "f16e6e091689c0faf6a2ad59c2fd642b288c6decc38b1def47d67ebc59a57c2e"
+          },
+          {
+            "path": "examples/typed_error_parity.rs",
+            "sha256": "4686536a882ad24eba59dbb53f3da271cfbae0bc1cbe357db910fb793d8efdfd"
+          },
+          {
+            "path": "examples/wifi_ble_coexistence_smoke.rs",
+            "sha256": "1f9ebe94e6a0ac757951681af33fcafd5d5b2fd125ee65c5a060b77ac1733d87"
+          },
+          {
+            "path": "examples/wifi_ble_connected_client_smoke.rs",
+            "sha256": "1088f65886784c0efbde4fb77830b040ea9e521849317218823f2e76f5396681"
+          },
+          {
+            "path": "examples/wifi_sle_coexistence_smoke.rs",
+            "sha256": "8030ba6e05ef1c954c52ef7da2c34aae2c382b048e0a221c8821373b8f81a941"
+          },
+          {
+            "path": "examples/wifi_sle_connected_client_smoke.rs",
+            "sha256": "9bc3dba62e438300f302e2b9295e7034f2000e5fdff79ea07a2a63d2dc6b50a9"
+          },
+          {
+            "path": "link/ws63-rom-call-symbols.txt",
+            "sha256": "cf2f6a7f10e80eb9f826415e2e986dd0a1d15951019e4290d26b6c60482a201c"
+          },
+          {
+            "path": "rust-toolchain.toml",
+            "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+          },
+          {
+            "path": "src/alloc.rs",
+            "sha256": "8b4bb6bb051eac0f9951bb690604fc0fe83d3c42d627e4aeaeb9f8599d5128ed"
+          },
+          {
+            "path": "src/ble.rs",
+            "sha256": "24277166ebeaccf4b21ad7a92503ad3db41074cb7c755f396f83e77948e02215"
+          },
+          {
+            "path": "src/ble_compat.rs",
+            "sha256": "e64d6f510a631726de024a017ad385d164d6e683a7835b231f8836df38eb8802"
+          },
+          {
+            "path": "src/ble_init_diag.rs",
+            "sha256": "3f61b697ec8a68bac85f7c669d9806a82fb4c1ca7590d8982a6a4a8c26123860"
+          },
+          {
+            "path": "src/ble_sc.rs",
+            "sha256": "086c68ec76867b487e50f2514ddb650c1efc5458630dc56f5d38e4963f219e9f"
+          },
+          {
+            "path": "src/blocking_diagnostics.rs",
+            "sha256": "593d5a6c7dc0fb8f866f7bfdce5c87aa8d0ed5d82af7b7441e5f3ed1f32e937f"
+          },
+          {
+            "path": "src/compiler_rt.rs",
+            "sha256": "839d60f9c1ef96216570fa08eb5f9aaff1ec4adc9bfce3f5564e663e3195829b"
+          },
+          {
+            "path": "src/composition.rs",
+            "sha256": "c77cb22df06f80a72d3203b01c158a158b360ae00b802bad191c428b6b7ec874"
+          },
+          {
+            "path": "src/crypto.rs",
+            "sha256": "242f546a002b076e17c9c123a048c04fc643ca810f3959b75cc71cac93b67a7e"
+          },
+          {
+            "path": "src/crypto_sae.rs",
+            "sha256": "d07f1f25d544e331ccf41d0b3ed7819adbfb04041d78e6a32926175dc2a4ba76"
+          },
+          {
+            "path": "src/data_path_diag.rs",
+            "sha256": "211c44513c5ecb793159911ed83a87ea64157aa762fba24d294fcc758d3db4e6"
+          },
+          {
+            "path": "src/eloop_diag.rs",
+            "sha256": "408dbfc56840fa6d4dfb4b96fb163d3a72d74382e717b80e0b1b575cc7e9c529"
+          },
+          {
+            "path": "src/error.rs",
+            "sha256": "4041c276faa97cad4fa390f0f20b6ac69c6396860b4f768e0e2c58d1c2fefc91"
+          },
+          {
+            "path": "src/frw.rs",
+            "sha256": "d5d0170784755c14fe70821514bca10413e2ba6e90816565a7bf09ee8416ba6b"
+          },
+          {
+            "path": "src/hcc.rs",
+            "sha256": "e33e13e01494bfb83817592e9b656a2a9eafca91c07063582e3edcd315e8e352"
+          },
+          {
+            "path": "src/hisi_rf_backend.rs",
+            "sha256": "2793c4404f280723afdab1653b8b3591bc828498f3a53895c6a828b5f21a718a"
+          },
+          {
+            "path": "src/hisi_rf_backend/incremental.rs",
+            "sha256": "840a098998454036a074a575dba363ab4ce15f4d2e31e43a91d64b891549dffd"
+          },
+          {
+            "path": "src/incremental_wait.rs",
+            "sha256": "e125b9d46c8939daddbd60ef2015559ce4d1c6f09e3d92d7d9adeaaa8fdf891a"
+          },
+          {
+            "path": "src/incremental_worker.rs",
+            "sha256": "1d372f6213255dbe5986c642da3b0a0b2b176b88272c72abd9f3e4a72ceb50eb"
+          },
+          {
+            "path": "src/lib.rs",
+            "sha256": "97776d2af43bdf5af6d2d699d69651b4fae064a819f78cc5ee64d8b2d3120a36"
+          },
+          {
+            "path": "src/libc.rs",
+            "sha256": "df78b59884b8c32d82857d0956a9f8a4ca9af2161acbb68ed17cab02e30bd292"
+          },
+          {
+            "path": "src/log.rs",
+            "sha256": "8eb2ae029b652d63d22fc50df192619050bd5350d838c2904c63fe2efab18350"
+          },
+          {
+            "path": "src/netif.rs",
+            "sha256": "387c0118bc3b19ebfbf6745805381c7ecf2b5da41016663a828838b050d2e8aa"
+          },
+          {
+            "path": "src/netif_l2.rs",
+            "sha256": "0ed4382e308a433a601ae3564d4b65146f6c81b10958a6eaa75a2c5766a155b3"
+          },
+          {
+            "path": "src/netif_l2/device.rs",
+            "sha256": "19de3f4477868d72dd234a04c64de6ba8b2853775542cd954183dcae0874a1e0"
+          },
+          {
+            "path": "src/netif_l2/host_delivery.rs",
+            "sha256": "4ddeeb15fc90ee0cd353c13068a3576c205d77a5ef63e7035b9922a32c06761f"
+          },
+          {
+            "path": "src/netif_l2/initial_session.rs",
+            "sha256": "392a5b12ded2c7add59c4fee1b10430425b8ac1437c8e8ba2246841a529bc41b"
+          },
+          {
+            "path": "src/netif_l2/link.rs",
+            "sha256": "700783930dfd726cdfa023f9431766dbc20a9dd017dbc64577437cf1dbc1af49"
+          },
+          {
+            "path": "src/netif_l2/pbuf_tests.rs",
+            "sha256": "d17695f52c4d78f7fc2b1904cd838e69feb0d69c76ccce03424771b383586346"
+          },
+          {
+            "path": "src/netif_l2/storage.rs",
+            "sha256": "154c5d907eda5433004c49b6128c09e80be4febea4c66b3da7067d2228a60d4a"
+          },
+          {
+            "path": "src/netif_l2/tests.rs",
+            "sha256": "d2069bc3ee8aaa26616643acb588fe0bee81bdb6d564a1328c115925574dcba9"
+          },
+          {
+            "path": "src/netif_l2/user_cleanup.rs",
+            "sha256": "7092738b2b3c0db6c0d5fd252051f9fed3379c5e93ee045fcd52f9f8ab651322"
+          },
+          {
+            "path": "src/netif_smoltcp.rs",
+            "sha256": "c82319c2528eb08915cdce6c1294aa6bc78cc42271e4e4d07d15c8aa1b140bc4"
+          },
+          {
+            "path": "src/oal.rs",
+            "sha256": "4d2ffa86169ec9ccbddf10bd4b6558687a5f9a1d3531996c16da678d075f89fe"
+          },
+          {
+            "path": "src/osal.rs",
+            "sha256": "15348817fb1c4871186c7282a06fe5d9ce8ecd2bdfc578b96df1cb655d657116"
+          },
+          {
+            "path": "src/osal_adapt.rs",
+            "sha256": "d8064fc7ec757b24753369570366e0ad992970fb199ed21aad7ca02102b50c17"
+          },
+          {
+            "path": "src/osal_ext.rs",
+            "sha256": "940df6d07aa14b84a3891b0cc994c5f61a559b4c352fe20d7e6831bb28f54876"
+          },
+          {
+            "path": "src/osal_queue.rs",
+            "sha256": "10e21083ca2bcdde845fc3c2fc1bbfd94a145122f54b6207692a3a239e6aed30"
+          },
+          {
+            "path": "src/osal_sync.rs",
+            "sha256": "c125bb76c0545432fa458b0ae064c6874bc79ef574f7c2693ea229324d93a602"
+          },
+          {
+            "path": "src/osal_wait.rs",
+            "sha256": "ff224efc249facc99f43d93dccf7d5c48d1b4cf2132a3e893c485d9dc0a89600"
+          },
+          {
+            "path": "src/pmp.rs",
+            "sha256": "3bdc4ae633d3c2d37efb8508345ac800167da688f53c4caa0bb8c44d1f2efc92"
+          },
+          {
+            "path": "src/profile.rs",
+            "sha256": "611a5ef7cebcad022f6417c8a8928c266b76ee9255c978e86b3b7fea21612266"
+          },
+          {
+            "path": "src/rf_init_diag.rs",
+            "sha256": "6a98c4e4c669680cf0efae3cfbb06f1c620bd525e4a36af605ce4a817bbb9ad7"
+          },
+          {
+            "path": "src/runtime.rs",
+            "sha256": "22052faad0a599a363d3c39dc34f6b0a250f05026abaa2ae6a4f9cdf18a5eee1"
+          },
+          {
+            "path": "src/selftest.rs",
+            "sha256": "0f7ff5898503a2ce497211de1f621cca53b7fb7efdee841c1d5772cd375e276a"
+          },
+          {
+            "path": "src/sle.rs",
+            "sha256": "a5fdd6fa2c7897252790947b19a948a4226c7a2be7148755a2c25bf983f9899b"
+          },
+          {
+            "path": "src/station_pm_diag.rs",
+            "sha256": "3a0652b10431d573accc1abe323cf46d3028736a52e6f2ffa277582ba980d3bd"
+          },
+          {
+            "path": "src/timer.rs",
+            "sha256": "c3ee655c889bd3b7e34bab4e67bc87abc17dca9061f1b4b1d471ddec8c299977"
+          },
+          {
+            "path": "src/uapi.rs",
+            "sha256": "04066048c0385a9317cc9349819cfd6a673594aa64af3701c5adbd73729f8396"
+          },
+          {
+            "path": "src/upstream_authenticator.rs",
+            "sha256": "a9f9918932a4c9dd873b7dd12c8e613a7ff075aafcda9b3effb38fbee11e0db8"
+          },
+          {
+            "path": "src/upstream_supplicant.rs",
+            "sha256": "88306a0d87070b9375125293a2df0238c8c7de08b65816646d6a375e8ad957a1"
+          },
+          {
+            "path": "src/upstream_supplicant/deauth.rs",
+            "sha256": "bf2701505da37c1e3ddc4eb6a79fdda291a4de9d09e0f8e73167f5da44ecb746"
+          },
+          {
+            "path": "src/wal.rs",
+            "sha256": "790ae2ac17883133d14c61f2f02fa38e23f89ad88864bcaaefc9532e5f917010"
+          },
+          {
+            "path": "src/wifi.rs",
+            "sha256": "70aa960b72b510639016716c516b94b291a8685eae0a5dc597d53d1882cb20c3"
+          },
+          {
+            "path": "src/wlmac_diag.rs",
+            "sha256": "1af95ffeb55e063657076854f765477aeb2510b954dbceb9b8cdbeefdd27720a"
+          },
+          {
+            "path": "src/wpa_compat.rs",
+            "sha256": "a7dfaf832281c3bfef2f12b1214c0aa65a4790da4db254472fb6a0c9270f8160"
+          },
+          {
+            "path": "src/ws63_runtime_compat.rs",
+            "sha256": "084c679a4383c9ebd64b1e83121f4b04b5b588705391bba770a681d89025771c"
+          },
+          {
+            "path": "tests/radio_stage_contract.rs",
+            "sha256": "4ac5256c7bf0f8c6047c4f5513ada897eedeff9f48e6cea4be2e8a3d37b1651c"
+          }
+        ],
+        "consumer_lock_sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+        "pinned_dependencies_unchanged": true,
+        "clean_offline": true,
+        "incremental_unchanged": true,
+        "missing_metadata_rejected": [
+          "hmac_user_del_etc",
+          "hmac_res_free_mac_user_etc"
+        ],
+        "restored_build": true,
+        "space_unicode_path": true,
+        "consumer_build_script": false,
+        "consumer_wrap_flags": false,
+        "boundary": "Packaged path dependency and final-call/resource checks, not crates.io-only facade or HIL acceptance"
+      },
+      "cleanup": {
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass",
+        "edges": [
+          {
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "call_address": 2511642,
+            "target_address": 2377174,
+            "file_offset": 221978
+          },
+          {
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "call_address": 2377348,
+            "target_address": 2628682,
+            "file_offset": 87684
+          },
+          {
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "call_address": 2629242,
+            "target_address": 2625338,
+            "file_offset": 339578
+          },
+          {
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "call_address": 2625376,
+            "target_address": 2377710,
+            "file_offset": 335712
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "call_address": 2377728,
+            "target_address": 2996182,
+            "file_offset": 88064
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "call_address": 2377840,
+            "target_address": 2663958,
+            "file_offset": 88176
+          }
+        ],
+        "elf_sha256": "a9a7046d213b421291657975acdd3b13220f8766e9bd78fabcc52f1ac5c3fffd",
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "rejected_call_mutations": 6
+      },
+      "storage": {
+        "control_bytes": 21440,
+        "l2_offset": 2296,
+        "l2_bytes": 12560,
+        "payload_bytes": 12112,
+        "metadata_bytes": 448,
+        "rx_slots": 4,
+        "tx_slots": 4,
+        "mtu": 1514,
+        "shared_arena_bytes": 299008,
+        "main_stack_bytes": 32768,
+        "packet_ram_bytes": 49152,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_bytes": 197120,
+        "native_pbuf_prefix_bytes": 16,
+        "control_address": 10538336,
+        "rf_arena_address": 10696384,
+        "runtime_arena_address": 10798272,
+        "main_stack_address": 10996480,
+        "packet_ram_address": 10485760,
+        "schema": "net0-linked-storage/v3",
+        "status": "pass",
+        "elf_sha256": "a9a7046d213b421291657975acdd3b13220f8766e9bd78fabcc52f1ac5c3fffd",
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim"
+      }
+    },
+    {
+      "host": "macos-14",
+      "id": 10097883174,
+      "name": "net0-external-consumer-macos-14",
+      "expires_at": "2026-12-08T09:36:24Z",
+      "digest": "sha256:3ad063e61503ef6dc60fa68502bd775661019b135c99d894421be7168ce99df3",
+      "downloaded_zip_sha256": "3ad063e61503ef6dc60fa68502bd775661019b135c99d894421be7168ce99df3",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "ce268af3bca2b4fc5b6b224a7974504bee317cb9cb00c9081820955bd4e94570",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "1bed1555b85c2e5bc4d0e0cc6edb69da102a6a760c6d975d8e2cc004d2a26892",
+          "bytes": 3549
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "333c366bd7314f77c2b9ec6ef0e6b78627c5fad6ac5653262bfe241edf886655",
+          "bytes": 15370
+        },
+        {
+          "name": "storage.json",
+          "sha256": "5830ffa61745d075ef5937dd475943dfd3f80ca6094c2f13017d257e538773f5",
+          "bytes": 751
+        }
+      ],
+      "consumer": {
+        "schema": "net0-transitive-consumer/v1",
+        "status": "pass",
+        "harness_sha256": "516bd2389d77bfeda37fb60cc85d430880822e829b736c84d5b7c416e25c0e9f",
+        "package_sha256": "23428970631ebea336cb214993c7cbb20a2f8490b9ac4cde7a5c0fa2f63c166a",
+        "package_bytes": 387161,
+        "source_files": [
+          {
+            "path": ".github/public-api/ble-b3-stage.txt",
+            "sha256": "9864143375bea3659098551768946d8280af4c9b96b7a01de3ac0b4bfa98bdbd"
+          },
+          {
+            "path": ".github/public-api/sle-s3-stage.txt",
+            "sha256": "85445ba0cdad4f6dcd26570acb9a858c361a07653f8a7fe39cae3c6cb366ec81"
+          },
+          {
+            "path": ".github/public-api/wpa2-incremental.txt",
+            "sha256": "1a6bdf40b75d90f8ee3150cdb404f69d41eb9ed0a0bc6ee1508609315f95583b"
+          },
+          {
+            "path": ".github/public-api/wpa3-incremental.txt",
+            "sha256": "3c814bd3fb8c0cc5daa2ad7d3055e7a270510d1e6265cd8c95290a183247f03e"
+          },
+          {
+            "path": ".github/scripts/check-net0-cleanup.py",
+            "sha256": "5b9590e8dbe0337a0b4d0367ffc8e8969eaa344c4e517c329ff5af3765bc806f"
+          },
+          {
+            "path": ".github/scripts/check-net0-consumer.py",
+            "sha256": "516bd2389d77bfeda37fb60cc85d430880822e829b736c84d5b7c416e25c0e9f"
+          },
+          {
+            "path": ".github/scripts/check-net0-storage.py",
+            "sha256": "a3911bd242e6cf2b4614819d054b9232de7f30b43394674fd9ccd820c34db8d4"
+          },
+          {
+            "path": ".github/scripts/check-public-api.py",
+            "sha256": "e0ee648dffaa1baf38b101649732e5dc4c6d48612ea1c9dac9d158520eeedb49"
+          },
+          {
+            "path": ".github/workflows/ci.yml",
+            "sha256": "bcc737426e57801d3750b2f050304367421af238c097cc448ba5c2e39a377544"
+          },
+          {
+            "path": ".github/workflows/publish.yml",
+            "sha256": "b357886da2fab78024c6d1e1e12ee107887207f53e3afc47e7153c0956eac363"
+          },
+          {
+            "path": ".gitignore",
+            "sha256": "02e7b40893c74a993a139de7b0f85d8cf2eaea57d544effd576920a514872af4"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "sha256": "7a5b4fd487badb1a27051753c4e8e8ed0c0e95be3a7ad4f51d0606a8687d2634"
+          },
+          {
+            "path": "Cargo.lock",
+            "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+          },
+          {
+            "path": "Cargo.toml",
+            "sha256": "08327a9316fb1788a80e99c532c4ff3ca225283db5ce3054bc43136daedf1e9f"
+          },
+          {
+            "path": "LICENSE",
+            "sha256": "7a7a93d9addcdb516442c1724d171182e1091bc97d0e5dcbd641a71db01ce1ce"
+          },
+          {
+            "path": "README.md",
+            "sha256": "03e0eabde526cb3265dc15ebe1bf3cb26ea0c2123e574f3fc9c4c96394270b4f"
+          },
+          {
+            "path": "build.rs",
+            "sha256": "de49efb45416d9cea17e646ddc66c2e4bfef4b2cd2c3f8f7aa33efc2dd641dad"
+          },
+          {
+            "path": "docs/l2-integration.md",
+            "sha256": "0361e540965d244ca3ad85ea5413cfcd19a3aa51445f3f1018165fc84ed849fd"
+          },
+          {
+            "path": "docs/radio-stage-api-migration.md",
+            "sha256": "e0d02a8533e7a233c8e2c8744616560017f3688bf8831ead5ac67805445c28f1"
+          },
+          {
+            "path": "examples/arena_admission_error.rs",
+            "sha256": "59dd1ec00c7b292489f13eaf74adfa8757c561c745c6776a404e4def121d8c03"
+          },
+          {
+            "path": "examples/ble_gatt_client_smoke.rs",
+            "sha256": "16d96ea509cf05a716a513c5a35ba61c831b4f01b33084dc04a26b05a302a85a"
+          },
+          {
+            "path": "examples/ble_gatt_server_smoke.rs",
+            "sha256": "b304277746044cbed0786af5c4577950532dc5b2d6830e10b9c3619413ed3eb5"
+          },
+          {
+            "path": "examples/ble_init_link.rs",
+            "sha256": "b75e7423b20fa1276a312fa1cef8b075f8aa2db4dd95b4dc3fb5781de0522506"
+          },
+          {
+            "path": "examples/ble_init_smoke.rs",
+            "sha256": "70b50a676dd067fd4ab0c07a7d4bf24c8b9373f0d06eee64a0d9d0219bc4aae6"
+          },
+          {
+            "path": "examples/bootstrap_profile.rs",
+            "sha256": "7bd6a442e6614102c5cc78f751f447a1faa38283dfa3fdf38fefba7b76148eb8"
+          },
+          {
+            "path": "examples/coexistence_init_smoke.rs",
+            "sha256": "17e00cabe16c639edbfab28f31e8933b86a29b921e680b2bab54b011ef5262d3"
+          },
+          {
+            "path": "examples/connectivity_contract_fixture.rs",
+            "sha256": "08eeb3545084a7d997c062184836a6ed5386da172f73c2a93c6b3f8bb4a6ba24"
+          },
+          {
+            "path": "examples/incremental_scan_profile.rs",
+            "sha256": "fa8400468b553bf33410c3c1e2a06fe9a538bd4eba7eec3a1f47e750a20158a6"
+          },
+          {
+            "path": "examples/operation_error_injection.rs",
+            "sha256": "f2271d7b1e4f4e3c065cee1846cd76d8f127a9c735d4eabc536a71ce927a750d"
+          },
+          {
+            "path": "examples/plain_firmware.rs",
+            "sha256": "b808155b327af4a38e2cf3b864a2e8e307103da4ee7b9e109501799096c630b0"
+          },
+          {
+            "path": "examples/resource_report.rs",
+            "sha256": "aec9bf8225e73c6d50a4b7ee0fc9b882cd6dbb2e933fb35736777cbe7f5cf3cd"
+          },
+          {
+            "path": "examples/sle_announce_smoke.rs",
+            "sha256": "7850ec88fb89fd89dead85dfb4bd05515531635b539be008ede6b8e4f2f5f616"
+          },
+          {
+            "path": "examples/sle_connect_client_smoke.rs",
+            "sha256": "1d695527b5c2f50eb8edf22ede22b922532245a140d83779992ad9bf74808c8e"
+          },
+          {
+            "path": "examples/sle_connect_server_smoke.rs",
+            "sha256": "09f81b40cbdb5d73ae732e2e5eb3e11b2f2d7c262aa1ffc1a0b1bad55f85f322"
+          },
+          {
+            "path": "examples/sle_seek_smoke.rs",
+            "sha256": "c07cfc654fdc5117b0d96feacf88dc4f4b023a02a78143201a8c58ef03816387"
+          },
+          {
+            "path": "examples/sle_ssap_client_smoke.rs",
+            "sha256": "6b8f3cff2e20dc171e40d561bd82121ffbfb000652a83e4e0da6fa2e067048e4"
+          },
+          {
+            "path": "examples/sle_ssap_server_smoke.rs",
+            "sha256": "a023be299c59e7b6d2306edce7e3403c1d1e2ea304327eb64467ad71aca1da6a"
+          },
+          {
+            "path": "examples/support/ble_firmware.rs",
+            "sha256": "f38a82d7d670296435bc3e23f348d1e35ac5237f1813176a46f31935b45eca95"
+          },
+          {
+            "path": "examples/support/net0_initial_network.rs",
+            "sha256": "77f0200601eb1d5b15b969c6cbd96bddf03d2ec11b79132e116dc5fca6b47896"
+          },
+          {
+            "path": "examples/support/net0_storage.rs",
+            "sha256": "305df264c7953f701c344d8fca8cdb700111502cb67ba75d96a231499397b9f1"
+          },
+          {
+            "path": "examples/support/sle_firmware.rs",
+            "sha256": "f16e6e091689c0faf6a2ad59c2fd642b288c6decc38b1def47d67ebc59a57c2e"
+          },
+          {
+            "path": "examples/typed_error_parity.rs",
+            "sha256": "4686536a882ad24eba59dbb53f3da271cfbae0bc1cbe357db910fb793d8efdfd"
+          },
+          {
+            "path": "examples/wifi_ble_coexistence_smoke.rs",
+            "sha256": "1f9ebe94e6a0ac757951681af33fcafd5d5b2fd125ee65c5a060b77ac1733d87"
+          },
+          {
+            "path": "examples/wifi_ble_connected_client_smoke.rs",
+            "sha256": "1088f65886784c0efbde4fb77830b040ea9e521849317218823f2e76f5396681"
+          },
+          {
+            "path": "examples/wifi_sle_coexistence_smoke.rs",
+            "sha256": "8030ba6e05ef1c954c52ef7da2c34aae2c382b048e0a221c8821373b8f81a941"
+          },
+          {
+            "path": "examples/wifi_sle_connected_client_smoke.rs",
+            "sha256": "9bc3dba62e438300f302e2b9295e7034f2000e5fdff79ea07a2a63d2dc6b50a9"
+          },
+          {
+            "path": "link/ws63-rom-call-symbols.txt",
+            "sha256": "cf2f6a7f10e80eb9f826415e2e986dd0a1d15951019e4290d26b6c60482a201c"
+          },
+          {
+            "path": "rust-toolchain.toml",
+            "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+          },
+          {
+            "path": "src/alloc.rs",
+            "sha256": "8b4bb6bb051eac0f9951bb690604fc0fe83d3c42d627e4aeaeb9f8599d5128ed"
+          },
+          {
+            "path": "src/ble.rs",
+            "sha256": "24277166ebeaccf4b21ad7a92503ad3db41074cb7c755f396f83e77948e02215"
+          },
+          {
+            "path": "src/ble_compat.rs",
+            "sha256": "e64d6f510a631726de024a017ad385d164d6e683a7835b231f8836df38eb8802"
+          },
+          {
+            "path": "src/ble_init_diag.rs",
+            "sha256": "3f61b697ec8a68bac85f7c669d9806a82fb4c1ca7590d8982a6a4a8c26123860"
+          },
+          {
+            "path": "src/ble_sc.rs",
+            "sha256": "086c68ec76867b487e50f2514ddb650c1efc5458630dc56f5d38e4963f219e9f"
+          },
+          {
+            "path": "src/blocking_diagnostics.rs",
+            "sha256": "593d5a6c7dc0fb8f866f7bfdce5c87aa8d0ed5d82af7b7441e5f3ed1f32e937f"
+          },
+          {
+            "path": "src/compiler_rt.rs",
+            "sha256": "839d60f9c1ef96216570fa08eb5f9aaff1ec4adc9bfce3f5564e663e3195829b"
+          },
+          {
+            "path": "src/composition.rs",
+            "sha256": "c77cb22df06f80a72d3203b01c158a158b360ae00b802bad191c428b6b7ec874"
+          },
+          {
+            "path": "src/crypto.rs",
+            "sha256": "242f546a002b076e17c9c123a048c04fc643ca810f3959b75cc71cac93b67a7e"
+          },
+          {
+            "path": "src/crypto_sae.rs",
+            "sha256": "d07f1f25d544e331ccf41d0b3ed7819adbfb04041d78e6a32926175dc2a4ba76"
+          },
+          {
+            "path": "src/data_path_diag.rs",
+            "sha256": "211c44513c5ecb793159911ed83a87ea64157aa762fba24d294fcc758d3db4e6"
+          },
+          {
+            "path": "src/eloop_diag.rs",
+            "sha256": "408dbfc56840fa6d4dfb4b96fb163d3a72d74382e717b80e0b1b575cc7e9c529"
+          },
+          {
+            "path": "src/error.rs",
+            "sha256": "4041c276faa97cad4fa390f0f20b6ac69c6396860b4f768e0e2c58d1c2fefc91"
+          },
+          {
+            "path": "src/frw.rs",
+            "sha256": "d5d0170784755c14fe70821514bca10413e2ba6e90816565a7bf09ee8416ba6b"
+          },
+          {
+            "path": "src/hcc.rs",
+            "sha256": "e33e13e01494bfb83817592e9b656a2a9eafca91c07063582e3edcd315e8e352"
+          },
+          {
+            "path": "src/hisi_rf_backend.rs",
+            "sha256": "2793c4404f280723afdab1653b8b3591bc828498f3a53895c6a828b5f21a718a"
+          },
+          {
+            "path": "src/hisi_rf_backend/incremental.rs",
+            "sha256": "840a098998454036a074a575dba363ab4ce15f4d2e31e43a91d64b891549dffd"
+          },
+          {
+            "path": "src/incremental_wait.rs",
+            "sha256": "e125b9d46c8939daddbd60ef2015559ce4d1c6f09e3d92d7d9adeaaa8fdf891a"
+          },
+          {
+            "path": "src/incremental_worker.rs",
+            "sha256": "1d372f6213255dbe5986c642da3b0a0b2b176b88272c72abd9f3e4a72ceb50eb"
+          },
+          {
+            "path": "src/lib.rs",
+            "sha256": "97776d2af43bdf5af6d2d699d69651b4fae064a819f78cc5ee64d8b2d3120a36"
+          },
+          {
+            "path": "src/libc.rs",
+            "sha256": "df78b59884b8c32d82857d0956a9f8a4ca9af2161acbb68ed17cab02e30bd292"
+          },
+          {
+            "path": "src/log.rs",
+            "sha256": "8eb2ae029b652d63d22fc50df192619050bd5350d838c2904c63fe2efab18350"
+          },
+          {
+            "path": "src/netif.rs",
+            "sha256": "387c0118bc3b19ebfbf6745805381c7ecf2b5da41016663a828838b050d2e8aa"
+          },
+          {
+            "path": "src/netif_l2.rs",
+            "sha256": "0ed4382e308a433a601ae3564d4b65146f6c81b10958a6eaa75a2c5766a155b3"
+          },
+          {
+            "path": "src/netif_l2/device.rs",
+            "sha256": "19de3f4477868d72dd234a04c64de6ba8b2853775542cd954183dcae0874a1e0"
+          },
+          {
+            "path": "src/netif_l2/host_delivery.rs",
+            "sha256": "4ddeeb15fc90ee0cd353c13068a3576c205d77a5ef63e7035b9922a32c06761f"
+          },
+          {
+            "path": "src/netif_l2/initial_session.rs",
+            "sha256": "392a5b12ded2c7add59c4fee1b10430425b8ac1437c8e8ba2246841a529bc41b"
+          },
+          {
+            "path": "src/netif_l2/link.rs",
+            "sha256": "700783930dfd726cdfa023f9431766dbc20a9dd017dbc64577437cf1dbc1af49"
+          },
+          {
+            "path": "src/netif_l2/pbuf_tests.rs",
+            "sha256": "d17695f52c4d78f7fc2b1904cd838e69feb0d69c76ccce03424771b383586346"
+          },
+          {
+            "path": "src/netif_l2/storage.rs",
+            "sha256": "154c5d907eda5433004c49b6128c09e80be4febea4c66b3da7067d2228a60d4a"
+          },
+          {
+            "path": "src/netif_l2/tests.rs",
+            "sha256": "d2069bc3ee8aaa26616643acb588fe0bee81bdb6d564a1328c115925574dcba9"
+          },
+          {
+            "path": "src/netif_l2/user_cleanup.rs",
+            "sha256": "7092738b2b3c0db6c0d5fd252051f9fed3379c5e93ee045fcd52f9f8ab651322"
+          },
+          {
+            "path": "src/netif_smoltcp.rs",
+            "sha256": "c82319c2528eb08915cdce6c1294aa6bc78cc42271e4e4d07d15c8aa1b140bc4"
+          },
+          {
+            "path": "src/oal.rs",
+            "sha256": "4d2ffa86169ec9ccbddf10bd4b6558687a5f9a1d3531996c16da678d075f89fe"
+          },
+          {
+            "path": "src/osal.rs",
+            "sha256": "15348817fb1c4871186c7282a06fe5d9ce8ecd2bdfc578b96df1cb655d657116"
+          },
+          {
+            "path": "src/osal_adapt.rs",
+            "sha256": "d8064fc7ec757b24753369570366e0ad992970fb199ed21aad7ca02102b50c17"
+          },
+          {
+            "path": "src/osal_ext.rs",
+            "sha256": "940df6d07aa14b84a3891b0cc994c5f61a559b4c352fe20d7e6831bb28f54876"
+          },
+          {
+            "path": "src/osal_queue.rs",
+            "sha256": "10e21083ca2bcdde845fc3c2fc1bbfd94a145122f54b6207692a3a239e6aed30"
+          },
+          {
+            "path": "src/osal_sync.rs",
+            "sha256": "c125bb76c0545432fa458b0ae064c6874bc79ef574f7c2693ea229324d93a602"
+          },
+          {
+            "path": "src/osal_wait.rs",
+            "sha256": "ff224efc249facc99f43d93dccf7d5c48d1b4cf2132a3e893c485d9dc0a89600"
+          },
+          {
+            "path": "src/pmp.rs",
+            "sha256": "3bdc4ae633d3c2d37efb8508345ac800167da688f53c4caa0bb8c44d1f2efc92"
+          },
+          {
+            "path": "src/profile.rs",
+            "sha256": "611a5ef7cebcad022f6417c8a8928c266b76ee9255c978e86b3b7fea21612266"
+          },
+          {
+            "path": "src/rf_init_diag.rs",
+            "sha256": "6a98c4e4c669680cf0efae3cfbb06f1c620bd525e4a36af605ce4a817bbb9ad7"
+          },
+          {
+            "path": "src/runtime.rs",
+            "sha256": "22052faad0a599a363d3c39dc34f6b0a250f05026abaa2ae6a4f9cdf18a5eee1"
+          },
+          {
+            "path": "src/selftest.rs",
+            "sha256": "0f7ff5898503a2ce497211de1f621cca53b7fb7efdee841c1d5772cd375e276a"
+          },
+          {
+            "path": "src/sle.rs",
+            "sha256": "a5fdd6fa2c7897252790947b19a948a4226c7a2be7148755a2c25bf983f9899b"
+          },
+          {
+            "path": "src/station_pm_diag.rs",
+            "sha256": "3a0652b10431d573accc1abe323cf46d3028736a52e6f2ffa277582ba980d3bd"
+          },
+          {
+            "path": "src/timer.rs",
+            "sha256": "c3ee655c889bd3b7e34bab4e67bc87abc17dca9061f1b4b1d471ddec8c299977"
+          },
+          {
+            "path": "src/uapi.rs",
+            "sha256": "04066048c0385a9317cc9349819cfd6a673594aa64af3701c5adbd73729f8396"
+          },
+          {
+            "path": "src/upstream_authenticator.rs",
+            "sha256": "a9f9918932a4c9dd873b7dd12c8e613a7ff075aafcda9b3effb38fbee11e0db8"
+          },
+          {
+            "path": "src/upstream_supplicant.rs",
+            "sha256": "88306a0d87070b9375125293a2df0238c8c7de08b65816646d6a375e8ad957a1"
+          },
+          {
+            "path": "src/upstream_supplicant/deauth.rs",
+            "sha256": "bf2701505da37c1e3ddc4eb6a79fdda291a4de9d09e0f8e73167f5da44ecb746"
+          },
+          {
+            "path": "src/wal.rs",
+            "sha256": "790ae2ac17883133d14c61f2f02fa38e23f89ad88864bcaaefc9532e5f917010"
+          },
+          {
+            "path": "src/wifi.rs",
+            "sha256": "70aa960b72b510639016716c516b94b291a8685eae0a5dc597d53d1882cb20c3"
+          },
+          {
+            "path": "src/wlmac_diag.rs",
+            "sha256": "1af95ffeb55e063657076854f765477aeb2510b954dbceb9b8cdbeefdd27720a"
+          },
+          {
+            "path": "src/wpa_compat.rs",
+            "sha256": "a7dfaf832281c3bfef2f12b1214c0aa65a4790da4db254472fb6a0c9270f8160"
+          },
+          {
+            "path": "src/ws63_runtime_compat.rs",
+            "sha256": "084c679a4383c9ebd64b1e83121f4b04b5b588705391bba770a681d89025771c"
+          },
+          {
+            "path": "tests/radio_stage_contract.rs",
+            "sha256": "4ac5256c7bf0f8c6047c4f5513ada897eedeff9f48e6cea4be2e8a3d37b1651c"
+          }
+        ],
+        "consumer_lock_sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+        "pinned_dependencies_unchanged": true,
+        "clean_offline": true,
+        "incremental_unchanged": true,
+        "missing_metadata_rejected": [
+          "hmac_user_del_etc",
+          "hmac_res_free_mac_user_etc"
+        ],
+        "restored_build": true,
+        "space_unicode_path": true,
+        "consumer_build_script": false,
+        "consumer_wrap_flags": false,
+        "boundary": "Packaged path dependency and final-call/resource checks, not crates.io-only facade or HIL acceptance"
+      },
+      "cleanup": {
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass",
+        "edges": [
+          {
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "call_address": 2511642,
+            "target_address": 2377174,
+            "file_offset": 221978
+          },
+          {
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "call_address": 2377348,
+            "target_address": 2628682,
+            "file_offset": 87684
+          },
+          {
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "call_address": 2629242,
+            "target_address": 2625338,
+            "file_offset": 339578
+          },
+          {
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "call_address": 2625376,
+            "target_address": 2377710,
+            "file_offset": 335712
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "call_address": 2377728,
+            "target_address": 2997038,
+            "file_offset": 88064
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "call_address": 2377840,
+            "target_address": 2663958,
+            "file_offset": 88176
+          }
+        ],
+        "elf_sha256": "e36037d450460e3a4ccda272dcebe04a6f712e2bb3c491689936c4bd5af36090",
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "rejected_call_mutations": 6
+      },
+      "storage": {
+        "control_bytes": 21440,
+        "l2_offset": 2296,
+        "l2_bytes": 12560,
+        "payload_bytes": 12112,
+        "metadata_bytes": 448,
+        "rx_slots": 4,
+        "tx_slots": 4,
+        "mtu": 1514,
+        "shared_arena_bytes": 299008,
+        "main_stack_bytes": 32768,
+        "packet_ram_bytes": 49152,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_bytes": 197120,
+        "native_pbuf_prefix_bytes": 16,
+        "control_address": 10538336,
+        "rf_arena_address": 10696384,
+        "runtime_arena_address": 10798272,
+        "main_stack_address": 10996480,
+        "packet_ram_address": 10485760,
+        "schema": "net0-linked-storage/v3",
+        "status": "pass",
+        "elf_sha256": "e36037d450460e3a4ccda272dcebe04a6f712e2bb3c491689936c4bd5af36090",
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim"
+      }
+    },
+    {
+      "host": "windows-latest",
+      "id": 10098017140,
+      "name": "net0-external-consumer-windows-latest",
+      "expires_at": "2026-12-08T09:36:24Z",
+      "digest": "sha256:7de7c50bdb77b4b535ff12d463e0908bf7c213e34799a8ef2c2d9393fe4bcb1f",
+      "downloaded_zip_sha256": "7de7c50bdb77b4b535ff12d463e0908bf7c213e34799a8ef2c2d9393fe4bcb1f",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "3af41895b1801a49cb319d2cbbb168a6220bbc6b76d26c735a9e1fbbc00076b0",
+          "bytes": 1479
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "8736fa7baa8c0b45be3b9cb84f56296f8ea6ff27f6ac13e36dbf766c58c84ccc",
+          "bytes": 3612
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "d578ee9771e814fb65928b844307e33bdf689f43fadfac5975fa8dd3b760d324",
+          "bytes": 15816
+        },
+        {
+          "name": "storage.json",
+          "sha256": "3d7568049f681237e19ba7399e177ffad63257d39a0292377aebeab13f57ae04",
+          "bytes": 776
+        }
+      ],
+      "consumer": {
+        "schema": "net0-transitive-consumer/v1",
+        "status": "pass",
+        "harness_sha256": "adaf35e602cdda6d87091d9bfea7bb2e5b6c26d64641b0a1c736018199cde583",
+        "package_sha256": "8a2311da1f4b682d50abc5b6f0329c3b619aa805bf61707cfe7dfc207c16bfae",
+        "package_bytes": 389776,
+        "source_files": [
+          {
+            "path": ".github/public-api/ble-b3-stage.txt",
+            "sha256": "623b54ce6fe632044f24bcc85fe1ae5f58cafdaa411d823b7f40125f88908d54"
+          },
+          {
+            "path": ".github/public-api/sle-s3-stage.txt",
+            "sha256": "200e0f1c52a1e71197d7a40f90011c26772563bf990e043057b85684f1b677ec"
+          },
+          {
+            "path": ".github/public-api/wpa2-incremental.txt",
+            "sha256": "f648e2d01fc4b1967ac103a9b38374ebee3025231ffa955e851ee12a340b5a45"
+          },
+          {
+            "path": ".github/public-api/wpa3-incremental.txt",
+            "sha256": "455644d655feb6182b5ab4441b78d57804e23877fbefd45cd661015fb17e6d32"
+          },
+          {
+            "path": ".github/scripts/check-net0-cleanup.py",
+            "sha256": "96377d18baf716cb8f29722c982797a3c5987015d31d5584932a6ef888e3cff2"
+          },
+          {
+            "path": ".github/scripts/check-net0-consumer.py",
+            "sha256": "adaf35e602cdda6d87091d9bfea7bb2e5b6c26d64641b0a1c736018199cde583"
+          },
+          {
+            "path": ".github/scripts/check-net0-storage.py",
+            "sha256": "b76589c8b8b1e791247f7162fcab36ab135524a89393dabff099f40e9c75bb8b"
+          },
+          {
+            "path": ".github/scripts/check-public-api.py",
+            "sha256": "fbcfc355ebaab2785cc991421fbc869d45bb3786585d0914e5c81ee0140726e3"
+          },
+          {
+            "path": ".github/workflows/ci.yml",
+            "sha256": "8971fb25aa07acc5ece4379f7b7c75da84f0f1ac0190a20f8beb4dfe5b59b7af"
+          },
+          {
+            "path": ".github/workflows/publish.yml",
+            "sha256": "06828f42cbb779008cb67dc77197c34ee488c48ffdca303197f5a501f012a278"
+          },
+          {
+            "path": ".gitignore",
+            "sha256": "b5e06c45679a27426bad39fb126df91dbd6f7de08ce4666a230fa444c30b0496"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "sha256": "203b01165d19de5c1a2d489dd5fdfd78435d5b5307b481fcdc29485fd519957d"
+          },
+          {
+            "path": "Cargo.lock",
+            "sha256": "7b0d74afdeacf73d0e5d8158a28f75fd7d629ca37824c099c932423291f2fda5"
+          },
+          {
+            "path": "Cargo.toml",
+            "sha256": "6312ff5ad3011ef8024778bfe4c89d4b8a5ae413cb41206492e910716fb501ad"
+          },
+          {
+            "path": "LICENSE",
+            "sha256": "e95a7f4ac2e217e7912d23b7d693fec0e0702096e31e676427acf01bb80ea794"
+          },
+          {
+            "path": "README.md",
+            "sha256": "917ec1ebcbc5a75ce3a5f8de4f8a92854ab5a9dd5527c57329b01c97d534d066"
+          },
+          {
+            "path": "build.rs",
+            "sha256": "698f68b37c6dcb8f1f0da016b57208fe7fda79caeaae25311f4c44cd88a4bb17"
+          },
+          {
+            "path": "docs/l2-integration.md",
+            "sha256": "4f9a67fb929472fea2b32f9991b2b8c4f94002f2fef280edf684448a6a277957"
+          },
+          {
+            "path": "docs/radio-stage-api-migration.md",
+            "sha256": "d7918b91dec2e76d8556045a4b71b65687a29d1a38d811095ca16e9a20f9f7a7"
+          },
+          {
+            "path": "examples/arena_admission_error.rs",
+            "sha256": "bd05770f6d23529353d13798e40d5d99fe8db02dfcc708f283ed5a123c356e43"
+          },
+          {
+            "path": "examples/ble_gatt_client_smoke.rs",
+            "sha256": "7554b2ab39c55ba21be64f19f75e85e12107d422974d6042567e0e225cbec822"
+          },
+          {
+            "path": "examples/ble_gatt_server_smoke.rs",
+            "sha256": "be2e97cec7788d6d94a2a99e791cd8b4bbee931d8efef22a5882ecba544bc40b"
+          },
+          {
+            "path": "examples/ble_init_link.rs",
+            "sha256": "d4225bf4dbd4b4adb22f14854775251980e9590dce1e2b3e48428a7ca8ac9977"
+          },
+          {
+            "path": "examples/ble_init_smoke.rs",
+            "sha256": "3eea685442e844dbef69b273af84b8de40bd073d50871f4c24fb5178f5d4d28f"
+          },
+          {
+            "path": "examples/bootstrap_profile.rs",
+            "sha256": "17285deef92f98ab4708b8bf84f43fbd338882bbdd9d020714d4a2bd849038ce"
+          },
+          {
+            "path": "examples/coexistence_init_smoke.rs",
+            "sha256": "7b47faf38cf892e2bb1a07ef0618d14a374b44523ec69cef3eab1b500a73f635"
+          },
+          {
+            "path": "examples/connectivity_contract_fixture.rs",
+            "sha256": "7c10ad417d7a7875d459c672c468f6d3ef8b5dab7eaa9d2d3f18c4bf1e619fec"
+          },
+          {
+            "path": "examples/incremental_scan_profile.rs",
+            "sha256": "5425f47132bae1aa3447164ccd0ba79f7964e6a84d409926b2b3e24c57cd4bcb"
+          },
+          {
+            "path": "examples/operation_error_injection.rs",
+            "sha256": "bc4f8af472646d9055fd29748b9203954c3ee6e8be909cdbe3c73bf1a496ff01"
+          },
+          {
+            "path": "examples/plain_firmware.rs",
+            "sha256": "ea20e99f1ab3f6bc41adcf0376095b84dd42b145a6bce4577c11044afc4a137a"
+          },
+          {
+            "path": "examples/resource_report.rs",
+            "sha256": "7fe0e8d9e3dd6e805f92358b5e4c07c7edc07478db5378ac9057dfa18697d26e"
+          },
+          {
+            "path": "examples/sle_announce_smoke.rs",
+            "sha256": "90e1a0dd80193996982b580694c3e579be4191b7b773b343239551c16b7ee410"
+          },
+          {
+            "path": "examples/sle_connect_client_smoke.rs",
+            "sha256": "7747eb8d19cfcc43595289e5265e3fb3f2814df4695c5ee0208d02776b2758a0"
+          },
+          {
+            "path": "examples/sle_connect_server_smoke.rs",
+            "sha256": "95fc2e70d7bd89274f1164345b31a90ee6f589afd81f5a83291cf383466c6914"
+          },
+          {
+            "path": "examples/sle_seek_smoke.rs",
+            "sha256": "ff64a1a8d84d28b4837ee6c97f5e2ebbd4b0990e77d0f5398946813df73f4012"
+          },
+          {
+            "path": "examples/sle_ssap_client_smoke.rs",
+            "sha256": "c4c43c8394fc317978a4cad25236ec3b0b4eec147c90124a0e4e7a35edf9589a"
+          },
+          {
+            "path": "examples/sle_ssap_server_smoke.rs",
+            "sha256": "959544424eb8c0b50c251ec9de712ba1982205afe74c6b15599bf76f4ac806ce"
+          },
+          {
+            "path": "examples/support/ble_firmware.rs",
+            "sha256": "694822ea2f513e1acb758f2f7b37c2ec6dbdf0e937903b679e237295a0adcf26"
+          },
+          {
+            "path": "examples/support/net0_initial_network.rs",
+            "sha256": "e8a5cb25c544eac5662b7688977b0b96853ce45483654e16bb797c54eac77c11"
+          },
+          {
+            "path": "examples/support/net0_storage.rs",
+            "sha256": "8fb26b8e35d30e34045b25238595f379b79daf8773ff3712abee3c2d3486d2b7"
+          },
+          {
+            "path": "examples/support/sle_firmware.rs",
+            "sha256": "4bdfd881cbd8bf30ef6a92d50ba1b36112e67d314f8592cb35200100b2729072"
+          },
+          {
+            "path": "examples/typed_error_parity.rs",
+            "sha256": "306f4eec10f623b0441a351de97b2465502108a07e285a1e4d6207afc6c57224"
+          },
+          {
+            "path": "examples/wifi_ble_coexistence_smoke.rs",
+            "sha256": "c6c40e994841bc1cfddf5d546b6af0927d8aee7a931c52e53ff5231a41d8a748"
+          },
+          {
+            "path": "examples/wifi_ble_connected_client_smoke.rs",
+            "sha256": "9df14f044cfcded599fa886bdd5ff16a843a56332f43562843f797281fe20af8"
+          },
+          {
+            "path": "examples/wifi_sle_coexistence_smoke.rs",
+            "sha256": "6648c0a890e5168091510b49bbdd41e5223284a71b32c3316ce8f52e98385fda"
+          },
+          {
+            "path": "examples/wifi_sle_connected_client_smoke.rs",
+            "sha256": "ca5d7de58eba4beab08dcff0adb1fb7adcbaca730344bc771626dacce40ab95e"
+          },
+          {
+            "path": "link/ws63-rom-call-symbols.txt",
+            "sha256": "c714178ec2a6fcbe8c3cad64844b0d56577661185eec5e82ac04c760b88a8fcb"
+          },
+          {
+            "path": "rust-toolchain.toml",
+            "sha256": "aa2eefd73f591fcb430e03955761f0f7c2bc12f13459112452a3d7cbe1013a64"
+          },
+          {
+            "path": "src/alloc.rs",
+            "sha256": "188df741eecd73fd90cfe6ac534929ce86fc872f5a31d006981f0648be6faaf1"
+          },
+          {
+            "path": "src/ble.rs",
+            "sha256": "ba9eb989901551603cf2d0b82fcc93b72e20ed3ccc34069aafe9232cd725ec8c"
+          },
+          {
+            "path": "src/ble_compat.rs",
+            "sha256": "a17ca66a2509a1263a195c93cc57b3bad9fdee8a9f8837205c13441178abbc84"
+          },
+          {
+            "path": "src/ble_init_diag.rs",
+            "sha256": "0c16c1fc075f0c69359175b84487f517496b63d9dd469647b06644e4d0195dcb"
+          },
+          {
+            "path": "src/ble_sc.rs",
+            "sha256": "39dfa1375c97c437f39133ffa76a9ef060749a86d6348fa62cbdce8ce9a91095"
+          },
+          {
+            "path": "src/blocking_diagnostics.rs",
+            "sha256": "e1329902b9e4b462bc9a5e2176aa0a8fea7ff5777f5c5b11c2f428eb57d2d12b"
+          },
+          {
+            "path": "src/compiler_rt.rs",
+            "sha256": "832ad38808808cd2bafe686e04449e95013dfb2eda77430ede6760d93f2d4986"
+          },
+          {
+            "path": "src/composition.rs",
+            "sha256": "bd10805d19a511cb8054198e0936a389bdb59fb91795e1e7d6aa58e06eff561a"
+          },
+          {
+            "path": "src/crypto.rs",
+            "sha256": "b155e52366fe9f95d057af8293c8fcc976e2c7b7586dae966fd372c1c25f5cfe"
+          },
+          {
+            "path": "src/crypto_sae.rs",
+            "sha256": "e472a57e4eea3d882b01744da8628d6d633cb7528bcc74b10e42dd1983d69bcd"
+          },
+          {
+            "path": "src/data_path_diag.rs",
+            "sha256": "b44bcad3116668c634aee1ec0399c396f957b1a08f8f925d07d40415df949353"
+          },
+          {
+            "path": "src/eloop_diag.rs",
+            "sha256": "4f5c84578554ad8e546ac4f621b540e9e474bf3b6a6d402530ae50c257ad05a3"
+          },
+          {
+            "path": "src/error.rs",
+            "sha256": "e5e7bcac4fd5c238d3c913114a153d84c40b267fa8a1aabfcd43b44e54716b2a"
+          },
+          {
+            "path": "src/frw.rs",
+            "sha256": "97848217dd394ba0156a7bb2e0c4b99c1c6fc92bbfc78445b9707d5992433569"
+          },
+          {
+            "path": "src/hcc.rs",
+            "sha256": "cafa322d5078ec414e32e8466ab3106987c2b3e884aeca483a83e799c58cc737"
+          },
+          {
+            "path": "src/hisi_rf_backend.rs",
+            "sha256": "7c9f8a47fd0f59e019805299c86ef1083eb85d0b38a44141b2fc95b81d4081b9"
+          },
+          {
+            "path": "src/hisi_rf_backend/incremental.rs",
+            "sha256": "94c180bc826cab8029eefcac8e64daa278423d8182262ee19376a1a4cd9ff938"
+          },
+          {
+            "path": "src/incremental_wait.rs",
+            "sha256": "5b3913e76721f9c64944def254223ced179208ca2ba43cb87c7b2f56a8e18c0c"
+          },
+          {
+            "path": "src/incremental_worker.rs",
+            "sha256": "9273ad222c8b1ba3857ed5afb99ecaea5334601ef4feb77c8c06b3c881befd7a"
+          },
+          {
+            "path": "src/lib.rs",
+            "sha256": "432153c4cd7eebc9533f652ab949e419b120cdfced813a07d65d2c7155f5263d"
+          },
+          {
+            "path": "src/libc.rs",
+            "sha256": "03c1681b6654f4ca66c8850c9f52bc12aec8e420593392167b776cf2e42220b6"
+          },
+          {
+            "path": "src/log.rs",
+            "sha256": "d614f5d1e50ffb4bd8dd6d8ce2dc55bdf163885e315cb368e4e4112b87d1b817"
+          },
+          {
+            "path": "src/netif.rs",
+            "sha256": "9b63485382911edfb697d13e033811615a0bc711daddccb470dab19e8fd0ec98"
+          },
+          {
+            "path": "src/netif_l2.rs",
+            "sha256": "241d55525a31f8a9c05f8c4369ecf10fc2b8ec7e2ff74147dcc6a91bdfabc852"
+          },
+          {
+            "path": "src/netif_l2/device.rs",
+            "sha256": "143219fdb9f48334d0a995e6b5b9d272fc7628aff8976caa7c7228777aec2be1"
+          },
+          {
+            "path": "src/netif_l2/host_delivery.rs",
+            "sha256": "40596806ba86eea17c44088b933e94fd172c3c76be79285aa5e1857d9e8cd6ff"
+          },
+          {
+            "path": "src/netif_l2/initial_session.rs",
+            "sha256": "3bcf747073a79e8b3b42d0b1513287b4fe8e5a840b0bbd811cdc5f856954020f"
+          },
+          {
+            "path": "src/netif_l2/link.rs",
+            "sha256": "d475c675b0674ca514373a6daa9192cb0e67cf7a313fe1f12b7299ff79af92fb"
+          },
+          {
+            "path": "src/netif_l2/pbuf_tests.rs",
+            "sha256": "ea648ea9f1f70e2cfe209f1b9e4162d5968ce6b9b42933407e7dd95b523001d1"
+          },
+          {
+            "path": "src/netif_l2/storage.rs",
+            "sha256": "392c7710cb4ba5cbbd2d3940480538a9b1aceace0e6fb7582a2a0f8e1d67a2ca"
+          },
+          {
+            "path": "src/netif_l2/tests.rs",
+            "sha256": "da42c388a92120e49091aeaaefcf58560ae3adf213d8853c3c1a194a27249d23"
+          },
+          {
+            "path": "src/netif_l2/user_cleanup.rs",
+            "sha256": "c55f14bc39ccff706256cb1db3494b35da4e903cdafbc2e2184823a848295e10"
+          },
+          {
+            "path": "src/netif_smoltcp.rs",
+            "sha256": "c47c53505dcd29ff4af38b61616c07500ab18c403965ce7458250ecb9aa9a58e"
+          },
+          {
+            "path": "src/oal.rs",
+            "sha256": "546637ebd6ea5748b16b98ba3732b9d921e3e1803ae0127b86f44830ffc078eb"
+          },
+          {
+            "path": "src/osal.rs",
+            "sha256": "af9574c51ea0132fe5249840b58c804b5e6d5a57416a49ddebce6d84f68316b3"
+          },
+          {
+            "path": "src/osal_adapt.rs",
+            "sha256": "bb669239de27b43803ae2feaae8a8de58f58240326fa0777776de3d0138acadd"
+          },
+          {
+            "path": "src/osal_ext.rs",
+            "sha256": "eb0560251e6b53d58bf9aed2289a0f9340ce3b8859b1db3b584ca6a356a5636d"
+          },
+          {
+            "path": "src/osal_queue.rs",
+            "sha256": "f31bab29608cd024e40d1cb2265ecfb2eb41d3b13b1daa52b77d32bd6010033f"
+          },
+          {
+            "path": "src/osal_sync.rs",
+            "sha256": "8c89c5968e8503e83efa76a0dd25340b98202e0c090e95aae155fc3e440933b6"
+          },
+          {
+            "path": "src/osal_wait.rs",
+            "sha256": "c94106c2b2ac559f3024f85e60d667f63dec1923985bd4d069b42a97e7ecc11e"
+          },
+          {
+            "path": "src/pmp.rs",
+            "sha256": "09f9fb8e7f522f62d9908277dc4502aa0016a3ba3c6173927198844de5f7818f"
+          },
+          {
+            "path": "src/profile.rs",
+            "sha256": "d4380fae2e6e762459f4c3d568cc484ee20ec3cf61495605bd76e7584fc7c764"
+          },
+          {
+            "path": "src/rf_init_diag.rs",
+            "sha256": "039e1555fa8da03b57d4e82f5b65517b2e355ff61a1f14ecb8de92bdb932cd06"
+          },
+          {
+            "path": "src/runtime.rs",
+            "sha256": "8e371b8b7b9eb03a78f8369f675b4634f70ec46c6209fd643b9582119813b68b"
+          },
+          {
+            "path": "src/selftest.rs",
+            "sha256": "fca7c8db8daf26b36ab32617b3fe4ad82ad4916906180fa7dd2ff9e1a3aaf58f"
+          },
+          {
+            "path": "src/sle.rs",
+            "sha256": "0bfc9f1e4214cc93a600dc22ff67b8e6c6c4274e8e1461670527c8087258b3d5"
+          },
+          {
+            "path": "src/station_pm_diag.rs",
+            "sha256": "36638151fd749d6ccc747bf056172df45d4aa178ca2c09d722a83e0300fddace"
+          },
+          {
+            "path": "src/timer.rs",
+            "sha256": "37b9366d29b990b03d4cca293bfe1aa2bb09b093d096c87b1c6a329aed08843c"
+          },
+          {
+            "path": "src/uapi.rs",
+            "sha256": "7b270bbe7df0914fb3c025cdaf64236af918b0dca8e155fcb02d80d8085e35c2"
+          },
+          {
+            "path": "src/upstream_authenticator.rs",
+            "sha256": "9bc4b08095dfaf51a7407067ec80b970cdb64a8f7dcfb26cf63680eaea0ee944"
+          },
+          {
+            "path": "src/upstream_supplicant.rs",
+            "sha256": "ed7a2ddf3fdbab1518846822910514c3cc38159fb31c95b1615502ea553125de"
+          },
+          {
+            "path": "src/upstream_supplicant/deauth.rs",
+            "sha256": "53d09ad1433ec7bf6385c30545a87af05e1028fa01218c89344bfda117dc0608"
+          },
+          {
+            "path": "src/wal.rs",
+            "sha256": "9490ea9a39e44e81f84f4b85bbce671574c1d923b7a33b8c95be02a87b423b83"
+          },
+          {
+            "path": "src/wifi.rs",
+            "sha256": "d29e286b78237ec7fc35ee08f86e5e7496f6781dee92ea48e07dfaf78a01e04a"
+          },
+          {
+            "path": "src/wlmac_diag.rs",
+            "sha256": "d9c0c5e735c6272f8f80573fce88eaead6c6136f750c93990f58e1045200469a"
+          },
+          {
+            "path": "src/wpa_compat.rs",
+            "sha256": "2162b5bf9d5ef283e40e753ee68b4e3a94c7566a0a8035ff33e4d7de49f434ab"
+          },
+          {
+            "path": "src/ws63_runtime_compat.rs",
+            "sha256": "ac7d7591cb492e52c0338dd255d6c46ed79ba6a6ef578486138a23fc39d31024"
+          },
+          {
+            "path": "tests/radio_stage_contract.rs",
+            "sha256": "e86cda3bb10f6a971ab94ce444f5a06fee53854986b8b21c2f02762f7ad663eb"
+          }
+        ],
+        "consumer_lock_sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+        "pinned_dependencies_unchanged": true,
+        "clean_offline": true,
+        "incremental_unchanged": true,
+        "missing_metadata_rejected": [
+          "hmac_user_del_etc",
+          "hmac_res_free_mac_user_etc"
+        ],
+        "restored_build": true,
+        "space_unicode_path": true,
+        "consumer_build_script": false,
+        "consumer_wrap_flags": false,
+        "boundary": "Packaged path dependency and final-call/resource checks, not crates.io-only facade or HIL acceptance"
+      },
+      "cleanup": {
+        "schema": "net0-cleanup-link/v1",
+        "status": "pass",
+        "edges": [
+          {
+            "source": "hmac_config_kick_user_etc",
+            "target": "__wrap_hmac_user_del_etc",
+            "call_address": 2511642,
+            "target_address": 2377174,
+            "file_offset": 221978
+          },
+          {
+            "source": "__wrap_hmac_user_del_etc",
+            "target": "hmac_user_del_etc",
+            "call_address": 2377348,
+            "target_address": 2628682,
+            "file_offset": 87684
+          },
+          {
+            "source": "hmac_user_del_etc",
+            "target": "hmac_user_free_etc",
+            "call_address": 2629242,
+            "target_address": 2625338,
+            "file_offset": 339578
+          },
+          {
+            "source": "hmac_user_free_etc",
+            "target": "__wrap_hmac_res_free_mac_user_etc",
+            "call_address": 2625376,
+            "target_address": 2377710,
+            "file_offset": 335712
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "_mac_res_get_hmac_user",
+            "call_address": 2377728,
+            "target_address": 2997062,
+            "file_offset": 88064
+          },
+          {
+            "source": "__wrap_hmac_res_free_mac_user_etc",
+            "target": "hmac_res_free_mac_user_etc",
+            "call_address": 2377840,
+            "target_address": 2663958,
+            "file_offset": 88176
+          }
+        ],
+        "elf_sha256": "1b03c4459178be11a8f6e6c0cb85e48862b51759957b45a7fe1aebbc5903073c",
+        "boundary": "Resolved HMAC call routing only; not native quiescence or HIL",
+        "rejected_call_mutations": 6
+      },
+      "storage": {
+        "control_bytes": 21440,
+        "l2_offset": 2296,
+        "l2_bytes": 12560,
+        "payload_bytes": 12112,
+        "metadata_bytes": 448,
+        "rx_slots": 4,
+        "tx_slots": 4,
+        "mtu": 1514,
+        "shared_arena_bytes": 299008,
+        "main_stack_bytes": 32768,
+        "packet_ram_bytes": 49152,
+        "rf_arena_bytes": 101888,
+        "runtime_arena_bytes": 197120,
+        "native_pbuf_prefix_bytes": 16,
+        "control_address": 10538336,
+        "rf_arena_address": 10696384,
+        "runtime_arena_address": 10798272,
+        "main_stack_address": 10996480,
+        "packet_ram_address": 10485760,
+        "schema": "net0-linked-storage/v3",
+        "status": "pass",
+        "elf_sha256": "1b03c4459178be11a8f6e6c0cb85e48862b51759957b45a7fe1aebbc5903073c",
+        "boundary": "Physical storage/link validation only; no native fence or HIL claim"
+      }
+    }
+  ],
+  "boundary": "Downloaded report ZIP bytes verified. Packaged path dependency, not registry-only facade; no downloaded firmware or new HIL claim. Actions retention is finite."
+}

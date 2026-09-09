@@ -1346,6 +1346,13 @@ backend `94478fc` 将 HMAC user delete 与真实 resource-free 返回值关联�
 native wait 有界性或外部 Cargo transitive hook 交付。原生排空/重连仍是下一功能
 门槛，不继续用 closed-route/one-shot 统计代替；NET0 active / NET1 queued 不变。
 
+后续 `e680319` / `1830bc9` 已将两条 cleanup wrapper 参数改为可经 rlib 传递的
+Rust native-link metadata。独立打包消费者不再需要复写 `--wrap`；三平台实际
+offline build、删 metadata 必须链接失败、恢复后调用图/资源布局检查均通过。
+[交付验收记录](evidence/net0-transitive-link-2026-09-09.md)绑定 23/23 exact-source
+CI 和三个下载 ZIP/15 个文件摘要，同时保留首轮 CI 的缓存依赖解析失败。
+该项关闭实验路径的 transitive hook 缺口，不关闭 native fence 或重连 HIL gate。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
