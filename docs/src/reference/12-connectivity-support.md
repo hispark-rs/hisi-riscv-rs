@@ -21,7 +21,10 @@
 和[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-rf-alpha115-acceptance-2026-09-09.json)
 已通过；既有 HIL 仍绑定各证据页的 source/ELF，不自动变成新版本或新 L2 路径的真机证明。
 
-父仓当前另 pin 了尚未发布的 NET0 backend 改动。仅启用 `standard-l2` 时，
+父仓当前另 pin 了尚未发布的 NET0 backend 改动，以及已发布并完成
+[下载验收](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-host-delivery-2026-09-09/radio-release-acceptance.json)
+的 `ws63-radio-blob 0.1.0-alpha.26` / `ws63-radio-sys 0.1.0-alpha.26`。
+这不是上表 facade alpha.115 的发布依赖闭包变更。仅启用 `standard-l2` 时，
 资源报告为 `hisi-rf-resource-report/v14` / `ws63-radio-2026-09-09-r14-net0`，
 计入 caller-owned L2 队列；未启用时仍使用上表 v13。该实验路径已通过目标 ELF
 存储布局和双板初始化准入预检；`3914ff5` 的固定 ELF 另完成
@@ -31,6 +34,9 @@
 后续 `654e90c` 已把同一队列绑定到标准 Driver 与既有 worker，并完成另一组
 [固定 ELF 3/3 + 20/20 绑定关闭控制面验证](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-bound-control-2026-09-09.md)。
 新路由仍不开放，以上流量、原生排空和重连门槛仍未关闭，未增加公开支持声明。
+后续 `b697275` 的
+[3/3 + 20/20 host-delivery 观测](https://github.com/hispark-rs/hisi-riscv-rs/blob/main/docs/plan/evidence/net0-host-delivery-2026-09-09.md)
+验证了早期 native 回调的进入/返回计数守恒；仍不等同于原生队列排空或新 L2 流量验收。
 
 ## Profile 矩阵
 
