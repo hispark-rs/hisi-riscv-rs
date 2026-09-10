@@ -1,0 +1,64 @@
+{
+  "boundary": "Resolved pre-publication descriptor hook and ROM patch destinations only; coverage, pointer identity and generation propagation require HIL; no reconnect permission",
+  "edges": [
+    {
+      "call_address": 1364162,
+      "file_offset": 737474,
+      "source": "hh503_rx_alloc_netbuf_and_dscr_patch",
+      "target": "__wrap_hh503_rx_set_ctrl_dscr",
+      "target_address": 2452052
+    },
+    {
+      "call_address": 2452080,
+      "file_offset": 162416,
+      "source": "__wrap_hh503_rx_set_ctrl_dscr",
+      "target": "__hisi_net0_rom_rx_set_ctrl",
+      "target_address": 2302124
+    }
+  ],
+  "elf_sha256": "9f8918bf623781ace088000ac03810b065c9fae12bb6616c329762d5999076a4",
+  "metadata": {
+    "address": 10670688,
+    "bytes": 368,
+    "packet_payload_bytes": 0,
+    "section": ".bss",
+    "slots": 16
+  },
+  "mutation_offsets": [
+    12462,
+    726660,
+    725216,
+    726668,
+    725232,
+    726664,
+    725224
+  ],
+  "patches": [
+    {
+      "index": 26,
+      "original": "hh503_rx_alloc_netbuf_and_dscr",
+      "original_address": 1230140,
+      "replacement_address": 1364036
+    },
+    {
+      "index": 28,
+      "original": "hal_rx_add_dscr",
+      "original_address": 1230396,
+      "replacement_address": 1364268
+    },
+    {
+      "index": 27,
+      "original": "hal_rx_pre_add_dscr",
+      "original_address": 1230302,
+      "replacement_address": 1364406
+    }
+  ],
+  "rejected_mutations": 9,
+  "schema": "net0-rx-origin-link/v1",
+  "status": "pass",
+  "veneer": {
+    "address": 1229298,
+    "bytes": 12,
+    "target": "hh503_rx_set_ctrl_dscr"
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "schema": "net0-rx-origin-downloads/v1",
+  "source": "70efda369aa9b8914b6d05659783a8a24b3d9e63",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34434252308",
+  "successful_jobs": 23,
+  "artifacts": [
+    {
+      "host": "ubuntu-latest",
+      "id": 10135936326,
+      "expires_at": "2026-12-09T03:40:57Z",
+      "downloaded_zip_sha256": "2028ab47fc65f5aa4e370053fa69337f283ada770ddee1ba968ce7cebccc0911",
+      "github_digest": "sha256:2028ab47fc65f5aa4e370053fa69337f283ada770ddee1ba968ce7cebccc0911",
+      "origin_elf_sha256": "8a4d45de407a4f432fac9637f3df5c3d4fab5ee7ec256f1f9695c6888e1ebef5",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "c538e64dc53b63ee2c333f704dc1b345bc38e107e914f877ce08cdfec8f8ac17",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "f8e87b0f5d86bf831821d7e1bc42a51e484cb1c5f3b56ee37565b6120c77c295",
+          "bytes": 3715
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "5e32b3b072b41677b17333e832a8f41b3572be29f40612406697f60ea894abf7",
+          "bytes": 17145
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "1b90b4e73cfa552aa7c7055ccf2229aac0946ca53ef05453422b39341d5c0955",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "a3019215b0906bf45b611cf3f863d256dc742a2e35f23fff07b15f6509d9d8f0",
+          "bytes": 1772
+        },
+        {
+          "name": "rx-origin.json",
+          "sha256": "3fc40614dd6bb15580312d0dbd8308f36329180495eeabc6c36990f51eaa3d98",
+          "bytes": 1587
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "a7a1bf30fa9e1295f00557f797a567612a1478f01eb58fe9cbf01a3785c4e322",
+          "bytes": 5248
+        },
+        {
+          "name": "storage.json",
+          "sha256": "5ffe4b7f38066a57ebd48765be6627721a9dbbf567a2b7a7b5c248572f43c480",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "macos-14",
+      "id": 10136152810,
+      "expires_at": "2026-12-09T03:40:57Z",
+      "downloaded_zip_sha256": "f5d09c21c55175ba56965b60b7d61a4b26c38ad297f773b54f10da587e3ed553",
+      "github_digest": "sha256:f5d09c21c55175ba56965b60b7d61a4b26c38ad297f773b54f10da587e3ed553",
+      "origin_elf_sha256": "aab0c4e8aaef6604abaac0c3d820029c67643a3fdd561ba3be3cfdddd082fb30",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "8f0a8edc5b8271c8250aab1ee8189527afe10d900122b1c17291bd2651b042d9",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "f8e87b0f5d86bf831821d7e1bc42a51e484cb1c5f3b56ee37565b6120c77c295",
+          "bytes": 3715
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "5e32b3b072b41677b17333e832a8f41b3572be29f40612406697f60ea894abf7",
+          "bytes": 17145
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "9be095ad95041e1eddce4a1eab367dbbf35afad298bc5f9222c4fdeb84a5c0ee",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "ed766b5376d0fb0172782c7d4d69dab6cfd45118b1c0124ad488649e4f4346ff",
+          "bytes": 1772
+        },
+        {
+          "name": "rx-origin.json",
+          "sha256": "7c14835b0b63caa54ae71d29ad43dcc72f5ab817b7f39770b5783a5cc3c9d120",
+          "bytes": 1587
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "13ed21609ad95b11cca85b96fe15385f63a76a4369a760575301cdd3895b78c9",
+          "bytes": 5248
+        },
+        {
+          "name": "storage.json",
+          "sha256": "2c0a421d603d2f435ab13a857e44639f9a3fecdc9ef6301046dcfd8375139244",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "windows-latest",
+      "id": 10136223245,
+      "expires_at": "2026-12-09T03:40:57Z",
+      "downloaded_zip_sha256": "7569a6636cb1853328510a6c2130746d8396911a1a06a5326854a1c11c2dea9f",
+      "github_digest": "sha256:7569a6636cb1853328510a6c2130746d8396911a1a06a5326854a1c11c2dea9f",
+      "origin_elf_sha256": "fe81f20a1a52c0d201f3983249cabcc79dc04a63fc6776c2c00aa88cb7f59f1b",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "854d74df08d5ae1703111e612896a2bb738c76511027795488e4d2f5240a6b6d",
+          "bytes": 1479
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "93c887e0be827ecfbc697ca940b4becfd87c335309571ba530b28396bcac4f0b",
+          "bytes": 3780
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "0502d9319d70a2689c4531bc59743330d6566eed7f7ba1ac148c3892b8739b83",
+          "bytes": 17640
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "e4019d25a3d04c05504a46de9b52d8908a2712b12fa673168d0b3a61e0c24254",
+          "bytes": 2705
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "2b1d772d6024c1ef0038db9b9e0a07063affeb157e5d0c855f886f64b49a05f7",
+          "bytes": 1841
+        },
+        {
+          "name": "rx-origin.json",
+          "sha256": "520fd4979f429079fd947e1c5355fa08d99727cb873715c0607ea3a6ccdcd884",
+          "bytes": 1651
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "278c010ee23922d67eb7a0157739ba9cd53e829b775cccd51cd13f40533552d9",
+          "bytes": 5440
+        },
+        {
+          "name": "storage.json",
+          "sha256": "469bcdeda390ecda10970eb28bbb5d30c90423f79b07170abf3246f7efda34d4",
+          "bytes": 776
+        }
+      ]
+    }
+  ],
+  "semantic_parity": {
+    "edges": [
+      [
+        "hh503_rx_alloc_netbuf_and_dscr_patch",
+        "__wrap_hh503_rx_set_ctrl_dscr"
+      ],
+      [
+        "__wrap_hh503_rx_set_ctrl_dscr",
+        "__hisi_net0_rom_rx_set_ctrl"
+      ]
+    ],
+    "patches": [
+      [
+        "hh503_rx_alloc_netbuf_and_dscr",
+        1230140,
+        26
+      ],
+      [
+        "hal_rx_add_dscr",
+        1230396,
+        28
+      ],
+      [
+        "hal_rx_pre_add_dscr",
+        1230302,
+        27
+      ]
+    ],
+    "veneer": {
+      "target": "hh503_rx_set_ctrl_dscr",
+      "address": 1229298,
+      "bytes": 12
+    },
+    "metadata_bytes": 368
+  },
+  "boundary": "Downloaded report ZIPs, not firmware or registry-only facade acceptance; finite Actions retention"
+}

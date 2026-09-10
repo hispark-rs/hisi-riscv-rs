@@ -1410,6 +1410,15 @@ tests、25 项最终 ELF 负例和新镜像 3/3 预检、UDP 30/30；精确 sour
 不将 already-disabled MAC 或软件队列清空当 DMA
 acknowledgement；native fence 与有界重连仍是 NET0 门槛，NET1 保持 queued。
 
+backend `e3005eb` 增加默认关闭的 RX descriptor-origin 观察实验，验证原厂 patched
+allocator 在交付硬件前的 descriptor/netbuf 绑定入口。实际调用与三项 ROM patch
+目的地已由最终 ELF 检查，未修改准入或原生释放行为。
+[原型证据](evidence/net0-rx-origin-2026-09-10.md)保留 3 轮中的全部失败：流量预检
+2/3（已运行的 UDP 20/20），但来源覆盖 0/3，16 槽表每轮均有容量不足和未匹配回调；
+第三轮双 association 后一次性保护拒绝开放，不能记成 UDP 丢包。
+下一步是核对原生 buffer 回收与有界 origin 所有权，再接到 host-copy generation；
+不因入口命中或流量通过而宣称 DMA fence/重连。NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

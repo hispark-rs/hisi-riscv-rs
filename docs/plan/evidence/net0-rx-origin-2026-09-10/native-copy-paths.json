@@ -1,0 +1,45 @@
+{
+  "schema": "net0-native-copy-audit/v1",
+  "status": "pass",
+  "edges": [
+    {
+      "source": "frw_rx_netbuf",
+      "target": "frw_alloc_pbuf",
+      "call_address": 2757592,
+      "target_address": 2759058,
+      "file_offset": 467928
+    },
+    {
+      "source": "frw_alloc_pbuf",
+      "target": "oal_pbuf_netbuf_alloc",
+      "call_address": 2759068,
+      "target_address": 2757266,
+      "file_offset": 469404
+    },
+    {
+      "source": "hmac_rx_parse_amsdu_etc",
+      "target": "oal_pbuf_netbuf_alloc",
+      "call_address": 2748780,
+      "target_address": 2757266,
+      "file_offset": 459116
+    }
+  ],
+  "elf_sha256": "9f8918bf623781ace088000ac03810b065c9fae12bb6616c329762d5999076a4",
+  "boundary": "Static normalized AUIPC/JALR calls only. AMSDU allocation must preserve source epoch; this does not prove path execution, complete clone/free coverage, or reconnect safety",
+  "rejected_call_mutations": 3,
+  "checker_sha256": "14998e45731e165eefaded9c603686c37e643a3c7203579e96a94417f4d15421",
+  "host_pbuf_allocator_callers": [
+    {
+      "function": "frw_alloc_pbuf",
+      "call_addresses": [
+        2759068
+      ]
+    },
+    {
+      "function": "hmac_rx_parse_amsdu_etc",
+      "call_addresses": [
+        2748780
+      ]
+    }
+  ]
+}
