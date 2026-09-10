@@ -1,0 +1,12 @@
+# hisi-riscv-rs uses the official upstream Rust nightly that contains the
+# `riscv32imfc-unknown-none-elf` builtin target. The target is visible to rustc,
+# but rustup does not ship a prebuilt `rust-std` component for it yet, so RISC-V
+# builds pass `-Zbuild-std=core,alloc` and require `rust-src`.
+#
+# The ecosystem pins a known-good nightly for reproducible CI/release builds.
+# The separate hisi-riscv-rust-toolchain repository tracks the latest nightly as
+# an external radar for upstream regressions and future Tier-2 readiness.
+[toolchain]
+channel = "nightly-2026-07-09"
+profile = "minimal"
+components = ["rust-src", "clippy", "rustfmt", "llvm-tools-preview"]

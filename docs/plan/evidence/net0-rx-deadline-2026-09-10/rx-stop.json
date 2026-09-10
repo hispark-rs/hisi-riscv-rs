@@ -1,0 +1,192 @@
+{
+  "boundary": "Resolved stop/rebuild/cleanup ROM calls only. Runtime allocation counts and context need HIL; no DMA/host RX queue fence claim",
+  "edges": [
+    {
+      "call_address": 2439408,
+      "file_offset": 149744,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_destroy",
+      "target_address": 2302160
+    },
+    {
+      "call_address": 2439826,
+      "file_offset": 150162,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_destroy",
+      "target_address": 2302160
+    },
+    {
+      "call_address": 2439796,
+      "file_offset": 150132,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "hal_disable_machw_phy_and_pa",
+      "target_address": 2299138
+    },
+    {
+      "call_address": 2439784,
+      "file_offset": 150120,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2439804,
+      "file_offset": 150140,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2439838,
+      "file_offset": 150174,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2439852,
+      "file_offset": 150188,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "hal_chip_get_hal_device",
+      "target_address": 2299038
+    },
+    {
+      "call_address": 2439864,
+      "file_offset": 150200,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rom_empty",
+      "target_address": 2302196
+    },
+    {
+      "call_address": 2439538,
+      "file_offset": 149874,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "frw_get_wifi_frw_task_id",
+      "target_address": 2705324
+    },
+    {
+      "call_address": 2439652,
+      "file_offset": 149988,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "hmac_is_thruput_enable",
+      "target_address": 2999546
+    },
+    {
+      "call_address": 2440064,
+      "file_offset": 150400,
+      "source": "__hisi_net0_rx_stop_handler",
+      "target": "__hisi_net0_rx_rebuild_probe",
+      "target_address": 2440560
+    },
+    {
+      "call_address": 2440808,
+      "file_offset": 151144,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_init",
+      "target_address": 2302172
+    },
+    {
+      "call_address": 2440964,
+      "file_offset": 151300,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_destroy",
+      "target_address": 2302160
+    },
+    {
+      "call_address": 2440654,
+      "file_offset": 150990,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2440818,
+      "file_offset": 151154,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2440940,
+      "file_offset": 151276,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2440976,
+      "file_offset": 151312,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "__hisi_net0_rom_enabled",
+      "target_address": 2302184
+    },
+    {
+      "call_address": 2440932,
+      "file_offset": 151268,
+      "source": "__hisi_net0_rx_rebuild_probe",
+      "target": "hal_disable_machw_phy_and_pa",
+      "target_address": 2299138
+    }
+  ],
+  "elf_sha256": "4229b1c78a55f449a88ad6a2d18052e912155287a47aefdbe3bc4c44a22c99ab",
+  "metadata": {
+    "address": 10570528,
+    "bytes": 80,
+    "packet_payload_bytes": 0,
+    "section": ".data"
+  },
+  "rejected_call_and_address_mutations": 25,
+  "schema": "net0-rx-stop-link/v3",
+  "status": "pass",
+  "veneers": [
+    {
+      "bytes": 12,
+      "file_offset": 12460,
+      "name": "__hisi_net0_rom_control",
+      "target": "get_dmac_frw_ctrl",
+      "target_address": 1214046
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12472,
+      "name": "__hisi_net0_rom_unregister",
+      "target": "frw_dmac_msg_hook_unregister",
+      "target_address": 1214286
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12484,
+      "name": "__hisi_net0_rom_register",
+      "target": "frw_dmac_msg_hook_register",
+      "target_address": 1214230
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12496,
+      "name": "__hisi_net0_rom_destroy",
+      "target": "hal_dev_fsm_destroy_rx_dscr",
+      "target_address": 1221066
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12508,
+      "name": "__hisi_net0_rom_init",
+      "target": "hal_dev_fsm_init_rx_dscr",
+      "target_address": 1221000
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12520,
+      "name": "__hisi_net0_rom_enabled",
+      "target": "hal_is_machw_enabled",
+      "target_address": 1242118
+    },
+    {
+      "bytes": 12,
+      "file_offset": 12532,
+      "name": "__hisi_net0_rom_empty",
+      "target": "hal_is_hw_rx_queue_empty",
+      "target_address": 1250366
+    }
+  ]
+}

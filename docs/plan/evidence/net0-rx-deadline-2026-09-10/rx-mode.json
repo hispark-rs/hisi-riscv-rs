@@ -1,0 +1,69 @@
+{
+  "boundary": "Pinned direct-call and free-on-103 ABI; not indirect-call completeness, DMA quiescence or reconnect",
+  "edges": [
+    {
+      "call_address": 2746778,
+      "file_offset": 457114,
+      "source": "hmac_rx_data_event_adapt",
+      "target": "__wrap_frw_host_post_msg",
+      "target_address": 2379616
+    },
+    {
+      "call_address": 2630418,
+      "file_offset": 340754,
+      "source": "hmac_tid_pause",
+      "target": "__wrap_frw_host_post_msg",
+      "target_address": 2379616
+    },
+    {
+      "call_address": 2629584,
+      "file_offset": 339920,
+      "source": "hmac_tid_resume",
+      "target": "__wrap_frw_host_post_msg",
+      "target_address": 2379616
+    },
+    {
+      "call_address": 2379682,
+      "file_offset": 90018,
+      "source": "__wrap_frw_host_post_msg",
+      "target": "frw_host_post_msg",
+      "target_address": 2760878
+    },
+    {
+      "call_address": 2746798,
+      "file_offset": 457134,
+      "source": "hmac_rx_data_event_adapt",
+      "target": "__wrap_oal_netbuf_free",
+      "target_address": 2451046
+    },
+    {
+      "call_address": 2746750,
+      "file_offset": 457086,
+      "source": "hmac_rx_data_event_adapt",
+      "target": "hmac_rx_process_data_msg",
+      "target_address": 2745766
+    }
+  ],
+  "elf_sha256": "4229b1c78a55f449a88ad6a2d18052e912155287a47aefdbe3bc4c44a22c99ab",
+  "message": 595,
+  "metadata": {
+    "address": 10673145,
+    "bytes": 1,
+    "packet_payload_bytes": 0,
+    "section": ".bss"
+  },
+  "ownership_checks": [
+    {
+      "bytes": "13053025",
+      "file_offset": 457110
+    },
+    {
+      "bytes": "aa843b18e567112069bf2285",
+      "file_offset": 457122
+    }
+  ],
+  "reject_status": 103,
+  "rejected_mutations": 8,
+  "schema": "net0-direct-rx-link/v1",
+  "status": "pass"
+}

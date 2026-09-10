@@ -1401,6 +1401,15 @@ stop → rebuild → per-queue check → cleanup，不新增 profile、不重新
 这是关闭 admission 下的分配往返，不证明 active DMA 排空、重复分配无泄漏或同设备
 重连；NET0 active / NET1 queued 不变。
 
+backend `8a6908c` 随后修复原生调用迟到却被成功回执抢先接受的 deadline 缺口：
+callback 准入、重建前、native 返回和 waiter 消费共享同一个 1,000 ms 预算，
+不依赖等待者曾经获得调度；原生观测保留，但迟到的零状态不能清除 timeout。
+[本次证据](evidence/net0-rx-deadline-2026-09-10.md)记录 240 host tests、19 Miri
+tests、25 项最终 ELF 负例和新镜像 3/3 预检、UDP 30/30；精确 source CI 23/23、
+三平台实际下载的 3 个 ZIP/24 个成员及调用图一致性已验证。此修复不使原厂 C 可取消，
+不将 already-disabled MAC 或软件队列清空当 DMA
+acknowledgement；native fence 与有界重连仍是 NET0 门槛，NET1 保持 queued。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

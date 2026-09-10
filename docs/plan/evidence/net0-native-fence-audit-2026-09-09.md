@@ -333,3 +333,20 @@ The separate [direct-RX evidence](net0-direct-rx-2026-09-10.md) now verifies
 normal traffic and rejection of the optional host message-595 path. That closes
 one earlier topology question, not the device/DMA observations above. No raw
 MMIO reset, fabricated queue state or reopen capability was added.
+
+Local RV32 LLVM decoding of the same saved ranges further rules out two
+misleading names as acknowledgements. `hal_device_enter_rf_sleep_mode_mark`
+at `0x12a432` is exactly `sb a1,0x543(a0); ret`: it records a software byte,
+not hardware sleep completion. `hal_set_machw_rx_buff_addr_sync` at `0x12c310`
+tests a head-pointer value and, on its empty-head branch, brackets an address
+update with the native IRQ save/restore. The inspected path has no DMA-ready
+poll. Unknown vendor instructions were left unknown rather than decoded as
+RV64 instructions; these conclusions use the standard RV32 instructions,
+existing headers and fixed ROM ranges above.
+
+The SDK's `hmac_radar_sensor_disable` also gates descriptor destruction on
+device INIT/IDLE state after disabling MAC. It does not supply a separate
+DMA-idle result to the caller. Neither the `sync` name, the sleep marker nor
+the already-zero MAC samples from terminal HIL grant a reusable generation
+fence. This follow-up used local saved bytes only, with no new target writes,
+VM transfer or native function invocation.
