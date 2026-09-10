@@ -1,0 +1,1292 @@
+{
+  "schema": "net0-direct-rx-hil/v1",
+  "source_commit": "9afac3366e1a75cb7f734266a0d4a0322462716e",
+  "elf_sha256": "9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c",
+  "negative_elf_sha256": "bc5b1cd5ad6995d34e8d09b3142440eba1e892ffc271adc3ba066779803d55f9",
+  "ap_elf_sha256": "d54e79d07df9ea860da1bb5858e0ff96c2c2a1964e1bf1ce4e9c1c360665b091",
+  "build_inputs": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "bdf990cb49c7401f6362903a1af8f7139e5044ee49e4e7c1989e2580b6248f3f"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "eae1aaa63bdbf8ec6f5839ca2c790b40f5279996d2a81fe429398b036b64629d"
+    },
+    {
+      "path": "build.rs",
+      "sha256": "de49efb45416d9cea17e646ddc66c2e4bfef4b2cd2c3f8f7aa33efc2dd641dad"
+    },
+    {
+      "path": "examples/arena_admission_error.rs",
+      "sha256": "59dd1ec00c7b292489f13eaf74adfa8757c561c745c6776a404e4def121d8c03"
+    },
+    {
+      "path": "examples/ble_gatt_client_smoke.rs",
+      "sha256": "16d96ea509cf05a716a513c5a35ba61c831b4f01b33084dc04a26b05a302a85a"
+    },
+    {
+      "path": "examples/ble_gatt_server_smoke.rs",
+      "sha256": "b304277746044cbed0786af5c4577950532dc5b2d6830e10b9c3619413ed3eb5"
+    },
+    {
+      "path": "examples/ble_init_link.rs",
+      "sha256": "b75e7423b20fa1276a312fa1cef8b075f8aa2db4dd95b4dc3fb5781de0522506"
+    },
+    {
+      "path": "examples/ble_init_smoke.rs",
+      "sha256": "70b50a676dd067fd4ab0c07a7d4bf24c8b9373f0d06eee64a0d9d0219bc4aae6"
+    },
+    {
+      "path": "examples/bootstrap_profile.rs",
+      "sha256": "7bd6a442e6614102c5cc78f751f447a1faa38283dfa3fdf38fefba7b76148eb8"
+    },
+    {
+      "path": "examples/coexistence_init_smoke.rs",
+      "sha256": "17e00cabe16c639edbfab28f31e8933b86a29b921e680b2bab54b011ef5262d3"
+    },
+    {
+      "path": "examples/connectivity_contract_fixture.rs",
+      "sha256": "08eeb3545084a7d997c062184836a6ed5386da172f73c2a93c6b3f8bb4a6ba24"
+    },
+    {
+      "path": "examples/incremental_scan_profile.rs",
+      "sha256": "f7040bf367f652903104b19f1a427e4568ecb2d1c1c7c9a1cea44ca0cd971a3f"
+    },
+    {
+      "path": "examples/operation_error_injection.rs",
+      "sha256": "f2271d7b1e4f4e3c065cee1846cd76d8f127a9c735d4eabc536a71ce927a750d"
+    },
+    {
+      "path": "examples/plain_firmware.rs",
+      "sha256": "b808155b327af4a38e2cf3b864a2e8e307103da4ee7b9e109501799096c630b0"
+    },
+    {
+      "path": "examples/resource_report.rs",
+      "sha256": "aec9bf8225e73c6d50a4b7ee0fc9b882cd6dbb2e933fb35736777cbe7f5cf3cd"
+    },
+    {
+      "path": "examples/sle_announce_smoke.rs",
+      "sha256": "7850ec88fb89fd89dead85dfb4bd05515531635b539be008ede6b8e4f2f5f616"
+    },
+    {
+      "path": "examples/sle_connect_client_smoke.rs",
+      "sha256": "1d695527b5c2f50eb8edf22ede22b922532245a140d83779992ad9bf74808c8e"
+    },
+    {
+      "path": "examples/sle_connect_server_smoke.rs",
+      "sha256": "09f81b40cbdb5d73ae732e2e5eb3e11b2f2d7c262aa1ffc1a0b1bad55f85f322"
+    },
+    {
+      "path": "examples/sle_seek_smoke.rs",
+      "sha256": "c07cfc654fdc5117b0d96feacf88dc4f4b023a02a78143201a8c58ef03816387"
+    },
+    {
+      "path": "examples/sle_ssap_client_smoke.rs",
+      "sha256": "6b8f3cff2e20dc171e40d561bd82121ffbfb000652a83e4e0da6fa2e067048e4"
+    },
+    {
+      "path": "examples/sle_ssap_server_smoke.rs",
+      "sha256": "a023be299c59e7b6d2306edce7e3403c1d1e2ea304327eb64467ad71aca1da6a"
+    },
+    {
+      "path": "examples/support/ble_firmware.rs",
+      "sha256": "f38a82d7d670296435bc3e23f348d1e35ac5237f1813176a46f31935b45eca95"
+    },
+    {
+      "path": "examples/support/net0_initial_network.rs",
+      "sha256": "77f0200601eb1d5b15b969c6cbd96bddf03d2ec11b79132e116dc5fca6b47896"
+    },
+    {
+      "path": "examples/support/net0_storage.rs",
+      "sha256": "305df264c7953f701c344d8fca8cdb700111502cb67ba75d96a231499397b9f1"
+    },
+    {
+      "path": "examples/support/sle_firmware.rs",
+      "sha256": "f16e6e091689c0faf6a2ad59c2fd642b288c6decc38b1def47d67ebc59a57c2e"
+    },
+    {
+      "path": "examples/typed_error_parity.rs",
+      "sha256": "4686536a882ad24eba59dbb53f3da271cfbae0bc1cbe357db910fb793d8efdfd"
+    },
+    {
+      "path": "examples/wifi_ble_coexistence_smoke.rs",
+      "sha256": "1f9ebe94e6a0ac757951681af33fcafd5d5b2fd125ee65c5a060b77ac1733d87"
+    },
+    {
+      "path": "examples/wifi_ble_connected_client_smoke.rs",
+      "sha256": "1088f65886784c0efbde4fb77830b040ea9e521849317218823f2e76f5396681"
+    },
+    {
+      "path": "examples/wifi_sle_coexistence_smoke.rs",
+      "sha256": "8030ba6e05ef1c954c52ef7da2c34aae2c382b048e0a221c8821373b8f81a941"
+    },
+    {
+      "path": "examples/wifi_sle_connected_client_smoke.rs",
+      "sha256": "9bc3dba62e438300f302e2b9295e7034f2000e5fdff79ea07a2a63d2dc6b50a9"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "255c8f64ef8b2822984c91e34f17136c7497e166be31e1bf2808f355c35aadcd"
+    },
+    {
+      "path": "src/alloc.rs",
+      "sha256": "8b4bb6bb051eac0f9951bb690604fc0fe83d3c42d627e4aeaeb9f8599d5128ed"
+    },
+    {
+      "path": "src/ble.rs",
+      "sha256": "24277166ebeaccf4b21ad7a92503ad3db41074cb7c755f396f83e77948e02215"
+    },
+    {
+      "path": "src/ble_compat.rs",
+      "sha256": "e64d6f510a631726de024a017ad385d164d6e683a7835b231f8836df38eb8802"
+    },
+    {
+      "path": "src/ble_init_diag.rs",
+      "sha256": "3f61b697ec8a68bac85f7c669d9806a82fb4c1ca7590d8982a6a4a8c26123860"
+    },
+    {
+      "path": "src/ble_sc.rs",
+      "sha256": "086c68ec76867b487e50f2514ddb650c1efc5458630dc56f5d38e4963f219e9f"
+    },
+    {
+      "path": "src/blocking_diagnostics.rs",
+      "sha256": "593d5a6c7dc0fb8f866f7bfdce5c87aa8d0ed5d82af7b7441e5f3ed1f32e937f"
+    },
+    {
+      "path": "src/compiler_rt.rs",
+      "sha256": "839d60f9c1ef96216570fa08eb5f9aaff1ec4adc9bfce3f5564e663e3195829b"
+    },
+    {
+      "path": "src/composition.rs",
+      "sha256": "c77cb22df06f80a72d3203b01c158a158b360ae00b802bad191c428b6b7ec874"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "242f546a002b076e17c9c123a048c04fc643ca810f3959b75cc71cac93b67a7e"
+    },
+    {
+      "path": "src/crypto_sae.rs",
+      "sha256": "d07f1f25d544e331ccf41d0b3ed7819adbfb04041d78e6a32926175dc2a4ba76"
+    },
+    {
+      "path": "src/data_path_diag.rs",
+      "sha256": "211c44513c5ecb793159911ed83a87ea64157aa762fba24d294fcc758d3db4e6"
+    },
+    {
+      "path": "src/eloop_diag.rs",
+      "sha256": "408dbfc56840fa6d4dfb4b96fb163d3a72d74382e717b80e0b1b575cc7e9c529"
+    },
+    {
+      "path": "src/error.rs",
+      "sha256": "4041c276faa97cad4fa390f0f20b6ac69c6396860b4f768e0e2c58d1c2fefc91"
+    },
+    {
+      "path": "src/frw.rs",
+      "sha256": "d5d0170784755c14fe70821514bca10413e2ba6e90816565a7bf09ee8416ba6b"
+    },
+    {
+      "path": "src/hcc.rs",
+      "sha256": "e33e13e01494bfb83817592e9b656a2a9eafca91c07063582e3edcd315e8e352"
+    },
+    {
+      "path": "src/hisi_rf_backend.rs",
+      "sha256": "d68a397468f341cf942dfc2eb5fce37d0455c48e960a34ac909ce09d0be242d6"
+    },
+    {
+      "path": "src/hisi_rf_backend/incremental.rs",
+      "sha256": "b8ebf86979d77c59b06f676e3ea00cf5cccb228d51d5c59326c05f9ee5485b4b"
+    },
+    {
+      "path": "src/incremental_wait.rs",
+      "sha256": "e125b9d46c8939daddbd60ef2015559ce4d1c6f09e3d92d7d9adeaaa8fdf891a"
+    },
+    {
+      "path": "src/incremental_worker.rs",
+      "sha256": "1d372f6213255dbe5986c642da3b0a0b2b176b88272c72abd9f3e4a72ceb50eb"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "5d3b86b4599fe46c2eb6da1f6349230b976d94405659beb4576e54d173a9c8b3"
+    },
+    {
+      "path": "src/libc.rs",
+      "sha256": "df78b59884b8c32d82857d0956a9f8a4ca9af2161acbb68ed17cab02e30bd292"
+    },
+    {
+      "path": "src/log.rs",
+      "sha256": "8eb2ae029b652d63d22fc50df192619050bd5350d838c2904c63fe2efab18350"
+    },
+    {
+      "path": "src/netif.rs",
+      "sha256": "387c0118bc3b19ebfbf6745805381c7ecf2b5da41016663a828838b050d2e8aa"
+    },
+    {
+      "path": "src/netif_l2.rs",
+      "sha256": "7c29c82a965a2121007d40dce9c939bb9d9116010710bb72ebc1a474900d831e"
+    },
+    {
+      "path": "src/netif_l2/device.rs",
+      "sha256": "19de3f4477868d72dd234a04c64de6ba8b2853775542cd954183dcae0874a1e0"
+    },
+    {
+      "path": "src/netif_l2/host_delivery.rs",
+      "sha256": "4ddeeb15fc90ee0cd353c13068a3576c205d77a5ef63e7035b9922a32c06761f"
+    },
+    {
+      "path": "src/netif_l2/host_tx.rs",
+      "sha256": "227fe6a5d4fc3a37c9d95602acecacf0f972315d374c92d924c023a6337133a5"
+    },
+    {
+      "path": "src/netif_l2/initial_session.rs",
+      "sha256": "392a5b12ded2c7add59c4fee1b10430425b8ac1437c8e8ba2246841a529bc41b"
+    },
+    {
+      "path": "src/netif_l2/link.rs",
+      "sha256": "700783930dfd726cdfa023f9431766dbc20a9dd017dbc64577437cf1dbc1af49"
+    },
+    {
+      "path": "src/netif_l2/pbuf_tests.rs",
+      "sha256": "d17695f52c4d78f7fc2b1904cd838e69feb0d69c76ccce03424771b383586346"
+    },
+    {
+      "path": "src/netif_l2/rx_mode.rs",
+      "sha256": "9eeadcc88233815f420e210aa467066fdb6761a1e6d45c57a0ad466aa027138c"
+    },
+    {
+      "path": "src/netif_l2/rx_stop.rs",
+      "sha256": "2597136a804840edeeb4fed656490a1e418259d1fbca9b57ecc9e465fa813c3d"
+    },
+    {
+      "path": "src/netif_l2/storage.rs",
+      "sha256": "154c5d907eda5433004c49b6128c09e80be4febea4c66b3da7067d2228a60d4a"
+    },
+    {
+      "path": "src/netif_l2/tests.rs",
+      "sha256": "d2069bc3ee8aaa26616643acb588fe0bee81bdb6d564a1328c115925574dcba9"
+    },
+    {
+      "path": "src/netif_l2/user_cleanup.rs",
+      "sha256": "c0f7e4404e4905f6af9d78484624afa5b9ce8b4cd1c7fbec6f927fb54c241c0d"
+    },
+    {
+      "path": "src/netif_smoltcp.rs",
+      "sha256": "c82319c2528eb08915cdce6c1294aa6bc78cc42271e4e4d07d15c8aa1b140bc4"
+    },
+    {
+      "path": "src/oal.rs",
+      "sha256": "4d2ffa86169ec9ccbddf10bd4b6558687a5f9a1d3531996c16da678d075f89fe"
+    },
+    {
+      "path": "src/osal.rs",
+      "sha256": "15348817fb1c4871186c7282a06fe5d9ce8ecd2bdfc578b96df1cb655d657116"
+    },
+    {
+      "path": "src/osal_adapt.rs",
+      "sha256": "d8064fc7ec757b24753369570366e0ad992970fb199ed21aad7ca02102b50c17"
+    },
+    {
+      "path": "src/osal_ext.rs",
+      "sha256": "940df6d07aa14b84a3891b0cc994c5f61a559b4c352fe20d7e6831bb28f54876"
+    },
+    {
+      "path": "src/osal_queue.rs",
+      "sha256": "10e21083ca2bcdde845fc3c2fc1bbfd94a145122f54b6207692a3a239e6aed30"
+    },
+    {
+      "path": "src/osal_sync.rs",
+      "sha256": "c125bb76c0545432fa458b0ae064c6874bc79ef574f7c2693ea229324d93a602"
+    },
+    {
+      "path": "src/osal_wait.rs",
+      "sha256": "ff224efc249facc99f43d93dccf7d5c48d1b4cf2132a3e893c485d9dc0a89600"
+    },
+    {
+      "path": "src/pmp.rs",
+      "sha256": "3bdc4ae633d3c2d37efb8508345ac800167da688f53c4caa0bb8c44d1f2efc92"
+    },
+    {
+      "path": "src/profile.rs",
+      "sha256": "611a5ef7cebcad022f6417c8a8928c266b76ee9255c978e86b3b7fea21612266"
+    },
+    {
+      "path": "src/rf_init_diag.rs",
+      "sha256": "6a98c4e4c669680cf0efae3cfbb06f1c620bd525e4a36af605ce4a817bbb9ad7"
+    },
+    {
+      "path": "src/runtime.rs",
+      "sha256": "22052faad0a599a363d3c39dc34f6b0a250f05026abaa2ae6a4f9cdf18a5eee1"
+    },
+    {
+      "path": "src/selftest.rs",
+      "sha256": "0f7ff5898503a2ce497211de1f621cca53b7fb7efdee841c1d5772cd375e276a"
+    },
+    {
+      "path": "src/sle.rs",
+      "sha256": "a5fdd6fa2c7897252790947b19a948a4226c7a2be7148755a2c25bf983f9899b"
+    },
+    {
+      "path": "src/station_pm_diag.rs",
+      "sha256": "3a0652b10431d573accc1abe323cf46d3028736a52e6f2ffa277582ba980d3bd"
+    },
+    {
+      "path": "src/timer.rs",
+      "sha256": "c3ee655c889bd3b7e34bab4e67bc87abc17dca9061f1b4b1d471ddec8c299977"
+    },
+    {
+      "path": "src/uapi.rs",
+      "sha256": "04066048c0385a9317cc9349819cfd6a673594aa64af3701c5adbd73729f8396"
+    },
+    {
+      "path": "src/upstream_authenticator.rs",
+      "sha256": "a9f9918932a4c9dd873b7dd12c8e613a7ff075aafcda9b3effb38fbee11e0db8"
+    },
+    {
+      "path": "src/upstream_supplicant.rs",
+      "sha256": "65940356214cfe3956b318111a638a84d2f443276a1db39e036f7e853540d8f5"
+    },
+    {
+      "path": "src/upstream_supplicant/deauth.rs",
+      "sha256": "bf2701505da37c1e3ddc4eb6a79fdda291a4de9d09e0f8e73167f5da44ecb746"
+    },
+    {
+      "path": "src/wal.rs",
+      "sha256": "790ae2ac17883133d14c61f2f02fa38e23f89ad88864bcaaefc9532e5f917010"
+    },
+    {
+      "path": "src/wifi.rs",
+      "sha256": "70aa960b72b510639016716c516b94b291a8685eae0a5dc597d53d1882cb20c3"
+    },
+    {
+      "path": "src/wlmac_diag.rs",
+      "sha256": "1af95ffeb55e063657076854f765477aeb2510b954dbceb9b8cdbeefdd27720a"
+    },
+    {
+      "path": "src/wpa_compat.rs",
+      "sha256": "a7dfaf832281c3bfef2f12b1214c0aa65a4790da4db254472fb6a0c9270f8160"
+    },
+    {
+      "path": "src/ws63_runtime_compat.rs",
+      "sha256": "084c679a4383c9ebd64b1e83121f4b04b5b588705391bba770a681d89025771c"
+    }
+  ],
+  "cases": [
+    {
+      "name": "net0-direct-rx3-9afac33",
+      "requested": 3,
+      "elf_sha256": "9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c",
+      "classification": "accepted",
+      "raw_summary_sha256": "da3ec77142a15b457d9bd38c8c59cd57e9e7d9b1a2041d25c1891f477980cdbd",
+      "original_source_label": "9afac3366e1a75cb7f734266a0d4a0322462716e",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 7.862131624948233,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 37118,
+              "sha256": "d0de731df4f16aaf5e3f9710d9379c7a1de96fdf1b6b1a64291cc1e780f38f79"
+            },
+            {
+              "role": "peer",
+              "bytes": 25003,
+              "sha256": "b7294eb6a3c483b842fcd0f0535c5fb26e449ff7b809c3303365cfd678b91466"
+            }
+          ],
+          "peer_reset_seconds": 0.7405590409180149,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "cleanup": {
+            "samples": [
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            ],
+            "pass": true
+          },
+          "host_tx": {
+            "samples": [
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 0,
+                "fault": 0
+              },
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 1,
+                "fault": 0
+              }
+            ],
+            "pass": true
+          },
+          "rx_stop": {
+            "samples": [
+              {
+                "installed": 1,
+                "requested": 0,
+                "entered": 0,
+                "returned": 0,
+                "post_returned": 0,
+                "mac_before": 255,
+                "mac_after": 255,
+                "descriptors_empty": 255,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 0,
+                "current_task": 0
+              },
+              {
+                "installed": 1,
+                "requested": 1,
+                "entered": 1,
+                "returned": 1,
+                "post_returned": 1,
+                "mac_before": 0,
+                "mac_after": 0,
+                "descriptors_empty": 1,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 261,
+                "current_task": 261
+              }
+            ],
+            "pass": true,
+            "boundary": "Immediate device stop receipt; not reusable DMA/host-queue fence"
+          },
+          "public_markers": {
+            "target": [
+              "RFDBG_NET0_BOUND_CLOSED",
+              "RFDBG_NET0_HOST_DELIVERY phase=bootstrap entered=0x0000000000000000 returned=0x0000000000000000 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000000 closed=0x0000000000000000 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_A5B_CONNECT_OK elapsed_ms=0x00000adf",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x000000ff 0x000000ff 0x000000ff 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_DELIVERY phase=connected entered=0x00000000000000ad returned=0x00000000000000ad abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000ab crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_RESULT result=open",
+              "RFDBG_NET0_INITIAL_SESSION_OPEN",
+              "RFDBG_NET0_HOST_DELIVERY phase=payload entered=0x00000000000000e2 returned=0x00000000000000e2 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000ab crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_ROUTE entered=000000000000000b queued=000000000000000b dropped=0000000000000000 closed=0000000000000000 abandoned=0000000000000000 in_flight=0000000000000000",
+              "RFDBG_NET0_PAYLOAD sent=0x0000000a received=0x0000000a bitmap=0x000003ff invalid=0x00000000 duplicate=0x00000000",
+              "RFDBG_NET0_PAYLOAD_OK",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000001 0x00000001 0x00000001 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000105 0x00000105",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000",
+              "RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x000000d6",
+              "RFDBG_NET0_HOST_DELIVERY phase=disconnected entered=0x00000000000000e3 returned=0x00000000000000e3 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000ab crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+              "RFDBG_A5B_CONNECT_PROFILE_OK"
+            ],
+            "peer": [
+              "RFDBG_SOFTAP_READY",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000002 echo_tx=00000002",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000004 echo_tx=00000004",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000007 echo_tx=00000007",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a"
+            ]
+          }
+        },
+        {
+          "index": 2,
+          "pass": true,
+          "elapsed_seconds": 7.853015207918361,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 29936,
+              "sha256": "f41635cf805152d1c97f62f0dec2a41d2e1329bffc4f2d91e46591164ebc2e0b"
+            },
+            {
+              "role": "peer",
+              "bytes": 26020,
+              "sha256": "252e4f481cadefa187647ed2019e9bba58b00c8466769f92f4cd5378da286733"
+            }
+          ],
+          "peer_reset_seconds": 0.7449934580363333,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "cleanup": {
+            "samples": [
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            ],
+            "pass": true
+          },
+          "host_tx": {
+            "samples": [
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 0,
+                "fault": 0
+              },
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 1,
+                "fault": 0
+              }
+            ],
+            "pass": true
+          },
+          "rx_stop": {
+            "samples": [
+              {
+                "installed": 1,
+                "requested": 0,
+                "entered": 0,
+                "returned": 0,
+                "post_returned": 0,
+                "mac_before": 255,
+                "mac_after": 255,
+                "descriptors_empty": 255,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 0,
+                "current_task": 0
+              },
+              {
+                "installed": 1,
+                "requested": 1,
+                "entered": 1,
+                "returned": 1,
+                "post_returned": 1,
+                "mac_before": 0,
+                "mac_after": 0,
+                "descriptors_empty": 1,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 261,
+                "current_task": 261
+              }
+            ],
+            "pass": true,
+            "boundary": "Immediate device stop receipt; not reusable DMA/host-queue fence"
+          },
+          "public_markers": {
+            "target": [
+              "RFDBG_NET0_BOUND_CLOSED",
+              "RFDBG_NET0_HOST_DELIVERY phase=bootstrap entered=0x0000000000000000 returned=0x0000000000000000 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000000 closed=0x0000000000000000 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_A5B_CONNECT_OK elapsed_ms=0x00000b00",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x000000ff 0x000000ff 0x000000ff 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_DELIVERY phase=connected entered=0x000000000000009b returned=0x000000000000009b abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000099 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_RESULT result=open",
+              "RFDBG_NET0_INITIAL_SESSION_OPEN",
+              "RFDBG_NET0_HOST_DELIVERY phase=payload entered=0x00000000000000d0 returned=0x00000000000000d0 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000099 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_ROUTE entered=000000000000000b queued=000000000000000b dropped=0000000000000000 closed=0000000000000000 abandoned=0000000000000000 in_flight=0000000000000000",
+              "RFDBG_NET0_PAYLOAD sent=0x0000000a received=0x0000000a bitmap=0x000003ff invalid=0x00000000 duplicate=0x00000000",
+              "RFDBG_NET0_PAYLOAD_OK",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000001 0x00000001 0x00000001 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000105 0x00000105",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000",
+              "RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x000000d5",
+              "RFDBG_NET0_HOST_DELIVERY phase=disconnected entered=0x00000000000000d1 returned=0x00000000000000d1 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000099 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+              "RFDBG_A5B_CONNECT_PROFILE_OK"
+            ],
+            "peer": [
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_READY",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000002 echo_tx=00000002",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000004 echo_tx=00000004",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000007 echo_tx=00000007",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a"
+            ]
+          }
+        },
+        {
+          "index": 3,
+          "pass": true,
+          "elapsed_seconds": 7.8804922089912,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 30272,
+              "sha256": "b39b97562e160cdf8f817a0f6bf97d8cf5451d7a7564292a01d378703913439b"
+            },
+            {
+              "role": "peer",
+              "bytes": 26020,
+              "sha256": "1d0a4255311f8dc416a181142b7b048f5b048d27346bfe51ea954a4baeada6dc"
+            }
+          ],
+          "peer_reset_seconds": 0.7342689160723239,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "cleanup": {
+            "samples": [
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            ],
+            "pass": true
+          },
+          "host_tx": {
+            "samples": [
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 0,
+                "fault": 0
+              },
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 1,
+                "fault": 0
+              }
+            ],
+            "pass": true
+          },
+          "rx_stop": {
+            "samples": [
+              {
+                "installed": 1,
+                "requested": 0,
+                "entered": 0,
+                "returned": 0,
+                "post_returned": 0,
+                "mac_before": 255,
+                "mac_after": 255,
+                "descriptors_empty": 255,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 0,
+                "current_task": 0
+              },
+              {
+                "installed": 1,
+                "requested": 1,
+                "entered": 1,
+                "returned": 1,
+                "post_returned": 1,
+                "mac_before": 0,
+                "mac_after": 0,
+                "descriptors_empty": 1,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 261,
+                "current_task": 261
+              }
+            ],
+            "pass": true,
+            "boundary": "Immediate device stop receipt; not reusable DMA/host-queue fence"
+          },
+          "public_markers": {
+            "target": [
+              "RFDBG_NET0_BOUND_CLOSED",
+              "RFDBG_NET0_HOST_DELIVERY phase=bootstrap entered=0x0000000000000000 returned=0x0000000000000000 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000000 closed=0x0000000000000000 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_A5B_CONNECT_OK elapsed_ms=0x00000b3d",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x000000ff 0x000000ff 0x000000ff 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_DELIVERY phase=connected entered=0x00000000000000b9 returned=0x00000000000000b9 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000b7 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_RESULT result=open",
+              "RFDBG_NET0_INITIAL_SESSION_OPEN",
+              "RFDBG_NET0_HOST_DELIVERY phase=payload entered=0x00000000000000ee returned=0x00000000000000ee abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000b7 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_ROUTE entered=000000000000000b queued=000000000000000b dropped=0000000000000000 closed=0000000000000000 abandoned=0000000000000000 in_flight=0000000000000000",
+              "RFDBG_NET0_PAYLOAD sent=0x0000000a received=0x0000000a bitmap=0x000003ff invalid=0x00000000 duplicate=0x00000000",
+              "RFDBG_NET0_PAYLOAD_OK",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000001 0x00000001 0x00000001 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000105 0x00000105",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000",
+              "RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x000000d6",
+              "RFDBG_NET0_HOST_DELIVERY phase=disconnected entered=0x00000000000000ef returned=0x00000000000000ef abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x00000000000000b7 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+              "RFDBG_A5B_CONNECT_PROFILE_OK"
+            ],
+            "peer": [
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_READY",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000002 echo_tx=00000002",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000004 echo_tx=00000004",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000007 echo_tx=00000007",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a"
+            ]
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 98.82858699990902,
+        "verify_requested": true,
+        "speed_khz": 3000
+      },
+      "recorded_passes": 3,
+      "udp_sent": 30,
+      "udp_received": 30,
+      "fault_readback": {
+        "address": 10673097,
+        "value": 0,
+        "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+        "symbol": "__hisi_net0_queued_rx_rejected"
+      },
+      "image_sha256": "26d2981e3e3dfe5d25ea3dbc7cac6ba7d64926518c6fb4c20032d9597c451893"
+    },
+    {
+      "name": "net0-direct-rx-negative-9afac33",
+      "requested": 1,
+      "elf_sha256": "bc5b1cd5ad6995d34e8d09b3142440eba1e892ffc271adc3ba066779803d55f9",
+      "classification": "rejected-queued-rx",
+      "raw_summary_sha256": "e014ad92557ed228abbe55feb9558e56b0fbe9b297b6dc83b5cb9cc49c6fffca",
+      "original_source_label": "9afac3366e1a75cb7f734266a0d4a0322462716e+queued-rx-fault",
+      "runs": [
+        {
+          "index": 1,
+          "pass": false,
+          "elapsed_seconds": 60.01577412500046,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": false,
+            "RFDBG_A5B_DISCONNECT_OK": false,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": false,
+            "RFDBG_NET0_PAYLOAD_OK": false,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": false
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 119391,
+              "sha256": "cd1543284178c39986750cba81ffd855086117fcbc7340a1e27d90e131412dd3"
+            },
+            {
+              "role": "peer",
+              "bytes": 208008,
+              "sha256": "7b9f74a3ae50ddb806c23ffbdbd85a7d23ca58bd6e4fa1f6be84302366ae3ff3"
+            }
+          ],
+          "peer_reset_seconds": 0.7424016250297427,
+          "payload": null,
+          "cleanup": {
+            "samples": [
+              [
+                1,
+                1,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            ],
+            "pass": false
+          },
+          "host_tx": {
+            "samples": [
+              {
+                "accepted": 0,
+                "processed": 0,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 0,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 1,
+                "fault": 0
+              }
+            ],
+            "pass": false
+          },
+          "rx_stop": {
+            "samples": [
+              {
+                "installed": 1,
+                "requested": 0,
+                "entered": 0,
+                "returned": 0,
+                "post_returned": 0,
+                "mac_before": 255,
+                "mac_after": 255,
+                "descriptors_empty": 255,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 0,
+                "current_task": 0
+              }
+            ],
+            "pass": false,
+            "boundary": "Immediate device stop receipt; not reusable DMA/host-queue fence"
+          },
+          "public_markers": {
+            "target": [
+              "RFDBG_NET0_BOUND_CLOSED",
+              "RFDBG_NET0_HOST_DELIVERY phase=bootstrap entered=0x0000000000000000 returned=0x0000000000000000 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000000 closed=0x0000000000000000 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x000000ff 0x000000ff 0x000000ff 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_TX 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000"
+            ],
+            "peer": [
+              "RFDBG_SOFTAP_READY",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000"
+            ]
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 98.67637312493753,
+        "verify_requested": true,
+        "speed_khz": 3000
+      },
+      "recorded_passes": 0,
+      "udp_sent": 0,
+      "udp_received": 0,
+      "fault_readback": {
+        "address": 10673097,
+        "value": 1,
+        "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a",
+        "symbol": "__hisi_net0_queued_rx_rejected"
+      },
+      "image_sha256": "d02a7af41032207f9382eac67c1953519a1a444de780fddbad537a97964762d0"
+    },
+    {
+      "name": "net0-direct-rx-restored-9afac33",
+      "requested": 1,
+      "elf_sha256": "9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c",
+      "classification": "accepted",
+      "raw_summary_sha256": "ed920aa306e0760cc3533ee47bc1ef9d94ba70c5389de0d396d9a2acea9e1cba",
+      "original_source_label": "9afac3366e1a75cb7f734266a0d4a0322462716e",
+      "runs": [
+        {
+          "index": 1,
+          "pass": true,
+          "elapsed_seconds": 8.184417541953735,
+          "markers": {
+            "RFDBG_A5B_CONNECT_OK": true,
+            "RFDBG_A5B_DISCONNECT_OK": true,
+            "RFDBG_A5B_CONNECT_PROFILE_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_OPEN": true,
+            "RFDBG_NET0_PAYLOAD_OK": true,
+            "RFDBG_NET0_INITIAL_SESSION_CLOSED": true
+          },
+          "captures": [
+            {
+              "role": "target",
+              "bytes": 36315,
+              "sha256": "ac49f0bcd9dd50b504090383305c2a6e853db4027512680e65071687b97b6c61"
+            },
+            {
+              "role": "peer",
+              "bytes": 26020,
+              "sha256": "82e21d1ae736c12f63d393a199647cbd41043895138f9ca01914c014b5ad3bd8"
+            }
+          ],
+          "peer_reset_seconds": 0.7541484589455649,
+          "payload": {
+            "sent": 10,
+            "received": 10,
+            "bitmap": 1023,
+            "invalid": 0,
+            "duplicate": 0
+          },
+          "cleanup": {
+            "samples": [
+              [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ]
+            ],
+            "pass": true
+          },
+          "host_tx": {
+            "samples": [
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 0,
+                "fault": 0
+              },
+              {
+                "accepted": 2,
+                "processed": 2,
+                "dropped": 0,
+                "pending": 0,
+                "peak": 1,
+                "rejected": 0,
+                "callback_errors": 0,
+                "closed": 1,
+                "fault": 0
+              }
+            ],
+            "pass": true
+          },
+          "rx_stop": {
+            "samples": [
+              {
+                "installed": 1,
+                "requested": 0,
+                "entered": 0,
+                "returned": 0,
+                "post_returned": 0,
+                "mac_before": 255,
+                "mac_after": 255,
+                "descriptors_empty": 255,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 0,
+                "current_task": 0
+              },
+              {
+                "installed": 1,
+                "requested": 1,
+                "entered": 1,
+                "returned": 1,
+                "post_returned": 1,
+                "mac_before": 0,
+                "mac_after": 0,
+                "descriptors_empty": 1,
+                "native_status": 0,
+                "fault": 0,
+                "expected_task": 261,
+                "current_task": 261
+              }
+            ],
+            "pass": true,
+            "boundary": "Immediate device stop receipt; not reusable DMA/host-queue fence"
+          },
+          "public_markers": {
+            "target": [
+              "RFDBG_NET0_BOUND_CLOSED",
+              "RFDBG_NET0_HOST_DELIVERY phase=bootstrap entered=0x0000000000000000 returned=0x0000000000000000 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000000 closed=0x0000000000000000 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_A5B_CONNECT_OK elapsed_ms=0x00000b0f",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x000000ff 0x000000ff 0x000000ff 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+              "RFDBG_NET0_HOST_DELIVERY phase=connected entered=0x0000000000000093 returned=0x0000000000000093 abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000091 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_RESULT result=open",
+              "RFDBG_NET0_INITIAL_SESSION_OPEN",
+              "RFDBG_NET0_HOST_DELIVERY phase=payload entered=0x00000000000000cf returned=0x00000000000000cf abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000091 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_ROUTE entered=000000000000000b queued=000000000000000b dropped=0000000000000000 closed=0000000000000000 abandoned=0000000000000000 in_flight=0000000000000000",
+              "RFDBG_NET0_PAYLOAD sent=0x0000000a received=0x0000000a bitmap=0x000003ff invalid=0x00000000 duplicate=0x00000000",
+              "RFDBG_NET0_PAYLOAD_OK",
+              "RFDBG_NET0_RX_STOP 0x00000001 0x00000001 0x00000001 0x00000001 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000105 0x00000105",
+              "RFDBG_NET0_HOST_TX 0x00000002 0x00000002 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000 0x00000001 0x00000000",
+              "RFDBG_NET0_USER_CLEANUP 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000 0x00000000 0x00000000 0x00000001 0x00000000 0x00000000",
+              "RFDBG_A5B_DISCONNECT_OK elapsed_ms=0x000000d5",
+              "RFDBG_NET0_HOST_DELIVERY phase=disconnected entered=0x00000000000000cf returned=0x00000000000000cf abandoned=0x0000000000000000 in_flight=0x0000000000000000 peak=0x0000000000000001 closed=0x0000000000000091 crossed_close=0x0000000000000000 nonzero=0x0000000000000000 exhausted=0",
+              "RFDBG_NET0_INITIAL_SESSION_CLOSED",
+              "RFDBG_A5B_CONNECT_PROFILE_OK"
+            ],
+            "peer": [
+              "RFDBG_SOFTAP_READY",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000000 echo_tx=00000000",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000002 echo_tx=00000002",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000004 echo_tx=00000004",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=00000007 echo_tx=00000007",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a",
+              "RFDBG_SOFTAP_NET dhcp_discover=00000000 dhcp_request=00000000 dhcp_reply=00000000 dhcp_reply_broadcast=00000000 dhcp_reply_unicast=00000000 dhcp_invalid=00000000 dhcp_last_xid=00000000 echo_rx=0000000a echo_tx=0000000a"
+            ]
+          }
+        }
+      ],
+      "flash": {
+        "exit_code": 0,
+        "seconds": 98.37522404198535,
+        "verify_requested": true,
+        "speed_khz": 3000
+      },
+      "recorded_passes": 1,
+      "udp_sent": 10,
+      "udp_received": 10,
+      "fault_readback": {
+        "address": 10673097,
+        "value": 0,
+        "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+        "symbol": "__hisi_net0_queued_rx_rejected"
+      },
+      "image_sha256": "26d2981e3e3dfe5d25ea3dbc7cac6ba7d64926518c6fb4c20032d9597c451893"
+    }
+  ],
+  "mutation": {
+    "schema": "net0-queued-rx-negative/v1",
+    "source_commit": "9afac3366e1a75cb7f734266a0d4a0322462716e",
+    "input_sha256": "9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c",
+    "output_sha256": "bc5b1cd5ad6995d34e8d09b3142440eba1e892ffc271adc3ba066779803d55f9",
+    "function": "hmac_rx_data_event_adapt",
+    "instruction_offset": 80,
+    "address": 2744962,
+    "file_offset": 455298,
+    "before": "01ed",
+    "after": "21a8",
+    "target_offset": 104,
+    "expected": "Native producer rejected, sticky flag=1, no successful L2 payload",
+    "boundary": "Intentional test-only control-flow mutation; never a release artifact or connectivity success"
+  },
+  "public_paired_config": {
+    "path": "examples/ws63/hil_wifi_config.rs",
+    "sha256": "ff3b87eb5fa268b8bfba7a020c1ce1f19ceebe65cc670c1bb111c94ec99289df"
+  },
+  "boundary": "Direct RX ownership and explicit queued-RX rejection only; not DMA fence, reinitialization or reconnect"
+}

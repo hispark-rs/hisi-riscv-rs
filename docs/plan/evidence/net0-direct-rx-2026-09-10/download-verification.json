@@ -1,0 +1,265 @@
+{
+  "schema": "net0-direct-rx-downloads/v1",
+  "source": "9afac3366e1a75cb7f734266a0d4a0322462716e",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34424883763",
+  "successful_jobs": 23,
+  "artifacts": [
+    {
+      "host": "ubuntu-latest",
+      "id": 10132653604,
+      "expires_at": "2026-12-09T01:17:37Z",
+      "downloaded_zip_sha256": "b85c7957ca4288a558f90c89ad9ab5cdc9eb70e2bd628ac04f71fa6ca3eedc33",
+      "github_digest": "sha256:b85c7957ca4288a558f90c89ad9ab5cdc9eb70e2bd628ac04f71fa6ca3eedc33",
+      "rx_mode_elf_sha256": "4f385df00db44c0ac89434ade8b71e896f3ddaea95006d84f912b1b60bc2b565",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "44a2850a4ef3dbcbb67ae7074e618cf32c2be5087bfcd4280b2e43fa972c9b46",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "b6a914324e33ac0ac6831b556b15d859cc4a7b8ae919a784ef40cbf40a1bd068",
+          "bytes": 3630
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "27ab198e96ec2ab64c1d104d2ba6b31b1e09dce4ec3d63863f0ab75032975ddf",
+          "bytes": 16626
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "24b7e669cff41feee4f132b72fbb0a7719b5a10a0245ae01ab0025d0477741a1",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "147d74557f0f9adb349649f9336d22a4ad46e8cf73df511b06f384db47732f6e",
+          "bytes": 1772
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "72fe1d7d58121e5a728dd88da50893c7b643ffd49ecfd78839ddb8aa3cb97057",
+          "bytes": 3482
+        },
+        {
+          "name": "storage.json",
+          "sha256": "1aa5b4015e38fe800b6a114146a2a5527384a34b78d09600b74ee44dc9bf7cb4",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "macos-14",
+      "id": 10132713707,
+      "expires_at": "2026-12-09T01:17:37Z",
+      "downloaded_zip_sha256": "7cb531fa884826387645d80732cc7bf84a0f1dbbd1a8060b4ae1745853674c6f",
+      "github_digest": "sha256:7cb531fa884826387645d80732cc7bf84a0f1dbbd1a8060b4ae1745853674c6f",
+      "rx_mode_elf_sha256": "30e85e054898ba628c747ab697a259761f8a90e2db018e6a441d8d97809c3134",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "7518238884f6f7998ff443c5cc32dc91d5114abfcf7b9356503313b369e64117",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "b6a914324e33ac0ac6831b556b15d859cc4a7b8ae919a784ef40cbf40a1bd068",
+          "bytes": 3630
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "27ab198e96ec2ab64c1d104d2ba6b31b1e09dce4ec3d63863f0ab75032975ddf",
+          "bytes": 16626
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "d89578cab34d95c97c325f06e419ed9b0e113ca952dd0ab7d6c8d50124f8aafa",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "639f461fb45d53d29dab7fb8aab2605150ffe1ba0f6a87732483837f8af1d13b",
+          "bytes": 1772
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "97739aa852fd0978608cb93a2d9617f3cc6595668108eb53f3a814178ec64ea5",
+          "bytes": 3482
+        },
+        {
+          "name": "storage.json",
+          "sha256": "71291de9e7fb8109e90faed1833251724293cf1137d94a874860b7b49b5f2b13",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "windows-latest",
+      "id": 10132865871,
+      "expires_at": "2026-12-09T01:17:37Z",
+      "downloaded_zip_sha256": "6c2f346577528c162e2518b99a62592acf089208ce512ef4b82f71ff6d973510",
+      "github_digest": "sha256:6c2f346577528c162e2518b99a62592acf089208ce512ef4b82f71ff6d973510",
+      "rx_mode_elf_sha256": "305dfde4eeb377d95d4e869f8e90444cd27e4b5878eda61339c360e67c9bd294",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "f46657a07ccf4b7f602ca3b1ecd50770bc902adc176d008600038a7c7a655e38",
+          "bytes": 1479
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "f1d237cac7c1039241f29ef90bbd1100623aea0fbbc4b088c1247ea4443d580c",
+          "bytes": 3694
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "cdc7726dcfd673611f0560ef5688892410c39aa0b37bddfebf92c559089c2c0d",
+          "bytes": 17107
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "27c84611d56b57457b7f6b7efb21f16554c02519828f97e20360e374a1f0555f",
+          "bytes": 2705
+        },
+        {
+          "name": "rx-mode.json",
+          "sha256": "5003c692b347eb4b5b5bbff3fec59ddacf0fd32ef03957f3e4afca22e85fa772",
+          "bytes": 1841
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "f850e8d5671a16de8324235a665f302e882d9dd89ec239fdf38e0d1f8dab5c7f",
+          "bytes": 3611
+        },
+        {
+          "name": "storage.json",
+          "sha256": "a49a238205747771db92162a9b9c9ec3638700449c42eaf064d366258177e1b5",
+          "bytes": 776
+        }
+      ]
+    }
+  ],
+  "semantic_parity": {
+    "stop_edges": [
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_destroy"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_destroy"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hal_disable_machw_phy_and_pa"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hal_chip_get_hal_device"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_empty"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "frw_get_wifi_frw_task_id"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hmac_is_thruput_enable"
+      ]
+    ],
+    "mode_edges": [
+      [
+        "hmac_rx_data_event_adapt",
+        "__wrap_frw_host_post_msg"
+      ],
+      [
+        "hmac_tid_pause",
+        "__wrap_frw_host_post_msg"
+      ],
+      [
+        "hmac_tid_resume",
+        "__wrap_frw_host_post_msg"
+      ],
+      [
+        "__wrap_frw_host_post_msg",
+        "frw_host_post_msg"
+      ],
+      [
+        "hmac_rx_data_event_adapt",
+        "__wrap_oal_netbuf_free"
+      ],
+      [
+        "hmac_rx_data_event_adapt",
+        "hmac_rx_process_data_msg"
+      ]
+    ],
+    "ownership_bytes": [
+      "13053025",
+      "aa843b18e567112069bf2285"
+    ],
+    "veneers": [
+      [
+        "__hisi_net0_rom_control",
+        "get_dmac_frw_ctrl",
+        1214046
+      ],
+      [
+        "__hisi_net0_rom_unregister",
+        "frw_dmac_msg_hook_unregister",
+        1214286
+      ],
+      [
+        "__hisi_net0_rom_register",
+        "frw_dmac_msg_hook_register",
+        1214230
+      ],
+      [
+        "__hisi_net0_rom_destroy",
+        "hal_dev_fsm_destroy_rx_dscr",
+        1221066
+      ],
+      [
+        "__hisi_net0_rom_enabled",
+        "hal_is_machw_enabled",
+        1242118
+      ],
+      [
+        "__hisi_net0_rom_empty",
+        "hal_is_hw_rx_queue_empty",
+        1250366
+      ]
+    ]
+  },
+  "boundary": "Downloaded report ZIPs, not firmware or registry-only facade acceptance; finite Actions retention"
+}

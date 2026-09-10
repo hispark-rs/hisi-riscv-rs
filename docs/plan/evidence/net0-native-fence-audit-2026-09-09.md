@@ -285,3 +285,51 @@ before this boundary and message 595 after it, and reject conflicting hook
 ownership. Unknown vendor instructions were not assigned semantics by LLVM.
 No callback replacement, target function call, queue flush or radio reset was
 performed; these local read artifacts do not close native quiescence or HIL.
+
+## Descriptor And Reset Follow-up (2026-09-10)
+
+Additional read-only ROM ranges narrow the remaining device boundary:
+
+| Range | SHA-256 |
+|---|---|
+| `[0x12a400, 0x12ad00)` | `a3d32d988f26deabb48f3c2ce17cd8602df6c6dab98ccec88ee1b3757b258b9f` |
+| `[0x12c200, 0x12c900)` | `1beaf16a73a115a52decb07d46e3556c5557d39254ae498ef747b9f5b360cc09` |
+| `[0x131000, 0x131300)` | `f89728339f09615823059761aa89693359e81cf84e82ebeabd2f4b567f4d6c1f` |
+
+The last range was read after restoring the normal direct-RX experiment ELF
+`9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c`.
+The existing Orb `dev` vendor decoder completed successfully. These reads did
+not call any reset function or write MAC/PHY registers.
+
+`hal_rx_destroy_dscr_queue` (`0x12c278`) walks three software descriptor lists,
+unlinks and frees their allocations, and clears list state. It contains no
+DMA-ready/status poll. The enclosing `hal_dev_fsm_destroy_rx_dscr` remains the
+owner of IRQ masking, RX interrupt flushing, device messages 50/52 and clearing
+the hardware head addresses. The separate software-list-empty observation must
+not be promoted to a DMA acknowledgement.
+
+`hal_dev_fsm_init_rx_dscr` (`0x12a188`) can return zero without allocating when
+device byte `+1216` has bit 3 set, or when the software lists are nonempty. Its
+normal path invokes `hal_rx_init_dscr_queue` under the native IRQ lock. That
+inner API is **void**, as confirmed by `hal_ext_if_rom.h`; there is no returned
+allocation status to propagate. At `0x12c75e`, `0x12c784` and `0x12c7aa`, it
+compares each actual list count with its configured count, logs a mismatch and
+continues. When `set_hw` is nonzero it can install a nonempty, partial queue.
+A future correlated rebuild receipt must therefore verify all three actual
+counts against their configured requirements and clean up partial failure,
+not only check the outer message's zero status or a nonempty list. These helpers
+were inspected, not invoked in this audit.
+
+`hh503_reset_mac_soft_reset` (`0x13108c`) writes the reset register, delays and
+releases reset. `hh503_reset_mac_logic_all` (`0x1310a8`) additionally saves and
+restores nine register values and writes derived queue fields afterward.
+`hh503_reset_phy_machw` (`0x1311a8`) dispatches into these paths according to
+its arguments; its name is not evidence of an independently drained DMA/queue
+state. The SDK normal init and diagnostic reset callers differ. Reusing this
+reset as a fence without accounting for restored pointers, queued device work,
+native autonomous re-enable and subsequent descriptor ownership is not safe.
+
+The separate [direct-RX evidence](net0-direct-rx-2026-09-10.md) now verifies
+normal traffic and rejection of the optional host message-595 path. That closes
+one earlier topology question, not the device/DMA observations above. No raw
+MMIO reset, fabricated queue state or reopen capability was added.

@@ -1,0 +1,95 @@
+{
+  "boundary": "Resolved host queue-4 call routing and metadata only; not DMAC/RX quiescence or HIL",
+  "edges": [
+    {
+      "call_address": 2499812,
+      "file_offset": 210148,
+      "source": "uapi_ioctl_send_eapol",
+      "target": "__wrap_frw_host_post_data",
+      "target_address": 2447966
+    },
+    {
+      "call_address": 2762490,
+      "file_offset": 472826,
+      "source": "uapi_lwip_send",
+      "target": "__wrap_frw_host_post_data",
+      "target_address": 2447966
+    },
+    {
+      "call_address": 2448094,
+      "file_offset": 158430,
+      "source": "__wrap_frw_host_post_data",
+      "target": "frw_host_post_data",
+      "target_address": 2759126
+    },
+    {
+      "call_address": 2448206,
+      "file_offset": 158542,
+      "source": "__wrap_frw_host_post_data",
+      "target": "frw_host_post_data",
+      "target_address": 2759126
+    },
+    {
+      "call_address": 2758334,
+      "file_offset": 468670,
+      "source": "frw_netbuf_que_handle",
+      "target": "__wrap_frw_netbuf_exec_callback",
+      "target_address": 2448756
+    },
+    {
+      "call_address": 2448836,
+      "file_offset": 159172,
+      "source": "__wrap_frw_netbuf_exec_callback",
+      "target": "frw_netbuf_exec_callback",
+      "target_address": 2754826
+    },
+    {
+      "call_address": 2448954,
+      "file_offset": 159290,
+      "source": "__wrap_frw_netbuf_exec_callback",
+      "target": "frw_netbuf_exec_callback",
+      "target_address": 2754826
+    },
+    {
+      "call_address": 2759178,
+      "file_offset": 469514,
+      "source": "frw_host_post_data",
+      "target": "__wrap_oal_netbuf_free",
+      "target_address": 2449266
+    },
+    {
+      "call_address": 2759232,
+      "file_offset": 469568,
+      "source": "frw_host_post_data",
+      "target": "__wrap_oal_netbuf_free",
+      "target_address": 2449266
+    },
+    {
+      "call_address": 2449368,
+      "file_offset": 159704,
+      "source": "__wrap_oal_netbuf_free",
+      "target": "oal_netbuf_free",
+      "target_address": 2753974
+    },
+    {
+      "call_address": 2448354,
+      "file_offset": 158690,
+      "source": "__wrap_frw_host_post_data",
+      "target": "oal_netbuf_free",
+      "target_address": 2753974
+    }
+  ],
+  "elf_sha256": "9f1e8d4341eb53c321b3793c391a94bb26b77856887a4c77a82e30732b109a1c",
+  "metadata": {
+    "address": 10571640,
+    "bytes": 584,
+    "capacity": 32,
+    "owner": "native host TX identity tracker",
+    "packet_payload_bytes": 0,
+    "section": ".data",
+    "symbol": "__hisi_net0_host_tx_tracker"
+  },
+  "rejected_call_mutations": 11,
+  "schema": "net0-host-tx-link/v1",
+  "status": "pass"
+}

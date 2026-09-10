@@ -1382,6 +1382,13 @@ backend `0f74864` 已区分协议清理后的 handshake TX 恢复与终止封闭
 queue-4 accepted/processed=2、rejected=0，但两次 association 使一次性 L2 保护
 正确拒绝开放。它不是 UDP 丢包，也不支持删除保护；native fence/有界恢复仍待闭合。
 
+同日 `9afac33` 固定 standard-L2 的 direct-RX 选择：消息 595 从启动起拒绝并
+关闭 admission，由原生生产者按 status 103 释放 payload；其他消息继续转发。
+[正反向证据](evidence/net0-direct-rx-2026-09-10.md)包含正常 3/3、UDP 30/30，
+两字节等布局负例触发 sticky fault 且无应用会话，以及恢复原 ELF 后 1/1、10/10。
+缺失 native wrap metadata 的 consumer 负例也已真实拒绝。它关闭可选 host RX 队列
+绕过，不证明 active DMA 停机、native 重建或重连；NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
