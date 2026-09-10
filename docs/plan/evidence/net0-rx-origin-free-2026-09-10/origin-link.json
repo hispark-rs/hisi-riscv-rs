@@ -1,0 +1,112 @@
+{
+  "boundary": "Resolved descriptor hook, free-attempt observer registration and ROM patch destinations only; coverage and generation propagation require HIL; no free/DMA/reconnect receipt",
+  "edges": [
+    {
+      "call_address": 1364162,
+      "file_offset": 737474,
+      "source": "hh503_rx_alloc_netbuf_and_dscr_patch",
+      "target": "__wrap_hh503_rx_set_ctrl_dscr",
+      "target_address": 2452812
+    },
+    {
+      "call_address": 2452840,
+      "file_offset": 163176,
+      "source": "__wrap_hh503_rx_set_ctrl_dscr",
+      "target": "__hisi_net0_rom_rx_set_ctrl",
+      "target_address": 2302124
+    },
+    {
+      "call_address": 2708182,
+      "file_offset": 418518,
+      "source": "dmac_main_rom_cb_base_init_before_frw_init",
+      "target": "__wrap_frw_rom_cb_register",
+      "target_address": 2452708
+    },
+    {
+      "call_address": 2708190,
+      "file_offset": 418526,
+      "source": "dmac_main_rom_cb_base_init_before_frw_init",
+      "target": "__wrap_frw_rom_cb_register",
+      "target_address": 2452708
+    },
+    {
+      "call_address": 2452774,
+      "file_offset": 163110,
+      "source": "__wrap_frw_rom_cb_register",
+      "target": "__hisi_net0_rom_register_callback",
+      "target_address": 2302136
+    },
+    {
+      "call_address": 2452804,
+      "file_offset": 163140,
+      "source": "__wrap_frw_rom_cb_register",
+      "target": "__hisi_net0_rom_register_callback",
+      "target_address": 2302136
+    }
+  ],
+  "elf_sha256": "21aabd008af78cf3094f1498ab15f788ff7cc37b25dc8bae46935e3a46ed3ccf",
+  "free_registration": {
+    "address": 2708146,
+    "boundary": "Captured callback pointer; free attempt only; runtime also requires callback 250 to be null",
+    "callback": 249,
+    "observer": "__hisi_net0_observe_free",
+    "original": "oal_mem_netbuf_free_from_ram",
+    "original_pointer_bytes": 4,
+    "registration_wrapper": "__wrap_frw_rom_cb_register"
+  },
+  "metadata": {
+    "address": 10676056,
+    "bytes": 384,
+    "original_pointer_bytes": 4,
+    "packet_payload_bytes": 0,
+    "section": ".bss",
+    "slots": 16
+  },
+  "mutation_offsets": [
+    12462,
+    9316,
+    12474,
+    418484,
+    726660,
+    725216,
+    726668,
+    725232,
+    726664,
+    725224
+  ],
+  "patches": [
+    {
+      "index": 26,
+      "original": "hh503_rx_alloc_netbuf_and_dscr",
+      "original_address": 1230140,
+      "replacement_address": 1364036
+    },
+    {
+      "index": 28,
+      "original": "hal_rx_add_dscr",
+      "original_address": 1230396,
+      "replacement_address": 1364268
+    },
+    {
+      "index": 27,
+      "original": "hal_rx_pre_add_dscr",
+      "original_address": 1230302,
+      "replacement_address": 1364406
+    }
+  ],
+  "registration_veneer": {
+    "address": 2298978,
+    "bytes": 12,
+    "rom_address": 1215818,
+    "sys_thunk_bytes": 10,
+    "target": "frw_rom_cb_register"
+  },
+  "rejected_mutations": 16,
+  "schema": "net0-rx-origin-link/v2",
+  "status": "pass",
+  "veneer": {
+    "address": 1229298,
+    "bytes": 12,
+    "target": "hh503_rx_set_ctrl_dscr"
+  }
+}

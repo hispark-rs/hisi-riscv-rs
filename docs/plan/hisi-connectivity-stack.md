@@ -1419,6 +1419,16 @@ allocator 在交付硬件前的 descriptor/netbuf 绑定入口。实际调用与
 下一步是核对原生 buffer 回收与有界 origin 所有权，再接到 host-copy generation；
 不因入口命中或流量通过而宣称 DMA fence/重连。NET0 active / NET1 queued 不变。
 
+backend `f04b701` 随后补上 callback 249 的 native free-attempt 观察；原厂函数是
+archive 局部符号，因此从公开注册入口捕获并原样转发，不写死最终地址。
+[释放观察证据](evidence/net0-rx-origin-free-2026-09-10.md)记录：原生池实际有 35 个
+control；新增观察已退役 35 条记录，但首轮 payload 快照仍有 23 次容量不足、21 次
+未匹配来源。UDP 为 10/10，terminal stop 则返回 `-0x1021` 超时；三轮预检按规则在
+首轮失败后停止，未跑 20 轮。短临界区发布、249 host tests、9 Miri tests 和最终 ELF
+16 个篡改负例通过；精确 CI 23/23、三平台 3 个下载 ZIP/27 个成员摘要及调用图一致性
+已核验，不代表 native lifetime/coverage 已闭环。后续以真实 buffer owner
+建立有界表示，并独立处理 stop deadline；不扩大数组或放宽超时冒充验收。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

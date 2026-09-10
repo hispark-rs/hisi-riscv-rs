@@ -1,0 +1,95 @@
+{
+  "schema": "net0-buffer-owner-postmortem/v1",
+  "elf_sha256": "21aabd008af78cf3094f1498ab15f788ff7cc37b25dc8bae46935e3a46ed3ccf",
+  "captures": [
+    {
+      "name": "terminal-ram-budget.bin",
+      "address": 10693604,
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    {
+      "name": "terminal-pool-pointer.bin",
+      "address": 1582156,
+      "bytes": 4,
+      "sha256": "525de1f21fdb59b3f91e70e1529c57d7a8742d0ae3eecdb33850885e46b57e7d"
+    },
+    {
+      "name": "terminal-pool-header.bin",
+      "address": 10700672,
+      "bytes": 28,
+      "sha256": "c0a6acf3d9bfd07c796aeaab36d7cb726dc51d2cd775768db74fc3e5057c3d29"
+    },
+    {
+      "name": "terminal-subpools.bin",
+      "address": 10700700,
+      "bytes": 80,
+      "sha256": "6b73dc2c069f8555cabfdf904852429ef0ed73baeb785a204524143a6a6be1d5"
+    }
+  ],
+  "pool": {
+    "address": 10700672,
+    "max_block_bytes": 1776,
+    "controls": 35,
+    "control_stride": 16,
+    "control_address": 10700832,
+    "packet_start": 10488016,
+    "packet_end": 10534912,
+    "subpools": [
+      {
+        "index": 0,
+        "free": 9,
+        "total": 9,
+        "min_free": 0,
+        "reserved": 0,
+        "start_index": 0,
+        "block_bytes": 356,
+        "packet_address": 10488016,
+        "free_head": 10700832,
+        "historical_peak_used": 9
+      },
+      {
+        "index": 1,
+        "free": 0,
+        "total": 0,
+        "min_free": 0,
+        "reserved": 0,
+        "start_index": 9,
+        "block_bytes": 576,
+        "packet_address": 10491220,
+        "free_head": 10700976,
+        "historical_peak_used": 0
+      },
+      {
+        "index": 2,
+        "free": 10,
+        "total": 10,
+        "min_free": 5,
+        "reserved": 0,
+        "start_index": 9,
+        "block_bytes": 944,
+        "packet_address": 10491220,
+        "free_head": 10701040,
+        "historical_peak_used": 5
+      },
+      {
+        "index": 3,
+        "free": 16,
+        "total": 16,
+        "min_free": 8,
+        "reserved": 0,
+        "start_index": 19,
+        "block_bytes": 1776,
+        "packet_address": 10500660,
+        "free_head": 10701136,
+        "historical_peak_used": 8
+      }
+    ]
+  },
+  "ram": {
+    "configured_max_bytes": 0,
+    "observed_live_bytes": 0,
+    "default_budget_from_sdk_assembly": 27648
+  },
+  "boundary": "Sequential terminal reads, not an atomic fence. Per-subpool historical peaks need not coincide. Zero RAM usage now does not prove no earlier RAM fallback; its byte budget is not an accepted buffer-count bound."
+}

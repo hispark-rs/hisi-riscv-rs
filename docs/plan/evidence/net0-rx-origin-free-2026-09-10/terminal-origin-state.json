@@ -1,0 +1,154 @@
+{
+  "schema": "net0-origin-postmortem/v1",
+  "elf_sha256": "21aabd008af78cf3094f1498ab15f788ff7cc37b25dc8bae46935e3a46ed3ccf",
+  "snapshot_sha256": "ddec5d8620f004b1f96c58e168ae294d3d860d7c570d925cbf1e705588af25fc",
+  "bytes": 384,
+  "address": 10676056,
+  "original_free": 2707024,
+  "original_snapshot_sha256": "6233ad7e3a9be0fe7673e47e0df83d651f87898e50fadc6c43818a44cc9bfab1",
+  "original_address": 10674392,
+  "original_bytes": 4,
+  "layout": [
+    {
+      "name": "RefCell<hisi_rf_ws63::netif_l2::rx_origin::Tracker<16>>",
+      "bytes": 384,
+      "fields": [
+        {
+          "name": "borrow",
+          "offset": 0,
+          "type": "Cell<isize>"
+        },
+        {
+          "name": "value",
+          "offset": 8,
+          "type": "UnsafeCell<hisi_rf_ws63::netif_l2::rx_origin::Tracker<16>>"
+        }
+      ]
+    },
+    {
+      "name": "Tracker<16>",
+      "bytes": 376,
+      "fields": [
+        {
+          "name": "descriptors",
+          "offset": 120,
+          "type": "DW_TAG_array_type"
+        },
+        {
+          "name": "netbufs",
+          "offset": 184,
+          "type": "DW_TAG_array_type"
+        },
+        {
+          "name": "revisions",
+          "offset": 248,
+          "type": "DW_TAG_array_type"
+        },
+        {
+          "name": "open",
+          "offset": 0,
+          "type": "DW_TAG_array_type"
+        },
+        {
+          "name": "diagnostic",
+          "offset": 16,
+          "type": "RxOriginDiagnostics"
+        }
+      ]
+    },
+    {
+      "name": "RxOriginDiagnostics",
+      "bytes": 104,
+      "fields": [
+        {
+          "name": "bindings",
+          "offset": 0,
+          "type": "u64"
+        },
+        {
+          "name": "failed_bindings",
+          "offset": 8,
+          "type": "u64"
+        },
+        {
+          "name": "replaced",
+          "offset": 16,
+          "type": "u64"
+        },
+        {
+          "name": "retired_on_free_attempt",
+          "offset": 24,
+          "type": "u64"
+        },
+        {
+          "name": "free_calls",
+          "offset": 32,
+          "type": "u64"
+        },
+        {
+          "name": "capacity_failures",
+          "offset": 40,
+          "type": "u64"
+        },
+        {
+          "name": "matched",
+          "offset": 48,
+          "type": "u64"
+        },
+        {
+          "name": "unmatched",
+          "offset": 56,
+          "type": "u64"
+        },
+        {
+          "name": "closed_origin",
+          "offset": 64,
+          "type": "u64"
+        },
+        {
+          "name": "current_origin",
+          "offset": 72,
+          "type": "u64"
+        },
+        {
+          "name": "stale_origin",
+          "offset": 80,
+          "type": "u64"
+        },
+        {
+          "name": "occupied",
+          "offset": 88,
+          "type": "usize"
+        },
+        {
+          "name": "peak",
+          "offset": 92,
+          "type": "usize"
+        },
+        {
+          "name": "exhausted",
+          "offset": 96,
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "diagnostics": {
+    "bindings": 235,
+    "failed_bindings": 0,
+    "replaced": 0,
+    "retired_on_free_attempt": 66,
+    "free_calls": 389,
+    "capacity_failures": 23,
+    "matched": 169,
+    "unmatched": 21,
+    "closed_origin": 129,
+    "current_origin": 40,
+    "stale_origin": 0,
+    "occupied": 0,
+    "peak": 16,
+    "exhausted": 0
+  },
+  "observed_conservation": true,
+  "boundary": "Sequential read-only postmortem after the failed capture; not an atomic snapshot or a HIL pass"
+}
