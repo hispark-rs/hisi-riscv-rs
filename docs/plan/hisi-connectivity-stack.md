@@ -1375,6 +1375,13 @@ turn，精确 CI 23/23、三平台下载摘要与最终 ELF 负例通过。
 拒绝了八次 EAPOL 提交。后续需区分可恢复协议 TX closure 与终止关闭，不放宽 RX
 generation/native fence；不把这次失败改写为 AP 瞬态或完整 NET0 验收。
 
+backend `0f74864` 已区分协议清理后的 handshake TX 恢复与终止封闭：仅在原生
+断连/user cleanup 完成、pending=0 且无 sticky fault 时恢复 queue-4；终止 stop
+仍不可逆。[证据](evidence/net0-handshake-admission-2026-09-10.md)绑定 23/23 CI、
+三平台实际下载及 3/3 预检，后续 20-reset 在 1/2 停止。失败轮 Wi-Fi 已连接，
+queue-4 accepted/processed=2、rejected=0，但两次 association 使一次性 L2 保护
+正确拒绝开放。它不是 UDP 丢包，也不支持删除保护；native fence/有界恢复仍待闭合。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
