@@ -25,7 +25,7 @@ then forwards native frees exactly once outside Rust critical sections.
 Native ownership, status values, packet admission and the reconnect guard are
 unchanged. Runtime validation rejects a missing original or a non-null callback
 250 that could bypass observation. The child repository records the bounded
-[ABI and ROM/pool oracle](../../../crates/chips/ws63/hisi-rf-ws63/docs/net0-native-free-observation.md).
+[ABI and ROM/pool oracle](https://github.com/hispark-rs/hisi-rf-ws63/blob/f04b701bc0b859e1370c14d65c429152a87b2fcc/docs/net0-native-free-observation.md).
 
 This retires **observations before free attempts**, not proven successful frees.
 The applicable conservation equation is now:
