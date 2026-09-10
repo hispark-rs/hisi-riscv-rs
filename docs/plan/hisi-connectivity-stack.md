@@ -1389,6 +1389,18 @@ queue-4 accepted/processed=2、rejected=0，但两次 association 使一次性 L
 缺失 native wrap metadata 的 consumer 负例也已真实拒绝。它关闭可选 host RX 队列
 绕过，不证明 active DMA 停机、native 重建或重连；NET0 active / NET1 queued 不变。
 
+2026-09-10 backend `5e7b179` 在现有 terminal 实验中加入受检的
+stop → rebuild → per-queue check → cleanup，不新增 profile、不重新开放 RX/TX。
+原厂内层初始化为 void，部分分配只记日志；因此按 normal/high/small 分别核对
+配置与实际数量，拒绝零返回但分配不足，并保留独立 cleanup 错误。
+[重建正反向证据](evidence/net0-rx-rebuild-2026-09-10.md)记录 3/3、UDP 30/30，
+每轮重建 4/4/8 后清为 0/0/0；等布局跳过初始化的负例得到 `-0x1026`，
+正常镜像恢复后 1/1、UDP 10/10。235 host tests、7 Miri tests、18 个实际调用与
+25 项调用/地址负向门禁本地通过；精确 source CI 23/23、三平台实际下载的
+3 个 ZIP/24 个成员及调用图一致性已验证。
+这是关闭 admission 下的分配往返，不证明 active DMA 排空、重复分配无泄漏或同设备
+重连；NET0 active / NET1 queued 不变。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/
