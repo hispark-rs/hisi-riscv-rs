@@ -1368,6 +1368,13 @@ backend `06d790b` 增加默认关闭的原生 RX-stop 实验：真实设备线�
 再次恢复被一次性契约拒绝。不能将其写为 20/20、AP 瞬态或完整 producer fence。
 下一门槛仍是原生 RX/DMAC closure 与有界同设备恢复，不以重复 one-shot 统计替代。
 
+2026-09-10 backend `9ee47bf` 把终止式 RX stop 收窄到显式 Disconnect 的独立 worker
+turn，精确 CI 23/23、三平台下载摘要与最终 ELF 负例通过。
+[新矩阵](evidence/net0-stop-scope-2026-09-10.md)为 3/3 预检、后续请求 20 轮实际
+5/6；失败轮 RX stop 未被请求，但共享 hostap cleanup 遗留的终止式 host TX close
+拒绝了八次 EAPOL 提交。后续需区分可恢复协议 TX closure 与终止关闭，不放宽 RX
+generation/native fence；不把这次失败改写为 AP 瞬态或完整 NET0 验收。
+
 #### NET1：Embassy Net 接入
 
 固定 `embassy-net = 0.9.1` / `embassy-net-driver = 0.2.0`，启用 Ethernet/IPv4/DHCPv4/

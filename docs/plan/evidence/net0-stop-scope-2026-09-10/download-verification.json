@@ -1,0 +1,231 @@
+{
+  "schema": "net0-rx-stop-downloads/v1",
+  "source": "9ee47bf2a4e3e36492b3f3d5a1c3a020db281fea",
+  "ci_url": "https://github.com/hispark-rs/hisi-rf-ws63/actions/runs/34346954976",
+  "successful_jobs": 23,
+  "artifacts": [
+    {
+      "host": "ubuntu-latest",
+      "id": 10102515918,
+      "expires_at": "2026-12-08T11:42:18Z",
+      "downloaded_zip_sha256": "92f109e84cb7d3474f42b0e69a3a42b03d3dd7f808ec4ca925c3f5c78bd8785e",
+      "github_digest": "sha256:92f109e84cb7d3474f42b0e69a3a42b03d3dd7f808ec4ca925c3f5c78bd8785e",
+      "rx_stop_elf_sha256": "5dafad52767a09c784bb628459170dc2cd982f1756fa9c6bc2949efb8bf461a3",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "a2b7fbdf31192465447a3bcd2d836bbcdba7fedf70613da69c8f70c3c0031b71",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "b6a914324e33ac0ac6831b556b15d859cc4a7b8ae919a784ef40cbf40a1bd068",
+          "bytes": 3630
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "4d0d84fca5221766ced743d2a108e88af066bfe90ffb1fefdf36a7bc75bb140b",
+          "bytes": 16258
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "624a2afb10b8d8eaee27de46f85b86c5d411ec5ab8d55dd2b28410a39b21247f",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "2f42525d4eeaf1530488601b1c6632ae0fa0c48014b6b30d4114d045b8c0f708",
+          "bytes": 3482
+        },
+        {
+          "name": "storage.json",
+          "sha256": "e86a85188047d4b7eeffcea0ccfb9750c09d3f591e15c8c11fa0d6dafbd01c4b",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "macos-14",
+      "id": 10102653061,
+      "expires_at": "2026-12-08T11:42:18Z",
+      "downloaded_zip_sha256": "0769744855c8ebb9f6f700ed7d50453cc315c129eacc39ff83c16b705c6bbeca",
+      "github_digest": "sha256:0769744855c8ebb9f6f700ed7d50453cc315c129eacc39ff83c16b705c6bbeca",
+      "rx_stop_elf_sha256": "757b9bbe5d1a25cad6abb2a73298c4a588faae660bbdbec6c9324ea4efa1e41c",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "94ee15d2b13e4fd6c15c1fcd4a6378f4d14e1090715b72b526a2c8c16c96b297",
+          "bytes": 1428
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "b6a914324e33ac0ac6831b556b15d859cc4a7b8ae919a784ef40cbf40a1bd068",
+          "bytes": 3630
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "4d0d84fca5221766ced743d2a108e88af066bfe90ffb1fefdf36a7bc75bb140b",
+          "bytes": 16258
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "0c9c73df4d43b052def4f7d5fc7a7fca656de98d2efb82164a7ee2794dac0919",
+          "bytes": 2610
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "ff9be01b88971fd9f5b3de5123f7d03be7afe64889ab2af43a25fe18f3a6a3f0",
+          "bytes": 3482
+        },
+        {
+          "name": "storage.json",
+          "sha256": "bb14c7aa5d58eb2585f365d98d473da6c816d51196802aaeb4f8280b5de7e94a",
+          "bytes": 751
+        }
+      ]
+    },
+    {
+      "host": "windows-latest",
+      "id": 10102704864,
+      "expires_at": "2026-12-08T11:42:18Z",
+      "downloaded_zip_sha256": "8bffe4ef21ff56fe2ff232662b340544b59bbc55b2d8d4b9a37dd8ca7ec5958c",
+      "github_digest": "sha256:8bffe4ef21ff56fe2ff232662b340544b59bbc55b2d8d4b9a37dd8ca7ec5958c",
+      "rx_stop_elf_sha256": "200603a25f68fd394d7138ef9184f63e0ab3e1da74aecde13d0cd74997edb708",
+      "files": [
+        {
+          "name": "cleanup.json",
+          "sha256": "e00c2a4c56772c6ed1a2f8521e59fa4d2da2138655d90079b49d1a0311e057f2",
+          "bytes": 1479
+        },
+        {
+          "name": "consumer.Cargo.lock",
+          "sha256": "c31626a5327cb419e07dbe60cdbb79f9e621469aff99e44d9a5ff9ed6d76b7f0",
+          "bytes": 40221
+        },
+        {
+          "name": "consumer.Cargo.toml",
+          "sha256": "f1d237cac7c1039241f29ef90bbd1100623aea0fbbc4b088c1247ea4443d580c",
+          "bytes": 3694
+        },
+        {
+          "name": "consumer.json",
+          "sha256": "2501a83a9fd97bfa95cc3cd33467baf682a351f8f952e29ae8c04e50c80f741e",
+          "bytes": 16729
+        },
+        {
+          "name": "host-tx.json",
+          "sha256": "287bb78a20b5ef697e2a44dc5348cfd6bffa295afe7eecdc4e9f407270cb0f3f",
+          "bytes": 2705
+        },
+        {
+          "name": "rx-stop.json",
+          "sha256": "308623c092f53a63e84414a6753ae9c705c49096a51b6930eec054c05a8eb273",
+          "bytes": 3611
+        },
+        {
+          "name": "storage.json",
+          "sha256": "5b6bb36f9e15fce3c262293cde6b9b28e9773b3cdab52e3359e1438ded31f356",
+          "bytes": 776
+        }
+      ]
+    }
+  ],
+  "semantic_parity": {
+    "edges": [
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_destroy"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_destroy"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hal_disable_machw_phy_and_pa"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_enabled"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hal_chip_get_hal_device"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "__hisi_net0_rom_empty"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "frw_get_wifi_frw_task_id"
+      ],
+      [
+        "__hisi_net0_rx_stop_handler",
+        "hmac_is_thruput_enable"
+      ]
+    ],
+    "veneers": [
+      {
+        "name": "__hisi_net0_rom_control",
+        "target": "get_dmac_frw_ctrl",
+        "target_address": 1214046,
+        "bytes": 12
+      },
+      {
+        "name": "__hisi_net0_rom_unregister",
+        "target": "frw_dmac_msg_hook_unregister",
+        "target_address": 1214286,
+        "bytes": 12
+      },
+      {
+        "name": "__hisi_net0_rom_register",
+        "target": "frw_dmac_msg_hook_register",
+        "target_address": 1214230,
+        "bytes": 12
+      },
+      {
+        "name": "__hisi_net0_rom_destroy",
+        "target": "hal_dev_fsm_destroy_rx_dscr",
+        "target_address": 1221066,
+        "bytes": 12
+      },
+      {
+        "name": "__hisi_net0_rom_enabled",
+        "target": "hal_is_machw_enabled",
+        "target_address": 1242118,
+        "bytes": 12
+      },
+      {
+        "name": "__hisi_net0_rom_empty",
+        "target": "hal_is_hw_rx_queue_empty",
+        "target_address": 1250366,
+        "bytes": 12
+      }
+    ],
+    "metadata": {
+      "bytes": 32,
+      "section": ".data",
+      "packet_payload_bytes": 0
+    }
+  },
+  "boundary": "Downloaded report ZIPs, not firmware. Packaged path dependency, not registry-only facade. Actions retention is finite."
+}
