@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Require successful CI for the release commit
         id: gate
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
