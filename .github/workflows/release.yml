@@ -86,7 +86,7 @@ jobs:
           gh release create "$RELEASE_VERSION" candidate/* --target "$GITHUB_SHA" --draft \
             --title "$RELEASE_VERSION" --notes "Verified firmware train; see release-manifest.json for exact source, submodules, tools and checksums."
       - name: Install mdBook
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.4
         with:
           tool: mdbook
       - name: Seed existing versioned docs site
