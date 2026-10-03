@@ -215,7 +215,7 @@ jobs:
           - os: ubuntu-latest
             profile: wpa3
             features: chip-ws63,profile-wifi-wpa3-smoltcp
-          - os: macos-14
+          - os: macos-15
             profile: wpa3
             features: chip-ws63,profile-wifi-wpa3-smoltcp
           - os: windows-latest
