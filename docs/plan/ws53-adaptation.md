@@ -8664,3 +8664,5 @@ WS53 模型 CI 入口：新增独立工作流和脚本，固定 QEMU overlay `1b
 IPC 模型 CI 增量：IPC 端点测试可选择原 IPC 专用模型或固定集成模型策略，两种策略均完成三轮、每方向1536帧；七组756场景和IPC一并执行通过，汇总 `target/ws53-model-contracts-ipc-suite-20261029/summary.json` SHA-256 `fc7b01f5873d116de5abd3478b385dccbfa4df6cc6e224beb38c19e74c37408c`。新增汇总门控测试，拒绝场景缺失、硬件访问标记和不完整IPC收发；工作流保存IPC操作日志。该路径仍不证明实际控制核协议、缓存一致性、门铃重置/唤醒或硬件协作。
 
 IPC 集成干净检出复验：从远端 `4c410b26e` 检出，使用隔离 Cargo 缓存和独立构建的固定 QEMU 重建并执行完整套件；756个外设场景及三轮 IPC 双向各1536帧均通过，未访问硬件。汇总 `/tmp/ws53-model-contracts-ipc-clean-20261029/summary.json` SHA-256 `d21311444568b26065bc3a54b8c3ae617a5309d4ef66247333190e4b75ad3b21`。远端 CI `40751943339` 重新构建固定 QEMU 并通过全部场景，其制品汇总 SHA-256 `299435e9c8aab0a5dcce29305f1b520b66f01f4fb596a11895462d2232d479f4`；这仍是合成模型验证。
+
+旧 DMA 安全边界续改：HAL `7551094` 将使用残留配置的通道启用和恢复改为 `unsafe`，要求调用者证明资源、地址和排空条件；WS63/BS21 DMA 主机和文档测试、三芯片 RISC-V Clippy 通过。仍需证明正常完成排空、控制器重启和驱动生命周期，不构成 DMA 安全或实板验收；详见 `docs/plan/legacy-dma-safety-audit.md`。
