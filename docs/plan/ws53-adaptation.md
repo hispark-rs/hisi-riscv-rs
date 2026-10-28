@@ -8594,3 +8594,5 @@ IPC 端点续记：QEMU 虚拟对端三轮各双向 512 帧，实际运行轮询
 IPC 会话修复：协作组件 `5a8971a` 区分完整非法消息与队列状态损坏，后者锁定会话失效；主机、远端 CI、空缓存外部消费者以及 QEMU 故障注入和直接队列回归通过。行为变更仍需真实对端与实板验收。
 
 Embassy 跨芯片续记：HAL `a3163e8` 抽取共享计数换算，修复 WS63/BS21 在较大 TCXO 值及远期截止时间上先乘再除可能溢出；保持原队列、IRQ 和交接，WS53 分段与重试语义不变。三芯片主机属性测试、RISC-V Clippy、WS53 固定远端依赖的 417 项单测和 73 项文档测试、WS53 Embassy QEMU 场景通过；此次未做实板验证或 registry 发布验收。QEMU 报告在 `target/ws53-embassy-math-qemu-20261029/report.json`，SHA-256 `a7defb9404f85e8cf6bcdb70c96ff429a6e49cee08e9ab49aa97f6f84e341373`。
+
+TCXO 旧芯片回归修复：SDK `731bc668865fd8dc89bc40da0583b4e4023095a0` 的 WS63 目标定义 `CONFIG_TCXO_WITH_TWO_DATA_REGS`；HAL `81d4ada` 将 WS63 TCXO 与 Embassy 改为两组 32 位读取，BS21 保持四组。PAC 主机寄存器视图、三芯片 Clippy 及 WS63 QEMU 普通计数范围冒烟通过；旧 WS63 PAC/SVD 的四组 16 位描述仍需修正，长运行与实板未验收。模型报告 `target/ws63-tcxo-model-report-20261029.json` SHA-256 `ebc7d53300721c63dde93ce99b19b42eb7270059f4e0d6ebbc85edc759a61c94`。
