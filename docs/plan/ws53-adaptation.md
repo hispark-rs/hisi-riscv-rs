@@ -2158,7 +2158,7 @@ SDMA门控bit4不能清除，明确记作未验证条件，不将此实验提升
 七项无设备的成功/缺库/缺符号/命令拒绝测试通过。结束后600次DPIDR零错误，
 CPU单步/恢复正常。98项Python入口规范及差异空白检查通过。
 
-证据见 [实板汇总](evidence/ws53-ram-hil-2026-10-23/summary.json) 和
+证据见 [实板汇总](evidence/ws53-ram-hil-2026-10-23/README.md) 和
 [接管细节](ws53-ram-takeover.md)。没有运行其他外设RAM镜像；未验收GDB源码断点、
 实际计时频率、FPU/NMI、缓存/DMA交接、控制核并行和Flash冷启动。完整P0–P7仍未完成。
 
