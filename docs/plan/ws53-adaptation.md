@@ -8644,3 +8644,5 @@ SYMC 模型集成续验：远端 QEMU `ws53-agpio-clock` 的历史包含集成�
 SYMC 干净检出复验：从远端主仓 `7a58000a6` 及其 HAL 子模块获取源码，用隔离 Cargo 缓存离线构建夹具，并使用独立构建的固定 QEMU 模型重新通过154场景；Python 依赖使用预先下载的固定版本缓存。报告 `/tmp/ws53-symc-clean-qemu-20261029/report.json` SHA-256 `abe9696fe7dac5f4555875bb47c7be57c44689f771f0a20ddf0d5520319528d8`。这是仿真复现，不覆盖真实固件/共享所有权或实板。
 
 HASH/KM 模型集成续验：新增共用的源码绑定夹具构建及凭据校验工具，原有 Rust CPU 场景工具纳入版本管理；当前 HAL 与固定来源新建 QEMU `1bc19b7` 的 HASH 198 场景、KM 357 场景通过。报告分别为 `target/ws53-hash-qualified-qemu02-20261029/report.json` SHA-256 `ef45bc000a7b5cdf7ea39b59f20961fc35750974dbd4026e2157dc77beb04ff0` 和 `target/ws53-km-qualified-qemu-20261029/report.json` SHA-256 `85aca5764fd053a5a3d980b9bf649581aaa070c1bb0d643931e935b35a0d6ead`。模型使用合成输入/密钥和显式假设，不证明真实密钥所有权、缓存/物理排空或实板行为。
+
+HASH/KM 干净检出复验：远端主仓 `f640a51e0` 及 HAL 子模块使用隔离 Cargo 缓存离线重建，配合同一独立构建 QEMU 分别重跑198/357场景通过。报告 `/tmp/ws53-hash-clean-qemu-20261029/report.json` SHA-256 `3cf230e28f00b18b5e652cbf03312b2f3ba467fd7c89270c6d2fec44de5a077d`，`/tmp/ws53-km-clean-qemu-20261029/report.json` SHA-256 `5bbed31204fdacfd7de5517e622c0230f6f2c30353a8f480eb994ee155dbd9ee`；复用预取 Python 依赖，不代表硬件或固件协作验收。
