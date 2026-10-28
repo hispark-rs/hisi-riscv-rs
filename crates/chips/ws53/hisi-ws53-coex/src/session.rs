@@ -23,10 +23,6 @@ impl<E> Session<E> {
     pub fn is_valid(&self) -> bool {
         self.valid
     }
-    /// Retaining the transport does not prove a peer has stopped using memory.
-    pub fn into_inner(self) -> E {
-        self.endpoint
-    }
 }
 impl<E: Endpoint> Endpoint for Session<E> {
     fn try_send(&mut self, message: &[u8]) -> Result<(), SendError> {

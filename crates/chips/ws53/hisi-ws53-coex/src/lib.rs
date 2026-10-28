@@ -151,3 +151,6 @@ pub mod session;
 
 /// Vendor firmware protocol profiles. Enforcement by a live session is pending.
 pub mod protocol;
+
+/// WS53 platform transport implementations.
+pub mod transport;

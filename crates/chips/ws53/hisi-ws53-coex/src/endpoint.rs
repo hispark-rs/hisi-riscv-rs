@@ -13,6 +13,10 @@ pub enum SendError {
     Full,
     /// The message exceeds the endpoint's supported bound; not published.
     TooLong { maximum: usize },
+    /// Message encoding is invalid; not published.
+    InvalidMessage,
+    /// Platform policy did not authorize this message; not published.
+    Unauthorized,
     /// Transport state is corrupted; not published by this call.
     Corrupt,
     /// The session is no longer usable; not published by this call.

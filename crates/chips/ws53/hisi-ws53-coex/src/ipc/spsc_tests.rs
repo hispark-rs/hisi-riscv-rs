@@ -356,3 +356,71 @@ fn volatile_adapter_uses_real_aligned_host_ram_and_keeps_guard_byte() {
     assert_eq!(contents[75], 0xa5);
     drop(unsafe { std::boxed::Box::from_raw(storage) });
 }
+
+#[test]
+fn polling_endpoint_checks_authority_backpressure_and_preserves_short_receive() {
+    use crate::endpoint::{Endpoint, ReceiveError, SendError};
+    use crate::protocol::FirmwareProtocol;
+    use crate::session::Session;
+    use crate::transport::ws53::{FrameAuthority, PollingEndpoint};
+    struct TestPolicy;
+    // SAFETY: the synthetic host peer only copies bytes; it never dereferences
+    // an address or invokes a service, so the accepted test frame has no peer
+    // resource or lifetime requirements.
+    unsafe impl FrameAuthority for TestPolicy {
+        fn permits(&self, message: Message<'_>) -> bool {
+            message.id().raw() == 1
+        }
+    }
+    let tx_memory = prepared(8, true);
+    let rx_memory = prepared(8, false);
+    let peer_rx = rx_memory.bytes.clone();
+    // SAFETY: exclusively owned in-memory test queues have no active peer at
+    // construction; the host peer below only writes its complementary fields.
+    let tx = unsafe { Transmit::from_prepared(tx_memory, Channel::Channel1) }.unwrap();
+    let rx = unsafe { Receive::from_prepared(rx_memory, Channel::Channel1) }.unwrap();
+    // SAFETY: the synthetic peer below implements the selected test profile;
+    // storage stays retained, no physical mappings or control core are used.
+    let endpoint = unsafe {
+        PollingEndpoint::from_prepared(tx, rx, TestPolicy, FirmwareProtocol::Sdk163d9150)
+    };
+    let mut endpoint = Session::new(endpoint);
+    assert_eq!(
+        endpoint.try_send(&[20, 0, 0, 0]),
+        Err(SendError::InvalidMessage)
+    );
+    assert_eq!(
+        endpoint.try_send(&[0, 0, 0, 0]),
+        Err(SendError::Unauthorized)
+    );
+    assert_eq!(endpoint.try_send(&[1, 0, 2, 0, 0xaa, 0xbb]), Ok(()));
+    assert_eq!(endpoint.try_send(&[1, 0, 0, 0]), Err(SendError::Full));
+    let frame = [1, 0, 2, 0, 0xcc, 0xdd];
+    for (i, value) in frame.into_iter().enumerate() {
+        write8(&peer_rx, 12 + i, value);
+    }
+    write16(&peer_rx, 6, frame.len() as u16);
+    let mut small = [0x55; 3];
+    assert_eq!(
+        endpoint.try_receive(&mut small),
+        Err(ReceiveError::BufferTooSmall { required: 6 })
+    );
+    assert_eq!(small, [0x55; 3]);
+    let mut output = [0; 8];
+    assert_eq!(endpoint.try_receive(&mut output), Ok(Some(6)));
+    assert_eq!(&output[..6], &frame);
+    assert_eq!(endpoint.try_receive(&mut output), Ok(None));
+    write8(&peer_rx, 3, 9); // Corrupt metadata is not an empty queue or reset.
+    let before = output;
+    assert_eq!(
+        endpoint.try_receive(&mut output),
+        Err(ReceiveError::Corrupt)
+    );
+    assert_eq!(output, before);
+    endpoint.invalidate();
+    assert_eq!(endpoint.try_send(&frame), Err(SendError::Invalidated));
+    assert_eq!(
+        endpoint.try_receive(&mut output),
+        Err(ReceiveError::Invalidated)
+    );
+}

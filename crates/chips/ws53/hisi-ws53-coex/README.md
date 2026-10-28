@@ -8,9 +8,17 @@ the protocol channel to a HAL doorbell and establish those contracts explicitly.
 
 The entropy callback accepts a platform-controlled source without coupling this
 protocol crate to a specific HAL or random-number driver. All destination updates
-remain transactional on an entropy failure. The existing HAL implementation and
-its consumers remain in place while migration is reviewed; this prototype does
-not imply new on-silicon validation.
+remain transactional on an entropy failure. HAL retains the physical doorbell;
+the firmware protocol and service callers use this component. This migration
+does not imply new on-silicon validation.
+
+The experimental polling adapter combines the existing shared queues with the
+bounded endpoint contract, an explicitly selected SDK profile and a platform
+authorization policy. It does not send notifications or wait asynchronously;
+the peer must poll or the platform must separately issue qualified notifications.
+After a short receive buffer the frame is retained locally even though the queue
+slot has been released. Explicit session invalidation prevents later endpoint
+operations but cannot detect an unobservable peer reset or reclaim peer memory.
 
 Run independent host tests with `cargo test --locked --target
 x86_64-unknown-linux-gnu --features defmt`; the RISC-V check uses the project's
