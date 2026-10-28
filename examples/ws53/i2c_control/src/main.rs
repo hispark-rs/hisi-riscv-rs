@@ -178,6 +178,25 @@ fn main() -> ! {
         }
         driver.recover().unwrap();
         assert!(driver.try_free().is_ok());
+    } else if cfg!(feature = "arbitration-smoke") {
+        // QEMU-only external arbitration loss on I2C0. Raw words and standard
+        // classification must survive cleanup; the peer bus remains usable.
+        let mut driver = result.unwrap_or_else(|_| panic!("I2C0 init failed"));
+        for _ in 0..2 {
+            let error = driver
+                .transaction(Address::seven(0x50).unwrap(), &mut [Operation::Write(&[0])])
+                .unwrap_err();
+            assert_eq!(
+                error,
+                Error::Failure(Failure::Abort {
+                    source: 0,
+                    detail: 0x1000
+                })
+            );
+            assert_eq!(error.kind(), ErrorKind::ArbitrationLoss);
+            assert!(!driver.is_poisoned());
+        }
+        assert!(driver.try_free().is_ok());
     } else {
         let mut driver = result.unwrap_or_else(|_| panic!("I2C0 init failed"));
         exercise(&mut driver);
@@ -215,6 +234,11 @@ fn main() -> ! {
         emit(
             &uart,
             b"WS53 PASS I2C clock_stall enable_timeout=1 bounded=1 other_instance=1\n",
+        );
+    } else if cfg!(feature = "arbitration-smoke") {
+        emit(
+            &uart,
+            b"WS53 PASS I2C arbitration_loss=1 raw=1 retry=1 other_instance=1\n",
         );
     } else {
         emit(&uart, b"WS53 PASS I2C instances=2 addr7=1 addr10=1 repeated_start=1 long_read=100 nack_recovery=1\n");

@@ -24,6 +24,11 @@ HELPERS = ('scripts/ws53_i2c_traffic_build.py',
 SCHEMA = 'ws53-i2c-wire-traffic-build-v1'
 
 
+def select_arbitration():
+    if 'arbitration-smoke' not in FEATURES:
+        FEATURES.append('arbitration-smoke')
+
+
 def snapshot():
     data = common.source_snapshot(ROOT, common.clean_environment())
     data.pop('shared_ram_fixture_sources')
@@ -75,4 +80,8 @@ def build(out):
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path,required=True)
-    build(p.parse_args().output.resolve())
+    p.add_argument('--arbitration',action='store_true')
+    args = p.parse_args()
+    if args.arbitration:
+        select_arbitration()
+    build(args.output.resolve())

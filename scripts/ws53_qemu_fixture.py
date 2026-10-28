@@ -53,8 +53,9 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
     for address, value in register_setup:
         require((address, value) in ((0x57014018, 5), (0x57014024, 0x15)), 'unreviewed TX setup')
     require(device != "uart-pads" or (fault is None and expected_output is not None), "pad fixture requires exact transcript and no generic fault")
-    require(fault in (None, "clock", "snapshot", "expiry", "control", "adc-manual-stall",
+    require(fault in (None, "clock", "snapshot", "expiry", "control", "i2c-arbitration", "adc-manual-stall",
                       "adc-cap-stall", "adc-stale", "adc-cap-error"), "unknown fault selector")
+    require(fault != 'i2c-arbitration' or device == 'i2c', 'arbitration fault requires I2C fixture')
     require(not (fault or '').startswith('adc-') or device == 'adc', 'ADC fault requires ADC fixture')
     require(fault != 'expiry' or device == 'rtc', 'expiry race requires RTC fixture')
     require(fault != 'control' or device == 'tsensor', 'control fault requires temperature fixture')
@@ -99,7 +100,7 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
                             for target in targets:
                                 signal = {'clock': 'clock 0 0', 'snapshot': 'stall-snapshot 0 1',
                                           'expiry': 'expire-on-request 0 1',
-                                          'control': 'corrupt-control 0 1',
+                                          'control': 'corrupt-control 0 1', 'i2c-arbitration': 'arbitration 0 1',
                                           'adc-manual-stall': 'stall 1 1', 'adc-cap-stall': 'stall 2 1',
                                           'adc-stale': 'stale 0 1', 'adc-cap-error': 'cap-error 0 1'}[fault]
                                 command = f"set_irq_in /machine/{target} {signal}"

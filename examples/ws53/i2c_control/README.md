@@ -15,3 +15,9 @@ uv run --script scripts/test-ws53-i2c.py --qemu /path/to/qemu-system-riscv32 --e
 正常场景检查两实例、7/10位地址、连续 Operation、重复 START、长读、地址 NACK
 恢复、资源回收和再次接管。停钟场景检查启用超时、有限清理和另一实例正常工作。
 脚本固定启用 assume-profile 并精确检查诊断；不宣称物理速率或实板支持。
+
+带数字引脚模型的源码绑定测试另由 `.github/workflows/ws53-i2c-wire.yml` 执行：
+`ws53_i2c_traffic_build.py --arbitration` 构建仲裁丢失夹具，
+`test-ws53-i2c-arbitration.py` 对 I2C0 注入虚拟仲裁丢失，检查原始错误、
+标准错误类别、重复尝试及 I2C1 正常工作。模型的故障输入不能代表真实
+总线多主仲裁或 SDA 卡低；混合中止原因没有在此模型中注入。

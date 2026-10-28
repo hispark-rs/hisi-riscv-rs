@@ -42,7 +42,7 @@ jobs:
           cargo fetch --locked --manifest-path examples/ws53/i2c_control/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
-          for script in ws53_ci_qemu_i2c_wire_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py; do
+          for script in ws53_ci_qemu_i2c_wire_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py test-ws53-i2c-arbitration.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
       - name: Build fixed QEMU source
@@ -61,6 +61,15 @@ jobs:
             --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
             --elf "$RUNNER_TEMP/ws53-i2c-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-build/receipt.json" \
             --output "$RUNNER_TEMP/ws53-i2c-test"
+      - name: Check arbitration loss and independent bus
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --arbitration --output "$RUNNER_TEMP/ws53-i2c-arbitration-build"
+          uv run --offline --script scripts/test-ws53-i2c-arbitration.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-arbitration-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-arbitration-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-arbitration-test"
       - name: Save model reports and build evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -75,3 +84,6 @@ jobs:
             ${{ runner.temp }}/ws53-i2c-build/build.log
             ${{ runner.temp }}/ws53-i2c-test/report.json
             ${{ runner.temp }}/ws53-i2c-test/*-difference.json
+            ${{ runner.temp }}/ws53-i2c-arbitration-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-arbitration-build/build.log
+            ${{ runner.temp }}/ws53-i2c-arbitration-test/report.json
