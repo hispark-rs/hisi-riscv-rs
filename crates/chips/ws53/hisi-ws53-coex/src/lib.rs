@@ -143,3 +143,11 @@ pub mod spsc;
 
 #[cfg(test)]
 mod message_tests;
+
+/// Chip-neutral bounded message interface.
+pub mod endpoint;
+/// Explicit local endpoint lifecycle.
+pub mod session;
+
+/// Vendor firmware protocol profiles. Enforcement by a live session is pending.
+pub mod protocol;
