@@ -50,3 +50,20 @@ Cargo 缓存从公开 registry 获取应用及固定 Rust 工具链标准库依�
 SHA-256 `65b60c8397a5bf663ce9e59a5e7b6c3fe40e771cf32f3fce802e168db07ee8c4`。
 此轮复用先前 QEMU 二进制和原模型来源凭证；模型源码的远端提交亦可检出，
 但旧凭证绑定原构建路径，换源码目录不能复用旧凭证，未宣称独立重建 QEMU。
+
+## 会话损坏处理修复后复验
+
+协作组件 `5a8971a` 对完整非法消息返回 `InvalidMessage` 且不消费；对
+元数据/游标损坏和不完整发布返回 `Corrupt` 并锁定会话失效。28 项主机测试、
+主机及 RISC-V Clippy、[远端 CI](https://github.com/hispark-rs/hisi-ws53-coex/actions/runs/40734880464)
+通过；空缓存外部消费者从 Git 固定提交获取并验证失效，无父仓 patch。
+这不是 crates.io 发布验收。
+
+重新构建 QEMU 端点和直接队列夹具，均三轮双向各 1536 帧通过。端点测试还
+注入异常元数据，验证首次错误后会话失效、恢复元数据仍不能使用旧会话；
+完整未知消息则保留且不使会话失效。报告保留于
+`target/ws53-ipc-corrupt-endpoint-qemu-20261029/report.json`，SHA-256
+`fc02c982689151bc0ad446c5c14befaa3d73cd421dcba4484ab284ebb0433e3a`；
+直接队列报告 `target/ws53-ipc-corrupt-direct-qemu-20261029/report.json`，
+SHA-256 `ffea2cc94b56f3bdb9c165242583f47f41af2f6e4dd440b4f851effad146b979`。
+此行为变更未在真实控制核、RAM 实板或 Flash 实板复验。

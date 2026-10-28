@@ -267,7 +267,10 @@ fn main() -> ! {
             };
             #[cfg(feature = "endpoint-contract")]
             let corrupt = match endpoint.try_receive(&mut bad_output) {
-                Err(ReceiveError::Corrupt) => true,
+                Err(ReceiveError::InvalidMessage) => {
+                    assert!(endpoint.is_valid());
+                    true
+                }
                 Ok(None) => false,
                 _ => panic!(),
             };
@@ -278,6 +281,15 @@ fn main() -> ! {
                 }
                 false => {}
             }
+        }
+        #[cfg(feature = "endpoint-contract")]
+        if gate & 16 != 0 && get(16) == 0 {
+            assert_eq!(
+                endpoint.try_receive(&mut output),
+                Err(ReceiveError::Corrupt)
+            );
+            assert!(!endpoint.is_valid());
+            put(16, 1);
         }
         if gate == 4 && get(13) == 0 && get(14) == 0 {
             #[cfg(not(feature = "endpoint-contract"))]
@@ -293,7 +305,9 @@ fn main() -> ! {
             #[cfg(feature = "endpoint-contract")]
             {
                 // Invalidation is local; it is deliberately not queue recovery.
-                endpoint.invalidate();
+                if get(16) == 0 {
+                    endpoint.invalidate();
+                }
                 assert_eq!(endpoint.try_send(&[]), Err(SendError::Invalidated));
                 put(13, 1);
                 assert_eq!(

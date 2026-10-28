@@ -107,13 +107,14 @@ def run(a):
                             assert not paused, 'all peer writes happen while CPU runs'
                             address = int(parts[1], 0)
                             if name == 'writel':
-                                assert address == report_address and int(parts[2], 0) in (1, 3, 4, 8)
+                                assert address == report_address and int(parts[2], 0) in ((1, 3, 4, 8, 16) if a.endpoint else (1, 3, 4, 8))
                             else:
                                 assert not peer_stopped
                                 if name == 'writew':
                                     assert address in (tx + 4, rx + 6) and 0 <= int(parts[2], 0) < 244
                                 elif name == 'writeb':
-                                    assert (address, int(parts[2], 0)) in ((tx + 3, 1), (rx + 3, 0))
+                                    allowed = ((tx + 3, 1), (rx + 3, 0)) + (((rx + 3, 9),) if a.endpoint else ())
+                                    assert (address, int(parts[2], 0)) in allowed
                                 else:
                                     assert name == 'write'
                                     size = int(parts[2], 0)
@@ -230,6 +231,12 @@ def run(a):
                         command(f'writel {report_address:#x} 8')
                         fault = wait(lambda w: w[17] == 27 and w[18] == 1)
                         assert state(rx, (0, 2, 1), 0)[0] == bad_read
+                        if a.endpoint and iteration == 0:
+                            command(f'writeb {rx + 3:#x} 9')
+                            command(f'writel {report_address:#x} 16')
+                            wait(lambda w: w[16] == 1)
+                            # Restore metadata only; the old session must stay invalid.
+                            command(f'writeb {rx + 3:#x} 0')
                         # Peer lifecycle handoff is explicit and input-only.
                         peer_stopped = True
                         command(f'writel {report_address:#x} 4')
@@ -244,7 +251,8 @@ def run(a):
                             unknown_id_not_consumed=True, error_output_unchanged=fault[18] == 1,
                             runtime_pauses_during_peer_transactions=0,
                             explicit_quiescent_reclaim=not a.endpoint,
-                            explicit_session_invalidation=a.endpoint,
+                            explicit_session_invalidation=a.endpoint and iteration != 0,
+                            detected_corruption_latches_invalidation=a.endpoint and iteration == 0,
                             short_receive_preserved=a.endpoint))
                         qmp('stop')
                     qmp('quit')
