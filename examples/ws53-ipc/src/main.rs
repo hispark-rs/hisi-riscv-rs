@@ -3,12 +3,15 @@
 #![no_main]
 use core::{cell::Cell, ptr};
 use critical_section::Mutex;
-use hisi_hal::ipc::mailbox::{MailboxError, MailboxImage, MailboxSize, Route};
 use hisi_hal::{
     Peripherals, interrupt,
-    ipc::{Channel, Doorbell, MAX_MESSAGE, Message, MessageId, Priority, ReceiveEnableState},
+    ipc::{Channel, Doorbell, ReceiveEnableState},
 };
 use hisi_riscv_rt::entry;
+use hisi_ws53_coex::{
+    Channel as ProtocolChannel, MAX_MESSAGE, Message, MessageId, Priority,
+    mailbox::{MailboxError, MailboxImage, MailboxSize, Route},
+};
 
 // command,sequence,ready,channel,value,result,rx0,rx1,tx0,tx1,irq0,irq1,panic,last-cause,unused,codec-hash
 #[unsafe(no_mangle)]
@@ -154,6 +157,10 @@ fn mailbox_error(error: MailboxError) -> u32 {
     }
 }
 fn mailbox_command(cmd: u32, channel: Channel, value: u32) -> Result<(), u32> {
+    let channel = match channel {
+        Channel::Channel0 => ProtocolChannel::Channel0,
+        Channel::Channel1 => ProtocolChannel::Channel1,
+    };
     let reversed = if cmd == 8 { value >> 24 } else { value };
     if reversed > 1 {
         return Err(28);

@@ -6,17 +6,15 @@ use core::{num::NonZeroU16, ptr, ptr::NonNull};
 use embedded_hal::delay::DelayNs;
 use hisi_hal::{
     Peripherals,
-    ipc::{
-        Channel, MAX_MESSAGE,
-        mailbox::{MailboxImage, MailboxSize, Route},
-        spsc::{CoherentMemory, Receive},
-    },
     timer::{TimerChannel, TimerDriver, TimerMode, TimerTicks},
     trng::{Error, TrngDriver},
 };
 use hisi_riscv_rt::entry;
-use hisi_ws53_coex::random_buffer::{
-    BufferRegion, RandomBufferImage, RequestError, ServiceError, UpdateRequest,
+use hisi_ws53_coex::{
+    Channel, MAX_MESSAGE,
+    mailbox::{MailboxImage, MailboxSize, Route},
+    random_buffer::{BufferRegion, RandomBufferImage, RequestError, ServiceError, UpdateRequest},
+    spsc::{CoherentMemory, Receive},
 };
 
 #[repr(C, align(4))]
@@ -116,11 +114,6 @@ fn main() -> ! {
         let Some(message) = rx.try_pop_into(&mut frame).unwrap() else {
             continue;
         };
-        // Convert the legacy HAL frame through the audited SDK encoding until
-        // the queue transport also moves to the protocol component.
-        let mut encoded = [0u8; MAX_MESSAGE];
-        let used = message.encode(&mut encoded);
-        let message = hisi_ws53_coex::Message::decode(&encoded[..used]).unwrap();
         let length = control(2);
         assert!((1..=128).contains(&length));
         let region = BufferRegion::try_from_control_bounds(0xc1000, 0xc1000 + length).unwrap();

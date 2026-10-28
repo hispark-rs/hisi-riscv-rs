@@ -2,13 +2,13 @@
 #![no_std]
 #![no_main]
 use core::ptr::{self, NonNull};
-use hisi_hal::ipc::{
+use hisi_riscv_rt::entry;
+use hisi_ws53_coex::{
     Channel, MAX_MESSAGE, Message, MessageId, Priority,
     layout::{ControlSramRange, SdkMailboxLayout},
     mailbox::{MailboxError, MailboxImage, MailboxSize, Route},
     spsc::{CoherentMemory, Error, Receive, Transmit},
 };
-use hisi_riscv_rt::entry;
 
 const COUNT: u32 = 512;
 #[repr(C, align(4))]
