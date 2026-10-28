@@ -9,7 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 import ws53_i2c_traffic_build as builder
-import ws53_ci_qemu_i2c_wire_build as policy
+import ws53_ci_qemu_uart_clock_build as policy
 from ws53_i2c_wire_trace import transactions
 from ws53_qemu_fixture import run_fixture
 
