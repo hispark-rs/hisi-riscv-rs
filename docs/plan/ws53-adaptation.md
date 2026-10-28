@@ -8600,3 +8600,7 @@ TCXO 旧芯片回归修复：SDK `731bc668865fd8dc89bc40da0583b4e4023095a0` 的 
 WS63 TCXO PAC 续记：SVD `9f11980`、PAC `6324bcf` 已分别推送并建立草稿 PR。保留旧 `u16` 访问器及未验证的兼容寄存器，另增完整 `u32` 只读字段；SVD 模式和契约、PAC 主机寄存器视图、RISC-V 构建与 Clippy、逐字再生及 HAL/QEMU 普通范围复验通过。两仓提交尚未合并、发布或实板验证。新 QEMU 报告 `target/ws63-tcxo-pac-model-report-20261029.json` SHA-256 `1f31052d78eadc2e5cf7b2587017bb52c2512b339fa9648b0c8e5f60e921a1cd`。
 
 独立检出复核：远端主工程获取 PAC `6324bcf` 及其 SVD `9f11980` 子模块，独立 Cargo 缓存补齐公开依赖后离线构建 WS63 模型并通过普通范围 QEMU 冒烟；复用既有 QEMU 二进制，不声称独立重建模型。报告 `/tmp/ws63-tcxo-clean-report-20261029.json` SHA-256 `dcf2e0d356e784e816cca5a15c38d9daca863fdd309ba3e408c62ba95bad752e`。PAC 草稿 PR 的构建、Clippy、文档和 SVD 再生 CI 均通过。
+
+I2C 跨芯片续记：HAL `2777409`/`96ad17e` 共享 WS53/BS21 命令规划并修正 BS21 多操作间误发 STOP、探测超时误报存在；两芯片主机测试、三芯片目标 Clippy 和 WS53 固定远端依赖预发布检查通过。源码固定后的 WS53 数字 QEMU 两路 57 段事务通过，报告 `target/ws53-i2c-shared-plan-final03-qemu-20261029/report.json` SHA-256 `24402e86a32b2a80fb9f6d6287b93d2fcae66d4b2e69f890590314ea0de8ac7e`。一次构建因源码同时变化被来源检查拒绝，保留在 `target/ws53-i2c-shared-plan-final-build-20261029/`。BS21 中止原因、超时后恢复、重复 START 的物理波形及两芯片变更后的实板均未验收。
+
+I2C 线序构建工具已从 IPC18 工具中解耦，避免普通数字模型回归依赖无关 HIL 脚本；原工具版本保留于主仓提交 `f7681d3f8`。解耦后同样完成两路 57 段 QEMU 回归，报告 `target/ws53-i2c-shared-plan-final04-qemu-20261029/report.json` SHA-256 `866ff4480e1db2509743dd929ea0ee32c20de55a9d823b29cc293ea7e8d4ec82`。IPC18 RAM 构建工具的独立 HIL 路径仍有未整理脚本，不能视为已完成干净检出验证。
