@@ -1,5 +1,7 @@
 # Build output
 /target/
+# Independent example workspaces produce their own Cargo output directories.
+/examples/**/target/
 
 # Editor files
 *.swp
