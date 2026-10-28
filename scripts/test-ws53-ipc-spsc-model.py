@@ -248,7 +248,8 @@ def run(a):
                         if a.endpoint:
                             assert final[15] == 1, 'short receive and retained retry not exercised'
                         for prop in ('ack-writes', 'send-writes', 'rejections'):
-                            assert qmp('qom-get', dict(path='/machine/ipc', property=prop)) == 0
+                            expected = int(a.endpoint and prop == 'send-writes')
+                            assert qmp('qom-get', dict(path='/machine/ipc', property=prop)) == expected
                         result['rounds'].append(dict(iteration=iteration, transmitted=consumed, received=produced,
                             initial_full_counter=initial[5], mailbox=list(final),
                             tx_and_rx_maximum_data_bytes=243, peer_full_refused=True,
@@ -258,6 +259,7 @@ def run(a):
                             explicit_session_invalidation=a.endpoint and iteration != 0,
                             detected_corruption_latches_invalidation=a.endpoint and iteration == 0,
                             small_queue_size_and_backpressure=a.endpoint,
+                            real_hal_doorbell_pending_result=a.endpoint,
                             short_receive_preserved=a.endpoint))
                         qmp('stop')
                     qmp('quit')

@@ -2,6 +2,11 @@
 #![no_std]
 #![no_main]
 use core::ptr::{self, NonNull};
+#[cfg(feature = "endpoint-contract")]
+use hisi_hal::{
+    Peripherals,
+    ipc::{Channel as DoorbellChannel, Doorbell, NotificationPending, ReceiveEnableState},
+};
 use hisi_riscv_rt::entry;
 use hisi_ws53_coex::{
     Channel, MAX_MESSAGE, Message, MessageId, Priority,
@@ -143,7 +148,7 @@ fn check_layout() {
 }
 
 #[cfg(feature = "endpoint-contract")]
-fn check_small_endpoint_bound() {
+fn check_small_endpoint_bound(doorbell: &mut Doorbell<'_>) {
     let size = MailboxSize::try_from_total_bytes(20).unwrap();
     unsafe {
         MailboxImage::initialize(
@@ -194,12 +199,13 @@ fn check_small_endpoint_bound() {
     );
     assert_eq!(snapshot(), before);
     let result = try_send_and_notify(&mut endpoint, &[1, 0, 3, 0, 1, 2, 3], || {
-        // A synthetic pending doorbell: publish must be visible first. This
-        // does not model the actual peer's notification or ACK protocol.
         assert_eq!(&snapshot()[6..8], &[7, 0]);
-        Err(7u8)
+        // SAFETY: model-only inline frame has no remote pointers; the isolated
+        // QEMU queue and peer are exclusively owned for this fixture.
+        unsafe { doorbell.notify(DoorbellChannel::Channel0) }
     });
-    assert_eq!(result, Ok(Published::NotificationFailed(7)));
+    assert_eq!(result, Ok(Published::Notified));
+    assert!(doorbell.send_pending(DoorbellChannel::Channel0));
     let full = snapshot();
     assert_eq!(&full[6..8], &[7, 0]);
     assert_eq!(&full[12..19], &[1, 0, 3, 0, 1, 2, 3]);
@@ -215,13 +221,42 @@ fn check_small_endpoint_bound() {
         Err(SendError::TooLong { maximum: 7 })
     );
     assert_eq!(snapshot(), full);
+    // Simulate the isolated peer releasing this complete frame while leaving
+    // the notification pending. Cursor access is aligned and complementary;
+    // no second local producer or live Rust reference aliases the queue.
+    unsafe {
+        ptr::addr_of_mut!(SMALL_TX)
+            .cast::<u16>()
+            .add(2)
+            .write_volatile(7)
+    };
+    let result = try_send_and_notify(&mut endpoint, &[1, 0, 0, 0], || {
+        // SAFETY: same model-only publication and exclusive-handoff contract.
+        unsafe { doorbell.notify(DoorbellChannel::Channel0) }
+    });
+    assert_eq!(
+        result,
+        Ok(Published::NotificationFailed(NotificationPending))
+    );
+    let pending = snapshot();
+    assert_eq!(&pending[4..8], &[7, 0, 3, 0]);
+    assert_eq!(pending[19], 1);
+    assert_eq!(&pending[12..15], &[0, 0, 0]);
+    assert!(doorbell.send_pending(DoorbellChannel::Channel0));
     put(11, 1);
 }
 #[entry]
 fn main() -> ! {
     check_layout();
     #[cfg(feature = "endpoint-contract")]
-    check_small_endpoint_bound();
+    {
+        let peripherals = Peripherals::take().unwrap();
+        // SAFETY: the QEMU-only profile owns the virtual IPC registers and has
+        // no external firmware, old handler, power transition, or shared peer.
+        let ipc = unsafe { peripherals.IPC.assume_application_ownership() };
+        let mut doorbell = unsafe { Doorbell::from_configured(ipc, ReceiveEnableState::Disabled) };
+        check_small_endpoint_bound(&mut doorbell);
+    }
     let size = MailboxSize::try_from_total_bytes(256).unwrap();
     // Exclusive pre-start initialization only. Host waits for ready before
     // accessing these regions; no Rust reference to a live queue is retained.
