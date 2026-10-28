@@ -41,3 +41,12 @@ IRQ 竞争、通知唤醒或任何实板行为。未操作实板。报告分别�
 ELF，再使用 `uv run scripts/test-ws53-ipc-spsc-model.py --endpoint --help`
 查看 QEMU、来源、两份凭证、ELF 和输出目录参数。直接队列配置使用
 `ws53_ipc_spsc_build.py`，运行时去掉 `--endpoint`。各输出必须使用新目录。
+
+干净检出复核：从主工程远端 `cffcdcd45` 和六个固定子模块重新检出；在空
+Cargo 缓存从公开 registry 获取应用及固定 Rust 工具链标准库依赖，再离线构建
+端点 ELF 并执行三轮 QEMU 测试，结果同上。构建前遗漏 `-Zbuild-std` 的 Rust
+标准库依赖导致首次离线失败，已保留 `/tmp/ws53-ipc-repro-build-20261029/build.log`；
+补齐依赖后的报告位于 `/tmp/ws53-ipc-repro-qemu-test02-20261029/report.json`，
+SHA-256 `65b60c8397a5bf663ce9e59a5e7b6c3fe40e771cf32f3fce802e168db07ee8c4`。
+此轮复用先前 QEMU 二进制和原模型来源凭证；模型源码的远端提交亦可检出，
+但旧凭证绑定原构建路径，换源码目录不能复用旧凭证，未宣称独立重建 QEMU。
