@@ -8616,3 +8616,5 @@ BS21 独立复现：从远端检出主工程 `4bd62d882` 和 HAL `90b1981`，使
 端点 QEMU 续验：源码校验的 RISC-V 夹具在独立小队列上验证超长、最大帧的实际数据及游标、暂时背压和拒绝前后内存不变；原并发模拟对端三轮累计双向各 1536 帧、短缓冲、损坏消息和失效路径通过。报告 `target/ws53-ipc-size-endpoint-qemu03-20261029/report.json` SHA-256 `a17e19b42d4593d9cece42a6d0854cf96860627f787dc44a7f054f936d404c2b`。该场景使用模型 RAM 和已存在 QEMU 构建，不证明实际控制核、缓存一致性或通知；本轮未操作硬件。
 
 UART 跨芯片续记：HAL `cd9bbec` 共用 1/64 分频计算，保留 WS53 的 8/16 倍采样选择与各后端寄存器时序；相关主机测试 WS53 60 项、WS63 16 项、BS21 14 项和三芯片 RISC-V Clippy 通过，含 WS53 SDK 配置表及分频算术属性测试。测试使用本地依赖覆盖，非 registry 验收；本次未重跑 QEMU 或实板。旧芯片 Boot 时钟高波特率的整数分频可能为零，待单独设计兼容的校验接口，见 `docs/plan/hal-cross-chip-review.md`。
+
+UART QEMU 续验：使用 HAL `cd9bbec` 构建的源码绑定 RAM 夹具通过原有 UART 时钟门控模型六组检查，含模拟输出及计数器；报告 `target/ws53-uart-common-divisor-qemu-20261029/report.json` SHA-256 `f358418c52e66ec47052d051ee390a580e731ae0b5f8e2de2bd537fa3b6388e2`。模型使用预设字符时长，该检查不验证分频后的实际波特率或物理门控；未访问实板。当前 QEMU 检查工具部分依赖未跟踪的本地 HIL 辅助脚本，尚不能宣称干净检出可复现，需整理测试依赖后再验证。
