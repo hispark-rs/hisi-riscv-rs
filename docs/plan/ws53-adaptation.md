@@ -8604,3 +8604,5 @@ WS63 TCXO PAC 续记：SVD `9f11980`、PAC `6324bcf` 已分别推送并建立草
 I2C 跨芯片续记：HAL `2777409`/`96ad17e` 共享 WS53/BS21 命令规划并修正 BS21 多操作间误发 STOP、探测超时误报存在；两芯片主机测试、三芯片目标 Clippy 和 WS53 固定远端依赖预发布检查通过。源码固定后的 WS53 数字 QEMU 两路 57 段事务通过，报告 `target/ws53-i2c-shared-plan-final03-qemu-20261029/report.json` SHA-256 `24402e86a32b2a80fb9f6d6287b93d2fcae66d4b2e69f890590314ea0de8ac7e`。一次构建因源码同时变化被来源检查拒绝，保留在 `target/ws53-i2c-shared-plan-final-build-20261029/`。BS21 中止原因、超时后恢复、重复 START 的物理波形及两芯片变更后的实板均未验收。
 
 I2C 线序构建工具已从 IPC18 工具中解耦，避免普通数字模型回归依赖无关 HIL 脚本；原工具版本保留于主仓提交 `f7681d3f8`。解耦后同样完成两路 57 段 QEMU 回归，报告 `target/ws53-i2c-shared-plan-final04-qemu-20261029/report.json` SHA-256 `866ff4480e1db2509743dd929ea0ee32c20de55a9d823b29cc293ea7e8d4ec82`。IPC18 RAM 构建工具的独立 HIL 路径仍有未整理脚本，不能视为已完成干净检出验证。
+
+干净检出从远端获取 HAL `96ad17e`，独立 Cargo 缓存获取依赖后离线重建 I2C 夹具，再复用现有来源校验过的 QEMU 重跑两路 57 段数字线序，通过；没有独立重建 QEMU。报告 `/tmp/ws53-i2c-clean-qemu-20261029/report.json` SHA-256 `df406a225d621d31a5558a4f046625d7c7d8f99605f8c5a393fc4adf7e841816`。
