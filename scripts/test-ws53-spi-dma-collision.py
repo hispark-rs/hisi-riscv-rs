@@ -88,7 +88,7 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
                     raw_address=base+(0x34 if port else 0xbc);empty_bit=1 if port else 128
                     advance_until(lambda:read(raw_address)&empty_bit)
                     if scenario in 'TDFI':fault('bus-stall')
-                    if scenario=='S':fault('stall')
+                    if scenario in 'SPQ':fault('stall')
                     if scenario=='R':fault('read-error')
                     if scenario=='W':fault('write-error')
                     if scenario=='C':
@@ -104,7 +104,18 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
                             cfg=reg(channel,8);ctrl=reg(channel,0x14);request=(4 if port else 6)+int(rx)
                             require((cfg>>9)&7==(2 if rx else 1) and (cfg>>(1 if rx else 5))&15==request,'route mismatch')
                             require((ctrl>>28)&7==2,'wrong protection')
+                        if scenario in 'PQ':
+                            # Hold TX until both channels are armed; inject only
+                            # afterward, while RX is still waiting for data.
+                            execute('stop')
+                            require(read(0x52070010)&((1<<ch)|(1<<rxch))==((1<<ch)|(1<<rxch)),
+                                    'both DMA channels must be active before collision')
+                            spi_fault('inject-collision-status-only' if scenario=='P' else 'collision')
+                            fault('stall',False)
+                            advance_until(lambda:prop('/machine/spi',f'frames{port}')==length)
+                            require(reg(rxch,0x14)&0xfff==length,'RX completed before collision')
                         send(b'G')
+                        if scenario in 'PQ':execute('cont')
                     until('WS53 SPIDMA retained');execute('stop')
                     configured=scenario not in 'CBLZ'
                     pending=dma('pending-writes');require(pending==int(scenario in 'TDFI'),'unexpected pending beat')
@@ -118,6 +129,7 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
                     if scenario=='W':fault('write-error',False)
                     if scenario=='B':spi_fault('stretch',False)
                     if scenario in 'LZ':spi_fault('inject-collision-status-only' if scenario=='Z' else 'collision',False)
+                    if scenario in 'PQ':spi_fault('inject-collision-status-only' if scenario=='P' else 'collision',False)
                     execute('cont');deadline=time.monotonic()+5
                     while dma('pending-writes') or read(0x52070010) or read(base+m['tx']):
                         require(time.monotonic()<deadline,'model transaction/serializer drain timed out');time.sleep(.002)
@@ -164,6 +176,7 @@ def main():
     cases=[(port,ch,'t','N') for port in range(2) for ch in range(8)]
     cases += [(port,0,side,s) for port in range(2) for side in 'tr' for s in 'TRWSDFI']
     cases += [(port,0,'t',s) for port in range(2) for s in 'CBLZ']
+    cases += [(port,0,'t',s) for port in range(2) for s in 'PQ']
     results=[run(a.qemu,a.elf,width,source,destination,*case) for case in cases]
     require(digest(a.qemu)==qemu_sha256 and digest(a.elf)==elf_sha256,'model or ELF changed during test')
     print(json.dumps({'elf':contract,'qemu_sha256':qemu_sha256,'elf_sha256':elf_sha256,'width':width*8,'scenarios':results,'hardware_accessed':False,

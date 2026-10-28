@@ -52,7 +52,7 @@ jobs:
               test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py \
               ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
-              ws53_spi_collision_build.py test-ws53-spi-collision.py; do
+              ws53_spi_collision_build.py test-ws53-spi-collision.py test-ws53-spi-dma-collision.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -90,6 +90,23 @@ jobs:
               --elf "$RUNNER_TEMP/ws53-$bus-collision-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-$bus-collision-build/receipt.json" \
               --output "$RUNNER_TEMP/ws53-$bus-collision-test"
           done
+      - name: Check SPI DMA collision and retention
+        working-directory: project
+        run: |
+          for width in 8 32; do
+            args=()
+            if [ "$width" = 32 ]; then args=(--features width32); fi
+            build="$RUNNER_TEMP/ws53-spi-dma-$width-build"
+            mkdir -p "$build"
+            cargo build --offline --locked --release -Zbuild-std=core,alloc \
+              --target riscv32imfc-unknown-none-elf --target-dir "$build/target" \
+              --manifest-path examples/ws53/Cargo.toml -p ws53_spi_dma "${args[@]}" \
+              > "$build/build.log" 2>&1
+            uv run --offline --script scripts/test-ws53-spi-dma-collision.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$build/target/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
+              > "$build/report.json"
+          done
       - name: Save model reports and build evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -116,3 +133,7 @@ jobs:
             ${{ runner.temp }}/ws53-qspi1-collision-build/receipt.json
             ${{ runner.temp }}/ws53-qspi1-collision-build/build.log
             ${{ runner.temp }}/ws53-qspi1-collision-test/report.json
+            ${{ runner.temp }}/ws53-spi-dma-8-build/build.log
+            ${{ runner.temp }}/ws53-spi-dma-8-build/report.json
+            ${{ runner.temp }}/ws53-spi-dma-32-build/build.log
+            ${{ runner.temp }}/ws53-spi-dma-32-build/report.json

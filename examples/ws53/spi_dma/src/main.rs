@@ -140,6 +140,14 @@ fn test<T: Instance + 'static>(
                 match scenario {
                     b'N' => assert_eq!(result.unwrap().elements(), 33),
                     b'R' | b'W' => assert_eq!(result, Err(Error::Bus)),
+                    b'P' | b'Q' => match result {
+                        Err(Error::SpiCollision { status, raw_interrupt }) => {
+                            assert_ne!(status & if port == 0 { 1 } else { 1 << 6 }, 0);
+                            let irq_bit = if port == 0 { 1 << 15 } else { 1 << 5 };
+                            assert_eq!(raw_interrupt & irq_bit != 0, scenario == b'Q');
+                        }
+                        _ => panic!("expected collision during DMA"),
+                    },
                     _ => assert_eq!(result, Err(Error::Timeout)),
                 }
             }
