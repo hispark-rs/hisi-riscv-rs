@@ -2,6 +2,56 @@ schema = "hispark-rs/plan-registry/v1"
 max_active_implementations = 2
 
 [[plan]]
+id = "ws53-i2c-wire"
+path = "ws53-i2c-wire.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "I2C model and board wire evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-ipc-ring"
+path = "ws53-ipc-ring.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-ipc-migration"]
+trigger = "firmware queue format evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-ipc-spsc"
+path = "ws53-ipc-spsc.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-ipc-migration"]
+trigger = "concurrent queue qualification"
+evidence = []
+
+[[plan]]
+id = "ws53-ram-takeover"
+path = "ws53-ram-takeover.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "RAM execution and handoff evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-spi-wire"
+path = "ws53-spi-wire.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "SPI model and board wire evidence"
+evidence = []
+
+[[plan]]
 id = "ws53-adaptation"
 path = "ws53-adaptation.md"
 status = "active"
