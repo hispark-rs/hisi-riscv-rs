@@ -1,5 +1,7 @@
 # WS53 应用核适配实施记录
 
+**状态：** 执行中，分阶段开发与验收。
+
 用户于 2026-10-22 批准完整 P0–P7 方案。本记录用于跨仓库实施和验收；
 **当前为分阶段开发版本，不是完整适配或稳定发布。**
 
@@ -500,7 +502,7 @@ SDK：`fbb_ws53` 提交 `163d9150ab94a02d09a05f623351f9facee3025e`，
 | 应用 ITCM | 模式 1：`0x20000..0x30000` | RAM ELF 暂用 `0x28000..0x30000` |
 | 应用 DTCM | 模式 1：`0x20010000..0x20060000` | RAM ELF 暂用 `0x20050000..0x2005ff00` |
 | 内存分配 | `dyn_mem.c`、`clock_recover.h` | 先读 BRAM_SHARE、DTCM_SHARE、MCU mode；不重分配 |
-| UART0/1/2 | `acore/platform_core.h`、`uart_porting.c` | 0x52081000 / 0x52080000 / 0x57014000 |
+| UART0/1/2 | `acore/platform_core.h`、`uart_porting.c` | 基址 0x52081000 / 0x52080000 / 0x57014000 |
 | TIMER | `timer_porting.c`、应用 `dev_work_clock_init` | 两通道，启动后 32 MHz（覆盖 menuconfig 的 30 MHz），IRQ 53/54 |
 | GPIO | `gpio_porting.h` | 三组宽度 23/12/3，不能套用 WS63 的 8 位宽度 |
 | IRQ | `acore/chip_core_irq.h` | 使用绝对 mcause 编号；32 以上走 LOCI |
@@ -3985,8 +3987,8 @@ ELF布局/ABI/无A指令检查通过，正式hisiflash离线check与hisi-fwpkg�
 eFuse、安全启动或永久保护。原应用运行后NV自然变化，因此本次备份哈希不同
 于上一轮恢复预期；同一烧录会话内仍完全保持。
 
-- CLI SHA：`725097f4972bf4a618f988fc1fd5b8d6f2d462906fed212e953ab1ce8bc524e2`。
-- ELF SHA：`b9d55dcf559cfb9493fa2553570215e6c6f9d66357e5e9c7ad147925025fae9f`。
+- CLI 校验值：`725097f4972bf4a618f988fc1fd5b8d6f2d462906fed212e953ab1ce8bc524e2`。
+- ELF 校验值：`b9d55dcf559cfb9493fa2553570215e6c6f9d66357e5e9c7ad147925025fae9f`。
 - 正文SHA：`51ae63672b48532559c61587841d733048782932e54dba440aacee5eb1dddd76`，19764字节。
 - 写前整片SHA：`65c846daf19ab1c49c25e463e0c916eac09b13a3e3ab8b521da8372289938c4d`。
 - 校验后整片SHA：`cfdc147a1df053b4f0a7f0b3ab91de77c84f80bebe7f64c7520623349df74ef7`。
