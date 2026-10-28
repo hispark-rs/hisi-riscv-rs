@@ -9,6 +9,24 @@ use hisi_ws53_coex::{
     mailbox::{MailboxError, MailboxImage, MailboxSize, Route},
     spsc::{CoherentMemory, Error, Receive, Transmit},
 };
+#[cfg(feature = "endpoint-contract")]
+use hisi_ws53_coex::{
+    endpoint::{Endpoint, ReceiveError, SendError},
+    protocol::FirmwareProtocol,
+    session::Session,
+    transport::ws53::{FrameAuthority, PollingEndpoint},
+};
+
+#[cfg(feature = "endpoint-contract")]
+struct SyntheticPeerAuthority;
+// SAFETY: the QEMU peer only copies inline bytes and never interprets an
+// address or performs any service. This is not a physical platform authority.
+#[cfg(feature = "endpoint-contract")]
+unsafe impl FrameAuthority for SyntheticPeerAuthority {
+    fn permits(&self, _: Message<'_>) -> bool {
+        true
+    }
+}
 
 const COUNT: u32 = 512;
 #[repr(C, align(4))]
@@ -149,8 +167,21 @@ fn main() -> ! {
         )
     }
     .unwrap();
-    let mut tx = Some(unsafe { Transmit::from_prepared(tx_memory, Channel::Channel0) }.unwrap());
-    let mut rx = Some(unsafe { Receive::from_prepared(rx_memory, Channel::Channel1) }.unwrap());
+    let tx = unsafe { Transmit::from_prepared(tx_memory, Channel::Channel0) }.unwrap();
+    let rx = unsafe { Receive::from_prepared(rx_memory, Channel::Channel1) }.unwrap();
+    #[cfg(not(feature = "endpoint-contract"))]
+    let (mut tx, mut rx) = (Some(tx), Some(rx));
+    #[cfg(feature = "endpoint-contract")]
+    let mut endpoint = Session::new(unsafe {
+        // The QEMU test peer uses exactly this cursor profile and owns the
+        // complementary fields; ordinary shared model RAM is coherent.
+        PollingEndpoint::from_prepared(
+            tx,
+            rx,
+            SyntheticPeerAuthority,
+            FirmwareProtocol::Sdk163d9150,
+        )
+    });
     put(7, 2166136261);
     put(8, 2166136261);
     put(9, COUNT);
@@ -166,7 +197,20 @@ fn main() -> ! {
             let input = message(sent, &p);
             // SAFETY: model peer only compares inline bytes, never executes a
             // service or dereferences payload pointers. Real permissions differ.
-            match unsafe { tx.as_mut().unwrap().try_push(input) } {
+            #[cfg(not(feature = "endpoint-contract"))]
+            let result = unsafe { tx.as_mut().unwrap().try_push(input) };
+            #[cfg(feature = "endpoint-contract")]
+            let result = {
+                let mut frame = [0; MAX_MESSAGE];
+                let length = input.encode(&mut frame);
+                endpoint
+                    .try_send(&frame[..length])
+                    .map_err(|error| match error {
+                        SendError::Full => Error::Mailbox(MailboxError::Full),
+                        _ => panic!(),
+                    })
+            };
+            match result {
                 Ok(()) => {
                     put(7, hash(get(7), input));
                     put(3, sent + 1);
@@ -176,7 +220,31 @@ fn main() -> ! {
             }
         }
         if gate & 2 != 0 && received < COUNT {
-            match rx.as_mut().unwrap().try_pop_into(&mut output).unwrap() {
+            #[cfg(not(feature = "endpoint-contract"))]
+            let received_message = rx.as_mut().unwrap().try_pop_into(&mut output).unwrap();
+            #[cfg(feature = "endpoint-contract")]
+            let received_message = {
+                if received == 0 && get(15) == 0 {
+                    let mut short = [0xa5; 1];
+                    match endpoint.try_receive(&mut short) {
+                        Err(ReceiveError::BufferTooSmall { required: 64 }) => {
+                            assert_eq!(short, [0xa5]);
+                            put(15, 1);
+                        }
+                        Ok(None) => {}
+                        _ => panic!(),
+                    }
+                }
+                if get(15) == 0 {
+                    None
+                } else {
+                    endpoint
+                        .try_receive(&mut output)
+                        .unwrap()
+                        .map(|length| Message::decode(&output[..length]).unwrap())
+                }
+            };
+            match received_message {
                 Some(actual) => {
                     let p = payload(received);
                     assert_eq!(actual, message(received, &p));
@@ -191,23 +259,49 @@ fn main() -> ! {
         }
         if gate & 8 != 0 && get(17) == 0 {
             let mut bad_output = [0xa5; MAX_MESSAGE];
-            match rx.as_mut().unwrap().try_pop_into(&mut bad_output) {
-                Err(Error::Mailbox(MailboxError::Message(_))) => {
+            #[cfg(not(feature = "endpoint-contract"))]
+            let corrupt = match rx.as_mut().unwrap().try_pop_into(&mut bad_output) {
+                Err(Error::Mailbox(MailboxError::Message(_))) => true,
+                Ok(None) => false,
+                _ => panic!(),
+            };
+            #[cfg(feature = "endpoint-contract")]
+            let corrupt = match endpoint.try_receive(&mut bad_output) {
+                Err(ReceiveError::Corrupt) => true,
+                Ok(None) => false,
+                _ => panic!(),
+            };
+            match corrupt {
+                true => {
                     put(18, u32::from(bad_output.iter().all(|b| *b == 0xa5)));
                     put(17, 27);
                 }
-                Ok(None) => {}
-                _ => panic!(),
+                false => {}
             }
         }
         if gate == 4 && get(13) == 0 && get(14) == 0 {
-            // SAFETY: host explicitly stops its peer after all valid frames and
-            // fault publication finish, then signals4. Synchronous QTest writes
-            // are complete; no subsequent queue access until system reset.
-            let _tx_mapping = unsafe { tx.take().unwrap().reclaim_after_peer_quiescent() };
-            put(13, 1);
-            let _rx_mapping = unsafe { rx.take().unwrap().reclaim_after_peer_quiescent() };
-            put(14, 1);
+            #[cfg(not(feature = "endpoint-contract"))]
+            {
+                // SAFETY: host explicitly stops its peer after all valid frames and
+                // fault publication finish, then signals4. Synchronous QTest writes
+                // are complete; no subsequent queue access until system reset.
+                let _tx_mapping = unsafe { tx.take().unwrap().reclaim_after_peer_quiescent() };
+                put(13, 1);
+                let _rx_mapping = unsafe { rx.take().unwrap().reclaim_after_peer_quiescent() };
+                put(14, 1);
+            }
+            #[cfg(feature = "endpoint-contract")]
+            {
+                // Invalidation is local; it is deliberately not queue recovery.
+                endpoint.invalidate();
+                assert_eq!(endpoint.try_send(&[]), Err(SendError::Invalidated));
+                put(13, 1);
+                assert_eq!(
+                    endpoint.try_receive(&mut output),
+                    Err(ReceiveError::Invalidated)
+                );
+                put(14, 1);
+            }
         }
         core::hint::spin_loop();
     }
