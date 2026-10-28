@@ -10,6 +10,7 @@ hisi-fwpkg against the qualified backup for packaging and hisiflash for writes.
 """
 import argparse
 import hashlib
+import io
 import json
 from pathlib import Path
 import runpy
@@ -30,11 +31,14 @@ def contains(region, start, size):
 
 
 def validate(path, *, allow_ram_functions=False):
+    # The relocation audit, main ELF checks, extracted payload and hash must
+    # all describe the same input, even if a concurrent build replaces path.
+    image = path.read_bytes()
     ram_functions = None
     if allow_ram_functions:
         audit = Path(__file__).resolve().parents[1]/'crates/hisi-riscv-rt/scripts/check-ws53-ram-functions.py'
-        ram_functions = runpy.run_path(str(audit))['validate'](path)
-    with path.open('rb') as stream:
+        ram_functions = runpy.run_path(str(audit))['validate_bytes'](image)
+    with io.BytesIO(image) as stream:
         elf = ELFFile(stream)
         require(elf.elfclass == 32 and elf.little_endian and elf['e_machine'] == 'EM_RISCV', 'ELF32 RISC-V required')
         require(elf['e_type'] == 'ET_EXEC' and elf['e_flags'] == 3, 'linked RVC/single-float ELF required')
@@ -45,7 +49,7 @@ def validate(path, *, allow_ram_functions=False):
                 continue
             v, p = segment['p_vaddr'], segment['p_paddr']
             size, count, flags = segment['p_memsz'], segment['p_filesz'], segment['p_flags']
-            require(count <= size and segment['p_offset']+count <= path.stat().st_size, 'truncated load segment')
+            require(count <= size and segment['p_offset']+count <= len(image), 'truncated load segment')
             require(not (flags & 1 and flags & 2), 'writable executable segment')
             if flags & 2:
                 require(contains(RAM, v, size) or (count == 0 and contains(BOOTSTRAP, v, size)), 'RAM/stack ownership violation')
@@ -103,7 +107,7 @@ def validate(path, *, allow_ram_functions=False):
         for address, data in parts:
             payload[address-FLASH[0]:address-FLASH[0]+len(data)] = data
     return dict(profile='ws53-vendor-flashboot-mode1-experimental', entry=FLASH[0],
-        elf_sha256=hashlib.sha256(path.read_bytes()).hexdigest(), loads=loads,
+        elf_sha256=hashlib.sha256(image).hexdigest(), loads=loads,
         payload_sha256=hashlib.sha256(payload).hexdigest(), payload_bytes=len(payload),
         verified=['ELF32/ilp32f', 'no-A-instructions', 'Flash-only-file-bytes', 'data-copy-layout', 'stack-boundaries'],
         hardware_verified=False, cold_boot_verified=False, complete_image=False,

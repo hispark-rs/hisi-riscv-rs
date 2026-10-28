@@ -9,7 +9,7 @@
 | hisi-registers | `feat/ws53-agpio-clock`，`bc02ca0`；包含 IPC、SPI 及 AGPIO 时钟等分项历史 | 同名远端分支，[草稿 PR #1](https://github.com/hispark-rs/hisi-registers/pull/1)；独立 SDIO、SFC 证据已分别推送并建 [PR #2](https://github.com/hispark-rs/hisi-registers/pull/2)、[PR #3](https://github.com/hispark-rs/hisi-registers/pull/3)，尚未合入 |
 | ws63-svd / ws63-pac | `fix/ws63-tcxo-two-word`：SVD `9f11980`、PAC `6324bcf`；新增完整 TCXO 字段并保留旧访问器 | [SVD 草稿 PR #2](https://github.com/hispark-rs/ws63-svd/pull/2)、[PAC 草稿 PR #2](https://github.com/hispark-rs/ws63-pac/pull/2)；均尚未合并或发布，待实板验证 |
 | ws53-pac | `feat/ws53-agpio-clock`，`cd5db21`；生成来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；独立打包、远端 CI 和发布 dry run 通过。用户授权发布 `v0.1.0-alpha.1`，正式上传因 crates.io 凭据返回 403，尚未发布 |
-| hisi-riscv-rt | `codex/ws53-exceptions`，`03fbef8` | 同名远端分支，[草稿 PR #7](https://github.com/hispark-rs/hisi-riscv-rt/pull/7)；独立依赖 PAC 的外部构建待验证 |
+| hisi-riscv-rt | `codex/ws53-exceptions`，`c57691c`；RAM 函数审计支持同一 ELF 快照 | 同名远端分支，[草稿 PR #7](https://github.com/hispark-rs/hisi-riscv-rt/pull/7)；独立依赖 PAC 的外部构建待验证 |
 | hisi-ws53-coex | `feat/ws53-control-core-protocol`，`5a8971a`；协议、传输、服务分层，队列损坏锁定会话失效 | [项目远端](https://github.com/hispark-rs/hisi-ws53-coex)同名分支；空缓存外部消费者、独立 CI 及轮询端点 QEMU 通过，未发布，真实对端与实板尚未验收 |
 | hisi-hal | `feat/ws53-mcu-integration`，`90b1981`；共用 I2C 事务规划，修正 BS21 重复 START 和中止分类 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；registry 解析不到 `ws53-pac` 导致原有 WS63/BS21 CI 多项失败；BS21 I2C 恢复与实板验证未完成 |
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
