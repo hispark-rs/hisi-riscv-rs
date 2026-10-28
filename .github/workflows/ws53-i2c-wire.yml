@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: hispark-rs/hisi-riscv-qemu
-          ref: fd853fe2b09d769ac100e1f26cf673241a42ef52
+          ref: e6f90b47c5ff4d7fd054c891f9fb67148c5f49be
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:

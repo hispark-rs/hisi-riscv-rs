@@ -74,6 +74,31 @@ fn exercise<T, W: Word, D: DelayNs>(bus: &mut Spi<'_, T, W, D>) {
     bus.flush().unwrap();
     bus.recover().unwrap();
 }
+fn collision_probe<T, D: DelayNs>(
+    bus: &mut Spi<'_, T, u8, D>,
+    uart: &mut Uart<'_, Uart2<'_>>,
+    mask: u32,
+) {
+    let error = bus.write(&[0x42]).unwrap_err();
+    match error {
+        Error::Failure(Failure::Collision {
+            status,
+            raw_interrupt: None,
+        }) => assert_ne!(status & mask, 0),
+        _ => panic!("status-only collision not reported"),
+    }
+    assert!(!bus.is_poisoned());
+    emit(uart, b"WS53 SPI clear collision\n");
+    let mut budget = 50_000_000u32;
+    loop {
+        if let Ok(byte) = uart.read_byte() {
+            assert_eq!(byte, b'R');
+            break;
+        }
+        budget = budget.checked_sub(1).expect("collision control timeout");
+    }
+    bus.write(&[0x42]).unwrap();
+}
 macro_rules! exercise_instance {
     ($token:expr, $pins:expr, $ctor:ident, $delay:expr) => {{
         let mut token = $token;
@@ -105,7 +130,7 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     // Only the QEMU profile establishes these clocks/routes/XIP permissions.
     // These pads are distinct synthetic permissions, NOT a physical pin map.
-    let uart = unsafe { Uart::from_configured(p.UART2.assume_application_ownership()) };
+    let mut uart = unsafe { Uart::from_configured(p.UART2.assume_application_ownership()) };
     let timer = RefCell::new(TimerDriver::new(unsafe {
         p.TIMER.assume_application_ownership()
     }));
@@ -157,6 +182,16 @@ fn main() -> ! {
         assert_eq!(error, Error::Failure(Failure::Timeout(Wait::Disable)));
         assert!(still_owned.is_poisoned());
         drop(still_owned); // bounded best effort, no inactive-bus claim
+    } else if cfg!(feature = "collision-spi0") {
+        let config = Config::new(
+            SpiHz::try_from_hz(1_000_000).unwrap(),
+            MODE_0,
+            NonZeroU16::new(1000).unwrap(),
+        );
+        let mut bus = Spi::<_, u8, _>::new_spi0(spi0, pins0, config, delay)
+            .unwrap_or_else(|_| panic!("SPI0 init"));
+        collision_probe(&mut bus, &mut uart, 1);
+        assert!(bus.try_free().is_ok());
     } else {
         let (sclk, mosi, miso) = exercise_instance!(spi0, pins0, new_spi0, delay);
         assert_eq!(
@@ -164,12 +199,21 @@ fn main() -> ! {
             (Pad::Mgpio3, Pad::Mgpio4, Pad::Mgpio5)
         );
     }
-    let (sclk, mosi, miso) = exercise_instance!(
-        unsafe { p.QSPI1.assume_application_ownership() },
-        pins1,
-        new_qspi1,
-        delay
-    );
+    let qspi1 = unsafe { p.QSPI1.assume_application_ownership() };
+    let (sclk, mosi, miso) = if cfg!(feature = "collision-qspi1") {
+        let config = Config::new(
+            SpiHz::try_from_hz(1_000_000).unwrap(),
+            MODE_0,
+            NonZeroU16::new(1000).unwrap(),
+        );
+        let mut bus = Spi::<_, u8, _>::new_qspi1(qspi1, pins1, config, delay)
+            .unwrap_or_else(|_| panic!("QSPI1 init"));
+        collision_probe(&mut bus, &mut uart, 1 << 6);
+        let (_, pins) = bus.try_free().unwrap_or_else(|_| panic!("QSPI1 release"));
+        pins.into_pads()
+    } else {
+        exercise_instance!(qspi1, pins1, new_qspi1, delay)
+    };
     assert_eq!(
         (sclk.pad(), mosi.pad(), miso.pad()),
         (Pad::Mgpio8, Pad::Mgpio9, Pad::Mgpio10)
@@ -180,6 +224,16 @@ fn main() -> ! {
         emit(
             &uart,
             b"WS53 PASS SPI clock_stall rx_timeout=1 poisoned=1 retained=1 other_instance=1\n",
+        );
+    } else if cfg!(feature = "collision-spi0") {
+        emit(
+            &uart,
+            b"WS53 PASS SPI status_collision=spi0 irq_absent=1 recovered=1 peer=1\n",
+        );
+    } else if cfg!(feature = "collision-qspi1") {
+        emit(
+            &uart,
+            b"WS53 PASS SPI status_collision=qspi1 irq_absent=1 recovered=1 peer=1\n",
         );
     } else {
         emit(

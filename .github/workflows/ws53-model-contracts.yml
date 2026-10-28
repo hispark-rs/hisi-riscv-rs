@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: hispark-rs/hisi-riscv-qemu
-          ref: fd853fe2b09d769ac100e1f26cf673241a42ef52
+          ref: e6f90b47c5ff4d7fd054c891f9fb67148c5f49be
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:
@@ -42,7 +42,7 @@ jobs:
           for manifest in examples/ws53-hash-model/Cargo.toml examples/ws53-km-model/Cargo.toml \
               examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml \
               examples/ws53-sfc-read/Cargo.toml examples/ws53-ipc/Cargo.toml \
-              examples/ws53/ram_smoke/Cargo.toml; do
+              examples/ws53/ram_smoke/Cargo.toml examples/ws53/spi_control/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
@@ -51,7 +51,8 @@ jobs:
               ws53_sdio_model_build.py test-ws53-sdio-qualified.py ws53_symc_model_build.py \
               test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py \
               ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
-              ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py; do
+              ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
+              ws53_spi_collision_build.py test-ws53-spi-collision.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -78,6 +79,17 @@ jobs:
             --output "$RUNNER_TEMP/ws53-spi-test"
           uv run --offline --script scripts/test-ws53-spi-wire-validator.py \
             --report "$RUNNER_TEMP/ws53-spi-test/report.json" --trace "$RUNNER_TEMP/ws53-spi-test/pads.csv"
+      - name: Check status-only SPI collision and recovery
+        working-directory: project
+        run: |
+          for bus in spi0 qspi1; do
+            uv run --offline --script scripts/ws53_spi_collision_build.py --bus "$bus" --output "$RUNNER_TEMP/ws53-$bus-collision-build"
+            uv run --offline --script scripts/test-ws53-spi-collision.py --bus "$bus" \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --model-receipt "$RUNNER_TEMP/ws53-model/receipt.json" --model-source ../qemu-overlay \
+              --elf "$RUNNER_TEMP/ws53-$bus-collision-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-$bus-collision-build/receipt.json" \
+              --output "$RUNNER_TEMP/ws53-$bus-collision-test"
+          done
       - name: Save model reports and build evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -98,3 +110,9 @@ jobs:
             ${{ runner.temp }}/ws53-spi-build/build.log
             ${{ runner.temp }}/ws53-spi-test/report.json
             ${{ runner.temp }}/ws53-spi-test/pads.csv
+            ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json
+            ${{ runner.temp }}/ws53-spi0-collision-build/build.log
+            ${{ runner.temp }}/ws53-spi0-collision-test/report.json
+            ${{ runner.temp }}/ws53-qspi1-collision-build/receipt.json
+            ${{ runner.temp }}/ws53-qspi1-collision-build/build.log
+            ${{ runner.temp }}/ws53-qspi1-collision-test/report.json

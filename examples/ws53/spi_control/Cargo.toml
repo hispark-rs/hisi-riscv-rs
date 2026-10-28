@@ -7,6 +7,8 @@ publish = false
 
 [features]
 clock-stall-smoke = []
+collision-spi0 = []
+collision-qspi1 = []
 
 [dependencies]
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
