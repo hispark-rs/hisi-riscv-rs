@@ -12,7 +12,7 @@
 | hisi-hal | `feat/ws53-mcu-integration`，`90b1981`；共用 I2C 事务规划，修正 BS21 重复 START 和中止分类 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；registry 解析不到 `ws53-pac` 导致原有 WS63/BS21 CI 多项失败；BS21 I2C 恢复与实板验证未完成 |
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
 | hisi-fwpkg | `feat/ws53-application-images`，`217447f` | 同名远端分支，[草稿 PR #4](https://github.com/hispark-rs/hisi-fwpkg/pull/4)；为 hisiflash 的固定 Git 依赖 |
-| hisiflash | `feat/ws53-serial-flash`，`68a0f87`；含串口回读文件头重传处理 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；本地工作区测试及格式/Clippy 通过，新增路径尚未实板验证 |
+| hisiflash | `feat/ws53-serial-flash`，`13a2bb2`；含串口回读文件头重传和恢复保护范围检查 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；本地工作区测试及格式/Clippy 通过，新增路径尚未实板验证 |
 | hisi-riscv-rs | `feat/ws53-integration`；PAC、HAL、运行时指针、示例及首轮 SPI Flash 恢复证据索引已分项提交 | 同名远端分支，[草稿 PR #58](https://github.com/hispark-rs/hisi-riscv-rs/pull/58)；余下脚本与证据待分项整理 |
 
 寄存器来源 → PAC → 运行时/HAL → 示例与测试；QEMU 模型独立版本化并由测试
