@@ -41,7 +41,8 @@ jobs:
         run: |
           for manifest in examples/ws53-hash-model/Cargo.toml examples/ws53-km-model/Cargo.toml \
               examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml \
-              examples/ws53-sfc-read/Cargo.toml examples/ws53-ipc/Cargo.toml; do
+              examples/ws53-sfc-read/Cargo.toml examples/ws53-ipc/Cargo.toml \
+              examples/ws53/ram_smoke/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
@@ -49,7 +50,8 @@ jobs:
           for script in ws53_ci_qemu_uart_clock_build.py ws53_crypto_model_build.py test-ws53-crypto-qualified.py \
               ws53_sdio_model_build.py test-ws53-sdio-qualified.py ws53_symc_model_build.py \
               test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py \
-              ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py; do
+              ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
+              ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -65,6 +67,17 @@ jobs:
         run: |
           bash scripts/run-ws53-model-contracts.sh "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             "$RUNNER_TEMP/ws53-model/receipt.json" ../qemu-overlay "$RUNNER_TEMP/ws53-contracts"
+      - name: Check SPI0 digital wire traffic
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_spi_model_build.py --output "$RUNNER_TEMP/ws53-spi-build"
+          uv run --offline --script scripts/test-ws53-spi-wire-ci.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-spi-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-spi-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-spi-test"
+          uv run --offline --script scripts/test-ws53-spi-wire-validator.py \
+            --report "$RUNNER_TEMP/ws53-spi-test/report.json" --trace "$RUNNER_TEMP/ws53-spi-test/pads.csv"
       - name: Save model reports and build evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -81,3 +94,6 @@ jobs:
             ${{ runner.temp }}/ws53-contracts/**/receipt.json
             ${{ runner.temp }}/ws53-contracts/**/operations.json
             ${{ runner.temp }}/ws53-contracts/summary.json
+            ${{ runner.temp }}/ws53-spi-build/receipt.json
+            ${{ runner.temp }}/ws53-spi-build/build.log
+            ${{ runner.temp }}/ws53-spi-test/report.json
