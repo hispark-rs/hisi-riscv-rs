@@ -8624,3 +8624,5 @@ UART 测试工具续记：主仓 `0533eb9ca` 将模型构建与检查工具纳�
 UART 全新模型续验：从远端独立检出模型 `1bc19b7`，由本地上游 Git 镜像检出固定 QEMU `7c949c53` 后全新构建模型；新凭据 `/tmp/ws53-uart-clean-qemu-build-20261029/receipt.json` SHA-256 `9ebf7e33f13109f4112cc993d969f90c00f4aec7f9411f792da68c628976253a`。用此前远端干净检出的夹具及此新模型重新通过六组时钟门控场景，报告 `/tmp/ws53-uart-fresh-qemu-test-20261029/report.json` SHA-256 `da644e2800e2706fc6f6ebba3465703fa6f40ef2e04855283339e3655dd01d36`。上游镜像为本地已有副本，非全新联网获取；模型仍不证明真实波特率、物理时钟或实板行为。
 
 旧芯片 UART 校验补充：HAL `3adeac4` 提供按实际选用时钟档位计算分频的可失败构造器，非法配置在 UART 寄存器写入前返回原 token；旧无错误返回构造器仍保留且不自动获得校验。WS63 的 24/40 MHz 配置及三芯片相关主机测试、目标 Clippy 与旧芯片 API 文档通过，依赖仍使用本地覆盖；新接口未在真实时钟树或实板验收。
+
+旧 DMA guard 安全整改：HAL `e5c12b6` 要求实验性 DMA 入口的缓冲区为拥有所有权或静态借用，阻止遗忘 guard 后回收所借用的栈；外部编译失败用例、旧芯片主机测试/文档测试、三芯片 Clippy 和 BS21 示例检查通过。WS63 示例 workspace 离线检查缺少 `hisi-panic-handler`；取消后总线排空、缓存行及外设地址等风险仍未解决，详见 `docs/plan/legacy-dma-safety-audit.md`。本轮未操作硬件。

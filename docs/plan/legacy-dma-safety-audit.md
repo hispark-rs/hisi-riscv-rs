@@ -33,3 +33,15 @@
 源码基线：HAL `3adeac4`；相关路径为 `start_mem_to_mem`、
 `start_mem_to_peripheral`、`start_peripheral_to_mem`、`Transfer::wait`、
 `PeripheralTransfer::wait`、`quiesce_channel` 和两个 `Drop` 实现。
+
+## 进展：静态借用限制
+
+HAL `e5c12b6` 为上述三个实验性启动入口添加 `'static` 缓冲区类型约束，
+阻止把非静态借用的栈空间交给一个可被遗忘的 guard。外部消费者的栈借用
+用例实际得到 E0521，相关 compile-fail 文档测试通过；两旧芯片相关主机
+测试、三芯片 RISC-V Clippy 和 BS21 示例 workspace 检查通过。这个约束会
+改变实验接口对非静态借用的接受范围；已有 WS63 示例的静态缓冲形式无需
+改写，但其 workspace 检查因离线缓存缺少 `hisi-panic-handler` 尚未完成。
+
+这只是第 2 项的一部分：不能证明 owned buffer 的提前释放路径或取消后的
+总线排空，也不解决第 1、3、4 项。仍不得把旧 guard 作为安全修复完成。
