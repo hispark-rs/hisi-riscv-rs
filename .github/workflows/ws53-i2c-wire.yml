@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: hispark-rs/hisi-riscv-qemu
-          ref: e6f90b47c5ff4d7fd054c891f9fb67148c5f49be
+          ref: 27def194eb9d0d6989cc3c5fb0f0c1da8150be0b
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:
@@ -42,7 +42,7 @@ jobs:
           cargo fetch --locked --manifest-path examples/ws53/i2c_control/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
-          for script in ws53_ci_qemu_uart_clock_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py test-ws53-i2c-arbitration.py; do
+          for script in ws53_ci_qemu_uart_clock_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py test-ws53-i2c-arbitration.py test-ws53-i2c-general-call.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
       - name: Build fixed QEMU source
@@ -81,6 +81,15 @@ jobs:
               --elf "$RUNNER_TEMP/ws53-i2c-$scenario-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-$scenario-build/receipt.json" \
               --output "$RUNNER_TEMP/ws53-i2c-$scenario-test"
           done
+      - name: Check general-call NACK and recovery
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --fault general-call --output "$RUNNER_TEMP/ws53-i2c-general-call-build"
+          uv run --offline --script scripts/test-ws53-i2c-general-call.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-general-call-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-general-call-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-general-call-test"
       - name: Save model reports and build evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -104,3 +113,6 @@ jobs:
             ${{ runner.temp }}/ws53-i2c-mixed-build/receipt.json
             ${{ runner.temp }}/ws53-i2c-mixed-build/build.log
             ${{ runner.temp }}/ws53-i2c-mixed-test/report.json
+            ${{ runner.temp }}/ws53-i2c-general-call-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-general-call-build/build.log
+            ${{ runner.temp }}/ws53-i2c-general-call-test/report.json

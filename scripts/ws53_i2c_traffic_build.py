@@ -25,7 +25,8 @@ SCHEMA = 'ws53-i2c-wire-traffic-build-v1'
 
 
 def select_fault(scenario):
-    feature = {'arbitration': 'arbitration-smoke', 'stuck': 'stuck-smoke', 'mixed': 'mixed-abort-smoke'}[scenario]
+    feature = {'arbitration': 'arbitration-smoke', 'stuck': 'stuck-smoke', 'mixed': 'mixed-abort-smoke',
+               'general-call': 'general-call-smoke'}[scenario]
     if feature not in FEATURES:
         FEATURES.append(feature)
 
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--arbitration',action='store_true')
-    p.add_argument('--fault',choices=('stuck','mixed'))
+    p.add_argument('--fault',choices=('stuck','mixed','general-call'))
     args = p.parse_args()
     if args.arbitration and args.fault:
         p.error('choose one fault')

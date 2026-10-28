@@ -178,6 +178,29 @@ fn main() -> ! {
         }
         driver.recover().unwrap();
         assert!(driver.try_free().is_ok());
+    } else if cfg!(feature = "general-call-smoke") {
+        let mut driver = result.unwrap_or_else(|_| panic!("I2C0 init failed"));
+        for _ in 0..2 {
+            let error = driver
+                .transaction(Address::seven(0).unwrap(), &mut [Operation::Write(&[0])])
+                .unwrap_err();
+            assert_eq!(
+                error,
+                Error::Failure(Failure::Abort {
+                    source: 0,
+                    detail: 0x10
+                })
+            );
+            assert_eq!(
+                error.kind(),
+                ErrorKind::NoAcknowledge(NoAcknowledgeSource::Address)
+            );
+            assert!(!driver.is_poisoned());
+        }
+        driver
+            .transaction(Address::seven(0x50).unwrap(), &mut [Operation::Write(&[0])])
+            .unwrap();
+        assert!(driver.try_free().is_ok());
     } else if cfg!(any(
         feature = "arbitration-smoke",
         feature = "stuck-smoke",
@@ -251,6 +274,11 @@ fn main() -> ! {
         emit(
             &uart,
             b"WS53 PASS I2C clock_stall enable_timeout=1 bounded=1 other_instance=1\n",
+        );
+    } else if cfg!(feature = "general-call-smoke") {
+        emit(
+            &uart,
+            b"WS53 PASS I2C general_call_nack=1 raw=1 retry=1 other_instance=1\n",
         );
     } else if cfg!(feature = "arbitration-smoke") {
         emit(
