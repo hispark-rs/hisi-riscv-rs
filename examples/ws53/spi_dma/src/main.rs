@@ -113,7 +113,14 @@ fn test<T: Instance + 'static>(
     match scenario {
         b'C' => assert_eq!(start, Err(Error::SpiConfiguration)),
         b'B' => assert_eq!(start, Err(Error::SpiBusy)),
-        b'L' => assert!(matches!(start, Err(Error::SpiHardware { .. }))),
+        b'L' | b'Z' => match start {
+            Err(Error::SpiCollision { status, raw_interrupt }) => {
+                assert_ne!(status & if port == 0 { 1 } else { 1 << 6 }, 0);
+                let irq_bit = if port == 0 { 1 << 15 } else { 1 << 5 };
+                assert_eq!(raw_interrupt & irq_bit != 0, scenario == b'L');
+            }
+            _ => panic!("expected collision status"),
+        },
         _ => {
             start.unwrap();
             emit(console, b"WS53 SPIDMA armed\n");

@@ -241,14 +241,14 @@ UART，只接受静态字节缓冲区。`wait_transmitter_idle` 是有限的发�
 校验完备的收流接口。UART2、双向拆分、IRQ/async及实板验证尚未提供。
 
 `spi_dma` 是 **QEMU 专用** SPI0/QSPI1双向DMA所有权示例，默认u8，另有
-`width32`变体。两种位宽各50个场景，覆盖八组TX/RX相邻通道、每侧独立故障、
-超时、取消、Drop/forget和初始配置/队列/错误拒绝。主机配置的是明确的模型
+`width32`变体。两种位宽各52个场景，覆盖八组TX/RX相邻通道、每侧独立故障、
+超时、取消、Drop/forget和初始配置/队列/错误拒绝，以及仅状态碰撞和状态与中断同时碰撞。主机配置的是明确的模型
 环境，不是实际板卡接线；示例中引脚占用不得用于推断物理复用。
 
 ```sh
 cargo build -Zbuild-std=core --manifest-path examples/ws53/Cargo.toml \
   -p ws53_spi_dma --release --locked
-uv run --script scripts/test-ws53-spi-dma.py --qemu /path/to/qemu-system-riscv32 \
+uv run --script scripts/test-ws53-spi-dma-collision.py --qemu /path/to/qemu-system-riscv32 \
   --elf examples/ws53/target/riscv32imfc-unknown-none-elf/release/ws53_spi_dma
 # 32位变体：同一构建命令增加 --features width32，然后运行相同检查器。
 ```
