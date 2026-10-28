@@ -70,3 +70,18 @@ compile-fail 文档和三芯片目标 Clippy 通过；现有仓库未发现这�
 
 内存到内存启动仍是安全接口，取消后归还及通道重新启用等路径仍须处理；
 不能因为外设入口增加 `unsafe` 就声称 DMA 子系统安全或问题已解决。
+
+## 进展：空传输和 SDK 停用证据
+
+HAL `a90daf7` 在内存及外设传输入口拒绝零长度，先于控制器和 DMA 寄存器
+访问；两旧芯片 DMA 相关主机测试及三芯片目标 Clippy 通过。此行为不推断
+硬件零长度语义，也不修复尚未证明的排空或资源归还。
+
+本机 WS63 SDK `bffc3560e480970a9e84707e0abdcc24e682d4f3` 的未修改文件
+`src/drivers/drivers/hal/dma/v151/hal_dmac_v151.c` SHA-256
+`622cc523713a184f84b56fd90f53a4f8dd7e70c7e2c85e43fece144d1d412782`：
+`hal_dma_v151_enable(..., false)` 清通道使能、释放握手及链表；它没有提供
+可用于证明已发总线写完成的等待或屏障。`hal_dmac_v151_regs_def.h`
+SHA-256 `954a30deba7fa311be9ab779dc7258e4363094cf905949a9fa94866fb4699af4`
+只命名 `active` 和 `halt` 位，未定义其排空语义。该 SDK 树有其他本地改动，
+上述两文件经 diff 检查未修改；不能以此推断芯片实际总线完成行为。
