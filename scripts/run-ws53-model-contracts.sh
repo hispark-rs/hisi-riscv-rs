@@ -38,22 +38,9 @@ for kind in symc sfc; do
         --elf "$output/$kind-build/firmware.elf" --receipt "$output/$kind-build/receipt.json" \
         --output "$output/$kind-test"
 done
-python3 - "$output" <<'PY'
-import hashlib
-import json
-from pathlib import Path
-import sys
-
-root = Path(sys.argv[1])
-names = ('hash', 'km', 'sdio-init', 'sdio-transfer', 'sdio-async', 'symc', 'sfc')
-rows = {}
-for name in names:
-    path = root / f'{name}-test/report.json'
-    content = path.read_bytes()
-    report = json.loads(content)
-    if report.get('passed') is not True or report.get('hardware_accessed') is not False:
-        raise SystemExit(f'invalid model report: {name}')
-    rows[name] = {'cases': report['cases'], 'report_sha256': hashlib.sha256(content).hexdigest()}
-(root / 'summary.json').write_text(json.dumps({'passed': True, 'hardware_accessed': False, 'models': rows}, indent=2) + '\n')
-print(json.dumps({'passed': True, 'models': rows}))
-PY
+uv run --offline --script scripts/ws53_ipc_endpoint_build.py --output "$output/ipc-build"
+uv run --offline --script scripts/test-ws53-ipc-spsc-model.py --endpoint --model-policy uart-clock \
+    --qemu "$qemu" --model-receipt "$model_receipt" --model-source "$model_source" \
+    --elf "$output/ipc-build/firmware.elf" --receipt "$output/ipc-build/receipt.json" \
+    --output "$output/ipc-test"
+uv run --offline --script scripts/ws53_model_summary.py "$output"

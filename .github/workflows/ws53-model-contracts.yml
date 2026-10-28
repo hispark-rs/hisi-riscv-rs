@@ -30,26 +30,29 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: 0.10.3
-          cache-dependency-glob: 'project/scripts/*.py'
+          cache-dependency-glob: "**/*.py"
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libpixman-1-dev libslirp-dev python3-venv
+          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libpixman-1-dev libslirp-dev
           bash project/.github/scripts/install-toolchain.sh
       - name: Fetch pinned fixture dependencies
         working-directory: project
         run: |
           for manifest in examples/ws53-hash-model/Cargo.toml examples/ws53-km-model/Cargo.toml \
-              examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml examples/ws53-sfc-read/Cargo.toml; do
+              examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml \
+              examples/ws53-sfc-read/Cargo.toml examples/ws53-ipc/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
           for script in ws53_ci_qemu_uart_clock_build.py ws53_crypto_model_build.py test-ws53-crypto-qualified.py \
               ws53_sdio_model_build.py test-ws53-sdio-qualified.py ws53_symc_model_build.py \
-              test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py; do
+              test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py \
+              ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
+          uv run --offline --script scripts/test-ws53-model-summary.py
       - name: Build fixed QEMU source
         working-directory: project
         run: |
@@ -76,4 +79,5 @@ jobs:
             ${{ runner.temp }}/ws53-contracts/**/runner.log
             ${{ runner.temp }}/ws53-contracts/**/build.log
             ${{ runner.temp }}/ws53-contracts/**/receipt.json
+            ${{ runner.temp }}/ws53-contracts/**/operations.json
             ${{ runner.temp }}/ws53-contracts/summary.json

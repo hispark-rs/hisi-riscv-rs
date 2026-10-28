@@ -39,9 +39,11 @@ def hash_frames(count):
 
 
 def run(a):
-    global firmware
+    global firmware, policy
     if a.endpoint:
         import ws53_ipc_endpoint_build as firmware
+    if a.model_policy == 'uart-clock':
+        import ws53_ci_qemu_uart_clock_build as policy
     built = firmware.validate(a.receipt, a.elf)
     admitted = policy.validate_receipt(a.model_receipt, a.qemu, source_root=a.model_source)
     with a.elf.open('rb') as stream:
@@ -284,6 +286,8 @@ if __name__ == '__main__':
     for name in ('qemu', 'model-receipt', 'model-source', 'elf', 'receipt', 'output'):
         p.add_argument('--' + name, type=Path, required=True)
     p.add_argument('--endpoint', action='store_true', help='test endpoint contract instead of direct queue reclaim')
+    p.add_argument('--model-policy', choices=('ipc-mask', 'uart-clock'), default='ipc-mask',
+                   help='select the pinned source and build receipt policy')
     a = p.parse_args()
     for name in ('qemu', 'model_receipt', 'model_source', 'elf', 'receipt', 'output'):
         setattr(a, name, getattr(a, name).resolve())
