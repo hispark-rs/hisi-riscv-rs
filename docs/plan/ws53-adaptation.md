@@ -8598,3 +8598,5 @@ Embassy 跨芯片续记：HAL `a3163e8` 抽取共享计数换算，修复 WS63/B
 TCXO 旧芯片回归修复：SDK `731bc668865fd8dc89bc40da0583b4e4023095a0` 的 WS63 目标定义 `CONFIG_TCXO_WITH_TWO_DATA_REGS`；HAL `81d4ada` 将 WS63 TCXO 与 Embassy 改为两组 32 位读取，BS21 保持四组。PAC 主机寄存器视图、三芯片 Clippy 及 WS63 QEMU 普通计数范围冒烟通过；当时 PAC/SVD 描述的后续修正见下，长运行与实板未验收。模型报告 `target/ws63-tcxo-model-report-20261029.json` SHA-256 `ebc7d53300721c63dde93ce99b19b42eb7270059f4e0d6ebbc85edc759a61c94`。
 
 WS63 TCXO PAC 续记：SVD `9f11980`、PAC `6324bcf` 已分别推送并建立草稿 PR。保留旧 `u16` 访问器及未验证的兼容寄存器，另增完整 `u32` 只读字段；SVD 模式和契约、PAC 主机寄存器视图、RISC-V 构建与 Clippy、逐字再生及 HAL/QEMU 普通范围复验通过。两仓提交尚未合并、发布或实板验证。新 QEMU 报告 `target/ws63-tcxo-pac-model-report-20261029.json` SHA-256 `1f31052d78eadc2e5cf7b2587017bb52c2512b339fa9648b0c8e5f60e921a1cd`。
+
+独立检出复核：远端主工程获取 PAC `6324bcf` 及其 SVD `9f11980` 子模块，独立 Cargo 缓存补齐公开依赖后离线构建 WS63 模型并通过普通范围 QEMU 冒烟；复用既有 QEMU 二进制，不声称独立重建模型。报告 `/tmp/ws63-tcxo-clean-report-20261029.json` SHA-256 `dcf2e0d356e784e816cca5a15c38d9daca863fdd309ba3e408c62ba95bad752e`。PAC 草稿 PR 的构建、Clippy、文档和 SVD 再生 CI 均通过。
