@@ -8618,3 +8618,5 @@ BS21 独立复现：从远端检出主工程 `4bd62d882` 和 HAL `90b1981`，使
 UART 跨芯片续记：HAL `cd9bbec` 共用 1/64 分频计算，保留 WS53 的 8/16 倍采样选择与各后端寄存器时序；相关主机测试 WS53 60 项、WS63 16 项、BS21 14 项和三芯片 RISC-V Clippy 通过，含 WS53 SDK 配置表及分频算术属性测试。测试使用本地依赖覆盖，非 registry 验收；本次未重跑 QEMU 或实板。旧芯片 Boot 时钟高波特率的整数分频可能为零，待单独设计兼容的校验接口，见 `docs/plan/hal-cross-chip-review.md`。
 
 UART QEMU 续验：使用 HAL `cd9bbec` 构建的源码绑定 RAM 夹具通过原有 UART 时钟门控模型六组检查，含模拟输出及计数器；报告 `target/ws53-uart-common-divisor-qemu-20261029/report.json` SHA-256 `f358418c52e66ec47052d051ee390a580e731ae0b5f8e2de2bd537fa3b6388e2`。模型使用预设字符时长，该检查不验证分频后的实际波特率或物理门控；未访问实板。当前 QEMU 检查工具部分依赖未跟踪的本地 HIL 辅助脚本，尚不能宣称干净检出可复现，需整理测试依赖后再验证。
+
+UART 测试工具续记：主仓 `0533eb9ca` 将模型构建与检查工具纳入版本管理，去除对本地未跟踪 HIL 辅助脚本的依赖，原脚本保存在 `target/ws53-uart-clock-original-tools-20261029/`。从远端干净检出主仓和子模块，隔离 Cargo 缓存获取依赖后离线构建并使用现有 QEMU 二进制通过六组场景；报告 `/tmp/ws53-uart-clean-repro-qemu02-20261029/report.json` SHA-256 `88396bdb72a3ad8b239a32a6ce072d8db676bd7e9551db892115e9b486d0c237`。固定模型提交 `1bc19b7` 也可从远端获取；但旧模型构建凭据绑定其原始源码路径，换用独立源码检出会被路径检查拒绝，本轮没有独立重建 QEMU，完整模型重建复现仍待验证。
