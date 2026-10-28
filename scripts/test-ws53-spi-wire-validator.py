@@ -5,6 +5,7 @@
 # ///
 """Check that a passing virtual SPI trace rejects damaged wire evidence."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -15,6 +16,9 @@ def run(report_path, trace_path):
     report = json.loads(report_path.read_text())
     if not report['passed'] or report['hardware_accessed']:
         raise ValueError('requires a passing model-only report')
+    expected = [value for path, value in report['inputs_sha256'].items() if Path(path).name == 'pads.csv']
+    if len(expected) != 1 or expected[0] != hashlib.sha256(trace_path.read_bytes()).hexdigest():
+        raise ValueError('trace differs from passing report')
     observation = report['observation']
     lines = [list(map(int, row.split(','))) for row in trace_path.read_text().splitlines()]
     mutations = {

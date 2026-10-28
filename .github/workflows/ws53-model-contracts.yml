@@ -97,3 +97,4 @@ jobs:
             ${{ runner.temp }}/ws53-spi-build/receipt.json
             ${{ runner.temp }}/ws53-spi-build/build.log
             ${{ runner.temp }}/ws53-spi-test/report.json
+            ${{ runner.temp }}/ws53-spi-test/pads.csv
