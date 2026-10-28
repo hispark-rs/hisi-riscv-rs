@@ -35,6 +35,13 @@ pub struct Image([u8; 256]);
 pub static mut WS53_SPSC_TX: Image = Image([0; 256]);
 #[unsafe(no_mangle)]
 pub static mut WS53_SPSC_RX: Image = Image([0; 256]);
+#[cfg(feature = "endpoint-contract")]
+#[repr(C, align(4))]
+struct SmallImage([u8; 20]);
+#[cfg(feature = "endpoint-contract")]
+static mut SMALL_TX: SmallImage = SmallImage([0; 20]);
+#[cfg(feature = "endpoint-contract")]
+static mut SMALL_RX: SmallImage = SmallImage([0; 20]);
 // input gate,ready,panic,tx,rx,full,empty,txhash,rxhash,target,magic,unused,
 // valid-done,tx-reclaimed,rx-reclaimed,unused,unused,bad-error,bad-output-kept,
 // layout-ok,layout-app-base,layout-total,layout-refusals,layout-app-end.
@@ -131,9 +138,75 @@ fn check_layout() {
     put(22, refused);
     put(23, app_base + total);
 }
+
+#[cfg(feature = "endpoint-contract")]
+fn check_small_endpoint_bound() {
+    let size = MailboxSize::try_from_total_bytes(20).unwrap();
+    unsafe {
+        MailboxImage::initialize(
+            &mut (*ptr::addr_of_mut!(SMALL_TX)).0,
+            size,
+            Route::ApplicationToControl(Channel::Channel0),
+        )
+        .unwrap();
+        let rx = &mut (*ptr::addr_of_mut!(SMALL_RX)).0;
+        MailboxImage::initialize(rx, size, Route::ControlToApplication(Channel::Channel1)).unwrap();
+        rx[3] = 0;
+        rx[4..6].copy_from_slice(&7u16.to_le_bytes());
+    }
+    // Isolated QEMU RAM: neither peer nor DMA accesses these model-only queues.
+    let tx_memory = unsafe {
+        CoherentMemory::from_mapping(
+            NonNull::new(ptr::addr_of_mut!(SMALL_TX).cast()).unwrap(),
+            size,
+        )
+    }
+    .unwrap();
+    let rx_memory = unsafe {
+        CoherentMemory::from_mapping(
+            NonNull::new(ptr::addr_of_mut!(SMALL_RX).cast()).unwrap(),
+            size,
+        )
+    }
+    .unwrap();
+    let tx = unsafe { Transmit::from_prepared(tx_memory, Channel::Channel0) }.unwrap();
+    let rx = unsafe { Receive::from_prepared(rx_memory, Channel::Channel1) }.unwrap();
+    let mut endpoint = unsafe {
+        PollingEndpoint::from_prepared(
+            tx,
+            rx,
+            SyntheticPeerAuthority,
+            FirmwareProtocol::Sdk163d9150,
+        )
+    };
+    let snapshot = || {
+        core::array::from_fn::<_, 20, _>(|i| unsafe {
+            ptr::addr_of!(SMALL_TX).cast::<u8>().add(i).read_volatile()
+        })
+    };
+    let before = snapshot();
+    assert_eq!(
+        endpoint.try_send(&[1, 0, 4, 0, 1, 2, 3, 4]),
+        Err(SendError::TooLong { maximum: 7 })
+    );
+    assert_eq!(snapshot(), before);
+    assert_eq!(endpoint.try_send(&[1, 0, 3, 0, 1, 2, 3]), Ok(()));
+    let full = snapshot();
+    assert_eq!(&full[6..8], &[7, 0]);
+    assert_eq!(&full[12..19], &[1, 0, 3, 0, 1, 2, 3]);
+    assert_eq!(endpoint.try_send(&[1, 0, 0, 0]), Err(SendError::Full));
+    assert_eq!(
+        endpoint.try_send(&[1, 0, 4, 0, 1, 2, 3, 4]),
+        Err(SendError::TooLong { maximum: 7 })
+    );
+    assert_eq!(snapshot(), full);
+    put(11, 1);
+}
 #[entry]
 fn main() -> ! {
     check_layout();
+    #[cfg(feature = "endpoint-contract")]
+    check_small_endpoint_bound();
     let size = MailboxSize::try_from_total_bytes(256).unwrap();
     // Exclusive pre-start initialization only. Host waits for ready before
     // accessing these regions; no Rust reference to a live queue is retained.

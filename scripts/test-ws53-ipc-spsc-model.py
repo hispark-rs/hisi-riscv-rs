@@ -196,6 +196,8 @@ def run(a):
                             qmp('system_reset')
                         qmp('cont')
                         wait(lambda w: w[1] == 1 and w[3] == w[4] == 0 and w[13] == w[14] == 0)
+                        if a.endpoint:
+                            assert report()[11] == 1, 'small-queue size and backpressure checks not executed'
                         assert report()[19:] == (1, 0x1001e300, 0xc00, 5, 0x1001ef00), 'typed SDK layout/refusals not executed'
                         assert read(tx, 256) == bytes([2, 0, 0, 1]) + bytes(4) + struct.pack('<I', 244) + bytes(244)
                         assert read(rx, 256) == bytes([0, 2, 1, 0]) + struct.pack('<HHI', 243, 0, 244) + bytes(244)
@@ -253,6 +255,7 @@ def run(a):
                             explicit_quiescent_reclaim=not a.endpoint,
                             explicit_session_invalidation=a.endpoint and iteration != 0,
                             detected_corruption_latches_invalidation=a.endpoint and iteration == 0,
+                            small_queue_size_and_backpressure=a.endpoint,
                             short_receive_preserved=a.endpoint))
                         qmp('stop')
                     qmp('quit')
