@@ -246,11 +246,11 @@ UART，只接受静态字节缓冲区。`wait_transmitter_idle` 是有限的发�
 环境，不是实际板卡接线；示例中引脚占用不得用于推断物理复用。
 
 ```sh
-cargo build -Zbuild-std=core --manifest-path examples/ws53/Cargo.toml \
-  -p ws53_spi_dma --release --locked
+uv run --script scripts/ws53_spi_dma_model_build.py --width 8 --output /path/to/build
 uv run --script scripts/test-ws53-spi-dma-collision.py --qemu /path/to/qemu-system-riscv32 \
-  --elf examples/ws53/target/riscv32imfc-unknown-none-elf/release/ws53_spi_dma
-# 32位变体：同一构建命令增加 --features width32，然后运行相同检查器。
+  --model-receipt /path/to/model/receipt.json --model-source /path/to/qemu-overlay \
+  --elf /path/to/build/firmware.elf --receipt /path/to/build/receipt.json
+# 32位变体：使用独立输出目录并将 --width 8 改为 --width 32。
 ```
 
 `SpiDma::from_configured`需要unsafe交接已启用且空闲的单线全双工master、

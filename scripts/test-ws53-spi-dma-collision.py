@@ -14,6 +14,8 @@ import subprocess
 import tempfile
 import time
 from elftools.elf.elffile import ELFFile
+import ws53_ci_qemu_uart_clock_build as policy
+import ws53_spi_dma_model_build as builder
 from ws53_qemu_fixture import connect, elf_check, require
 
 NOTICES=['ws53-spi: assumed profile 32MHz FIFO8 XOR-peer enable-crossing=1us',
@@ -164,7 +166,9 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--qemu',required=True);p.add_argument('--elf',required=True,type=Path)
+    p=argparse.ArgumentParser(description=__doc__)
+    for name in ('qemu','model-receipt','model-source','elf','receipt'):
+        p.add_argument('--'+name,required=True,type=Path)
     a=p.parse_args();contract=elf_check.validate(a.elf)
     def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
     qemu_sha256=digest(a.qemu);elf_sha256=digest(a.elf)
@@ -173,13 +177,20 @@ def main():
         require(src and dst and len(src)==len(dst)==1,'missing allocation symbols');width=src[0]['st_size']//35
         require(width in (1,4) and src[0]['st_size']==dst[0]['st_size']==35*width,'wrong allocation size')
         source,destination=src[0]['st_value'],dst[0]['st_value']
+    builder.configure(str(width*8))
+    builder.validate(a.receipt,a.elf)
+    admission=policy.validate_receipt(a.model_receipt,a.qemu,source_root=a.model_source)
     cases=[(port,ch,'t','N') for port in range(2) for ch in range(8)]
     cases += [(port,0,side,s) for port in range(2) for side in 'tr' for s in 'TRWSDFI']
     cases += [(port,0,'t',s) for port in range(2) for s in 'CBLZ']
     cases += [(port,0,'t',s) for port in range(2) for s in 'PQ']
     results=[run(a.qemu,a.elf,width,source,destination,*case) for case in cases]
     require(digest(a.qemu)==qemu_sha256 and digest(a.elf)==elf_sha256,'model or ELF changed during test')
+    builder.validate(a.receipt,a.elf)
+    require(policy.validate_receipt(a.model_receipt,a.qemu,source_root=a.model_source)==admission,
+            'model identity changed during test')
     print(json.dumps({'elf':contract,'qemu_sha256':qemu_sha256,'elf_sha256':elf_sha256,'width':width*8,'scenarios':results,'hardware_accessed':False,
+                      'model_admission':admission,'build_receipt_sha256':digest(a.receipt),
                       'physical_cache_cs_or_drain_proven':False},indent=2))
 
 
