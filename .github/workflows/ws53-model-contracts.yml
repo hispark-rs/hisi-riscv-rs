@@ -29,6 +29,7 @@ jobs:
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:
+          version: 0.10.3
           cache-dependency-glob: 'project/scripts/*.py'
       - name: Install build dependencies
         run: |
