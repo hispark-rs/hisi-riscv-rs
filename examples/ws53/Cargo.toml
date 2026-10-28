@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["ram_smoke", "nmi_context", "watchdog_control", "tcxo_control", "rtc_control", "pwm_control", "i2c_control", "spi_control", "temperature_control", "i2s_control", "adc_calibration", "adc_capture", "dma_memory", "uart_dma", "spi_dma", "i2c_dma", "i2s_dma", "trng_control", "efuse_control", "cache_contract", "exception_context"]
+default-members = ["ram_smoke"]
+
+[patch.crates-io]
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+bs2x-pac = { path = "../../crates/chips/bs2x/bs2x-pac" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = "s"
