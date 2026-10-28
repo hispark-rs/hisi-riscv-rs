@@ -118,6 +118,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hisi-ws53-coex"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "vcell",
+]
+
+[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -303,6 +310,7 @@ dependencies = [
  "embedded-hal",
  "hisi-hal",
  "hisi-riscv-rt",
+ "hisi-ws53-coex",
 ]
 
 [[package]]

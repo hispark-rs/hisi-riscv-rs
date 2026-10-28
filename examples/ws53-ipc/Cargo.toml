@@ -9,6 +9,7 @@ default = []
 model-handoff = []
 
 [dependencies]
+hisi-ws53-coex = { path = "../../crates/chips/ws53/hisi-ws53-coex" }
 critical-section = "1"
 embedded-hal = "1.0.0"
 hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
