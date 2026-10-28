@@ -1,6 +1,28 @@
 use super::*;
 
 #[test]
+fn sdk_discriminator_range_and_public_formats_are_exact() {
+    #[cfg(feature = "defmt")]
+    {
+        fn format<T: defmt::Format>() {}
+        format::<Channel>();
+        format::<MessageId>();
+        format::<Priority>();
+        format::<MessageError>();
+        format::<Message<'static>>();
+        format::<mailbox::MailboxSize>();
+        format::<mailbox::Route>();
+        format::<mailbox::MailboxError>();
+        format::<spsc::Snapshot>();
+        format::<spsc::Error>();
+    }
+    assert_eq!(MessageId::UPDATE_SHARED_RANDOM_NUMBER.raw(), 18);
+    for raw in 0..=u8::MAX {
+        assert_eq!(MessageId::try_from_raw(raw).is_some(), raw < 19);
+    }
+}
+
+#[test]
 fn all_sdk_ids_priorities_and_payload_lengths_encode_exactly_and_preserve_tail() {
     let payload: [u8; MAX_PAYLOAD] = core::array::from_fn(|i| (i * 37 + 11) as u8);
     let mut cases = 0;
