@@ -14,7 +14,10 @@ use hisi_ws53_coex::{
     endpoint::{Endpoint, ReceiveError, SendError},
     protocol::FirmwareProtocol,
     session::Session,
-    transport::ws53::{FrameAuthority, PollingEndpoint},
+    transport::{
+        notification::{Published, try_send_and_notify},
+        ws53::{FrameAuthority, PollingEndpoint},
+    },
 };
 
 #[cfg(feature = "endpoint-contract")]
@@ -190,11 +193,23 @@ fn check_small_endpoint_bound() {
         Err(SendError::TooLong { maximum: 7 })
     );
     assert_eq!(snapshot(), before);
-    assert_eq!(endpoint.try_send(&[1, 0, 3, 0, 1, 2, 3]), Ok(()));
+    let result = try_send_and_notify(&mut endpoint, &[1, 0, 3, 0, 1, 2, 3], || {
+        // A synthetic pending doorbell: publish must be visible first. This
+        // does not model the actual peer's notification or ACK protocol.
+        assert_eq!(&snapshot()[6..8], &[7, 0]);
+        Err(7u8)
+    });
+    assert_eq!(result, Ok(Published::NotificationFailed(7)));
     let full = snapshot();
     assert_eq!(&full[6..8], &[7, 0]);
     assert_eq!(&full[12..19], &[1, 0, 3, 0, 1, 2, 3]);
     assert_eq!(endpoint.try_send(&[1, 0, 0, 0]), Err(SendError::Full));
+    assert_eq!(
+        try_send_and_notify(&mut endpoint, &[1, 0, 0, 0], || -> Result<(), u8> {
+            panic!("full queue must not ring doorbell")
+        }),
+        Err(SendError::Full)
+    );
     assert_eq!(
         endpoint.try_send(&[1, 0, 4, 0, 1, 2, 3, 4]),
         Err(SendError::TooLong { maximum: 7 })
