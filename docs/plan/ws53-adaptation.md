@@ -8642,3 +8642,5 @@ UART 全新模型续验：从远端独立检出模型 `1bc19b7`，由本地上�
 SYMC 模型集成续验：远端 QEMU `ws53-agpio-clock` 的历史包含集成提交 `a7bfa7c` 和 SYMC `66b722b`；修正能力矩阵中过时的“主 QEMU 未切换”描述。新增源码绑定的 SYMC ELF 构建、模型凭据校验与 CPU 场景运行工具；以新构建的固定模型 `1bc19b7` 和当前 HAL 完成 154 场景，报告 `target/ws53-symc-qualified-qemu-20261029/report.json` SHA-256 `b38eef8318c36937fdbc0f867a971d77a808c67b38a9e67006eb24a07c7daf6d`。仅使用合成密钥和模型假设，不证明实板密钥所有权、真实算法、缓存一致性或物理排空；无硬件操作。
 
 SYMC 干净检出复验：从远端主仓 `7a58000a6` 及其 HAL 子模块获取源码，用隔离 Cargo 缓存离线构建夹具，并使用独立构建的固定 QEMU 模型重新通过154场景；Python 依赖使用预先下载的固定版本缓存。报告 `/tmp/ws53-symc-clean-qemu-20261029/report.json` SHA-256 `abe9696fe7dac5f4555875bb47c7be57c44689f771f0a20ddf0d5520319528d8`。这是仿真复现，不覆盖真实固件/共享所有权或实板。
+
+HASH/KM 模型集成续验：新增共用的源码绑定夹具构建及凭据校验工具，原有 Rust CPU 场景工具纳入版本管理；当前 HAL 与固定来源新建 QEMU `1bc19b7` 的 HASH 198 场景、KM 357 场景通过。报告分别为 `target/ws53-hash-qualified-qemu02-20261029/report.json` SHA-256 `ef45bc000a7b5cdf7ea39b59f20961fc35750974dbd4026e2157dc77beb04ff0` 和 `target/ws53-km-qualified-qemu-20261029/report.json` SHA-256 `85aca5764fd053a5a3d980b9bf649581aaa070c1bb0d643931e935b35a0d6ead`。模型使用合成输入/密钥和显式假设，不证明真实密钥所有权、缓存/物理排空或实板行为。
