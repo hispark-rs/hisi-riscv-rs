@@ -2,14 +2,10 @@
 //! Uses the inherited TRNG handoff only after both vendor CPU clients stop.
 use core::num::NonZeroU16;
 use embedded_hal::delay::DelayNs;
-use hisi_hal::{
-    ipc::{
-        Message, MessageId, Priority,
-        random_buffer::{
-            BufferRegion, RandomBufferImage, RequestError, ServiceError, UpdateRequest,
-        },
-    },
-    trng::{Error, TrngDriver},
+use hisi_hal::trng::{Error, TrngDriver};
+use hisi_ws53_coex::{
+    Message, MessageId, Priority,
+    random_buffer::{BufferRegion, RandomBufferImage, RequestError, ServiceError, UpdateRequest},
 };
 
 #[derive(Clone, Copy)]
@@ -104,13 +100,9 @@ pub fn check(source: &mut TrngDriver<'_>, delay: &mut impl DelayNs) {
                 words[4] = request.byte_len() as u32;
                 let mut image =
                     RandomBufferImage::attach(region, &mut data[..length as usize]).unwrap();
-                match image.update(
-                    request,
-                    source,
-                    &mut scratch[..capacity as usize],
-                    NonZeroU16::new(attempts as u16).unwrap(),
-                    delay,
-                ) {
+                match image.update(request, &mut scratch[..capacity as usize], |bytes| {
+                    source.fill_bytes(bytes, NonZeroU16::new(attempts as u16).unwrap(), delay)
+                }) {
                     Ok(()) => 0,
                     Err(ServiceError::Request(error)) => code(error),
                     Err(ServiceError::ScratchTooSmall) => 20,

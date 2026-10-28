@@ -44,7 +44,7 @@ wdt-smoke = []
 wdt-settle-probe = ["wdt-smoke"]
 wdt-handshake-probe = ["wdt-smoke"]
 trng-smoke = []
-ipc-random-smoke = ["trng-smoke"]
+ipc-random-smoke = ["trng-smoke", "dep:hisi-ws53-coex"]
 trng-ring-start-smoke = ["ipc-random-smoke"]
 tsensor-smoke = []
 tsensor-restart-probe = ["tsensor-smoke"]
@@ -64,6 +64,7 @@ pwm0-finite-irq-probe = ["pwm0-finite-probe"]
 pwm0-abnormal-probe = ["pwm0-finite-probe"]
 
 [dependencies]
+hisi-ws53-coex = { path = "../../../crates/chips/ws53/hisi-ws53-coex", optional = true }
 ws53-pac = { path = "../../../crates/chips/ws53/ws53-pac" }
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
 hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }
