@@ -11,12 +11,14 @@
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
 | hisi-fwpkg | `feat/ws53-application-images`，`217447f` | 同名远端分支，[草稿 PR #4](https://github.com/hispark-rs/hisi-fwpkg/pull/4)；为 hisiflash 的固定 Git 依赖 |
 | hisiflash | `feat/ws53-serial-flash`，`916cf06`；库和 CLI 分两次提交 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；空缓存干净检出 394 项测试及格式/Clippy 通过 |
-| hisi-riscv-rs | `feat/ws53-integration`，`2ebeae78d`；PAC、HAL 和运行时指针已提交 | 同名远端分支，[草稿 PR #58](https://github.com/hispark-rs/hisi-riscv-rs/pull/58)；余下示例、脚本与精简证据待分项整理 |
+| hisi-riscv-rs | `feat/ws53-integration`；PAC、HAL、运行时指针、示例及首轮 SPI Flash 恢复证据索引已分项提交 | 同名远端分支，[草稿 PR #58](https://github.com/hispark-rs/hisi-riscv-rs/pull/58)；余下脚本与证据待分项整理 |
 
 寄存器来源 → PAC → 运行时/HAL → 示例与测试；QEMU 模型独立版本化并由测试
 固定其来源。`hisiflash` 固定远端 `hisi-fwpkg` 的 `217447f`。目前尚不能声称
-整个适配可以从干净检出完整构建：示例和脚本尚未提交，递归子模块及外部
-消费者构建仍在检查。HAL/运行时依赖的 WS53 PAC 尚未发布到 crates.io。
+整个适配已完成：脚本与证据尚未全部提交，外部消费者构建仍在检查。HAL/运行时
+依赖的 WS53 PAC 尚未发布到 crates.io。干净检出已成功初始化全部递归子模块；
+空 Cargo 缓存下 WS53 HAL 主机测试、WS53/WS63/BS21 RISC-V 检查和 WS53 示例
+构建通过。两个诊断示例分别显式启用 `qemu-only`，不能把它们视为硬件验收。
 
 ## 材料保护
 
@@ -32,6 +34,9 @@
   `evidence/ws53-spi23-first-flash-2026-10-28/private-files.json`。
 - 构建缓存和临时日志位于 `target/`（约 125 GB）；其中仍有可能是唯一副本的
   测试脚本和快照，清理前必须逐项核对并转存必要源码。当前未删除工作树或数据。
+- 独立示例目录的 `target/` 已由项目 `.gitignore` 排除；锁文件与源码没有被
+  排除。`hisiflash` 的三个已跟踪 `.vscode` 配置受本机全局忽略规则匹配，但
+  仍处于版本管理中，未删除或通过忽略规则改变它们。
 
 ## 硬件与验收边界
 
