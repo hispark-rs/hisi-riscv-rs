@@ -1,0 +1,77 @@
+name: WS53 I2C virtual wires
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, feat/ws53-integration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ws53-i2c-wire-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  virtual-wires:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          path: project
+      - uses: actions/checkout@v7
+        with:
+          repository: hispark-rs/hisi-riscv-qemu
+          ref: 6d4c0699048c48a037ccdbcd228b433df981b997
+          path: qemu-overlay
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: 0.10.3
+          cache-dependency-glob: "**/*.py"
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libpixman-1-dev libslirp-dev
+          bash project/.github/scripts/install-toolchain.sh
+      - name: Fetch pinned fixture dependencies
+        working-directory: project
+        run: |
+          cargo fetch --locked --manifest-path examples/ws53/i2c_control/Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
+            --target riscv32imfc-unknown-none-elf
+          for script in ws53_ci_qemu_i2c_wire_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py; do
+            uv run --script "scripts/$script" --help > /dev/null
+          done
+      - name: Build fixed QEMU source
+        working-directory: project
+        run: |
+          qemu_python=$(uv run --python 3.12 --no-project -- sh -c 'command -v python')
+          uv run --offline --script scripts/ws53_ci_qemu_i2c_wire_build.py \
+            --overlay-root ../qemu-overlay --python "$qemu_python" \
+            --output "$RUNNER_TEMP/ws53-i2c-model" --jobs 2 > "$RUNNER_TEMP/ws53-i2c-model-build.json"
+      - name: Build and check real driver wire traffic
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --output "$RUNNER_TEMP/ws53-i2c-build"
+          uv run --offline --script scripts/test-ws53-i2c-wire-traffic.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-test"
+      - name: Save model reports and build evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ws53-i2c-virtual-wires
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/ws53-i2c-model-build.json
+            ${{ runner.temp }}/ws53-i2c-model/receipt.json
+            ${{ runner.temp }}/ws53-i2c-model/command-*.log
+            ${{ runner.temp }}/ws53-i2c-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-build/build.log
+            ${{ runner.temp }}/ws53-i2c-test/report.json
+            ${{ runner.temp }}/ws53-i2c-test/*-difference.json

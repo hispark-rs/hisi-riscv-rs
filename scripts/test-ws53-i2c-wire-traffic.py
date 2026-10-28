@@ -66,6 +66,11 @@ def run(a):
                 actual=wire,expected=expected*repeat),indent=2)+'\n')
             raise ValueError(f'I2C{bus} normal virtual-peer wire bytes/ACKs differ')
         decoded.append(dict(bus=bus,segments=wire['segments'],exercises=repeat))
+    # Recheck both source-bound builds after execution as well: a successful
+    # trace must not be attributed to a different binary or source closure.
+    builder.validate(a.receipt,a.elf)
+    if policy.validate_receipt(a.model_receipt,a.qemu,source_root=a.model_source) != admitted:
+        raise ValueError('I2C model admission changed during the run')
     report = dict(passed=True,elf_sha256=sha(a.elf),model_admission=admitted,result=result,wires=decoded,
         pad_trace_sha256=sha(pad),hardware_accessed=False,physical_peer_or_flash_qualified=False,
         inputs_sha256={str(p.resolve()):sha(p) for p in (Path(__file__),Path(builder.__file__),
