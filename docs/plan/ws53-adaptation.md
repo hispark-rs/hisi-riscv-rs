@@ -8652,3 +8652,5 @@ SDIO 模型集成续验：新增共用的来源绑定夹具构建和模型凭据
 SDIO 干净检出复验：主仓 `062f65de4` 从远端获取，以隔离 Cargo 缓存离线构建三份夹具并在独立构建的固定 QEMU 重跑，初始化10、传输14、异步15场景通过。`/tmp/ws53-sdio-*-clean-qemu-20261029/report.json` 的 init、transfer、async SHA-256 分别为 `43337eece8a0fed3868852d5a243a2b59b9f45fbaba15a3ad6b4f6cba9f8ef79`、`852336cc3006f143d3f458b046465f94957cbc33f4464828fc99c11d73ca2675`、`77b7d9de1f448dabe7f572b59d50d300743193d7f34f2fd5555f4e31125988f4`。Python 依赖复用固定版本缓存；硬件及完整协议仍未验收。
 
 SFC 只读模型续验：新增源码绑定夹具构建和模型凭据校验工具，原有8场景 Rust HAL 检查纳入版本管理；当前 HAL 与独立构建固定 QEMU `1bc19b7` 通过正常读取、错误配置拒绝和模型停滞后复位恢复。报告 `target/ws53-sfc-qualified-qemu-20261029/report.json` SHA-256 `bece8df90c415ce77973192cba7c0415c05f109bf6d0730edf33536a92319650`。仅测试合成只读 NOR，不代表完整 FlashBoot、实板 SFC、实际总线排空或 Flash 写入验收。
+
+SFC 干净检出复验：从远端主仓 `3baa21523` 获取测试链，以隔离 Cargo 缓存离线重建 RAM 夹具，在独立构建的固定 QEMU 上重新通过8场景；报告 `/tmp/ws53-sfc-clean-qemu-20261029/report.json` SHA-256 `4d0bcf008b6f062b6a6376805acd90bbe7f5530577cde2c72b7a6daeab273f11`。Python 使用预取依赖缓存；不授予真实 FlashBoot、总线排空或实板资格。
