@@ -74,3 +74,7 @@
 	path = crates/chips/ws53/ws53-pac
 	url = https://github.com/hispark-rs/ws53-pac.git
 	branch = feat/ws53-agpio-clock
+[submodule "crates/chips/ws53/hisi-ws53-coex"]
+	path = crates/chips/ws53/hisi-ws53-coex
+	url = https://github.com/hispark-rs/hisi-ws53-coex.git
+	branch = feat/ws53-control-core-protocol
