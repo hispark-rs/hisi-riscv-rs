@@ -53,7 +53,7 @@ jobs:
               ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
-              test-ws53-spi-dma-collision.py; do
+              test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -102,6 +102,11 @@ jobs:
               --model-receipt "$RUNNER_TEMP/ws53-model/receipt.json" --model-source ../qemu-overlay \
               --elf "$build/firmware.elf" --receipt "$build/receipt.json" \
               > "$build/report.json"
+            uv run --offline --script scripts/test-ws53-spi-dma-identity.py --width "$width" \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --model-receipt "$RUNNER_TEMP/ws53-model/receipt.json" --model-source ../qemu-overlay \
+              --elf "$build/firmware.elf" --receipt "$build/receipt.json" \
+              > "$build/identity-negative.json"
           done
       - name: Save model reports and build evidence
         if: always()
@@ -132,6 +137,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-dma-8-build/build.log
             ${{ runner.temp }}/ws53-spi-dma-8-build/receipt.json
             ${{ runner.temp }}/ws53-spi-dma-8-build/report.json
+            ${{ runner.temp }}/ws53-spi-dma-8-build/identity-negative.json
             ${{ runner.temp }}/ws53-spi-dma-32-build/build.log
             ${{ runner.temp }}/ws53-spi-dma-32-build/receipt.json
             ${{ runner.temp }}/ws53-spi-dma-32-build/report.json
+            ${{ runner.temp }}/ws53-spi-dma-32-build/identity-negative.json
