@@ -6,6 +6,7 @@
 """Fail closed on WS53 MCU_MODE_1 RAM ELF layout/ISA violations; never loads it."""
 import argparse
 import hashlib
+import io
 import json
 from pathlib import Path
 from elftools.elf.elffile import ELFFile
@@ -22,7 +23,10 @@ def require(condition, message):
 
 
 def validate(path):
-    with path.open("rb") as stream:
+    # Parse, bound and hash the same snapshot. A concurrent rebuild may replace
+    # the path; opening again after parsing could otherwise hash another ELF.
+    image = path.read_bytes()
+    with io.BytesIO(image) as stream:
         elf = ELFFile(stream)
         require(elf.elfclass == 32 and elf.little_endian, "expected ELF32 little endian")
         require(elf["e_machine"] == "EM_RISCV", "expected RISC-V")
@@ -36,7 +40,7 @@ def validate(path):
             start, size = seg["p_paddr"], seg["p_memsz"]
             require(start == seg["p_vaddr"], "RAM image cannot depend on relocation from flash")
             require(seg["p_filesz"] <= size, "file segment exceeds memory size")
-            require(seg["p_offset"] + seg["p_filesz"] <= path.stat().st_size, "truncated load segment")
+            require(seg["p_offset"] + seg["p_filesz"] <= len(image), "truncated load segment")
             region = DATA if seg["p_flags"] & 2 else PROGRAM
             require(region[0] <= start <= start + size <= region[1], "segment outside owned RAM profile")
             require(not seg["p_flags"] & 2 or not seg["p_flags"] & 1, "writable executable segment")
@@ -74,7 +78,7 @@ def validate(path):
             value = symbols.get(name, 0)
             require(DATA[0] < value <= DATA[1] and value % 16 == 0, f"invalid {name}")
     return {"profile": "ws53-acore-mcu-mode1-ram", "elf": str(path),
-            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "loads": loads,
+            "sha256": hashlib.sha256(image).hexdigest(), "loads": loads,
             "verified": ["ELF32", "ilp32f", "RAM-only", "no-A-instructions", "stack-boundaries"],
             "hardware_verified": False}
 
