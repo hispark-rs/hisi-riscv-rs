@@ -4,10 +4,10 @@
 
 | 仓库 | 本地状态与集成目标 | 远端与待办 |
 | --- | --- | --- |
-| hisi-registers | `feat/ws53-agpio-clock`，`bc02ca0`；包含 IPC、SPI 及 AGPIO 时钟等分项历史 | 同名远端分支，[草稿 PR #1](https://github.com/hispark-rs/hisi-registers/pull/1)；逐项审查，实板因果仍需验证 |
-| ws53-pac | `feat/ws53-agpio-clock`，`8dc9a3d`；来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；空缓存干净检出测试通过。新仓库首个工作分支当前也是默认分支，尚无独立 PR |
+| hisi-registers | `feat/ws53-agpio-clock`，`bc02ca0`；包含 IPC、SPI 及 AGPIO 时钟等分项历史 | 同名远端分支，[草稿 PR #1](https://github.com/hispark-rs/hisi-registers/pull/1)；独立 SDIO、SFC 证据已分别推送并建 [PR #2](https://github.com/hispark-rs/hisi-registers/pull/2)、[PR #3](https://github.com/hispark-rs/hisi-registers/pull/3)，尚未合入 |
+| ws53-pac | `feat/ws53-agpio-clock`，`cd5db21`；生成来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；独立打包、远端 CI 和发布 dry run 通过。用户授权发布 `v0.1.0-alpha.1`，正式上传因 crates.io 凭据返回 403，尚未发布 |
 | hisi-riscv-rt | `codex/ws53-exceptions`，`03fbef8` | 同名远端分支，[草稿 PR #7](https://github.com/hispark-rs/hisi-riscv-rt/pull/7)；独立依赖 PAC 的外部构建待验证 |
-| hisi-hal | `feat/ws53-mcu-integration`，`4c650a7`；驱动按功能拆分提交 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；独立消费者的未发布依赖解析仍需处理 |
+| hisi-hal | `feat/ws53-mcu-integration`，`7a5cd12`；驱动按功能拆分提交，README 已收敛 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；子仓 CI 增加固定远端依赖的预发布测试，正式 registry 与外部消费者验收仍受未发布依赖阻塞 |
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
 | hisi-fwpkg | `feat/ws53-application-images`，`217447f` | 同名远端分支，[草稿 PR #4](https://github.com/hispark-rs/hisi-fwpkg/pull/4)；为 hisiflash 的固定 Git 依赖 |
 | hisiflash | `feat/ws53-serial-flash`，`916cf06`；库和 CLI 分两次提交 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；空缓存干净检出 394 项测试及格式/Clippy 通过 |
