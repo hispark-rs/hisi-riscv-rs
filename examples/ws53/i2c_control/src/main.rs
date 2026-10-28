@@ -124,7 +124,7 @@ fn main() -> ! {
     let p = Peripherals::take().unwrap();
     // QEMU supplies ownership and the clock profile. No physical board takeover,
     // pinmux writes, wire scans or Flash access are performed by this fixture.
-    let uart = unsafe { Uart::from_configured(p.UART2.assume_application_ownership()) };
+    let mut uart = unsafe { Uart::from_configured(p.UART2.assume_application_ownership()) };
     let timer = RefCell::new(TimerDriver::new(unsafe {
         p.TIMER.assume_application_ownership()
     }));
@@ -178,24 +178,41 @@ fn main() -> ! {
         }
         driver.recover().unwrap();
         assert!(driver.try_free().is_ok());
-    } else if cfg!(feature = "arbitration-smoke") {
-        // QEMU-only external arbitration loss on I2C0. Raw words and standard
-        // classification must survive cleanup; the peer bus remains usable.
+    } else if cfg!(any(
+        feature = "arbitration-smoke",
+        feature = "stuck-smoke",
+        feature = "mixed-abort-smoke"
+    )) {
+        // Synthetic faults on I2C0. Check both raw words and standard kind after
+        // cleanup; I2C1 below must remain usable.
         let mut driver = result.unwrap_or_else(|_| panic!("I2C0 init failed"));
+        let (source, detail, kind) = if cfg!(feature = "arbitration-smoke") {
+            (0, 0x1000, ErrorKind::ArbitrationLoss)
+        } else if cfg!(feature = "stuck-smoke") {
+            (2, 0, ErrorKind::Bus)
+        } else {
+            (2, 1, ErrorKind::Other)
+        };
         for _ in 0..2 {
             let error = driver
                 .transaction(Address::seven(0x50).unwrap(), &mut [Operation::Write(&[0])])
                 .unwrap_err();
-            assert_eq!(
-                error,
-                Error::Failure(Failure::Abort {
-                    source: 0,
-                    detail: 0x1000
-                })
-            );
-            assert_eq!(error.kind(), ErrorKind::ArbitrationLoss);
+            assert_eq!(error, Error::Failure(Failure::Abort { source, detail }));
+            assert_eq!(error.kind(), kind);
             assert!(!driver.is_poisoned());
         }
+        emit(&uart, b"WS53 I2C clear fault\n");
+        let mut budget = 50_000_000u32;
+        loop {
+            if let Ok(byte) = uart.read_byte() {
+                assert_eq!(byte, b'R');
+                break;
+            }
+            budget = budget.checked_sub(1).expect("fault control timeout");
+        }
+        driver
+            .transaction(Address::seven(0x50).unwrap(), &mut [Operation::Write(&[0])])
+            .unwrap();
         assert!(driver.try_free().is_ok());
     } else {
         let mut driver = result.unwrap_or_else(|_| panic!("I2C0 init failed"));
@@ -239,6 +256,16 @@ fn main() -> ! {
         emit(
             &uart,
             b"WS53 PASS I2C arbitration_loss=1 raw=1 retry=1 other_instance=1\n",
+        );
+    } else if cfg!(feature = "stuck-smoke") {
+        emit(
+            &uart,
+            b"WS53 PASS I2C stuck=1 raw=1 retry=1 other_instance=1\n",
+        );
+    } else if cfg!(feature = "mixed-abort-smoke") {
+        emit(
+            &uart,
+            b"WS53 PASS I2C mixed_abort=1 raw=1 retry=1 other_instance=1\n",
         );
     } else {
         emit(&uart, b"WS53 PASS I2C instances=2 addr7=1 addr10=1 repeated_start=1 long_read=100 nack_recovery=1\n");

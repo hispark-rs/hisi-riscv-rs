@@ -24,9 +24,14 @@ HELPERS = ('scripts/ws53_i2c_traffic_build.py',
 SCHEMA = 'ws53-i2c-wire-traffic-build-v1'
 
 
+def select_fault(scenario):
+    feature = {'arbitration': 'arbitration-smoke', 'stuck': 'stuck-smoke', 'mixed': 'mixed-abort-smoke'}[scenario]
+    if feature not in FEATURES:
+        FEATURES.append(feature)
+
+
 def select_arbitration():
-    if 'arbitration-smoke' not in FEATURES:
-        FEATURES.append('arbitration-smoke')
+    select_fault('arbitration')
 
 
 def snapshot():
@@ -81,7 +86,12 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--arbitration',action='store_true')
+    p.add_argument('--fault',choices=('stuck','mixed'))
     args = p.parse_args()
+    if args.arbitration and args.fault:
+        p.error('choose one fault')
     if args.arbitration:
         select_arbitration()
+    elif args.fault:
+        select_fault(args.fault)
     build(args.output.resolve())

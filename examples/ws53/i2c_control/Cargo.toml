@@ -9,6 +9,8 @@ publish = false
 clock-stall-smoke = []
 wire-pads = []
 arbitration-smoke = []
+stuck-smoke = []
+mixed-abort-smoke = []
 
 [dependencies]
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }

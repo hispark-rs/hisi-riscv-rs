@@ -39,7 +39,7 @@ def connect(path, proc):
 
 def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
                 qemu_options=(), expected_diagnostics=(), qom_checks=(), register_checks=(), expected_output=None,
-                input_stages=(), control_stages=(), register_setup=(), output_validator=None, dma_setup=(), dma_stages=(), stage_qom_checks=(), ram_regions=(), register_mask_checks=()):
+                input_stages=(), control_stages=(), register_setup=(), output_validator=None, dma_setup=(), dma_stages=(), stage_qom_checks=(), ram_regions=(), register_mask_checks=(), i2c_stages=()):
     for address, mask, value in register_mask_checks:
         require(type(mask) is int and type(value) is int and 0 < mask <= 0xffffffff
                 and 0 <= value <= 0xffffffff and value & ~mask == 0, 'invalid register observation mask')
@@ -53,13 +53,17 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
     for address, value in register_setup:
         require((address, value) in ((0x57014018, 5), (0x57014024, 0x15)), 'unreviewed TX setup')
     require(device != "uart-pads" or (fault is None and expected_output is not None), "pad fixture requires exact transcript and no generic fault")
-    require(fault in (None, "clock", "snapshot", "expiry", "control", "i2c-arbitration", "adc-manual-stall",
+    require(fault in (None, "clock", "snapshot", "expiry", "control", "i2c-arbitration", "i2c-stuck", "i2c-mixed", "adc-manual-stall",
                       "adc-cap-stall", "adc-stale", "adc-cap-error"), "unknown fault selector")
-    require(fault != 'i2c-arbitration' or device == 'i2c', 'arbitration fault requires I2C fixture')
+    require(not (fault or '').startswith('i2c-') or device == 'i2c', 'I2C fault requires I2C fixture')
     require(not (fault or '').startswith('adc-') or device == 'adc', 'ADC fault requires ADC fixture')
     require(fault != 'expiry' or device == 'rtc', 'expiry race requires RTC fixture')
     require(fault != 'control' or device == 'tsensor', 'control fault requires temperature fixture')
     require(not control_stages or device == 'tcxo', 'dynamic control requires TCXO fixture')
+    require(not i2c_stages or device == 'i2c', 'I2C stage requires I2C fixture')
+    for marker, signal, level in i2c_stages:
+        require(marker == b'WS53 I2C clear fault\n' and signal in ('arbitration', 'inject-sda-stuck', 'nack-address')
+                and level == 0, 'unreviewed I2C fault-stage control')
     for _, signal, level in control_stages:
         require(signal in ('clock', 'stall-snapshot') and level in (0, 1), 'invalid TCXO fixture control')
     require(not (dma_setup or dma_stages or stage_qom_checks) or device == 'mdma', 'DMA injection requires MDMA fixture')
@@ -98,14 +102,17 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
                         if fault is not None:
                             targets = ('rtc0', 'rtc1') if device == 'rtc' else (device,)
                             for target in targets:
-                                signal = {'clock': 'clock 0 0', 'snapshot': 'stall-snapshot 0 1',
-                                          'expiry': 'expire-on-request 0 1',
-                                          'control': 'corrupt-control 0 1', 'i2c-arbitration': 'arbitration 0 1',
-                                          'adc-manual-stall': 'stall 1 1', 'adc-cap-stall': 'stall 2 1',
-                                          'adc-stale': 'stale 0 1', 'adc-cap-error': 'cap-error 0 1'}[fault]
-                                command = f"set_irq_in /machine/{target} {signal}"
-                                qt.write(command.encode() + b"\n")
-                                require(qt.readline().strip() == b"OK", "qtest fault setup failed")
+                                signals = {'clock': ('clock 0 0',), 'snapshot': ('stall-snapshot 0 1',),
+                                          'expiry': ('expire-on-request 0 1',),
+                                          'control': ('corrupt-control 0 1',), 'i2c-arbitration': ('arbitration 0 1',),
+                                          'i2c-stuck': ('inject-sda-stuck 0 1',),
+                                          'i2c-mixed': ('inject-sda-stuck 0 1', 'nack-address 0 1'),
+                                          'adc-manual-stall': ('stall 1 1',), 'adc-cap-stall': ('stall 2 1',),
+                                          'adc-stale': ('stale 0 1',), 'adc-cap-error': ('cap-error 0 1',)}[fault]
+                                for signal in signals:
+                                    command = f"set_irq_in /machine/{target} {signal}"
+                                    qt.write(command.encode() + b"\n")
+                                    require(qt.readline().strip() == b"OK", "qtest fault setup failed")
                         for address, value in register_setup:
                             qt.write(f'writel {address:#x} {value:#x}\n'.encode())
                             require(qt.readline().strip() == b'OK', 'TX fixture setup failed')
@@ -126,6 +133,12 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
                                         qt.write(f'set_irq_in /machine/tcxo {signal} 0 {level}\n'.encode())
                                         require(qt.readline().strip() == b'OK', 'TCXO stage control failed')
                                         controlled.add(index)
+                                for index, (marker, signal, level) in enumerate(i2c_stages):
+                                    key = ('i2c', index)
+                                    if key not in controlled and marker in output:
+                                        qt.write(f'set_irq_in /machine/i2c {signal} 0 {level}\n'.encode())
+                                        require(qt.readline().strip() == b'OK', 'I2C stage control failed')
+                                        controlled.add(key)
                                 for index, (marker, signal, channel, level) in enumerate(dma_stages):
                                     key=('dma',index)
                                     if key not in controlled and marker in output:
@@ -146,7 +159,7 @@ def run_fixture(qemu, elf, *, device, begin, done, passed, fault=None,
                             else:
                                 raise ValueError(f"{device} HAL test timed out ({fault}): {output.decode(errors='replace')}")
                         require(len(sent) == len(input_stages), 'missing UART input stages')
-                        require(len(controlled) == len(control_stages)+len(dma_stages), 'missing control stages')
+                        require(len(controlled) == len(control_stages)+len(dma_stages)+len(i2c_stages), 'missing control stages')
                         for path, prop, expected in qom_checks:
                             actual = execute('qom-get', {'path': path, 'property': prop})
                             require(actual == expected, f'QOM {path}.{prop}: {actual} != {expected}')

@@ -20,4 +20,7 @@ uv run --script scripts/test-ws53-i2c.py --qemu /path/to/qemu-system-riscv32 --e
 `ws53_i2c_traffic_build.py --arbitration` 构建仲裁丢失夹具，
 `test-ws53-i2c-arbitration.py` 对 I2C0 注入虚拟仲裁丢失，检查原始错误、
 标准错误类别、重复尝试及 I2C1 正常工作。模型的故障输入不能代表真实
-总线多主仲裁或 SDA 卡低；混合中止原因没有在此模型中注入。
+总线多主仲裁或 SDA 卡低。另用 `--fault stuck`、`--fault mixed` 构建
+对应夹具，并在测试脚本选择同名 `--scenario`；QEMU 合成状态分别为
+SDA 卡低和卡低伴随地址 NACK。这只是错误状态注入，不模拟物理低电平、
+时序或超时，也不能证明硅片会产生所注入的组合。
