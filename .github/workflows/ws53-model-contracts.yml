@@ -1,0 +1,78 @@
+name: WS53 model contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, feat/ws53-integration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ws53-model-contracts-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          path: project
+      - uses: actions/checkout@v7
+        with:
+          repository: hispark-rs/hisi-riscv-qemu
+          ref: 1bc19b7eefe81f27196f0a80f294753027f5ca8d
+          path: qemu-overlay
+      - uses: astral-sh/setup-uv@v7
+        with:
+          cache-dependency-glob: 'project/scripts/*.py'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libpixman-1-dev libslirp-dev python3-venv
+          bash project/.github/scripts/install-toolchain.sh
+      - name: Fetch pinned fixture dependencies
+        working-directory: project
+        run: |
+          for manifest in examples/ws53-hash-model/Cargo.toml examples/ws53-km-model/Cargo.toml \
+              examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml examples/ws53-sfc-read/Cargo.toml; do
+            cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
+          done
+          cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
+            --target riscv32imfc-unknown-none-elf
+          for script in ws53_ci_qemu_uart_clock_build.py ws53_crypto_model_build.py test-ws53-crypto-qualified.py \
+              ws53_sdio_model_build.py test-ws53-sdio-qualified.py ws53_symc_model_build.py \
+              test-ws53-symc-qualified.py ws53_sfc_model_build.py test-ws53-sfc-qualified.py; do
+            uv run --script "scripts/$script" --help > /dev/null
+          done
+      - name: Build fixed QEMU source
+        working-directory: project
+        run: |
+          qemu_python=$(uv run --python 3.12 --no-project -- sh -c 'command -v python')
+          uv run --offline --script scripts/ws53_ci_qemu_uart_clock_build.py \
+            --overlay-root ../qemu-overlay --python "$qemu_python" \
+            --output "$RUNNER_TEMP/ws53-model" --jobs 2 > "$RUNNER_TEMP/ws53-model-build.json"
+      - name: Run synthetic model contracts
+        working-directory: project
+        run: |
+          bash scripts/run-ws53-model-contracts.sh "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            "$RUNNER_TEMP/ws53-model/receipt.json" ../qemu-overlay "$RUNNER_TEMP/ws53-contracts"
+      - name: Save model reports and build evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ws53-model-contracts
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/ws53-model-build.json
+            ${{ runner.temp }}/ws53-model/receipt.json
+            ${{ runner.temp }}/ws53-model/command-*.log
+            ${{ runner.temp }}/ws53-contracts/**/report.json
+            ${{ runner.temp }}/ws53-contracts/**/runner.log
+            ${{ runner.temp }}/ws53-contracts/**/build.log
+            ${{ runner.temp }}/ws53-contracts/**/receipt.json
+            ${{ runner.temp }}/ws53-contracts/summary.json

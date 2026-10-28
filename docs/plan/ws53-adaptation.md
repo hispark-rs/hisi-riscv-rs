@@ -8654,3 +8654,5 @@ SDIO 干净检出复验：主仓 `062f65de4` 从远端获取，以隔离 Cargo �
 SFC 只读模型续验：新增源码绑定夹具构建和模型凭据校验工具，原有8场景 Rust HAL 检查纳入版本管理；当前 HAL 与独立构建固定 QEMU `1bc19b7` 通过正常读取、错误配置拒绝和模型停滞后复位恢复。报告 `target/ws53-sfc-qualified-qemu-20261029/report.json` SHA-256 `bece8df90c415ce77973192cba7c0415c05f109bf6d0730edf33536a92319650`。仅测试合成只读 NOR，不代表完整 FlashBoot、实板 SFC、实际总线排空或 Flash 写入验收。
 
 SFC 干净检出复验：从远端主仓 `3baa21523` 获取测试链，以隔离 Cargo 缓存离线重建 RAM 夹具，在独立构建的固定 QEMU 上重新通过8场景；报告 `/tmp/ws53-sfc-clean-qemu-20261029/report.json` SHA-256 `4d0bcf008b6f062b6a6376805acd90bbe7f5530577cde2c72b7a6daeab273f11`。Python 使用预取依赖缓存；不授予真实 FlashBoot、总线排空或实板资格。
+
+WS53 模型 CI 入口：新增独立工作流和脚本，固定 QEMU overlay `1bc19b7`，构建新模型并逐项执行 HASH/KM/SYMC、SDIO 三类和 SFC 共七份 Rust 夹具；构建凭据和场景报告作为 CI 制品。本机使用已独立构建的固定模型全链路通过，汇总 `target/ws53-model-contracts-suite-20261029/summary.json` SHA-256 `2af1645cf04f42cdbccb54f3bb2c47c3ba6112380f6873d7387c35bdce356107`。这只是合成模型回归，工作流首次远端运行状态尚未验收，不能替代实板、Flash或冷启动。
