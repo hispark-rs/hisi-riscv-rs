@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Run the WS63/BS21 SPI write-drain examples against a supplied QEMU.
 
 The example firmware intentionally loops forever. A successful check observes

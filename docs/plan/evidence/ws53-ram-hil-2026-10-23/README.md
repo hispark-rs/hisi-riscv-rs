@@ -9,7 +9,7 @@
 - [`guard-tests.json`](guard-tests.json)：不连接硬件的 J-Link 自动更新与 Flash 辅助禁用守卫测试。
 
 守卫源码为 [`hil/jlink-no-update-guard.c`](../../../../hil/jlink-no-update-guard.c)，
-可用 `python3 scripts/test-ws53-jlink-guard.py` 在不连接探针的情况下重新运行模拟测试。
+可用 `uv run --script scripts/test-ws53-jlink-guard.py` 在不连接探针的情况下重新运行模拟测试。
 模拟测试不证明实际 SEGGER 库或固件行为；板上操作仍须单独确认守卫与探针状态。
 
 原始校验表中的摘要、矩阵、守卫测试和 20 轮报告哈希均已核对；此检查不替代

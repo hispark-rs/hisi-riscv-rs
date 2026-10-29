@@ -45,6 +45,8 @@ jobs:
               examples/ws53/ram_smoke/Cargo.toml examples/ws53/spi_control/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
+          cargo fetch --locked --manifest-path Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path examples/bs21/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
           for script in ws53_ci_qemu_uart_clock_build.py ws53_crypto_model_build.py test-ws53-crypto-qualified.py \
@@ -53,7 +55,7 @@ jobs:
               ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
-              test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py; do
+              test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -80,6 +82,18 @@ jobs:
             --output "$RUNNER_TEMP/ws53-spi-test"
           uv run --offline --script scripts/test-ws53-spi-wire-validator.py \
             --report "$RUNNER_TEMP/ws53-spi-test/report.json" --trace "$RUNNER_TEMP/ws53-spi-test/pads.csv"
+      - name: Check legacy SPI write drain
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc -p spi_loopback --release \
+            --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws63-spi-target"
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/bs21/Cargo.toml \
+            -p bs21_spi_loopback --release --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/bs21-spi-target"
+          uv run --offline --script scripts/test-legacy-spi-write-qemu.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --ws63-elf "$RUNNER_TEMP/ws63-spi-target/riscv32imfc-unknown-none-elf/release/spi_loopback" \
+            --bs21-elf "$RUNNER_TEMP/bs21-spi-target/riscv32imfc-unknown-none-elf/release/bs21_spi_loopback" \
+            --output "$RUNNER_TEMP/ws53-legacy-spi-report.json"
       - name: Check status-only SPI collision and recovery
         working-directory: project
         run: |
@@ -128,6 +142,7 @@ jobs:
             ${{ runner.temp }}/ws53-spi-build/build.log
             ${{ runner.temp }}/ws53-spi-test/report.json
             ${{ runner.temp }}/ws53-spi-test/pads.csv
+            ${{ runner.temp }}/ws53-legacy-spi-report.json
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json
             ${{ runner.temp }}/ws53-spi0-collision-build/build.log
             ${{ runner.temp }}/ws53-spi0-collision-test/report.json
