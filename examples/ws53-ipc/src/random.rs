@@ -138,7 +138,7 @@ fn main() -> ! {
                 let mut image =
                     RandomBufferImage::attach(region, &mut destination[1..1 + length as usize])
                         .unwrap();
-                match image.update(request, &mut scratch[..capacity], |bytes| {
+                match image.handle_message(message, &mut scratch[..capacity], |bytes| {
                     random.fill_bytes(bytes, attempts, &mut delay)
                 }) {
                     Ok(()) => 0,
