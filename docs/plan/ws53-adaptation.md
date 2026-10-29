@@ -8778,3 +8778,5 @@ IPC18 干净检出复验：从远端获取父仓 `ac2e3d104` 和全部递归子�
 HAL 独立回归：远端 CI `40798060026` 的正式 registry 任务因 crates.io 尚无 `ws53-pac` 而失败，包括旧芯片任务；WS53 固定远端依赖预发布任务通过。HAL `ca97f88` 为预发布检查补入 WS63/BS21 主机测试、目标 Clippy 与 BS2X unstable 门控；独立临时检出分别通过 WS53 432、WS63 338、BS21 220 项单测及各自文档测试，三芯片目标 Clippy 与 feature 拒绝检查通过，日志 SHA-256 `0f37786030f9f558c0997f1afbc725f58b369857d1420fbbcc101659b05cd396`。预发布检查使用固定远端 PAC/runtime 覆盖并重新解依赖，不是 registry 锁文件或版本发布验收；正式任务仍应保持失败直至依赖发布。
 
 UART DMA 异步续验：以 HAL `ca97f88` 实际构建当前 Rust 夹具，固定 `27def19` QEMU 的 78 场景再次通过，覆盖两路 UART、8 路 DMA、RX/TX、取消和错误；报告 SHA-256 `f5cfc7ffe7d8cdb1f02ea08d49dba9bd29803a220ba66b857b5543d04cab2d2d`。脚本纳入版本管理和模型 CI；后续 HAL `1e37693` 仅更新模块说明。此脚本不包含独立来源收据，不证明电气波形、缓存一致性、总线排空或实板 UART DMA；本轮没有硬件操作。
+
+UART DMA 干净检出复验：远端父仓 `72be22e5e` 及递归子模块干净检出，隔离预填缓存离线构建夹具，在既有 `27def19` QEMU 上通过同样的 78 场景；报告 SHA-256 `aea77feedf5f3f8dfffce9022288155ce398b437a1fca521134daa3e1d6f73a0`。未重建 QEMU，远端 CI、真实硬件和冷启动验收另计。
