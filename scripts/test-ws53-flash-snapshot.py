@@ -68,6 +68,28 @@ def main():
                              if s["sh_flags"] & 4 and s.name != ".ws53.ramtext")
         section = elf.get_section(section_index)
         header = elf["e_shoff"] + section_index * elf["e_shentsize"]
+        hidden = bytearray(image)
+        struct.pack_into("<I", hidden, header + 8, section["sh_flags"] & ~4)
+        struct.pack_into("<I", hidden, section["sh_offset"], 0x1000202F)
+        try:
+            validate(ReplacedPath(bytes(hidden)), allow_ram_functions=ram)
+        except ValueError as error:
+            if "entry missing from scanned" not in str(error):
+                raise
+        else:
+            raise RuntimeError("entry hidden from instruction scan")
+        text_index = next(i for i, s in enumerate(elf.iter_sections()) if s.name == ".text")
+        text_section = elf.get_section(text_index)
+        text_header = elf["e_shoff"] + text_index * elf["e_shentsize"]
+        hidden_functions = bytearray(image)
+        struct.pack_into("<I", hidden_functions, text_header + 8, text_section["sh_flags"] & ~4)
+        try:
+            validate(ReplacedPath(bytes(hidden_functions)), allow_ram_functions=ram)
+        except ValueError as error:
+            if "function missing from scanned" not in str(error):
+                raise
+        else:
+            raise RuntimeError("functions hidden from instruction scan")
         mutant = bytearray(image)
         copy = bytes(section.data())
         struct.pack_into("<I", mutant, header + 16, len(mutant))

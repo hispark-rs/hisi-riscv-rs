@@ -61,6 +61,9 @@ def main():
         section_index = next(i for i, s in enumerate(elf.iter_sections()) if s["sh_flags"] & 4)
         section_header = elf["e_shoff"] + section_index * elf["e_shentsize"]
         section_size = text["sh_size"]
+        function_index = next(i for i, s in enumerate(elf.iter_sections()) if s.name == ".text")
+        function_section = elf.get_section(function_index)
+        function_header = elf["e_shoff"] + function_index * elf["e_shentsize"]
     # ELF32 header / program-header field offsets follow the ELF specification.
     cases = {
         "wrong-abi": ([(36, 1)], "single-float ABI"),
@@ -71,6 +74,10 @@ def main():
         "atomic": ([(instruction, 0x1000202F)], "atomic instruction"),
         "long-instruction": ([(instruction, 0x0000001F)], "unsupported long instruction"),
         "short-executable-load": ([(phdrs[0] + 16, 2)], "file-backed load segment"),
+        "hidden-entry": ([(section_header + 8, text["sh_flags"] & ~4),
+                          (instruction, 0x1000202F)], "entry missing from scanned"),
+        "hidden-functions": ([(function_header + 8, function_section["sh_flags"] & ~4)],
+                             "function missing from scanned"),
     }
     with tempfile.TemporaryDirectory(prefix="ws53-elf-guards-") as work:
         for name, (patches, expected) in cases.items():

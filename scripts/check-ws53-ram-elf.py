@@ -3,7 +3,11 @@
 # requires-python = ">=3.11"
 # dependencies = ["pyelftools==0.32"]
 # ///
-"""Fail closed on WS53 MCU_MODE_1 RAM ELF layout/ISA violations; never loads it."""
+"""Check WS53 MCU_MODE_1 RAM ELF layout and scanned code; never loads it.
+
+This is not a complete control-flow proof: metadata, unsymbolized gaps and
+alternate instruction boundaries may hide reachable instructions.
+"""
 import argparse
 import hashlib
 import io
@@ -56,6 +60,7 @@ def validate(path):
                     for s in file_loads), "entry is not file-backed executable")
         # Executable sections contain RVC 16-bit or base 32-bit instructions.
         # All AMO/LR/SC share opcode 0x2f; reject it rather than relying on target flags.
+        scanned = []
         for sec in elf.iter_sections():
             if not sec["sh_flags"] & 4:
                 continue
@@ -64,6 +69,7 @@ def validate(path):
                         sec["sh_addr"] + sec["sh_size"] <= s["address"] + s["size"] and
                         sec["sh_offset"] == s["offset"] + sec["sh_addr"] - s["address"]
                         for s in file_loads), "executable section does not match file-backed load segment")
+            scanned.append((sec["sh_addr"], sec["sh_addr"] + sec["sh_size"]))
             data, offset = sec.data(), 0
             while offset < len(data):
                 half = int.from_bytes(data[offset:offset + 2], "little")
@@ -75,15 +81,25 @@ def validate(path):
         symtab = elf.get_section_by_name(".symtab")
         require(symtab is not None, "retain symbols for RAM debugging")
         symbols = {s.name: s["st_value"] for s in symtab.iter_symbols()}
+        def scanned_address(address):
+            return any(start <= address < end for start, end in scanned)
+        require(scanned_address(elf["e_entry"]), "entry missing from scanned executable sections")
         require(symbols.get("reset_vector") == PROGRAM[0], "invalid reset_vector")
         trap = symbols.get("trap_vector", 0)
         require(PROGRAM[0] <= trap < PROGRAM[1] and trap % 256 == 0, "invalid trap_vector")
+        require(scanned_address(trap), "trap missing from scanned executable sections")
+        for symbol in symtab.iter_symbols():
+            address = symbol["st_value"]
+            if symbol["st_info"]["type"] == "STT_FUNC" and any(
+                    s["flags"] & 1 and s["address"] <= address < s["address"] + s["size"]
+                    for s in file_loads):
+                require(scanned_address(address), "function missing from scanned executable sections")
         for name in ("__stack_top__", "__irq_stack_top__", "__exc_stack_top__", "__nmi_stack_top__"):
             value = symbols.get(name, 0)
             require(DATA[0] < value <= DATA[1] and value % 16 == 0, f"invalid {name}")
     return {"profile": "ws53-acore-mcu-mode1-ram", "elf": str(path),
             "sha256": hashlib.sha256(image).hexdigest(), "loads": loads,
-            "verified": ["ELF32", "ilp32f", "RAM-only", "no-A-instructions", "stack-boundaries"],
+            "verified": ["ELF32", "ilp32f", "RAM-only", "no-A-in-scanned-instructions", "stack-boundaries"],
             "hardware_verified": False}
 
 

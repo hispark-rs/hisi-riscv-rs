@@ -7,6 +7,8 @@
 
 This never constructs a combined/control-core image or touches hardware. Use
 hisi-fwpkg against the qualified backup for packaging and hisiflash for writes.
+Instruction scans do not prove complete control flow: unsymbolized gaps,
+untrusted metadata and alternate instruction boundaries remain limitations.
 """
 import argparse
 import hashlib
@@ -66,6 +68,7 @@ def validate(path, *, allow_ram_functions=False):
             file_offsets.append(segment['p_offset'])
         require(any(row['flags'] & 1 and row['vma'] == FLASH[0] and row['filesz'] > 0
                     for row in loads), 'entry not executable')
+        scanned = []
         for section in elf.iter_sections():
             if not section['sh_flags'] & 4:
                 continue
@@ -73,6 +76,7 @@ def validate(path, *, allow_ram_functions=False):
                 row['vma'] <= section['sh_addr'] and section['sh_addr']+section['sh_size'] <= row['vma']+row['filesz']
                 and section['sh_offset'] == offset + section['sh_addr'] - row['vma']
                 for row, offset in zip(loads, file_offsets)), 'executable bytes outside file-backed Flash')
+            scanned.append((section['sh_addr'], section['sh_addr']+section['sh_size']))
             if ram_functions is not None and section.name == '.ws53.ramtext':
                 # This section intentionally includes placed read-only data.
                 # The RAM audit scans function symbols and resolves references.
@@ -88,6 +92,15 @@ def validate(path, *, allow_ram_functions=False):
         table = elf.get_section_by_name('.symtab')
         require(table is not None, 'debug symbols required')
         symbols = {s.name:s['st_value'] for s in table.iter_symbols()}
+        def scanned_address(address):
+            return any(start <= address < end for start, end in scanned)
+        require(scanned_address(elf['e_entry']), 'entry missing from scanned executable sections')
+        for symbol in table.iter_symbols():
+            address = symbol['st_value']
+            if symbol['st_info']['type'] == 'STT_FUNC' and any(
+                    row['flags'] & 1 and row['vma'] <= address < row['vma']+row['filesz']
+                    for row in loads):
+                require(scanned_address(address), 'function missing from scanned executable sections')
         require(symbols.get('reset_vector') == FLASH[0], 'reset vector mismatch')
         require(symbols.get('__bootstrap_stack_bottom__') == BOOTSTRAP[0] and
                 symbols.get('__bootstrap_stack_top__') == BOOTSTRAP[1], 'bootstrap stack outside retained ITCM')
@@ -97,6 +110,7 @@ def validate(path, *, allow_ram_functions=False):
         for name in ('trap_vector', '__hisi_ws53_prepare_flash_ram', 'runtime_init'):
             value = symbols.get(name, 0)
             require(FLASH[0] <= value < FLASH[1] and (name != 'trap_vector' or value % 256 == 0), 'invalid '+name)
+            require(scanned_address(value), name+' missing from scanned executable sections')
         data_section = elf.get_section_by_name('.data')
         require(data_section is not None and data_section['sh_size'] > 0, 'fixture must exercise initialized data')
         begin, end = symbols.get('__data_begin__', 0), symbols.get('__data_end__', 0)
@@ -112,7 +126,7 @@ def validate(path, *, allow_ram_functions=False):
     return dict(profile='ws53-vendor-flashboot-mode1-experimental', entry=FLASH[0],
         elf_sha256=hashlib.sha256(image).hexdigest(), loads=loads,
         payload_sha256=hashlib.sha256(payload).hexdigest(), payload_bytes=len(payload),
-        verified=['ELF32/ilp32f', 'no-A-instructions', 'Flash-only-file-bytes', 'data-copy-layout', 'stack-boundaries'],
+        verified=['ELF32/ilp32f', 'no-A-in-scanned-instructions', 'Flash-only-file-bytes', 'data-copy-layout', 'stack-boundaries'],
         hardware_verified=False, cold_boot_verified=False, complete_image=False,
         **({'ram_functions':{k:v for k,v in ram_functions.items() if k != 'symbols'}}
            if ram_functions is not None else {})), bytes(payload)
