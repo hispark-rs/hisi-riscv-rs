@@ -42,7 +42,8 @@ jobs:
           for manifest in examples/ws53-hash-model/Cargo.toml examples/ws53-km-model/Cargo.toml \
               examples/ws53-symc-model/Cargo.toml examples/ws53-sdio-init/Cargo.toml \
               examples/ws53-sfc-read/Cargo.toml examples/ws53-ipc/Cargo.toml \
-              examples/ws53/ram_smoke/Cargo.toml examples/ws53/spi_control/Cargo.toml; do
+              examples/ws53/ram_smoke/Cargo.toml examples/ws53/spi_control/Cargo.toml \
+              examples/ws53-flash/Cargo.toml examples/ws53-ram-functions/Cargo.toml; do
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
           cargo fetch --locked --manifest-path Cargo.toml --target riscv32imfc-unknown-none-elf
@@ -56,9 +57,10 @@ jobs:
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
-              test-ws53-ram-elf.py; do
+              test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
+          uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
           uv run --offline --script scripts/test-ws53-model-summary.py
       - name: Build fixed QEMU source
         working-directory: project
@@ -97,6 +99,19 @@ jobs:
             --ws63-elf "$RUNNER_TEMP/ws63-spi-target/riscv32imfc-unknown-none-elf/release/spi_loopback" \
             --bs21-elf "$RUNNER_TEMP/bs21-spi-target/riscv32imfc-unknown-none-elf/release/bs21_spi_loopback" \
             --output "$RUNNER_TEMP/ws53-legacy-spi-report.json"
+      - name: Check Flash and RAM-function ELF snapshots
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53-flash/Cargo.toml \
+            --release --features capture-delay --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws53-flash-snapshot"
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53-ram-functions/Cargo.toml \
+            --release --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws53-ram-functions-snapshot"
+          ram_elf="$RUNNER_TEMP/ws53-ram-functions-snapshot/riscv32imfc-unknown-none-elf/release/ws53_ram_functions"
+          PYTHONOPTIMIZE=1 uv run --offline --script scripts/test-ws53-flash-snapshot.py \
+            --elf "$RUNNER_TEMP/ws53-flash-snapshot/riscv32imfc-unknown-none-elf/release/ws53_flash_smoke" \
+            --ram-functions-elf "$ram_elf" > "$RUNNER_TEMP/ws53-flash-snapshot-tests.log"
+          PYTHONOPTIMIZE=1 uv run --offline --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py \
+            "$ram_elf" > "$RUNNER_TEMP/ws53-ram-functions-snapshot-tests.log"
       - name: Check status-only SPI collision and recovery
         working-directory: project
         run: |
@@ -147,6 +162,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-test/report.json
             ${{ runner.temp }}/ws53-spi-test/pads.csv
             ${{ runner.temp }}/ws53-legacy-spi-report.json
+            ${{ runner.temp }}/ws53-flash-snapshot-tests.log
+            ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json
             ${{ runner.temp }}/ws53-spi0-collision-build/build.log
             ${{ runner.temp }}/ws53-spi0-collision-test/report.json
