@@ -39,6 +39,10 @@ def require_failure(data: dict[str, object], needle: str) -> None:
         raise AssertionError(f"expected {needle!r}, got {failures}")
 
 
+def entry(data: dict[str, object], plan_id: str) -> dict[str, object]:
+    return next(item for item in data["plan"] if item["id"] == plan_id)
+
+
 def main() -> None:
     assert errors(copy.deepcopy(SOURCE)) == []
 
@@ -47,17 +51,18 @@ def main() -> None:
     require_failure(duplicate, "重复 plan ID")
 
     cycle = copy.deepcopy(SOURCE)
-    cycle["plan"][0]["depends_on"] = [cycle["plan"][1]["id"]]
+    entry(cycle, "ws53-adaptation")["depends_on"] = ["connectivity-stack"]
+    entry(cycle, "connectivity-stack")["depends_on"] = ["ws53-adaptation"]
     require_failure(cycle, "计划依赖存在环")
 
     no_evidence = copy.deepcopy(SOURCE)
-    no_evidence["plan"][-1]["evidence"] = []
+    entry(no_evidence, "hal-060-release")["evidence"] = []
     require_failure(no_evidence, "必须绑定关闭证据")
 
     too_many_active = copy.deepcopy(SOURCE)
-    for entry in too_many_active["plan"][:2]:
-        entry["status"] = "active"
-        entry["priority"] = "P0"
+    extra = entry(too_many_active, "rtos-semantics")
+    extra["status"] = "active"
+    extra["priority"] = "P0"
     require_failure(too_many_active, "活动实现超过 WIP 上限")
 
     unknown_evidence = copy.deepcopy(SOURCE)
@@ -75,11 +80,11 @@ def main() -> None:
     assert CONNECTIVITY.check_active_window(SOURCE, active_status) == []
     assert CONNECTIVITY.check_active_window(SOURCE, "决策待定")
     premature = copy.deepcopy(SOURCE)
-    premature["plan"][0]["active_milestone"] = "NET1"
+    entry(premature, "connectivity-stack")["active_milestone"] = "NET1"
     assert CONNECTIVITY.check_active_window(premature, active_status)
-    concurrent = copy.deepcopy(SOURCE)
-    concurrent["plan"][1]["status"] = "active"
-    assert CONNECTIVITY.check_active_window(concurrent, active_status)
+    # An additional plan is checked against global WIP by the registry checker,
+    # not by the Connectivity-specific NET0 gate.
+    assert CONNECTIVITY.check_active_window(too_many_active, active_status) == []
 
     plan = (ROOT / "docs/plan/hisi-connectivity-stack.md").read_text()
     assert CONNECTIVITY.check_net_milestones(plan) == []
