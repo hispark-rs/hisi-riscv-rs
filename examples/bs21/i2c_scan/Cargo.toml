@@ -9,6 +9,14 @@ license = "MIT"
 name = "bs21_i2c_scan"
 path = "src/main.rs"
 
+[features]
+model-only = []
+
+[[bin]]
+name = "bs21_i2c_model"
+path = "src/model.rs"
+required-features = ["model-only"]
+
 [dependencies]
 # Select the BS21 chip across the stack. `default-features = false` drops the
 # WS63 defaults; `chip-bs21` pulls bs2x-pac, and `rt` turns on bs2x-pac's rt

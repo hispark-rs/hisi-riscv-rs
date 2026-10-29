@@ -1,0 +1,29 @@
+{
+  "schema": "ws53-icache-contract-evidence-v1",
+  "date": "2026-10-27",
+  "runtime_commit": "af6b564329d26554d6af5a2c06daa8bb30024389",
+  "runtime_branch": "codex/ws53-cache-control",
+  "qualified_baseline_commit": "ac525e54876d82a1fe9ca6ba86f93b4f924abbb2",
+  "baseline_files_matched": 42,
+  "sdk_cases": 521,
+  "interpreter_refusals": 4,
+  "host_tests": 7,
+  "compiled_artifact_positive": 1,
+  "compiled_artifact_refusals": 6,
+  "feature_cases": 18,
+  "rv32_library_built": true,
+  "local_commit_only": true,
+  "hardware_accessed": false,
+  "default_startup_calls_cache_operation": false,
+  "functional_qemu_model_qualified": false,
+  "ram_hardware_qualified": false,
+  "flash_hardware_qualified": false,
+  "cold_boot_qualified": false,
+  "dma_coherence_qualified": false,
+  "timing_cause_established": false,
+  "limitations": [
+    "instruction configuration only; no data cache/PMP/handoff",
+    "linear compiled CSR scan is not a complete path/value proof",
+    "build log and snapshots are not an independent hermetic provenance attestation"
+  ]
+}

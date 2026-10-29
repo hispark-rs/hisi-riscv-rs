@@ -105,6 +105,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs21_timer_delay"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal 1.0.0",
+ "hisi-hal",
+ "hisi-riscv-rt",
+]
+
+[[package]]
 name = "bs21_timer_irq"
 version = "0.1.0"
 dependencies = [
@@ -419,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.9"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -433,12 +442,13 @@ dependencies = [
  "instability",
  "nb 1.1.0",
  "portable-atomic",
+ "ws53-pac",
  "ws63-pac",
 ]
 
 [[package]]
 name = "hisi-riscv-rt"
-version = "0.5.3"
+version = "0.5.10"
 dependencies = [
  "bs2x-pac",
  "critical-section",
@@ -855,8 +865,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ws53-pac"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "critical-section",
+ "riscv",
+ "vcell",
+]
+
+[[package]]
 name = "ws63-pac"
-version = "0.2.2"
+version = "0.4.6"
 dependencies = [
  "critical-section",
  "riscv",

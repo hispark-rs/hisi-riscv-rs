@@ -1,5 +1,106 @@
 schema = "hispark-rs/plan-registry/v1"
-max_active_implementations = 1
+max_active_implementations = 2
+
+[[plan]]
+id = "ws53-i2c-wire"
+path = "ws53-i2c-wire.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "I2C model and board wire evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-ipc-ring"
+path = "ws53-ipc-ring.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-ipc-migration"]
+trigger = "firmware queue format evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-ipc-spsc"
+path = "ws53-ipc-spsc.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-ipc-migration"]
+trigger = "concurrent queue qualification"
+evidence = []
+
+[[plan]]
+id = "ws53-ram-takeover"
+path = "ws53-ram-takeover.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "RAM execution and handoff evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-spi-wire"
+path = "ws53-spi-wire.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "SPI model and board wire evidence"
+evidence = []
+
+[[plan]]
+id = "ws53-adaptation"
+path = "ws53-adaptation.md"
+status = "active"
+active_milestone = "WS53 MCU integration"
+priority = "P0"
+owner = "WS53 integration maintainers"
+depends_on = []
+trigger = "user-approved WS53 application-core adaptation"
+evidence = []
+
+[[plan]]
+id = "hal-cross-chip-review"
+path = "hal-cross-chip-review.md"
+status = "supporting"
+priority = "P1"
+owner = "HAL maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "WS53 integration requires reusable multi-chip HAL"
+evidence = []
+
+[[plan]]
+id = "legacy-dma-safety-audit"
+path = "legacy-dma-safety-audit.md"
+status = "supporting"
+priority = "P1"
+owner = "HAL maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "multi-chip DMA safety review"
+evidence = []
+
+[[plan]]
+id = "ws53-ipc-migration"
+path = "ws53-ipc-migration.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "control-core cooperation architecture and compatibility"
+evidence = []
+
+[[plan]]
+id = "ws53-workspace-status"
+path = "ws53-workspace-status.md"
+status = "supporting"
+priority = "P1"
+owner = "WS53 integration maintainers"
+depends_on = ["ws53-adaptation"]
+trigger = "multi-repository dependency and evidence maintenance"
+evidence = []
 
 [[evidence]]
 id = "connectivity-u8-review"

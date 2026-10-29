@@ -1,0 +1,118 @@
+name: WS53 I2C virtual wires
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, feat/ws53-integration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ws53-i2c-wire-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  virtual-wires:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          path: project
+      - uses: actions/checkout@v7
+        with:
+          repository: hispark-rs/hisi-riscv-qemu
+          ref: 27def194eb9d0d6989cc3c5fb0f0c1da8150be0b
+          path: qemu-overlay
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: 0.10.3
+          cache-dependency-glob: "**/*.py"
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglib2.0-dev libpixman-1-dev libslirp-dev
+          bash project/.github/scripts/install-toolchain.sh
+      - name: Fetch pinned fixture dependencies
+        working-directory: project
+        run: |
+          cargo fetch --locked --manifest-path examples/ws53/i2c_control/Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
+            --target riscv32imfc-unknown-none-elf
+          for script in ws53_ci_qemu_uart_clock_build.py ws53_i2c_traffic_build.py test-ws53-i2c-wire-traffic.py test-ws53-i2c-arbitration.py test-ws53-i2c-general-call.py; do
+            uv run --script "scripts/$script" --help > /dev/null
+          done
+      - name: Build fixed QEMU source
+        working-directory: project
+        run: |
+          qemu_python=$(uv run --python 3.12 --no-project -- sh -c 'command -v python')
+          uv run --offline --script scripts/ws53_ci_qemu_uart_clock_build.py \
+            --overlay-root ../qemu-overlay --python "$qemu_python" \
+            --output "$RUNNER_TEMP/ws53-i2c-model" --jobs 2 > "$RUNNER_TEMP/ws53-i2c-model-build.json"
+      - name: Build and check real driver wire traffic
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --output "$RUNNER_TEMP/ws53-i2c-build"
+          uv run --offline --script scripts/test-ws53-i2c-wire-traffic.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-test"
+      - name: Check arbitration loss and independent bus
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --arbitration --output "$RUNNER_TEMP/ws53-i2c-arbitration-build"
+          uv run --offline --script scripts/test-ws53-i2c-arbitration.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-arbitration-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-arbitration-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-arbitration-test"
+      - name: Check stuck and mixed abort status
+        working-directory: project
+        run: |
+          for scenario in stuck mixed; do
+            uv run --offline --script scripts/ws53_i2c_traffic_build.py --fault "$scenario" --output "$RUNNER_TEMP/ws53-i2c-$scenario-build"
+            uv run --offline --script scripts/test-ws53-i2c-arbitration.py --scenario "$scenario" \
+              --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+              --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+              --elf "$RUNNER_TEMP/ws53-i2c-$scenario-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-$scenario-build/receipt.json" \
+              --output "$RUNNER_TEMP/ws53-i2c-$scenario-test"
+          done
+      - name: Check general-call NACK and recovery
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/ws53_i2c_traffic_build.py --fault general-call --output "$RUNNER_TEMP/ws53-i2c-general-call-build"
+          uv run --offline --script scripts/test-ws53-i2c-general-call.py \
+            --qemu "$RUNNER_TEMP/ws53-i2c-model/qemu/build/qemu-system-riscv32" \
+            --model-receipt "$RUNNER_TEMP/ws53-i2c-model/receipt.json" --model-source ../qemu-overlay \
+            --elf "$RUNNER_TEMP/ws53-i2c-general-call-build/firmware.elf" --receipt "$RUNNER_TEMP/ws53-i2c-general-call-build/receipt.json" \
+            --output "$RUNNER_TEMP/ws53-i2c-general-call-test"
+      - name: Save model reports and build evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ws53-i2c-virtual-wires
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/ws53-i2c-model-build.json
+            ${{ runner.temp }}/ws53-i2c-model/receipt.json
+            ${{ runner.temp }}/ws53-i2c-model/command-*.log
+            ${{ runner.temp }}/ws53-i2c-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-build/build.log
+            ${{ runner.temp }}/ws53-i2c-test/report.json
+            ${{ runner.temp }}/ws53-i2c-test/*-difference.json
+            ${{ runner.temp }}/ws53-i2c-arbitration-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-arbitration-build/build.log
+            ${{ runner.temp }}/ws53-i2c-arbitration-test/report.json
+            ${{ runner.temp }}/ws53-i2c-stuck-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-stuck-build/build.log
+            ${{ runner.temp }}/ws53-i2c-stuck-test/report.json
+            ${{ runner.temp }}/ws53-i2c-mixed-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-mixed-build/build.log
+            ${{ runner.temp }}/ws53-i2c-mixed-test/report.json
+            ${{ runner.temp }}/ws53-i2c-general-call-build/receipt.json
+            ${{ runner.temp }}/ws53-i2c-general-call-build/build.log
+            ${{ runner.temp }}/ws53-i2c-general-call-test/report.json

@@ -10,7 +10,7 @@
 
 ## 状态规则
 
-- **执行中**：仓库 WIP 限制允许的主要实现里程碑；可以为零，最多一个。
+- **执行中**：仓库 WIP 限制允许的主要实现里程碑；可以为零，当前最多两个。WS53 是用户明确授权与 Connectivity 并行开展的工作。
 - **决策待定**：产品方向等待显式选择，不占用实现 WIP 槽位。
 - **配套工作**：当前里程碑所需的有限正确性或兼容性工作，不开启第二条产品方向。
 - **条件触发**：仅当注册表记录的产品条件成立时启动。
@@ -26,6 +26,16 @@
 
 | 计划 | 状态 | 优先级 | 触发条件 / 前置阻塞 | 阻塞项 / 下一决策 |
 |---|---|---:|---|---|
+| [WS53 I2C 线序](ws53-i2c-wire.md) | 配套工作 | P1 | 模型与实板线序 | 外部器件及冷启动验收 |
+| [WS53 IPC 队列格式](ws53-ipc-ring.md) | 配套工作 | P1 | 厂商队列布局证据 | 实际对端及生命周期验收 |
+| [WS53 IPC 并发存储](ws53-ipc-spsc.md) | 配套工作 | P1 | 共享队列并发契约 | 缓存、通知与真实对端验收 |
+| [WS53 RAM 接管](ws53-ram-takeover.md) | 配套工作 | P1 | 实板 RAM 启动及恢复证据 | 生产交接与未覆盖外设 |
+| [WS53 SPI 线序](ws53-spi-wire.md) | 配套工作 | P1 | 模型与实板线序 | 外部器件及冷启动验收 |
+| [WS53 应用核适配](ws53-adaptation.md) | 执行中 | P0 | 用户授权完整适配并持续维护 | 按能力和证据矩阵推进；真实冷启动及未验收外设保持开放 |
+| [HAL 跨芯片结构审查](hal-cross-chip-review.md) | 配套工作 | P1 | WS53 接入和既有芯片兼容性 | 分模块复用并保留真实硬件差异 |
+| [旧 DMA 安全审查](legacy-dma-safety-audit.md) | 配套工作 | P1 | 跨芯片 DMA 安全性 | 未解决的问题不可标为已证明安全 |
+| [WS53 IPC 迁移](ws53-ipc-migration.md) | 配套工作 | P1 | 控制核协议与硬件驱动分层 | 实际对端兼容性与生命周期验收 |
+| [WS53 多仓库维护](ws53-workspace-status.md) | 配套工作 | P1 | 依赖、提交及证据同步 | 独立发布依赖与远端可获取性 |
 | [Connectivity 全栈](hisi-connectivity-stack.md) | 执行中 | P0 | A5、BLE B0-B3、SLE S0-S3、U0-U8R 已闭合 | 当前仅 NET0 标准 L2；Embassy Net → 自主授时 HTTPS 顺序排队，不自动毕业 coexistence |
 | [RTOS 语义与验证](hisi-rtos-semantics-and-verification.md) | 配套工作 | P1 | A5R-F0-F5 已闭合；requirement/runtime/silicon mechanism 变化时重开 | 保持规范、模型、Rust proof 与 immutable HIL evidence 同步 |
 | [WS63 RF runtime 兼容](ws63-rf-runtime-compatibility.md) | 配套工作 | P1 | archive/profile 变化或 A5R 暴露兼容缺口时重开 | 版本化 blob/runtime 兼容发布输入 |

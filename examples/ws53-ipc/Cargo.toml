@@ -1,0 +1,41 @@
+[package]
+name = "ws53-ipc-model-example"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[features]
+default = []
+model-handoff = []
+endpoint-contract = ["model-handoff"]
+
+[dependencies]
+hisi-ws53-coex = { path = "../../crates/chips/ws53/hisi-ws53-coex" }
+critical-section = "1"
+embedded-hal = "1.0.0"
+hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt", default-features = false, features = ["chip-ws53", "unstable", "bundled-memory-x"] }
+
+[[bin]]
+name = "ipc-model"
+path = "src/main.rs"
+required-features = ["model-handoff"]
+
+[[bin]]
+name = "ipc-spsc-model"
+path = "src/spsc.rs"
+required-features = ["model-handoff"]
+
+[[bin]]
+name = "ipc-random-model"
+path = "src/random.rs"
+required-features = ["model-handoff"]
+
+[workspace]
+resolver = "2"
+
+[patch.crates-io]
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+bs2x-pac = { path = "../../crates/chips/bs2x/bs2x-pac" }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }

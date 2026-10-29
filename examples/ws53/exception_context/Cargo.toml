@@ -1,0 +1,22 @@
+[package]
+name = "ws53_exception_context"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[features]
+qemu-only = []
+hil-controlled = []
+# Known to the shared engine; rejected by this RAM-only entry wrapper.
+flash-autonomous = []
+legacy-hooks = []
+named-stop = []
+default-stop = []
+default-halt = []
+irq-exception = ["dep:hisi-hal", "dep:riscv"]
+
+[dependencies]
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }
+hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"], optional = true }
+riscv = { version = "0.13", optional = true }

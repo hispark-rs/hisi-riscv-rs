@@ -1,5 +1,8 @@
 # Build output
 /target/
+# Independent example workspaces produce their own Cargo output directories.
+/examples/**/target/
+/crates/chips/ws53/hisi-ws53-coex/target/
 
 # Editor files
 *.swp

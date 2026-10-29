@@ -1,0 +1,169 @@
+{
+  "schema": 1,
+  "scope": "20 historical RAM-only takeovers with control core held in reset; not production handoff or cold boot",
+  "elf_sha256": "b5e78998cd3604ea1afa686311f5369333a7ed47864f498aa6dbfed3b3115074",
+  "source_summary_sha256": "76abb1e43965c481baad9c9e138bb1f8ceb66f6db15f16881cd206560d01230b",
+  "source_matrix_sha256": "373524a8a84a89f213abd2c9a33664f274d218bca731cab3cd896ce2ac8e1e2f",
+  "rounds": [
+    {
+      "round": 1,
+      "source_report_sha256": "8ad8c8945c306c2060906550aa8efb0c8c59ecd9d30cf9d485ca7d657c7f66ca",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 2,
+      "source_report_sha256": "bd552fe829209641745fa9fdc711bf4a9614103fefaba4d50593cd702588931b",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 3,
+      "source_report_sha256": "b4bd9072f55ed1c1313e713f0da1af790fcb89e808d8b6dc896e9d88f8e3db4a",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 4,
+      "source_report_sha256": "df62a18581f2ae9e26eae6b1bfec3eb166dd56a7f365581695e93673a4b7b241",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 5,
+      "source_report_sha256": "3153f782160b02d5ffe6e8e5a1dbd73f5a6817028734aa1977ff4ad4f31aaf7e",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 6,
+      "source_report_sha256": "22f29c6b6a5a79f705e23cef5b419136046489b6f98c4e1859ddab60e28b5778",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 7,
+      "source_report_sha256": "bdc352d1cf7f991e7bb8bc5de8ce99c84641336fe54757cb19417fff0ed8e76e",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 8,
+      "source_report_sha256": "257b495815fe697d5942cccadaa9430d54d24b2ac8e15c5b5947fc4b1761ec81",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 9,
+      "source_report_sha256": "bcdf4762158add5456821913b4e7387ca75b77352442e3159c661d00cefb1eaa",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 10,
+      "source_report_sha256": "4ee79c32d18c34b7e25b95ad7ce722c13f86a41a3456bfe3a942b4880414ddb8",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 11,
+      "source_report_sha256": "edd597c9c4a33fa9c6fb04b02cd138218e129f55b66ec071e1e47fae1d1ff3b3",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 12,
+      "source_report_sha256": "5f92559c6b279ff2a2189bcf13155f6aa21d966dbb9a88599246931601dc1720",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 13,
+      "source_report_sha256": "9a0d81f2eb67adb2744973f069aa07ce1a9ff3355584686f9954409d8e72947a",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 14,
+      "source_report_sha256": "b59a99fedb8eb59928881958301c6d13dc6db454a6cd0540de379887f3cc9a60",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 15,
+      "source_report_sha256": "55b3af6cf028dba437aa9059cad2fa97891236c1f83f9054f08f9de0f827e026",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 16,
+      "source_report_sha256": "41996e896af3e0508ddf2643c61c9931a8b07bda487353a6a09dff8fdd9d6d15",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 17,
+      "source_report_sha256": "2c8000d5e706a3e454b2037c436369b97836ec4ab25175c533cb8787f2274416",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 18,
+      "source_report_sha256": "838c278d6220e5ead99d5454e25be56861f37c5065e1083faa0bc2a5242c99f9",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 19,
+      "source_report_sha256": "e8782ff9e93c9fea018f74a8aff68cfa07b711c42e9e194fe1a876e0c23aea46",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    },
+    {
+      "round": 20,
+      "source_report_sha256": "c89d7af68c67475041c41a19f90327ee40ad7b2b69847506e1d267c7d5fa3e5f",
+      "passed": true,
+      "recovered": true,
+      "ram_verified": true,
+      "post_image_verified": true
+    }
+  ]
+}

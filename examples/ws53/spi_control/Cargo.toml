@@ -1,0 +1,17 @@
+[package]
+name = "ws53_spi_control"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[features]
+clock-stall-smoke = []
+collision-spi0 = []
+collision-qspi1 = []
+
+[dependencies]
+hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }
+embedded-hal = "1"
+riscv = "0.13"

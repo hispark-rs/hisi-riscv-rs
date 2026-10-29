@@ -1,0 +1,10 @@
+[package]
+name = "bs21_timer_delay"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-bs21", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", default-features = false, features = ["chip-bs21", "unstable"] }
+embedded-hal = "1"

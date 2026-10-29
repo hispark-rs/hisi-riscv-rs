@@ -1,0 +1,82 @@
+[package]
+name = "ws53_ram_smoke"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[features]
+spi-wire-probe = []
+i2c-wire-probe = []
+i2c-wire-bus1 = ["i2c-wire-probe"]
+secure-boot-read-probe = []
+sfc-read-probe = []
+uart2-async-tx-smoke = ["hisi-hal/async", "dep:embedded-io-async"]
+uart-tx-irq-probe = []
+embassy-fault-probe = ["embassy-smoke"]
+embassy-smoke = ["hisi-hal/embassy", "dep:embassy-time", "dep:embassy-time-driver"]
+uart-rx-smoke = []
+uart-error-smoke = []
+uart-irq-smoke = []
+uart2-irq-smoke = []
+timer-async-smoke = ["hisi-hal/async", "dep:embedded-hal-async"]
+gpio-async-smoke = ["hisi-hal/async", "dep:embedded-hal-async"]
+uart2-async-smoke = ["hisi-hal/async", "dep:embedded-io-async"]
+uart-line-smoke = []
+uart-all-lines-smoke = ["uart-line-smoke"]
+uart-pad-probe = ["uart-all-lines-smoke"]
+uart-clock-probe = ["uart-all-lines-smoke"]
+uart-h0-init-smoke = ["uart-all-lines-smoke"]
+uart-h0-init-already-on = ["uart-h0-init-smoke"]
+uart-h0-init-pins = ["uart-h0-init-smoke"]
+uart-reset-probe = ["uart-all-lines-smoke"]
+uart-l0-reset-probe = ["uart-all-lines-smoke"]
+uart-l0-hal-reset-probe = ["uart-l0-reset-probe"]
+uart-access-probe = ["uart-reset-probe"]
+uart-hal-reset-probe = ["uart-access-probe"]
+gpio-smoke = []
+gpio17-smoke = []
+timer1-gpio17-smoke = []
+tcxo-snapshot-smoke = []
+tcxo-nonblocking-smoke = ["tcxo-snapshot-smoke"]
+rtc-smoke = []
+wdt-smoke = []
+wdt-settle-probe = ["wdt-smoke"]
+wdt-handshake-probe = ["wdt-smoke"]
+trng-smoke = []
+ipc-random-smoke = ["trng-smoke", "dep:hisi-ws53-coex"]
+trng-ring-start-smoke = ["ipc-random-smoke"]
+tsensor-smoke = []
+tsensor-restart-probe = ["tsensor-smoke"]
+mdma-smoke = []
+mdma-async-fault = ["mdma-async-smoke"]
+mdma-async-smoke = ["mdma-smoke", "hisi-hal/async"]
+mdma-irq-probe = ["mdma-smoke"]
+mdma-width8 = ["mdma-smoke"]
+mdma-width16 = ["mdma-smoke"]
+mdma-direct-probe = ["mdma-smoke"]
+pwm0-smoke = []
+pwm0-clock-probe = ["pwm0-smoke"]
+pwm0-finite-probe = ["pwm0-smoke"]
+pwm0-finite-delay-probe = ["pwm0-finite-probe"]
+pwm0-finite-counter-probe = ["pwm0-finite-delay-probe"]
+pwm0-finite-irq-probe = ["pwm0-finite-probe"]
+pwm0-abnormal-probe = ["pwm0-finite-probe"]
+
+[dependencies]
+hisi-ws53-coex = { path = "../../../crates/chips/ws53/hisi-ws53-coex", optional = true }
+ws53-pac = { path = "../../../crates/chips/ws53/ws53-pac" }
+hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }
+riscv = "0.13"
+critical-section = "1"
+nb = "1"
+embedded-io = "0.6"
+embedded-hal-nb = "1"
+embedded-hal = "1"
+
+embedded-io-async = { version = "0.6", optional = true }
+embedded-hal-async = { version = "1.0", optional = true }
+
+embassy-time = { version = "0.5.1", features = ["tick-hz-1_000_000"], optional = true }
+embassy-time-driver = { version = "0.2.2", optional = true }

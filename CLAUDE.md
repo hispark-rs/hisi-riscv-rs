@@ -70,6 +70,28 @@ their repositories.
 
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
 
+### Multi-repository maintenance
+
+- Keep `docs/plan/ws53-workspace-status.md` current as WS53 units are validated.
+  Record remaining qualifications separately for QEMU, RAM, Flash reset and
+  power-cycle testing; do not treat one as evidence for another.
+- Inventory dirty files, untracked evidence, branch ancestry, remotes and worktree
+  users before cleanup. Never discard an unverified result, backup or active
+  worktree to make the status appear clean. Preserve raw hardware materials
+  outside Git and record their purpose, location and hashes in the evidence index.
+- Commit and push reviewable units in dependency order: register source, generated
+  PAC, runtime and HAL, models and tools, then parent pointers. Before committing
+  a pointer or pinned Git dependency, verify the exact commit is fetchable from
+  its declared remote. Ordinary builds must not require local absolute paths,
+  temporary worktrees, untracked source or a prepopulated cache.
+- Ignore only reproducible outputs, caches and temporary captures. Keep source,
+  required lockfiles, configuration, tests and concise evidence versioned; inspect
+  already-tracked files separately. Do not modify sealed evidence without recording
+  its provenance and integrity consequences.
+- After a verified unit, update its branch, remote, tests and dependency status;
+  remove a worktree only after checking that its work is preserved, it is clean,
+  and no task or script still references it. Never force-push or reset to tidy up.
+
 ## Architecture
 
 ### Crate Dependency Chain

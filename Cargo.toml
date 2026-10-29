@@ -6,6 +6,7 @@ exclude = [
     "crates/chips/ws63/ws63-radio-sys/crates/hisi-rf-link",
 ]
 members = [
+    "crates/chips/ws53/ws53-pac",
     "crates/chips/ws63/ws63-pac",
     "crates/chips/bs2x/bs2x-pac",
     "crates/hisi-alloc",
@@ -146,6 +147,7 @@ critical-section = "1"
 # PAC's #[no_mangle] DEVICE_PERIPHERALS static is defined twice → link failure, and
 # the singleton-safety invariant is split across two copies).
 [patch.crates-io]
+ws53-pac = { path = "crates/chips/ws53/ws53-pac" }
 ws63-pac = { path = "crates/chips/ws63/ws63-pac" }
 bs2x-pac = { path = "crates/chips/bs2x/bs2x-pac" }
 hisi-alloc = { path = "crates/hisi-alloc" }
