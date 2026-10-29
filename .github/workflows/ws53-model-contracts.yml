@@ -59,7 +59,8 @@ jobs:
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
-              test-bs21-timer-delay-qemu.py test-ws53-uart-dma.py test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
+              test-bs21-timer-delay-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py \
+              test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -120,6 +121,20 @@ jobs:
             --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             --elf "$RUNNER_TEMP/ws53-uart-dma-target/riscv32imfc-unknown-none-elf/release/ws53_uart_dma" \
             > "$RUNNER_TEMP/ws53-uart-dma-async-report.json"
+      - name: Check WS53 SPI DMA nonblocking progress
+        working-directory: project
+        run: |
+          for width in 8 32; do
+            features=poll-smoke
+            if [ "$width" = 32 ]; then features=poll-smoke,width32; fi
+            cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+              -p ws53_spi_dma --features "$features" --release --target riscv32imfc-unknown-none-elf \
+              --target-dir "$RUNNER_TEMP/ws53-spi-dma-poll-$width"
+            uv run --offline --script scripts/test-ws53-spi-dma.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$RUNNER_TEMP/ws53-spi-dma-poll-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
+              > "$RUNNER_TEMP/ws53-spi-dma-poll-$width.json"
+          done
       - name: Check BS21 stale timer expiry
         working-directory: project
         run: |
@@ -197,6 +212,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-test/pads.csv
             ${{ runner.temp }}/ws53-legacy-spi-report.json
             ${{ runner.temp }}/ws53-uart-dma-async-report.json
+            ${{ runner.temp }}/ws53-spi-dma-poll-8.json
+            ${{ runner.temp }}/ws53-spi-dma-poll-32.json
             ${{ runner.temp }}/ws53-flash-snapshot-tests.log
             ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json

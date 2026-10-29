@@ -8780,3 +8780,5 @@ HAL 独立回归：远端 CI `40798060026` 的正式 registry 任务因 crates.i
 UART DMA 异步续验：以 HAL `ca97f88` 实际构建当前 Rust 夹具，固定 `27def19` QEMU 的 78 场景再次通过，覆盖两路 UART、8 路 DMA、RX/TX、取消和错误；报告 SHA-256 `f5cfc7ffe7d8cdb1f02ea08d49dba9bd29803a220ba66b857b5543d04cab2d2d`。脚本纳入版本管理和模型 CI；后续 HAL `1e37693` 仅更新模块说明。此脚本不包含独立来源收据，不证明电气波形、缓存一致性、总线排空或实板 UART DMA；本轮没有硬件操作。
 
 UART DMA 干净检出复验：远端父仓 `72be22e5e` 及递归子模块干净检出，隔离预填缓存离线构建夹具，在既有 `27def19` QEMU 上通过同样的 78 场景；报告 SHA-256 `aea77feedf5f3f8dfffce9022288155ce398b437a1fca521134daa3e1d6f73a0`。未重建 QEMU，远端 CI、真实硬件和冷启动验收另计。
+
+SPI DMA 非阻塞进度：HAL `48e202d` 将单次状态观察从阻塞等待抽出并提供 `SpiTransfer::poll`；未完成时保留运行状态，完成或故障关闭请求并保留资源，不提供 ISR 唤醒或物理排空证明。主机 12 项 SPI DMA 状态机测试、WS53 目标 Clippy（含无 async）通过；固定 `27def19` QEMU 使用新 poll 路径对 8 位、32 位分别通过 50 场景，报告 SHA-256 `cedf332e402ad2b9f0117bf59c3a952b6c604b53a6de1e487dbf936fa5da0ff0`、`64e07dc0987a5cf4527b67d797bb61ea4379d98e20a8b647fa2e6ee8c9a9a160`，原阻塞路径 8 位 50 场景报告 `c382332a7bf8442e0164ae873fa0db57a375558f9621bc613e3fb31a8e66d1f0`。部分场景专门测试起始拒绝和取消，不都调用 poll；CI 已加入 poll 回归，来源绑定收据、实板及异步唤醒仍未验收。本轮无硬件操作。

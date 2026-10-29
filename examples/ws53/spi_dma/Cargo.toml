@@ -7,6 +7,7 @@ publish = false
 
 [features]
 width32 = []
+poll-smoke = []
 
 [dependencies]
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }

@@ -1,7 +1,9 @@
 //! Model-only SPI duplex DMA fixture. Never load this image on physical boards.
 #![no_std]
 #![no_main]
-use core::{cell::RefCell, num::NonZeroU16};
+use core::cell::RefCell;
+#[cfg(not(feature = "poll-smoke"))]
+use core::num::NonZeroU16;
 use embedded_hal::delay::DelayNs;
 use hisi_hal::{
     Peripherals,
@@ -133,10 +135,30 @@ fn test<T: Instance + 'static>(
                     _ => transfer.as_mut().unwrap().request_stop(),
                 }
             } else {
-                let result = transfer
-                    .as_mut()
-                    .unwrap()
-                    .wait(NonZeroU16::new(1000).unwrap(), delay);
+                let t = transfer.as_mut().unwrap();
+                #[cfg(feature = "poll-smoke")]
+                let result = {
+                    let mut result = Err(Error::Timeout);
+                    for _ in 0..1000 {
+                        match t.poll() {
+                            Ok(Some(done)) => {
+                                result = Ok(done);
+                                break;
+                            }
+                            Ok(None) => delay.delay_us(1),
+                            Err(e) => {
+                                result = Err(e);
+                                break;
+                            }
+                        }
+                    }
+                    if matches!(result, Err(Error::Timeout)) {
+                        t.request_stop();
+                    }
+                    result
+                };
+                #[cfg(not(feature = "poll-smoke"))]
+                let result = t.wait(NonZeroU16::new(1000).unwrap(), delay);
                 match scenario {
                     b'N' => assert_eq!(result.unwrap().elements(), 33),
                     b'R' | b'W' => assert_eq!(result, Err(Error::Bus)),
