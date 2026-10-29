@@ -47,6 +47,7 @@ jobs:
             cargo fetch --locked --manifest-path "$manifest" --target riscv32imfc-unknown-none-elf
           done
           cargo fetch --locked --manifest-path Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path examples/ws53/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/bs21/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
@@ -58,7 +59,7 @@ jobs:
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
-              test-bs21-timer-delay-qemu.py test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
+              test-bs21-timer-delay-qemu.py test-ws53-uart-dma.py test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -109,6 +110,16 @@ jobs:
             --ws63-elf "$RUNNER_TEMP/ws63-spi-target/riscv32imfc-unknown-none-elf/release/spi_loopback" \
             --bs21-elf "$RUNNER_TEMP/bs21-spi-target/riscv32imfc-unknown-none-elf/release/bs21_spi_loopback" \
             --output "$RUNNER_TEMP/ws53-legacy-spi-report.json"
+      - name: Check WS53 UART DMA async
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+            -p ws53_uart_dma --features async-smoke --release --target riscv32imfc-unknown-none-elf \
+            --target-dir "$RUNNER_TEMP/ws53-uart-dma-target"
+          uv run --offline --script scripts/test-ws53-uart-dma.py --async-smoke \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/ws53-uart-dma-target/riscv32imfc-unknown-none-elf/release/ws53_uart_dma" \
+            > "$RUNNER_TEMP/ws53-uart-dma-async-report.json"
       - name: Check BS21 stale timer expiry
         working-directory: project
         run: |
@@ -185,6 +196,7 @@ jobs:
             ${{ runner.temp }}/ws53-spi-test/report.json
             ${{ runner.temp }}/ws53-spi-test/pads.csv
             ${{ runner.temp }}/ws53-legacy-spi-report.json
+            ${{ runner.temp }}/ws53-uart-dma-async-report.json
             ${{ runner.temp }}/ws53-flash-snapshot-tests.log
             ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json
