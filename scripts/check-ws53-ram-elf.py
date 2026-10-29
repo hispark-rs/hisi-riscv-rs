@@ -34,6 +34,7 @@ def validate(path):
         require(elf["e_flags"] == 3, "expected RVC + single-float ABI only")
         require(elf["e_entry"] == PROGRAM[0], "entry must be WS53 RAM reset_vector")
         loads = []
+        file_loads = []
         for seg in elf.iter_segments():
             if seg["p_type"] != "PT_LOAD":
                 continue
@@ -48,9 +49,11 @@ def validate(path):
                             other["address"] < start + size for other in loads),
                     "overlapping load segments")
             loads.append({"address": start, "size": size, "flags": seg["p_flags"]})
+            file_loads.append({"address": start, "size": seg["p_filesz"],
+                               "offset": seg["p_offset"], "flags": seg["p_flags"]})
         require(loads, "no loadable segments")
         require(any(s["flags"] & 1 and s["address"] <= elf["e_entry"] < s["address"] + s["size"]
-                    for s in loads), "entry is not executable")
+                    for s in file_loads), "entry is not file-backed executable")
         # Executable sections contain RVC 16-bit or base 32-bit instructions.
         # All AMO/LR/SC share opcode 0x2f; reject it rather than relying on target flags.
         for sec in elf.iter_sections():
@@ -58,8 +61,9 @@ def validate(path):
                 continue
             require(sec["sh_type"] == "SHT_PROGBITS", "executable section is not file-backed")
             require(any(s["flags"] & 1 and s["address"] <= sec["sh_addr"] and
-                        sec["sh_addr"] + sec["sh_size"] <= s["address"] + s["size"]
-                        for s in loads), "executable section outside load segment")
+                        sec["sh_addr"] + sec["sh_size"] <= s["address"] + s["size"] and
+                        sec["sh_offset"] == s["offset"] + sec["sh_addr"] - s["address"]
+                        for s in file_loads), "executable section does not match file-backed load segment")
             data, offset = sec.data(), 0
             while offset < len(data):
                 half = int.from_bytes(data[offset:offset + 2], "little")

@@ -58,6 +58,9 @@ def main():
                  enumerate(elf.iter_segments()) if seg["p_type"] == "PT_LOAD"]
         text = next(s for s in elf.iter_sections() if s["sh_flags"] & 4)
         instruction = text["sh_offset"]
+        section_index = next(i for i, s in enumerate(elf.iter_sections()) if s["sh_flags"] & 4)
+        section_header = elf["e_shoff"] + section_index * elf["e_shentsize"]
+        section_size = text["sh_size"]
     # ELF32 header / program-header field offsets follow the ELF specification.
     cases = {
         "wrong-abi": ([(36, 1)], "single-float ABI"),
@@ -67,6 +70,7 @@ def main():
         "overlap": ([(phdrs[1] + 8, 0x28000), (phdrs[1] + 12, 0x28000)], "overlapping load"),
         "atomic": ([(instruction, 0x1000202F)], "atomic instruction"),
         "long-instruction": ([(instruction, 0x0000001F)], "unsupported long instruction"),
+        "short-executable-load": ([(phdrs[0] + 16, 2)], "file-backed load segment"),
     }
     with tempfile.TemporaryDirectory(prefix="ws53-elf-guards-") as work:
         for name, (patches, expected) in cases.items():
@@ -88,6 +92,22 @@ def main():
             if result.returncode == 0 or expected not in result.stderr:
                 raise RuntimeError(f"{name}: -O bypassed or changed guard: {result.stderr}")
             print(f"PASS {name} (normal and -O)")
+        # Put forbidden instructions in the loaded bytes but point the section
+        # to a safe duplicate appended after the ELF tables. Scanning only the
+        # section without checking its file mapping would miss the instruction.
+        data = bytearray(original)
+        safe_copy = data[instruction:instruction + section_size]
+        struct.pack_into("<I", data, section_header + 16, len(data))
+        struct.pack_into("<I", data, instruction, 0x1000202F)
+        data.extend(safe_copy)
+        fixture = Path(work) / "aliased-executable-section"
+        fixture.write_bytes(data)
+        for optimized in (False, True):
+            command = [sys.executable] + (["-O"] if optimized else []) + [str(CHECK), str(fixture)]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+            if result.returncode == 0 or "file-backed load segment" not in result.stderr:
+                raise RuntimeError(f"aliased section accepted or wrong rejection: {result.stderr}")
+        print("PASS aliased-executable-section (normal and -O)")
     return 0
 
 
