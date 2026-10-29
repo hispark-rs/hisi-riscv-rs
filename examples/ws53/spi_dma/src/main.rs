@@ -50,22 +50,46 @@ impl DelayNs for TimerDelay<'_, '_> {
         panic!("timer stopped");
     }
 }
-// Model-only cooperative timer: one counter observation per poll and a
-// self-wake while pending. This exercises the actual future, not timer IRQs.
+// Model-only application owns TIMER0 and routes its IRQ to the HAL adapter.
 #[cfg(feature = "async-smoke")]
 impl embedded_hal_async::delay::DelayNs for TimerDelay<'_, '_> {
     async fn delay_ns(&mut self, ns: u32) {
-        let ticks = (u64::from(ns) * 32_000_000).div_ceil(1_000_000_000) as u32;
-        let start = self.0.borrow_mut().current_value(TimerChannel::Channel1).unwrap();
-        core::future::poll_fn(|cx| {
-            let now = self.0.borrow_mut().current_value(TimerChannel::Channel1).unwrap();
-            if start.wrapping_sub(now) >= ticks {
-                core::task::Poll::Ready(())
-            } else {
-                cx.waker().wake_by_ref();
-                core::task::Poll::Pending
-            }
-        }).await
+        let mut timer = self.0.borrow_mut();
+        // SAFETY: the fixture owns TIMER0; its sole handler is below.
+        let mut delay = unsafe { timer.async_delay(TimerChannel::Channel0) }.unwrap();
+        embedded_hal_async::delay::DelayNs::delay_ns(&mut delay, ns).await;
+    }
+}
+#[cfg(feature = "async-smoke")]
+mod async_executor {
+    use core::{
+        cell::Cell,
+        task::{RawWaker, RawWakerVTable, Waker},
+    };
+    use critical_section::Mutex;
+    use hisi_hal::timer::{TimerChannel, TimerDriver};
+    static WOKEN: Mutex<Cell<bool>> = Mutex::new(Cell::new(false));
+    static IRQS: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+    static VTABLE: RawWakerVTable = RawWakerVTable::new(|_| raw(), |_| wake(), |_| wake(), |_| {});
+    fn raw() -> RawWaker {
+        RawWaker::new(core::ptr::null(), &VTABLE)
+    }
+    fn wake() {
+        critical_section::with(|cs| WOKEN.borrow(cs).set(true));
+    }
+    pub fn waker() -> Waker {
+        unsafe { Waker::from_raw(raw()) }
+    }
+    pub fn take_wake() -> bool {
+        critical_section::with(|cs| WOKEN.borrow(cs).replace(false))
+    }
+    pub fn irq_count() -> u32 {
+        critical_section::with(|cs| IRQS.borrow(cs).get())
+    }
+    #[unsafe(no_mangle)]
+    extern "C" fn TIMER_0() {
+        assert!(unsafe { TimerDriver::on_async_interrupt(TimerChannel::Channel0) });
+        critical_section::with(|cs| IRQS.borrow(cs).set(IRQS.borrow(cs).get() + 1));
     }
 }
 fn emit(u: &Uart<'_, Uart2<'_>>, s: &[u8]) {
@@ -134,7 +158,10 @@ fn test<T: Instance + 'static>(
         b'C' => assert_eq!(start, Err(Error::SpiConfiguration)),
         b'B' => assert_eq!(start, Err(Error::SpiBusy)),
         b'L' | b'Z' => match start {
-            Err(Error::SpiCollision { status, raw_interrupt }) => {
+            Err(Error::SpiCollision {
+                status,
+                raw_interrupt,
+            }) => {
                 assert_ne!(status & if port == 0 { 1 } else { 1 << 6 }, 0);
                 let irq_bit = if port == 0 { 1 << 15 } else { 1 << 5 };
                 assert_eq!(raw_interrupt & irq_bit != 0, scenario == b'L');
@@ -177,25 +204,53 @@ fn test<T: Instance + 'static>(
                 };
                 #[cfg(feature = "async-smoke")]
                 let result = {
-                    use core::{future::Future, num::NonZeroU32, task::{Context, Poll, Waker}};
-                    let mut future = core::pin::pin!(t.wait_async(delay, NonZeroU32::new(1).unwrap()));
+                    use core::{
+                        future::Future,
+                        num::NonZeroU32,
+                        task::{Context, Poll},
+                    };
+                    let mut future =
+                        core::pin::pin!(t.wait_async(delay, NonZeroU32::new(1).unwrap()));
                     let mut result = Err(Error::Timeout);
-                    let mut cx = Context::from_waker(Waker::noop());
-                    for _ in 0..10_000 {
+                    let waker = async_executor::waker();
+                    let mut cx = Context::from_waker(&waker);
+                    let mut wake = true;
+                    let mut polls = 0;
+                    for _ in 0..100_000_000 {
+                        if !wake && !async_executor::take_wake() {
+                            continue;
+                        }
+                        wake = false;
+                        polls += 1;
                         if let Poll::Ready(value) = future.as_mut().poll(&mut cx) {
                             result = value;
+                            break;
+                        }
+                        if polls >= 1000 {
                             break;
                         }
                     }
                     result // dropping a pending future performs cancellation
                 };
+                #[cfg(feature = "async-smoke")]
+                {
+                    let mut timer = delay.0.borrow_mut();
+                    let probe = unsafe { timer.async_delay(TimerChannel::Channel0) }.unwrap();
+                    drop(probe); // cancellation/return leaves TIMER0 reusable
+                    if matches!(scenario, b'N' | b'T') {
+                        assert!(async_executor::irq_count() > 0);
+                    }
+                }
                 #[cfg(not(any(feature = "poll-smoke", feature = "async-smoke")))]
                 let result = t.wait(NonZeroU16::new(1000).unwrap(), delay);
                 match scenario {
                     b'N' => assert_eq!(result.unwrap().elements(), 33),
                     b'R' | b'W' => assert_eq!(result, Err(Error::Bus)),
                     b'P' | b'Q' => match result {
-                        Err(Error::SpiCollision { status, raw_interrupt }) => {
+                        Err(Error::SpiCollision {
+                            status,
+                            raw_interrupt,
+                        }) => {
                             assert_ne!(status & if port == 0 { 1 } else { 1 << 6 }, 0);
                             let irq_bit = if port == 0 { 1 << 15 } else { 1 << 5 };
                             assert_eq!(raw_interrupt & irq_bit != 0, scenario == b'Q');
@@ -245,6 +300,17 @@ fn main() -> ! {
     let timer = RefCell::new(TimerDriver::new(unsafe {
         p.TIMER.assume_application_ownership()
     }));
+    #[cfg(feature = "async-smoke")]
+    {
+        use hisi_hal::interrupt::{self, Threshold};
+        timer.borrow_mut().disable(TimerChannel::Channel0);
+        timer
+            .borrow_mut()
+            .set_interrupt_mask(TimerChannel::Channel0, true);
+        timer.borrow_mut().clear_interrupt(TimerChannel::Channel0);
+        interrupt::set_threshold(Threshold::from_level(0).unwrap());
+        unsafe { riscv::interrupt::enable() };
+    }
     timer.borrow_mut().configure(
         TimerChannel::Channel1,
         TimerMode::Periodic,
