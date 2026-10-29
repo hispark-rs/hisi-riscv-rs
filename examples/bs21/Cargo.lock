@@ -105,6 +105,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs21_timer_delay"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal 1.0.0",
+ "hisi-hal",
+ "hisi-riscv-rt",
+]
+
+[[package]]
 name = "bs21_timer_irq"
 version = "0.1.0"
 dependencies = [

@@ -57,7 +57,7 @@ jobs:
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
-              test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
+              test-bs21-timer-delay-qemu.py test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -99,6 +99,14 @@ jobs:
             --ws63-elf "$RUNNER_TEMP/ws63-spi-target/riscv32imfc-unknown-none-elf/release/spi_loopback" \
             --bs21-elf "$RUNNER_TEMP/bs21-spi-target/riscv32imfc-unknown-none-elf/release/bs21_spi_loopback" \
             --output "$RUNNER_TEMP/ws53-legacy-spi-report.json"
+      - name: Check BS21 stale timer expiry
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/bs21/Cargo.toml \
+            -p bs21_timer_delay --release --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/bs21-spi-target"
+          uv run --offline --script scripts/test-bs21-timer-delay-qemu.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/bs21-spi-target/riscv32imfc-unknown-none-elf/release/bs21_timer_delay"
       - name: Check Flash and RAM-function ELF snapshots
         working-directory: project
         run: |
