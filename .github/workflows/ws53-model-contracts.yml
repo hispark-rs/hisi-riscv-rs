@@ -55,7 +55,8 @@ jobs:
               ws53_ipc_endpoint_build.py test-ws53-ipc-spsc-model.py ws53_model_summary.py \
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
-              test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py; do
+              test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
+              test-ws53-ram-elf.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --offline --script scripts/test-ws53-model-summary.py
@@ -75,6 +76,8 @@ jobs:
         working-directory: project
         run: |
           uv run --offline --script scripts/ws53_spi_model_build.py --output "$RUNNER_TEMP/ws53-spi-build"
+          uv run --offline --script scripts/test-ws53-ram-elf.py "$RUNNER_TEMP/ws53-spi-build/firmware.elf" \
+            > "$RUNNER_TEMP/ws53-ram-elf-negative-tests.log"
           uv run --offline --script scripts/test-ws53-spi-wire-ci.py \
             --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             --model-receipt "$RUNNER_TEMP/ws53-model/receipt.json" --model-source ../qemu-overlay \
@@ -140,6 +143,7 @@ jobs:
             ${{ runner.temp }}/ws53-contracts/summary.json
             ${{ runner.temp }}/ws53-spi-build/receipt.json
             ${{ runner.temp }}/ws53-spi-build/build.log
+            ${{ runner.temp }}/ws53-ram-elf-negative-tests.log
             ${{ runner.temp }}/ws53-spi-test/report.json
             ${{ runner.temp }}/ws53-spi-test/pads.csv
             ${{ runner.temp }}/ws53-legacy-spi-report.json
