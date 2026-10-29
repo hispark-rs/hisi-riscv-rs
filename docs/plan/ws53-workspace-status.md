@@ -11,7 +11,7 @@
 | ws53-pac | `feat/ws53-agpio-clock`，`cd5db21`；生成来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；独立打包、远端 CI 和发布 dry run 通过。用户授权发布 `v0.1.0-alpha.1`，正式上传因 crates.io 凭据返回 403，尚未发布 |
 | hisi-riscv-rt | `codex/ws53-exceptions`，`eb3e2d5`；RAM 函数审计绑定快照和实际加载字节 | 同名远端分支，[草稿 PR #7](https://github.com/hispark-rs/hisi-riscv-rt/pull/7)；独立依赖 PAC 的外部构建待验证 |
 | hisi-ws53-coex | `feat/ws53-control-core-protocol`，`5a8971a`；协议、传输、服务分层，队列损坏锁定会话失效 | [项目远端](https://github.com/hispark-rs/hisi-ws53-coex)同名分支；空缓存外部消费者、独立 CI 及轮询端点 QEMU 通过，未发布，真实对端与实板尚未验收 |
-| hisi-hal | `feat/ws53-mcu-integration`，`d210f6a`；共用 I2C 事务与 SPI 帧处理，修正旧芯片 SPI 写入的接收 FIFO 消费 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；`ws53-pac` 尚未发布，旧芯片 SPI 改动的实板验证未完成 |
+| hisi-hal | `feat/ws53-mcu-integration`，`44b74dc`；共用 I2C 事务、SPI 帧和分频计算 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；`ws53-pac` 尚未发布，旧芯片 SPI 改动的实板验证未完成 |
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
 | hisi-fwpkg | `feat/ws53-application-images`，`217447f` | 同名远端分支，[草稿 PR #4](https://github.com/hispark-rs/hisi-fwpkg/pull/4)；为 hisiflash 的固定 Git 依赖 |
 | hisiflash | `feat/ws53-serial-flash`，`13a2bb2`；含串口回读文件头重传和恢复保护范围检查 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；本地工作区测试及格式/Clippy 通过，新增路径尚未实板验证 |
