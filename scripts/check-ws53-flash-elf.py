@@ -43,7 +43,7 @@ def validate(path, *, allow_ram_functions=False):
         require(elf.elfclass == 32 and elf.little_endian and elf['e_machine'] == 'EM_RISCV', 'ELF32 RISC-V required')
         require(elf['e_type'] == 'ET_EXEC' and elf['e_flags'] == 3, 'linked RVC/single-float ELF required')
         require(elf['e_entry'] == FLASH[0], 'wrong vendor application entry')
-        loads, parts = [], []
+        loads, parts, file_offsets = [], [], []
         for segment in elf.iter_segments():
             if segment['p_type'] != 'PT_LOAD' or segment['p_memsz'] == 0:
                 continue
@@ -63,13 +63,16 @@ def validate(path, *, allow_ram_functions=False):
                 require(not any(p < address+len(data) and address < p+count for address, data in parts), 'overlapping Flash payload')
                 parts.append((p, segment.data()))
             loads.append(dict(vma=v, lma=p, filesz=count, memsz=size, flags=flags))
-        require(any(row['flags'] & 1 and row['vma'] == FLASH[0] for row in loads), 'entry not executable')
+            file_offsets.append(segment['p_offset'])
+        require(any(row['flags'] & 1 and row['vma'] == FLASH[0] and row['filesz'] > 0
+                    for row in loads), 'entry not executable')
         for section in elf.iter_sections():
             if not section['sh_flags'] & 4:
                 continue
             require(section['sh_type'] == 'SHT_PROGBITS' and any(row['flags'] & 1 and
                 row['vma'] <= section['sh_addr'] and section['sh_addr']+section['sh_size'] <= row['vma']+row['filesz']
-                for row in loads), 'executable bytes outside file-backed Flash')
+                and section['sh_offset'] == offset + section['sh_addr'] - row['vma']
+                for row, offset in zip(loads, file_offsets)), 'executable bytes outside file-backed Flash')
             if ram_functions is not None and section.name == '.ws53.ramtext':
                 # This section intentionally includes placed read-only data.
                 # The RAM audit scans function symbols and resolves references.

@@ -9,7 +9,9 @@ import hashlib
 import io
 from pathlib import Path
 import runpy
+import struct
 from types import SimpleNamespace
+from elftools.elf.elffile import ELFFile
 
 
 class ReplacedPath:
@@ -61,6 +63,23 @@ def main():
             pass
         else:
             raise RuntimeError("invalid Flash entry accepted")
+        elf = ELFFile(io.BytesIO(image))
+        section_index = next(i for i, s in enumerate(elf.iter_sections())
+                             if s["sh_flags"] & 4 and s.name != ".ws53.ramtext")
+        section = elf.get_section(section_index)
+        header = elf["e_shoff"] + section_index * elf["e_shentsize"]
+        mutant = bytearray(image)
+        copy = bytes(section.data())
+        struct.pack_into("<I", mutant, header + 16, len(mutant))
+        struct.pack_into("<I", mutant, section["sh_offset"], 0x1000202F)
+        mutant.extend(copy)
+        try:
+            validate(ReplacedPath(bytes(mutant)), allow_ram_functions=ram)
+        except ValueError as error:
+            if "executable bytes outside file-backed Flash" not in str(error):
+                raise
+        else:
+            raise RuntimeError("aliased Flash section accepted despite unsafe loaded code")
         print(f"PASS snapshot ram_functions={ram}")
 
 
