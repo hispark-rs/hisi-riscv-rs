@@ -606,6 +606,7 @@ name = "ws53_spi_dma"
 version = "0.1.0"
 dependencies = [
  "embedded-hal 1.0.0",
+ "embedded-hal-async",
  "hisi-hal",
  "hisi-riscv-rt",
  "riscv",

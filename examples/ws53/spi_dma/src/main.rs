@@ -2,7 +2,7 @@
 #![no_std]
 #![no_main]
 use core::cell::RefCell;
-#[cfg(not(feature = "poll-smoke"))]
+#[cfg(not(any(feature = "poll-smoke", feature = "async-smoke")))]
 use core::num::NonZeroU16;
 use embedded_hal::delay::DelayNs;
 use hisi_hal::{
@@ -50,6 +50,24 @@ impl DelayNs for TimerDelay<'_, '_> {
         panic!("timer stopped");
     }
 }
+// Model-only cooperative timer: one counter observation per poll and a
+// self-wake while pending. This exercises the actual future, not timer IRQs.
+#[cfg(feature = "async-smoke")]
+impl embedded_hal_async::delay::DelayNs for TimerDelay<'_, '_> {
+    async fn delay_ns(&mut self, ns: u32) {
+        let ticks = (u64::from(ns) * 32_000_000).div_ceil(1_000_000_000) as u32;
+        let start = self.0.borrow_mut().current_value(TimerChannel::Channel1).unwrap();
+        core::future::poll_fn(|cx| {
+            let now = self.0.borrow_mut().current_value(TimerChannel::Channel1).unwrap();
+            if start.wrapping_sub(now) >= ticks {
+                core::task::Poll::Ready(())
+            } else {
+                cx.waker().wake_by_ref();
+                core::task::Poll::Pending
+            }
+        }).await
+    }
+}
 fn emit(u: &Uart<'_, Uart2<'_>>, s: &[u8]) {
     for &b in s {
         let mut n = 1_000_000;
@@ -82,7 +100,7 @@ fn test<T: Instance + 'static>(
     rx: Channel<'static>,
     case: Case,
     console: &mut Uart<'_, Uart2<'_>>,
-    delay: &mut impl DelayNs,
+    delay: &mut TimerDelay<'_, '_>,
 ) {
     let Case { port, ch, scenario } = case;
     let length = if scenario == b'N' { 33 } else { 3 };
@@ -136,7 +154,7 @@ fn test<T: Instance + 'static>(
                 }
             } else {
                 let t = transfer.as_mut().unwrap();
-                #[cfg(feature = "poll-smoke")]
+                #[cfg(all(feature = "poll-smoke", not(feature = "async-smoke")))]
                 let result = {
                     let mut result = Err(Error::Timeout);
                     for _ in 0..1000 {
@@ -157,7 +175,21 @@ fn test<T: Instance + 'static>(
                     }
                     result
                 };
-                #[cfg(not(feature = "poll-smoke"))]
+                #[cfg(feature = "async-smoke")]
+                let result = {
+                    use core::{future::Future, num::NonZeroU32, task::{Context, Poll, Waker}};
+                    let mut future = core::pin::pin!(t.wait_async(delay, NonZeroU32::new(1).unwrap()));
+                    let mut result = Err(Error::Timeout);
+                    let mut cx = Context::from_waker(Waker::noop());
+                    for _ in 0..10_000 {
+                        if let Poll::Ready(value) = future.as_mut().poll(&mut cx) {
+                            result = value;
+                            break;
+                        }
+                    }
+                    result // dropping a pending future performs cancellation
+                };
+                #[cfg(not(any(feature = "poll-smoke", feature = "async-smoke")))]
                 let result = t.wait(NonZeroU16::new(1000).unwrap(), delay);
                 match scenario {
                     b'N' => assert_eq!(result.unwrap().elements(), 33),

@@ -545,7 +545,7 @@ RDL 已有的共同 IP 定义包含继承的复位值，尚需逐块核对证据
 | IPC18随机缓冲图像服务 | 复用已有TRNG PAC；SDK12字节请求/类型/本地地址和128字节默认配置核对，无MMIO新增 | 独立登记整块范围、拒绝溢出/不等半区、私有暂存及一次总预算；全部成功才更新普通独占图像；不能从请求创建引用或授予live lease | 实际SPSC/PAC集成128场景及RAM同ELF13项；候选20另覆盖普通Flash/脏RAM/停源/复位恢复；确定性源，不证明熵 | RAM三轮39项；候选20真实烧录/Flash及独立复位两轮26项，D5执行窗口与TIMER对照及原厂恢复通过；真正冷启动未验收，未观测内部TRNG信号 | 实验图像层；SDMA排空/生产交接及真实控制核共享服务未验收 |
 | IPC控制核传输/服务/资源协商 | 动态地址已观察；实际控制核补丁/缓存/排序和启动交接待核对 | 存储与IPC18独占图像基础已实现，完整服务授权、buffer lease、通知重试/drain/rearm及丢唤醒处理待做 | 门铃/存储/IPC18图像子集，实际控制核/丢唤醒/缓存模型待做 | 待做 | 未支持 |
 | 低功耗/共享时钟管理 | 待做 | 待做 | 待做 | 待做 | 未支持 |
-| async/Embassy | 依赖 UART/GPIO/定时器/DMA | UART RX/TX独占借用/单字节Read/Write/线路完成flush/取消；新增TIMER DelayNs/分段单次等待/拒绝/取消；新增GPIO单bank五种Wait/取消/重用；新增TCXO/TIMER1单hart Embassy时间驱动/16槽队列；新增MDMA内存async共享IRQ/并发等待/保留资源，UART0/1 DMA等待及发送器空闲等待已实现，其余外设DMA异步等待待做 | UART2数字对端、两路TIMER与GPIO17真实Future通过；Embassy Timer/Ticker/队列/取消及两阶段时钟故障恢复通过；新增MDMA实际Future、两类总线错误和取消后在途写保留；UART DMA async 78场景当前固定模型重验通过 | UART2三轮同ELF原始日志一致；两路TIMER三轮同ELF流程与44项LOAD观察一致；GPIO17 IRQ34异步三轮RAM同ELF输出一致，候选12另经真实Flash/独立nRESET与D5验证；Embassy IRQ54三轮同ELF输出一致，具名测试均恢复原固件；物理时钟故障/睡眠/长周期边界等未验收 | 部分实验支持；全部unstable |
+| async/Embassy | 依赖 UART/GPIO/定时器/DMA | UART RX/TX独占借用/单字节Read/Write/线路完成flush/取消；新增TIMER DelayNs/分段单次等待/拒绝/取消；新增GPIO单bank五种Wait/取消/重用；新增TCXO/TIMER1单hart Embassy时间驱动/16槽队列；新增MDMA内存async共享IRQ/并发等待/保留资源，UART0/1 DMA等待及发送器空闲等待、SPI DMA外部异步定时器驱动的可取消等待已实现，其余外设DMA异步等待待做 | UART2数字对端、两路TIMER与GPIO17真实Future通过；Embassy Timer/Ticker/队列/取消及两阶段时钟故障恢复通过；新增MDMA实际Future、两类总线错误和取消后在途写保留；UART DMA async 78场景当前固定模型重验通过 | UART2三轮同ELF原始日志一致；两路TIMER三轮同ELF流程与44项LOAD观察一致；GPIO17 IRQ34异步三轮RAM同ELF输出一致，候选12另经真实Flash/独立nRESET与D5验证；Embassy IRQ54三轮同ELF输出一致，具名测试均恢复原固件；物理时钟故障/睡眠/长周期边界等未验收 | 部分实验支持；全部unstable |
 
 USB/PDM/KEYSCAN 不列入 WS53 能力。
 
@@ -8782,3 +8782,5 @@ UART DMA 异步续验：以 HAL `ca97f88` 实际构建当前 Rust 夹具，固�
 UART DMA 干净检出复验：远端父仓 `72be22e5e` 及递归子模块干净检出，隔离预填缓存离线构建夹具，在既有 `27def19` QEMU 上通过同样的 78 场景；报告 SHA-256 `aea77feedf5f3f8dfffce9022288155ce398b437a1fca521134daa3e1d6f73a0`。未重建 QEMU，远端 CI、真实硬件和冷启动验收另计。
 
 SPI DMA 非阻塞进度：HAL `48e202d` 将单次状态观察从阻塞等待抽出并提供 `SpiTransfer::poll`；未完成时保留运行状态，完成或故障关闭请求并保留资源，不提供 ISR 唤醒或物理排空证明。主机 12 项 SPI DMA 状态机测试、WS53 目标 Clippy（含无 async）通过；固定 `27def19` QEMU 使用新 poll 路径对 8 位、32 位分别通过 50 场景，报告 SHA-256 `cedf332e402ad2b9f0117bf59c3a952b6c604b53a6de1e487dbf936fa5da0ff0`、`64e07dc0987a5cf4527b67d797bb61ea4379d98e20a8b647fa2e6ee8c9a9a160`，原阻塞路径 8 位 50 场景报告 `c382332a7bf8442e0164ae873fa0db57a375558f9621bc613e3fb31a8e66d1f0`。部分场景专门测试起始拒绝和取消，不都调用 poll；CI 已加入 poll 回归，来源绑定收据、实板及异步唤醒仍未验收。本轮无硬件操作。
+
+SPI DMA 异步等待：HAL `92e716a` 使用调用方提供的异步定时器安排复查；已轮询的等待被取消时关闭请求、停止两路并保留资源，未轮询 Future 的丢弃不改运行中的传输。13 项 SPI DMA 主机状态机测试及 WS53 目标 Clippy 通过；实际 Rust Future 在固定 `27def19` QEMU 中以合作式计数器和手动执行器跑通 8 位/32 位各 50 场景，报告 SHA-256 `7d85a1db1d83434c9036c064aedf116317ffd8e27127f6d3c9b1ad927f633ad9`、`102812b55057aee5a30226e53337d58037baa04e4b876f285388f1c41124a0e6`。部分场景测试起始拒绝或取消，未进入异步等待；夹具不验证实际定时器 IRQ、执行器唤醒、真实对端、物理排空或缓存。实际 timer/Embassy 联合模型、实板及冷启动仍未验收；本轮无硬件操作。

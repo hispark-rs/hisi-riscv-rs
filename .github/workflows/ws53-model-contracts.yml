@@ -121,19 +121,21 @@ jobs:
             --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             --elf "$RUNNER_TEMP/ws53-uart-dma-target/riscv32imfc-unknown-none-elf/release/ws53_uart_dma" \
             > "$RUNNER_TEMP/ws53-uart-dma-async-report.json"
-      - name: Check WS53 SPI DMA nonblocking progress
+      - name: Check WS53 SPI DMA nonblocking and async progress
         working-directory: project
         run: |
-          for width in 8 32; do
-            features=poll-smoke
-            if [ "$width" = 32 ]; then features=poll-smoke,width32; fi
-            cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
-              -p ws53_spi_dma --features "$features" --release --target riscv32imfc-unknown-none-elf \
-              --target-dir "$RUNNER_TEMP/ws53-spi-dma-poll-$width"
-            uv run --offline --script scripts/test-ws53-spi-dma.py \
-              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
-              --elf "$RUNNER_TEMP/ws53-spi-dma-poll-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
-              > "$RUNNER_TEMP/ws53-spi-dma-poll-$width.json"
+          for mode in poll async; do
+            for width in 8 32; do
+              features="$mode-smoke"
+              if [ "$width" = 32 ]; then features="$features,width32"; fi
+              cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+                -p ws53_spi_dma --features "$features" --release --target riscv32imfc-unknown-none-elf \
+                --target-dir "$RUNNER_TEMP/ws53-spi-dma-$mode-$width"
+              uv run --offline --script scripts/test-ws53-spi-dma.py \
+                --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+                --elf "$RUNNER_TEMP/ws53-spi-dma-$mode-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
+                > "$RUNNER_TEMP/ws53-spi-dma-$mode-$width.json"
+            done
           done
       - name: Check BS21 stale timer expiry
         working-directory: project
@@ -214,6 +216,8 @@ jobs:
             ${{ runner.temp }}/ws53-uart-dma-async-report.json
             ${{ runner.temp }}/ws53-spi-dma-poll-8.json
             ${{ runner.temp }}/ws53-spi-dma-poll-32.json
+            ${{ runner.temp }}/ws53-spi-dma-async-8.json
+            ${{ runner.temp }}/ws53-spi-dma-async-32.json
             ${{ runner.temp }}/ws53-flash-snapshot-tests.log
             ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json
