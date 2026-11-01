@@ -74,3 +74,8 @@ HAL 主机 WS63/BS21/WS53 为 336/220/427；RTOS 基础/共享为 86/91，每芯
 - 父仓 QEMU：`uv run --script scripts/test-embassy-time-profile.py --qemu <binary> --elf <elf>
   --case ws53|ws63|bs21|coexist --output <new-report.json>`。coexist 当前返回失败，不能当作绿灯。
 - 本轮未整理其他历史未提交证据，没有删除工作树、原始波形、备份或已有成果。
+
+远端 RTOS [CI 41281349605](https://github.com/hispark-rs/hisi-rtos/actions/runs/41281349605)：
+固定远端依赖的 time-development 与原 TLA 作业通过；registry check 和 Kani 在解析
+未发布 HAL alpha.10 时失败，Kani 未进入证明执行阶段。不能称全套 CI 或 Kani 已通过。
+文档已在可写 uv 缓存下重新构建，预处理器及 HTML 输出均成功。

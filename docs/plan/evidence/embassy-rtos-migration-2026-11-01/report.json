@@ -25,7 +25,8 @@
     "sta_workspace_check": true,
     "softap_check": true,
     "one_hal_in_parent_lock": true,
-    "tcxo_words_ws63_and_bs21": 3
+    "tcxo_words_ws63_and_bs21": 3,
+    "mdbook_with_preprocessor": true
   },
   "shared_qemu": {
     "qualified": false,
@@ -87,5 +88,12 @@
     "rf_ws63": "b7f742b305cd9fd0200ff6f0133fa391e7e7d42a",
     "qemu": "e60f95c3d9f53e65b8df193a64e5faae616fa85b"
   },
-  "source_scope": "Independent RTOS/template and initial QEMU matrices use HAL 2b6cfce. Parent later uses 5895b95: additional chip-correct Instant word reuse, checked by WS63/BS21 register-view tests and STA/SoftAP target builds. No silicon high-word qualification."
+  "source_scope": "Independent RTOS/template and initial QEMU matrices use HAL 2b6cfce. Parent later uses 5895b95: additional chip-correct Instant word reuse, checked by WS63/BS21 register-view tests and STA/SoftAP target builds. No silicon high-word qualification.",
+  "remote_ci": {
+    "run": "https://github.com/hispark-rs/hisi-rtos/actions/runs/41281349605",
+    "time_development": "success",
+    "tla": "success",
+    "registry_check": "dependency resolution blocked: hisi-hal ^0.7.0-alpha.10 unavailable",
+    "kani": "not executed: cargo metadata blocked by the same unpublished HAL dependency"
+  }
 }
