@@ -180,7 +180,7 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.10"
 dependencies = [
  "bs2x-pac",
  "cfg-if",
@@ -192,12 +192,13 @@ dependencies = [
  "instability",
  "nb",
  "portable-atomic",
+ "ws53-pac",
  "ws63-pac",
 ]
 
 [[package]]
 name = "hisi-riscv-rt"
-version = "0.5.3"
+version = "0.5.10"
 dependencies = [
  "bs2x-pac",
  "critical-section",
@@ -373,8 +374,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77439c1b53d2303b20d9459b1ade71a83c716e3f9c34f3228c00e6f185d6c002"
 
 [[package]]
+name = "ws53-pac"
+version = "0.1.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5dceaa58b908bb2770c7f202e50d8f74ed540a7efb5971ed0a600a08ac60bd3"
+dependencies = [
+ "critical-section",
+ "riscv",
+ "vcell",
+]
+
+[[package]]
 name = "ws63-pac"
-version = "0.2.2"
+version = "0.4.6"
 dependencies = [
  "critical-section",
  "riscv",

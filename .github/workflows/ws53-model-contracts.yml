@@ -14,6 +14,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  bs20-compatibility:
+    name: BS20 isolated workspace compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Install pinned toolchain
+        run: bash .github/scripts/install-toolchain.sh
+      - name: Build all BS20 examples with their own lockfile
+        run: |
+          cargo build --locked -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf \
+            --manifest-path examples/bs20/Cargo.toml --workspace --release
+          git diff --exit-code -- examples/bs20/Cargo.lock
+
   synthetic-models:
     runs-on: ubuntu-latest
     timeout-minutes: 60
