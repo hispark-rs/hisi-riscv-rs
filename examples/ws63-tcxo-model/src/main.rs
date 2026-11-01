@@ -15,9 +15,11 @@ fn main() -> ! {
     clock.enable();
     let a = clock.read_counter().unwrap();
     let b = clock.read_counter32().unwrap();
-    let us = embassy_time_driver::now();
     let c = clock.read_counter().unwrap();
-    if (a as u32) <= b && b <= (c as u32) && a / 24 <= us && us <= c / 24 {
+    unsafe { assert!(hisi_rtos::embassy::init(hisi_hal::timer::TimerDriver::new(p.TIMER), clock).is_ok()); }
+    let us = embassy_time_driver::now();
+    let later = embassy_time_driver::now();
+    if (a as u32) <= b && b <= (c as u32) && c / 24 <= us && us <= later {
         puts(b"WS63 TCXO EMBASSY PASS\n");
     } else {
         puts(b"WS63 TCXO EMBASSY FAIL\n");

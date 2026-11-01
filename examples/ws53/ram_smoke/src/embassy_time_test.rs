@@ -1,4 +1,5 @@
 //! Same-ELF Embassy Timer/Ticker tests. No pad or counter-epoch writes.
+use hisi_rtos::embassy as embassy;
 use core::{
     cell::Cell,
     future::Future,
@@ -8,7 +9,7 @@ use core::{
 use critical_section::Mutex;
 use embassy_time::{Duration, Instant, Ticker, Timer};
 use hisi_hal::{
-    embassy, interrupt,
+    interrupt,
     peripherals::{Timer as TimerToken, Uart2},
     tcxo::{TcxoDriver, TcxoError},
     timer::{TimerChannel, TimerDriver, TimerMode, TimerTicks},

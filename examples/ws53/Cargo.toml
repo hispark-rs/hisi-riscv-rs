@@ -4,6 +4,9 @@ members = ["ram_smoke", "nmi_context", "watchdog_control", "tcxo_control", "rtc_
 default-members = ["ram_smoke"]
 
 [patch.crates-io]
+hisi-rtos = { path = "../../crates/hisi-rtos" }
+hisi-rf-rtos-driver = { path = "../../crates/hisi-rf-rtos-driver" }
+hisi-hal = { path = "../../crates/hisi-hal" }
 hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }
 ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
 ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }

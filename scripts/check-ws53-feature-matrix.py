@@ -13,13 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 POSITIVE = (
     "chip-ws53,rt,unstable",
     "chip-ws53,rt,unstable,async",
-    "chip-ws53,rt,unstable,embassy",
-    "chip-ws53,rt,unstable,async,embassy",
     "chip-ws63,rt",
     "chip-ws63,rt,unstable",
-    "chip-ws63,rt,async,embassy",
     "chip-ws63,rt,async,unstable",
-    "chip-ws63,rt,async,embassy,unstable",
     "chip-bs21,rt,unstable",
 )
 NEGATIVE = (
@@ -29,8 +25,6 @@ NEGATIVE = (
     ("chip-ws53,chip-bs21,unstable", "select exactly ONE chip feature"),
     ("chip-ws63,chip-bs21,unstable", "select exactly ONE chip feature"),
     ("chip-bs21", "BS2X support is experimental"),
-    ("chip-ws53,embassy", "chip-ws53 requires unstable"),
-    ("chip-ws53,rt,unstable,embassy,embassy-time-driver/tick-hz-32_768", "WS53 Embassy requires tick-hz-1_000_000"),
 )
 
 

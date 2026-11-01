@@ -3,6 +3,7 @@
 //! command, peer handshake, epoch reset or clock-tree initialization is used.
 #![no_std]
 #![no_main]
+use hisi_rtos::embassy as embassy;
 use core::{
     cell::Cell,
     future::Future,
@@ -13,7 +14,7 @@ use critical_section::Mutex;
 use embassy_time::{Instant, Timer};
 use embedded_hal::delay::DelayNs;
 use hisi_hal::{
-    Peripherals, embassy,
+    Peripherals,
     gpio::{GpioBank, GpioDriver, Pad},
     interrupt,
     peripherals::Uart2,

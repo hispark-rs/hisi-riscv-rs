@@ -14,7 +14,7 @@ sfc-read-probe = []
 uart2-async-tx-smoke = ["hisi-hal/async", "dep:embedded-io-async"]
 uart-tx-irq-probe = []
 embassy-fault-probe = ["embassy-smoke"]
-embassy-smoke = ["hisi-hal/embassy", "dep:embassy-time", "dep:embassy-time-driver"]
+embassy-smoke = ["dep:hisi-rtos", "dep:embassy-time", "dep:embassy-time-driver"]
 uart-rx-smoke = []
 uart-error-smoke = []
 uart-irq-smoke = []
@@ -64,6 +64,7 @@ pwm0-finite-irq-probe = ["pwm0-finite-probe"]
 pwm0-abnormal-probe = ["pwm0-finite-probe"]
 
 [dependencies]
+hisi-rtos = { path = "../../../crates/hisi-rtos", features = ["embassy-only", "chip-ws53", "unstable"], optional = true }
 hisi-ws53-coex = { path = "../../../crates/chips/ws53/hisi-ws53-coex", optional = true }
 ws53-pac = { path = "../../../crates/chips/ws53/ws53-pac" }
 hisi-hal = { path = "../../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
