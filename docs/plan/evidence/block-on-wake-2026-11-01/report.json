@@ -1,0 +1,74 @@
+{
+  "counterexample": {
+    "command": [
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+      "-M",
+      "ws63",
+      "-display",
+      "none",
+      "-monitor",
+      "none",
+      "-serial",
+      "stdio",
+      "-kernel",
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-wake-2026-11-01/counterexample.elf",
+      "-icount",
+      "shift=0,sleep=on",
+      "-d",
+      "guest_errors"
+    ],
+    "stdout": "WAKE TEST: BEGIN\r\nWAKE TEST: WAKE ISSUED\r\n",
+    "stderr": "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nqemu-system-riscv32: terminating on signal 15 from pid 26 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/run-25165d3d9b77c74a/bin/python3)\n",
+    "returncode": 0,
+    "terminated_after_window": true,
+    "elf_sha256": "d460deec2d6efc12c5606e2118ba4b28cbd51ec9ba022aecc74a1f8eb49b1dfb",
+    "unexpected_diagnostics": []
+  },
+  "control": {
+    "command": [
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+      "-M",
+      "ws63",
+      "-display",
+      "none",
+      "-monitor",
+      "none",
+      "-serial",
+      "stdio",
+      "-kernel",
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-wake-2026-11-01/control.elf",
+      "-icount",
+      "shift=0,sleep=on",
+      "-d",
+      "guest_errors"
+    ],
+    "stdout": "WAKE TEST: BEGIN\r\nWAKE TEST: WAKE ISSUED\r\nWAKE TEST: COMPLETE\r\n",
+    "stderr": "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2\nqemu-system-riscv32: terminating on signal 15 from pid 26 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/run-25165d3d9b77c74a/bin/python3)\n",
+    "returncode": 0,
+    "terminated_after_window": true,
+    "elf_sha256": "7b64b6c61a6b1c7e64266385bd019de0a6b9222a317988a0fe5f041e8f51cbb5",
+    "unexpected_diagnostics": []
+  },
+  "counterexample_reproduced": true,
+  "hardware_accessed": false,
+  "qualification_passed": false,
+  "defect_fixed": false,
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "hal_commit": "c907bed8255c334ce618d54f9567b8114b7a176e",
+  "raw": "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-wake-2026-11-01",
+  "trace_scope": "Last translated block includes WFI; instruction translation is not a sampled halt PC.",
+  "remaining": [
+    "IRQ between poll and WFI not deterministically injected",
+    "No proposed idle primitive or hardware semantics qualified",
+    "No runtime or HAL fix in this batch"
+  ],
+  "raw_hashes": {
+    "build.log": "4b0ab2870049e2fc0354baf7faf2ef5c93838fa018da47baa99d92d2ef3c6fdc",
+    "build-network.log": "e5772942244ad92c3f11cf32bc42df24ea5ebcaf3abea5fe7b593b2e93169eaf",
+    "build-control.log": "2d9885aa0adfbd8a869b890de7dfb659e6f02cf2e4a30234ea9a27b5afe649a4",
+    "counterexample-trace.log": "ab5be8099588bb02acae355df2dbd15995e7639d00fb7649d9db6ce972989b7f",
+    "trace-stdout.log": "9f45fff77b35971b6e8ca36f0052b1e68447133a850c55a0cf0a5705a0e3e314",
+    "trace-stderr.log": "465d943d5b24a9f04961e7add694e120cd460a0373e37779da672fbbb0fd8615",
+    "run-checked.log": "ad8cd3acb3c1c57a05b3cef280d03eb535ad5c084198dd7ed4be78db0a506d61"
+  }
+}

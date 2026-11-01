@@ -1,0 +1,69 @@
+{
+  "hardware_accessed": false,
+  "protocol_rejected": [
+    "truncated",
+    "duplicate",
+    "LF-only",
+    "no-timers",
+    "no-guards",
+    "short-queue",
+    "no-reentry",
+    "backwards",
+    "wrong-mode-base",
+    "wrong-mode-timer-async",
+    "wrong-mode-tcxo",
+    "wrong-mode-gpio-async",
+    "fault-forbidden-in-HIL-embassy",
+    "fault-forbidden-in-HIL-base"
+  ],
+  "fault": {
+    "elf": {
+      "profile": "ws53-acore-mcu-mode1-ram",
+      "elf": "target/embassy-extraction/ws53-rtos-fault.elf",
+      "sha256": "11154d49574248405ba79b388d9c022a82880d331a83848d0d66cf90d95cb75c",
+      "loads": [
+        {
+          "address": 163840,
+          "size": 17116,
+          "flags": 5
+        },
+        {
+          "address": 180960,
+          "size": 4044,
+          "flags": 4
+        },
+        {
+          "address": 537198592,
+          "size": 16800,
+          "flags": 6
+        }
+      ],
+      "verified": [
+        "ELF32",
+        "ilp32f",
+        "RAM-only",
+        "no-A-in-scanned-instructions",
+        "stack-boundaries"
+      ],
+      "hardware_verified": false
+    },
+    "fault": null,
+    "uart": [
+      "WS53 RAM data/bss OK",
+      "WS53 PASS timer_irq=53 count=3",
+      "WS53 EMBASSY STALL",
+      "WS53 EMBASSY RECOVER SNAPSHOT",
+      "WS53 EMBASSY CLOCK OFF",
+      "WS53 EMBASSY RECOVER CLOCK",
+      "WS53 PASS embassy_fault frozen=2 retry=2 recover=2 no_early=1",
+      "WS53 PASS embassy irq=54 timers=5 ticker=3 guards=3 cancel=1 capacity=16 reenter=1 monotonic=1"
+    ],
+    "uart_raw": "WS53 RAM data/bss OK\r\nWS53 PASS timer_irq=53 count=3\r\nWS53 EMBASSY STALL\r\nWS53 EMBASSY RECOVER SNAPSHOT\r\nWS53 EMBASSY CLOCK OFF\r\nWS53 EMBASSY RECOVER CLOCK\r\nWS53 PASS embassy_fault frozen=2 retry=2 recover=2 no_early=1\r\nWS53 PASS embassy irq=54 timers=5 ticker=3 guards=3 cancel=1 capacity=16 reenter=1 monotonic=1\r\n",
+    "input_stages_sent": 4,
+    "diagnostics": [],
+    "stage_qom_checks": [],
+    "qom_checks": [],
+    "register_checks": [],
+    "hardware_verified": false
+  }
+}

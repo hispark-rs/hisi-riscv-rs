@@ -1,0 +1,90 @@
+{
+  "hal_baseline": "5895b95560ca1789d2aea37cfd6db51ba05e416a",
+  "hal_candidate": "da254f86b8b7b014b39e4923b054d01c71278046",
+  "hal_pr": "https://github.com/hispark-rs/hisi-hal/pull/18",
+  "runtime_remote_override": "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb",
+  "tests": {
+    "independent_host": {
+      "ws63": 343,
+      "bs21": 220,
+      "ws53": 427
+    },
+    "new_rendezvous_tests": 7,
+    "baseline_expected_failures": [
+      "event_between_check_and_registration_wakes_waiter",
+      "clone_replace_drop_reset_and_wake_callbacks_are_outside_lock"
+    ],
+    "target_clippy": {
+      "ws63": "passed",
+      "bs21": "passed",
+      "ws53": "passed"
+    },
+    "hal_no_embassy_boundary": "passed six chip/mode graphs",
+    "format": "passed",
+    "remote_git_consumer": {
+      "host": "passed",
+      "riscv32imfc": "passed",
+      "registry_release_qualification": false
+    },
+    "host_test_clippy": {
+      "status": "failed",
+      "identical_baseline_diagnostics": true,
+      "diagnostics": [
+        "error: this operation has no effect",
+        "error: call to `std::mem::drop` with a value that does not implement `Drop`. Dropping such a type only extends its contained lifetimes",
+        "error: this function has too many arguments (8/7)",
+        "error: incompatible bit mask: `_ & 4095` will never be higher than `4095`",
+        "error: manual `RangeInclusive::contains` implementation",
+        "error: manual `RangeInclusive::contains` implementation",
+        "error: manual `RangeInclusive::contains` implementation",
+        "error: used `assert_eq!` with a literal bool",
+        "error: used `assert_eq!` with a literal bool",
+        "error: used `assert_eq!` with a literal bool",
+        "error: this assertion is always `true`",
+        "error: this assertion has a constant value",
+        "error: this assertion has a constant value",
+        "error: this assertion has a constant value",
+        "error: this assertion has a constant value",
+        "error: this operation has no effect",
+        "error: could not compile `hisi-hal` (lib test) due to 16 previous errors"
+      ]
+    },
+    "qemu_async_delay": "passed; five sequential completions; no race injection"
+  },
+  "hardware": {
+    "accessed": false,
+    "ram": "not tested",
+    "flash_reset": "not tested",
+    "cold_boot": "not tested"
+  },
+  "scope": "Single-consumer software rendezvous and five shared polling wrappers; no peripheral MMIO changes.",
+  "remaining": [
+    "legacy TIMER cancellation/spurious IRQ",
+    "DMA ownership and quiescence",
+    "minimal block_on poll-to-WFI race",
+    "runtime/HAL unpublished dependency release blockers",
+    "physical interrupt timing and cancellation qualification"
+  ],
+  "local_raw_logs": "/home/sanchuanhehe/Documents/hispark-rs/validation/irq-rendezvous-2026-11-01",
+  "raw_log_sha256": {
+    "async-delay-build.log": "75aae8621de6b02f1991fb3d41da49cfe014ec40b75f09f8f207482ca613ed2f",
+    "baseline-clippy-host.log": "fdb2fe94afe3af8e9fe62139f9b030e37a9d66522dbb1fcdec37a7902dd53243",
+    "baseline.log": "c695a8052933453d2176fd350550c9e7536d615afa130e58e4a5e55c713afc73",
+    "boundary.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "candidate-bs21.log": "f1627181a67d04314cab08382d0a62e6c62ec37670e191390b0239bf2d6d0117",
+    "candidate-ws53.log": "8bb29aadefd3595c5f78030fc902f61dea5235afe2c1388329d0dfb944b9dcf1",
+    "candidate-ws63.log": "01a9fd145fc43ad19b07a5065cb4b664c44b3c0570cafe5f02e138d1d98c3501",
+    "clippy-bs21.log": "efb87cd3b273c9faee5caa44c9ed44b1ed9f2d315f6cfc4b418b6cf501671a10",
+    "clippy-host.log": "5b367e5ef003c42a5f04d27f8c17741fce3622628b9a263dfce92cae98c3acd4",
+    "clippy-ws53.log": "03fea44a3c2b187c2698656d11a56c3d0546538ade2ad652169f72c98570c0ce",
+    "clippy-ws63.log": "4cb8ac4310113d7e98bc1c6462c56b23bd8a530d8c06c63ac4f5c23929af4230",
+    "consumer-host.log": "9829283e709bf5e6d3546f25566ea0a8e2813dd950fd125c15566956cd9f0b43",
+    "consumer-target.log": "3610da3170fd986f598efebb19244465bfd3a2436279c052d6ac669ddb7ed12e",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "replay": {
+    "host": "cargo test --locked --lib --target x86_64-unknown-linux-gnu --no-default-features --features chip-ws63,async,unstable",
+    "independent": "HAL scripts/check-ws53-integration.sh; explicit remote runtime development overlay",
+    "qemu": "uv run --script scripts/test-hal-irq-wait-qemu.py --qemu <binary> --elf <async_delay ELF> --output <new-report.json>"
+  }
+}

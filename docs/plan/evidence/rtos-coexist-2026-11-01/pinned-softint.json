@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "sources": 4,
+  "irqs": [
+    36,
+    37,
+    38,
+    39
+  ],
+  "hardware_accessed": false
+}

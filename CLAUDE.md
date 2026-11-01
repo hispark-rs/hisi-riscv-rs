@@ -35,7 +35,7 @@ Crate **package names are unchanged** by this grouping — `cargo build -p blink
 # but rustup does not ship its prebuilt rust-std component yet, so RISC-V commands
 # use `-Zbuild-std=core,alloc`. Default target is set in .cargo/config.toml.
 cargo build -Zbuild-std=core,alloc                         # Build libraries + default-member WS63 examples.
-cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --features hisi-rf/chip-ws63  # STA/general lane.
+cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --exclude embassy_multitask --exclude embassy_async_io --features hisi-rf/chip-ws63  # STA/general lane.
 cargo check -Zbuild-std=core,alloc -p wifi_softap                 # AP lane (target archives are mutually exclusive).
 # The HAL has NO default chip (esp-hal style) — building it STANDALONE needs an explicit
 # chip feature, else a `compile_error!` fires:
@@ -70,6 +70,28 @@ their repositories.
 
 **Important:** When editing submodule files, commit inside the submodule first, then update and commit the parent repo's submodule pointer.
 
+### Multi-repository maintenance
+
+- Keep `docs/plan/ws53-workspace-status.md` current as WS53 units are validated.
+  Record remaining qualifications separately for QEMU, RAM, Flash reset and
+  power-cycle testing; do not treat one as evidence for another.
+- Inventory dirty files, untracked evidence, branch ancestry, remotes and worktree
+  users before cleanup. Never discard an unverified result, backup or active
+  worktree to make the status appear clean. Preserve raw hardware materials
+  outside Git and record their purpose, location and hashes in the evidence index.
+- Commit and push reviewable units in dependency order: register source, generated
+  PAC, runtime and HAL, models and tools, then parent pointers. Before committing
+  a pointer or pinned Git dependency, verify the exact commit is fetchable from
+  its declared remote. Ordinary builds must not require local absolute paths,
+  temporary worktrees, untracked source or a prepopulated cache.
+- Ignore only reproducible outputs, caches and temporary captures. Keep source,
+  required lockfiles, configuration, tests and concise evidence versioned; inspect
+  already-tracked files separately. Do not modify sealed evidence without recording
+  its provenance and integrity consequences.
+- After a verified unit, update its branch, remote, tests and dependency status;
+  remove a worktree only after checking that its work is preserved, it is clean,
+  and no task or script still references it. Never force-push or reset to tidy up.
+
 ## Architecture
 
 ### Crate Dependency Chain
@@ -82,7 +104,7 @@ hisi-riscv-rt (riscv-rt facade + chip startup adapters)
 ```
 
 - **`ws63-pac`**: Single-file svd2rust output. Provides raw `RegisterBlock` structs for 36 peripheral/register blocks. The `Peripherals::take()` singleton pattern ensures one-time access.
-- **`hisi-hal`**: 43 source files implementing safe drivers (incl. `asynch.rs` + `embassy.rs`). Depends on `embedded-hal 1.0`, `embedded-hal-nb 1.0`, `embedded-io 0.6`, `portable-atomic`; optional `async` (`embedded-hal-async`/`embedded-io-async`) + `embassy` (embassy-time driver) features.
+- **`hisi-hal`**: Hardware drivers with executor-independent `async` (`embedded-hal-async`/`embedded-io-async`). No Embassy scheduling, queues, registration or RTOS dependency. `hisi-rtos::embassy` owns integration: `embassy` shares the scheduler timer (1 ms resolution), while experimental `embassy-only` explicitly consumes HAL counters/alarms without compiling the scheduler. Build these profiles separately.
 - **`hisi-riscv-rt`**: Runtime crate — thin `riscv-rt` entry facade plus chip startup adapters. WS63 owns `asm/ws63` + `linker/ws63` startup/layout/header resources and uses `ws63-pac/rt` for `device.x`; BS2X currently reuses the legacy adapter with per-example `memory.x` and `bs2x-pac/rt` `device.x`.
 
 ### Peripheral Singleton Pattern
@@ -148,7 +170,7 @@ Two controllers share `dma::RegisterBlock`:
 - **No `std`** — `#![no_std]` throughout. No heap, no `Vec` in driver code. Use fixed arrays when data buffers are needed.
 - **Safety via lifetime generics** — peripherals are `'d`-parameterized to prevent use-after-drop of the `Peripherals` token.
 - **Register access is `unsafe`** — raw PAC register writes use `unsafe { reg.write(|w| w.bits(val)) }`. Driver methods encapsulate this.
-- **Async & embassy** — `async` remains a feature gate for async trait impls; the blocking-backed SPI/I2C async traits build with `async` alone, while interrupt/waker helpers (`asynch::block_on`, `IrqSignal`, GPIO wait, timer async delay, UART async I/O, DMA/LSADC async hooks) require `unstable`. `embassy` is also `unstable`-gated until end-to-end HIL. See `docs/src/explanation/components/06-async-embassy.md`.
+- **Async & embassy** — `async` remains a feature gate for async trait impls; the blocking-backed SPI/I2C async traits build with `async` alone, while interrupt/waker helpers (`asynch::block_on`, `IrqSignal`, GPIO wait, timer async delay, UART async I/O, DMA/LSADC async hooks) require `unstable`. The experimental standalone Embassy profile belongs to `hisi-rtos`, not HAL. See `docs/src/explanation/components/06-async-embassy.md`.
 - **SPI/I2C/UART instances use separate type constructors** — not unified `new()` because each instance may have unique configuration needs.
 
 ### Typed config — "if it compiles, it runs on silicon"
@@ -270,8 +292,8 @@ when no stable code depends on the module. Both gating macros are in
 - **Standalone experimental modules** MAY use `unstable_driver!` only when default
   stable code has no dependency on that module. Otherwise use `unstable_module!`
   to keep crate-internal references compiling while hiding the external API.
-- **`async`/`embassy`** are feature-gates (consent-by-feature). `embassy` is ALSO
-  `unstable`-gated (no end-to-end HIL). `async` alone only exposes the blocking-
+- **`async`** is a HAL feature gate. Embassy profiles are tested by `hisi-rtos`;
+  pure Embassy requires its `unstable` feature. HAL `async` alone only exposes the blocking-
   backed SPI/I2C async trait impls; interrupt/waker-backed helpers and drivers are
   ALSO `unstable`-gated until lost-wake/cancellation invariants and HIL are closed.
 - **Graduation** (unstable → stable): delete the `#[instability::unstable]` attr
@@ -289,8 +311,8 @@ change.
 
 **Release gate matrix** (verify all positive rows + clippy `-D warnings`, plus
 the BS2X negative gate before changing public API gates):
-`{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async,embassy}`,
-`{ws63,rt,async,unstable}`, `{ws63,rt,async,embassy,unstable}`,
+`{ws63,rt}`, `{ws63,rt,unstable}`, `{ws63,rt,async}`,
+`{ws63,rt,async,unstable}`,
 `{bs21,rt,unstable}`. `{bs21,rt}` without `unstable` must fail with the BS2X
 experimental compile_error. BS2X isolated examples need explicit
 `cargo check --manifest-path` CI checks (they're not in `cargo check --workspace`).

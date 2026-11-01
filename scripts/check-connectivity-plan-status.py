@@ -56,9 +56,8 @@ def check_active_window(registry: dict, status: str) -> list[str]:
         errors.append("当前仅批准激活 NET0；后续阶段须先验收并更新契约")
     if "当前唯一活动里程碑是 NET0" not in status:
         errors.append("状态段必须与 registry 的 NET0 活动窗口一致")
-    active = [entry.get("id") for entry in entries if entry.get("status") == "active"]
-    if active != ["connectivity-stack"]:
-        errors.append(f"活动实现必须唯一：{active}")
+    # The registry checker owns the global WIP limit. Other explicitly approved
+    # work may run in parallel without changing Connectivity's NET0 milestone.
     return errors
 
 
@@ -126,7 +125,7 @@ def main() -> int:
     print(
         "connectivity-plan-status: OK "
         f"({len(evidence_links)} evidence links, {len(open_items)} conditional items, "
-        "active implementations=1, milestone=NET0)"
+        "connectivity milestone=NET0)"
     )
     return 0
 

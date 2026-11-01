@@ -1,0 +1,179 @@
+{
+  "hal_commits": [
+    "0052bd3",
+    "3ff019da72750a0dcb0a2d9c5f2e6e76f7f3af15"
+  ],
+  "base": "454ab400a20fa6d3cbf62099ceac8876938d8931",
+  "pr": "https://github.com/hispark-rs/hisi-hal/pull/22",
+  "scope": "Shared UART RX polling and cancellation; retain per-backend register/ownership/error contracts; remove WS63 one-byte ISR latch.",
+  "host_tests": {
+    "ws63": 366,
+    "ws53": 442,
+    "bs21": 220
+  },
+  "common_rx_tests": 8,
+  "target_clippy": "all three chips passed with -D warnings",
+  "doc_tests": "WS63 and WS53 passed",
+  "no_embassy": "six normal-dependency graphs passed",
+  "register_policy": "passed",
+  "external_consumer": {
+    "source": "consumer/",
+    "cache_started_empty": true,
+    "target": "riscv32imfc-unknown-none-elf",
+    "chips": [
+      "ws63",
+      "ws53",
+      "bs21"
+    ],
+    "passed": true,
+    "scope": "Library consumer build, not executable/HIL; exact remote HAL and runtime development override with registry PACs; not registry-only release qualification."
+  },
+  "models": {
+    "normal": {
+      "rounds": 2,
+      "raw_report": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-20261101-pass/report.json",
+      "sha256": "461e15e738a45256188b404ef95143504d3a0b455cd5124ace8e682dce41f9ff"
+    },
+    "blocked-route": {
+      "rounds": 3,
+      "raw_report": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-26-blocked-route/report.json",
+      "sha256": "f660f0b751222c580c7ca35584080b45fd801e98429f6260781b01c8973db76a"
+    },
+    "cancel-peer-timeout": {
+      "rounds": 3,
+      "raw_report": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-26-cancel-peer-timeout/report.json",
+      "sha256": "5564b13907fb33619e842985a31fdbadb7922dd8a09d4a70793bd13c214f196c"
+    }
+  },
+  "model_scope": "WS53 local replay using existing UART model and local helper scripts, eight rounds total. Digital RX peer, IRQ42, cancellation and fault recovery. Vendor BootROM/FlashBoot not modeled; no physical timing qualification.",
+  "model_reproducibility_gap": "Existing local helper scripts are not tracked in the parent. Hashes and raw paths retained; this local replay does not qualify clean-checkout integration CI. Publishing/normalizing that helper dependency chain remains open.",
+  "local_helper_sha256": {
+    "ws53_uart_rx_build.py": "8f6bf7a1ceeae8ae8a5b2514d8d06209548d5b6c0b4f5e5aeed3293b313c718d",
+    "ws53_ci_domain_elf_build.py": "c5d90b2473051a1bcc276f8cd9ed3cbbc7e38f749644f7b968fae70c14c00a66",
+    "test-ws53-flash-uart-rx-qemu.py": "0637c30cd18b3456c000efe0cfee986ca255379a52d27156a71fd45f01c1f354",
+    "test-ws53-flash-tsensor-domain-ci.py": "2c0a7c9a0132bee8ca116eaad06c473ac757ad78b52a944a0e00119cd678fa9f",
+    "test-ws53-flash-qemu.py": "fee41bc919ebe7c5e1ed4d504a482c8c4aa58864922c50e9c956968ed75e8113",
+    "check-ws53-flash-elf.py": "6b4a499ce2b9fd461dc819d0b5d7d39d5bfbbdbf0613e59805b1288e23554109"
+  },
+  "ws63_model": "not qualified: RX FIFO count and mask/reassert semantics are missing; no zero-return MMIO substitute used",
+  "hardware_accessed": false,
+  "stable_graduation": false,
+  "open": [
+    "WS63 RX model and hardware qualification",
+    "WS63 blocking-backed async TX",
+    "All UART instances, physical timing and overflow/error validation",
+    "block_on idle race",
+    "HAL/runtime registry release and remote CI",
+    "Full HAL IP/SoC restructuring remains incremental"
+  ],
+  "preserved_failures": [
+    "Initial stale example alpha.9 lock, corrected only to current alpha.10",
+    "Build source snapshot changed during concurrent documentation edit; sealed build rerun passed",
+    "Sandbox QMP socket denied; retried outside sandbox",
+    "TIMER/GPIO QEMU binary lacks UART route device; switched to existing hash-matched UART model"
+  ],
+  "raw": "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-lifecycle-2026-11-01",
+  "logs": {
+    "clippy-bs21.log": {
+      "bytes": 725,
+      "sha256": "cd91e5bc67b6d1c6e75ebad4411b694c19efff9731c0baa007bd7f8463e0adc3"
+    },
+    "clippy-ws53.log": {
+      "bytes": 733,
+      "sha256": "9fbede371191a9f4c6444b300e972ec39a7c44071d9b93fb25f12297b7a11b1f"
+    },
+    "clippy-ws63.log": {
+      "bytes": 1745,
+      "sha256": "ec1434a4d61cdbc58df1ccadda7eb0c2fa615974de31d423a3e661f6e5ee507c"
+    },
+    "consumer-bs21.log": {
+      "bytes": 925,
+      "sha256": "18e53aabf13f442c56a67bd70d9dce77ab5e54523f78cb28f3c63ae2d9e74523"
+    },
+    "consumer-ws53.log": {
+      "bytes": 941,
+      "sha256": "b617ea0864b7e98371e41c1abb3cdd70d7febd53d5e6e08a348736e8f87b365c"
+    },
+    "consumer-ws63.log": {
+      "bytes": 3953,
+      "sha256": "fb1c628d0081609493b47bc5924db59d3afb63aebaa3c4d08d6eab8543e211df"
+    },
+    "docs-ws53.log": {
+      "bytes": 6768,
+      "sha256": "edaf02597f5c35dbeb351a219cce3eb7ebd32fcb833303fde1b5cf97245f1cf3"
+    },
+    "docs-ws63.log": {
+      "bytes": 1537,
+      "sha256": "6191cdde3cc62613c8dd1292738749d37b3ae6259dcaf718834864f4ec21bbb8"
+    },
+    "extract-ws53.log": {
+      "bytes": 38493,
+      "sha256": "ef263f9e48fd8e9a919e2db311e680c771e01ca6acc26386958471ce63e30208"
+    },
+    "final-clippy-ws63.log": {
+      "bytes": 696,
+      "sha256": "6d9548dfbc9df74ab02d733a5da5da965655dde08696871450c2eedca9c9da71"
+    },
+    "final-host-ws63.log": {
+      "bytes": 22854,
+      "sha256": "3f4cd9968543606652f739043438d178b8687697d9444e0564f6273a265e6d85"
+    },
+    "final-no-embassy.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host-bs21.log": {
+      "bytes": 13176,
+      "sha256": "130b894ec7b51c9b266d25d5719f3534a0f25e298a88af1da757a52b33e4f2bd"
+    },
+    "host-ws53.log": {
+      "bytes": 37420,
+      "sha256": "8b15cf7477efbcf2f8ff1c8450d9f39c6629fa7811990f34545e347d7b1f579e"
+    },
+    "host-ws63.log": {
+      "bytes": 22883,
+      "sha256": "51bccae5b8d345b194b7d88b47a81bb003cadeb489a3c2d8288bd5cb46b0f4d7"
+    },
+    "model-blocked-route.log": {
+      "bytes": 5371,
+      "sha256": "f660f0b751222c580c7ca35584080b45fd801e98429f6260781b01c8973db76a"
+    },
+    "model-cancel-peer-timeout.log": {
+      "bytes": 5397,
+      "sha256": "5564b13907fb33619e842985a31fdbadb7922dd8a09d4a70793bd13c214f196c"
+    },
+    "no-embassy.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "register-policy.log": {
+      "bytes": 27,
+      "sha256": "97bfd928deae8bcaabd3ce0d2e548648bb8df999230a764c1184013b71d84fd5"
+    },
+    "ws53-build-current.log": {
+      "bytes": 673,
+      "sha256": "84d4aa1c090c04b61025afeb20c836199dcece423f888efc61e4a72a1dcbb393"
+    },
+    "ws53-build-run.log": {
+      "bytes": 1970,
+      "sha256": "e722b839e1ead741d0623d64d9717b0b2951d453635de59b77f09aab31edee45"
+    },
+    "ws53-build-sealed.log": {
+      "bytes": 99,
+      "sha256": "833a7a651e3bcc66c91d9e7c58d396c45cc96cb3ce527b992894070148a19d64"
+    },
+    "ws53-qemu-matched.log": {
+      "bytes": 3931,
+      "sha256": "461e15e738a45256188b404ef95143504d3a0b455cd5124ace8e682dce41f9ff"
+    },
+    "ws53-qemu-retry.log": {
+      "bytes": 1095,
+      "sha256": "1a130d8fa016014b8c7299a5ae34ea8c63448bc56b93562b9c31bb8c1c04de3b"
+    },
+    "ws53-qemu.log": {
+      "bytes": 871,
+      "sha256": "b5aa0efef647d8e67ef4f96620483c580e865194668a24f407b56dda498e06b5"
+    }
+  },
+  "build_receipt_sha256": "239a0d04c10b5b00f66402969955a704e9e7f9a29c598e6db0ada3db099d75e5"
+}

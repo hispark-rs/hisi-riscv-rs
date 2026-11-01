@@ -1,0 +1,29 @@
+running 4 tests
+test asynch::tests::registered_waiter_is_woken_and_events_coalesce ... ok
+test asynch::tests::replacement_and_reset_do_not_wake_retired_waiters ... ok
+test asynch::tests::event_between_check_and_registration_wakes_waiter ... FAILED
+test asynch::tests::clone_replace_drop_reset_and_wake_callbacks_are_outside_lock ... FAILED
+
+failures:
+
+---- asynch::tests::event_between_check_and_registration_wakes_waiter stdout ----
+
+thread 'asynch::tests::event_between_check_and_registration_wakes_waiter' (1228) panicked at src/asynch/tests.rs:31:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- asynch::tests::clone_replace_drop_reset_and_wake_callbacks_are_outside_lock stdout ----
+
+thread 'asynch::tests::clone_replace_drop_reset_and_wake_callbacks_are_outside_lock' (1227) panicked at src/asynch/tests.rs:76:45:
+Waker callback ran under metadata lock: Timeout
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    asynch::tests::clone_replace_drop_reset_and_wake_callbacks_are_outside_lock
+    asynch::tests::event_between_check_and_registration_wakes_waiter
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 336 filtered out; finished in 2.00s
+
+error: test failed, to rerun pass `--lib`

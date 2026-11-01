@@ -1,0 +1,53 @@
+{
+  "schema": "ws53-exceptions-ram-hil-v1",
+  "date": "2026-10-27",
+  "runtime_commit": "daa33a3de1a8c4d9bb2d3eb7558fa1e0610c7432",
+  "probe": "23121302",
+  "uart": "5CB7019921",
+  "initial_trials": [
+    {
+      "profile": "typed",
+      "passed": true,
+      "mailbox_words_identical": 128,
+      "elf_sha256": "f85f722491712a5c5136222cf893867f932f74843de30580b15fd2d3408ea0ea"
+    },
+    {
+      "profile": "irq",
+      "passed": true,
+      "mailbox_words_identical": 128,
+      "elf_sha256": "5e521fa14b0f1a7c65fc90cf0c0f506d53f1c3a8910743bda870853d35eaa63b"
+    }
+  ],
+  "consecutive_irq_rounds": 20,
+  "each_round_mailbox_words_equal_to_same_elf_qemu": 128,
+  "typed_combinations": 24,
+  "returns_per_round": 25,
+  "irq_hook_entries_per_round": 27,
+  "physical_resets": 22,
+  "prior_dpidr_correct": 600,
+  "series_dpidr_correct": 600,
+  "after_dpidr_correct": 600,
+  "core_halt_step_resume_passed": true,
+  "factory_at_recovered_after_each_round": true,
+  "mailbox_guard_refusals": 11,
+  "pre_ram_tcl_cases": 5,
+  "old_ram_readback_cases": 7,
+  "hardware_accessed": true,
+  "flash_written": false,
+  "ram_hardware_qualified": true,
+  "flash_hardware_qualified": false,
+  "cold_boot_qualified": false,
+  "physical_nmi_qualified": false,
+  "logic_analyzer_waveform_qualified": false,
+  "production_handoff_qualified": false,
+  "sdma_quiescence_qualified": false,
+  "prior_scheduling_delay_cause_established": false,
+  "parent_changes_uncommitted": true,
+  "runtime_documentation_commit": "45c6cceda7d95d708f57c99ab4cf1d73af8646b4",
+  "qemu_sha256": "20e0b9299fe7222fd4b4c83c368ba53fc27b512c5f8b34aeba2f523e2bee6d71",
+  "total_checked_probe_returns": 550,
+  "total_typed_hook_entries": 593,
+  "total_timer_irq53_returns": 21,
+  "archived_source_replay_passed": true,
+  "current_documented_build_elf_identical": true
+}

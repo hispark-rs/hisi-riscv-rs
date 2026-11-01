@@ -1,0 +1,307 @@
+{
+  "hal_commits": [
+    "08a41204fc8e9096a9504d424eb099230c0ca1ba",
+    "737599f8e6ebf9694462f3108b04de5d515737d2",
+    "454ab400a20fa6d3cbf62099ceac8876938d8931"
+  ],
+  "baseline": "c907bed8255c334ce618d54f9567b8114b7a176e",
+  "pr": "https://github.com/hispark-rs/hisi-hal/pull/21",
+  "scope": "Shared GPIO wait lifecycle, distinct ownership and PAC/ISR backends; WS63 per-pin completion/cancellation; no executor/queue added. Temporary masking preserves pending; old disable semantics retained.",
+  "independent_host": {
+    "ws63": 358,
+    "ws53": 438,
+    "bs21": 220
+  },
+  "shared_tests": 7,
+  "target_clippy": "all three chips passed",
+  "doctests": {
+    "ws63": {
+      "passed": 9,
+      "ignored": 4
+    },
+    "ws53": {
+      "passed": 74,
+      "ignored": 2
+    }
+  },
+  "feature_checks": [
+    "WS63 rt async without unstable passed",
+    "WS53 rt unstable without async passed"
+  ],
+  "dependency_boundary": "six no-Embassy graphs passed",
+  "register_policy": "passed",
+  "format": "passed",
+  "parent_python_policy": "passed using existing working-tree checker; checker edits not part of this batch",
+  "qemu": {
+    "ws63": "same bank simultaneous waits, empty IRQ, three cancellations incl. preserving peer, two immediate levels and rising/falling/any-edge; peer already pending while another pin cancels",
+    "ws53": "MGPIO17 eight wakes, two immediate, two cancellations, two ownership guards, restore; timer IRQ baseline also passed; directional-edge re-poll before ISR must preserve controller pending",
+    "baseline": "identical fixture source fails assertion after empty GPIO IRQ; different HAL only, development dependency graph recorded",
+    "remote_consumer": "Independent Cargo cache started empty; then fetched final HAL revision, retaining locked registry deps. Final remote exact-commit RISC-V link and pending-peer model case passed. Not registry release qualification.",
+    "intermediate": "737599f fails pending-peer case: disable also clears controller pending. Fixed by 454ab40 mask-only primitive."
+  },
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "fixture_source_sha256": "f81b2f3fdb11672a24abca267e54d8578028f736a05d793e009e242b86b41ecc",
+  "consumer_sources": "Copy examples/ws63-gpio-async-model/src/main.rs and build.rs next to remote-consumer/Cargo.toml; independent workspace and lockfile; no parent patch.",
+  "consumer_command": "cargo +nightly-2026-07-09 build --locked -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf --release",
+  "unqualified": [
+    "Physical GPIO clock, level, acknowledgement and cancellation timing",
+    "All WS63 banks/pins: fixture uses GPIO1 inputs8/9 only",
+    "Cross-core and unrelated ISR shared-register arbitration",
+    "Legacy any-edge setup/bounce window",
+    "block_on wake/idle defect",
+    "DMA safety",
+    "Registry release of HAL/runtime",
+    "New remote CI result"
+  ],
+  "hardware_accessed": false,
+  "stable_graduation": false,
+  "raw": "/home/sanchuanhehe/Documents/hispark-rs/validation/gpio-lifecycle-2026-11-01",
+  "logs": {
+    "baseline-build.log": {
+      "sha256": "d17ed6e59c241e863e653a222bccc0ea0f1883e0156fd3ed219a5418750cddb1",
+      "bytes": 2016
+    },
+    "baseline-pending-peer-build.log": {
+      "sha256": "b38c1ec033c13c7f8c62fa224ef44b5509f18a755902e53ac6f6d96e637989f3",
+      "bytes": 200
+    },
+    "baseline-pending-peer.log": {
+      "sha256": "da8b8f52d98e47dca8a505747fc19b4fc7422688d12be3b1ef569c746e0b364a",
+      "bytes": 1877
+    },
+    "docs-ws53.log": {
+      "sha256": "c4a160e64f697995a72e27e7df5ea26849fdc980b9b827b25ba5298caadc2d50",
+      "bytes": 6768
+    },
+    "docs-ws63.log": {
+      "sha256": "9b9b0a1a71e238b4ed2bb49131b45aa6c75e4fc303be3dcfa59a4ee96beaaa8e",
+      "bytes": 1537
+    },
+    "final-clippy-bs21.log": {
+      "sha256": "33c4c9640f5d007673ac952f0be268074a7fc9e4f88b1b96f8c02088b2e0a5db",
+      "bytes": 725
+    },
+    "final-clippy-ws53.log": {
+      "sha256": "bfb0ee06d56f257a7e0e40494fedc8dd27d4e6591c38679341224291dbed6ed8",
+      "bytes": 696
+    },
+    "final-clippy-ws63.log": {
+      "sha256": "77a562a9a67e1fa2f8cf58b9a414fbcce7f9ece9761584f08b6a20c1fad14827",
+      "bytes": 696
+    },
+    "final-fields-clippy-ws63.log": {
+      "sha256": "4237ae4f68bd553f1d0d3bcfbd0ff316421fb49954824ae2936c023cdc22ec66",
+      "bytes": 696
+    },
+    "final-fields-host-ws63.log": {
+      "sha256": "f9db9ca6a76be58f19363fd9ddde4414a145fdc1c0fe941453e948bf379ed111",
+      "bytes": 21978
+    },
+    "final-host-bs21.log": {
+      "sha256": "e5597d194b7f14953f825a8cee43e80166721e7792892d07f39fad79439dc6a5",
+      "bytes": 13176
+    },
+    "final-host-ws53.log": {
+      "sha256": "d8ab1b1b78e370cd855fdfd04739ad60b0b12caf1c3f6a724d096f0367e535ac",
+      "bytes": 36954
+    },
+    "final-host-ws63.log": {
+      "sha256": "65943ab914237f0c8a8ad7252098795edfd88ba73d9ab22597bf00b4dabca466",
+      "bytes": 21978
+    },
+    "format.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "lock.log": {
+      "sha256": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+      "bytes": 113
+    },
+    "mask-clippy-bs21.log": {
+      "sha256": "ee27d78a25822296504e8a58a0180720487d3fdfb6fa0d82e42fd7f16bf8c00c",
+      "bytes": 696
+    },
+    "mask-clippy-ws53.log": {
+      "sha256": "64a1309b03578580321f3f25f830e9f9cb4ee122487e1eefcfecbc61363a32f9",
+      "bytes": 696
+    },
+    "mask-clippy-ws63.log": {
+      "sha256": "a7e90f340c88f246b31dc96aebe3cfd7b19932dd7e8a89fbdcfce74993f6d5e7",
+      "bytes": 696
+    },
+    "mask-docs-ws53.log": {
+      "sha256": "dc379da983674d58c35166e490d6363068b7096251ffa3f367283cae63b65841",
+      "bytes": 6768
+    },
+    "mask-docs-ws63.log": {
+      "sha256": "c93ba570298e3ee98294091d1fba4bd1323778d84e0ca02c76ea41221587ddd8",
+      "bytes": 1537
+    },
+    "mask-format.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "mask-host-bs21.log": {
+      "sha256": "4c2a966df9aefc1d64f4d55651d412b4bcab18780d37ff1219b75562cec204db",
+      "bytes": 13147
+    },
+    "mask-host-ws53.log": {
+      "sha256": "2fbf0952e74709df30187908e71bf68f63d4a34465dd48c1479e64687b9ac3e3",
+      "bytes": 36954
+    },
+    "mask-host-ws63.log": {
+      "sha256": "5c4bfab92cc7390f626872d41b9057f6c398a31ab0e7ad3e86305614a058a642",
+      "bytes": 21978
+    },
+    "mask-register-policy.log": {
+      "sha256": "97bfd928deae8bcaabd3ce0d2e548648bb8df999230a764c1184013b71d84fd5",
+      "bytes": 27
+    },
+    "mask-stable-async.log": {
+      "sha256": "fab6d6c6be9b1fc026e96383512342e99d9b007551587fe95c8e99342623056f",
+      "bytes": 1002
+    },
+    "mask-ws53-blocking.log": {
+      "sha256": "2b4d4933754571dff5186c548e6e1afba83653af37fed7ea4cb15c91915beb43",
+      "bytes": 193
+    },
+    "mask-ws53-build.log": {
+      "sha256": "dee66fee7cda2a97066fffb2ce496726f9f3acf4599cde39437c24aa308002e6",
+      "bytes": 299
+    },
+    "mask-ws53-edge-build.log": {
+      "sha256": "b6ccfcce15d2f367ba57f82fb10fde389f848e98a6a4aea54def0da0ab9fc0e8",
+      "bytes": 299
+    },
+    "mask-ws53-edge-run.log": {
+      "sha256": "af66fba54b1e9acbad9d0eb743293fa578cd4ed0e2b2c523b101625898c93b04",
+      "bytes": 1143
+    },
+    "mask-ws53-run.log": {
+      "sha256": "63c2e150c27b9b209ba142191fe3658f43abcc638e2525ba0d5908611d804c79",
+      "bytes": 1057
+    },
+    "mask-ws63-build.log": {
+      "sha256": "391387fab2c185e88b99a754f1496db608ce7beecfd49a2a0fb798b6e4627486",
+      "bytes": 301
+    },
+    "mask-ws63-run.log": {
+      "sha256": "0535c39e87b941d2692d2fedf2aae41fd0b053a4640ad4112a5030821628e6e0",
+      "bytes": 1835
+    },
+    "no-embassy.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "pending-peer-build.log": {
+      "sha256": "55af34b22d44eb071cbf37a061cbe40a9ea00ab86d51958e9cb5367e12f03266",
+      "bytes": 191
+    },
+    "python-policy.log": {
+      "sha256": "10003b6e95f6518c71304b7501dceaef72f4444daa36e7e89873bd88f02e2633",
+      "bytes": 119
+    },
+    "register-policy-final.log": {
+      "sha256": "97bfd928deae8bcaabd3ce0d2e548648bb8df999230a764c1184013b71d84fd5",
+      "bytes": 27
+    },
+    "register-policy.log": {
+      "sha256": "97bfd928deae8bcaabd3ce0d2e548648bb8df999230a764c1184013b71d84fd5",
+      "bytes": 27
+    },
+    "remote-build.log": {
+      "sha256": "c5c3116753e2a49682e7228e94b73d05f71d3c6eaf4f0c78b053d5c50e701be4",
+      "bytes": 3805
+    },
+    "remote-mask-build.log": {
+      "sha256": "43955fa7ad6dc675033e6d47d750f6752ed479b824e57316df1c4fa0c75722b3",
+      "bytes": 618
+    },
+    "remote-mask-run.log": {
+      "sha256": "22140142620670fd82d5a9c280000920e3fe6b199a1154e5e7deda61b5cd33ea",
+      "bytes": 1843
+    },
+    "remote-pending-peer-build.log": {
+      "sha256": "c69a0ec1a7c7e5b2220f40e06c3c29a07ec1b470be64c7a8df818a5db8667f54",
+      "bytes": 199
+    },
+    "remote-pending-peer.log": {
+      "sha256": "535c9b385c2394527740637e778031c7e03282ddf6e640426494cd1a52dd3189",
+      "bytes": 1837
+    },
+    "remote-run.log": {
+      "sha256": "ace882c3586bd80022dfedf5c3756e7caaa1dbd87a5562dceff2a91ae6fd1d0f",
+      "bytes": 1843
+    },
+    "stable-async.log": {
+      "sha256": "aa63830648bcfb91d4de16fbca005ca5c3aec68015468ddb12d806703d708891",
+      "bytes": 1431
+    },
+    "ws53-blocking.log": {
+      "sha256": "e044c2336e910e66eedd171100aeca2dcbb552fb85728cb5d143e80ae0771b6e",
+      "bytes": 230
+    },
+    "ws53-extract-clippy.log": {
+      "sha256": "595639715eab57082ea80dc6f34b1ff9f44074da1ff297bacbb83330f57ee879",
+      "bytes": 1753
+    },
+    "ws53-extract-host.log": {
+      "sha256": "9b836d6ad84cff33473fa16a18fe050c23d734e6abc897336cd3ae974b923d50",
+      "bytes": 38481
+    },
+    "ws53-final-build.log": {
+      "sha256": "a6b87f89b912cc2b53e6bc9efe2bb029ab96b545eac93e5ddcfe00f0da604116",
+      "bytes": 299
+    },
+    "ws53-fixture-build.log": {
+      "sha256": "6d00c5edd69dd7ba8db62030c7e088c49ee0d2eed71cdc0c006d8e4a123fc7de",
+      "bytes": 299
+    },
+    "ws53-run-final.log": {
+      "sha256": "ed665ee58e23c6067c2149015e301a9b58a8de87a2a59275223a6dfeb7107de1",
+      "bytes": 1143
+    },
+    "ws63-clippy-final.log": {
+      "sha256": "c3c9ad887f3e22277eb6a23cd31829f062573d53eeb66e21b1f4186c7f1cc599",
+      "bytes": 1442
+    },
+    "ws63-clippy.log": {
+      "sha256": "95b80fe1a780d606884be8603882dfcaa6735a7a7a55f9f7ba53b2be2c170fc3",
+      "bytes": 1143
+    },
+    "ws63-fields-fixture-build.log": {
+      "sha256": "a75a82a89121de8e7d6bac5e88b56e6fa572977a304d947b3456a8d6268375a0",
+      "bytes": 301
+    },
+    "ws63-fixture-build-final.log": {
+      "sha256": "583b89cf08d3f4fbf0892c4d24b8117f2c8b12e0c787f95890cadf6a8a987c62",
+      "bytes": 191
+    },
+    "ws63-fixture-build.log": {
+      "sha256": "158876b4ad9765ed15a34aa71eefce2cfd9906e4e10505086fab20fa381dc09a",
+      "bytes": 2558
+    },
+    "ws63-fixture-complete-build.log": {
+      "sha256": "cc6fe3397db057eb8eb5e4049af86b1090206342bbeba3d27c8bc8926d1cdc92",
+      "bytes": 191
+    },
+    "ws63-host.log": {
+      "sha256": "d211314bc0667c50437dc3e1681b5b4f6ee7d541d445b376d0475be8018bb371",
+      "bytes": 22007
+    },
+    "ws63-parent-clippy.log": {
+      "sha256": "b3f873390261a03ebfc5caefe94f120979abc5d44138d57c3b2c6efdbfac9686",
+      "bytes": 575
+    },
+    "ws63-pending-peer.log": {
+      "sha256": "fca3e30aec7092b30e5c86ed12fca159c3348580d05043dd6d2a1543f54ee4da",
+      "bytes": 1829
+    },
+    "ws63-run-final.log": {
+      "sha256": "7a4789e95530c76405566f44aa7d8c94d0a66b563a560e20a75816b8a5ff00cc",
+      "bytes": 1835
+    }
+  },
+  "ws53_fixture_source_sha256": "ed9b4463182e0f31dcbe9b4b9c01097e806d1e8d8c66089929d4a4627fad2eaf",
+  "fixture_correction": "Initial WS53 extra assertion incorrectly required asserted level waits to remain Pending. Restricted re-poll Pending assertion to directional-edge cases; original level waits still qualify via immediate completion."
+}

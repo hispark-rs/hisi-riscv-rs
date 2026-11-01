@@ -1,0 +1,15 @@
+[package]
+name = "ws63_block_on_model"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[features]
+irq-race = []
+[workspace]
+[dependencies]
+hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws63", "rt", "async", "unstable"] }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt", default-features = false, features = ["chip-ws63", "bundled-memory-x"] }
+[patch.crates-io]
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+[profile.release]
+opt-level = "s"

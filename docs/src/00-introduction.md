@@ -12,7 +12,7 @@
 
 整套生态包含：
 
-- **`hisi-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选 `async` / `embassy`。
+- **`hisi-hal`** —— 手写的安全外设驱动（GPIO/UART/I2C/SPI/DMA/Timer…），基于 `embedded-hal 1.0`，可选执行器无关的 `async`；Embassy 时间接入由 `hisi-rtos` 提供。
 - **{{#chip-field pac_crate}}** —— svd2rust 生成的寄存器访问层。
 - **`hisi-riscv-rt`** —— 启动汇编、链接脚本、中断向量。
 - **官方 Rust nightly 工具链** —— 使用 upstream `riscv32imfc-unknown-none-elf`（硬浮点、无原子）目标，当前经 `rust-src` + `-Zbuild-std=core,alloc` 构建。

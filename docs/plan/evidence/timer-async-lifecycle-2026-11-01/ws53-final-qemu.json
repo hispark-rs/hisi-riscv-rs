@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "race_injection": false,
+  "chip": "ws53",
+  "lifecycle": false,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws53",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "null",
+    "-serial",
+    "null",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/examples/ws53/target/riscv32imfc-unknown-none-elf/release/ws53_ram_smoke",
+    "-icount",
+    "shift=0,sleep=on",
+    "-d",
+    "guest_errors"
+  ],
+  "returncode": 0,
+  "runner_terminated": true,
+  "elf_sha256": "8078e88b5366e5167709e6f45935583c6c07a908aff598e1887578ae505192d2",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "stdout": "WS53 RAM data/bss OK\r\nWS53 PASS timer_irq=53 count=3\r\nWS53 PASS timer_async channels=2 expiries=16 cancels=4 guards=6\r\n",
+  "stderr": [
+    "qemu-system-riscv32: terminating on signal 15 from pid 21 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-hal-irq-wait-qemu-d807d3dcc5a7e682/bin/python3)"
+  ],
+  "unexpected_diagnostics": []
+}

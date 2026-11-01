@@ -3,7 +3,7 @@
 //! The BS21 analogue of `examples/ws63/embassy_multitask`: runs `embassy-executor`
 //! (platform-riscv32, thread mode) with two async tasks that
 //! `embassy_time::Timer::after_millis(..).await` at different rates. Time comes
-//! from `hisi_hal::embassy` — the same chip-neutral embassy-time `Driver`
+//! from `hisi_rtos::embassy` — the same chip-neutral embassy-time `Driver`
 //! WS63 uses (now() via the TCXO 64-bit counter, alarms via a TIMER channel),
 //! built with `--features chip-bs21,unstable` so the TCXO rate (32 MHz) and the alarm IRQ
 //! come from `soc/bs21.rs`.
@@ -12,7 +12,7 @@
 //! number: WS63 uses `TIMER_INT0` = 26 (a standard `mie`-bit local interrupt),
 //! BS21 uses `TIMER_0` = 53 (a HiSilicon LOCI custom local interrupt). Both are
 //! delivered with `mcause = <irq>`, so the trap handler routes the alarm by
-//! testing `mcause & 0xFFF == hisi_hal::embassy::ALARM_IRQ` — no chip
+//! testing `mcause & 0xFFF == hisi_rtos::embassy::ALARM_IRQ` — no chip
 //! literals in this file.
 
 #![no_std]
@@ -84,8 +84,8 @@ extern "C" fn atrap_handle() {
     let mcause: u32;
     unsafe { core::arch::asm!("csrr {0}, mcause", out(reg) mcause) };
     // Interrupt (bit31) and cause == the embassy alarm IRQ (53 on BS21).
-    if (mcause & 0x8000_0000) != 0 && (mcause & 0xFFF) == hisi_hal::embassy::ALARM_IRQ {
-        hisi_hal::embassy::on_alarm_interrupt(); // embassy-time alarm fired
+    if (mcause & 0x8000_0000) != 0 && (mcause & 0xFFF) == hisi_rtos::embassy::ALARM_IRQ {
+        hisi_rtos::embassy::on_alarm_interrupt(); // embassy-time alarm fired
     }
 }
 
@@ -130,6 +130,8 @@ fn main() -> ! {
     unsafe {
         core::arch::asm!("csrw mtvec, {0}", in(reg) atrap as *const () as usize); // direct mode
         interrupt::init();
+        // This standalone platform owns the clock epoch, TIMER and TCXO.
+        assert!(hisi_rtos::embassy::init(hisi_hal::timer::TimerDriver::new(p.TIMER), tcxo).is_ok());
         interrupt::enable_global();
     }
 

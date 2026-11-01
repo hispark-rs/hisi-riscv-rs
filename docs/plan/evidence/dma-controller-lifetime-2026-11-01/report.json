@@ -1,0 +1,182 @@
+{
+  "hal_commit": "c907bed8255c334ce618d54f9567b8114b7a176e",
+  "baseline_hal": "6a6ff72ced4d91af0fb5297c18d004413988d3b0",
+  "pr": "https://github.com/hispark-rs/hisi-hal/pull/20",
+  "scope": "Require static controller lifetime at three experimental retained-guard launch methods; no runtime/MMIO change.",
+  "baseline_counterexample": "Compile-only short controller reborrow, forget guard, reuse original token: accepted on baseline.",
+  "candidate_counterexample": [
+    {
+      "code": "E0521",
+      "message": "borrowed data escapes outside of function",
+      "spans": [
+        {
+          "line": 7,
+          "text": [
+            {
+              "highlight_end": 74,
+              "highlight_start": 27,
+              "text": "    if let Ok(transfer) = driver.start_mem_to_mem(channels.ch0, src, dst) {"
+            }
+          ]
+        },
+        {
+          "line": 7,
+          "text": [
+            {
+              "highlight_end": 74,
+              "highlight_start": 27,
+              "text": "    if let Ok(transfer) = driver.start_mem_to_mem(channels.ch0, src, dst) {"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "E0499",
+      "message": "cannot borrow `*token` as mutable more than once at a time",
+      "spans": [
+        {
+          "line": 10,
+          "text": [
+            {
+              "highlight_end": 49,
+              "highlight_start": 44,
+              "text": "    let mut reclaimed = DmaDriver::new_dma(token.reborrow());"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "host_tests": {
+    "ws63": 351,
+    "bs21": 220,
+    "ws53": 432
+  },
+  "target_clippy": {
+    "ws63": "passed",
+    "bs21": "passed",
+    "ws53": "passed"
+  },
+  "doctests": {
+    "ws63": {
+      "passed": 9,
+      "ignored": 4
+    },
+    "bs21": {
+      "passed": 6,
+      "ignored": 3
+    }
+  },
+  "format": "passed",
+  "external_consumer": {
+    "dependency": "Exact remote Git HAL and runtime commits; registry PAC; development integration, not release qualification",
+    "cache": "New CARGO_HOME populated by positive host; target and negative then reuse that standalone cache",
+    "positive_host": "passed",
+    "positive_riscv": "passed with locked resolution",
+    "negative_host": "expected exit 101, E0521 and E0499"
+  },
+  "existing_callers": {
+    "ws63_dma_loopback": "release build passed",
+    "bs21_dma_mem": "locked target check passed",
+    "bs20_dma_mem": "locked check blocked: workspace lock requires updating; not counted as passed"
+  },
+  "qemu": "not rerun; compile-time boundary only",
+  "hardware": "not accessed; no flash/reset/serial/probe operations",
+  "open_items": [
+    "Normal completion bus-drain proof",
+    "Cache ownership and other bus masters",
+    "Higher-level peripheral DMA and async safety",
+    "Unpublished HAL/runtime release dependencies",
+    "BS20 workspace lock drift"
+  ],
+  "raw_evidence": "/home/sanchuanhehe/Documents/hispark-rs/validation/dma-controller-lifetime-2026-11-01",
+  "logs": {
+    "baseline-check.log": {
+      "sha256": "27dd44e056943bc8f0f56398e4476425bf2c80493856f3afb71b5fabe2abbc55",
+      "bytes": 1630
+    },
+    "bs20-example-final.log": {
+      "sha256": "8d3ac4599bfe24ad3487229f38855ab298cd0a89addda685ff4bea58797d4182",
+      "bytes": 273
+    },
+    "bs20-example.log": {
+      "sha256": "8d3ac4599bfe24ad3487229f38855ab298cd0a89addda685ff4bea58797d4182",
+      "bytes": 273
+    },
+    "bs21-example.log": {
+      "sha256": "9d0ed788c987b02d43023c55c83e125cce3221c821b661dd840f3ed99038c2a4",
+      "bytes": 1900
+    },
+    "candidate-lock.log": {
+      "sha256": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+      "bytes": 113
+    },
+    "clippy-bs21.log": {
+      "sha256": "c356a8a9493a6cb9ef3f1e99c38a4534a7409e16f364a90b64b6d360adf7c54c",
+      "bytes": 744
+    },
+    "clippy-ws53.log": {
+      "sha256": "2ebb908cd2b32a53931106f9917c9ba6f56654bc0ce9b8a3adaf1936b7afa326",
+      "bytes": 752
+    },
+    "clippy-ws63.log": {
+      "sha256": "d45c84f39652b9e6600893d6afaa47b8035558d09c63ebd0b2f738e06ef6b9ce",
+      "bytes": 1764
+    },
+    "doc-bs21.log": {
+      "sha256": "dd6abd6eaa7504ce2fae72ad40c29596155b50097819c70ababd9d8c529ff00c",
+      "bytes": 1207
+    },
+    "doc-ws63.log": {
+      "sha256": "631c8a2cb9696a8228dff96735c8c72613a978277d639dc56886d909f9f037ec",
+      "bytes": 1556
+    },
+    "format.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "host-bs21.log": {
+      "sha256": "337053a282fd4afbc6ed5ea4cfbe2013a4982d0a59d1f1e7b2eb42091c53f326",
+      "bytes": 13195
+    },
+    "host-ws53.log": {
+      "sha256": "bdf2b6a4a1edd63c034df86271c8c2b9ac5bf67eae3fa6ae172c47f6372efb55",
+      "bytes": 36505
+    },
+    "host-ws63.log": {
+      "sha256": "b16f7ff0695dcc5db2dea885f912734d89848fd36bcadf77993830af7f631773",
+      "bytes": 22914
+    },
+    "positive-host.log": {
+      "sha256": "70cdddd72fe6c8276dfa33ab109cf6b8e1220168706a483a57efb724fda7096d",
+      "bytes": 1550
+    },
+    "positive-target.log": {
+      "sha256": "f710a28be05eecc81697989607b1b83a0c0d12c6f916beb784a4d7e4d6d4bb43",
+      "bytes": 1834
+    },
+    "remote-negative.log": {
+      "sha256": "79b755f7cd67155a66445d0d4c8fae82d0f7838cefa569b7996cb42e1f9eb603",
+      "bytes": 1645
+    },
+    "remote-positive-host.log": {
+      "sha256": "40c1309d1f61afc50922b050722824cca765120f4007a75f7c31ea9b78294321",
+      "bytes": 2554
+    },
+    "remote-positive-target.log": {
+      "sha256": "15a55fe4ac606f82b0309f308f65d934ed2c24c9ee97630e90452607877e4d77",
+      "bytes": 2451
+    },
+    "ws63-example.log": {
+      "sha256": "474219adce3f65537924efd33e53a5233054f81810e6a5f04f1da8a9c99d2a3f",
+      "bytes": 583
+    }
+  },
+  "reproduce": [
+    "Positive: cargo +nightly-2026-07-09 check --locked --target x86_64-unknown-linux-gnu",
+    "Positive: cargo +nightly-2026-07-09 check --locked -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf",
+    "Negative: cargo +nightly-2026-07-09 check --locked --target x86_64-unknown-linux-gnu (expect 101 and E0521/E0499)",
+    "Subrepo doctests: cargo test --locked --doc --target x86_64-unknown-linux-gnu --no-default-features --features chip-CHIP,rt,async,unstable (ws63/bs21; explicit development runtime override required)"
+  ]
+}

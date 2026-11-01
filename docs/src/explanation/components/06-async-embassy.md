@@ -1,86 +1,65 @@
-# 异步与 embassy 适配
+# 异步外设与 Embassy 适配
 
-> hisi-hal 的异步层（`async`/`embassy` feature）如何工作、代码在哪、以及之后如何上游化。
-> 总体架构见 [overview.md](01-overview.md)。
-> 0.6.0 稳定性边界：SPI/I2C 的 blocking-backed async trait impl 随 `async` 暴露；interrupt/waker async、DMA/LSADC async 和 `embassy` 公共模块仍需 `unstable`。
+HAL 的 `async` feature 提供执行器无关的 `embedded-hal-async` / `embedded-io-async`
+及外设 Future。原有稳定性门控继续生效：SPI/I2C 的 blocking-backed async trait
+可使用 `async`；中断唤醒、取消等实验能力仍需 `unstable`。选择 async 不会拉入 Embassy。
 
-## 一句话
+## 组件边界
 
-hisi-hal 在阻塞驱动之上加了**blocking-backed async trait impl**(`async` feature)、一层**中断 + waker 驱动的异步驱动**(`async + unstable`) 和**一个 embassy-time `Driver`**(`embassy + unstable`)。于是同一套 HAL 既能阻塞用,也能在 `embedded-hal-async` / `embassy-executor` 下 `.await`。全部跑在**单核、无原子扩展**的 WS63 上,靠 `portable-atomic` + `critical-section` 垫片。
+- `hisi-hal`：计数器采样、定时器配置、IRQ 状态/确认以及硬件独占资源。
+- `hisi-rtos`：`embassy-time-driver` 全局实现，公共调度核心、有界队列、
+  单调时间缓存、截止时间分段、闹钟重编程及唤醒。
+- 应用/平台：建立时钟与资源归属，调用 `unsafe hisi_rtos::embassy::init(timer, tcxo)`，
+  将该芯片 `hisi_rtos::embassy::ALARM_IRQ` 路由到 `hisi_rtos::embassy::on_alarm_interrupt()`，配置全局中断。
+- `hisi-riscv-rt`：入口和中断基础设施；不包含 Embassy 调度策略。
+- 默认 RTOS profile 的 `embassy`：协调线程睡眠、时间片及预算，共享 SchedulerPort。
+- `embassy-only`：明确的纯 Embassy profile，编译时不包含线程 scheduler/context/storage。
+  两种 profile 共用队列实现和唯一驱动注册；在不同 Cargo invocation 中构建。
 
-## 三块地基
+纯 profile 无直接 PAC 依赖，不接受地址、IRQ 数字或 IP 版本作为用户输入。WS53 使用
+TIMER1/IRQ54；WS63 使用 TIMER0/IRQ26；BS2X 使用 TIMER0/IRQ53。驱动永久占用整个
+TIMER 资源和 TCXO 采样窗口，不能再把同一块资源交给 DMA 等待、普通 delay 或 RTOS。
 
-### 1. `asynch::block_on` + `IrqSignal`(`crates/hisi-hal/src/asynch.rs`, `unstable`)
+## 分辨率与模式
 
-- **`block_on(fut)`**:极简单 future 执行器 —— poll,Pending 就 `wfi` 休眠,硬件中断唤醒后重 poll。无堆、无全局执行器。给"不上 embassy 也想 `.await`"的场景用。
-- **`IrqSignal`**:`const` 可构造的「ISR → future」桥。一个 `portable_atomic::AtomicBool`(fired 标志)+ 一个 `critical_section::Mutex` 停放的 `Waker`。驱动把它放进 `static`;ISR 调 `signal()`,future poll 时 `take_fired()`/`register(waker)`。
+RTOS 共享模式继续使用注入的毫秒时钟：即使 tick ABI 为 1 MHz，也只有 1 ms 分辨率，
+亚毫秒截止时间向上舍入。纯 profile 的 TCXO 路径保留配置上的微秒粒度，不能用它为
+RTOS 模式宣称微秒精度。两者 `embassy::RESOLUTION_US` 分别为 1000 和 1，均不是
+物理计时精度证明。共享模式在唤醒回调前领取重编程 generation，回调外置后仍检测旧计划。
 
-### 2. 每驱动的 `on_interrupt` 钩子(不自动装 ISR)
+## 纯 profile 的调度和安全语义
 
-**关键设计**:异步驱动**不**抢占中断向量。每个 interrupt/waker 驱动导出一个 `on_interrupt`(`timer::on_interrupt(ch)`、`gpio::on_interrupt(bank)`、`uart::on_interrupt(idx)`、`lsadc::on_interrupt()`、`dma::on_interrupt()`、`embassy::on_alarm_interrupt()`),由**应用的 trap 处理函数**按 `mcause` 路由过去(见示例)。这些钩子在 0.6.0 默认稳定面之外,需 `unstable`。
+纯 profile 的三种芯片共用 `embassy/standalone.rs`、`embassy/math.rs`；`embassy/backend.rs` 仅适配 HAL 的采样
+结果和硬件配置。初始化之前 now=0，不访问硬件；失败返回两个资源，采样超时可能保留
+未完成请求。成功后不提供 deinit，不自动换频、复位计数器或进入停钟睡眠。
 
-这样开 `async`/`embassy` feature(哪怕被 cargo 工作区特性合并全局打开)**绝不**改变非异步固件的行为 —— 因为没有任何 ISR 被默认安装。
+配置频率是平台前提，不是测量结果。平台须保证单应用 hart、无控制核/DMA/NMI 争用、
+稳定时钟和 epoch。TCXO 未就绪时返回最后时间并缩短重试闹钟；读数倒退（包括无法区分
+的计数器完整回绕/复位）报告 epoch 错误，不伪造时间前进。32 位闹钟可分段覆盖远期
+64 位截止时间。实际编程延迟可能使唤醒晚于截止时间，不能保证硬实时精度。
 
-### 3. WS63 没有原子扩展 —— 怎么跑起来的
+暂保留 WS53 已有 16 项队列：上游 queue-utils 在队列借用期间调用 Waker，不能直接
+满足已有重入契约。克隆、丢弃、唤醒回调均在状态借用和临界区外执行。容量满时唤醒
+被替换任务重新轮询；取消等待可能留下有界的旧唤醒，绝不表示撤回已提交操作。
 
-WS63 是 `riscv32imfc`(**无 A 扩展**,`lr.w/sc.w` 会陷入)。
+## 迁移
 
-- hisi-hal 一直用 `portable-atomic`(开 `critical-section` feature)做 CAS 垫片;`hisi-riscv-rt` 提供 `riscv/critical-section-single-hart` 实现。
-- **embassy-executor 在无 CAS 目标上也能跑**（thumbv6m / 无 A 扩展 RISC-V 目标同理）：它内部按编译期 cfg 在 `core::sync::atomic` 与 `portable_atomic` 间切换，riscv 平台模块的 `SIGNAL_WORK` 只用 load/store（WS63 支持）。所以**无需改 embassy**。
-- 一个真实踩过的坑:`target/` 里**陈旧的 host proc-macro 工件**(syn/quote 来自旧 rustc)会让 embassy 宏构建莫名失败 → `cargo clean` 后全量通过。
+删除 HAL 的实验 `embassy` feature 与 `hisi_hal::embassy` 路径；加入独立依赖：
 
-## embassy-time `Driver`(`crates/hisi-hal/src/embassy.rs`, `unstable`)
+```toml
+hisi-hal = { version = "0.7.0-alpha.10", features = ["chip-ws63", "unstable"] }
+hisi-rtos = { version = "0.1.0-alpha.25", features = ["chip-ws63", "embassy-only", "unstable"] }
+embassy-time = { version = "0.5", features = ["tick-hz-1_000_000"] }
+```
 
-让 WS63 成为 [embassy-time](https://docs.rs/embassy-time) 的**时间提供者**,于是 `Timer::after`/`Instant`/`Ticker` 在 embassy-executor 下可用:
+以上 API 属于开发分支，当前标注的 RTOS 版本尚未包含已发布的 `embassy-only` feature；
+正式发布需要单独版本规划和授权，不能将开发集成通过当作 registry 可用。
+原 WS53 `init/status/on_alarm_interrupt` 改为 `hisi_rtos::embassy`；WS63/BS2X 新增
+显式 init，不再通过 HAL feature 隐式访问裸寄存器。旧芯片普通已发布 HAL API 保留。
 
-- **`now()`**:读 **TCXO 64 位自由计数器**(24 MHz),缩放到 embassy-time 的 1 MHz tick(微秒)。单调、跟随真实(QEMU 上是虚拟)流逝时间。
-- **`schedule_wake(at, waker)`**:把 waker 入 `embassy-time-queue-utils::Queue`;若最早截止变了,用一个 **TIMER 通道**(`ALARM_CH`,IRQ `TIMER_INT0`)编程一次性闹钟。
-- **`on_alarm_interrupt()`**:闹钟 IRQ 触发时排空到期 waker、重新武装下一个截止。
-- 经 `embassy_time_driver::time_driver_impl!` 注册为全局 driver(导出 `_embassy_time_now`/`_embassy_time_schedule_wake`,embassy-time 链接它们)。
+## 测试归属
 
-应用侧:HAL 依赖需启用 `features = ["embassy", "unstable"]`,并开 `embassy-time/tick-hz-1_000_000`(对齐 `TICK_HZ`)、把闹钟通道的 trap 路由到 `on_alarm_interrupt`、`enable_global()`。其余照 embassy 标准用法。
-
-## 代码地图
-
-| 文件 | 内容 |
-|------|------|
-| `crates/hisi-hal/src/asynch.rs` | `block_on` + `IrqSignal`(地基; `unstable`)|
-| `crates/hisi-hal/src/embassy.rs` | embassy-time `Driver`(now/alarm/queue; `embassy + unstable`)|
-| `crates/hisi-hal/src/timer.rs` (末尾) | `AsyncDelay`(`DelayNs`)+ `on_interrupt` (`unstable`) |
-| `crates/hisi-hal/src/gpio.rs` (末尾) | `Wait`(GPIO 边沿/电平)+ `on_interrupt` (`unstable`) |
-| `crates/hisi-hal/src/uart.rs` (末尾) | `embedded_io_async::{Read,Write}` + `on_interrupt` (`unstable`) |
-| `crates/hisi-hal/src/spi.rs` (末尾) | `embedded_hal_async::spi::SpiBus`(包装阻塞; `async`) |
-| `crates/hisi-hal/src/i2c.rs` (末尾) | `embedded_hal_async::i2c::I2c`(包装阻塞; `async`) |
-| `crates/hisi-hal/src/lsadc.rs` (末尾) | `read_async`(自研;IRQ 72; `unstable`) |
-| `crates/hisi-hal/src/dma.rs` (末尾) | `wait_transfer_done`(自研;IRQ 59; `unstable`) |
-| `crates/hisi-hal/Cargo.toml` | `async` / `embassy` feature + 可选依赖 |
-
-**示例**(均在 ws63-qemu smoke-test 验证):
-`examples/ws63/async_delay`(block_on + `DelayNs`)、`async_bus`(SPI/I2C/LSADC)、
-`embassy_multitask`(embassy 多任务 + embassy-time)、`embassy_async_io`(capstone:embassy + GPIO `Wait` + async UART)。
-
-## 覆盖范围
-
-实现覆盖了 **`embedded-hal-async` / `embedded-io-async` 对 WS63 适用的 trait**:`DelayNs`(timer)、`digital::Wait`(GPIO)、`spi::SpiBus`、`i2c::I2c`、io `Read`/`Write`(UART);外加两个完成中断外设的自研异步(DMA IRQ 59、LSADC IRQ 72)。默认稳定面只暴露 SPI/I2C 的 blocking-backed impl；其余需 `unstable`。RTC/I2S/PWM 等无标准 async trait、语义为周期/流式/一次性 —— 保持阻塞,需要时按同一 `IrqSignal`+`on_interrupt` 模式加(RTC 的 IRQ 29 已建模)。
-
-## 之后怎样上游化
-
-按"上游"对象分四条线,**都不需要改 embassy 本身**:
-
-1. **embassy 支持 —— 两种正规模型,WS63 走 out-of-tree 那条**。
-   embassy 仓库**确实**收录了一批 **in-tree HAL**(`embassy-nrf`/`-stm32`/`-rp`/`-nxp`/`-imxrt`/`-microchip`/`-mspm0`/`-mcxa`…,主要是主流 Cortex-M),它们由 embassy 维护者**承诺维护**、与 embassy 内部同步演进。
-   但 embassy 同时提供一套**给树外 HAL 用的接缝**(`embassy-time-driver` + `embassy-time-queue-utils` + `embassy-executor` 的 platform 抽象)—— 树外 HAL 只实现这些 trait 即可,**无需进 embassy 仓库**。最大的例子是 **esp-hal**(Espressif 自己维护、在 esp-rs/esp-hal,**不在** embassy 仓库),社区还有 ch32-hal/py32-hal 等几十个。
-   **WS63 属于后者(esp-hal 模型)**,原因:① in-tree 要 embassy 维护者**采纳并长期维护**该芯片——对一颗 niche 的 HiSilicon 厂商芯片门槛极高;② embassy 的 in-tree HAL 通常基于标准 Rust 工具链和主线 CI 构建,而 WS63 仍需要 `-Zbuild-std`、QEMU fork 和板级 HIL 证据来闭环;③ hisi-hal 本就是**独立 HAL**(阻塞 embedded-hal + 可选 embassy),天然适合树外。
-   所以**上游化 = 把带 `embassy` feature 的 hisi-hal 发布到 crates.io**(版本结构已就绪),而**不是**塞进 embassy monorepo。想更解耦可拆 `embassy-time-ws63`,但非必需。
-   - 跟版:盯 `embassy-time-driver`(现 0.2)/`embassy-time-queue-utils`(0.3)/`embassy-executor`(0.10)的 semver;破坏性改动(如 `Driver` 从 alarm-handle 改成 `schedule_wake`+queue)集中在 `embassy.rs` 一个文件。
-
-2. **embassy-executor 已是上游**:我们直接用 `platform-riscv32`,**零改动**。无 CAS 支持是它已有能力(thumbv6m 同理)。无需上游任何东西。
-
-3. **工具链 / target**: `riscv32imfc-unknown-none-elf` 已进入 upstream rustc nightly,生态主线已脱离自定义 rustc。剩余两步是:
-   - **短期**:业务仓 pin 已验证 nightly,用 `rust-src` + `-Zbuild-std=core,alloc` 构建。
-   - **长期**:推动 rustup 分发该 target 的预编译 `rust-std`,并用外部 radar 积累 Tier-2 readiness 证据。
-   - 现状对异步**无影响**:异步只依赖 `portable-atomic`+`critical-section`,与 target 是否上游正交。
-
-4. **QEMU 模型**(ws63-qemu):把 `-M ws63` 板卡 + `-cpu ws63` 命名核 + xlinx 自定义 ISA 解码上游到 QEMU —— 这是 [hisi-riscv-qemu](https://github.com/hispark-rs/hisi-riscv-qemu) 自身的上游化工作。与本仓异步无直接关系,但能让 CI 不依赖 fork 的 QEMU。
-
-> 简言之:**异步/embassy 这块本身已经是「按上游约定正确实现」**,真正的上游化工作量在 ① 把 hisi-hal(含 embassy feature)发版到 crates.io、② 让官方 target 获得 rustup std 组件/Tier-2 证据、③ ws63-qemu 进 QEMU 主线 —— 三者互相独立。
+组件子仓维护主机调度、重入、边界、错误返回、feature/单提供者冲突和独立消费者测试。
+HAL 子仓维护不依赖 Embassy 的硬件及 async 测试。父仓维护真实 runtime/HAL/适配层
+组合的 QEMU 场景和实板测试。迁移状态、发布阻塞与本次验收结果统一见
+[迁移清单](https://github.com/hispark-rs/hisi-riscv-rs/blob/feat/ws53-integration/docs/plan/embassy-extraction.md)。历史实板证据不自动适用于新行为。

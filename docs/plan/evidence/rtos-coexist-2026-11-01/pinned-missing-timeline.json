@@ -1,0 +1,33 @@
+{
+  "case": "coexist",
+  "passed": false,
+  "hardware_accessed": false,
+  "timeline_required": true,
+  "timeline_complete": false,
+  "physical_timing_qualified": false,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-coexist-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-coexist-2026-11-01/firmware/default.elf",
+    "-d",
+    "guest_errors"
+  ],
+  "elf_sha256": "311672083f1dfcd42a4930b57eea790d0863c98a580c58715b0624ab4fc1f19d",
+  "qemu_sha256": "3fd55191ce784b3c66ccb31deb0ec7912a9fb7d05e00aa15ecbe2f04286a7e95",
+  "stdout": "\r\nA3 RTOS Embassy coexist diagnostic\r\nnative_ticks=18 embassy_ticks=10 timer_irqs=25 context_switches=36 software_irqs=19\r\n\r\nA3_RTOS_EMBASSY_COEXIST_OK\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=21 frac=0) -> effective baud ~= 476190 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=21 frac=0) -> effective baud ~= 476190 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=21 frac=44) -> effective baud ~= 461095 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 21 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-embassy-time-profile-78111ce366af31c8/bin/python3)"
+  ],
+  "unexpected_diagnostics": []
+}

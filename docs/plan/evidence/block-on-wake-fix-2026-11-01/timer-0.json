@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "software_wake": false,
+  "atomic_idle_qualified": false,
+  "race_injection": false,
+  "chip": "ws63",
+  "lifecycle": true,
+  "channel": 0,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-coexist-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-wake-fix-2026-11-01/timer-target/riscv32imfc-unknown-none-elf/release/async_delay",
+    "-icount",
+    "shift=0,sleep=on",
+    "-d",
+    "guest_errors"
+  ],
+  "returncode": 0,
+  "runner_terminated": true,
+  "elf_sha256": "29db97177fa6541548788dd6ff861fe656752426e4daedc85739b7a33bc11ecf",
+  "qemu_sha256": "3fd55191ce784b3c66ccb31deb0ec7912a9fb7d05e00aa15ecbe2f04286a7e95",
+  "stdout": "\r\nWS63 async delay (embedded-hal-async DelayNs on TIMER0)\r\nTIMER CHANNEL: 0\r\nTIMER LIFECYCLE: PASS cancel=4 zero=1 unpolled=1 spurious=1 rounding=1 long=1\r\nasync tick #1\r\nasync tick #2\r\nasync tick #3\r\nasync tick #4\r\nasync tick #5\r\nASYNC DELAY: PASS\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 978 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-hal-irq-wait-qemu-d807d3dcc5a7e682/bin/python3)"
+  ],
+  "unexpected_diagnostics": []
+}

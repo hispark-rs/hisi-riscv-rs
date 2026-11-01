@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-qemu/scripts/ws63_softint_test.py", line 54, in <module>
+    print(json.dumps(test(parser.parse_args().qemu), indent=2))
+                     ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-qemu/scripts/ws63_softint_test.py", line 22, in test
+    assert read(12) == 1 and levels() == [False]*4
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

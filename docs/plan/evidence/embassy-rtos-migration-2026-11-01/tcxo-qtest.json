@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "machine": "ws63",
+      "passed": true,
+      "frequency": 24000000
+    },
+    {
+      "machine": "bs21",
+      "passed": true,
+      "frequency": 32000000
+    }
+  ],
+  "hardware_accessed": false
+}

@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "race_injection": false,
+  "chip": "ws63",
+  "lifecycle": true,
+  "channel": 2,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/timer-lifecycle-2026-11-01/channel-2/riscv32imfc-unknown-none-elf/release/async_delay",
+    "-icount",
+    "shift=0,sleep=on",
+    "-d",
+    "guest_errors"
+  ],
+  "returncode": 0,
+  "runner_terminated": true,
+  "elf_sha256": "0775b54572a83ffcbb1661587eccb4f5cb8b3e58a0a8504d5e672fec96ed7efe",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "stdout": "\r\nWS63 async delay (embedded-hal-async DelayNs on TIMER0)\r\nTIMER CHANNEL: 2\r\nTIMER LIFECYCLE: PASS cancel=4 zero=1 unpolled=1 spurious=1 rounding=1 long=1\r\nasync tick #1\r\nasync tick #2\r\nasync tick #3\r\nasync tick #4\r\nasync tick #5\r\nASYNC DELAY: PASS\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 2904 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-hal-irq-wait-qemu-d807d3dcc5a7e682/bin/python3)"
+  ],
+  "unexpected_diagnostics": []
+}

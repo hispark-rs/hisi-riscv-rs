@@ -44,7 +44,7 @@ crates/chips/ws63/ws63-pac/ws63-svd (XML)      crates/chips/bs2x/bs2x-pac/bs2x-s
        │                                            │
        └─> ws63-pac   (svd2rust)                   └─> bs2x-pac   (svd2rust)
             │                                            │
-            └─> hisi-hal   (手写安全驱动；chip-bs21 需 unstable、async/embassy feature)
+            └─> hisi-hal   (手写安全驱动；chip-bs21 需 unstable、async feature；Embassy 由 RTOS 接入)
                  │
                  ├─> examples/ws63/*   (WS63 示例)
                  ├─> examples/bs21/*   (BS21 示例，隔离)
@@ -72,7 +72,7 @@ allowlist 约束的例外，不能据此推导用户依赖边界。用户 Wi-Fi 
 - **延时实现**：`blinky` 的 `delay_ms` 是**手写忙等**（按 240 MHz 估算，绕过 HAL timer），属「最小可演示」而非最佳实践；`async_delay` / `embassy_multitask` 演示了正确的 `DelayNs` / `Timer::after` 路径。
 - **自定义内存布局**：`custom_memory` 演示用示例自带的 `memory.x` 覆盖 `hisi-riscv-rt` 的 bundled 链接脚本（`hisi-riscv-rt` 的默认 feature `bundled-memory-x`，关掉后由示例侧提供），从而不与 rt 冲突。
 - **semihosting / CI 信号**：`semihost_selftest` 用 semihosting `exit()` 给 CI 一个免解析 UART 的 pass/fail 退出码。
-- **异步**：`async_*` / `embassy_*` 用 hisi-hal 的 `async` / `embassy` feature + `unstable` + `embassy-executor`（机制见 [async-embassy.md](06-async-embassy.md)）。
+- **异步**：`async_*` / `embassy_*` 用 HAL `async` 及 RTOS `embassy-only` profile + `unstable` + `embassy-executor`（机制见 [async-embassy.md](06-async-embassy.md)）。
 - **RF maintainer fixtures**：`rf_port_demo` 只行使 allocator/securec/log shims；
   `wifi_blob_link` 负责最小 archive link；`wifi_init_smoke` 负责完整 vendor runtime、
   底层诊断和连接性 HIL。它们冻结迁移证据，不定义应用 API。

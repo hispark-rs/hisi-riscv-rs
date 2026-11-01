@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "scope": "UART tracked helper closure and clean remote checkout reproducibility; no HAL/model behavior change",
+  "integration_commit": "29e02117afed58aed3e92f80bf76ee9876be49a9",
+  "checkout_clean_after_tests": true,
+  "overlay_clean_after_tests": true,
+  "remote": "https://github.com/hispark-rs/hisi-riscv-rs.git",
+  "submodule_commits": {
+    "crates/hisi-hal": "3ff019da72750a0dcb0a2d9c5f2e6e76f7f3af15",
+    "crates/hisi-riscv-rt": "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb",
+    "crates/chips/ws53/ws53-pac": "cd5db216ea5fe6692ea88b231780778e3a3a8385",
+    "crates/chips/ws63/ws63-pac": "6324bcf94e26a3eb690085ec1b0ae501bdb167ac",
+    "crates/chips/bs2x/bs2x-pac": "e340664c72b6fad01ad55971ccf3bee2f10a3e1a"
+  },
+  "dependency_fetch": "Cargo and uv caches began empty; pinned toolchain preinstalled; locks not modified; all fixture/build/helper code fetched from remote Git",
+  "source_setup_note": "Initial cone sparse-checkout rejected gitlink paths; rerun with --skip-checks, then verified clean checkout before/after build.",
+  "model": {
+    "overlay_commit": "27def194eb9d0d6989cc3c5fb0f0c1da8150be0b",
+    "upstream_commit": "7c949c53e936aa3a658d84ab53bae5cadaa5d59c",
+    "fresh_build": true,
+    "receipt_sha256": "236c3ebe0fe24e21792b33db705f542f54fe3abbd0bb8c071c82914888b950f1",
+    "upstream_source": "Fresh clone from existing local Git mirror, fixed commit verified; copied wrapping submodules pinned by receipt. No existing build reused. CI can fetch upstream without mirror."
+  },
+  "elf": {
+    "sha256": "fc0a102af1870d0c59b95dca664435dd6c53c58b572500d1b54dba6aebf00080",
+    "receipt_sha256": "9db353e01c169eee3e8ea3bfc3c348d0b3ccfa5c48a3a10831f4c8c5d3159bb1",
+    "schema": "ws53-flash-uart-rx-build-v2",
+    "fresh_build": true,
+    "source_bound": true
+  },
+  "host_tests": {
+    "qmp_qtest_cleanup": 8,
+    "receipt_and_dwarf_negative_cases": 9,
+    "valid_receipt_and_dwarf": true
+  },
+  "scenarios": {
+    "normal": {
+      "rounds": 2,
+      "source": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-clean-normal/report.json",
+      "report_sha256": "37c8eefd6b65f1f735b993a13f91f9b36ffe44457f2dc48d763d36e8425b95a4",
+      "elf_sha256": "fc0a102af1870d0c59b95dca664435dd6c53c58b572500d1b54dba6aebf00080",
+      "qemu_sha256": "9f3ac6e0b2312451b70d160e75728592323203f945fffbdc8fcff91f08986385"
+    },
+    "blocked-route": {
+      "rounds": 3,
+      "source": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-clean-blocked-route/report.json",
+      "report_sha256": "d947a2189535e8c135be88e91af42f1cd5349f1795d6395d712fbbb74830fe27",
+      "elf_sha256": "fc0a102af1870d0c59b95dca664435dd6c53c58b572500d1b54dba6aebf00080",
+      "qemu_sha256": "9f3ac6e0b2312451b70d160e75728592323203f945fffbdc8fcff91f08986385"
+    },
+    "cancel-peer-timeout": {
+      "rounds": 3,
+      "source": "/home/sanchuanhehe/Documents/hispark-rs/validation/urx-clean-cancel-peer-timeout/report.json",
+      "report_sha256": "4d80364ed705103ccba7a313d66b67866fc6510afb6bc4b688134abdc8a5ad97",
+      "elf_sha256": "fc0a102af1870d0c59b95dca664435dd6c53c58b572500d1b54dba6aebf00080",
+      "qemu_sha256": "9f3ac6e0b2312451b70d160e75728592323203f945fffbdc8fcff91f08986385"
+    }
+  },
+  "rounds_total": 8,
+  "hardware_accessed": false,
+  "physical_timing_verified": false,
+  "real_flash_boot_verified": false,
+  "legacy_evidence": "Original UART scripts backed up under raw/original; previous v1 receipts not rewritten or upgraded. v2 requires new build.",
+  "helper_architecture": "Tracked shared source inventory + full-path DWARF binding + QMP/qtest utility; UART runner no longer imports temperature/PWM/RTC legacy scripts.",
+  "ci": "Workflow includes these commands with fixed model source; full remote workflow result not qualified by this local run.",
+  "remaining": [
+    "WS63 RX FIFO/IRQ model missing",
+    "WS63 blocking-backed async TX",
+    "HAL block_on idle race",
+    "Hardware qualification and full vendor cold boot",
+    "Remaining cross-chip driver consolidation"
+  ],
+  "raw": "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-repro-2026-11-01",
+  "logs": {
+    "build.log": {
+      "sha256": "833a7a651e3bcc66c91d9e7c58d396c45cc96cb3ce527b992894070148a19d64",
+      "bytes": 99
+    },
+    "clean-build.log": {
+      "sha256": "6e8834e687faf31dfee4e8e365233b614841033d3fae642570654734c13a66e3",
+      "bytes": 126
+    },
+    "clean-model-blocked-route.log": {
+      "sha256": "b93843a3cff27bc2c0f928dd360bfbe8f4db477de6494db19da4f3fba4da8988",
+      "bytes": 5486
+    },
+    "clean-model-cancel-peer-timeout.log": {
+      "sha256": "4d80364ed705103ccba7a313d66b67866fc6510afb6bc4b688134abdc8a5ad97",
+      "bytes": 5485
+    },
+    "clean-model-normal.log": {
+      "sha256": "37c8eefd6b65f1f735b993a13f91f9b36ffe44457f2dc48d763d36e8425b95a4",
+      "bytes": 4019
+    },
+    "clean-negative.log": {
+      "sha256": "34452dbba7d79e84f2805e34ee1aa8cfba3e478187d37b1c14d77075c4fa2f90",
+      "bytes": 137
+    },
+    "clean-support.log": {
+      "sha256": "f4c1d56315238b7d5fc730e444049359e6442e6829d8b246b2bf036425f9c6a4",
+      "bytes": 133
+    },
+    "fetch.log": {
+      "sha256": "c0f01c8f637e4e9a6718925b7b9569b2aeba6b943119052863f4ae3cb09f072f",
+      "bytes": 1655
+    },
+    "model-build.log": {
+      "sha256": "236c3ebe0fe24e21792b33db705f542f54fe3abbd0bb8c071c82914888b950f1",
+      "bytes": 159687
+    },
+    "model.log": {
+      "sha256": "5d695b7310b4e37e2c099d82e64d20b7b36f534644901fb612090190ae46c3e9",
+      "bytes": 4019
+    },
+    "python-policy.log": {
+      "sha256": "7f32b5f2367192b5094f5194674fa70cf3ef0dca93fdfa2f25f59a58879f1cb9",
+      "bytes": 119
+    },
+    "receipt-negative.log": {
+      "sha256": "b27aa90f580ce3e953dcf9e1cbae6ecc04e1eb8d8473dd5a4c319fbe3e08ca90",
+      "bytes": 137
+    },
+    "unit.log": {
+      "sha256": "d8061f37c53a723eb8fca8a8beb1617bd6caebd57add9102f89d93a4be2330bc",
+      "bytes": 133
+    }
+  },
+  "helper_hashes": {
+    "scripts/ws53_uart_rx_build.py": "7d72a766321e4b90e2960c7a4a7c6ea39f6cd761886e7d1f8cb5935d2c9417b6",
+    "scripts/ws53_ci_elf_build.py": "d28c462a0ecf8bb699779d70fde203f7309bfbd65087281229f0d55bb5d8e4a4",
+    "scripts/elf_panic_sites.py": "c8c5b7c0171246e49d2db082923e28ab8aaa6aea85325cd1e45e4fb8b2b20249",
+    "scripts/qemu_test_support.py": "577b809838047a08242f1dd00ff600e8808a3de01beef0d812d43915a2f09255",
+    "scripts/test-ws53-flash-uart-rx-qemu.py": "1d6bdffed27703a8bc5e957c68459d7bf0c9e9646eb1364c090dfd9fe93f4120",
+    "scripts/check-ws53-flash-elf.py": "6b4a499ce2b9fd461dc819d0b5d7d39d5bfbbdbf0613e59805b1288e23554109",
+    "scripts/test-qemu-test-support.py": "1a28a1789a4547c113aa581bd3b2778ee49f86b007223a968c52ee5a431e25e2",
+    "scripts/test-ws53-uart-receipt.py": "2c5bf7a5522a294b810c1e5576f40456c9cfd434fa01e5cf3fd86addf72bc963"
+  },
+  "remote_ci_observation": {
+    "run": "https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/41288759118",
+    "conclusion": "failure",
+    "phase": "Fetch pinned fixture dependencies, before UART test",
+    "error": "ws53-hash-model Cargo.lock stale; --locked rejected update",
+    "log_sha256": "22ff25a67f55db1f37587d58d6c00a9b15185545751376a45908058c20ac8548",
+    "remediation": "Audit and synchronize workflow fixture locks as separate maintenance change; no relaxed lock policy."
+  }
+}

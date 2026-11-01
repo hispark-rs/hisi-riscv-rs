@@ -1,0 +1,12 @@
+[package]
+name = "ws53_cache_contract"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[features]
+qemu-only = []
+
+[dependencies]
+hisi-riscv-rt = { path = "../../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }

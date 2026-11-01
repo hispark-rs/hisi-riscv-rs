@@ -6,37 +6,42 @@
 能自洽解释的整体**。读完你应该能回答："如果我要加一个外设驱动，它该放在哪一层、长什么样、
 为什么不能直接写寄存器。"
 
-## 一条单向的依赖链
+## 单向依赖与应用组装
 
-整个库栈是一条**严格单向**的依赖链，每一层只依赖它下面的一层：
-
-```console
-ws63-svd (XML 真值)
-   │ svd2rust 生成
-   ▼
-ws63-pac  ── 裸寄存器访问层（~1.5 MB lib.rs，36 个外设/寄存器块）
-   │
-   ▼
-hisi-hal  ── 手写的安全驱动（35 个源文件 + 可选 async/embassy）
-   │
-   ▼
-examples/ws63/*  ── 应用
-
-hisi-riscv-rt  ── 运行时（启动汇编、链接脚本、中断向量）：横切，被示例链接
+```mermaid
+flowchart TD
+  App[应用 / BSP / 平台启动] --> HAL[hisi-hal]
+  App --> RT[hisi-riscv-rt]
+  App --> Adapter[hisi-rtos 门面 / 时间 profile]
+  App --> Exec[Embassy executor 或其他执行器]
+  Adapter --> HAL
+  HAL --> PAC[当前芯片 PAC]
+  RT --> PAC
+  App --> Coex[hisi-ws53-coex 等协议与服务组件]
+  Coex -. 平台装配硬件通知 .-> HAL
+  RDL[hisi-registers / 原有 SVD] -. 生成 .-> PAC
 ```
 
-这条链不是随手画的，它对应着一个明确的**抽象递进**：SVD 是芯片寄存器的机器可读真值，
-PAC 把它机械地翻成 Rust 类型，HAL 在 PAC 之上用人手写出安全、符合 `embedded-hal` 的驱动，
-示例再在 HAL 之上写业务。每往上一层，**`unsafe` 越少、类型越强、离硬件越远**。
+HAL 面向硬件能力和已确认的 IP 行为，保留标准 blocking/async trait、外设 Future、
+Waker 和取消状态机。HAL 不依赖 Embassy 时间驱动、时间队列、执行器或 RTOS。
+`hisi-rtos` 按 profile 组合全局时间提供者、共用截止时间队列及闹钟重编程；纯 Embassy 应用显式
+交出 TIMER/TCXO，负责中断路由、时钟配置和跨核资源交接。runtime 负责启动、链接、
+异常和中断入口，不负责 Embassy 任务或资源策略。
 
-为什么要这么分？因为这三层的**变化频率和变化原因完全不同**。SVD/PAC 跟着芯片走，
-芯片定了就几乎不动；HAL 跟着 Rust 嵌入式生态（`embedded-hal` 版本、esp-hal 的模式演进）走；
-示例跟着用户需求走。把它们拆开，任何一层换代都不会逼着另外两层跟着改。
-这种分层也对应仓库和 release 边界：越底层的组件越应该能被别人单独复用，而不是把我们的 HAL
-或 examples 变成唯一选择。这个取舍见[仓库与发布模型](08-repository-release-model.md)。
-逐层的实现细节见各自的深入文档：[ws63-svd](components/02-ws63-svd.md)、
-[ws63-pac](components/03-ws63-pac.md)、[hisi-hal](components/04-hisi-hal.md)、
-[hisi-riscv-rt](components/05-hisi-riscv-rt.md)、[ws63-examples](components/07-ws63-examples.md)。
+芯片差异按三个层次区分：实例/IRQ/时钟等编译期配置在 `soc`；周期/波特率等参数由
+用户配置；寄存器、副作用、停止/确认等行为由外设 IP 后端负责。只有行为一致的逻辑
+才共用。不会为每个新芯片复制一套调度器，也不会把 IP 行为差异伪装成配置开关。
+
+Embassy 时间驱动与执行器独立。`hisi-rtos/embassy` 使用 RTOS 共享定时器，分辨率为
+1 ms；实验 `embassy-only` profile 不编译线程调度器，保留 TCXO 路径配置上的微秒粒度。
+两者只有一处全局注册、一个选定的队列和定时器所有者。adapter 当前位于 RTOS 子仓；
+未来 `hisi-rtos-embassy` 的拆分按既有 core/port/facade 规划推进。PAC、runtime、HAL、
+RTOS 各自独立维护，父仓负责版本组合、QEMU 与实板验收。
+详见[仓库与发布模型](08-repository-release-model.md)和
+[异步与 Embassy](components/06-async-embassy.md)。
+
+生成工具、`hisiflash`、`hisi-fwpkg`、OpenOCD、QEMU 和逻辑分析仪属于开发/验收工具，
+不进入固件的普通依赖链。QEMU 通过不替代 RAM、Flash 复位及冷启动实板验收。
 
 ### 为什么 PAC 必须只有一份
 
@@ -101,7 +106,7 @@ HAL 用 crate 内部的 sealed trait（`private.rs` 里的 `Sealed` 超 trait）
   `portable-atomic` 的 critical-section polyfill，`hisi-riscv-rt` 提供
   `critical-section-single-hart` 实现。这一条让 async/embassy 能在这颗核上跑——
   详见 [async 与 embassy](04-async-embassy.md)。
-- **多芯片**：同一套 HAL 用 `chip-ws63` / `chip-bs21` feature 二选一区分，
+- **多芯片**：同一套 HAL 用 `chip-ws53` / `chip-ws63` / `chip-bs21` feature 三选一区分，
   条件编译外设模块。WS63 含 Wi-Fi 相关，BS2X 含 GADC/KEYSCAN/QDEC/RTC/TRNG 等 M1 外设；`chip-bs21` 目前需 `unstable`。
 
 ## 这套架构想达到的最终目的

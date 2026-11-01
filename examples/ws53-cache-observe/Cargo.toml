@@ -1,0 +1,31 @@
+[package]
+name = "ws53_cache_observe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[workspace]
+resolver = "3"
+
+[features]
+hil-controlled = []
+model-only = []
+
+[dependencies]
+hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable"] }
+riscv = "0.13"
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+
+[patch.crates-io]
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+bs2x-pac = { path = "../../crates/chips/bs2x/bs2x-pac" }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true
+codegen-units = 1

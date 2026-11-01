@@ -45,7 +45,7 @@ ws63-rs 是面向 HiSilicon **WS63 + BS2X**（BS21/BS20/BS22）RISC-V SoC 族的
 | `crates/chips/ws63/ws63-pac/ws63-svd` | 嵌套 submodule | WS63 SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
 | `crates/chips/bs2x/bs2x-pac` | submodule | BS2X（BS21/BS20/BS22）svd2rust 生成的寄存器访问层 | [ws63-pac.md](03-ws63-pac.md) |
 | `crates/chips/bs2x/bs2x-pac/bs2x-svd` | 嵌套 submodule | BS2X SVD 真值 + 生成工具 | [ws63-svd.md](02-ws63-svd.md) |
-| `crates/hisi-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`/`embassy` | [hisi-hal.md](04-hisi-hal.md) |
+| `crates/hisi-hal` | submodule | 多芯片 HAL（standalone 需显式选 `chip-ws63`；实验性 `chip-bs21` 需 `unstable`）+ 可选 `async`（Embassy 时间适配在 RTOS） | [hisi-hal.md](04-hisi-hal.md) |
 | `crates/hisi-riscv-rt` | submodule | 运行时：启动、中断向量、链接脚本、critical-section | [hisi-riscv-rt.md](05-hisi-riscv-rt.md) |
 | `crates/hisi-alloc` | submodule | caller-owned、有界的 vendor runtime allocation contract | [ws63-RF.md](09-ws63-rf.md) |
 | `crates/hisi-crypto` | submodule | 芯片中立的 fallible crypto capability、secret/key 类型和软件 oracle | [ws63-RF.md](09-ws63-rf.md) |

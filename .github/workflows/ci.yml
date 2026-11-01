@@ -119,7 +119,7 @@ jobs:
       # unify across one invocation, so firmware roles are checked separately.
       - name: Check STA and general workspace
         run: >-
-          cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap
+          cargo check -Zbuild-std=core,alloc --workspace --exclude wifi_softap --exclude embassy_multitask --exclude embassy_async_io
           --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp
       - name: Check SoftAP firmware role
         run: cargo check -Zbuild-std=core,alloc -p wifi_softap
@@ -128,7 +128,7 @@ jobs:
       # embassy-time driver and Cargo unifies dependency features across one build.
       - name: Build default members (release)
         run: cargo build -Zbuild-std=core,alloc --release
-      - name: Build legacy HAL Embassy examples separately
+      - name: Build RTOS facade standalone Embassy examples separately
         run: |
           cargo build -Zbuild-std=core,alloc --release -p embassy_multitask
           cargo build -Zbuild-std=core,alloc --release -p embassy_async_io
@@ -348,7 +348,7 @@ jobs:
         run: cargo test -p ws63-rf-rs --target x86_64-unknown-linux-gnu --lib
       - name: Run clippy for STA and general workspace
         run: >-
-          cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap
+          cargo clippy -Zbuild-std=core,alloc --workspace --exclude wifi_softap --exclude embassy_multitask --exclude embassy_async_io
           --features hisi-rf/chip-ws63,hisi-rf/profile-wifi-wpa2-smoltcp -- -D warnings
       - name: Run clippy for SoftAP firmware role
         run: cargo clippy -Zbuild-std=core,alloc -p wifi_softap -- -D warnings

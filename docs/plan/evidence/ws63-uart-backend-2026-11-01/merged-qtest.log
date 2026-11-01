@@ -1,0 +1,35 @@
+==> building tests/qtest/ws63-test
+[1/1] Generating qemu-version.h with a custom command (wrapped by meson to capture output)
+==> running ws63-test (boot-free register-level regression)
+TAP version 14
+# random seed: R02S798dc7c4386572defcb9e23a5d1a36eb
+1..11
+# Start of riscv32 tests
+# Start of ws63 tests
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 1 /riscv32/ws63/gpio
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 2 /riscv32/ws63/uart
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 3 /riscv32/ws63/timer_intc
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 4 /riscv32/ws63/timer_current_latch
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 5 /riscv32/ws63/dma_mem2mem
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 6 /riscv32/ws63/spi_fifo_window
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 7 /riscv32/ws63/spi_dma_bytes
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine bs20 -accel qtest
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine bs21 -accel qtest
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine bs21e -accel qtest
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine bs22 -accel qtest
+ok 8 /riscv32/ws63/bs2x_spi_layout
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 9 /riscv32/ws63/dma_en_chns_start
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -accel qtest
+ok 10 /riscv32/ws63/sdma_unprovisioned
+# starting QEMU: exec /home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/qemu/build/qemu-system-riscv32 -qtest unix:/tmp/qtest-606618.sock -qtest-log /dev/null -chardev socket,path=/tmp/qtest-606618.qmp,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine ws63 -nic socket,fd=4 -accel qtest
+ok 11 /riscv32/ws63/netmac
+# End of ws63 tests
+# End of riscv32 tests

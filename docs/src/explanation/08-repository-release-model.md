@@ -18,6 +18,7 @@
 - PAC 的契约是寄存器类型与中断枚举；
 - runtime 的契约是启动、链接脚本、入口、中断默认符号与临界区实现；
 - HAL 的契约是 safe driver API、`embedded-hal` trait、stable/unstable 门控；
+- RTOS 门面的时间 profile 契约是共享计时、队列和显式资源交接，硬件 port 单向依赖 HAL；
 - examples 的契约只是“一个可运行的组合演示”，不是平台的唯一入口。
 
 每一层都可以被保留、替换或绕过。
@@ -82,7 +83,8 @@ PAC 还有一个额外约束：全程序不能链接两份 PAC。PAC 内部的 s
 所以顺序必须沿依赖图从底往上，而不是假设整个生态只有一条链：
 
 ```text
-SVD → PAC → hisi-hal / hisi-riscv-rt
+寄存器来源 → PAC → hisi-hal / hisi-riscv-rt
+hisi-hal → hisi-rtos 时间 profile → examples/template
 hisi-crypto → hisi-keystore / hisi-crypto-ws63
 hisi-alloc / hisi-storage / hisi-nvs / hisi-rom-sys
     → chip backend → hisi-rf facade → examples/template

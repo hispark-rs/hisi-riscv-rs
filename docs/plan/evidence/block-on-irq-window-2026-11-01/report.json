@@ -1,0 +1,360 @@
+{
+  "hardware_accessed": false,
+  "production_behavior_modified": false,
+  "correctness_passed": false,
+  "hal_commit": "f39aef7bfd545486fc7cf466e9e8060d9688a846",
+  "runtime_commit": "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb",
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-irq-window-2026-11-01",
+  "reports": {
+    "final-before-wfi": {
+      "hardware_accessed": false,
+      "race_reproduced": true,
+      "correctness_passed": false,
+      "timing": "before-wfi",
+      "symbols": {
+        "irq_race_wait": 2299058,
+        "irq_race_done": 2299044,
+        "SOFT_INT0": 2298928,
+        "IRQ_RACE_STATE": 10534924,
+        "notify": 10534941,
+        "wfi": 2299158,
+        "code_sha256": "0b21fcc901d590f4562e73f24d05854fcf620373829c8b2c4693b4e97c7a149c",
+        "code_size": 156
+      },
+      "injected_interrupts": 2,
+      "elf_sha256": "717c7a7ffc48593385fe2b49b45545b27eadfb1a20750b18dd35e930e1b13b74",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "command": [
+        "../validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+        "-M",
+        "ws63",
+        "-S",
+        "-display",
+        "none",
+        "-monitor",
+        "none",
+        "-serial",
+        "stdio",
+        "-kernel",
+        "../validation/block-on-irq-window-2026-11-01/target/riscv32imfc-unknown-none-elf/release/ws63_block_on_model",
+        "-d",
+        "guest_errors",
+        "-qmp",
+        "unix:/tmp/irq-window-f2qg0iz0/qmp.sock,server=on,wait=off",
+        "-qtest",
+        "unix:/tmp/irq-window-f2qg0iz0/qtest.sock,server=on,wait=off",
+        "-qtest-log",
+        "/dev/null",
+        "-gdb",
+        "unix:/tmp/irq-window-f2qg0iz0/gdb,server=on,wait=off"
+      ],
+      "before": {
+        "state": [
+          1,
+          0,
+          0,
+          2147508232
+        ],
+        "pc": 2299158,
+        "notified": 0
+      },
+      "after_irq_before_wfi": {
+        "state": [
+          1,
+          1,
+          0,
+          2147508232
+        ],
+        "pc": 2299158,
+        "notified": 1
+      },
+      "observed_wait": {
+        "state": [
+          1,
+          1,
+          0,
+          2147508232
+        ],
+        "notified": 1,
+        "cpu": {
+          "pc": 2299162,
+          "text": "\r\nCPU#0\r\n pc       0023151a\r\n mhartid  00000000\r\n mstatus  80007888\r\n mstatush 00000000\r\n mip      00000000\r\n mie      00000888\r\n mideleg  00000000\r\n medeleg  00000000\r\n mtvec    00230880\r\n mepc     00231516\r\n mcause   80000024\r\n mtval    00000000\r\n mscratch 00a8c9b0\r\n x0/zero  00000000 x1/ra    00231514 x2/sp    00a8cac0 x3/gp    00a0c800\r\n x4/tp    00000000 x5/t0    000015b3 x6/t1    0023176a x7/t2    efbeadde\r\n x8/s0    00a0c000 x9/s1    00000000 x10/a0   00000008 x11/a1   00000000\r\n x12/a2   002318dc x13/a3   a04a6000 x14/a4   00000001 x15/a5   00000000\r\n x16/a6   00000000 x17/a7   00000000 x18/s2   00232298 x19/s3   00a0c000\r\n x20/s4   00000000 x21/s5   00000000 x22/s6   00000000 x23/s7   00000000\r\n x24/s8   00000000 x25/s9   00000000 x26/s10  00000000 x27/s11  00000000\r\n x28/t3   00000000 x29/t4   00000000 x30/t5   001803e0 x31/t6   00000000\r\n fcsr     00000000\r\n f0/ft0   ffffffff00000000 f1/ft1   ffffffff00000000 f2/ft2   ffffffff00000000 f3/ft3   ffffffff00000000\r\n f4/ft4   ffffffff00000000 f5/ft5   ffffffff00000000 f6/ft6   ffffffff00000000 f7/ft7   ffffffff00000000\r\n f8/fs0   ffffffff00000000 f9/fs1   ffffffff00000000 f10/fa0  ffffffff00000000 f11/fa1  ffffffff00000000\r\n f12/fa2  ffffffff00000000 f13/fa3  ffffffff00000000 f14/fa4  ffffffff00000000 f15/fa5  ffffffff00000000\r\n f16/fa6  ffffffff00000000 f17/fa7  ffffffff00000000 f18/fs2  ffffffff00000000 f19/fs3  ffffffff00000000\r\n f20/fs4  ffffffff00000000 f21/fs5  ffffffff00000000 f22/fs6  ffffffff00000000 f23/fs7  ffffffff00000000\r\n f24/fs8  ffffffff00000000 f25/fs9  ffffffff00000000 f26/fs10 ffffffff00000000 f27/fs11 ffffffff00000000\r\n f28/ft8  ffffffff00000000 f29/ft9  ffffffff00000000 f30/ft10 ffffffff00000000 f31/ft11 ffffffff00000000\r\n"
+        },
+        "seconds": 0.1
+      },
+      "completion": {
+        "state": [
+          2,
+          2,
+          0,
+          2147508232
+        ],
+        "pc": 2299044,
+        "notified": 1,
+        "block_on_returned": true,
+        "done_callback_executed": false
+      },
+      "code_unchanged": true,
+      "unexpected_diagnostics": [],
+      "diagnostic_completed": true
+    },
+    "final-after-wfi": {
+      "hardware_accessed": false,
+      "race_reproduced": false,
+      "correctness_passed": true,
+      "timing": "after-wfi",
+      "symbols": {
+        "irq_race_wait": 2299058,
+        "irq_race_done": 2299044,
+        "SOFT_INT0": 2298928,
+        "IRQ_RACE_STATE": 10534924,
+        "notify": 10534941,
+        "wfi": 2299158,
+        "code_sha256": "0b21fcc901d590f4562e73f24d05854fcf620373829c8b2c4693b4e97c7a149c",
+        "code_size": 156
+      },
+      "injected_interrupts": 1,
+      "elf_sha256": "717c7a7ffc48593385fe2b49b45545b27eadfb1a20750b18dd35e930e1b13b74",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "command": [
+        "../validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+        "-M",
+        "ws63",
+        "-S",
+        "-display",
+        "none",
+        "-monitor",
+        "none",
+        "-serial",
+        "stdio",
+        "-kernel",
+        "../validation/block-on-irq-window-2026-11-01/target/riscv32imfc-unknown-none-elf/release/ws63_block_on_model",
+        "-d",
+        "guest_errors",
+        "-qmp",
+        "unix:/tmp/irq-window-vt7pboeo/qmp.sock,server=on,wait=off",
+        "-qtest",
+        "unix:/tmp/irq-window-vt7pboeo/qtest.sock,server=on,wait=off",
+        "-qtest-log",
+        "/dev/null",
+        "-gdb",
+        "unix:/tmp/irq-window-vt7pboeo/gdb,server=on,wait=off"
+      ],
+      "before": {
+        "state": [
+          1,
+          0,
+          0,
+          2147508232
+        ],
+        "pc": 2299158,
+        "notified": 0
+      },
+      "observed_wait": {
+        "state": [
+          1,
+          0,
+          0,
+          2147508232
+        ],
+        "notified": 0,
+        "cpu": {
+          "pc": 2299162,
+          "text": "\r\nCPU#0\r\n pc       0023151a\r\n mhartid  00000000\r\n mstatus  80006008\r\n mstatush 00000000\r\n mip      00000000\r\n mie      00000888\r\n mideleg  00000000\r\n medeleg  00000000\r\n mtvec    00230880\r\n mepc     00000000\r\n mcause   00000000\r\n mtval    00000000\r\n mscratch 00000000\r\n x0/zero  00000000 x1/ra    00231514 x2/sp    00a8cac0 x3/gp    00a0c800\r\n x4/tp    00000000 x5/t0    000015b3 x6/t1    0023176a x7/t2    efbeadde\r\n x8/s0    00a0c000 x9/s1    00000000 x10/a0   00000008 x11/a1   00000000\r\n x12/a2   002318dc x13/a3   a04a6000 x14/a4   00000001 x15/a5   00000000\r\n x16/a6   00000000 x17/a7   00000000 x18/s2   00232298 x19/s3   00a0c000\r\n x20/s4   00000000 x21/s5   00000000 x22/s6   00000000 x23/s7   00000000\r\n x24/s8   00000000 x25/s9   00000000 x26/s10  00000000 x27/s11  00000000\r\n x28/t3   00000000 x29/t4   00000000 x30/t5   001803e0 x31/t6   00000000\r\n fcsr     00000000\r\n f0/ft0   0000000000000000 f1/ft1   0000000000000000 f2/ft2   0000000000000000 f3/ft3   0000000000000000\r\n f4/ft4   0000000000000000 f5/ft5   0000000000000000 f6/ft6   0000000000000000 f7/ft7   0000000000000000\r\n f8/fs0   0000000000000000 f9/fs1   0000000000000000 f10/fa0  0000000000000000 f11/fa1  0000000000000000\r\n f12/fa2  0000000000000000 f13/fa3  0000000000000000 f14/fa4  0000000000000000 f15/fa5  0000000000000000\r\n f16/fa6  0000000000000000 f17/fa7  0000000000000000 f18/fs2  0000000000000000 f19/fs3  0000000000000000\r\n f20/fs4  0000000000000000 f21/fs5  0000000000000000 f22/fs6  0000000000000000 f23/fs7  0000000000000000\r\n f24/fs8  0000000000000000 f25/fs9  0000000000000000 f26/fs10 0000000000000000 f27/fs11 0000000000000000\r\n f28/ft8  0000000000000000 f29/ft9  0000000000000000 f30/ft10 0000000000000000 f31/ft11 0000000000000000\r\n"
+        },
+        "seconds": 0.1
+      },
+      "completion": {
+        "state": [
+          2,
+          1,
+          0,
+          2147508232
+        ],
+        "pc": 2299044,
+        "notified": 1,
+        "block_on_returned": true,
+        "done_callback_executed": false
+      },
+      "code_unchanged": true,
+      "unexpected_diagnostics": [],
+      "diagnostic_completed": true
+    },
+    "default-exit": {
+      "hardware_accessed": false,
+      "race_reproduced": true,
+      "correctness_passed": false,
+      "timing": "before-wfi",
+      "symbols": {
+        "irq_race_wait": 2299058,
+        "irq_race_done": 2299044,
+        "SOFT_INT0": 2298928,
+        "IRQ_RACE_STATE": 10534924,
+        "notify": 10534941,
+        "wfi": 2299158,
+        "code_sha256": "0b21fcc901d590f4562e73f24d05854fcf620373829c8b2c4693b4e97c7a149c",
+        "code_size": 156
+      },
+      "injected_interrupts": 2,
+      "elf_sha256": "717c7a7ffc48593385fe2b49b45545b27eadfb1a20750b18dd35e930e1b13b74",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "command": [
+        "../validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+        "-M",
+        "ws63",
+        "-S",
+        "-display",
+        "none",
+        "-monitor",
+        "none",
+        "-serial",
+        "stdio",
+        "-kernel",
+        "../validation/block-on-irq-window-2026-11-01/target/riscv32imfc-unknown-none-elf/release/ws63_block_on_model",
+        "-d",
+        "guest_errors",
+        "-qmp",
+        "unix:/tmp/irq-window-qdlgwk6n/qmp.sock,server=on,wait=off",
+        "-qtest",
+        "unix:/tmp/irq-window-qdlgwk6n/qtest.sock,server=on,wait=off",
+        "-qtest-log",
+        "/dev/null",
+        "-gdb",
+        "unix:/tmp/irq-window-qdlgwk6n/gdb,server=on,wait=off"
+      ],
+      "before": {
+        "state": [
+          1,
+          0,
+          0,
+          2147508232
+        ],
+        "pc": 2299158,
+        "notified": 0
+      },
+      "after_irq_before_wfi": {
+        "state": [
+          1,
+          1,
+          0,
+          2147508232
+        ],
+        "pc": 2299158,
+        "notified": 1
+      },
+      "observed_wait": {
+        "state": [
+          1,
+          1,
+          0,
+          2147508232
+        ],
+        "notified": 1,
+        "cpu": {
+          "pc": 2299162,
+          "text": "\r\nCPU#0\r\n pc       0023151a\r\n mhartid  00000000\r\n mstatus  80007888\r\n mstatush 00000000\r\n mip      00000000\r\n mie      00000888\r\n mideleg  00000000\r\n medeleg  00000000\r\n mtvec    00230880\r\n mepc     00231516\r\n mcause   80000024\r\n mtval    00000000\r\n mscratch 00a8c9b0\r\n x0/zero  00000000 x1/ra    00231514 x2/sp    00a8cac0 x3/gp    00a0c800\r\n x4/tp    00000000 x5/t0    000015b3 x6/t1    0023176a x7/t2    efbeadde\r\n x8/s0    00a0c000 x9/s1    00000000 x10/a0   00000008 x11/a1   00000000\r\n x12/a2   002318dc x13/a3   a04a6000 x14/a4   00000001 x15/a5   00000000\r\n x16/a6   00000000 x17/a7   00000000 x18/s2   00232298 x19/s3   00a0c000\r\n x20/s4   00000000 x21/s5   00000000 x22/s6   00000000 x23/s7   00000000\r\n x24/s8   00000000 x25/s9   00000000 x26/s10  00000000 x27/s11  00000000\r\n x28/t3   00000000 x29/t4   00000000 x30/t5   001803e0 x31/t6   00000000\r\n fcsr     00000000\r\n f0/ft0   ffffffff00000000 f1/ft1   ffffffff00000000 f2/ft2   ffffffff00000000 f3/ft3   ffffffff00000000\r\n f4/ft4   ffffffff00000000 f5/ft5   ffffffff00000000 f6/ft6   ffffffff00000000 f7/ft7   ffffffff00000000\r\n f8/fs0   ffffffff00000000 f9/fs1   ffffffff00000000 f10/fa0  ffffffff00000000 f11/fa1  ffffffff00000000\r\n f12/fa2  ffffffff00000000 f13/fa3  ffffffff00000000 f14/fa4  ffffffff00000000 f15/fa5  ffffffff00000000\r\n f16/fa6  ffffffff00000000 f17/fa7  ffffffff00000000 f18/fs2  ffffffff00000000 f19/fs3  ffffffff00000000\r\n f20/fs4  ffffffff00000000 f21/fs5  ffffffff00000000 f22/fs6  ffffffff00000000 f23/fs7  ffffffff00000000\r\n f24/fs8  ffffffff00000000 f25/fs9  ffffffff00000000 f26/fs10 ffffffff00000000 f27/fs11 ffffffff00000000\r\n f28/ft8  ffffffff00000000 f29/ft9  ffffffff00000000 f30/ft10 ffffffff00000000 f31/ft11 ffffffff00000000\r\n"
+        },
+        "seconds": 0.1
+      },
+      "completion": {
+        "state": [
+          2,
+          2,
+          0,
+          2147508232
+        ],
+        "pc": 2299044,
+        "notified": 1,
+        "block_on_returned": true,
+        "done_callback_executed": false
+      },
+      "code_unchanged": true,
+      "unexpected_diagnostics": [],
+      "diagnostic_completed": true
+    }
+  },
+  "wrong_profile_rejected_before_qemu": true,
+  "default_software_regression": {
+    "passed": true,
+    "hardware_accessed": false,
+    "physical_timing_qualified": false,
+    "software_wake": true,
+    "atomic_idle_qualified": false,
+    "race_injection": false,
+    "chip": "ws63",
+    "lifecycle": false,
+    "channel": 0,
+    "command": [
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+      "-M",
+      "ws63",
+      "-display",
+      "none",
+      "-monitor",
+      "none",
+      "-serial",
+      "stdio",
+      "-kernel",
+      "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-irq-window-2026-11-01/default-target/riscv32imfc-unknown-none-elf/release/ws63_block_on_model",
+      "-icount",
+      "shift=0,sleep=on",
+      "-d",
+      "guest_errors"
+    ],
+    "returncode": 0,
+    "runner_terminated": true,
+    "elf_sha256": "c544a43f6173953f377c9250033fd5441a129f6121bf263a17f900e8df221665",
+    "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+    "stdout": "BLOCK_ON SOFTWARE WAKE: BEGIN\r\nBLOCK_ON SOFTWARE WAKE: enabled=PASS\r\nBLOCK_ON SOFTWARE WAKE: disabled=PASS\r\nBLOCK_ON SOFTWARE WAKE: PASS\r\n",
+    "stderr": [
+      "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+      "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+      "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+      "qemu-system-riscv32: terminating on signal 15 from pid 1149747 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-hal-irq-wait-qemu-d807d3dcc5a7e682/bin/python3)"
+    ],
+    "unexpected_diagnostics": []
+  },
+  "source_sha256": {
+    "examples/ws63-block-on-model/Cargo.toml": "e3d54cec6c6486fe0e02e66053c77ed5081673326af565c98e185b243672e33b",
+    "examples/ws63-block-on-model/Cargo.lock": "498d7f1a52203131345d5d8fed4c8330b73610e7e946c6beb2118de5dae9068a",
+    "examples/ws63-block-on-model/src/main.rs": "053c2a654603ad67203a38c60ea5222d74c4d3d1cd25b7f44174dc5b23d607ae",
+    "examples/ws63-block-on-model/src/irq_race.rs": "f120da55202d417186cab8f31fd228c7475ceb8412659eb9629ac5ec3833887c",
+    "scripts/test-block-on-irq-window.py": "0d94574333a87474728dce7bb2873ff410b53363b92c2f942c643bb769a69a91",
+    "scripts/ws53_qemu_rsp.py": "932feedbde81c18e250916b4a7a6ffcf372e391c97e874e386f9a45d3fada1a8",
+    "scripts/qemu_test_support.py": "577b809838047a08242f1dd00ff600e8808a3de01beef0d812d43915a2f09255"
+  },
+  "raw_sha256": {
+    "build.log": "fe79c071354fe064f62a65bae68459c8fe81e5ddb7865cb7181e21c6601ceb75",
+    "before.log": "9fbb3d39481722d9f6b1ffa20598ba39c7ab2bd940376cf0db1967639b3600bb",
+    "control.log": "b77f2038269c987b176be2004dcdb9414b2155c93aaf74c9a602793168572e79",
+    "clippy.log": "c0c2b1b1be5eb24c787ae581e11a14eb674176600119da7c2745b224ccc79540",
+    "default-build.log": "173527bfd31ce2ba1322ef4973c81f475b7dd252ceb4f64a2adec67e3f4444aa",
+    "default-smoke.log": "ca746fa898df7c5673b06326433fa3a166bc37b2d2987fed0e341cde893609f8",
+    "wrong-profile.log": "345b8f5e541a0631561f5df136b023772a588772f8d9b345c6b22dd5aec69e57",
+    "default-exit.log": "53617c458466978720218f96c5d75a80ed9011bf4b866b0300695e97824ebb6c",
+    "python-policy.log": "f571cf4e9fea9bb2863cd604d4b541cf54d877e868e2c3eb951481d4d49f1645",
+    "final-before-wfi.log": "b900f701ecc67e906a6981ff513ea9a7be2d6d4a7590f387494caaf56423411a",
+    "final-after-wfi.log": "286e236315a631f46c73f1700d3d26cd25582eed5f61719cef84e4548af6ddd9",
+    "host-ci.json": "3bb5a587cf943bc1ed0627281fd552b2f6f3400fdc70c36e2b083c06332c1a64",
+    "plans-ci.json": "3bc3507b9ea33c5190880101bbe408989ed71c6f385e32b1fb0250e7bf6478c6",
+    "default-smoke.json": "19a65e5733ea3ed02d75567f7f2b790fb9b773a3d868e04f56ec9e04458b6369",
+    "final-before-wfi/report.json": "b900f701ecc67e906a6981ff513ea9a7be2d6d4a7590f387494caaf56423411a",
+    "final-after-wfi/report.json": "286e236315a631f46c73f1700d3d26cd25582eed5f61719cef84e4548af6ddd9",
+    "default-exit/report.json": "53617c458466978720218f96c5d75a80ed9011bf4b866b0300695e97824ebb6c",
+    "final-default-exit/report.json": "2652db9e4c30ad221731c8493f34e5ee71d81696ea1ddaaf489114c986f1889a",
+    "final-default-exit.log": "2652db9e4c30ad221731c8493f34e5ee71d81696ea1ddaaf489114c986f1889a"
+  },
+  "sdk": {
+    "path": "/home/sanchuanhehe/Documents/hispark/fbb_ws53",
+    "commit": "163d9150ab94a02d09a05f623351f9facee3025e",
+    "paths_sha256": {
+      "src/middleware/utils/pm/pm_sleep/pm_sleep.c": "88299c6bb8a0e5733f9ee9dfdf638b3f6b394d57fba0365edfd57ac68846a46a",
+      "src/middleware/chips/ws53/pm/pm_sleep/pm_sleep_porting.c": "8b6c894644790f345d94a99fbfc9d6f9a23191a449a9b9c235741187211d459c",
+      "src/kernel/osal/src/liteos/osal_interrupt.c": "f2122a645ee08a04d2e7113be14a583d3c3102de75d5e0dc7226e46e869c060d"
+    },
+    "status": "",
+    "finding": "uapi_pm_enter_sleep locks IRQ before entering WFI and restores saved state afterwards; osal calls LOS_IntLock/Restore; port also has power-state coordination",
+    "limitation": "WS53 SDK source evidence only; not validation of WS63 or Rust idle ABI; no permission to assume deep-sleep behavior"
+  },
+  "default_exit_policy": "Final script reproduced the known race and exited 1 without --expect-race; earlier raw runs preserved."
+}

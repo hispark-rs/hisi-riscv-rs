@@ -1,0 +1,33 @@
+[package]
+name = "ws53_exec_compare"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace]
+resolver = "3"
+
+[features]
+default = ["flash-autonomous"]
+flash-autonomous = []
+model-only = []
+
+[dependencies]
+hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "rt", "unstable"] }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt", features = ["chip-ws53", "unstable", "ws53-flash-start"] }
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+riscv = "0.13"
+embedded-hal = "1"
+
+[patch.crates-io]
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+bs2x-pac = { path = "../../crates/chips/bs2x/bs2x-pac" }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+debug = true
+codegen-units = 1

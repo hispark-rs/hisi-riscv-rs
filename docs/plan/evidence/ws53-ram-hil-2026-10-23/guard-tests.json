@@ -1,0 +1,53 @@
+{
+  "hardware_accessed": false,
+  "cases": [
+    {
+      "case": "missing-path",
+      "exit_code": 125,
+      "commands": []
+    },
+    {
+      "case": "missing-library",
+      "exit_code": 125,
+      "commands": []
+    },
+    {
+      "case": "missing-command",
+      "exit_code": 125,
+      "commands": []
+    },
+    {
+      "case": "success",
+      "exit_code": 0,
+      "commands": [
+        "DisableAutoUpdateFW",
+        "DisableFlashDL",
+        "DisableFlashBPs"
+      ]
+    },
+    {
+      "case": "rejected-0",
+      "exit_code": 125,
+      "commands": [
+        "DisableAutoUpdateFW"
+      ]
+    },
+    {
+      "case": "rejected-1",
+      "exit_code": 125,
+      "commands": [
+        "DisableAutoUpdateFW",
+        "DisableFlashDL"
+      ]
+    },
+    {
+      "case": "rejected-2",
+      "exit_code": 125,
+      "commands": [
+        "DisableAutoUpdateFW",
+        "DisableFlashDL",
+        "DisableFlashBPs"
+      ]
+    }
+  ]
+}

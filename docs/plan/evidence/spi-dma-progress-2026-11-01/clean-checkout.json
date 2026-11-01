@@ -1,0 +1,22 @@
+{
+  "parent_commit": "9c6ea9c6b7f7f3dd2e089ff00eb8b50e1150ebbf",
+  "origin": "https://github.com/hispark-rs/hisi-riscv-rs.git",
+  "clean_after_build_and_replay": true,
+  "remote_submodules": 8,
+  "locked_fetch_then_offline_build": "passed",
+  "cargo_cache": "reused explicit consumer cache from previous batch, missing registry packages fetched normally; not an empty-cache claim",
+  "complete_before_wait_cases": 16,
+  "all_first_poll_ready_without_timer": true,
+  "nonasync_rejected_before_model_launch": true,
+  "model_rebuilt_this_batch": false,
+  "model_reference": "../ws63-uart-backend-2026-11-01/report.json",
+  "hardware_accessed": false,
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/spi-dma-progress-2026-11-01",
+  "sha256": {
+    "clean-fetch.log": "472fff879cd848a70fad69dabb16d5c0973b668da03dcc6eb5f370613f0e1d7d",
+    "clean-build.log": "52098a9a2a690d1c3f7a77876c4c375ac31a25504ab146b6216cc5ee1d20cd50",
+    "clean-early.json": "4307f2d38188d1b77a44ab8666fa36b85fe7fca7d61dfabeef1e66886e8e9be6",
+    "nonasync-rejected.log": "83a15cf2b2e23a4e127c41695f8581eee3711482ed7f5675cf0783f9486993a0",
+    "clean-target/riscv32imfc-unknown-none-elf/release/ws53_spi_dma": "da7864e55482346bbaf2e333ab495a65cbd6f91753af4edaa14394e1c573590c"
+  }
+}

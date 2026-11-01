@@ -1,0 +1,148 @@
+{
+  "hal_commits": [
+    "7e4c86c500690287815579d54d36a47fad5b2f84",
+    "6a6ff72ced4d91af0fb5297c18d004413988d3b0"
+  ],
+  "hal_baseline": "da254f86b8b7b014b39e4923b054d01c71278046",
+  "example_commits": [
+    "2783c93",
+    "20bac94ea0009509c5a0560a55e87e2e39a0dcde"
+  ],
+  "prs": [
+    "https://github.com/hispark-rs/hisi-hal/pull/19",
+    "https://github.com/hispark-rs/ws63-examples/pull/8"
+  ],
+  "scope": "Shared one-shot state machine; distinct PAC/IRQ and ownership adapters. No Embassy queue or extra hardware owner.",
+  "tests": {
+    "independent_host": {
+      "ws63": 351,
+      "ws53": 432,
+      "bs21": 220
+    },
+    "shared_lifecycle_tests_per_active_backend": 8,
+    "target_clippy": "all three chips passed",
+    "feature_gates": [
+      "ws63 rt",
+      "ws63 rt async without unstable",
+      "ws53 rt unstable without async",
+      "bs21 rt unstable without async"
+    ],
+    "format": "passed after module ordering correction",
+    "register_access": "passed",
+    "no_embassy_dependency": "six chip/mode graphs passed",
+    "external_remote_consumer": "host and RISC-V passed; pinned Git HAL/runtime; not registry release qualification",
+    "ws63_docs": "passed with -D warnings",
+    "qemu_ws63": "All three channel/IRQ bindings: cancellation, zero, unpolled, empty IRQ, rounding, first long chunk; five subsequent real traps each.",
+    "qemu_ws53": "Both channels: 16 expiries, four cancellations, six binding guards; inherited clock profile.",
+    "baseline": "Same final fixture source with old HAL fails: cancellation leaves timer or IRQ active. Isolated dependency graph/build profile recorded in raw baseline project, not a byte-identical parent build.",
+    "dma": {
+      "spi": {
+        "scenarios": 50,
+        "hardware_accessed": false,
+        "case_distribution": {
+          "N": 16,
+          "T": 4,
+          "R": 4,
+          "W": 4,
+          "S": 4,
+          "D": 4,
+          "F": 4,
+          "I": 4,
+          "C": 2,
+          "B": 2,
+          "L": 2
+        },
+        "raw_report": "/home/sanchuanhehe/Documents/hispark-rs/validation/timer-lifecycle-2026-11-01/spi-dma-qemu.json",
+        "sha256": "8dd16e01c271421830374e61ec0f43ca0809460f1e261ece1e043cf97f2e96d4",
+        "scope": "Existing async fixture with TIMER IRQ wait; includes pre-start refusal/cancellation cases, not every case awaits a timer."
+      },
+      "i2c": {
+        "scenarios": 166,
+        "hardware_accessed": false,
+        "case_distribution": {
+          "N": 108,
+          "1": 2,
+          "3": 2,
+          "4": 2,
+          "T": 6,
+          "R": 6,
+          "W": 6,
+          "S": 6,
+          "D": 6,
+          "F": 6,
+          "I": 6,
+          "A": 4,
+          "C": 2,
+          "B": 2,
+          "L": 2
+        },
+        "raw_report": "/home/sanchuanhehe/Documents/hispark-rs/validation/timer-lifecycle-2026-11-01/i2c-dma-qemu.json",
+        "sha256": "4d90922e06b61122ae7c65be86dc0e062d242360247a806271b9ee1babe579b4",
+        "scope": "Existing async fixture with TIMER IRQ wait; includes pre-start refusal/cancellation cases, not every case awaits a timer."
+      }
+    }
+  },
+  "qemu_overlay_commit": "e60f95c3d9f53e65b8df193a64e5faae616fa85b",
+  "hardware": {
+    "accessed": false,
+    "ram": "not retested",
+    "flash_reset": "not retested",
+    "cold_boot": "not tested"
+  },
+  "limitations": [
+    "Hardware stop/ack timing and physical frequency are unqualified",
+    "WS53 cross-core handoff remains explicit platform responsibility",
+    "BS21 async capability unchanged",
+    "Minimal block_on poll-to-WFI and legacy DMA safety remain open",
+    "HAL/runtime release blockers unchanged",
+    "Remote CI for this increment not yet qualified"
+  ],
+  "sdk_references": [
+    {
+      "chip": "ws63",
+      "commit": "eca0018d86a027e6e31f59b354ef86f686d5cb38",
+      "source": "/home/sanchuanhehe/Documents/hispark/fbb_ws63/src/drivers/drivers/hal/timer/v150/hal_timer_v150.c",
+      "sha256": "743f2d904206dd592d8f2092aef7e6b7794363d6e427cb9010043332b741e073"
+    },
+    {
+      "chip": "ws53",
+      "commit": "163d9150ab94a02d09a05f623351f9facee3025e",
+      "source": "/home/sanchuanhehe/Documents/hispark/fbb_ws53/src/drivers/drivers/hal/timer/v150/hal_timer_v150.c",
+      "sha256": "564d3d880d8d6d930388f1327aa9bbc5419b9ee9909ad4ad912e7af8305ee986"
+    }
+  ],
+  "raw_material_location": "/home/sanchuanhehe/Documents/hispark-rs/validation/timer-lifecycle-2026-11-01",
+  "raw_log_sha256": {
+    "boundary.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "channel-0-build.log": "eeb92da7e7f436ce8a21df13247812fc541b91cb041374575356e102aff55d44",
+    "channel-1-build.log": "818ff9e844f6ccdf19c40ad0b7dc0cd6bc3ad8bd31867d248574ad672ede23eb",
+    "channel-2-build.log": "076c6566d8724f1038a0ebe631496ecb93c8f3dabf97f8bcbe13287d9165c6b1",
+    "clippy-bs21.log": "8ca25666cadd8952cb4339c8adaeb40832ed4ebe87bec6b508c42108055211f5",
+    "clippy-ws53.log": "78200e02b134cc5008f39880cd7b0ece0de663448e94c8958d1eb351c96a8fe4",
+    "clippy-ws63.log": "9b9a4f990bfe6457a595cd4d4bebc7497e722e1f44d04cfebcfe0758c55c2b9f",
+    "consumer-host.log": "e5d9975cb102bc89b2ee0bbf108df96664f3d7847cfd74a1d0b69231175dfa50",
+    "consumer-target.log": "95341c31464e31db424071ff1ff3b2596e449077fbc0f5cfe4c0689a23cd6887",
+    "doc-ws63.log": "def62ecf343348246f8160aaa5fcc0e7111006306d5eb3d1df08694555186f2c",
+    "format-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.log": "503d4a448de5977e1ca9b46ef91b61c1d78f4b458648e3a44fe539bf91b2f362",
+    "gate-chip-bs21-rt-unstable.log": "172f5c7d0a07695c892d1e83509da5c2d0abf943e8f468a2108de32050ad5145",
+    "gate-chip-ws53-rt-unstable.log": "07c20832dbfa3250a067fd432931277ce07878ed9fa54f810cd20e0482b983d6",
+    "gate-chip-ws63-rt-async.log": "c58bf540de04e1d25d8278880c26df9550e7beeae0a84d7be27244e78baae507",
+    "gate-chip-ws63-rt.log": "bfef02a5ad20f3321ac420f5e11ebc2517006d7c90bbb6bd9b8ff2a80c383603",
+    "i2c-dma-build.log": "233435c6642189678011bb5fb0bea50b2b2e29b3aacc07bb56a4306d91ebde1e",
+    "independent-bs21.log": "0eef13f42a1b90a2406a7597f35b25a21dff2530a17c43b5ae263ac040b3fff5",
+    "independent-lock.log": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+    "independent-ws53.log": "4fed5636d49427eb4b2eb68d2bc8f7dc4633da73aed8be65b1689c34f8f8d746",
+    "independent-ws63.log": "4c472d0af96a52ffc0c5d8685102e3e4c0a66d9bd449bc9b1026674232d928c0",
+    "python-policy.log": "b1780a16d202482a4d647c0c98980dfd38920ffe69b263fc45f2210aee2ddb8c",
+    "register-policy.log": "97bfd928deae8bcaabd3ce0d2e548648bb8df999230a764c1184013b71d84fd5",
+    "spi-dma-build.log": "8569e28e060ed5a0341399b27ce693e555fe3d2aaf5cbbd4a11f0f099716d1f2",
+    "ws53-stage1-build.log": "22bd9fd9582ff8fc1e367c03dcbcc6fb8f69e00ba585481bc9bf053b5552b117",
+    "ws53-stage1-host.log": "2275d913282ac5c20cccb82174d8ee33e86f5243ade0f9c4c75078c3373bc7ae",
+    "ws63-baseline-build.log": "966d8816eb8b193d183e1a8ae4233f27ecb3ceb1a27997e27119203540049a40",
+    "ws63-baseline-final-build.log": "28594a3b6932c4f784bad90081d9503bd9fd7c85b72e0d41046372946372bf04",
+    "ws63-lifecycle-build.log": "a75d378271fd4ad819314adae7d516774d2767c6139cfa9a2fdf66b791a74323",
+    "ws63-stage2-timer.log": "1a7a4cd2432334512d1d307669392ba384eea77b88d9efc622315668ffc37b7f"
+  },
+  "qemu_build": "Reused the previously validated binary; not rebuilt in this increment. Per-run reports contain its SHA-256."
+}

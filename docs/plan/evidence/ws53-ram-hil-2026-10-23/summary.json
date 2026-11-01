@@ -1,0 +1,30 @@
+{
+  "consecutive_hardware_rounds": 20,
+  "elf_sha256": "b5e78998cd3604ea1afa686311f5369333a7ed47864f498aa6dbfed3b3115074",
+  "inherited_mie_enabled_rounds": 16,
+  "uart_byte_parity": true,
+  "final_dpidr_correct": 600,
+  "control_core_held_in_reset": true,
+  "production_handoff_verified": false,
+  "sdma_quiescence_verified": false,
+  "flash_written": false,
+  "scope": [
+    "RAM data/BSS",
+    "UART2 inherited TX configuration",
+    "TIMER0 IRQ53 count=3 and return",
+    "entry single step",
+    "halt/continue",
+    "load/after-wait/post-run image readback",
+    "physical reset and vendor AT recovery"
+  ],
+  "not_verified": [
+    "GDB source breakpoints",
+    "actual timer frequency",
+    "control-core coexistence",
+    "FPU arithmetic",
+    "hardware NMI",
+    "DMA/cache handoff",
+    "other peripherals",
+    "flash cold boot"
+  ]
+}

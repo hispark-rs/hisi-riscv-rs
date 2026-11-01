@@ -1,0 +1,15 @@
+[package]
+name = "uart-external-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[features]
+chip-ws63 = ["hisi-hal/chip-ws63"]
+chip-ws53 = ["hisi-hal/chip-ws53"]
+chip-bs21 = ["hisi-hal/chip-bs21"]
+[dependencies]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "3ff019da72750a0dcb0a2d9c5f2e6e76f7f3af15", default-features = false, features = ["async", "unstable"] }
+embedded-io-async = "0.6"
+[patch.crates-io]
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }

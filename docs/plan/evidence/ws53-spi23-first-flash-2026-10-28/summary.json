@@ -1,0 +1,208 @@
+{
+  "passed": true,
+  "prior_archives": [
+    {
+      "name": "ws53-icache-contract-2026-10-27",
+      "files": 75,
+      "manifest_sha256": "385db25ab36e44a3e93c73010ce167b0c09b5674ce1a32bb43aa427470179862"
+    },
+    {
+      "name": "ws53-icache-model-2026-10-27",
+      "files": 119,
+      "manifest_sha256": "ccda44acb88a88e825c793e5bd8bc13b73eb3a7f651cdc1a17a0a346d67aef59"
+    },
+    {
+      "name": "ws53-rust-cache-contract-2026-10-27",
+      "files": 82,
+      "manifest_sha256": "80514b8ff42aa606e2f5a2c5bdf0060cca1dbc949b89fc8b35a9623aca0b8811"
+    },
+    {
+      "name": "ws53-exceptions-2026-10-27",
+      "files": 297,
+      "manifest_sha256": "8e1464f61559114928f1f290b7612ebdcf8bde03a1fedfd20acf296115f5807b"
+    },
+    {
+      "name": "ws53-exceptions-ram-2026-10-27",
+      "files": 366,
+      "manifest_sha256": "c0b3f9e18910358881ec316e21511655ff2d6dd7fe2ab84c19609942ede1a561"
+    },
+    {
+      "name": "ws53-flash-exceptions17-software-2026-10-27",
+      "files": 468,
+      "manifest_sha256": "3657bfc79e39186dd15e75e90e24f8629e582dd647a46f8c52a4b08951ab3caa"
+    },
+    {
+      "name": "ws53-flash-exceptions17-physical-2026-10-27",
+      "files": 102,
+      "manifest_sha256": "6ddf791f6cd8af616fc9a8da0de93ac368ebacdea5d016326809fdca970afc1b"
+    },
+    {
+      "name": "ws53-exception-ci-2026-10-27",
+      "files": 222,
+      "manifest_sha256": "b3e08d74a08ad880969c5a0376846318e07933481f3a0a57220cae4dc613f587"
+    },
+    {
+      "name": "ws53-cache-observe-2026-10-27",
+      "files": 225,
+      "manifest_sha256": "02bb65f55c47b84166db05821aea2746d0b0821a2360c2b8559fb0722e4ce2d3"
+    },
+    {
+      "name": "ws53-mcu-counter-integration-2026-10-27",
+      "files": 354,
+      "manifest_sha256": "ca743eed5ea47acdf6367e0c6a4e6e57d4f080992c1ac110767c67f55e3c195b"
+    },
+    {
+      "name": "ws53-execcompare18-2026-10-27",
+      "files": 169,
+      "manifest_sha256": "834e50e5b4f3b50b246e0238b1ebcdf63b3b4919084ab57720b292d44be61600"
+    },
+    {
+      "name": "ws53-ram-functions-2026-10-27",
+      "files": 122,
+      "manifest_sha256": "5b1d3e099ed0dd59c2b835c6de7cdc06effad53f5abc3cb954972cc252e93a77"
+    },
+    {
+      "name": "ws53-ram19-2026-10-27",
+      "files": 225,
+      "manifest_sha256": "77965f8d27ff668b65061dd572e31ea99724e0f5add56826e6fb02178848ca73"
+    },
+    {
+      "name": "ws53-peripheral-integration-2026-10-27",
+      "files": 3661,
+      "manifest_sha256": "1d3bc4cf6c626d902436cbf18b79db882d64207679462fce648589d8f279367c"
+    },
+    {
+      "name": "ws53-ipc-2026-10-27",
+      "files": 619,
+      "manifest_sha256": "46da835a86dfb03209c1f584d0719b19f41db43cc71849fb28c516851c6fcb76"
+    },
+    {
+      "name": "ws53-ipc-enable-mask-2026-10-27",
+      "files": 498,
+      "manifest_sha256": "cf0a83fe8653ba2b87d8500c902efcbc3b1a608954be8a2f5ed5c8a6aef65c0b"
+    },
+    {
+      "name": "ws53-ipc-ring-2026-10-27",
+      "files": 332,
+      "manifest_sha256": "02873beced42047b40a8604a965d9b8b31211516898dde5dd6c498c6aa18b2fe"
+    },
+    {
+      "name": "ws53-ipc-spsc-2026-10-27",
+      "files": 488,
+      "manifest_sha256": "6ac0c1a3359c70ebe8eb0604828240d973435ca71626f9aaa82e1d17c76e744c"
+    },
+    {
+      "name": "ws53-ccore-debug-metadata-2026-10-27",
+      "files": 35,
+      "manifest_sha256": "259724bcb7777a400aa8d50128a08298b391e87a7aa0d7c000b1af33d278bd3f"
+    },
+    {
+      "name": "ws53-ipc-layout-2026-10-27",
+      "files": 158,
+      "manifest_sha256": "b5a94c4ac006b4209cf2ed441e7f4374ff37670646c5c177beaae1337de05480"
+    },
+    {
+      "name": "ws53-ap0-csw-2026-10-27",
+      "files": 62,
+      "manifest_sha256": "4637f2b20f5aefc199fde6a06e9dc48a0a02aa36d62c776d8ba11b34714f8527"
+    },
+    {
+      "name": "ws53-ipc-random-2026-10-28",
+      "files": 75,
+      "manifest_sha256": "4d7c184d50d867d2eaebf53be3f866dd6422abf146adfc88ead186e7a852b05c"
+    },
+    {
+      "name": "ws53-ipc-random-ram-2026-10-28",
+      "files": 44,
+      "manifest_sha256": "9ae5e688c6f151e2cd5ccf454474a88f1d4bba32cd446b7107bd99ed51178ca6"
+    },
+    {
+      "name": "ws53-trng-ring-start-2026-10-28",
+      "files": 69,
+      "manifest_sha256": "527e462a6e8ecda277282f6f3f0a57833c43a185473fa37cf8924225fd0afa43"
+    },
+    {
+      "name": "ws53-trng20-flash-2026-10-28",
+      "files": 60,
+      "manifest_sha256": "8ed7090602f25bf4384690adde2fc66ca8254479667f7ac104e3f883d3172ac5"
+    },
+    {
+      "name": "ws53-uart-h0-clock-2026-10-28",
+      "files": 59,
+      "manifest_sha256": "b0403cff40be14d7f63b3fd48b1cd0aef38482b1cda30d49eeddc166f53798d1"
+    },
+    {
+      "name": "ws53-uart-h0-init-2026-10-28",
+      "files": 127,
+      "manifest_sha256": "d61498157b04f97cf5f446adc63c7859ab73ff0c1cbac7135d2b6942c7b11100"
+    },
+    {
+      "name": "ws53-uart21-flash-2026-10-28",
+      "files": 77,
+      "manifest_sha256": "a665dc2aa91e2a1e423ed313a9579e736e47fc4a69804e1e43884751f7b2e5b8"
+    },
+    {
+      "name": "ws53-i2c-wire-2026-10-28",
+      "files": 90,
+      "manifest_sha256": "bca18a5dd31a5d9f07e7e0c1ed10f234ce7141c1e3412988d39a0dd762b97403"
+    },
+    {
+      "name": "ws53-i2c22-first-flash-2026-10-28",
+      "files": 170,
+      "manifest_sha256": "6cce9a3039a965093fd4a82435f7f671be96058fec743eebb3c72e99efefd69a"
+    },
+    {
+      "name": "ws53-i2c22-flash-2026-10-28",
+      "files": 175,
+      "manifest_sha256": "889b72f59cd307919f3d0fa4cb73000ec80ceedcc26ce0f2198563fd73ed5594"
+    },
+    {
+      "name": "ws53-spi-wire-2026-10-28",
+      "files": 208,
+      "manifest_sha256": "d3f77809685a46a8c0af50dfcfae2148bc047e73cac668b0007ccd79f276823e"
+    },
+    {
+      "name": "ws53-spi-status-2026-10-28",
+      "files": 184,
+      "manifest_sha256": "08f223d7d9e2ee58180822b160921eecfb2d5026c4470eaa328ece46dbac61ee"
+    }
+  ],
+  "flash_qualification_passed": false,
+  "full_readback_verified": true,
+  "autonomous_begin_only": true,
+  "default_exception_observed": true,
+  "gpio1_unreadable_via_ap0": true,
+  "precise_fault_mepc_not_captured": true,
+  "gate_causality_silicon_proven": false,
+  "model_missing_agpio_gate_scenario": true,
+  "exact_pretest_image_and_nv_restored": true,
+  "original_at_restored": true,
+  "elf_sha256": "2fc345719174cdb82a73d4c0de9bcf8f16cdc6728387e46e0e4e8ca20c84e535",
+  "body_sha256": "d9c349a5759c3b9b2eb7613ea0cd0c444534c4e3b1f7e6feb92027cb80497d4c",
+  "flash_frames_qualified": 0,
+  "health": [
+    {
+      "name": "spi23-health-before01",
+      "reads": 600,
+      "report_sha256": "11c67489f6218dc380ced64bcd5c020904a74c00dad929efa71fc1def1f38637"
+    },
+    {
+      "name": "spi23-recover-health-before01",
+      "reads": 600,
+      "report_sha256": "eb8170c725df0dac2965dc9aca01806a0be618ecb4166533e003adec22977e74"
+    },
+    {
+      "name": "spi23-recover-health-after01",
+      "reads": 600,
+      "report_sha256": "17f6fcc1e4c91adb961c360f605f2dc322b8472924b57a7c9d72d78615dfbd2d"
+    }
+  ],
+  "isolated_agpio_rdl_pac_only": true,
+  "gpio_driver_fixed": false,
+  "agpio_model_fixed": false,
+  "agpio_rdl_commit": "bc02ca0defcd89330328abd54813a08374f4d046",
+  "agpio_pac_commit": "8dc9a3d2582a29e90338c71d26b4e27d88d3d503",
+  "factory_agpio_clock": 1,
+  "cold_boot_verified": false,
+  "stable_api_graduated": false
+}

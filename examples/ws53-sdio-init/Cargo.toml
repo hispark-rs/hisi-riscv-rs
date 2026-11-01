@@ -1,0 +1,40 @@
+[package]
+name = "ws53-sdio-init-model-example"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[features]
+default = []
+model-handoff = []
+model-async = ["hisi-hal/async", "dep:critical-section"]
+
+[dependencies]
+embedded-hal = "1.0"
+critical-section = { version = "1", optional = true }
+hisi-hal = { path = "../../crates/hisi-hal", default-features = false, features = ["chip-ws53", "unstable"] }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt", default-features = false, features = ["chip-ws53", "unstable", "bundled-memory-x"] }
+
+[[bin]]
+name = "sdio-init-model"
+path = "src/model.rs"
+required-features = ["model-handoff"]
+
+[[bin]]
+name = "sdio-transfer-model"
+path = "src/transfer.rs"
+required-features = ["model-handoff"]
+
+[[bin]]
+name = "sdio-async-model"
+path = "src/async_transfer.rs"
+required-features = ["model-handoff", "model-async"]
+
+[workspace]
+resolver = "2"
+
+[patch.crates-io]
+ws53-pac = { path = "../../crates/chips/ws53/ws53-pac" }
+ws63-pac = { path = "../../crates/chips/ws63/ws63-pac" }
+bs2x-pac = { path = "../../crates/chips/bs2x/bs2x-pac" }
+hisi-riscv-rt = { path = "../../crates/hisi-riscv-rt" }

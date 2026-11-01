@@ -1,0 +1,56 @@
+{
+  "hal_before": "d5ca0bad58bc51dad9653ee03aede722e615dc66",
+  "hal_after": "a52e0ddf72ce5ec360bc9fcb4fce727acf75f4bf",
+  "production_behavior_changed": false,
+  "hardware_accessed": false,
+  "new_qemu_tests_run": false,
+  "registry_release_qualified": false,
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/hal-test-lints-2026-11-01",
+  "independent_child_gate": {
+    "exit_code": 0,
+    "parent_workspace_patch": false,
+    "remote_runtime": "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb",
+    "host_tests": {
+      "ws53": 445,
+      "ws63": 372,
+      "bs21": 220
+    },
+    "host_test_clippy": true,
+    "target_clippy": true,
+    "doctests": true,
+    "negative_features": true,
+    "empty_cache": false
+  },
+  "mutation": {
+    "production_fields": [
+      "source burst shift 12 to 13",
+      "bus lock bit 14 to 15"
+    ],
+    "cases": 512,
+    "seed": 20261101,
+    "old_passed": 12,
+    "old_failed": 0,
+    "new_passed": 9,
+    "new_failed": 3,
+    "new_failing_properties": [
+      "dma::proptests::ch_cfg_word_no_stray_bits",
+      "dma::proptests::ch_cfg_word_flag_bits",
+      "dma::proptests::control_word_fields_round_trip"
+    ]
+  },
+  "sha256": {
+    "independent-final.log": "9f1bf02ea6f08d368fc70a9a164d2b315dd5736450f1b6ce3be8ae1822b06d4e",
+    "independent.log": "f4f70dc47299ce364e854671af7b33d99984841dda50b188ae5e7962726a5eeb",
+    "mutant-new-lock.log": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+    "mutant-new.log": "767a21380edccdbe16f56b675bb4fce169e892848723e83e6e5a9da7643ba4f9",
+    "mutant-old-lock.log": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+    "mutant-old.log": "ddcc4927d4c524c4d07b46765a4ed8dcbdef738e375f0331d9756d18fd58605f",
+    "ws63-clippy-final.log": "35f4b32b7bacfb8b8ae35a9db102d29d36b2f03e97fc95c711593a7f9f6576c4",
+    "ws63-clippy.log": "5770431e87bdbe8d1741ebc641be9deaa1ae73bdba28b9db835411f4a0708da9",
+    "ws63-tests.log": "1631b03a61416fc08a01c8aee98c8b0b635eb31935f11556d41c6e74f0ad37bc"
+  },
+  "mutation_source_sha256": {
+    "mutant-old": "a3ab052caf57a1c10c118f39acf5060cc005a7101e596b1b138bf130180ff385",
+    "mutant-new": "9ebb5330ab32cbaebb3196aaf2187e141f0459359e3bbc1f78b771a3b1616e7f"
+  }
+}

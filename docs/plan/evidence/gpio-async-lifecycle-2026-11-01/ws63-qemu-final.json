@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "chip": "ws63",
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/examples/ws63-gpio-async-model/target/riscv32imfc-unknown-none-elf/release/ws63_gpio_async_model",
+    "-icount",
+    "shift=0,sleep=on",
+    "-d",
+    "guest_errors"
+  ],
+  "runner_terminated": true,
+  "returncode": 0,
+  "stdout": "GPIO ASYNC: BEGIN\r\nGPIO ASYNC: PASS simultaneous=2 spurious=1 cancels=3 immediate=2 edges=3\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 21 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-gpio-async-qemu-408dd537674f6540/bin/python3)"
+  ],
+  "unexpected_diagnostics": [],
+  "elf_sha256": "de0df77342c6cd3e50d9a7d14aad348d420cc543d0bc605581d15fed5eea923d",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255"
+}

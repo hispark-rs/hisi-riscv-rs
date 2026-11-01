@@ -1,0 +1,8 @@
+[package]
+name = "ws53-pac-registry-consumer"
+version = "0.0.0"
+edition = "2024"
+[dependencies]
+ws53-pac = { version = "=0.1.0-alpha.1", features = ["critical-section", "rt"] }
+[target.'cfg(not(target_arch = "riscv32"))'.dev-dependencies]
+critical-section = { version = "1", features = ["std"] }

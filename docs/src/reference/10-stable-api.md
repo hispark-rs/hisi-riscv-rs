@@ -1,5 +1,9 @@
 # Stable API 清单与门控状态
 
+开发分支时间职责更新（2026-11-01）：实验 Embassy 时间驱动已迁至
+`hisi-rtos` 的共享/纯 profile；HAL 的执行器无关 async 保留。新行为尚未完成
+实板复验，不能继承历史验收。状态见 [迁移清单](https://github.com/hispark-rs/hisi-riscv-rs/blob/feat/ws53-integration/docs/plan/embassy-extraction.md)。
+
 本页是 `hisi-hal 0.7.0-alpha.2` 当前默认公开面的**唯一事实源**。该版本仅把
 `hisi-riscv-hal 0.6.0` 改名为新 package/repository，下面的 API 与门控边界保持
 等价。判定规则与门控机制见

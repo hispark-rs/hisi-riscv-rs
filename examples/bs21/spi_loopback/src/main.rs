@@ -43,6 +43,18 @@ fn main() -> ! {
         Err(_) => uart.write(b"  SPI error (timeout)\r\n"),
     }
 
+    // A write-only transaction must drain its simultaneous RX frames before
+    // the next transfer. The loopback model's FIFO holds only 32 frames.
+    let mut after_write = [0u8; 1];
+    if spi.write(&[0xa5; 64]).is_ok()
+        && spi.transfer(&[0x3c], &mut after_write).is_ok()
+        && after_write == [0x3c]
+    {
+        uart.write(b"  SPI write drain OK\r\n");
+    } else {
+        uart.write(b"  SPI write drain FAILED\r\n");
+    }
+
     loop {
         core::hint::spin_loop();
     }

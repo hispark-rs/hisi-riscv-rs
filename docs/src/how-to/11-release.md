@@ -130,7 +130,7 @@ cargo clippy -Zbuild-std=core,alloc --locked --target riscv32imfc-unknown-none-e
 cargo doc -Zbuild-std=core,alloc --locked --no-deps --document-private-items --target riscv32imfc-unknown-none-elf
 
 # hisi-hal：按 .github/workflows/ci.yml 的 feature matrix 跑
-cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async,embassy
+cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-ws63,rt,async
 cargo check -Zbuild-std=core,alloc --locked --no-default-features --features chip-bs21,rt,unstable
 ```
 

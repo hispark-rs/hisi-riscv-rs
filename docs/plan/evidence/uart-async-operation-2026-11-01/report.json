@@ -1,0 +1,741 @@
+{
+  "hardware_accessed": false,
+  "hal_commit": "d7e8ea5f1d7b03e75ea7c61cafdadc4c1998cfa2",
+  "hal_pr": "https://github.com/hispark-rs/hisi-hal/pull/28",
+  "raw_directory": "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-async-operation-2026-11-01",
+  "change": "One internal UART wait/rearm/recheck/cancellation implementation for WS53/WS63 RX and WS53 TX/flush; concrete hardware checks and API unchanged.",
+  "independent_tests": {
+    "exit": 0,
+    "ws53_unit": 446,
+    "ws63_stable_unit": 335,
+    "ws63_stable_async_unit": 335,
+    "ws63_unstable_async_unit": 377,
+    "bs21_unit": 220,
+    "shared_lifecycle_tests": 13,
+    "host_target_clippy": true,
+    "doc_tests": true,
+    "invalid_features_rejected": true
+  },
+  "external_consumer": {
+    "exit": 0,
+    "profiles": [
+      "shared,chip-ws63",
+      "standalone,chip-ws53",
+      "standalone,chip-ws63",
+      "standalone,chip-bs21"
+    ],
+    "host_and_riscv_checks": true,
+    "uart_read_write_type_contracts": true,
+    "dependencies": "Pinned remote Git development overrides; uses existing download cache. Not registry release qualification."
+  },
+  "models": {
+    "ws63-1/report.json": {
+      "passed": true,
+      "hardware_accessed": false,
+      "fifo_capacity": 1,
+      "physical_fifo_depth_verified": false,
+      "command": [
+        "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+        "-M",
+        "ws63",
+        "-display",
+        "none",
+        "-monitor",
+        "none",
+        "-serial",
+        "stdio",
+        "-chardev",
+        "socket,id=peer,path=/tmp/ws63-uart-async-kzi03g8r/peer,server=on,wait=off",
+        "-serial",
+        "chardev:peer",
+        "-serial",
+        "null",
+        "-global",
+        "ws63-uart.rx-fifo-size=1",
+        "-kernel",
+        "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-async-operation-2026-11-01/ws63-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model",
+        "-icount",
+        "shift=0,sleep=off",
+        "-d",
+        "guest_errors"
+      ],
+      "input_stages": 3,
+      "stdout": "UART ASYNC: ARM\r\nUART ASYNC: CANCEL\r\nUART ASYNC: REARM\r\nUART ASYNC: PASS irq=54 wakes=3 burst=3 cancel=1 empty=1\r\n",
+      "stderr": [
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "qemu-system-riscv32: terminating on signal 15 from pid 1374217 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-ws63-uart-async-qemu-eb21022a6f642eac/bin/python3)"
+      ],
+      "unexpected_diagnostics": [],
+      "returncode": 0,
+      "elf_sha256": "46dfa147555ff6bd342fd1cf96079f6f3ac9341527b5ba55f8a5f28536cffa30",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d"
+    },
+    "ws63-16/report.json": {
+      "passed": true,
+      "hardware_accessed": false,
+      "fifo_capacity": 16,
+      "physical_fifo_depth_verified": false,
+      "command": [
+        "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-nb-tx-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+        "-M",
+        "ws63",
+        "-display",
+        "none",
+        "-monitor",
+        "none",
+        "-serial",
+        "stdio",
+        "-chardev",
+        "socket,id=peer,path=/tmp/ws63-uart-async-8zm6dmyx/peer,server=on,wait=off",
+        "-serial",
+        "chardev:peer",
+        "-serial",
+        "null",
+        "-global",
+        "ws63-uart.rx-fifo-size=16",
+        "-kernel",
+        "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-async-operation-2026-11-01/ws63-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model",
+        "-icount",
+        "shift=0,sleep=off",
+        "-d",
+        "guest_errors"
+      ],
+      "input_stages": 3,
+      "stdout": "UART ASYNC: ARM\r\nUART ASYNC: CANCEL\r\nUART ASYNC: REARM\r\nUART ASYNC: PASS irq=54 wakes=3 burst=3 cancel=1 empty=1\r\n",
+      "stderr": [
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+        "qemu-system-riscv32: terminating on signal 15 from pid 1374226 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-ws63-uart-async-qemu-eb21022a6f642eac/bin/python3)"
+      ],
+      "unexpected_diagnostics": [],
+      "returncode": 0,
+      "elf_sha256": "46dfa147555ff6bd342fd1cf96079f6f3ac9341527b5ba55f8a5f28536cffa30",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d"
+    },
+    "ws53-tx-verified/report.json": {
+      "elf": {
+        "profile": "ws53-acore-mcu-mode1-ram",
+        "elf": "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-async-operation-2026-11-01/ws53-tx-target/riscv32imfc-unknown-none-elf/release/ws53_ram_smoke",
+        "sha256": "3c66c620353636bb3b06c4ef5bcd6532ccbb1557fddfa64d55881ef1ae68483d",
+        "loads": [
+          {
+            "address": 163840,
+            "size": 9790,
+            "flags": 5
+          },
+          {
+            "address": 173632,
+            "size": 960,
+            "flags": 4
+          },
+          {
+            "address": 537198592,
+            "size": 16432,
+            "flags": 6
+          }
+        ],
+        "verified": [
+          "ELF32",
+          "ilp32f",
+          "RAM-only",
+          "no-A-in-scanned-instructions",
+          "stack-boundaries"
+        ],
+        "hardware_verified": false
+      },
+      "fault": null,
+      "uart": [
+        "WS53 RAM data/bss OK",
+        "WS53 PASS timer_irq=53 count=3",
+        "WS53 UART2 ASYNC TX DATA abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw",
+        "WS53 UART2 TX CANCEL FULL CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        "WS53 UART2 TX CANCEL LATCHED LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL",
+        "WS53 UART2 TX CANCEL FLUSH F",
+        "WS53 UART2 TX RX ARM",
+        "WS53 UART2 TX RX HELD",
+        "WS53 PASS uart2_async_tx bytes=257 cancel=3 guards=3 rx=3 flush=1 wake=1"
+      ],
+      "uart_raw": "WS53 RAM data/bss OK\r\nWS53 PASS timer_irq=53 count=3\r\nWS53 UART2 ASYNC TX DATA abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw\r\nWS53 UART2 TX CANCEL FULL CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\r\nWS53 UART2 TX CANCEL LATCHED LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\r\nWS53 UART2 TX CANCEL FLUSH F\r\nWS53 UART2 TX RX ARM\r\nWS53 UART2 TX RX HELD\r\nWS53 PASS uart2_async_tx bytes=257 cancel=3 guards=3 rx=3 flush=1 wake=1\r\n",
+      "input_stages_sent": 1,
+      "diagnostics": [
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control"
+      ],
+      "stage_qom_checks": [],
+      "qom_checks": [
+        [
+          "/machine/uart0",
+          "rx-peer-frames",
+          0
+        ],
+        [
+          "/machine/uart0",
+          "pad-rx-frames",
+          0
+        ],
+        [
+          "/machine/uart0",
+          "pad-rx-aborted",
+          0
+        ],
+        [
+          "/machine/uart1",
+          "rx-peer-frames",
+          0
+        ],
+        [
+          "/machine/uart1",
+          "pad-rx-frames",
+          0
+        ],
+        [
+          "/machine/uart1",
+          "pad-rx-aborted",
+          0
+        ],
+        [
+          "/machine/uart2",
+          "rx-peer-frames",
+          3
+        ],
+        [
+          "/machine/uart2",
+          "pad-rx-frames",
+          3
+        ],
+        [
+          "/machine/uart2",
+          "pad-rx-aborted",
+          0
+        ],
+        [
+          "/machine/pinctrl",
+          "uart-tx-bytes-33",
+          674
+        ]
+      ],
+      "register_checks": [
+        [
+          1459838980,
+          1
+        ],
+        [
+          1459838984,
+          1
+        ],
+        [
+          1459839012,
+          4
+        ],
+        [
+          1459839016,
+          4
+        ],
+        [
+          1459699736,
+          0
+        ],
+        [
+          1459699788,
+          0
+        ]
+      ],
+      "hardware_verified": false,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_timing_qualified": false,
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "elf_sha256": "3c66c620353636bb3b06c4ef5bcd6532ccbb1557fddfa64d55881ef1ae68483d"
+    },
+    "ws53-rx-results/normal/report.json": {
+      "passed": true,
+      "hardware_accessed": false,
+      "flash_programmed": false,
+      "cold_boot": "not_verified",
+      "elf_sha256": "aefec34485eb58aa4a656e6d8f712e5db161816266ddb2a41b5015d4cdecd0ea",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "build_receipt_sha256": "a67e686bf8743c74c78e8f4336109ad2c27634325dc54f39c07d1052cd255fb0",
+      "rounds": [
+        {
+          "iteration": 0,
+          "fault": "normal",
+          "panic_line": 0,
+          "compiled_panic_site": null,
+          "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 7,
+            "uart2.pad-rx-frames": 7,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 266
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 98,
+            "0x5703096c": 0
+          },
+          "peer_frames": 7,
+          "input_stages": 3,
+          "guest_phase": 5,
+          "irq42_waker_and_cancel_assertions_completed": true,
+          "terminal_observation_seconds": 0.15
+        },
+        {
+          "iteration": 1,
+          "fault": "normal",
+          "panic_line": 0,
+          "compiled_panic_site": null,
+          "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 7,
+            "uart2.pad-rx-frames": 7,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 266
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 98,
+            "0x5703096c": 0
+          },
+          "peer_frames": 7,
+          "input_stages": 3,
+          "guest_phase": 5,
+          "irq42_waker_and_cancel_assertions_completed": true,
+          "terminal_observation_seconds": 0.15
+        }
+      ],
+      "scenario": "normal",
+      "virtual_peer_injected_with_cpu_paused": true,
+      "script_sha256": "1d6bdffed27703a8bc5e957c68459d7bf0c9e9646eb1364c090dfd9fe93f4120",
+      "support_sha256": "577b809838047a08242f1dd00ff600e8808a3de01beef0d812d43915a2f09255",
+      "physical_uart_timing_verified": false,
+      "diagnostics": [
+        "ws53-uart-reset: observed L0 profile; divisor zero and in-flight cancellation assumed",
+        "qemu-system-riscv32: ws53-uart-l0-route: explicit command1-to-acore profile; initial route, ccore destination and physical readback are not modeled",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-wdt: assumed timing low-byte=255 expiry=count+1 stage=reload clock=32000",
+        "qemu-system-riscv32: warning: icount sleep disabled and no active timers"
+      ]
+    },
+    "ws53-rx-results/blocked-route/report.json": {
+      "passed": true,
+      "hardware_accessed": false,
+      "flash_programmed": false,
+      "cold_boot": "not_verified",
+      "elf_sha256": "aefec34485eb58aa4a656e6d8f712e5db161816266ddb2a41b5015d4cdecd0ea",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "build_receipt_sha256": "a67e686bf8743c74c78e8f4336109ad2c27634325dc54f39c07d1052cd255fb0",
+      "rounds": [
+        {
+          "iteration": 0,
+          "fault": "blocked-route",
+          "panic_line": 45,
+          "compiled_panic_site": {
+            "source": "examples/ws53-flash-uart-rx/src/uart_async.rs",
+            "line": 45,
+            "failure_code": 2,
+            "message": "UART2 async read did not wake",
+            "addresses": [
+              4580476
+            ]
+          },
+          "uart_sha256": "9d46910bf01ed505a4f3001c68c3e64e8d866518446f3cd768f02c9ca7b8a82d",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": true,
+            "uart-l0-route.blocked": true,
+            "uart2.rx-peer-frames": 3,
+            "uart2.pad-rx-frames": 3,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 109
+          },
+          "registers": {
+            "0x57014018": 5,
+            "0x5701404c": 3,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 99,
+            "0x5703096c": 0
+          },
+          "peer_frames": 3,
+          "input_stages": 1,
+          "guest_phase": 3,
+          "irq42_waker_and_cancel_assertions_completed": false,
+          "terminal_observation_seconds": 0.15
+        },
+        {
+          "iteration": 1,
+          "fault": "blocked-route",
+          "panic_line": 45,
+          "compiled_panic_site": {
+            "source": "examples/ws53-flash-uart-rx/src/uart_async.rs",
+            "line": 45,
+            "failure_code": 2,
+            "message": "UART2 async read did not wake",
+            "addresses": [
+              4580476
+            ]
+          },
+          "uart_sha256": "9d46910bf01ed505a4f3001c68c3e64e8d866518446f3cd768f02c9ca7b8a82d",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": true,
+            "uart-l0-route.blocked": true,
+            "uart2.rx-peer-frames": 3,
+            "uart2.pad-rx-frames": 3,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 109
+          },
+          "registers": {
+            "0x57014018": 5,
+            "0x5701404c": 3,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 99,
+            "0x5703096c": 0
+          },
+          "peer_frames": 3,
+          "input_stages": 1,
+          "guest_phase": 3,
+          "irq42_waker_and_cancel_assertions_completed": false,
+          "terminal_observation_seconds": 0.15
+        },
+        {
+          "iteration": 2,
+          "fault": "normal",
+          "panic_line": 0,
+          "compiled_panic_site": null,
+          "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 7,
+            "uart2.pad-rx-frames": 7,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 266
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 98,
+            "0x5703096c": 0
+          },
+          "peer_frames": 7,
+          "input_stages": 3,
+          "guest_phase": 5,
+          "irq42_waker_and_cancel_assertions_completed": true,
+          "terminal_observation_seconds": 0.15
+        }
+      ],
+      "scenario": "blocked-route",
+      "virtual_peer_injected_with_cpu_paused": true,
+      "script_sha256": "1d6bdffed27703a8bc5e957c68459d7bf0c9e9646eb1364c090dfd9fe93f4120",
+      "support_sha256": "577b809838047a08242f1dd00ff600e8808a3de01beef0d812d43915a2f09255",
+      "physical_uart_timing_verified": false,
+      "diagnostics": [
+        "ws53-uart-reset: observed L0 profile; divisor zero and in-flight cancellation assumed",
+        "qemu-system-riscv32: ws53-uart-l0-route: explicit command1-to-acore profile; initial route, ccore destination and physical readback are not modeled",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-wdt: assumed timing low-byte=255 expiry=count+1 stage=reload clock=32000",
+        "qemu-system-riscv32: warning: icount sleep disabled and no active timers"
+      ]
+    },
+    "ws53-rx-results/cancel-peer-timeout/report.json": {
+      "passed": true,
+      "hardware_accessed": false,
+      "flash_programmed": false,
+      "cold_boot": "not_verified",
+      "elf_sha256": "aefec34485eb58aa4a656e6d8f712e5db161816266ddb2a41b5015d4cdecd0ea",
+      "qemu_sha256": "b13cda695d268ad3c26c19d864eea42b667eab6f25c304e6f7c4f2c2cb95f48d",
+      "build_receipt_sha256": "a67e686bf8743c74c78e8f4336109ad2c27634325dc54f39c07d1052cd255fb0",
+      "rounds": [
+        {
+          "iteration": 0,
+          "fault": "cancel-peer-timeout",
+          "panic_line": 128,
+          "compiled_panic_site": {
+            "source": "examples/ws53-flash-uart-rx/src/uart_async.rs",
+            "line": 128,
+            "failure_code": 3,
+            "message": "UART2 cancelled input timeout",
+            "addresses": [
+              4586166
+            ]
+          },
+          "uart_sha256": "d5fdb2f009e7324626facbcb9fe3d2ec7945e59700baf4e687596df1fa7d5b34",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 6,
+            "uart2.pad-rx-frames": 6,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 158
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 99,
+            "0x5703096c": 0
+          },
+          "peer_frames": 6,
+          "input_stages": 2,
+          "guest_phase": 3,
+          "irq42_waker_and_cancel_assertions_completed": false,
+          "terminal_observation_seconds": 0.15
+        },
+        {
+          "iteration": 1,
+          "fault": "cancel-peer-timeout",
+          "panic_line": 128,
+          "compiled_panic_site": {
+            "source": "examples/ws53-flash-uart-rx/src/uart_async.rs",
+            "line": 128,
+            "failure_code": 3,
+            "message": "UART2 cancelled input timeout",
+            "addresses": [
+              4586166
+            ]
+          },
+          "uart_sha256": "d5fdb2f009e7324626facbcb9fe3d2ec7945e59700baf4e687596df1fa7d5b34",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 6,
+            "uart2.pad-rx-frames": 6,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 158
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 99,
+            "0x5703096c": 0
+          },
+          "peer_frames": 6,
+          "input_stages": 2,
+          "guest_phase": 3,
+          "irq42_waker_and_cancel_assertions_completed": false,
+          "terminal_observation_seconds": 0.15
+        },
+        {
+          "iteration": 2,
+          "fault": "normal",
+          "panic_line": 0,
+          "compiled_panic_site": null,
+          "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+          "capture_window": [
+            2,
+            960000000,
+            960000066
+          ],
+          "qom": {
+            "uart-l0-route.commands": 1,
+            "uart-l0-route.routed": true,
+            "uart-l0-route.source-pending": false,
+            "uart-l0-route.blocked": false,
+            "uart2.rx-peer-frames": 7,
+            "uart2.pad-rx-frames": 7,
+            "uart2.pad-rx-aborted": 0,
+            "pinctrl.uart-tx-bytes-33": 266
+          },
+          "registers": {
+            "0x57014018": 0,
+            "0x5701404c": 0,
+            "0x57036004": 1,
+            "0x57036008": 1,
+            "0x52002210": 98,
+            "0x5703096c": 0
+          },
+          "peer_frames": 7,
+          "input_stages": 3,
+          "guest_phase": 5,
+          "irq42_waker_and_cancel_assertions_completed": true,
+          "terminal_observation_seconds": 0.15
+        }
+      ],
+      "scenario": "cancel-peer-timeout",
+      "virtual_peer_injected_with_cpu_paused": true,
+      "script_sha256": "1d6bdffed27703a8bc5e957c68459d7bf0c9e9646eb1364c090dfd9fe93f4120",
+      "support_sha256": "577b809838047a08242f1dd00ff600e8808a3de01beef0d812d43915a2f09255",
+      "physical_uart_timing_verified": false,
+      "diagnostics": [
+        "ws53-uart-reset: observed L0 profile; divisor zero and in-flight cancellation assumed",
+        "qemu-system-riscv32: ws53-uart-l0-route: explicit command1-to-acore profile; initial route, ccore destination and physical readback are not modeled",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+        "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+        "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+        "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+        "ws53-wdt: assumed timing low-byte=255 expiry=count+1 stage=reload clock=32000",
+        "qemu-system-riscv32: warning: icount sleep disabled and no active timers"
+      ]
+    }
+  },
+  "earlier_failures": [
+    "Independent temporary build ran out of /tmp disk quota; rerun in fresh workspace temporary/target directories passed. No old source/evidence/backup deleted.",
+    "First RX runner failed before model checks: Unix socket path too long. Short fresh output paths used for verified run, then archived.",
+    "First TX runner removed CR from completion marker; guest emitted full success transcript but runner timed out. Preserve CR and exact whole-output validation; verified rerun passed.",
+    "Existing WS63 CI command included test-uart-nb-qemu.py as an extra positional argument: reproduced argparse exit 2, removed only that argument; actual capacity 1/16 runs passed."
+  ],
+  "not_qualified": [
+    "Physical timing, FIFO electrical behavior, RAM/Flash/cold-start hardware requalification",
+    "Legacy WS63 blocking-backed async TX and chip-specific flush differences",
+    "HAL IRQ-before-WFI race",
+    "Registry-only publication with unpublished dependency versions"
+  ],
+  "source_sha256": {
+    "crates/hisi-hal/src/uart.rs": "2b3ae770869d1db7e3ba978ee8be2177b9ad4f4fc030f420e42f429ea2111fee",
+    "crates/hisi-hal/src/uart/async_wait.rs": "213a4da90c43e0d82aeedca65e8bfa9ba5876c5e74d6479c1d0cc896d3fb7032",
+    "crates/hisi-hal/src/uart/asynch.rs": "14871216d0619cced60870fe0c14010f437aefcd4aeeb6ccb3c228374fd20703",
+    "crates/hisi-hal/src/uart_ws53/asynch.rs": "eaf06cb714d5bef45755384da3d32eecad8152ce24fa50b2ee8b5c751d631bd3",
+    "crates/hisi-hal/docs/uart-async.md": "8a70a81de99de592da6ed456dc62a4a5d555eed75500d07ff49d83666565380b",
+    "scripts/test-ws53-uart-async-tx-qemu.py": "60586de867cde70c9d3cf8bd590cf644da116872948dc6d7f02d7fbfd09c3baa",
+    "scripts/ws53_qemu_fixture.py": "451b8fbf5508367084d2084b9fcc7a13826049531601e8d72d21c37b319c7321",
+    "scripts/check-ws53-ram-elf.py": "17dd4825e564441d39dac683a8f5548ea59f7b2448e9b749b5e77a3d6f029f47",
+    ".github/workflows/ws53-model-contracts.yml": "0943bf6c0122680d24f69971774aeae5f39dc9b45aa28e4c4626b369b42e84ca",
+    "examples/ws53/ram_smoke/src/uart2_async_tx.rs": "cc7a2c01e8c68cbe49e7144061f26d3616a50e42814ecd11e3724597975f2125"
+  },
+  "raw_sha256": {
+    "independent.log": "8a7fc17395acd58f7078568946fbba7aaa2b1fe35d2b6edf56d9965f4b765ece",
+    "final-unit.log": "16e615ab784a195ffef49d819423ab2bdb9ccd4990b3f8026f41ae37965bd6c0",
+    "ws63-build.log": "4464264f5557a5b0d9a3cc9cb1691b48565e8579b332bcc51cba8b3d5b5b8216",
+    "ws53-tx-build.log": "6d2367e6002f999a2a158eb33130f3e3b751775323250a00d6693415fe10c852",
+    "independent-final.log": "41c00e09d650da296c9567f18b6d3e0770b6396e4be8793afd6c2bcef37a4826",
+    "ws53-rx-build.log": "b50526d0001110bde1fe726eae1b47652fa5588d86ec41d5992514892817a92a",
+    "ci-cli-before.log": "5ad352b26db3cf991eccf1b6b5abfa8b2fa56a54b8f0ded34a8f13f8f9492274",
+    "ws63-1.log": "388cab4c7b3d49d85f9c1936eb5a441c9bd498e9c74bd12a8f7925d89674b0ff",
+    "ws63-16.log": "766b4f227c47218ec69f0123b6abbeeeb8d1beecd8982bc1eb0343ce042f3bc2",
+    "ws53-tx.log": "3c2dc93aebfe8e67159bfad49a32cc350568e246dea65d3fa1e04a2e1f66bf4a",
+    "ws53-rx-normal.log": "dd154b6d9fb4ea3a45f6842e9d6837adf6354290d565529502b4dd4b2ee05dc8",
+    "ws53-rx-normal-final.log": "43ebc25c33fde07238c83e735b2da8e4cb328166d502564e22c3104b35dd0208",
+    "ws53-rx-blocked-route-final.log": "7118de693af00f8c66bb4d618eaba66215d9939c729363b4771d2882e0a13b0a",
+    "ws53-rx-cancel-peer-timeout-final.log": "7d19671663386f056b8e845f1a7a45cbeef547cd1dc673609d050ad04ddd52e5",
+    "ws53-tx-final.log": "762d71dffc2524bad4a496b4b915a33cf12cdcb5eedf4aca4eaeecf035484682",
+    "consumer.log": "841c3c11f349c0f44c94bb4ec6a4cb1d5753e99d2e5739ffb6074fae44ad260e",
+    "ws53-tx-verified.log": "135e0ec7fb6631e978164737176bb4ac4c035c9cb66140e5475560e9dc3c49da",
+    "python-policy.log": "65f8262783a0b8f8f82c1c091dd98f18140d864ad6a033f0628e6304b7ffb2be",
+    "ws63-1/report.json": "388cab4c7b3d49d85f9c1936eb5a441c9bd498e9c74bd12a8f7925d89674b0ff",
+    "ws63-16/report.json": "766b4f227c47218ec69f0123b6abbeeeb8d1beecd8982bc1eb0343ce042f3bc2",
+    "ws53-tx-verified/report.json": "135e0ec7fb6631e978164737176bb4ac4c035c9cb66140e5475560e9dc3c49da",
+    "ws53-rx-results/normal/report.json": "43ebc25c33fde07238c83e735b2da8e4cb328166d502564e22c3104b35dd0208",
+    "ws53-rx-results/blocked-route/report.json": "7118de693af00f8c66bb4d618eaba66215d9939c729363b4771d2882e0a13b0a",
+    "ws53-rx-results/cancel-peer-timeout/report.json": "7d19671663386f056b8e845f1a7a45cbeef547cd1dc673609d050ad04ddd52e5",
+    "ws53-rx-build/receipt.json": "a67e686bf8743c74c78e8f4336109ad2c27634325dc54f39c07d1052cd255fb0",
+    "plan-registry.log": "4448aaa08201cbe6a85cd8a77b041209dbb5ead7f0b8216761e3eebeef36e0f6"
+  },
+  "consumer_sha256": {
+    "Cargo.toml": "8ccd9433fbce767f648b758e1c48cb79f9cdd12b28e6476aeaece74cc7dabf81",
+    "Cargo.lock": "a983d6b20c52c2a2f805346ab1a35d8df138ad4c95f18862908317e7365e40d0",
+    "src/lib.rs": "d3cf5946be95264a1162d6c80271f6ab43be11ceb4006b7c2e907469e381eed7"
+  }
+}

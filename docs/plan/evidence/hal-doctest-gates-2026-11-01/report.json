@@ -1,0 +1,85 @@
+{
+  "hal_commit": "f39aef7bfd545486fc7cf466e9e8060d9688a846",
+  "branch": "fix/dma-doctest-feature-gates",
+  "pr": "https://github.com/hispark-rs/hisi-hal/pull/27",
+  "hardware_accessed": false,
+  "driver_behavior_changed": false,
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/hal-doctest-gates-2026-11-01",
+  "remote_before": {
+    "parent": "82729b128",
+    "job": 124816846516,
+    "result": "failure",
+    "diagnostic": "E0603 private dma module in positive doctest"
+  },
+  "local_before": {
+    "full_remote_failure_reproduced": false,
+    "doctest_collection": "only two negative examples; positive not collected",
+    "toolchains": [
+      "stable 1.96.1",
+      "nightly-2026-07-09"
+    ]
+  },
+  "independent_profiles": [
+    {
+      "features": "chip-ws53,rt,unstable,async,defmt",
+      "unit_tests": 445
+    },
+    {
+      "features": "chip-ws63",
+      "unit_tests": 335
+    },
+    {
+      "features": "chip-ws63,rt,async",
+      "unit_tests": 335
+    },
+    {
+      "features": "chip-ws63,rt,async,unstable",
+      "unit_tests": 372
+    },
+    {
+      "features": "chip-bs21,rt,unstable",
+      "unit_tests": 220
+    }
+  ],
+  "host_and_target_clippy": true,
+  "doctests": true,
+  "feature_rejection": true,
+  "fmt": true,
+  "diagnostics_mutation": {
+    "expected_exit": 101,
+    "negative_passed": 7,
+    "negative_failed": 1,
+    "production_modified": false
+  },
+  "remote_checkout": {
+    "source_clean": true,
+    "development_lock_modified": true,
+    "registry_only_release": false,
+    "stable_docs": true,
+    "unstable_docs": true
+  },
+  "remote_after": "pending",
+  "sha256": {
+    "before-lock.log": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+    "before-stable.log": "da054d062475ed15245f70ded4969b12ffce9b484b1e777ea7142c248f3371a2",
+    "independent.log": "3c0428043611d142660989b02efaa20fcd6882c5dc54b5de2a90cbc5582b2f57",
+    "before-parent-lock.log": "31f937b5f0ed4008f0699ae6072cdacd647eda99bdd1b400090d54c35f241727",
+    "before-stable-parent-version.log": "3714f5a3fbebda4ebc98e526453e2866b014eb1cdebaf0e508ccca5431a168bc",
+    "before-doc-cfg.log": "04aa70c83215ca4356962dcbf40502e99e1ebdccc0e2796b88baae0d0bfa49a7",
+    "independent-final.log": "9c18de6b90c187c61ef35d9d09df78b2f4dfc8805936cdf7815b590596c5c47e",
+    "after-stable-0.3.13.log": "3f7e0c5305c1306067006435a010ca7b78c7d34f3e71991baaed566a5b42ac13",
+    "after-unstable-0.3.13.log": "fa9b9b0b627c2e1c2d806295bf846fd50c623a76c2259e83f2a932d485a6c1c4",
+    "wrong-diagnostic.log": "b4ae3326bfda819b4e3766e4b9ff8f870b8d944a72b9890ad884a5edf93ae303",
+    "independent-verified.log": "54ad5857db621c0b7d27212a3fde581d3cbbc03e083255f8141ff8a553d7359b",
+    "wrong-diagnostic-final.log": "fbf93e6e60b0967b5c0154129178566f224b8d6433aa614adfceaae6e1807ec8",
+    "after-stable-verified.log": "da6136d90c54fbf9c2c017ff65cb6e43276bc9ba2f0a818ea3f084d693b4ef79",
+    "after-unstable-verified.log": "61ca6c8f40813216f18a980864245c25419168723d01ebd7dea2bec3fd0d63cb",
+    "remote-before.log": "2813d8fca171ac69bff2ef5d99bc264e6189cf825aec2bd491f777cfcc2452fa",
+    "remote-fetch.log": "e903571ce2a1e2c7309f54b4a1e05dbc08aa9c72b6988d8f89fc9441bcf6e495",
+    "remote-lock.log": "80da2dd5a35ff0350345f622d53ebaa517bcb218d9edf9b7baf7653745b58966",
+    "remote-stable-doc.log": "4772f802c2379d0701ad9c887ab8626cc2f869c154374c3d85e9cfc7cb8326f6",
+    "remote-unstable-doc.log": "7ce61c3f303c7e94bf6b04031fba399473be8e945b578405cd4da58edf9295e3",
+    "development.toml": "f8a47884111586f005848c0f5f729544d3444a445c2c03891fe6f886b0c50b0c",
+    "remote-development-lock.diff": "260d0fbc8e33fc59ea9b1f666867944a6b15587fe2f2aa27ba330cf38382aeb0"
+  }
+}

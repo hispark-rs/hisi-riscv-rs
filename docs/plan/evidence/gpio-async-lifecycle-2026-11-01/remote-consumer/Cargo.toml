@@ -1,0 +1,16 @@
+[package]
+name = "ws63_gpio_async_model"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "454ab400a20fa6d3cbf62099ceac8876938d8931", default-features = false, features = ["chip-ws63", "rt", "async", "unstable"] }
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb", default-features = false, features = ["chip-ws63", "bundled-memory-x"] }
+ws63-pac = { version = "0.4.4" }
+critical-section = "1"
+embedded-hal-async = "1"
+[patch.crates-io]
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }
+[profile.release]
+opt-level = "s"

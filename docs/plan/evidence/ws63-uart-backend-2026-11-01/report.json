@@ -1,0 +1,120 @@
+{
+  "scope": "UART adapter correction and model integration; not full HAL completion",
+  "hardware_accessed": false,
+  "hal": {
+    "branch": "refactor/uart-async-receive",
+    "head": "1a456ab1da5c84d5d2c8dbfa302410d3cfddfb12",
+    "commits": [
+      "7eda6f8",
+      "1a456ab"
+    ],
+    "pr": "https://github.com/hispark-rs/hisi-hal/pull/22",
+    "pushed": true
+  },
+  "qemu": {
+    "branch": "fix/uart-rx-model",
+    "head": "7c88dacda8c7f07dfffc63298646ef473b84b49e",
+    "base": "27def194eb9d0d6989cc3c5fb0f0c1da8150be0b",
+    "pr": "https://github.com/hispark-rs/hisi-riscv-qemu/pull/26",
+    "pushed": true,
+    "fresh_build_receipt": "/home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01/merged-fresh/receipt.json",
+    "binary_sha256": "828656c38406c69f3e5f9c04d3b0e0772f66db766551da8a3165a10ceda48187"
+  },
+  "checks": {
+    "ws63_host": 366,
+    "ws63_target_clippy": "passed",
+    "fresh_cache_remote_consumer_host_target": [
+      "ws63",
+      "ws53",
+      "bs21"
+    ],
+    "external_graph": "fixed remote Git HAL and explicit runtime override; not registry qualification",
+    "register_port_profiles": 18,
+    "original_qtest": 11,
+    "tcxo_machines": [
+      "ws63",
+      "bs21"
+    ],
+    "rust_uart_capacities": [
+      1,
+      16
+    ],
+    "ws53_uart_rounds": 8,
+    "receipt_negative_cases": 9
+  },
+  "preexisting_ci": {
+    "revision": "77404271ead13036d42e1be45d40442773ad0a9d",
+    "runs": [
+      41289155015,
+      41289159943
+    ],
+    "bs20": "passed",
+    "synthetic_models": "failed: SPI DMA 1/0/2/t/N timeout after armed; not resolved by UART fixes"
+  },
+  "sdk_snapshot": {
+    "path": "/home/sanchuanhehe/Documents/hispark/fbb_ws63_mesh/sdk/drivers/drivers/hal/uart/v151/hal_uart_v151_regs_def.h",
+    "git_commit": null,
+    "sha256": "c4c32d9fc90e8c393e0d1c688d50cf8c4f813d8be859567a3c03e1df2cf15a01"
+  },
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/ws63-uart-2026-11-01",
+  "raw_artifacts": {
+    "build.log": "7412a5498c682b90f8163bd38038bf55e9e65be3b65ea9e7f236764dbcfbec2b",
+    "hal-host.log": "fd11d7daba2955c168bfec5f1d676180aeeecaaeacb22a0100a6c98c4d678b69",
+    "hal-clippy.log": "27db10d238f836dfe2e3d0823f6ee140198793bf46a47b5bfbe66847060a4fab",
+    "fixture-build.log": "dfa21d91902f23ef2e5fa6d68efb462664de88017b00d7cfa7898f0b17da637a",
+    "qtest.log": "686a93d3b146dd360e5057ad4307422df155c324ca99b930212bd6a5f6807457",
+    "register-model.log": "3872c5e846a93f1d84fca6382a030299ada519d6f64a41e47d43f7010f83a9b9",
+    "hal-model-1.log": "894af194e538b7c499c2eb61408ff2ae8717d74fde50dca41e9437d87983d3bc",
+    "hal-model-16.log": "7f3c4abd1bae1be5645422c0392906ac1aea29cc99e17b24d45b22d37d68ac2d",
+    "baseline-build.log": "4c88dbcb3ba1ef2860b9e04c2cf20a5b057663db0e96dc4dd8359f2efa6dd604",
+    "candidate-build.log": "4466b4b5293a5e8345528121636c9e6808770eb88a0caa6bc4a107e6c5f394e7",
+    "hal-host-final.log": "beb522d37aeaa0fc49f991e0d4eae49df77dc1a40360545547e212e252fcaece",
+    "hal-clippy-final.log": "eb897a75805fcf6b8d3f85a85ede2a3ec2b302d5654d12927a99cf2a903f1dcc",
+    "final-1.log": "68aad50ff3b0901f45421856c694dfaff56db4b30f4c8dc728a57174dbac2bc0",
+    "final-16.log": "0657e24a5608ae1eab0592ce32f9d9f59643f3bbeb7d9d99061cdf14577f4f29",
+    "baseline-negative.log": "d347b9685d550289d3e2b9429ad7e21bd32070eb65786c3a1bdeb7a61329b778",
+    "ci-failed.log": "caae3006d6d7e82c0ab8a7678ddd4c968adbe9f98005824733a0aa89f3e7d05f",
+    "merged-build.log": "aa6d375e345546ff82be6098562ba73ccfa59da8c6de0e9f1554ff1da86ede57",
+    "merged-fresh.log": "c6d5e6f2b4ebfa4857f2d8731b915ee9bf42030423cd9a98f661ac0a14f8fc60",
+    "consumer-resolve.log": "773e4452f3291f43173e7984efa6cf36439ee2468a68ea219772c23be98821f9",
+    "consumer-ws63-host.log": "5a27568f5fca2d7861b5cab413c19a5cbfbc9e79977342a186011084cc34cbb9",
+    "consumer-ws63-target.log": "95a6ad517272db2856a5abb7896cad40a5c73790c58640b6333138d20f26fbbb",
+    "python-policy.log": "e5c2350c243cd336a870e7a807773478468b66acf2224502cddd681e4094ee2f",
+    "consumer-ws53-host.log": "ddbdd609afa774d066ee0831a8347ffc88a8548f308a437056a44324d162ae5d",
+    "consumer-ws53-target.log": "a223a7e7868da62b23437520baf8303de77e5f6df05f83f3da09279e7153ad78",
+    "consumer-bs21-host.log": "c20e12b60cece720fc7c4bb0b76dc787ae0c5f75166217b2144b011ad2c4157f",
+    "consumer-bs21-target.log": "c90aa029b3fb0bb9f0a6a9d9a487fdffbdb1927eaccf46a319e03260811e5fd7",
+    "merged-tcxo.log": "4b7e6255ffb040df1179570a7a5b07380e542348f1d42c0513facf4171771fec",
+    "merged-qtest.log": "09465a52c608ad85ba7fffe9dd091b0d5d53907192a334da52027c603897ae5d",
+    "merged-hal-1.log": "3e0768cbf3980edb444338a5d871e6dd716302b2629bd99738e19e41da4bebb6",
+    "merged-hal-16.log": "def107df7aaa7b4e56f352470bacaff63ac435d2c26adfc6a9812a238422eea4",
+    "ws53-build.log": "833a7a651e3bcc66c91d9e7c58d396c45cc96cb3ce527b992894070148a19d64",
+    "ws53-normal.log": "b6644da963422f516b3eb75674dfbb2f86dd80405eaf53455d66902ad3237300",
+    "ws53-blocked-route.log": "44a56cba2fd456494841d844949d2eb729e2046ada1857afbd44e9ae995e5343",
+    "ws53-cancel-peer-timeout.log": "d586b1f7b391391ea8715181fc7d65c4d636cb8b7ee751a3594cc231af95d92c",
+    "merged-fresh/receipt.json": "c6d5e6f2b4ebfa4857f2d8731b915ee9bf42030423cd9a98f661ac0a14f8fc60",
+    "consumer/Cargo.toml": "1b7a7c76d7dedb82edf46968fe2da83d987d8e9b8775e58b831a9454a5a6f5d4",
+    "consumer/Cargo.lock": "b70947e3e2dfe72590536a1ef2898635ac853c859e6a6442e9ffca1bc7013f60",
+    "consumer/src/lib.rs": "4cf5ac50ac2024400aed1b639cb7b5c99a2c34f6c06237c53d793a6df1cb32c6",
+    "target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model": "e31757a5dc5d4c995f39b54165c19ca50272efe1727f13143185643f4e8cb877",
+    "baseline-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model": "a768a012e340b5205a49f867443611e00be1243440ef5668fba6ee577b192170",
+    "ws53-build/receipt.json": "1c1f68ce8395a11a60bcf01d7d517d6c414dc47d1e76f3055becaddf442ec28c"
+  },
+  "inputs": {
+    "examples/ws63-uart-async-model/Cargo.lock": "de9c8ff9d5a6051d4feefceded7d4d1113fcf3174cc984c9dc176b7c2584516a",
+    "examples/ws63-uart-async-model/Cargo.toml": "26f117c7814440d19b3f523f39fb64275dd21f6ebc0760f830e132983bed214c",
+    "examples/ws63-uart-async-model/src/main.rs": "aea728df7054cc4080b55e181e2144d28943b242c72d50c21fe551435ce1ea0e",
+    "examples/ws63-uart-async-model/build.rs": "5636e6cfeb8c12a25b4152a3de55e70512c558fcd8503571bcbfd73896599fd5",
+    "scripts/test-ws63-uart-async-qemu.py": "95ea40af7634fb34f0e856bbf30e6e15bcae33f3b5dc91cc68053677c2bd046d",
+    "scripts/ws53_ci_qemu_uart_clock_build.py": "9d1b092aabaafb0af76d1db97a6f352a77d88e36b8ccbcd1aebf9590c0989858"
+  },
+  "unverified": [
+    "physical FIFO depth/timing",
+    "line errors/overrun",
+    "TX completion and async TX",
+    "real hardware RAM/Flash/cold boot after behavior changes",
+    "block_on idle race",
+    "full remote model CI",
+    "registry-only unpublished dependency graph"
+  ]
+}

@@ -1,0 +1,5 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/crates/chips/ws63/hisi-rf-ws63/Cargo.toml
+workspace: /home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/Cargo.toml
+    Checking hisi-hal v0.7.0-alpha.10 (/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/crates/hisi-hal)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1.81s
