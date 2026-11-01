@@ -1,0 +1,10 @@
+[package]
+name = "hal-irq-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "da254f86b8b7b014b39e4923b054d01c71278046", default-features = false, features = ["chip-ws63", "async", "unstable"] }
+[patch.crates-io]
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }

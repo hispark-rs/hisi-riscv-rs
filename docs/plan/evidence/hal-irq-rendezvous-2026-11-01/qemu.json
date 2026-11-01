@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "race_injection": false,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/riscv32imfc-unknown-none-elf/release/async_delay",
+    "-d",
+    "guest_errors"
+  ],
+  "returncode": 0,
+  "runner_terminated": true,
+  "elf_sha256": "1cbb768eb2336d01bcabc8a71460079f6fed012b2bcb4ce788d25c7365983d2a",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "stdout": "\r\nWS63 async delay (embedded-hal-async DelayNs on TIMER0)\r\nasync tick #1\r\nasync tick #2\r\nasync tick #3\r\nasync tick #4\r\nasync tick #5\r\nASYNC DELAY: PASS\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=0) -> effective baud ~= 116279 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=86 frac=51) -> effective baud ~= 115211 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 21 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-hal-irq-wait-qemu-d807d3dcc5a7e682/bin/python)"
+  ],
+  "unexpected_diagnostics": []
+}

@@ -8803,3 +8803,8 @@ Cargo feature 合并构建中混用。
 契约及 RTOS profile 尚未发布；仅 `ws53-pac` 原标签发布成功且 registry 消费者已验证。
 本轮没有烧录、复位、串口或分析仪操作，历史物理证据不能自动继承。
 完整职责、提交、测试、发布与实板边界统一见 [迁移清单](embassy-extraction.md)。
+
+后续 HAL 公共等待整改：`da254f8` 修复旧五外设的 IRQ 登记窗口，合并相同 poll
+逻辑，并将 Waker 回调移出内部临界区；WS53 硬件状态机未改变。独立三芯片回归、
+远端消费者和父仓普通 async QEMU 通过，取消/停机/WFI 及实板保持未验收。
+详细范围和反例见 [跨芯片审查记录](hal-cross-chip-review.md)，不以此宣称全部 async 已完成。
