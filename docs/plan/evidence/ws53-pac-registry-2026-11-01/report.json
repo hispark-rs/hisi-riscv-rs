@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0-alpha.1",
+  "published_at": "2026-11-01T06:04:52.938292Z",
+  "checksum": "e5dceaa58b908bb2770c7f202e50d8f74ed540a7efb5971ed0a600a08ac60bd3",
+  "yanked": false,
+  "source_commit": "cd5db216ea5fe6692ea88b231780778e3a3a8385",
+  "workflow": "https://github.com/hispark-rs/ws53-pac/actions/runs/40729236272",
+  "attempt": 3,
+  "organization_secret_visible_to_repository": true,
+  "organization_secret_updated_at": "2026-11-01T05:58:12Z",
+  "repository_secret_count": 0,
+  "environment_count": 0,
+  "host_external_consumer": "passed singleton and IRQ test",
+  "riscv_external_consumer": "passed riscv32imfc-unknown-none-elf check",
+  "fresh_cargo_home": true,
+  "parent_patch_used": false,
+  "hardware_accessed": false
+}
