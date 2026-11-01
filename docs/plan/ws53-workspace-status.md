@@ -14,6 +14,9 @@
 三份整改计划补登现有注册表，24 项计划检查通过，仍只有原两个活动实现；
 这只关闭计划登记失败，其他 CI 待办独立保留。见[登记检查](evidence/uart-nb-tx-2026-11-01/plan-registry.json)。
 
+父仓 `1797a2e43` 的远端干净检出、四个精确子模块、locked 构建和 UART 实际行为重放通过，
+检出仍干净；见[复现记录](evidence/uart-nb-tx-2026-11-01/clean-checkout.json)。
+
 详见[本批证据及 CI 待办](evidence/uart-nb-tx-2026-11-01/README.md)。
 
 ## 2026-11-01 HAL 主机测试门控整改
