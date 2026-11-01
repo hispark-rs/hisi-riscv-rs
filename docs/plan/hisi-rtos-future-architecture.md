@@ -17,6 +17,14 @@ NVS 格式、ROM symbols、镜像格式、HAL 或应用框架。
 扩展的规范和证明 gate 唯一详细计划见
 [RTOS 调度语义与验证](hisi-rtos-semantics-and-verification.md)。
 
+## 2026-11-01 时间职责整改状态
+
+本轮在现有 `hisi-rtos` 仓库内实施 Embassy 时间归属整改，具体比较、进度与验收见
+[Embassy 迁移清单](embassy-extraction.md)。不创建平行 `hisi-embassy` 仓库。
+`embassy-only` 已进入实验实现：保留 TCXO 微秒粒度，编译时不包含线程调度器；
+原 `embassy` 仍为共享定时器、毫秒分辨率。共用队列与唯一注册不代表 F1-F3 的全部
+core/port 拆分已经完成。实板复验保持未验收，未来组件表仍是规划。
+
 ## 生态定位
 
 ```text

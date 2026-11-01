@@ -1,17 +1,41 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 时间职责整改增量（优先于下方历史盘点）
+
+| 仓库 | 当前分支 / 提交 | 推送与验证 |
+| --- | --- | --- |
+| hisi-hal | `refactor/embassy-extraction` / `5895b95` | 已推送，[PR #17](https://github.com/hispark-rs/hisi-hal/pull/17)；三芯片独立集成及无 Embassy 依赖检查通过 |
+| hisi-rtos | `refactor/embassy-time-profiles` / `9b83efa` | 已推送，[PR #1](https://github.com/hispark-rs/hisi-rtos/pull/1)；基础 86、共享 91、纯模式每芯片 14 测试及三芯片 Clippy 通过 |
+| hisi-riscv-qemu | `fix/tcxo-time-contract` / `e60f95c` | 已推送，[PR #25](https://github.com/hispark-rs/hisi-riscv-qemu/pull/25)；TCXO 双芯片测试、11 项旧 qtest、WS53 TCXO 回归通过 |
+| ws63-examples | `refactor/rtos-embassy-profile` / `f52900d` | 已推送，[PR #7](https://github.com/hispark-rs/ws63-examples/pull/7)；两示例链接，纯计时 QEMU 通过 |
+| hisi-rs-template | `refactor/rtos-embassy-profile` / `a843ec2` | 已推送，[PR #6](https://github.com/hispark-rs/hisi-rs-template/pull/6)；WS63/BS21 生成项目在父仓外完整构建，显式固定远端开发图 |
+| hisi-crypto-ws63 | `chore/hal-time-integration` / `560b713` | 已推送，[PR #1](https://github.com/hispark-rs/hisi-crypto-ws63/pull/1)；统一 HAL 精确依赖，19 项独立主机测试与目标检查通过 |
+| hisi-rf-ws63 | `chore/hal-time-integration` / `b7f742b` | 已推送，[PR #1](https://github.com/hispark-rs/hisi-rf-ws63/pull/1)；统一 HAL 精确依赖，26 项独立主机测试与目标检查通过 |
+
+父仓同步上述子模块与锁文件，STA 工作区和 SoftAP 检查通过，只有一份 HAL。
+纯 Embassy 与线程 profile 分开构建，没有新增 `hisi-embassy` 仓库或子模块。
+原型保留在父工程外 `validation/embassy-extraction/superseded-hisi-embassy/`。
+
+`ws53-pac` 发布已关闭 403 阻塞，原标签第 3 次执行成功；其他 crate 无发布授权。
+新 HAL、runtime WS53、RF driver 及新 RTOS profile 仍未发布；开发覆盖不是 registry 发布验收。
+实板未操作。共享共存原 HIL 阈值在迁移前后 QEMU 均失败，保持未关闭；
+完整边界和报告见 [Embassy 迁移清单](embassy-extraction.md)。
+
+## 先前盘点（保留历史，不代表上述仓库的当前 HEAD）
+
+
 **状态：** WS53 适配的配套工作，持续维护。
 
-状态记录：2026-10-29。本清单记录整合状态，不替代具体功能的验收证据。
+状态记录：2026-11-01。本清单记录整合状态，不替代具体功能的验收证据。
 
 | 仓库 | 本地状态与集成目标 | 远端与待办 |
 | --- | --- | --- |
 | hisi-registers | `feat/ws53-agpio-clock`，`bc02ca0`；包含 IPC、SPI 及 AGPIO 时钟等分项历史 | 同名远端分支，[草稿 PR #1](https://github.com/hispark-rs/hisi-registers/pull/1)；独立 SDIO、SFC 证据已分别推送并建 [PR #2](https://github.com/hispark-rs/hisi-registers/pull/2)、[PR #3](https://github.com/hispark-rs/hisi-registers/pull/3)，尚未合入 |
 | ws63-svd / ws63-pac | `fix/ws63-tcxo-two-word`：SVD `9f11980`、PAC `6324bcf`；新增完整 TCXO 字段并保留旧访问器 | [SVD 草稿 PR #2](https://github.com/hispark-rs/ws63-svd/pull/2)、[PAC 草稿 PR #2](https://github.com/hispark-rs/ws63-pac/pull/2)；均尚未合并或发布，待实板验证 |
-| ws53-pac | `feat/ws53-agpio-clock`，`cd5db21`；生成来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；独立打包、远端 CI 和发布 dry run 通过。用户授权发布 `v0.1.0-alpha.1`，正式上传因 crates.io 凭据返回 403，尚未发布 |
+| ws53-pac | `feat/ws53-agpio-clock`，`cd5db21`；生成来源固定到 `bc02ca0` | [项目远端](https://github.com/hispark-rs/ws53-pac)同名分支；独立打包、远端 CI 和发布 dry run 通过。用户授权发布 `v0.1.0-alpha.1`，2026-11-01 原标签发布任务第 3 次运行成功；registry 包校验及全新缓存主机/RISC-V 外部消费者通过，见 evidence/ws53-pac-registry-2026-11-01/report.json |
 | hisi-riscv-rt | `codex/ws53-exceptions`，`eb3e2d5`；RAM 函数审计绑定快照和实际加载字节 | 同名远端分支，[草稿 PR #7](https://github.com/hispark-rs/hisi-riscv-rt/pull/7)；独立依赖 PAC 的外部构建待验证 |
 | hisi-ws53-coex | `feat/ws53-control-core-protocol`，`5a8971a`；协议、传输、服务分层，队列损坏锁定会话失效 | [项目远端](https://github.com/hispark-rs/hisi-ws53-coex)同名分支；空缓存外部消费者、独立 CI 及轮询端点 QEMU 通过，未发布，真实对端与实板尚未验收 |
-| hisi-hal | `feat/ws53-mcu-integration`，`f14aabc`；共用 I2C 事务、SPI 帧和分频计算 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；`ws53-pac` 尚未发布，旧芯片 SPI 改动的实板验证未完成 |
+| hisi-hal | `feat/ws53-mcu-integration`，`f14aabc`；共用 I2C 事务、SPI 帧和分频计算 | 同名远端分支，[草稿 PR #16](https://github.com/hispark-rs/hisi-hal/pull/16)；`ws53-pac 0.1.0-alpha.1` 已发布；HAL 新版本尚未发布，旧芯片 SPI 改动的实板验证未完成 |
 | hisi-riscv-qemu | `ws53-agpio-clock`，`756662c`；包含多个模型集成分支 | 同名远端分支，[草稿 PR #23](https://github.com/hispark-rs/hisi-riscv-qemu/pull/23)；继续核查各模型的实板边界 |
 | hisi-fwpkg | `feat/ws53-application-images`，`217447f` | 同名远端分支，[草稿 PR #4](https://github.com/hispark-rs/hisi-fwpkg/pull/4)；为 hisiflash 的固定 Git 依赖 |
 | hisiflash | `feat/ws53-serial-flash`，`13a2bb2`；含串口回读文件头重传和恢复保护范围检查 | 同名远端分支，[草稿 PR #26](https://github.com/hispark-rs/hisiflash/pull/26)；本地工作区测试及格式/Clippy 通过，新增路径尚未实板验证 |
@@ -19,8 +43,8 @@
 
 寄存器来源 → PAC → 运行时/HAL → 示例与测试；QEMU 模型独立版本化并由测试
 固定其来源。`hisiflash` 固定远端 `hisi-fwpkg` 的 `217447f`。目前尚不能声称
-整个适配已完成：脚本与证据尚未全部提交，外部消费者构建仍在检查。HAL/运行时
-依赖的 WS53 PAC 尚未发布到 crates.io。干净检出已成功初始化全部递归子模块；
+整个适配已完成：脚本与证据尚未全部提交，外部消费者构建仍在检查。
+WS53 PAC 已于 2026-11-01 发布到 crates.io；HAL 与 Embassy 新版本仍为开发集成。干净检出已成功初始化全部递归子模块；
 空 Cargo 缓存下 WS53 HAL 主机测试、WS53/WS63/BS21 RISC-V 检查和 WS53 示例
 构建通过。两个诊断示例分别显式启用 `qemu-only`，不能把它们视为硬件验收。
 

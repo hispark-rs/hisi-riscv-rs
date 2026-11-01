@@ -1,0 +1,91 @@
+{
+  "hardware_accessed": false,
+  "flash_tested": false,
+  "power_cycle_tested": false,
+  "tests": {
+    "hal_host": {
+      "ws63": 336,
+      "bs21": 220,
+      "ws53": 427
+    },
+    "rtos_host": {
+      "base": 86,
+      "shared": 91,
+      "standalone_per_chip": 14
+    },
+    "independent_three_chip_clippy": true,
+    "independent_template_links": [
+      "ws63",
+      "bs21"
+    ],
+    "external_ws53_host_and_target": true,
+    "qtest_existing": 11,
+    "crypto_host": 19,
+    "rf_host": 26,
+    "sta_workspace_check": true,
+    "softap_check": true,
+    "one_hal_in_parent_lock": true,
+    "tcxo_words_ws63_and_bs21": 3
+  },
+  "shared_qemu": {
+    "qualified": false,
+    "before_and_after": "native_ticks=7 embassy_ticks=7 timer_irqs=14 context_switches=14",
+    "reason": "Existing HIL fixture requires native>=8. Same threshold failure on pre-migration d17beda; no tolerance was lowered."
+  },
+  "release_blockers": [
+    "new HAL alpha.10 not published",
+    "runtime chip-ws53 not published",
+    "RF runtime driver alpha.20 not published",
+    "new RTOS embassy-only profile not published"
+  ],
+  "new_component_created": false,
+  "unpublished_prototype": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/superseded-hisi-embassy",
+  "logs": [
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/hal-independent.log",
+      "sha256": "94ba317b59f5b5b22bdd2fd7569b87d149ad814083578428a65e493b05a24fa2"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/rtos-independent-rerun.log",
+      "sha256": "9c4e46de2459deb0d15d3b06f89c8326962b61d1f3e6ff0c0d2b77d00059920e"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qtest-regression.log",
+      "sha256": "60d258787b47e1d6afc30ad01fde768dd14661e372b52df67bf3c914cd0918fd"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/template-ws63-build.log",
+      "sha256": "9c7170c9a3edc20f7a6baae846a423db06f014c6bcfb4913492941fa71aabc84"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/template-bs21-build.log",
+      "sha256": "837bdc9748a0c7fa37aa7cc3b3ec5d5047aaa31151a3a73fda819d78c8525d52"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/embassy-extraction/ws53-external.log",
+      "sha256": "0550831532dae570ad60f1f66c1c72e6a8e2843c9f10a7612c3d154fbef770c3"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/embassy-extraction/workspace-check.log",
+      "sha256": "e2a41740bea06fcce3bf7e6440f556812fe9446bc040860109722391a0d13c59"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/embassy-extraction/crypto-regression.log",
+      "sha256": "9932e7a334496f9151f148eabfe005a274f3da287a14f449532e0eb64535aba4"
+    },
+    {
+      "path": "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/embassy-extraction/rf-regression.log",
+      "sha256": "09c7ab638818795727755000ddbcee624f47104a4c8342709070d0cbb276fc1f"
+    }
+  ],
+  "commits": {
+    "hal": "5895b95560ca1789d2aea37cfd6db51ba05e416a",
+    "rtos": "9b83efacb5b44d02c76e3f4a9193275256a373d5",
+    "template": "a843ec2e079ffb5eb35200bef2c4de9849ccbaf4",
+    "ws63_examples": "f52900db5921a28f5696c89d7abd28d4b32fcd20",
+    "crypto_ws63": "560b713c720f4783adb8bc4d1aebaf1380d08677",
+    "rf_ws63": "b7f742b305cd9fd0200ff6f0133fa391e7e7d42a",
+    "qemu": "e60f95c3d9f53e65b8df193a64e5faae616fa85b"
+  },
+  "source_scope": "Independent RTOS/template and initial QEMU matrices use HAL 2b6cfce. Parent later uses 5895b95: additional chip-correct Instant word reuse, checked by WS63/BS21 register-view tests and STA/SoftAP target builds. No silicon high-word qualification."
+}

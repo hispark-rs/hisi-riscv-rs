@@ -8788,3 +8788,18 @@ SPI DMA 异步等待：HAL `92e716a` 使用调用方提供的异步定时器安�
 SPI DMA 定时器 IRQ 联合模型：异步夹具改用 HAL TIMER0 异步延时和模型 IRQ53，只在 waker 通知后重新轮询；正常完成和超时取消要求至少一次定时器中断，完成/取消后重新取得 TIMER0 异步延时以检查本地清理。固定 `27def19` QEMU 中 8 位及 32 位各 50 场景通过，报告 SHA-256 `72c6e892014b1062076f3e92cedd617b787d57be1981644ab9ab17fdef0e314d` 和 `bb396b6fdb53c893c45b2c44b242d4f73473949161fa6dc19e3118b8f5746574`；部分场景在启动阶段拒绝或主动终止，不运行等待。此为手写单核测试执行器，不证明 Embassy 调度、真实 IRQ/电气时序、缓存和物理排空；不继承实板验收。
 
 I2C DMA 异步等待：HAL `b9e87bb` 将 SPI 的外部定时器等待及取消保护提取为内部共用逻辑，`40dde14` 为 I2C 添加单次 poll 和可取消 async 等待，保留接收尾部水位、STOP、错误和资源保留规则。I2C 主机状态机 12 项和 WS53 目标 Clippy 通过；固定 `27def19` QEMU 的实际 Rust TIMER0 IRQ Future 和原阻塞路径各通过 166 场景，报告 SHA-256 `7dc4d43c4dc148ee31c125a9f4a35016bcdea9007f171ece425b2c0bbe1304b3`、`96e4e91860884e152540c11b02bcae752f64ab35b59d87fc256827c7eb1936a5`；共享等待重构后 SPI 另过 50 场景，报告 `f4c67dfc43f6e86bcaa875adadc96b0131f1b86c83961e518df2fac7a8701264`。模型使用手写单核执行器和虚拟对端；部分场景在等待前拒绝或终止。源码绑定收据、真实对端、Embassy、实板、总线排空和冷启动仍未验收。
+
+
+## 2026-11-01：Embassy 回归现有 RTOS 时间架构
+
+撤回平行 `hisi-embassy` 组件方案，未创建该仓库。HAL 只保留硬件计数/定时/IRQ
+和执行器无关 async；队列、注册及时间策略迁入 `hisi-rtos`。原 `embassy` 共用
+SchedulerPort，1 MHz ABI 仍为 1 ms 分辨率；实验 `embassy-only` 不编译线程调度器，
+显式交接 TIMER/TCXO。两种 profile 共用有界队列、一处全局注册，不能在同一
+Cargo feature 合并构建中混用。
+
+子仓独立测试与三芯片检查通过；WS53 正常/故障、旧芯片纯模式 QEMU 通过。
+共享共存旧 HIL 阈值在迁移前后 QEMU 都未达到，尚未关闭。新 HAL、runtime、RF
+契约及 RTOS profile 尚未发布；仅 `ws53-pac` 原标签发布成功且 registry 消费者已验证。
+本轮没有烧录、复位、串口或分析仪操作，历史物理证据不能自动继承。
+完整职责、提交、测试、发布与实板边界统一见 [迁移清单](embassy-extraction.md)。

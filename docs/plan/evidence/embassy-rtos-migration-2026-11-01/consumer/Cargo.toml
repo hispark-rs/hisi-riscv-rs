@@ -1,0 +1,19 @@
+[package]
+name = "ws53-time-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hisi-rtos = { version = "0.1.0-alpha.25", features = ["embassy-only", "chip-ws53", "unstable"] }
+embassy-time-driver = { version = "0.2", features = ["tick-hz-1_000_000"] }
+[dev-dependencies]
+critical-section = { version = "1", features = ["std"] }
+
+# Explicit development integration only, NOT registry/release qualification.
+# No path dependencies: these commits must be fetchable without the parent.
+[patch.crates-io]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "2b6cfcec688d3e2ea7e5f294e2d49d45d9091135" }
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }
+hisi-rf-rtos-driver = { git = "https://github.com/hispark-rs/hisi-rf-rtos-driver", rev = "f36280b51d93f8cb4e00962e3a450f6b8322e8bd" }
+hisi-rtos = { git = "https://github.com/hispark-rs/hisi-rtos", rev = "9b83efacb5b44d02c76e3f4a9193275256a373d5" }

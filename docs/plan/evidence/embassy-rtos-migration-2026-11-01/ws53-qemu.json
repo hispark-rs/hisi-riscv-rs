@@ -1,0 +1,28 @@
+{
+  "case": "ws53",
+  "passed": false,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws53",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/target/embassy-extraction/ws53-rtos-embassy.elf",
+    "-d",
+    "guest_errors"
+  ],
+  "elf_sha256": "6af8b1fd895c6f6d8173372013024ec2e03c807477f50f6787272941269d0017",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "stdout": "",
+  "stderr": [
+    "qemu-system-riscv32: terminating on signal 15 from pid 91341 (/home/sanchuanhehe/.cache/uv/environments-v2/test-embassy-time-profile-78111ce366af31c8/bin/python)"
+  ],
+  "unexpected_diagnostics": []
+}

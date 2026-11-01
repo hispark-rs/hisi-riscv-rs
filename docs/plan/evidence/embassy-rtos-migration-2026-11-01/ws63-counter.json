@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "long_uptime_qualified": false,
+  "elf_sha256": "4c1a54c6f45ef2747cf507dbee36b3ae4e3ff7b6eaaf5793b27ad95fb4f7aff7",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255",
+  "stdout": "WS63 TCXO EMBASSY PASS\n",
+  "stderr": "qemu-system-riscv32: terminating on signal 15 from pid 56756 (/home/sanchuanhehe/.cache/uv/environments-v2/test-ws63-tcxo-model-02cfa1efd60e5a10/bin/python3)\n"
+}

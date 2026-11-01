@@ -1,0 +1,7 @@
+{
+  "rtos_commit": "d17beda",
+  "elf_sha256": "b9cb62a3fd31fc8a8388e04e6dc6231b41e78778cec9392f8f78f9b2a02cf985",
+  "stdout": "\r\nA3 RTOS Embassy coexist diagnostic\r\nnative_ticks=7 embassy_ticks=7 timer_irqs=14 context_switches=14\r\n\r\nA3_RTOS_EMBASSY_COEXIST_FAIL\r\n",
+  "stderr": "qemu-system-riscv32: terminating on signal 15 from pid 76899 (/usr/bin/python)\n",
+  "hardware_accessed": false
+}
