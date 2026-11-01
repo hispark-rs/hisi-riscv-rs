@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 HAL 主机测试门控整改
+
+HAL `test/host-lint-contracts` / `a52e0dd` 已推送，
+[草稿 PR #25](https://github.com/hispark-rs/hisi-hal/pull/25) 叠加 #24。
+关闭此前 WS63 16 项主机测试 Clippy 问题及新增检查发现的 BS21 两项问题；
+子仓独立开发脚本现强制三芯片 `clippy --tests -D warnings`。WS53/WS63/BS21
+445/372/220 项主机测试、文档测试、主机/目标 Clippy 全部通过。
+
+DMA 属性测试移除复制编码器，调用生产实现；隔离故障注入中旧测试 12 项全过，
+新测试捕获 3 项失败。PWM 穷举实际类型化入口，不用恒真断言替代边界验证。
+无生产驱动变更、无硬件操作、无版本发布；父仓只同步指针与精简证据，锁文件不变。
+详见[测试门控证据](evidence/hal-test-lints-2026-11-01/README.md)。
+
 ## 2026-11-01 HAL 软件唤醒修复
 
 HAL `fix/block-on-software-wake` / `d5ca0ba` 已推送（实现 `cc1be08`，随后仅澄清 IRQ 文档前提），
@@ -8,8 +21,8 @@ HAL `fix/block-on-software-wake` / `d5ca0ba` 已推送（实现 `cc1be08`，随�
 没有新增定时器、时间队列、Embassy 依赖或跨芯片平行实现。父仓同步指针、独立
 QEMU 软件唤醒示例、锁文件与 CI；既有芯片/定时器回归通过。
 
-三芯片独立测试与目标 Clippy 通过；额外 WS63 主机测试 Clippy 修改前后仍各有
-16 项旧错误，不能称所有 lint 通过。固定远端消费者是开发验收，未发布依赖仍阻塞
+该批三芯片独立测试与目标 Clippy 通过；当时额外 WS63 主机测试 Clippy 修改前后各有
+16 项旧错误，现由上方测试门控整改关闭，旧报告保留。固定远端消费者是开发验收，未发布依赖仍阻塞
 registry-only 发布。没有新发布或硬件操作，WFI 前 IRQ 竞态仍未关闭。
 详见[软件唤醒证据](evidence/block-on-wake-fix-2026-11-01/README.md)。
 

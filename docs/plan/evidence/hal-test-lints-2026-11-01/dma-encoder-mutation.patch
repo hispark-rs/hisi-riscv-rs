@@ -1,0 +1,20 @@
+--- a/src/dma.rs
++++ b/src/dma.rs
+@@ -244,7 +244,7 @@
+     fn control_word(self, transfer_size: DmaTransferSize) -> u32 {
+         let mut control: u32 = 0;
+         control |= (transfer_size.get() as u32) & 0x0fff; // trans_size [0:11]
+-        control |= ((self.src_burst as u32) & 0x07) << 12; // s_bsize [12:14]
++        control |= ((self.src_burst as u32) & 0x07) << 13; // s_bsize [12:14]
+         control |= ((self.dst_burst as u32) & 0x07) << 15; // d_bsize [15:17]
+         control |= ((self.src_width as u32) & 0x07) << 18; // s_width [18:20]
+         control |= ((self.dst_width as u32) & 0x07) << 21; // d_width [21:23]
+@@ -274,7 +274,7 @@
+             ch_cfg |= 1 << 13;
+         }
+         if self.bus_lock {
+-            ch_cfg |= 1 << 14;
++            ch_cfg |= 1 << 15;
+         }
+         ch_cfg
+     }
