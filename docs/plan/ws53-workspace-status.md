@@ -2,6 +2,16 @@
 
 **状态：** WS53 适配的配套工作，持续维护中。
 
+## 2026-11-01 HAL 文档测试与稳定配置门控
+
+HAL `fix/dma-doctest-feature-gates` / `f39aef7` 已推送，
+[草稿 PR #27](https://github.com/hispark-rs/hisi-hal/pull/27) 叠加 #26。
+DMA 示例随实验 feature 门控，反例验证 E0521/E0133；子仓新增两个稳定 WS63 配置。
+五组主机测试、文档、主机测试及目标 Clippy 通过；错误诊断注入能按预期失败。
+未改 DMA 行为、公开可见性或安全契约，父仓同步精确指针与证据，锁文件无变更。
+原远端私有模块文档失败与本机收集差异均保留，新远端 CI 单独确认。
+见[范围与证据](evidence/hal-doctest-gates-2026-11-01/README.md)。无硬件操作或发布。
+
 ## 2026-11-01 UART 非阻塞发送修复
 
 - HAL `fix/uart-nonblocking-write` / `9a8cfaf` 已推送，[草稿 PR #26](https://github.com/hispark-rs/hisi-hal/pull/26)。
