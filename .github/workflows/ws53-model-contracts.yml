@@ -59,7 +59,7 @@ jobs:
               ws53_spi_model_build.py test-ws53-spi-wire-ci.py test-ws53-spi-wire-validator.py \
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
-              test-bs21-timer-delay-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py \
+              test-bs21-timer-delay-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py test-ws53-i2c-dma.py \
               test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
@@ -136,6 +136,20 @@ jobs:
                 --elf "$RUNNER_TEMP/ws53-spi-dma-$mode-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
                 > "$RUNNER_TEMP/ws53-spi-dma-$mode-$width.json"
             done
+          done
+      - name: Check WS53 I2C DMA blocking and async progress
+        working-directory: project
+        run: |
+          for mode in blocking async; do
+            extra=()
+            if [ "$mode" = async ]; then extra=(--features async-smoke); fi
+            cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+              -p ws53_i2c_dma "${extra[@]}" --release --target riscv32imfc-unknown-none-elf \
+              --target-dir "$RUNNER_TEMP/ws53-i2c-dma-$mode"
+            uv run --offline --script scripts/test-ws53-i2c-dma.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$RUNNER_TEMP/ws53-i2c-dma-$mode/riscv32imfc-unknown-none-elf/release/ws53_i2c_dma" \
+              > "$RUNNER_TEMP/ws53-i2c-dma-$mode.json"
           done
       - name: Check BS21 stale timer expiry
         working-directory: project
@@ -218,6 +232,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-dma-poll-32.json
             ${{ runner.temp }}/ws53-spi-dma-async-8.json
             ${{ runner.temp }}/ws53-spi-dma-async-32.json
+            ${{ runner.temp }}/ws53-i2c-dma-blocking.json
+            ${{ runner.temp }}/ws53-i2c-dma-async.json
             ${{ runner.temp }}/ws53-flash-snapshot-tests.log
             ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json

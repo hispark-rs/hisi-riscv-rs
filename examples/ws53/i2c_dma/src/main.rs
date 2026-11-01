@@ -44,6 +44,17 @@ impl DelayNs for TimerDelay<'_, '_> {
         panic!("timer stopped");
     }
 }
+#[cfg(feature = "async-smoke")]
+impl embedded_hal_async::delay::DelayNs for TimerDelay<'_, '_> {
+    async fn delay_ns(&mut self, ns: u32) {
+        let mut timer = self.0.borrow_mut();
+        let mut delay = unsafe { timer.async_delay(TimerChannel::Channel0) }.unwrap();
+        embedded_hal_async::delay::DelayNs::delay_ns(&mut delay, ns).await;
+    }
+}
+#[cfg(feature = "async-smoke")]
+#[path = "../../spi_dma/src/async_executor.rs"]
+mod async_executor;
 fn emit(u: &Uart<'_, Uart2<'_>>, s: &[u8]) {
     for &b in s {
         let mut n = 1_000_000;
@@ -74,7 +85,7 @@ fn test<T: Instance + 'static>(
     rx: Channel<'static>,
     case: Case,
     console: &mut Uart<'_, Uart2<'_>>,
-    delay: &mut impl DelayNs,
+    delay: &mut TimerDelay<'_, '_>,
 ) {
     let Case {
         port,
@@ -168,10 +179,53 @@ fn test<T: Instance + 'static>(
                     _ => transfer.as_mut().unwrap().request_stop(),
                 }
             } else {
+                #[cfg(not(feature = "async-smoke"))]
                 let result = transfer.as_mut().unwrap().wait(
                     NonZeroU16::new(if normal { 20000 } else { 3000 }).unwrap(),
                     delay,
                 );
+                #[cfg(feature = "async-smoke")]
+                let result = {
+                    use core::{
+                        future::Future,
+                        num::NonZeroU32,
+                        task::{Context, Poll},
+                    };
+                    let mut future = core::pin::pin!(
+                        transfer
+                            .as_mut()
+                            .unwrap()
+                            .wait_async(delay, NonZeroU32::new(10).unwrap())
+                    );
+                    let mut result = Err(Error::Timeout);
+                    let waker = async_executor::waker();
+                    let mut cx = Context::from_waker(&waker);
+                    let mut wake = true;
+                    let mut polls = 0;
+                    for _ in 0..100_000_000 {
+                        if !wake && !async_executor::take_wake() {
+                            continue;
+                        }
+                        wake = false;
+                        polls += 1;
+                        if let Poll::Ready(value) = future.as_mut().poll(&mut cx) {
+                            result = value;
+                            break;
+                        }
+                        if polls >= if normal { 20000 } else { 3000 } {
+                            break;
+                        }
+                    }
+                    result
+                };
+                #[cfg(feature = "async-smoke")]
+                {
+                    let mut timer = delay.0.borrow_mut();
+                    drop(unsafe { timer.async_delay(TimerChannel::Channel0) }.unwrap());
+                    if matches!(scenario, b'N' | b'T') {
+                        assert!(async_executor::irq_count() > 0);
+                    }
+                }
                 match scenario {
                     b'N' | b'1' | b'3' | b'4' => {
                         assert_eq!(result.unwrap().elements(), length as u16)
@@ -236,6 +290,17 @@ fn main() -> ! {
     let timer = RefCell::new(TimerDriver::new(unsafe {
         p.TIMER.assume_application_ownership()
     }));
+    #[cfg(feature = "async-smoke")]
+    {
+        use hisi_hal::interrupt::{self, Threshold};
+        timer.borrow_mut().disable(TimerChannel::Channel0);
+        timer
+            .borrow_mut()
+            .set_interrupt_mask(TimerChannel::Channel0, true);
+        timer.borrow_mut().clear_interrupt(TimerChannel::Channel0);
+        interrupt::set_threshold(Threshold::from_level(0).unwrap());
+        unsafe { riscv::interrupt::enable() };
+    }
     timer.borrow_mut().configure(
         TimerChannel::Channel1,
         TimerMode::Periodic,

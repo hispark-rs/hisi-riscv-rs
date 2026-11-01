@@ -514,7 +514,9 @@ dependencies = [
 name = "ws53_i2c_dma"
 version = "0.1.0"
 dependencies = [
+ "critical-section",
  "embedded-hal 1.0.0",
+ "embedded-hal-async",
  "hisi-hal",
  "hisi-riscv-rt",
  "riscv",
