@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 定时器生命周期增量
+
+| 仓库 | 分支 / 提交 | 状态 |
+| --- | --- | --- |
+| hisi-hal | `refactor/timer-async-lifecycle` / `6a6ff72` | 两批提交已推送，[草稿 PR #19](https://github.com/hispark-rs/hisi-hal/pull/19)；共用生命周期，分别保留芯片后端和所有权入口 |
+| ws63-examples | `test/timer-async-lifecycle` / `20bac94` | 已推送，[草稿 PR #8](https://github.com/hispark-rs/ws63-examples/pull/8)；三通道取消/复用夹具 |
+
+父仓更新两个子模块指针、模型 CI 与报告上传、精简证据。没有版本/依赖清单变化，
+原集成锁文件无需修改；其他组件的固定开发图保留各自原验收提交。主机、目标与
+远端消费者通过，WS63 三通道和 WS53 两通道 QEMU 通过，SPI/I2C DMA 组合
+50/166 场景通过。远端新增 CI 和实板未验收，发布阻塞未关闭。
+完整结果见 [报告](evidence/timer-async-lifecycle-2026-11-01/report.json)。
+
 ## 2026-11-01 HAL IRQ 等待增量
 
 HAL 当前为 `fix/irq-signal-rendezvous` / `da254f8`，已推送并核对远端精确提交；

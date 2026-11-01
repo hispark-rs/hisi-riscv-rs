@@ -162,12 +162,23 @@ jobs:
       - name: Check executor-independent HAL IRQ waits
         working-directory: project
         run: |
-          cargo build --offline --locked -Zbuild-std=core,alloc -p async_delay --release \
-            --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/hal-irq-wait"
+          for channel in 0 1 2; do
+            feature=lifecycle-check
+            if [ "$channel" != 0 ]; then feature=lifecycle-channel$channel; fi
+            cargo build --offline --locked -Zbuild-std=core,alloc -p async_delay --features "async_delay/$feature" --release \
+              --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/hal-irq-wait"
+            uv run --offline --script scripts/test-hal-irq-wait-qemu.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$RUNNER_TEMP/hal-irq-wait/riscv32imfc-unknown-none-elf/release/async_delay" \
+              --lifecycle --channel "$channel" --output "$RUNNER_TEMP/hal-irq-wait-$channel.json"
+          done
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+            -p ws53_ram_smoke --features timer-async-smoke --release --target riscv32imfc-unknown-none-elf \
+            --target-dir "$RUNNER_TEMP/ws53-timer-lifecycle"
           uv run --offline --script scripts/test-hal-irq-wait-qemu.py \
-            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
-            --elf "$RUNNER_TEMP/hal-irq-wait/riscv32imfc-unknown-none-elf/release/async_delay" \
-            --output "$RUNNER_TEMP/hal-irq-wait.json"
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" --chip ws53 \
+            --elf "$RUNNER_TEMP/ws53-timer-lifecycle/riscv32imfc-unknown-none-elf/release/ws53_ram_smoke" \
+            --output "$RUNNER_TEMP/ws53-timer-lifecycle.json"
       - name: Check Flash and RAM-function ELF snapshots
         working-directory: project
         run: |
@@ -243,6 +254,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-dma-async-32.json
             ${{ runner.temp }}/ws53-i2c-dma-blocking.json
             ${{ runner.temp }}/ws53-i2c-dma-async.json
+            ${{ runner.temp }}/hal-irq-wait-*.json
+            ${{ runner.temp }}/ws53-timer-lifecycle.json
             ${{ runner.temp }}/ws53-flash-snapshot-tests.log
             ${{ runner.temp }}/ws53-ram-functions-snapshot-tests.log
             ${{ runner.temp }}/ws53-spi0-collision-build/receipt.json

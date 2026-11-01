@@ -8808,3 +8808,10 @@ Cargo feature 合并构建中混用。
 逻辑，并将 Waker 回调移出内部临界区；WS53 硬件状态机未改变。独立三芯片回归、
 远端消费者和父仓普通 async QEMU 通过，取消/停机/WFI 及实板保持未验收。
 详细范围和反例见 [跨芯片审查记录](hal-cross-chip-review.md)，不以此宣称全部 async 已完成。
+
+定时器后续：HAL `7e4c86c`/`6a6ff72` 共用 WS53/WS63 的一次性 async 生命周期，
+寄存器/IRQ/资源接管仍独立。WS63 的取消和空中断问题已在模型复现并修复，WS53
+原双通道场景及 SPI/I2C DMA＋定时器组合保持通过；WS63 三个通道也已分别验证。
+仅此软件/模型范围有新证据，物理停止时序、RAM/Flash/冷启动均不继承旧结论。
+进度与依赖以 [多仓状态](ws53-workspace-status.md) 和
+[证据](evidence/timer-async-lifecycle-2026-11-01/report.json) 为准。

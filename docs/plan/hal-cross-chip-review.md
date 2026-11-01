@@ -12,7 +12,7 @@ WS63/BS2X 公开接口保持兼容，WS53 仅在 `unstable` 下调整。父仓�
 | GPIO / pinctrl | WS53 区分 bank、pad、共享 GPIO1 时钟与既有交接；WS63 GPIO 资源和寄存器布局不同 | 对照标准 digital trait、状态与错误；复用相同逻辑，pad/时钟配置留在 SoC，保留不同寄存器后端 |
 | UART | `uart.rs` 已含共用部分，`uart_ws53.rs` 是 WS53 接收/trait 实现；H0、复位及 pad 特定 | 先核对可共用 FIFO/trait 逻辑，H0/实例/IRQ 留 SoC 或行为后端，不能改变既有 WS63 API |
 | DMA | WS53 v151 MDMA 八槽、保留资源和缓存交接；WS63 DMA/SDMA 通道及寄存器不同 | 先共用边界计算和取消状态机的可证明部分；请求路由归 SoC，独立后端保留停机与缓存差异 |
-| TIMER | WS53 两通道 v150；WS63 三定时器，接管与 IRQ 不同 | 比较通用 tick/超时与 async 逻辑；寄存器和时钟后端分离 |
+| TIMER | WS53 两通道、WS63 三通道已共用一次性 async 生命周期；接管、寄存器与 IRQ 后端独立 | 继续验证真实 stop/ack 和时钟；BS21 未新增 async，不因同名 IP 默认开放 |
 | TCXO | WS53 应用窗口含多片段快照；WS63 计数器快照路径不同 | 审查快照/超时通用算术，保留窗口及时钟语义差异 |
 | Embassy | 已迁至 `hisi-rtos` 的共享/纯时间 profile；HAL 无队列、注册或 Embassy 依赖 | 不在 HAL 内继续合并调度器；测试与发布归 RTOS，平台交接显式化，详见 `embassy-extraction.md` |
 | I2C | WS53 v151、BS2X DesignWare v151、WS63 v150；同号不等于行为相同 | WS53/BS21 共用字节事务规划，但寄存器、资源与失败处理保持独立；BS21 中止分类有 SDK/主机证据，超时恢复和实板仍未证实，实例/时钟/路由继续归 SoC |
@@ -145,3 +145,26 @@ HAL 子仓新增七项测试；旧提交稳定失败于登记窗口与回调锁�
 通过，但未注入目标 IRQ 竞态。额外主机测试 Clippy 仍有与基线相同的 16 项旧告警。
 没有操作实板，没有修改寄存器行为，也没有提升稳定性等级。
 详见 [证据](evidence/hal-irq-rendezvous-2026-11-01/report.json)。
+
+### 定时器生命周期（`7e4c86c` → `6a6ff72`）
+
+先从 WS53 提取 `timer/async_alarm.rs`，将硬件操作移出元数据临界区，再让 WS63
+使用相同的 arm、等待、完成和取消状态机。WS53 保留整个 TimerDriver 的 unsafe
+借用/交接，WS63 保留消耗 TIMER token 的实验构造器；各自 PAC、IRQ 与停止确认
+留在小型后端。没有新增队列、执行器或第二个硬件所有者。
+
+WS63 以前取消 Future 会留下计时器/IRQ 活动，空中断也会提前完成等待；现在取消
+会停止、屏蔽、确认并清理 Waker，空中断不会停止仍在计时的通道。同时共用向上
+取整、零值不启动和长周期分段计算。公开签名保留，但行为改变不能继承旧实板验收。
+
+原 WS53 生命周期测试迁到 HAL 共用模块，并补充 arm 期间到期、检查 raw 状态后
+到期、通道隔离及 IO/Waker 均在锁外的检查。独立主机 WS63/WS53/BS21 为
+351/432/220，三芯片目标 Clippy、feature、寄存器策略和无 Embassy 依赖检查通过。
+WS63 三通道 QEMU 分别通过生命周期检查和五次后续 IRQ；WS53 两通道原场景保持
+通过，SPI/I2C DMA 与定时器组合分别通过 50/166 场景（包含等待前拒绝的场景）。
+固定旧 HAL 的相同夹具仍失败于取消后活动检查。详见
+[报告](evidence/timer-async-lifecycle-2026-11-01/report.json)。
+
+真实停止/确认时序、外部时钟和跨核资源仍未复验；BS21 async 未扩大支持范围。
+下一批重点是最小 `block_on` 的 poll-to-WFI 窗口、DMA 内存安全与其他 async
+外设的接管/取消契约，不能把定时器模型通过推广为整个 HAL async 已验收。

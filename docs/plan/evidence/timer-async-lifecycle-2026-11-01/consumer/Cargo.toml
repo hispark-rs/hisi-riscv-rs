@@ -1,0 +1,11 @@
+[package]
+name="timer-lifecycle-consumer"
+version="0.0.0"
+edition="2024"
+publish=false
+[workspace]
+[dependencies]
+hisi-hal={git="https://github.com/hispark-rs/hisi-hal.git",rev="6a6ff72ced4d91af0fb5297c18d004413988d3b0",default-features=false,features=["chip-ws63","async","unstable"]}
+embedded-hal-async="1.0"
+[patch.crates-io]
+hisi-riscv-rt={git="https://github.com/hispark-rs/hisi-riscv-rt.git",rev="eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb"}
