@@ -66,6 +66,7 @@ jobs:
           cargo fetch --locked --manifest-path examples/ws53/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/bs21/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws63-gpio-async-model/Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path examples/ws53-flash-uart-rx/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
           for script in ws53_ci_qemu_uart_clock_build.py ws53_crypto_model_build.py test-ws53-crypto-qualified.py \
@@ -77,7 +78,8 @@ jobs:
               ws53_spi_collision_build.py test-ws53-spi-collision.py ws53_spi_dma_model_build.py \
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
               test-bs21-timer-delay-qemu.py test-hal-irq-wait-qemu.py test-gpio-async-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py test-ws53-i2c-dma.py \
-              test-ws53-ram-elf.py test-ws53-flash-snapshot.py; do
+              test-ws53-ram-elf.py test-ws53-flash-snapshot.py ws53_uart_rx_build.py \
+              test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -94,6 +96,21 @@ jobs:
         run: |
           bash scripts/run-ws53-model-contracts.sh "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             "$RUNNER_TEMP/ws53-model/receipt.json" ../qemu-overlay "$RUNNER_TEMP/ws53-contracts"
+      - name: Check UART receive lifecycle and validation failures
+        working-directory: project
+        run: |
+          uv run --offline --script scripts/test-qemu-test-support.py \
+            > "$RUNNER_TEMP/ws53-uart-support.log" 2>&1
+          uv run --offline --script scripts/ws53_uart_rx_build.py --output "$RUNNER_TEMP/ws53-uart-build"
+          uv run --offline --script scripts/test-ws53-uart-receipt.py \
+            --receipt "$RUNNER_TEMP/ws53-uart-build/receipt.json" > "$RUNNER_TEMP/ws53-uart-negative.json"
+          for scenario in normal blocked-route cancel-peer-timeout; do
+            uv run --offline --script scripts/test-ws53-flash-uart-rx-qemu.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$RUNNER_TEMP/ws53-uart-build/firmware.elf" \
+              --build-receipt "$RUNNER_TEMP/ws53-uart-build/receipt.json" \
+              --output "$RUNNER_TEMP/uart-$scenario" --scenario "$scenario"
+          done
       - name: Check IPC18 random-buffer service
         working-directory: project
         run: |
@@ -263,6 +280,13 @@ jobs:
             ${{ runner.temp }}/ws53-model-build.json
             ${{ runner.temp }}/ws53-model/receipt.json
             ${{ runner.temp }}/ws53-model/command-*.log
+            ${{ runner.temp }}/ws53-uart-support.log
+            ${{ runner.temp }}/ws53-uart-negative.json
+            ${{ runner.temp }}/ws53-uart-build/receipt.json
+            ${{ runner.temp }}/ws53-uart-build/build.log
+            ${{ runner.temp }}/uart-*/report.json
+            ${{ runner.temp }}/uart-*/qemu.stderr
+            ${{ runner.temp }}/uart-*/round*.pads.csv
             ${{ runner.temp }}/ws53-contracts/**/report.json
             ${{ runner.temp }}/ws53-contracts/**/runner.log
             ${{ runner.temp }}/ws53-contracts/**/build.log
