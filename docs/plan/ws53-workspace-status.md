@@ -1,5 +1,19 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 GPIO 生命周期增量
+
+HAL `refactor/gpio-async-lifecycle` / `454ab40`，先抽取 WS53（`08a4120`）、修复
+WS63 每引脚隔离（`737599f`），再保留临时屏蔽时的 pending；三批已推送，
+[草稿 PR #21](https://github.com/hispark-rs/hisi-hal/pull/21)
+叠加 #20。父仓同步可从远端取得的精确指针、新模型夹具及独立锁文件、CI 与证据。
+既有依赖版本没有变化，其他组件开发图保持各自验收提交。
+
+三芯片主机/目标检查、WS53/WS63 文档测试和无 Embassy 依赖检查通过。WS63 模型
+验证同组引脚相互隔离及取消，WS53 GPIO async 增加 ISR 前重 poll 并通过；
+相同夹具的旧版及中间版本 pending-peer 失败均保留。
+全新 Cargo 缓存的父仓外消费者从远端构建并通过 WS63 模型。新增 CI 远端结果尚未
+验收，发布与实板阻塞保留。完整范围见 [报告](evidence/gpio-async-lifecycle-2026-11-01/report.json)。
+
 ## 2026-11-01 BS20 独立回归与 WFI 反例
 
 父仓 `18dab2e18` 已推送：同步 BS20 独立锁文件中的 HAL/runtime/PAC 版本，

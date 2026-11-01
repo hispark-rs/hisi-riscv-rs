@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "physical_timing_qualified": false,
+  "chip": "ws53",
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/qemu-time/build/qemu-system-riscv32",
+    "-M",
+    "ws53",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "null",
+    "-serial",
+    "null",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/examples/ws53/target/riscv32imfc-unknown-none-elf/release/ws53_ram_smoke",
+    "-icount",
+    "shift=0,sleep=on",
+    "-d",
+    "guest_errors"
+  ],
+  "runner_terminated": true,
+  "returncode": 0,
+  "stdout": "WS53 RAM data/bss OK\r\nWS53 PASS timer_irq=53 count=3\r\nWS53 PASS gpio_async pad=17 irq=34 wakes=8 immediate=2 cancels=2 guards=2 restore=1\r\n",
+  "stderr": [
+    "qemu-system-riscv32: terminating on signal 15 from pid 73 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-gpio-async-qemu-408dd537674f6540/bin/python3)"
+  ],
+  "unexpected_diagnostics": [],
+  "elf_sha256": "5a9cacb5af1018bf02f5de44f086c870d38fe8f627dc9a081716f692be0017bb",
+  "qemu_sha256": "106f7cb6b616b88b790ffcd2aeddbf6194741f922222ec1e21ff2207d62dc255"
+}

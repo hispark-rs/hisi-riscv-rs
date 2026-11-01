@@ -98,6 +98,14 @@ fn complete<F: Future<Output = Result<(), core::convert::Infallible>>>(
         }
         stimulus(high);
         pending();
+        // Re-poll before the ISR is allowed to run. Temporary local masking
+        // must preserve an already latched controller event.
+        if wrong.is_some() {
+            // The directional-edge cases must await their ISR; a level wait
+            // is allowed to complete immediately once its level matches.
+            assert!(f.as_mut().poll(cx).is_pending());
+            assert!(interrupt::is_pending(GpioBank::Bank0.interrupt()));
+        }
         unsafe { riscv::interrupt::enable() };
         let mut budget = 1_000_000;
         while counts().1 == before.1 {
