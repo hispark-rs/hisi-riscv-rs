@@ -13,6 +13,10 @@ HAL WS53 主机 444 项、测试 Clippy、WS63 UART 八项通过。
 见 [证据与因果边界](evidence/spi-dma-progress-2026-11-01/README.md)。
 本地关闭这项夹具错误；远端全 CI 及实板仍分别验收，没有硬件操作。
 
+父仓 `9c6ea9c6b` 已推送。远端干净稀疏检出与八个精确子模块获取成功，按锁文件
+构建后 16 路首轮完成重放通过，检出无变更；非 async ELF 在启动模型前被拒绝。
+见 [干净检出记录](evidence/spi-dma-progress-2026-11-01/clean-checkout.json)。
+
 ## 2026-11-01 WS63 UART 后端纠错与模型集成
 
 HAL `refactor/uart-async-receive` 已推送 `7eda6f8`、`1a456ab`，更新
