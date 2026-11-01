@@ -1,0 +1,21 @@
+{
+  "parent": "0e2153fb2",
+  "jobs": {
+    "host": {
+      "id": 124818839982,
+      "head_sha": "0e2153fb297b6d8f6870db79877cab098382824e",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/41296661834/job/124818839982"
+    },
+    "plans": {
+      "id": 124818840067,
+      "head_sha": "0e2153fb297b6d8f6870db79877cab098382824e",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/41296661864/job/124818840067"
+    }
+  },
+  "scope": "Only named host and plan jobs, not all CI",
+  "raw_root": "/home/sanchuanhehe/Documents/hispark-rs/validation/block-on-irq-window-2026-11-01"
+}

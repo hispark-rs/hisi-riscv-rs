@@ -2,6 +2,18 @@
 
 **状态：** WS53 适配的配套工作，持续维护中。
 
+## 2026-11-01 IRQ→WFI 窗口定位
+
+现有最小夹具新增 `irq-race` profile，真实 HAL + IRQ ISR 在 WFI 前定点注入时
+需要第二次 IRQ 才继续；在 WFI 后注入一次即完成。仅父仓诊断、证据和计划更新，
+没有改 HAL/RTOS 行为、模型、锁文件或硬件。复现默认失败，显式诊断模式也不改变
+`correctness_passed=false`。旧软件唤醒场景及新 profile Clippy 通过。
+[完整边界与 SDK 线索](evidence/block-on-irq-window-2026-11-01/README.md)。
+
+上一提交 `0e2153fb2` 的远端主机测试 `124818839982` 和计划检查 `124818840067`
+已成功，关闭上一批对应的远端失败；其他 CI 不在这个结论内。
+[作业记录](evidence/hal-doctest-gates-2026-11-01/remote-after.json)。
+
 ## 2026-11-01 HAL 文档测试与稳定配置门控
 
 HAL `fix/dma-doctest-feature-gates` / `f39aef7` 已推送，
