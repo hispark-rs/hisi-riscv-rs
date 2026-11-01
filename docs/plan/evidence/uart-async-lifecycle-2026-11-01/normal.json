@@ -1,0 +1,103 @@
+{
+  "passed": true,
+  "hardware_accessed": false,
+  "flash_programmed": false,
+  "cold_boot": "not_verified",
+  "elf_sha256": "905a2ac01834edf350631847943b98f42366eda69386e05bd0145fb36a6c7140",
+  "qemu_sha256": "fd0258f1eb0f51cf698d4715e4e65202edc9a9558dfdb74c7dd9cb9b27c4f054",
+  "build_receipt_sha256": "239a0d04c10b5b00f66402969955a704e9e7f9a29c598e6db0ada3db099d75e5",
+  "rounds": [
+    {
+      "iteration": 0,
+      "fault": "normal",
+      "panic_line": 0,
+      "compiled_panic_site": null,
+      "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+      "capture_window": [
+        2,
+        960000000,
+        960000066
+      ],
+      "qom": {
+        "uart-l0-route.commands": 1,
+        "uart-l0-route.routed": true,
+        "uart-l0-route.source-pending": false,
+        "uart-l0-route.blocked": false,
+        "uart2.rx-peer-frames": 7,
+        "uart2.pad-rx-frames": 7,
+        "uart2.pad-rx-aborted": 0,
+        "pinctrl.uart-tx-bytes-33": 266
+      },
+      "registers": {
+        "0x57014018": 0,
+        "0x5701404c": 0,
+        "0x57036004": 1,
+        "0x57036008": 1,
+        "0x52002210": 98,
+        "0x5703096c": 0
+      },
+      "peer_frames": 7,
+      "input_stages": 3,
+      "guest_phase": 5,
+      "irq42_waker_and_cancel_assertions_completed": true,
+      "terminal_observation_seconds": 0.15
+    },
+    {
+      "iteration": 1,
+      "fault": "normal",
+      "panic_line": 0,
+      "compiled_panic_site": null,
+      "uart_sha256": "cb84d8dd1772a4c12f899101c2f2bdfe9d5f2ff5f2773b1e07a74421ad0aa9c4",
+      "capture_window": [
+        2,
+        960000000,
+        960000066
+      ],
+      "qom": {
+        "uart-l0-route.commands": 1,
+        "uart-l0-route.routed": true,
+        "uart-l0-route.source-pending": false,
+        "uart-l0-route.blocked": false,
+        "uart2.rx-peer-frames": 7,
+        "uart2.pad-rx-frames": 7,
+        "uart2.pad-rx-aborted": 0,
+        "pinctrl.uart-tx-bytes-33": 266
+      },
+      "registers": {
+        "0x57014018": 0,
+        "0x5701404c": 0,
+        "0x57036004": 1,
+        "0x57036008": 1,
+        "0x52002210": 98,
+        "0x5703096c": 0
+      },
+      "peer_frames": 7,
+      "input_stages": 3,
+      "guest_phase": 5,
+      "irq42_waker_and_cancel_assertions_completed": true,
+      "terminal_observation_seconds": 0.15
+    }
+  ],
+  "scenario": "normal",
+  "virtual_peer_injected_with_cpu_paused": true,
+  "script_sha256": "0637c30cd18b3456c000efe0cfee986ca255379a52d27156a71fd45f01c1f354",
+  "physical_uart_timing_verified": false,
+  "diagnostics": [
+    "ws53-uart-reset: observed L0 profile; divisor zero and in-flight cancellation assumed",
+    "qemu-system-riscv32: ws53-uart-l0-route: explicit command1-to-acore profile; initial route, ccore destination and physical readback are not modeled",
+    "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+    "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+    "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+    "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+    "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+    "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+    "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+    "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+    "ws53-uart: assumed byte DMA requests, FIFO64 and timed serializer",
+    "ws53-uart: TX pad8N1 profile assumes stable32MHz; RX separate profile",
+    "ws53-uart: RX pad8N1 center sampling assumes stable32MHz; physical timing unqualified",
+    "ws53-uart: host8N1 peer drives fixed RX board pad; no flow control",
+    "ws53-wdt: assumed timing low-byte=255 expiry=count+1 stage=reload clock=32000",
+    "qemu-system-riscv32: warning: icount sleep disabled and no active timers"
+  ]
+}

@@ -1,5 +1,23 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 UART 共用接收增量
+
+HAL `refactor/uart-async-receive` / `3ff019d` 已推送，
+[草稿 PR #22](https://github.com/hispark-rs/hisi-hal/pull/22) 叠加 GPIO #21。
+`0052bd3` 先保持行为抽取 WS53 接收轮询；`3ff019d` 将 WS63 接入共用等待/取消守卫，
+删除 ISR 单字节暂存槽，保留 FIFO 数据并关闭取消后的接收通知。每芯片寄存器、错误
+及所有权契约保留后端；WS63 async TX 仍是阻塞实现，本批没有闭合该问题。
+
+独立主机测试 WS63/WS53/BS21 为 366/442/220，三芯片目标 Clippy、文档测试及六组
+无 Embassy 依赖检查通过。全新 Cargo 缓存从远端精确提交构建三芯片外部库消费者
+通过；该开发图仍含显式 runtime override，不是 registry 发布验收。
+父仓仅更新 UART Flash 示例锁文件中的 HAL alpha.9→alpha.10，其他锁定版本不变。
+
+WS53 匹配既有 UART 模型的八轮本地回放通过，含正常、路由阻断/恢复、取消超时/恢复。
+所用旧辅助脚本仍未跟踪，**本地回放不计入干净检出 CI 验收**；哈希与整理缺口已记录。
+WS63 UART 模型缺少 FIFO 计数和中断屏蔽语义，模型验收未关闭。全部实板验收保持原状态，
+本轮未操作硬件。见 [证据](evidence/uart-async-lifecycle-2026-11-01/report.json)。
+
 ## 2026-11-01 GPIO 生命周期增量
 
 HAL `refactor/gpio-async-lifecycle` / `454ab40`，先抽取 WS53（`08a4120`）、修复

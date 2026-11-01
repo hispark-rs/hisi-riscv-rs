@@ -10,7 +10,7 @@ WS63/BS2X 公开接口保持兼容，WS53 仅在 `unstable` 下调整。父仓�
 | 模块 | 当前差异与边界 | 下一步 |
 | --- | --- | --- |
 | GPIO / pinctrl | WS53/WS63 已共用 async 等待生命周期；WS53 整组交接、WS63 每引脚资源与寄存器布局仍不同 | WS63 按引脚隔离完成/取消，IRQ 和数量归 SoC；继续合并可证明的公共逻辑，保留 pad/时钟与真实寄存器差异 |
-| UART | `uart.rs` 已含共用部分，`uart_ws53.rs` 是 WS53 接收/trait 实现；H0、复位及 pad 特定 | 先核对可共用 FIFO/trait 逻辑，H0/实例/IRQ 留 SoC 或行为后端，不能改变既有 WS63 API |
+| UART | 分频运算、`uart/async_receive.rs` 的接收轮询/取消及测试已共用；`uart/asynch.rs` 与 WS53 后端保留 PAC/IRQ/错误差异；H0、复位及 pad 特定 | WS63 ISR 单字节槽已移除，待补完整 RX 模型；TX blocking/async 差异尚未合并，不能宣称全套 UART 已统一 |
 | DMA | WS53 v151 MDMA 八槽、保留资源和缓存交接；WS63 DMA/SDMA 通道及寄存器不同 | 先共用边界计算和取消状态机的可证明部分；请求路由归 SoC，独立后端保留停机与缓存差异 |
 | TIMER | WS53 两通道、WS63 三通道已共用一次性 async 生命周期；接管、寄存器与 IRQ 后端独立 | 继续验证真实 stop/ack 和时钟；BS21 未新增 async，不因同名 IP 默认开放 |
 | TCXO | WS53 应用窗口含多片段快照；WS63 计数器快照路径不同 | 审查快照/超时通用算术，保留窗口及时钟语义差异 |
@@ -215,3 +215,12 @@ WS53 方向边沿等待增加 ISR 前重 poll 的检查；电平满足时允许�
 
 没有操作实板或提升稳定性；不证明所有引脚、电气/确认时序或跨核/其他 ISR 的
 共享寄存器排他。BS21 async 未新增，WFI 及 DMA 未关闭项保持独立。
+
+2026-11-01 UART 增量：HAL `0052bd3` 先抽取原 WS53 接收轮询与测试，
+`3ff019d` 引入共用取消守卫并用于 WS63。先登记 Waker，再屏蔽、检查、开启、复查；
+ISR 仅关闭通知/唤醒，WS63 字节仍留在 FIFO。消除原单字节槽覆盖风险和取消后仍
+开启 RX 的路径，保留既有公开签名及 WS53 unsafe 交接。WS63 后端留在 UART 模块，
+未把 UART 等待变成 RTOS/Embassy 调度。八项共用测试由 HAL 维护。
+主机、目标及外部库消费者通过；WS53 本地模型八轮通过，但旧辅助脚本链尚未完全
+纳入 Git，不能计远端 CI；WS63 模型及实板未验收。详见
+[范围、证据和复现缺口](evidence/uart-async-lifecycle-2026-11-01/README.md)。

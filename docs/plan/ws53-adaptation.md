@@ -8828,3 +8828,13 @@ GPIO 后续：HAL `08a4120`/`737599f`/`454ab40` 将 WS53/WS63 的等待、唤醒
 保留整组/单引脚所有权差异并修复同组串扰及临时屏蔽丢 pending。独立测试、远端消费者及两芯片
 具名 QEMU 场景通过；RAM/Flash/冷启动未复验，不能继承旧物理结果。
 边界与证据见 [跨芯片审查](hal-cross-chip-review.md) 和 [维护清单](ws53-workspace-status.md)。
+
+### 2026-11-01 UART 共用接收与取消
+
+HAL `3ff019d`（[草稿 PR #22](https://github.com/hispark-rs/hisi-hal/pull/22)）
+将 WS53/WS63 接收轮询和取消守卫统一；WS63 移除 ISR 单字节暂存，取消保留未读 FIFO。
+独立主机测试 366/442/220、三芯片目标 Clippy 和远端库消费者通过，WS53 八轮本地
+模型回放通过。模型辅助脚本传递依赖尚未全部纳入 Git，不计干净检出 CI；WS63 RX
+模型缺少寄存器/IRQ 语义，仍未验收。本轮无实板操作，不继承旧 HIL 结论、不升级稳定性。
+Embassy 时间 profile 继续归 `hisi-rtos`；HAL 仅维护执行器无关等待。
+[证据及未关闭项](evidence/uart-async-lifecycle-2026-11-01/README.md)。
