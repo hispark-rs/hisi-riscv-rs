@@ -1,0 +1,24 @@
+0x002314bc:  f4440413          addi                    s0,s0,-188
+0x002314c0:  440c              lw                      a1,8(s0)
+0x002314c2:  4501              mv                      a0,zero
+0x002314c4:  9582              jalr                    ra,a1,0
+
+----------------
+IN: _RNvYNCNvNtCs63zahyHA8hs_8hisi_hal6asynch6VTABLEs0_0INtNtNtCsaK8IDCFzm5q_4core3ops8function6FnOnceTPuEE9call_onceB8_
+0x0023175a:  8082              ret
+
+----------------
+IN: main
+0x002314c6:  002325b7          lui                     a1,562
+0x002314ca:  c4a58593          addi                    a1,a1,-950
+0x002314ce:  01710513          addi                    a0,sp,23
+0x002314d2:  4661              addi                    a2,zero,24
+0x002314d4:  00000097          auipc                   ra,0                    # 0x2314d4
+0x002314d8:  f62080e7          jalr                    ra,ra,-158
+
+----------------
+IN: main
+0x002314dc:  10500073          wfi
+0x002314e0:  444c              lw                      a1,12(s0)
+0x002314e2:  4501              mv                      a0,zero
+0x002314e4:  9582              jalr                    ra,a1,0

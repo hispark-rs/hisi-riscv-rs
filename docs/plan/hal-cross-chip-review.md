@@ -180,3 +180,11 @@ WS53 的显式停止/缓存契约继续独立，未因旧驱动增加生命周�
 变化、QEMU 或实板新证据。正常完成排空、缓存及高层 DMA 仍需审查，细节以
 [安全审查](legacy-dma-safety-audit.md) 和
 [本批证据](evidence/dma-controller-lifetime-2026-11-01/report.json) 为准。
+
+### 平台休眠与旧芯片回归
+
+最小 `block_on` 的软件唤醒失败已由独立 WS63 QEMU 反例确认，尚未修复；
+poll-to-WFI 的 IRQ 窗口仍未确定性注入。不能把它作为 Future 共同状态机塞回 HAL，
+也不另建时间队列；后续平台交接约束见 [专门审查](hal-block-on-idle.md)。
+BS20 九个示例已同步独立锁文件、从远端干净检出完整链接，并纳入独立回归 CI；
+这关闭锁文件阻塞，不扩大硬件验收。

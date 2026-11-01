@@ -1,5 +1,17 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 BS20 独立回归与 WFI 反例
+
+父仓 `18dab2e18` 已推送：同步 BS20 独立锁文件中的 HAL/runtime/PAC 版本，
+不改变已锁定第三方版本；新增独立 CI 构建九个 BS20 示例。远端干净稀疏检出、
+四个精确子模块和全新 Cargo 缓存下，九个 release ELF 全部链接成功且检出仍干净。
+下方“BS20 锁文件阻塞”已由本批关闭；远端新增 CI 结果尚未验收。
+见 [报告](evidence/bs20-regression-2026-11-01/report.json)。
+
+未修改 HAL/runtime 行为。另建立 `block_on` 软件唤醒失败的独立 QEMU 反例，
+明确记录为未修复，不以诊断用两次 poll 代替产品修复；平台休眠交接仍待设计。
+见 [审查及证据](hal-block-on-idle.md)。没有硬件操作或稳定性升级。
+
 ## 2026-11-01 DMA 控制器生命周期增量
 
 HAL 当前 `fix/dma-controller-lifetime` / `c907bed`，已推送；

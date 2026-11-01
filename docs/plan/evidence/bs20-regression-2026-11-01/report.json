@@ -1,0 +1,66 @@
+{
+  "parent_commit": "18dab2e18d569068db4e00262d11faee104408a8",
+  "submodules": [
+    " e340664c72b6fad01ad55971ccf3bee2f10a3e1a crates/chips/bs2x/bs2x-pac (v0.1.2)",
+    " 6324bcf94e26a3eb690085ec1b0ae501bdb167ac crates/chips/ws63/ws63-pac (6324bcf)",
+    " c907bed8255c334ce618d54f9567b8114b7a176e crates/hisi-hal (c907bed)",
+    " eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb crates/hisi-riscv-rt (eb3e2d5)"
+  ],
+  "source": "Fresh sparse remote clone with four required remote submodules; no parent untracked files copied",
+  "cache": "New CARGO_HOME; registry dependencies downloaded; fresh target directory",
+  "command": "cargo build --locked -Zbuild-std=core,alloc --target riscv32imfc-unknown-none-elf --manifest-path examples/bs20/Cargo.toml --workspace --release",
+  "all_nine_linked": true,
+  "clean_after_build": true,
+  "artifacts": {
+    "blinky": {
+      "bytes": 1228568,
+      "sha256": "53f391193c03bfb3deefd34baf57f05144684261c18d23f35cea9c70e9942795"
+    },
+    "clock_rng": {
+      "bytes": 1401436,
+      "sha256": "aa6299872f4d3c888a0a9e72a5c5719bc6739b8f89241fd20d6268754bcfeab8"
+    },
+    "dma_mem": {
+      "bytes": 1430136,
+      "sha256": "1054aafe6a65c812d33d0a5f2fd491ddce8f7a2aa86ce1d9cd47cea05a450afa"
+    },
+    "gadc_read": {
+      "bytes": 1421848,
+      "sha256": "612a968cde7f32a3f52e0be823952a7a5e064a231b07d151238691cb961b26a6"
+    },
+    "hid_demo": {
+      "bytes": 1409956,
+      "sha256": "03b29cbba1b3a03b7ea5488c237ce7239b055f37f6b617c4197fc0c72438e8de"
+    },
+    "i2c_scan": {
+      "bytes": 1400496,
+      "sha256": "1963427739f21f3a6554c0dea98fbde6e7098caaa28da29646e7ad4ebc6ed4f9"
+    },
+    "pwm_wdt": {
+      "bytes": 1395184,
+      "sha256": "d8f940e880fb4de07c374fe60ec4b5b5e33da8721243ad6e4b76ec64a7b26535"
+    },
+    "spi_loopback": {
+      "bytes": 1392640,
+      "sha256": "0c9b1602d9f77a292bc632ba77786a8aa0ed66e64ccd2bfe342d99cfd610adb7"
+    },
+    "uart_hello": {
+      "bytes": 1384252,
+      "sha256": "8c60fb82b75a0ef28b32629c8ff9a74688dbfd1d2b44062280363ecb353ae86c"
+    }
+  },
+  "hardware_accessed": false,
+  "qemu_run": false,
+  "physical_qualification": false,
+  "ci": "Dedicated job added; remote result not yet qualified",
+  "raw": "/home/sanchuanhehe/Documents/hispark-rs/validation/bs20-regression-2026-11-01",
+  "logs": {
+    "check.log": "8751668ccaf9271c1764e6d809d7c140474bf921141b61d90100ae5571cafd9e",
+    "check-locked.log": "7ac58874017609dc0aa5d8570b711e789ad90a5bbf91a521bc8bb8d6d4b7f755",
+    "build-release.log": "9d279033e8d9c351ae874913df70041a96340a50fa79b9647691a163ce930e72",
+    "clone.log": "42d29530a921052609c3ddb33f361c4b152269c6bcbcf679daec963783416d1b",
+    "submodules.log": "90b4525c991f7bab2f0c91811e56c6e0d7f9ba782b62746ed874a23172dd9a86",
+    "clean-build.log": "1b29b18510742e462cb9154f28844f6385b6c842d6e7ac106c45c357ba204e36"
+  },
+  "scope": "Close BS20 lock drift and preserve old-chip build regression; no HAL source behavior change, no release qualification"
+}

@@ -1,0 +1,14 @@
+[package]
+name = "block-on-wake-counterexample"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[features]
+poll-control = []
+[dependencies]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "c907bed8255c334ce618d54f9567b8114b7a176e", default-features = false, features = ["chip-ws63", "rt", "async", "unstable"] }
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb", default-features = false, features = ["chip-ws63", "bundled-memory-x"] }
+[patch.crates-io]
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }
+[profile.release]
+opt-level = "s"
