@@ -1,5 +1,19 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 UART 回归工具链与干净检出
+
+父仓 `29e02117a` 已推送：UART 构建/运行器纳入 Git，并脱离旧温度/PWM/RTC
+脚本导入链；复用已跟踪的构建来源清单，将 QMP/qtest 与完整 DWARF 路径绑定分别
+收敛为工具模块。CI 加入正常、路由阻断/恢复及取消超时/恢复场景。
+
+远端干净稀疏检出、五个精确子模块和全新 Cargo/uv 缓存构建通过；CI 固定 QEMU
+`27def194` 从固定上游重新编译，八轮模型回放通过。协议/清理八项和记录/ELF 来源
+反例九项通过，检出及 overlay 均保持干净。因此下节“本地辅助脚本未跟踪”的复现
+缺口由本批关闭；整条远端 workflow 结果仍单独验收。HAL 保持 `3ff019d`，无行为
+改动。WS63 RX 模型、实板、TX 与 WFI 问题未关闭。
+见 [报告](evidence/uart-model-repro-2026-11-01/report.json) 和
+[可复现入口](uart-model-reproducibility.md)。旧脚本/记录已保全，未重写旧验收证据。
+
 ## 2026-11-01 UART 共用接收增量
 
 HAL `refactor/uart-async-receive` / `3ff019d` 已推送，

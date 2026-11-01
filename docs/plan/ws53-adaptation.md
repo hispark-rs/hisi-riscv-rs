@@ -8838,3 +8838,12 @@ HAL `3ff019d`（[草稿 PR #22](https://github.com/hispark-rs/hisi-hal/pull/22)�
 模型缺少寄存器/IRQ 语义，仍未验收。本轮无实板操作，不继承旧 HIL 结论、不升级稳定性。
 Embassy 时间 profile 继续归 `hisi-rtos`；HAL 仅维护执行器无关等待。
 [证据及未关闭项](evidence/uart-async-lifecycle-2026-11-01/README.md)。
+
+### 2026-11-01 UART 可复现模型验收补齐
+
+父仓 `29e02117a` 将 UART 工具链纳入 Git，去除温度/PWM/RTC 的间接导入，使用
+共用 QMP/qtest 工具与完整 DWARF 失败点绑定。远端干净检出和全新 Cargo/uv 缓存
+构建通过；固定 QEMU 独立构建后，正常/路由阻断/取消超时及恢复八轮通过。
+工具测试八项、记录及 ELF 来源反例九项通过；未操作实板，不继承物理验收。
+关闭上一节脚本未跟踪的复现缺口，WS63 UART 模型仍待完善。
+[证据](evidence/uart-model-repro-2026-11-01/README.md)。

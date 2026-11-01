@@ -2,6 +2,8 @@
 
 本项关闭 UART 整改中“运行器依赖未跟踪历史脚本”的缺口，不扩大硬件验收范围。
 当前 UART 接收实现和软件验收见 [UART 生命周期证据](evidence/uart-async-lifecycle-2026-11-01/README.md)。
+远端干净检出、新依赖缓存和独立模型构建的实际结果见
+[本轮验收](evidence/uart-model-repro-2026-11-01/README.md)；八轮场景通过，未操作实板。
 
 ## 工具职责
 
