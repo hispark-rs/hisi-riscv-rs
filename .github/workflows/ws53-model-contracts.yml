@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: hispark-rs/hisi-riscv-qemu
-          ref: 27def194eb9d0d6989cc3c5fb0f0c1da8150be0b
+          ref: 7c88dacda8c7f07dfffc63298646ef473b84b49e
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:
@@ -66,6 +66,7 @@ jobs:
           cargo fetch --locked --manifest-path examples/ws53/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/bs21/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws63-gpio-async-model/Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path examples/ws63-uart-async-model/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws53-flash-uart-rx/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
@@ -79,7 +80,7 @@ jobs:
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
               test-bs21-timer-delay-qemu.py test-hal-irq-wait-qemu.py test-gpio-async-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py test-ws53-i2c-dma.py \
               test-ws53-ram-elf.py test-ws53-flash-snapshot.py ws53_uart_rx_build.py \
-              test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py; do
+              test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py test-ws63-uart-async-qemu.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -96,6 +97,19 @@ jobs:
         run: |
           bash scripts/run-ws53-model-contracts.sh "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             "$RUNNER_TEMP/ws53-model/receipt.json" ../qemu-overlay "$RUNNER_TEMP/ws53-contracts"
+      - name: Check WS63 UART RX IRQ and cancellation with a virtual peer
+        working-directory: project
+        run: |
+          uv run --script ../qemu-overlay/scripts/ws63_uart_rx_test.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" > "$RUNNER_TEMP/ws63-uart-registers.json"
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws63-uart-async-model/Cargo.toml \
+            --release --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws63-uart-target"
+          for capacity in 1 16; do
+            uv run --offline --script scripts/test-ws63-uart-async-qemu.py \
+              --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+              --elf "$RUNNER_TEMP/ws63-uart-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model" \
+              --capacity "$capacity" --output "$RUNNER_TEMP/ws63-uart-$capacity"
+          done
       - name: Check UART receive lifecycle and validation failures
         working-directory: project
         run: |
@@ -278,6 +292,10 @@ jobs:
           if-no-files-found: warn
           path: |
             ${{ runner.temp }}/ws53-model-build.json
+            ${{ runner.temp }}/ws63-uart-registers.json
+            ${{ runner.temp }}/ws63-uart-*/report.json
+            ${{ runner.temp }}/ws63-uart-*/uart.log
+            ${{ runner.temp }}/ws63-uart-*/qemu.log
             ${{ runner.temp }}/ws53-model/receipt.json
             ${{ runner.temp }}/ws53-model/command-*.log
             ${{ runner.temp }}/ws53-uart-support.log

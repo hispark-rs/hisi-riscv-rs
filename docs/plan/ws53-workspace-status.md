@@ -1,5 +1,26 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 WS63 UART 后端纠错与模型集成
+
+HAL `refactor/uart-async-receive` 已推送 `7eda6f8`、`1a456ab`，更新
+[PR #22](https://github.com/hispark-rs/hisi-hal/pull/22)：共用等待核心保留，WS63
+后端改用已核实的状态/数据读取；pending 单字节接收选择一字节 FIFO 门限且不复位。
+上一批“缺少 FIFO 计数”的诊断已修正：计数别名本身尚未核实，不能补假模型使其通过。
+
+QEMU `fix/uart-rx-model` / `7c88dac` 已推送，[草稿 PR #26](https://github.com/hispark-rs/hisi-riscv-qemu/pull/26)
+叠加 #24，并包含 #25 TCXO 修正；保留当前 WS53 模型线。父仓固定此提交和来源清单，
+新增实际 Rust UART 夹具、独立锁文件、模型 CI 与证据；HAL 指针远端可取得。
+
+最终 WS63 主机 366 项/目标 Clippy、三芯片全新缓存远端消费者通过；模型 18 个端口配置、
+11 项 qtest、双芯片 TCXO、WS63 Rust 容量 1/16 和 WS53 UART 八轮通过。
+旧计数读取及中间门限错误的两个失败版本保留。新的真实硬件验收未执行，稳定性未升级。
+独立开发 override 不是发布验收；未发布依赖和 WFI/TX/DMA 未关闭项仍在。
+见 [报告](evidence/ws63-uart-backend-2026-11-01/README.md)。
+
+此前父仓 `77404271e` 的远端运行 41289155015/41289159943：BS20 构建通过，
+synthetic-models 在 SPI DMA `1/0/2/t/N` 超时；没有降低断言或称整条 CI 通过。
+当前新增远端回归另行验收。Embassy 归现有 RTOS 的职责和精度分层不变。
+
 ## 2026-11-01 UART 回归工具链与干净检出
 
 父仓 `29e02117a` 已推送：UART 构建/运行器纳入 Git，并脱离旧温度/PWM/RTC

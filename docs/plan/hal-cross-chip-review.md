@@ -229,3 +229,10 @@ ISR 仅关闭通知/唤醒，WS63 字节仍留在 FIFO。消除原单字节槽�
 缓存、独立编译 CI 固定 QEMU 后八轮回放通过，关闭上段辅助脚本未跟踪的缺口。
 HAL 及 WS63 模型未改，其他未验收项不变。
 见 [干净检出证据](evidence/uart-model-repro-2026-11-01/README.md)。
+
+WS63 后端续验：`7eda6f8` 复用 blocking 的状态/数据路径，`1a456ab` 选择逐字节
+触发门限，保持共用 ReceiveWait 和原接口。真实 Rust 夹具揭露了主机 mock 未能
+覆盖的计数别名及 quarter-full 阈值错误；这两项纠错没有变成第二套等待状态机。
+QEMU 明确建模 RX mask/reassert/FIFO 和 reset，保留旧反例；实际 Rust IRQ/取消
+在容量 1/16 通过，三芯片独立消费者及 WS53 八轮回归通过。实板与发布仍未验收。
+详见 [纠错证据](evidence/ws63-uart-backend-2026-11-01/README.md)。

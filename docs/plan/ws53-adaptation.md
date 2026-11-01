@@ -8847,3 +8847,13 @@ Embassy 时间 profile 继续归 `hisi-rtos`；HAL 仅维护执行器无关等�
 工具测试八项、记录及 ELF 来源反例九项通过；未操作实板，不继承物理验收。
 关闭上一节脚本未跟踪的复现缺口，WS63 UART 模型仍待完善。
 [证据](evidence/uart-model-repro-2026-11-01/README.md)。
+
+### 2026-11-01 共用 UART 的 WS63 后端纠错
+
+HAL `7eda6f8` / `1a456ab` 分别修正读取寄存器路径及 pending RX 的一字节门限，
+继续复用同一等待/取消核心，不加入 RTOS/Embassy 依赖。QEMU `7c88dac` 保留
+既有 WS53 模型并补齐共用 UART RX 状态、屏蔽、FIFO 和 reset 测试。
+旧版本的两种失败保留；最终主机、三芯片远端消费者、WS63 实际 Rust 模型和
+WS53 UART 八轮通过。本轮不操作实板，不升级稳定性。远端全流水线另有 SPI DMA
+超时待定位；不能用 UART 通过代替整体通过。
+[实现与验收范围](evidence/ws63-uart-backend-2026-11-01/README.md)。
