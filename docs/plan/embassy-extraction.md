@@ -47,6 +47,12 @@ HAL 保留 timer/counter/IRQ、标准 async trait 和外设等待/取消；不�
 
 ## 实施与验收
 
+增量复核：RTOS `dad311b` 将纯 profile 的启动/存储不可见性改为三个独立 E0432
+反例，共享 profile 增加原 API 正例；开发依赖与子仓锁文件同步 HAL `f39aef7`。
+独立时间矩阵、HAL 无 Embassy 依赖检查及五组远端消费者通过；只改门控测试和
+开发依赖，未改变时间精度、调度行为或新增实板结论。
+见[复核证据](evidence/rtos-profile-contracts-2026-11-01/README.md)。
+
 1. HAL 硬件接口 `e73a4b6`，职责迁移 `2b6cfce`，共用 TCXO 字访问器 `5895b95` 已推送。
 2. RTOS 共用队列、唯一注册、纯 profile `9b83efa` 已推送；子仓有自有测试与显式远端开发配置。
 3. WS63 示例、模板和父仓示例已迁移；STA/SoftAP 分开检查通过，父仓只解析一个 HAL。

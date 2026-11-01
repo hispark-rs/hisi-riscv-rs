@@ -2,6 +2,17 @@
 
 **状态：** WS53 适配的配套工作，持续维护中。
 
+## 2026-11-01 RTOS 时间 profile 边界复核
+
+RTOS `refactor/embassy-time-profiles` / `dad311b` 已推送至现有
+[PR #1](https://github.com/hispark-rs/hisi-rtos/pull/1)：共享 API 正例与三个纯 profile
+反例、开发 HAL 精确依赖及子仓锁文件同步。父仓更新可远端获取的指针，根锁文件
+没有依赖解析变化；修正 HAL 审查计划中残留的 Embassy 调度内核归属文字。
+独立矩阵 86/91/14×3、三芯片 Clippy、最终文档与五组远端消费者通过。
+[证据及限制](evidence/rtos-profile-contracts-2026-11-01/README.md)。
+没有新组件、发布或硬件操作；共享分辨率仍为 1 ms，纯 profile 为实验实现。
+IRQ→WFI、未发布依赖及实板复验继续单列，不能称完整适配已完成。
+
 ## 2026-11-01 IRQ→WFI 窗口定位
 
 现有最小夹具新增 `irq-race` profile，真实 HAL + IRQ ISR 在 WFI 前定点注入时

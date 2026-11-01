@@ -1,0 +1,76 @@
+{
+  "hardware_accessed": false,
+  "new_parallel_component": false,
+  "production_time_behavior_changed": false,
+  "rtos_commit": "dad311b44621f106d7aca4cbfc7aec0cc1d9b397",
+  "hal_commit": "f39aef7bfd545486fc7cf466e9e8060d9688a846",
+  "raw_directory": "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-profile-contracts-2026-11-01",
+  "dependency_mode": "Explicit pinned remote Git development dependencies; not registry release qualification; existing Cargo download cache used.",
+  "checks": {
+    "independent_time_profiles": {
+      "exit": 0,
+      "unit_tests": {
+        "base": 86,
+        "shared": 91,
+        "ws53_standalone": 14,
+        "ws63_standalone": 14,
+        "bs21_standalone": 14
+      },
+      "target_clippy": true,
+      "negative_features": true
+    },
+    "final_doc_tests": {
+      "exit": 0,
+      "shared_positive": 1,
+      "per_chip_standalone_E0432": 3
+    },
+    "format": true,
+    "hal_blocking_async_dependency_boundary": true,
+    "consumer": {
+      "exit": 0,
+      "profiles": [
+        "shared",
+        "shared,chip-ws63",
+        "standalone,chip-ws53",
+        "standalone,chip-ws63",
+        "standalone,chip-bs21"
+      ],
+      "host_tests_each": 1,
+      "riscv_checks_each": 1,
+      "source": "Remote RTOS exact commit; no parent patch or path dependencies"
+    },
+    "plan_registry": true
+  },
+  "limitations": [
+    "Shared profile: 1 MHz tick ABI with 1 ms source resolution.",
+    "Standalone profile: configured 1 us granularity; no physical accuracy, power or sleep qualification.",
+    "No new QEMU run for these documentation tests and development pins; earlier migration/model evidence remains separately recorded.",
+    "IRQ-before-WFI race remains open in HAL experimental block_on.",
+    "HAL alpha.10, WS53-capable runtime, RF driver alpha.20 and RTOS time profile remain release blockers; no crate published.",
+    "RAM, Flash reset and cold-start requalification not performed."
+  ],
+  "source_sha256": {
+    "Cargo.lock": "ad58a11cf4a7964bd09c8c5648cf864aa11d85df3e93cc3467a38a743fb071fb",
+    ".ci/development-dependencies.toml": "6c4520d63b9c8ddbf0760e0d3f32761107861b57efaaa4dbf916e3f8e56a12e3",
+    "src/embassy/mod.rs": "fa449666e660075d51025709a3686c5377856a54ccaa3fb2b65d9790f9b89743"
+  },
+  "raw_sha256": {
+    "time-profiles.log": "39d0a32ac50c16a5727668b12f384d41300416de251f6458e9de6fcfa3f4639e",
+    "docs-final.log": "7f273f297762ec398d1d6493d8aa81a920e9ec78d8ae9fec31df4a2d4ef49cb0",
+    "consumer.log": "5de3a2420255babe9a22e777379ab6ace5318143e8a148902eda71a7a119c155",
+    "final-changes.patch": "21c6e48fe62576189683ca48285531f3190b02d878c539ff53e6224ec014bfb4",
+    "plan-registry.log": "4448aaa08201cbe6a85cd8a77b041209dbb5ead7f0b8216761e3eebeef36e0f6"
+  },
+  "hal_boundary_attempts": {
+    "initial": "Without the explicit dev config, sandbox DNS failed while resolving registry dependencies; not a driver-test failure.",
+    "verified": "Remote HAL checkout f39aef7, --offline --config ../development.toml, exit 0",
+    "initial_log_sha256": "c6ef8fc59054ed48d9c4c2ae99b48c0e2a03836fb728c9e11da8f55438f00b90",
+    "verified_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "consumer_sha256": {
+    "Cargo.toml": "5366717a1282dfa14949e80feca536f37abd9d08ea14054ab5ffa42e90c69e9a",
+    "Cargo.lock": "81c7036ef6d3e7cdf24512b506231e473ae52609a2da4ee86be882a3b519467f",
+    "src/lib.rs": "a66813e930e5b32922bb24c0c0e6d8abfc1b26525e77f5eec4d12d2bd4e5413e",
+    "rust-toolchain.toml": "67d8f084758ff48ce0526f127f214fd266d65be47803d2b71b7b6e0d2e391c78"
+  }
+}

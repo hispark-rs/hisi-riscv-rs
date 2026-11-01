@@ -27,6 +27,9 @@ core/port 拆分已经完成。实板复验保持未验收，未来组件表仍�
 
 ## 生态定位
 
+下图包含延期的组件拆分：当前 Embassy 应用通过 `hisi-rtos::embassy` 选择共享或
+纯时间 profile；`hisi-rtos-embassy` 尚未作为独立 crate 实现，不是新增依赖入口。
+
 ```text
 Standalone app -> hisi-rtos -> hisi-hal
 Ariel OS app   -> ariel-os-hisi adapter -> hisi-rtos / hisi-hal / hisi-rf
