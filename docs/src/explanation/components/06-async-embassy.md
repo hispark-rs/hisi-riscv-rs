@@ -62,4 +62,4 @@ embassy-time = { version = "0.5", features = ["tick-hz-1_000_000"] }
 组件子仓维护主机调度、重入、边界、错误返回、feature/单提供者冲突和独立消费者测试。
 HAL 子仓维护不依赖 Embassy 的硬件及 async 测试。父仓维护真实 runtime/HAL/适配层
 组合的 QEMU 场景和实板测试。迁移状态、发布阻塞与本次验收结果统一见
-[迁移清单](../../../plan/embassy-extraction.md)。历史实板证据不自动适用于新行为。
+[迁移清单](https://github.com/hispark-rs/hisi-riscv-rs/blob/feat/ws53-integration/docs/plan/embassy-extraction.md)。历史实板证据不自动适用于新行为。

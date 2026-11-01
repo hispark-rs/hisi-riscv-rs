@@ -1,0 +1,25 @@
+{
+  "base_commit": "e3cfedc06",
+  "remote_failed_job": "https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/41294492240/job/124812365553",
+  "cause": "two migration links escaped mdBook source root",
+  "tool_version": "mdbook-linkcheck 0.7.7",
+  "tool_source": {
+    "browser_download_url": "https://github.com/Michael-F-Bryan/mdbook-linkcheck/releases/download/v0.7.7/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip",
+    "digest": null,
+    "name": "mdbook-linkcheck.x86_64-unknown-linux-gnu.zip",
+    "size": 5228777
+  },
+  "before_exit": 1,
+  "after_exit": 0,
+  "local_check_scope": "HEAD documentation archive with only staged two-line patch; unrelated dirty documents excluded and preserved",
+  "external_url_reachability_checked_by_mdbook": false,
+  "hardware_accessed": false,
+  "raw_sha256": {
+    "remote-mdbook-job.log": "cb5e220f09916163476f294fde8fd373b6565ab76799c5f2dff79dfbd2acabe6",
+    "mdbook-link-fix.patch": "c1d493df59484a5530e4010e8eb899945bb6e413d0187973d872853b81534bf9",
+    "mdbook-before-final.log": "07129c5d55308edeb86a8119680dc67d25e0ae72aa542cc3b3212276b99e3996",
+    "mdbook-after-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "linkcheck-tool/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip": "18cebca9493804b307b39a44af2664cdfa881e84b8d92a94205d6c51572318ef",
+    "linkcheck-tool/mdbook-linkcheck": "2d7232e448f77f2534e3e047c7c3085b1bd8a68535cf230efed8611c9a201fc0"
+  }
+}
