@@ -21,6 +21,11 @@ QEMU `fix/uart-rx-model` / `7c88dac` 已推送，[草稿 PR #26](https://github.
 synthetic-models 在 SPI DMA `1/0/2/t/N` 超时；没有降低断言或称整条 CI 通过。
 当前新增远端回归另行验收。Embassy 归现有 RTOS 的职责和精度分层不变。
 
+父仓 `27f8198eb` 集成及 `d73a3292c` I2C CI pin 同步已推送。远端 `d73a3292c`
+干净检出和五个精确子模块可获取，夹具按锁文件完整链接、容量 16 模型重放通过，
+检出仍干净。首次离线检查缺少 riscv-rt 缓存，经正常 locked fetch 解决，无本地补丁。
+见 [独立检出记录](evidence/ws63-uart-backend-2026-11-01/clean-checkout.json)。
+
 ## 2026-11-01 UART 回归工具链与干净检出
 
 父仓 `29e02117a` 已推送：UART 构建/运行器纳入 Git，并脱离旧温度/PWM/RTC
