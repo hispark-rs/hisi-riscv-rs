@@ -83,7 +83,7 @@ jobs:
               test-bs21-timer-delay-qemu.py test-hal-irq-wait-qemu.py test-gpio-async-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py test-ws53-i2c-dma.py \
               test-ws53-ram-elf.py test-ws53-flash-snapshot.py ws53_uart_rx_build.py \
               test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py test-ws63-uart-async-qemu.py test-uart-nb-qemu.py \
-              test-embassy-time-profile.py; do
+              test-ws53-uart-async-tx-qemu.py test-embassy-time-profile.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -141,11 +141,21 @@ jobs:
           cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws63-uart-async-model/Cargo.toml \
             --release --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws63-uart-target"
           for capacity in 1 16; do
-            uv run --offline --script scripts/test-ws63-uart-async-qemu.py test-uart-nb-qemu.py \
+            uv run --offline --script scripts/test-ws63-uart-async-qemu.py \
               --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
               --elf "$RUNNER_TEMP/ws63-uart-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model" \
               --capacity "$capacity" --output "$RUNNER_TEMP/ws63-uart-$capacity"
           done
+      - name: Check WS53 UART TX, flush and cancellation through virtual pads
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc --manifest-path examples/ws53/Cargo.toml \
+            -p ws53_ram_smoke --features uart2-async-tx-smoke --release \
+            --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws53-uart-tx-target"
+          uv run --offline --script scripts/test-ws53-uart-async-tx-qemu.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/ws53-uart-tx-target/riscv32imfc-unknown-none-elf/release/ws53_ram_smoke" \
+            --output "$RUNNER_TEMP/ws53-uart-tx"
       - name: Check software wakes without a periodic timer
         working-directory: project
         run: |
@@ -351,6 +361,8 @@ jobs:
             ${{ runner.temp }}/ws63-uart-*/report.json
             ${{ runner.temp }}/ws63-uart-*/uart.log
             ${{ runner.temp }}/ws63-uart-*/qemu.log
+            ${{ runner.temp }}/ws53-uart-tx/report.json
+            ${{ runner.temp }}/ws53-uart-tx/uart.bin
             ${{ runner.temp }}/ws53-model/receipt.json
             ${{ runner.temp }}/ws53-model/command-*.log
             ${{ runner.temp }}/ws53-uart-support.log

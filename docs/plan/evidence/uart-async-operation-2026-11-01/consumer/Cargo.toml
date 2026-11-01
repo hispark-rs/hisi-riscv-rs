@@ -1,0 +1,26 @@
+[package]
+name = "rtos-profile-consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[features]
+shared = ["hisi-rtos/embassy"]
+standalone = ["hisi-rtos/embassy-only", "hisi-rtos/unstable"]
+chip-ws53 = ["hisi-rtos/chip-ws53"]
+chip-ws63 = ["hisi-rtos/chip-ws63"]
+chip-bs21 = ["hisi-rtos/chip-bs21"]
+[dependencies]
+hisi-rtos = { version = "0.1.0-alpha.25", default-features = false }
+embassy-time-driver = { version = "0.2", features = ["tick-hz-1_000_000"] }
+hisi-hal = { version = "0.7.0-alpha.10", default-features = false, features = ["async", "unstable"] }
+embedded-io-async = "0.6"
+[dev-dependencies]
+critical-section = { version = "1", features = ["std"] }
+# Explicit development integration only, NOT registry/release qualification.
+# No path dependencies: these commits must be fetchable without the parent.
+[patch.crates-io]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "d7e8ea5f1d7b03e75ea7c61cafdadc4c1998cfa2" }
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }
+hisi-rf-rtos-driver = { git = "https://github.com/hispark-rs/hisi-rf-rtos-driver", rev = "f36280b51d93f8cb4e00962e3a450f6b8322e8bd" }
+hisi-rtos = { git = "https://github.com/hispark-rs/hisi-rtos", rev = "dad311b44621f106d7aca4cbfc7aec0cc1d9b397" }

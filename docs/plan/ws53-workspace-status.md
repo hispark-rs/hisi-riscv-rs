@@ -2,6 +2,16 @@
 
 **状态：** WS53 适配的配套工作，持续维护中。
 
+## 2026-11-01 UART RX/TX 操作等待共用
+
+HAL `refactor/uart-async-operation` / `d7e8ea5` 已推送，
+[草稿 PR #28](https://github.com/hispark-rs/hisi-hal/pull/28) 叠加 #27。
+WS53/WS63 RX 与 WS53 TX/flush 共用有界轮询和取消 guard；13 项共用测试归子仓。
+独立五配置主机/文档/Clippy、四组远端 HAL/RTOS 消费者、WS63 RX 两容量、WS53
+TX 及 RX 八轮正常/错误恢复通过。父仓同步指针、TX 运行器/CI 与证据，版本及根锁不变。
+[范围、初次工具失败及复现入口](evidence/uart-async-operation-2026-11-01/README.md)。
+旧 WS63 async TX、flush 差异、WFI、未发布依赖及实板复验仍开放；本轮无硬件操作。
+
 ## 2026-11-01 RTOS 时间 profile 边界复核
 
 RTOS `refactor/embassy-time-profiles` / `dad311b` 已推送至现有
