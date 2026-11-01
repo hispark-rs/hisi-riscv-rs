@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 HAL 软件唤醒修复
+
+HAL `fix/block-on-software-wake` / `d5ca0ba` 已推送（实现 `cc1be08`，随后仅澄清 IRQ 文档前提），
+[草稿 PR #24](https://github.com/hispark-rs/hisi-hal/pull/24) 叠加 #23。
+现有 WS63 实验 `block_on` 记录软件唤醒，增加静态通知槽生命周期与嵌套/并发拒绝，
+没有新增定时器、时间队列、Embassy 依赖或跨芯片平行实现。父仓同步指针、独立
+QEMU 软件唤醒示例、锁文件与 CI；既有芯片/定时器回归通过。
+
+三芯片独立测试与目标 Clippy 通过；额外 WS63 主机测试 Clippy 修改前后仍各有
+16 项旧错误，不能称所有 lint 通过。固定远端消费者是开发验收，未发布依赖仍阻塞
+registry-only 发布。没有新发布或硬件操作，WFI 前 IRQ 竞态仍未关闭。
+详见[软件唤醒证据](evidence/block-on-wake-fix-2026-11-01/README.md)。
+
 ## 2026-11-01 RTOS/Embassy 共存模型修复
 
 | 仓库 | 工作分支 / 提交 | 同步与验证 |

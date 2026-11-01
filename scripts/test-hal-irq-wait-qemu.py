@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Check HAL timer IRQ waits without Embassy or hardware access."""
+"""Check HAL timer or software-wake progress without Embassy or hardware access."""
 import argparse
 import hashlib
 import json
@@ -19,9 +19,12 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--chip", choices=("ws63", "ws53"), default="ws63")
     parser.add_argument("--lifecycle", action="store_true", help="Require WS63 opt-in lifecycle checks")
+    parser.add_argument("--software-wake", action="store_true", help="Run WS63 software-only block_on checks, without a timer")
     parser.add_argument("--channel", type=int, choices=(0, 1, 2), default=0,
                         help="WS63 lifecycle channel compiled into the fixture")
     args = parser.parse_args()
+    if args.software_wake and (args.chip != "ws63" or args.lifecycle or args.channel != 0):
+        parser.error("software-wake is a separate WS63 case; no lifecycle/channel selection")
     if args.output.exists():
         raise FileExistsError(args.output)
     serial = ["-serial", "null", "-serial", "null"] if args.chip == "ws53" else []
@@ -43,7 +46,13 @@ def main():
                   and not re.fullmatch(
                       r"qemu-system-riscv32: terminating on signal 15 from pid \d+ .*", s)]
     ticks = re.findall(rb"async tick #(\d+)\r?\n", stdout)
-    if args.chip == "ws53":
+    if args.software_wake:
+        transcript_ok = all(stdout.count(marker) == 1 for marker in (
+            b"BLOCK_ON SOFTWARE WAKE: BEGIN\r\n",
+            b"BLOCK_ON SOFTWARE WAKE: enabled=PASS\r\n",
+            b"BLOCK_ON SOFTWARE WAKE: disabled=PASS\r\n",
+            b"BLOCK_ON SOFTWARE WAKE: PASS\r\n"))
+    elif args.chip == "ws53":
         transcript_ok = (stdout.count(b"WS53 PASS timer_async channels=2 expiries=16 cancels=4 guards=6") == 1
                          and b"WS53 PASS timer_irq=53 count=3" in stdout)
     else:
@@ -57,6 +66,7 @@ def main():
               and b"FAIL" not in stdout and not unexpected
               and (proc.returncode == 0 or timed_out))
     result = dict(passed=passed, hardware_accessed=False, physical_timing_qualified=False,
+                  software_wake=args.software_wake, atomic_idle_qualified=False,
                   race_injection=False, chip=args.chip, lifecycle=args.lifecycle, channel=args.channel,
                   command=command, returncode=proc.returncode,
                   runner_terminated=timed_out,

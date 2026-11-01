@@ -67,6 +67,7 @@ jobs:
           cargo fetch --locked --manifest-path examples/bs21/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws63-gpio-async-model/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws63-uart-async-model/Cargo.toml --target riscv32imfc-unknown-none-elf
+          cargo fetch --locked --manifest-path examples/ws63-block-on-model/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path examples/ws53-flash-uart-rx/Cargo.toml --target riscv32imfc-unknown-none-elf
           cargo fetch --locked --manifest-path "$(rustc --print sysroot)/lib/rustlib/src/rust/library/Cargo.toml" \
             --target riscv32imfc-unknown-none-elf
@@ -129,6 +130,16 @@ jobs:
               --elf "$RUNNER_TEMP/ws63-uart-target/riscv32imfc-unknown-none-elf/release/ws63_uart_async_model" \
               --capacity "$capacity" --output "$RUNNER_TEMP/ws63-uart-$capacity"
           done
+      - name: Check software wakes without a periodic timer
+        working-directory: project
+        run: |
+          cargo build --offline --locked -Zbuild-std=core,alloc --release \
+            --manifest-path examples/ws63-block-on-model/Cargo.toml \
+            --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/ws63-block-on-target"
+          uv run --offline --script scripts/test-hal-irq-wait-qemu.py --software-wake \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/ws63-block-on-target/riscv32imfc-unknown-none-elf/release/ws63_block_on_model" \
+            --output "$RUNNER_TEMP/ws63-block-on.json"
       - name: Check UART receive lifecycle and validation failures
         working-directory: project
         run: |
@@ -318,6 +329,7 @@ jobs:
           path: |
             ${{ runner.temp }}/ws53-model-build.json
             ${{ runner.temp }}/ws63-softint.json
+            ${{ runner.temp }}/ws63-block-on.json
             ${{ runner.temp }}/rtos-coexist-*.json
             ${{ runner.temp }}/ws63-uart-registers.json
             ${{ runner.temp }}/ws63-uart-*/report.json

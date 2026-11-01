@@ -1,0 +1,13 @@
+[package]
+name = "ws63_block_on_consumer"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hisi-hal = { git = "https://github.com/hispark-rs/hisi-hal.git", rev = "cc1be0816e80c9e71ea8f2fb601122c35bc9a07b", default-features = false, features = ["chip-ws63", "rt", "async", "unstable"] }
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb", default-features = false, features = ["chip-ws63", "bundled-memory-x"] }
+[patch.crates-io]
+hisi-riscv-rt = { git = "https://github.com/hispark-rs/hisi-riscv-rt.git", rev = "eb3e2d55a41c7655c2be83e465e5dc524eb1d7cb" }
+[profile.release]
+opt-level = "s"
