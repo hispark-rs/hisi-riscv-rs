@@ -33,6 +33,9 @@
 | [WS53 SPI 线序](ws53-spi-wire.md) | 配套工作 | P1 | 模型与实板线序 | 外部器件及冷启动验收 |
 | [WS53 应用核适配](ws53-adaptation.md) | 执行中 | P0 | 用户授权完整适配并持续维护 | 按能力和证据矩阵推进；真实冷启动及未验收外设保持开放 |
 | [HAL 跨芯片结构审查](hal-cross-chip-review.md) | 配套工作 | P1 | WS53 接入和既有芯片兼容性 | 分模块复用并保留真实硬件差异 |
+| [Embassy 职责整改](embassy-extraction.md) | 配套工作 | P1 | 按现有 RTOS 时间契约整合 | 共享毫秒精度与纯 profile 分离，实板复验未关闭 |
+| [HAL 软件唤醒与空闲](hal-block-on-idle.md) | 配套工作 | P1 | 执行器无关等待契约 | WFI 前中断竞态仍未关闭 |
+| [UART 模型可复现](uart-model-reproducibility.md) | 配套工作 | P1 | 固定源码与独立消费者 | 模型证据不替代物理和实板验收 |
 | [旧 DMA 安全审查](legacy-dma-safety-audit.md) | 配套工作 | P1 | 跨芯片 DMA 安全性 | 未解决的问题不可标为已证明安全 |
 | [WS53 IPC 迁移](ws53-ipc-migration.md) | 配套工作 | P1 | 控制核协议与硬件驱动分层 | 实际对端兼容性与生命周期验收 |
 | [WS53 多仓库维护](ws53-workspace-status.md) | 配套工作 | P1 | 依赖、提交及证据同步 | 独立发布依赖与远端可获取性 |

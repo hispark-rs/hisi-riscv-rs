@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "plans": 24,
+  "active_implementations": [
+    "ws53-adaptation",
+    "connectivity-stack"
+  ],
+  "previous_ci_job": 124813193494,
+  "previous_failure": "missing three registry entries and four early status declarations",
+  "added_plans": [
+    "embassy-extraction",
+    "hal-block-on-idle",
+    "uart-model-reproducibility"
+  ],
+  "status": "supporting",
+  "log": "/home/sanchuanhehe/Documents/hispark-rs/validation/uart-nb-tx-2026-11-01/plan-registry.log",
+  "sha256": "4448aaa08201cbe6a85cd8a77b041209dbb5ead7f0b8216761e3eebeef36e0f6"
+}

@@ -1,5 +1,7 @@
 # Embassy 职责整改（2026-11-01）
 
+**状态：** HAL 跨芯片整改的配套工作；实现、仿真与实板验收分别记录。
+
 用户撤回独立 `hisi-embassy` 仓库方案；未创建远端仓库，也未推送该组件。
 未发布原型保存在工作区 `validation/embassy-extraction/superseded-hisi-embassy/`，用于
 迁移对照，不参与构建。此次不操作实板。遵循 `hisi-rtos-future-architecture.md`，

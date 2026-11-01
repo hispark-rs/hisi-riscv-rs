@@ -228,3 +228,33 @@ owner = "hisi-hal maintainers"
 depends_on = []
 trigger = "historical release closure"
 evidence = ["hal-060-release-record"]
+
+[[plan]]
+id = "embassy-extraction"
+path = "embassy-extraction.md"
+status = "supporting"
+priority = "P1"
+owner = "HAL and runtime maintainers"
+depends_on = ["hal-cross-chip-review"]
+trigger = "按现有 RTOS 时间契约整合"
+evidence = []
+
+[[plan]]
+id = "hal-block-on-idle"
+path = "hal-block-on-idle.md"
+status = "supporting"
+priority = "P1"
+owner = "HAL and runtime maintainers"
+depends_on = ["hal-cross-chip-review"]
+trigger = "执行器无关等待契约"
+evidence = []
+
+[[plan]]
+id = "uart-model-reproducibility"
+path = "uart-model-reproducibility.md"
+status = "supporting"
+priority = "P1"
+owner = "HAL and runtime maintainers"
+depends_on = ["hal-cross-chip-review"]
+trigger = "固定源码与独立消费者"
+evidence = []
