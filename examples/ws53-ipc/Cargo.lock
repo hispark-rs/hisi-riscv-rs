@@ -90,7 +90,7 @@ checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
 name = "hisi-hal"
-version = "0.7.0-alpha.9"
+version = "0.7.0-alpha.10"
 dependencies = [
  "bs2x-pac",
  "cfg-if",

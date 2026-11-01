@@ -172,3 +172,11 @@ WS53 PAC 已于 2026-11-01 发布到 crates.io；HAL 与 Embassy 新版本仍为
 时钟修正已完成 RAM 实板与 QEMU 测试，但新的 Flash 实板测试仍未完成。真实断电
 冷启动仍未验收。2026-10-29 盘点时串口设备未出现，未发起新的硬件操作。
 历史记录中仅能证明复位的结果不能标记为冷启动通过。
+
+### UART 回归后续：模型 CI 的旧锁文件
+
+远端 [run 41288759118](https://github.com/hispark-rs/hisi-riscv-rs/actions/runs/41288759118)
+在 UART 步骤前因 HASH 示例的旧锁失败。已检查 workflow 的十三个独立解析范围，
+七个 WS53 示例仅同步 HAL alpha.9→alpha.10，第三方锁定版本不变；全部重新通过
+`cargo metadata --locked --offline`。继续保留严格锁定，整条远端 workflow 单独验收。
+[审查](evidence/uart-model-repro-2026-11-01/lock-audit.json)。

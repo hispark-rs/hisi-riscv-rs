@@ -1,0 +1,117 @@
+[
+  {
+    "manifest": "examples/ws53-hash-model",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-km-model",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-symc-model",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-sdio-init",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-sfc-read",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-ipc",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53",
+    "locked_before": true
+  },
+  {
+    "manifest": "examples/ws53-flash",
+    "locked_before": false,
+    "updated": true,
+    "changes": [
+      {
+        "name": "hisi-hal",
+        "source": "local",
+        "before": "0.7.0-alpha.9",
+        "after": "0.7.0-alpha.10"
+      }
+    ]
+  },
+  {
+    "manifest": "examples/ws53-ram-functions",
+    "locked_before": true
+  },
+  {
+    "manifest": ".",
+    "locked_before": true
+  },
+  {
+    "manifest": "examples/bs21",
+    "locked_before": true
+  },
+  {
+    "manifest": "examples/ws63-gpio-async-model",
+    "locked_before": true
+  },
+  {
+    "manifest": "examples/ws53-flash-uart-rx",
+    "locked_before": true
+  }
+]
