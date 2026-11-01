@@ -8815,3 +8815,7 @@ Cargo feature 合并构建中混用。
 仅此软件/模型范围有新证据，物理停止时序、RAM/Flash/冷启动均不继承旧结论。
 进度与依赖以 [多仓状态](ws53-workspace-status.md) 和
 [证据](evidence/timer-async-lifecycle-2026-11-01/report.json) 为准。
+
+DMA 合并前的旧芯片兼容审查：HAL `c907bed` 限制短借用控制器进入保留 guard，
+子仓失败文档测试及远端消费者验证通过；没有修改 WS53 DMA 行为或扩大验收。
+总线排空、缓存和实板证明仍未关闭，见 [安全审查](legacy-dma-safety-audit.md)。

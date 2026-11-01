@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 DMA 控制器生命周期增量
+
+HAL 当前 `fix/dma-controller-lifetime` / `c907bed`，已推送；
+[草稿 PR #20](https://github.com/hispark-rs/hisi-hal/pull/20) 叠加在定时器 #19 上。
+父仓同步子模块精确提交，无依赖版本变化，不改已有锁文件。编译期要求旧 DMA
+guard 持有静态控制器，防止遗忘短借用 guard 后重新取得原控制器；没有运行时改动。
+
+主机 WS63/BS21/WS53 351/220/432、三芯片目标 Clippy、旧芯片文档测试通过。
+全新 Cargo 缓存下远端开发图的正例主机/RISC-V 构建通过，反例按预期拒绝。
+WS63/BS21 现有 DMA 示例通过；BS20 的 `--locked` 检查被旧锁文件阻塞，未更新或
+掩盖这一问题。QEMU 未重跑，实板未操作，发布及总线排空阻塞继续保留。
+见 [报告](evidence/dma-controller-lifetime-2026-11-01/report.json)。
+
 ## 2026-11-01 定时器生命周期增量
 
 | 仓库 | 分支 / 提交 | 状态 |

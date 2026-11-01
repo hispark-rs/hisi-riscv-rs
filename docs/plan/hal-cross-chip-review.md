@@ -168,3 +168,15 @@ WS63 三通道 QEMU 分别通过生命周期检查和五次后续 IRQ；WS53 两
 真实停止/确认时序、外部时钟和跨核资源仍未复验；BS21 async 未扩大支持范围。
 下一批重点是最小 `block_on` 的 poll-to-WFI 窗口、DMA 内存安全与其他 async
 外设的接管/取消契约，不能把定时器模型通过推广为整个 HAL async 已验收。
+
+### 旧 DMA 控制器交接（`c907bed`）
+
+合并 DMA 前先修正保留 guard 的所有权入口：三个旧启动方法要求静态控制器，
+不能从短 reborrow 启动后遗忘 guard 并重新取得原 token。现有拥有原 DMA token
+的 WS63/BS21 示例保持可构建；子仓维护三个失败文档测试和移交正例。
+WS53 的显式停止/缓存契约继续独立，未因旧驱动增加生命周期约束而强行共用。
+
+独立开发图三芯片主机/Clippy、旧芯片文档及远端消费者通过；本批没有 MMIO
+变化、QEMU 或实板新证据。正常完成排空、缓存及高层 DMA 仍需审查，细节以
+[安全审查](legacy-dma-safety-audit.md) 和
+[本批证据](evidence/dma-controller-lifetime-2026-11-01/report.json) 为准。
