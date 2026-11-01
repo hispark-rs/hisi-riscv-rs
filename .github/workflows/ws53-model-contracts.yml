@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: hispark-rs/hisi-riscv-qemu
-          ref: 7c88dacda8c7f07dfffc63298646ef473b84b49e
+          ref: d61c4a3737869cc47e52d083c44f83bd2f7a093e
           path: qemu-overlay
       - uses: astral-sh/setup-uv@v7
         with:
@@ -80,7 +80,8 @@ jobs:
               test-ws53-spi-dma-collision.py test-ws53-spi-dma-identity.py test-legacy-spi-write-qemu.py \
               test-bs21-timer-delay-qemu.py test-hal-irq-wait-qemu.py test-gpio-async-qemu.py test-ws53-uart-dma.py test-ws53-spi-dma.py test-ws53-i2c-dma.py \
               test-ws53-ram-elf.py test-ws53-flash-snapshot.py ws53_uart_rx_build.py \
-              test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py test-ws63-uart-async-qemu.py; do
+              test-ws53-flash-uart-rx-qemu.py test-qemu-test-support.py test-ws53-uart-receipt.py test-ws63-uart-async-qemu.py \
+              test-embassy-time-profile.py; do
             uv run --script "scripts/$script" --help > /dev/null
           done
           uv run --script crates/hisi-riscv-rt/scripts/test-ws53-ram-functions-snapshot.py --help > /dev/null
@@ -97,6 +98,24 @@ jobs:
         run: |
           bash scripts/run-ws53-model-contracts.sh "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
             "$RUNNER_TEMP/ws53-model/receipt.json" ../qemu-overlay "$RUNNER_TEMP/ws53-contracts"
+      - name: Check RTOS and Embassy sharing one timer
+        working-directory: project
+        run: |
+          uv run --script ../qemu-overlay/scripts/ws63_softint_test.py \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" > "$RUNNER_TEMP/ws63-softint.json"
+          cargo build --offline --locked -Zbuild-std=core,alloc --release -p rtos_embassy_coexist \
+            --target riscv32imfc-unknown-none-elf --target-dir "$RUNNER_TEMP/rtos-coexist-target"
+          uv run --offline --script scripts/test-embassy-time-profile.py --case coexist \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/rtos-coexist-target/riscv32imfc-unknown-none-elf/release/rtos_embassy_coexist" \
+            --output "$RUNNER_TEMP/rtos-coexist-default.json"
+          cargo build --offline --locked -Zbuild-std=core,alloc --release -p rtos_embassy_coexist \
+            --features rtos_embassy_coexist/model-timeline --target riscv32imfc-unknown-none-elf \
+            --target-dir "$RUNNER_TEMP/rtos-coexist-target"
+          uv run --offline --script scripts/test-embassy-time-profile.py --case coexist --require-timeline \
+            --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+            --elf "$RUNNER_TEMP/rtos-coexist-target/riscv32imfc-unknown-none-elf/release/rtos_embassy_coexist" \
+            --output "$RUNNER_TEMP/rtos-coexist-timeline.json"
       - name: Check WS63 UART RX IRQ and cancellation with a virtual peer
         working-directory: project
         run: |
@@ -298,6 +317,8 @@ jobs:
           if-no-files-found: warn
           path: |
             ${{ runner.temp }}/ws53-model-build.json
+            ${{ runner.temp }}/ws63-softint.json
+            ${{ runner.temp }}/rtos-coexist-*.json
             ${{ runner.temp }}/ws63-uart-registers.json
             ${{ runner.temp }}/ws63-uart-*/report.json
             ${{ runner.temp }}/ws63-uart-*/uart.log

@@ -1,5 +1,20 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 RTOS/Embassy 共存模型修复
+
+| 仓库 | 工作分支 / 提交 | 同步与验证 |
+| --- | --- | --- |
+| hisi-riscv-qemu | `fix/ws63-software-interrupt` / `d61c4a3` | 已推送，[草稿 PR #27](https://github.com/hispark-rs/hisi-riscv-qemu/pull/27)，叠加 #26；四路通知源、TCXO、UART 和旧 qtest 通过 |
+| ws63-examples | `test/rtos-coexist-timeline` / `b4e4376` | 已推送，[草稿 PR #9](https://github.com/hispark-rs/ws63-examples/pull/9)，叠加 #8；默认/时间线共存测试与 Clippy 通过 |
+| hisi-riscv-rs | `feat/ws53-integration` | 同步示例指针、两份 workflow 的模型提交与源码闭包，新增共存 CI；无锁文件依赖变化 |
+
+原 native=7 的阻塞来自模型没有实际触发软件通知。相同原 ELF 在修复模型达到
+17/10，未降低门槛、未改生产 HAL/RTOS。时间契约仍为共享路径 1 ms 分辨率，
+纯 Embassy 为独立 profile；不存在新 `hisi-embassy` 仓库。实板、WFI 软件唤醒竞态、
+DMA 缓存/停止及未发布依赖的阻塞继续保留；本轮不操作实板。
+结果、源码绑定及旧构建目录误复用的完整说明见
+[共存证据](evidence/rtos-coexist-2026-11-01/README.md)。远端全量 CI 独立验收。
+
 ## 2026-11-01 SPI DMA 模型超时定位
 
 HAL `test/dma-immediate-wait` / `3a1288d` 已推送，[草稿 PR #23](https://github.com/hispark-rs/hisi-hal/pull/23)

@@ -18,7 +18,11 @@ def main():
     parser.add_argument("--elf", type=Path, required=True)
     parser.add_argument("--case", choices=("ws63", "bs21", "ws53", "coexist"), required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--require-timeline", action="store_true",
+                        help="require a complete bounded coexist trace, including software IRQs")
     args = parser.parse_args()
+    if args.require_timeline and args.case != "coexist":
+        parser.error("--require-timeline is only defined for coexist")
     if args.output.exists():
         raise FileExistsError(args.output)
     machine = "ws63" if args.case == "coexist" else args.case
@@ -40,7 +44,14 @@ def main():
         r"qemu-system-riscv32: terminating on signal 15 from pid \d+ .*", s)
         and not s.startswith("ws63-uart: baud divider set ")]
     passed = marker in stdout and b"FAIL" not in stdout and not unexpected
+    timeline_ok = None
+    if args.require_timeline:
+        timeline_ok = (re.findall(rb"TRACE lost=(\d+)", stdout) == [b"0"]
+                       and all(re.search(rb"TRACE " + kind + rb" \d+ \d+\r?\n", stdout)
+                               for kind in (b"N", b"E", b"S", b"R", b"A", b"I", b"W")))
+        passed = passed and timeline_ok
     result = dict(case=args.case, passed=passed, hardware_accessed=False,
+                  timeline_required=args.require_timeline, timeline_complete=timeline_ok,
                   physical_timing_qualified=False, command=command,
                   elf_sha256=hashlib.sha256(args.elf.read_bytes()).hexdigest(),
                   qemu_sha256=hashlib.sha256(args.qemu.read_bytes()).hexdigest(),

@@ -1,0 +1,33 @@
+{
+  "case": "coexist",
+  "passed": true,
+  "hardware_accessed": false,
+  "timeline_required": true,
+  "timeline_complete": true,
+  "physical_timing_qualified": false,
+  "command": [
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-coexist-2026-11-01/pinned-build/qemu/build/qemu-system-riscv32",
+    "-M",
+    "ws63",
+    "-display",
+    "none",
+    "-monitor",
+    "none",
+    "-serial",
+    "stdio",
+    "-kernel",
+    "/home/sanchuanhehe/Documents/hispark-rs/validation/rtos-coexist-2026-11-01/firmware/timeline.elf",
+    "-d",
+    "guest_errors"
+  ],
+  "elf_sha256": "d2daec627c9de4262a44a7f201d6a36e09bdd2f882f0f962d1719b6d9270c0db",
+  "qemu_sha256": "3fd55191ce784b3c66ccb31deb0ec7912a9fb7d05e00aa15ecbe2f04286a7e95",
+  "stdout": "\r\nA3 RTOS Embassy coexist diagnostic\r\nnative_ticks=18 embassy_ticks=10 timer_irqs=26 context_switches=36 software_irqs=19\r\nTRACE W 1 0\r\nTRACE N 2 0\r\nTRACE A 2 7\r\nTRACE A 2 7\r\nTRACE W 2 0\r\nTRACE A 3 6\r\nTRACE S 3 120\r\nTRACE A 3 6\r\nTRACE A 3 6\r\nTRACE I 9 0\r\nTRACE A 10 4\r\nTRACE A 10 4\r\nTRACE N 10 0\r\nTRACE A 10 4\r\nTRACE A 10 4\r\nTRACE W 10 0\r\nTRACE A 10 4\r\nTRACE I 14 0\r\nTRACE A 14 3\r\nTRACE A 14 3\r\nTRACE E 14 0\r\nTRACE A 15 2\r\nTRACE I 17 0\r\nTRACE A 17 9\r\nTRACE A 17 9\r\nTRACE N 17 0\r\nTRACE A 17 7\r\nTRACE A 17 7\r\nTRACE W 17 0\r\nTRACE A 17 7\r\nTRACE I 24 0\r\nTRACE A 24 2\r\nTRACE A 24 2\r\nTRACE N 24 0\r\nTRACE A 24 2\r\nTRACE A 24 2\r\nTRACE W 24 0\r\nTRACE A 24 2\r\nTRACE I 26 0\r\nTRACE A 26 5\r\nTRACE A 26 5\r\nTRACE E 26 0\r\nTRACE A 26 5\r\nTRACE I 31 0\r\nTRACE A 31 6\r\nTRACE A 31 6\r\nTRACE N 31 0\r\nTRACE A 31 6\r\nTRACE A 31 6\r\nTRACE W 31 0\r\nTRACE A 31 6\r\nTRACE I 37 0\r\nTRACE A 37 1\r\nTRACE A 37 1\r\nTRACE E 37 0\r\nTRACE A 37 1\r\nTRACE I 38 0\r\nTRACE A 38 10\r\nTRACE A 38 10\r\nTRACE N 38 0\r\nTRACE A 38 7\r\nTRACE A 38 7\r\nTRACE W 38 0\r\nTRACE A 38 7\r\nTRACE I 45 0\r\nTRACE A 45 3\r\nTRACE A 45 3\r\nTRACE N 45 0\r\nTRACE A 45 3\r\nTRACE A 45 3\r\nTRACE W 45 0\r\nTRACE A 45 3\r\nTRACE I 48 0\r\nTRACE A 49 4\r\nTRACE A 49 3\r\nTRACE E 49 0\r\nTRACE A 49 3\r\nTRACE I 52 0\r\nTRACE A 52 8\r\nTRACE A 52 8\r\nTRACE N 52 0\r\nTRACE A 52 7\r\nTRACE A 52 7\r\nTRACE W 52 0\r\nTRACE A 52 7\r\nTRACE I 59 0\r\nTRACE A 59 1\r\nTRACE A 59 1\r\nTRACE N 59 0\r\nTRACE A 59 1\r\nTRACE A 59 1\r\nTRACE W 59 0\r\nTRACE A 59 1\r\nTRACE I 60 0\r\nTRACE A 60 6\r\nTRACE A 60 6\r\nTRACE E 60 0\r\nTRACE A 60 6\r\nTRACE I 66 0\r\nTRACE A 66 5\r\nTRACE A 66 5\r\nTRACE N 66 0\r\nTRACE A 66 5\r\nTRACE A 66 5\r\nTRACE W 66 0\r\nTRACE A 66 5\r\nTRACE I 71 0\r\nTRACE A 71 2\r\nTRACE A 71 2\r\nTRACE E 71 0\r\nTRACE A 71 2\r\nTRACE I 73 0\r\nTRACE A 73 9\r\nTRACE A 73 9\r\nTRACE N 73 0\r\nTRACE A 73 7\r\nTRACE A 73 7\r\nTRACE W 74 0\r\nTRACE A 74 6\r\nTRACE I 80 0\r\nTRACE A 80 2\r\nTRACE A 80 2\r\nTRACE N 80 0\r\nTRACE A 80 2\r\nTRACE A 80 2\r\nTRACE W 80 0\r\nTRACE A 80 2\r\nTRACE I 82 0\r\nTRACE A 82 5\r\nTRACE A 82 5\r\nTRACE E 82 0\r\nTRACE A 82 5\r\nTRACE I 87 0\r\nTRACE A 87 6\r\nTRACE A 87 6\r\nTRACE N 87 0\r\nTRACE A 87 6\r\nTRACE A 87 6\r\nTRACE W 87 0\r\nTRACE A 87 6\r\nTRACE I 93 0\r\nTRACE A 93 1\r\nTRACE A 93 1\r\nTRACE E 93 0\r\nTRACE A 93 1\r\nTRACE I 94 0\r\nTRACE A 94 10\r\nTRACE A 94 10\r\nTRACE N 94 0\r\nTRACE A 94 7\r\nTRACE A 94 7\r\nTRACE W 94 0\r\nTRACE A 95 6\r\nTRACE I 101 0\r\nTRACE A 101 3\r\nTRACE A 101 3\r\nTRACE N 101 0\r\nTRACE A 101 3\r\nTRACE A 101 3\r\nTRACE W 101 0\r\nTRACE A 101 3\r\nTRACE I 104 0\r\nTRACE A 104 4\r\nTRACE A 104 4\r\nTRACE E 104 0\r\nTRACE A 104 4\r\nTRACE I 108 0\r\nTRACE A 108 7\r\nTRACE A 108 7\r\nTRACE N 108 0\r\nTRACE A 108 7\r\nTRACE A 108 7\r\nTRACE W 108 0\r\nTRACE A 108 7\r\nTRACE I 115 0\r\nTRACE A 115 8\r\nTRACE A 115 8\r\nTRACE N 115 0\r\nTRACE A 115 7\r\nTRACE A 115 7\r\nTRACE W 115 0\r\nTRACE A 115 7\r\nTRACE E 115 0\r\nTRACE A 115 7\r\nTRACE I 122 0\r\nTRACE A 122 1\r\nTRACE A 122 1\r\nTRACE N 122 0\r\nTRACE A 122 1\r\nTRACE A 122 1\r\nTRACE W 122 0\r\nTRACE A 123 3\r\nTRACE R 123 0\r\nTRACE lost=0\r\n\r\nA3_RTOS_EMBASSY_COEXIST_OK\r\n",
+  "stderr": [
+    "ws63-uart: baud divider set (int=21 frac=0) -> effective baud ~= 476190 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=21 frac=0) -> effective baud ~= 476190 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "ws63-uart: baud divider set (int=21 frac=44) -> effective baud ~= 461095 at the nominal 160000000 Hz UART clock. QEMU's chardev passes bytes regardless of baud, so a wrong-clock/baud config still prints here but is garbled on real silicon. Issue #2",
+    "qemu-system-riscv32: terminating on signal 15 from pid 21 (/home/sanchuanhehe/Documents/hispark-rs/validation/embassy-extraction/uv-cache/environments-v2/test-embassy-time-profile-78111ce366af31c8/bin/python3)"
+  ],
+  "unexpected_diagnostics": []
+}

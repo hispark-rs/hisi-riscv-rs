@@ -52,8 +52,12 @@ HAL 保留 timer/counter/IRQ、标准 async trait 和外设等待/取消；不�
 4. WS63/BS21 纯 Embassy、WS53 正常/时钟停顿恢复 QEMU 通过。旧 TCXO 模型固定返回
    VALID、不反映 EN 的问题由 QEMU `e60f95c` 修复；双芯片 qtest、11 项旧 qtest 和
    WS53 TCXO 原回归通过。原始模型和失败报告完整保留，没有绕过初始化检查。
-5. RTOS 共存场景仍未通过原 HIL 阈值：迁移前 `d17beda` 与迁移后均为 native=7、
-   embassy=7、timer IRQ=14、switch=14；要求 native>=8。未降低门槛，保留待定位/验收。
+5. RTOS 共存场景的 QEMU 阻塞已定位并修复：旧模型遗漏 SYS_CTL1 软件中断，迁移前
+   `d17beda` 与迁移后均为 native=7、embassy=7、timer IRQ=14、switch=14。
+   QEMU `d61c4a3` 补上 cause36–39 后，同一未修改 ELF 达到 native=17、embassy=10，
+   通过原 native>=8 等门槛；新增示例还要求 software IRQ>0。没有改变生产 RTOS 调度策略。
+   这只关闭该模型缺陷，不能关闭 `block_on` 软件唤醒/WFI 竞态或继承旧 HIL 结论。
+   见[共存定位证据](evidence/rtos-coexist-2026-11-01/README.md)。
 6. 不执行实板；所有新行为的 RAM / Flash / 冷启动结果保持未验收。
 
 测试与来源索引：[精简报告](evidence/embassy-rtos-migration-2026-11-01/report.json)。
@@ -72,7 +76,8 @@ HAL 主机 WS63/BS21/WS53 为 336/220/427；RTOS 基础/共享为 86/91，每芯
   执行 `bash scripts/check-time-profiles.sh`；不复制则为 registry 模式，当前有上述发布阻塞。
 - HAL 独立检出：`bash scripts/check-ws53-integration.sh`，随后运行依赖边界检查。
 - 父仓 QEMU：`uv run --script scripts/test-embassy-time-profile.py --qemu <binary> --elf <elf>
-  --case ws53|ws63|bs21|coexist --output <new-report.json>`。coexist 当前返回失败，不能当作绿灯。
+  --case ws53|ws63|bs21|coexist --output <new-report.json>`。coexist 必须使用含软件通知源的
+  固定模型；带 `model-timeline` 构建另加 `--require-timeline`，缺事件或溢出均不通过。
 - 本轮未整理其他历史未提交证据，没有删除工作树、原始波形、备份或已有成果。
 
 远端 RTOS [CI 41281349605](https://github.com/hispark-rs/hisi-rtos/actions/runs/41281349605)：

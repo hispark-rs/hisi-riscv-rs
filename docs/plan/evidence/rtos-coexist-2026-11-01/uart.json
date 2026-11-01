@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "machine": "ws63",
+      "capacity": 1,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    },
+    {
+      "machine": "ws63",
+      "capacity": 16,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    },
+    {
+      "machine": "bs20",
+      "capacity": 1,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    },
+    {
+      "machine": "bs21",
+      "capacity": 1,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    },
+    {
+      "machine": "bs21e",
+      "capacity": 1,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    },
+    {
+      "machine": "bs22",
+      "capacity": 1,
+      "ports": 3,
+      "passed": true,
+      "hardware_accessed": false,
+      "physical_fifo_depth_verified": false,
+      "physical_baud_verified": false,
+      "receive_count_alias_qualified": false
+    }
+  ],
+  "qemu_sha256": "087b79da24ef692072cdccadc80a8458f6022ba4b882f4618bc21119e210ed82"
+}
