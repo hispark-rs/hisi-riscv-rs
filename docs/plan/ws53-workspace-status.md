@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+## 2026-11-01 SPI DMA 模型超时定位
+
+HAL `test/dma-immediate-wait` / `3a1288d` 已推送，[草稿 PR #23](https://github.com/hispark-rs/hisi-hal/pull/23)
+叠加 #22；两批均只改子仓测试，不改驱动行为或版本。父仓同步可获取的子模块指针、
+SPI DMA 夹具和运行器、两组首轮完成 CI 场景与证据，不改模型 pin 或锁文件。
+
+确定性反例显示：DMA 已完成但原夹具要求 TIMER0 IRQ>0，导致 panic，外部表现为
+armed 后超时。现分别验证首轮完成（不启动 timer）和阻塞等待（必须发生 IRQ），
+保留原数据/停止/归属断言。8/32 位 poll/async 原 200 场景和新增 32 场景通过；
+HAL WS53 主机 444 项、测试 Clippy、WS63 UART 八项通过。
+见 [证据与因果边界](evidence/spi-dma-progress-2026-11-01/README.md)。
+本地关闭这项夹具错误；远端全 CI 及实板仍分别验收，没有硬件操作。
+
 ## 2026-11-01 WS63 UART 后端纠错与模型集成
 
 HAL `refactor/uart-async-receive` 已推送 `7eda6f8`、`1a456ab`，更新

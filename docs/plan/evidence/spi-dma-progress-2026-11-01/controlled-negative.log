@@ -1,0 +1,20 @@
+Installed 1 package in 3ms
+before first poll: {'tx_remaining': 0, 'rx_remaining': 0, 'pending_writes': 0, 'frames': 33, 'tx_fifo': 0, 'rx_fifo': 0}
+Traceback (most recent call last):
+  File "/home/sanchuanhehe/Documents/hispark-rs/validation/spi-dma-progress-2026-11-01/controlled-diagnostic.py", line 207, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/home/sanchuanhehe/Documents/hispark-rs/validation/spi-dma-progress-2026-11-01/controlled-diagnostic.py", line 201, in main
+    results=[run(a.qemu,a.elf,width,source,destination,*case, observation=observation,
+             ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 complete_before_wait=a.complete_before_wait) for case in cases]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanchuanhehe/Documents/hispark-rs/validation/spi-dma-progress-2026-11-01/controlled-diagnostic.py", line 123, in run
+    until('WS53 SPIDMA retained');execute('stop')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanchuanhehe/Documents/hispark-rs/validation/spi-dma-progress-2026-11-01/controlled-diagnostic.py", line 67, in until
+    require(time.monotonic()<deadline,f'{width}/{port}/{ch}/{side}/{scenario}: timeout {output!r}')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanchuanhehe/Documents/hispark-rs/hisi-riscv-rs/scripts/check-ws53-ram-elf.py", line 26, in require
+    raise ValueError(message)
+ValueError: 1/0/0/t/N: timeout bytearray(b'WS53 SPIDMA ready\nWS53 SPIDMA armed\nWS53 SPIDMA diagnostic: zero timer IRQ\n')

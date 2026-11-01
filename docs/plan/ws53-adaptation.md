@@ -8857,3 +8857,11 @@ HAL `7eda6f8` / `1a456ab` 分别修正读取寄存器路径及 pending RX 的一
 WS53 UART 八轮通过。本轮不操作实板，不升级稳定性。远端全流水线另有 SPI DMA
 超时待定位；不能用 UART 通过代替整体通过。
 [实现与验收范围](evidence/ws63-uart-backend-2026-11-01/README.md)。
+
+### 2026-11-01 SPI DMA 首轮完成与定时等待验收
+
+原 async 夹具误要求正常完成必有定时器 IRQ，DMA 在首次 poll 前完成时会 panic。
+本地确定性反例保留；现单独验证已完成路径零 timer IRQ 和阻塞路径真实 timer IRQ。
+原 200 场景与新增 32 场景通过。HAL 子仓补齐共享等待的无 timer 契约测试，
+父仓维护实际 Rust/QEMU 集成；没有修改生产驱动或操作硬件。远端流水线另行验收。
+[证据](evidence/spi-dma-progress-2026-11-01/README.md)。

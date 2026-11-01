@@ -183,6 +183,12 @@ jobs:
                 --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
                 --elf "$RUNNER_TEMP/ws53-spi-dma-$mode-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
                 > "$RUNNER_TEMP/ws53-spi-dma-$mode-$width.json"
+              if [ "$mode" = async ]; then
+                uv run --offline --script scripts/test-ws53-spi-dma.py --complete-before-wait \
+                  --qemu "$RUNNER_TEMP/ws53-model/qemu/build/qemu-system-riscv32" \
+                  --elf "$RUNNER_TEMP/ws53-spi-dma-$mode-$width/riscv32imfc-unknown-none-elf/release/ws53_spi_dma" \
+                  > "$RUNNER_TEMP/ws53-spi-dma-$mode-$width-early.json"
+              fi
             done
           done
       - name: Check WS53 I2C DMA blocking and async progress
@@ -327,6 +333,8 @@ jobs:
             ${{ runner.temp }}/ws53-spi-dma-poll-32.json
             ${{ runner.temp }}/ws53-spi-dma-async-8.json
             ${{ runner.temp }}/ws53-spi-dma-async-32.json
+            ${{ runner.temp }}/ws53-spi-dma-async-8-early.json
+            ${{ runner.temp }}/ws53-spi-dma-async-32-early.json
             ${{ runner.temp }}/ws53-i2c-dma-blocking.json
             ${{ runner.temp }}/ws53-i2c-dma-async.json
             ${{ runner.temp }}/hal-irq-wait-*.json

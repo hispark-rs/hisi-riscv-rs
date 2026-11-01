@@ -22,7 +22,7 @@ MAPS=[dict(control=4,enable=0,fifo=0x2c,select=0xc8,tx=0xd0,rx=0xdc,dma=0x18,cle
       dict(control=0,enable=8,fifo=0x60,select=0x10,tx=0x20,rx=0x24,dma=0x4c,clear=0x48)]
 
 
-def run(qemu,elf,width,source,destination,port,ch,side,scenario):
+def run(qemu,elf,width,source,destination,port,ch,side,scenario, *, observation=None, complete_before_wait=False):
     rxch=(ch+1)%8;target=rxch if side=='r' else ch
     length=33 if scenario=='N' else 3;base=0x5208d000 if port else 0x52087000;m=MAPS[port]
     mask=(1<<(width*8))-1
@@ -103,8 +103,34 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
                             cfg=reg(channel,8);ctrl=reg(channel,0x14);request=(4 if port else 6)+int(rx)
                             require((cfg>>9)&7==(2 if rx else 1) and (cfg>>(1 if rx else 5))&15==request,'route mismatch')
                             require((ctrl>>28)&7==2,'wrong protection')
+                        before_wait = None
+                        if complete_before_wait:
+                            require(scenario == 'N', 'completion-before-wait requires normal transfer')
+                            deadline = time.monotonic()+5
+                            while True:
+                                before_wait = dict(tx_remaining=reg(ch,0x14)&0xfff,
+                                    rx_remaining=reg(rxch,0x14)&0xfff,
+                                    pending_writes=dma('pending-writes'),
+                                    frames=prop('/machine/spi',f'frames{port}'),
+                                    tx_fifo=read(base+m['tx']), rx_fifo=read(base+m['rx']))
+                                if before_wait == dict(tx_remaining=0,rx_remaining=0,pending_writes=0,
+                                                       frames=length,tx_fifo=0,rx_fifo=0):
+                                    break
+                                require(time.monotonic()<deadline, f'pre-poll DMA did not complete: {before_wait}')
+                                time.sleep(.001)
                         send(b'G')
                     until('WS53 SPIDMA retained');execute('stop')
+                    wait_observation = None
+                    if observation is not None:
+                        polls,pending_polls,irqs = [read(observation+i*4) for i in range(3)]
+                        wait_observation = dict(polls=polls,pending_polls=pending_polls,timer_irqs=irqs)
+                        if scenario not in 'CBLDFI':
+                            require(0 < polls <= 1000 and pending_polls <= polls, 'invalid wait observation')
+                            if scenario == 'T' or pending_polls:
+                                require(irqs > 0, 'pending wait never exercised timer IRQ')
+                        if complete_before_wait:
+                            require(wait_observation == dict(polls=1,pending_polls=0,timer_irqs=0),
+                                    f'completed DMA must not arm a timer: {wait_observation}')
                     configured=scenario not in 'CBL'
                     pending=dma('pending-writes');require(pending==int(scenario in 'TDFI'),'unexpected pending beat')
                     require(read(base+m['dma'])==(3 if scenario=='F' else 0),'requests not disabled together')
@@ -144,6 +170,9 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
             lines+=['WS53 SPIDMA retained','WS53 PASS SPIDMA retained=1 data=1','WS53 SPIDMA done']
             require(output.decode().splitlines()==lines,str(output))
             return {'port':port,'tx_channel':ch,'rx_channel':rxch,'fault_side':side,'scenario':scenario,
+                    'complete_before_wait':complete_before_wait,
+                    'before_wait':before_wait if complete_before_wait else None,
+                    'wait_observation':wait_observation,
                     'copied_elements':copied,'pending_at_stop':pending,'abandoned':scenario in 'DF',
                     'memory_guard_address_and_raw_verified':True,'hardware_verified':False}
         finally:
@@ -152,16 +181,24 @@ def run(qemu,elf,width,source,destination,port,ch,side,scenario):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--qemu',required=True);p.add_argument('--elf',required=True,type=Path)
+    p.add_argument('--complete-before-wait', action='store_true',
+                   help='Run all 16 normal routes after observed DMA completion, requiring first-poll Ready and no timer IRQ')
     a=p.parse_args();contract=elf_check.validate(a.elf)
     with a.elf.open('rb') as stream:
         symbols=ELFFile(stream).get_section_by_name('.symtab');src=symbols.get_symbol_by_name('WS53_SPI_DMA_SOURCE');dst=symbols.get_symbol_by_name('WS53_SPI_DMA_DESTINATION')
         require(src and dst and len(src)==len(dst)==1,'missing allocation symbols');width=src[0]['st_size']//35
         require(width in (1,4) and src[0]['st_size']==dst[0]['st_size']==35*width,'wrong allocation size')
         source,destination=src[0]['st_value'],dst[0]['st_value']
+        observed=symbols.get_symbol_by_name('WS53_SPI_DMA_WAIT_OBSERVATION')
+        require(not observed or len(observed)==1 and observed[0]['st_size']==12, 'invalid wait observation symbol')
+        observation=observed[0]['st_value'] if observed else None
+        require(not a.complete_before_wait or observation is not None, 'completion-before-wait requires async fixture')
     cases=[(port,ch,'t','N') for port in range(2) for ch in range(8)]
     cases += [(port,0,side,s) for port in range(2) for side in 'tr' for s in 'TRWSDFI']
     cases += [(port,0,'t',s) for port in range(2) for s in 'CBL']
-    results=[run(a.qemu,a.elf,width,source,destination,*case) for case in cases]
+    if a.complete_before_wait:cases=cases[:16]
+    results=[run(a.qemu,a.elf,width,source,destination,*case, observation=observation,
+                 complete_before_wait=a.complete_before_wait) for case in cases]
     print(json.dumps({'elf':contract,'width':width*8,'scenarios':results,'hardware_accessed':False,
                       'physical_cache_cs_or_drain_proven':False},indent=2))
 

@@ -27,6 +27,11 @@ type Word = u8;
 static mut WS53_SPI_DMA_SOURCE: [Word; 35] = [0x5a; 35];
 #[unsafe(no_mangle)]
 static mut WS53_SPI_DMA_DESTINATION: [Word; 35] = [0x5a; 35];
+// Model observation only: actual polls, Pending results and timer IRQs. The host
+// reads this after the guest reports retained; it never drives completion.
+#[cfg(feature = "async-smoke")]
+#[unsafe(no_mangle)]
+static mut WS53_SPI_DMA_WAIT_OBSERVATION: [u32; 3] = [0; 3];
 struct TimerDelay<'a, 'd>(&'a RefCell<TimerDriver<'d>>);
 impl DelayNs for TimerDelay<'_, '_> {
     fn delay_ns(&mut self, ns: u32) {
@@ -186,6 +191,7 @@ fn test<T: Instance + 'static>(
                     let mut cx = Context::from_waker(&waker);
                     let mut wake = true;
                     let mut polls = 0;
+                    let mut pending = 0;
                     for _ in 0..100_000_000 {
                         if !wake && !async_executor::take_wake() {
                             continue;
@@ -196,9 +202,20 @@ fn test<T: Instance + 'static>(
                             result = value;
                             break;
                         }
+                        pending += 1;
                         if polls >= 1000 {
                             break;
                         }
+                    }
+                    let observation =
+                        core::ptr::addr_of_mut!(WS53_SPI_DMA_WAIT_OBSERVATION).cast::<u32>();
+                    for (index, value) in [polls, pending, async_executor::irq_count()]
+                        .into_iter()
+                        .enumerate()
+                    {
+                        // SAFETY: only this model fixture writes the static; the
+                        // host observes it with the CPU stopped after retained.
+                        unsafe { observation.add(index).write_volatile(value) };
                     }
                     result // dropping a pending future performs cancellation
                 };
@@ -207,7 +224,9 @@ fn test<T: Instance + 'static>(
                     let mut timer = delay.0.borrow_mut();
                     let probe = unsafe { timer.async_delay(TimerChannel::Channel0) }.unwrap();
                     drop(probe); // cancellation/return leaves TIMER0 reusable
-                    if matches!(scenario, b'N' | b'T') {
+                    // A normal transfer may already be complete before the first
+                    // poll. The stalled timeout case must actually await TIMER0.
+                    if scenario == b'T' {
                         assert!(async_executor::irq_count() > 0);
                     }
                 }
