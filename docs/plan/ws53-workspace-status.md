@@ -1,5 +1,18 @@
 # WS53 多仓库维护状态
 
+**状态：** WS53 适配的配套工作，持续维护中。
+
+## 2026-11-01 UART 非阻塞发送修复
+
+- HAL `fix/uart-nonblocking-write` / `9a8cfaf` 已推送，[草稿 PR #26](https://github.com/hispark-rs/hisi-hal/pull/26)。
+- QEMU `test/uart-tx-backpressure` / `2c4aa61` 已推送，[草稿 PR #28](https://github.com/hispark-rs/hisi-riscv-qemu/pull/28)。
+- 父仓同步 HAL 指针、两份模型 workflow pin、源码校验、新夹具及独立锁文件和行为回归。
+- 三芯片独立测试/Clippy、旧芯片实际 nb trait、新缓存远端消费者、模型及 WS53 回归通过。
+  FIFO 深度、物理时序、旧 async TX 及 RAM/Flash/冷启动未由本轮验收；没有硬件操作。
+- Embassy 归现有 RTOS；共享路径 1 ms 分辨率，纯 profile 单独选择。未创建平行组件或发布 crate。
+
+详见[本批证据及 CI 待办](evidence/uart-nb-tx-2026-11-01/README.md)。
+
 ## 2026-11-01 HAL 主机测试门控整改
 
 HAL `test/host-lint-contracts` / `a52e0dd` 已推送，

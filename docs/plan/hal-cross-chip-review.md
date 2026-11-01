@@ -15,7 +15,7 @@ DMA 属性测试直接调用生产编码器，PWM 穷举真实类型化入口；
 | 模块 | 当前差异与边界 | 下一步 |
 | --- | --- | --- |
 | GPIO / pinctrl | WS53/WS63 已共用 async 等待生命周期；WS53 整组交接、WS63 每引脚资源与寄存器布局仍不同 | WS63 按引脚隔离完成/取消，IRQ 和数量归 SoC；继续合并可证明的公共逻辑，保留 pad/时钟与真实寄存器差异 |
-| UART | 分频运算、`uart/async_receive.rs` 的接收轮询/取消及测试已共用；`uart/asynch.rs` 与 WS53 后端保留 PAC/IRQ/错误差异；H0、复位及 pad 特定 | WS63 ISR 单字节槽已移除，待补完整 RX 模型；TX blocking/async 差异尚未合并，不能宣称全套 UART 已统一 |
+| UART | 分频运算、`uart/async_receive.rs` 的接收轮询/取消及测试已共用；`uart/asynch.rs` 与 WS53 后端保留 PAC/IRQ/错误差异；H0、复位及 pad 特定 | WS63 RX 模型及实际 Rust 接收回归已补齐；三芯片 nb Write 共用有界发送，旧芯片满 FIFO 阻塞已修复；flush/async TX 差异保留，不能宣称全套 UART 已统一 |
 | DMA | WS53 v151 MDMA 八槽、保留资源和缓存交接；WS63 DMA/SDMA 通道及寄存器不同 | 先共用边界计算和取消状态机的可证明部分；请求路由归 SoC，独立后端保留停机与缓存差异 |
 | TIMER | WS53 两通道、WS63 三通道已共用一次性 async 生命周期；接管、寄存器与 IRQ 后端独立 | 继续验证真实 stop/ack 和时钟；BS21 未新增 async，不因同名 IP 默认开放 |
 | TCXO | WS53 应用窗口含多片段快照；WS63 计数器快照路径不同 | 审查快照/超时通用算术，保留窗口及时钟语义差异 |
@@ -241,3 +241,8 @@ WS63 后端续验：`7eda6f8` 复用 blocking 的状态/数据路径，`1a456ab`
 QEMU 明确建模 RX mask/reassert/FIFO 和 reset，保留旧反例；实际 Rust IRQ/取消
 在容量 1/16 通过，三芯片独立消费者及 WS53 八轮回归通过。实板与发布仍未验收。
 详见 [纠错证据](evidence/ws63-uart-backend-2026-11-01/README.md)。
+
+2026-11-01 非阻塞发送增量：HAL `9a8cfaf` 共用公开 nb Write 转发，修正旧芯片
+错误调用阻塞写入。相同 Rust 夹具前失败后通过，WS63/BS21 与 WS53 相关回归见
+[UART 背压证据](evidence/uart-nb-tx-2026-11-01/README.md)。没有引入通用万能 trait、
+新时间组件或重复调度器；旧 async TX、flush 差异与物理验收仍独立保留。
